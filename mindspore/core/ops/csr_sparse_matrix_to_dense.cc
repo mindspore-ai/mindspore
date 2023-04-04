@@ -96,8 +96,8 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   }
   // Static Shape
   bool staShape = !IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero];
-  MS_EXCEPTION_IF_CHECK_FAIL(
-    !staShape, "For '" + primitive->name() + "', 'col_indices' and 'values' " + "should have the same length.");
+  MS_EXCEPTION_VALUE_ERR_IF_CHECK(
+    staShape, "For '" + primitive->name() + "', 'col_indices' and 'values' " + "should have the same length.");
 
   auto shape_abs_ptr = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_abs_ptr);
