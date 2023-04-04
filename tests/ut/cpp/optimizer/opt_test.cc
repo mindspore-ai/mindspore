@@ -148,7 +148,6 @@ TEST_F(TestOptOpt, TestCheckOptIsClone) {
 
   ASSERT_TRUE(nullptr != before);
   ASSERT_TRUE(CheckOpt(before, before));
-  // Failed to compare
   ASSERT_FALSE(CheckOpt(before, before, std::vector<SubstitutionPtr>({elim_Z})));
 }
 
@@ -158,7 +157,6 @@ TEST_F(TestOptOpt, Elim) {
 
   ASSERT_TRUE(nullptr != before);
   ASSERT_TRUE(nullptr != after);
-  // Failed to compare
   ASSERT_TRUE(CheckOpt(before, after, std::vector<SubstitutionPtr>({elim_Z})));
 }
 
@@ -168,7 +166,6 @@ TEST_F(TestOptOpt, ElimTwo) {
 
   ASSERT_TRUE(nullptr != before);
   ASSERT_TRUE(nullptr != after);
-  // Failed to compare
   ASSERT_TRUE(CheckOpt(before, after, std::vector<SubstitutionPtr>({elim_Z})));
 }
 
