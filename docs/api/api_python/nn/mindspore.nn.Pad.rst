@@ -6,7 +6,7 @@ mindspore.nn.Pad
     根据 `paddings` 和 `mode` 对输入进行填充。
 
     参数：
-        - **paddings** (tuple) - 填充大小，其shape为(N, 2)，N是输入数据的维度，填充的元素为int类型。对于 `x` 的第 `D` 个维度，paddings[D, 0]表示要在输入Tensor的第 `D` 个维度之前扩展的大小，paddings[D, 1]表示在输入Tensor的第 `D` 个维度后面要扩展的大小。每个维度填充后的大小为： :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`。
+        - **paddings** (tuple) - 填充大小，其shape为 :math:`(N, 2)` ，N是输入数据的维度，填充的元素为int类型。对于 `x` 的第 `D` 个维度，paddings[D, 0]表示要在输入Tensor的第 `D` 个维度之前扩展的大小，paddings[D, 1]表示在输入Tensor的第 `D` 个维度后面要扩展的大小。每个维度填充后的大小为： :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`。
 
           .. code-block::
 
@@ -34,5 +34,5 @@ mindspore.nn.Pad
 
     异常：
         - **TypeError** - `paddings` 不是tuple。
-        - **ValueError** - `paddings` 的长度超过4或其shape不是(N, 2)。
+        - **ValueError** - `paddings` 的长度超过4或其shape不是 :math:`(N, 2)` 。
         - **ValueError** - `mode` 不是'CONSTANT'，'REFLECT'或'SYMMETRIC'。

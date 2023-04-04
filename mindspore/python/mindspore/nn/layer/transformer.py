@@ -68,8 +68,8 @@ class MultiheadAttention(Cell):
             Default: ``False``.
         kdim (int): Total number of features for keys. Default: ``None`` (`kdim=embed_dim`).
         vdim (int): Total number of features for values. Default: ``None`` (`vdim=embed_dim`).
-        batch_first (bool): If ``True``, then the input and output shape are (batch, seq, feature),
-            else (seq, batch, feature). Default: ``False``.
+        batch_first (bool): If ``True``, then the input and output shape are :math:`(batch, seq, feature)` ,
+            else :math:`(seq, batch, feature)` . Default: ``False``.
 
     Inputs:
         - **query** (Tensor): The query embeddings. If `query` is unbatched, the shape is :math:`(L, E_q)`,
@@ -249,7 +249,8 @@ class TransformerEncoderLayer(Cell):
             a callable (`ops.relu` or `ops.gelu`). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
         batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
-            (batch, seq, feature), otherwise the shape is (seq, batch, feature). Default: ``False``.
+             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
+            Default: ``False``.
         norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
             operations, respectively. Default: ``False``.
 
@@ -356,7 +357,8 @@ class TransformerDecoderLayer(Cell):
             a callable (`ops.relu` or `ops.gelu`). Default: ``"relu"``
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
         batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
-            (batch, seq, feature), otherwise the shape is (seq, batch, feature). Default: ``False``.
+             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)`.
+            Default: ``False``.
         norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
             operations, respectively. Default: ``False``.
 
@@ -597,7 +599,8 @@ class Transformer(Cell):
         custom_decoder (Cell): Custom decoder. Default: ``None``.
         layer_norm_eps (float): the epsilion value in layer normalization module. Default: ``1e-5``.
         batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
-            (batch, seq, feature), otherwise the shape is (seq, batch, feature). Default: ``False``.
+             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
+            Default: ``False``.
         norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
             operations, respectively. Default: ``False``.
 

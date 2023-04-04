@@ -16,7 +16,7 @@ mindspore.nn.BatchNorm3d
         需要注意的是，更新running_mean和running_var的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ,其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。
 
     参数：
-        - **num_features** (int) - 指定输入Tensor的通道数量。输入Tensor的size为(N, C, D, H, W)。
+        - **num_features** (int) - 指定输入Tensor的通道数量。输入Tensor的size为 :math:`(N, C, D, H, W)` 。
         - **eps** (float) - 加在分母上的值，以确保数值稳定。默认值：1e-5。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.9。
         - **affine** (bool) - bool类型。设置为True时，可以学习gama和beta。默认值：True。

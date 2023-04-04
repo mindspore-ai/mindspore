@@ -15,8 +15,8 @@ mindspore.ops.matrix_diag_part
     返回：
         Tensor，与 `x` 的类型相同。
 
-        - 设 `x` 有r维 :math:`[I, J, ..., M, N]` 。设 `max_diag_len` 为所有对角线长度中的最大值，则 :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`。
-        - 设 `num_diags` 为输出的维度数，则有 :math:`num\_diags = k[1] - k[0] + 1`。如果 :math:`num\_diags == 1`，则输出Tensor的维度为r - 1，分别为 :math:`[I, J, ..., L, max\_diag\_len]`。否则，输出Tensor的维度为r，分别为 :math:`[I, J, ..., L, num\_diags, max\_diag\_len]`。
+        - 设 `x` 有r维 :math:`(I, J, ..., M, N)` 。设 `max_diag_len` 为所有对角线长度中的最大值，则 :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`。
+        - 设 `num_diags` 为输出的维度数，则有 :math:`num\_diags = k[1] - k[0] + 1`。如果 :math:`num\_diags == 1`，则输出Tensor的维度为r - 1，分别为 :math:`(I, J, ..., L, max\_diag\_len)`。否则，输出Tensor的维度为r，分别为 :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` 。
 
     异常：
         - **TypeError** - `x` 不为Tensor。

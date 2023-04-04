@@ -751,11 +751,11 @@ class Pad(Cell):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
-            paddings are int type. For `D` th dimension of the `x`, paddings[D, 0] indicates how many sizes to be
-            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
-            be extended behind of the `D` th dimension of the input tensor. The padded size of each dimension D of the
-            output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`,
+        paddings (tuple): The shape of parameter `paddings` is :math:`(N, 2)` . N is the rank of input data. All
+            elements of paddings are int type. For `D` th dimension of the `x`, paddings[D, 0] indicates how many
+            sizes to be extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how
+            many sizes to be extended behind of the `D` th dimension of the input tensor. The padded size of each
+            dimension D of the output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`,
             e.g.:
 
             .. code-block::
@@ -791,7 +791,7 @@ class Pad(Cell):
 
     Raises:
         TypeError: If `paddings` is not a tuple.
-        ValueError: If length of `paddings` is more than 4 or its shape is not (N, 2).
+        ValueError: If length of `paddings` is more than 4 or its shape is not :math:`(N, 2)` .
         ValueError: If `mode` is not one of 'CONSTANT', 'REFLECT', 'SYMMETRIC'.
 
     Supported Platforms:

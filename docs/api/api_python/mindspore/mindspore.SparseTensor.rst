@@ -13,8 +13,8 @@ mindspore.SparseTensor
     对于稠密张量，其 `SparseTensor(indices, values, shape)` 具有 `dense[indices[i]] = values[i]` 。
 
     参数：
-        - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和SparseTensor维度的数量。
-        - **values** (Tensor) - 形状为[N]的一维张量，其内部可以为任何数据类型，用来给 `indices` 中的每个元素提供数值。
+        - **indices** (Tensor) - 形状为 :math:`(N, ndims)` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和SparseTensor维度的数量。
+        - **values** (Tensor) - 形状为 :math:`(N)` 的一维张量，其内部可以为任何数据类型，用来给 `indices` 中的每个元素提供数值。
         - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
 
     返回：
