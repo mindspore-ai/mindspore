@@ -81,4 +81,5 @@ int StackFP32Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Stack, CPUOpCoderCreator<StackFP32Coder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Stack, CPUOpCoderCreator<StackFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Stack, CPUOpCoderCreator<StackFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl
