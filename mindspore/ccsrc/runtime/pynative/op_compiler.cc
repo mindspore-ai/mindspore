@@ -58,6 +58,24 @@ OpCompiler &OpCompiler::GetInstance() {
   return instance;
 }
 
+KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
+                                               device::DeviceContext *device_context) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  KernelGraphPtr graph;
+  if (op_run_info->op_prim->name() == "PackFunc") {
+    auto recent_graph = op_run_info->op_prim->GetAttr("recent_graph");
+    MS_EXCEPTION_IF_NULL(recent_graph);
+    auto func_graph = recent_graph->cast<FuncGraphPtr>();
+    std::vector<KernelGraphPtr> all_out_graph;
+    graph = session_->ConstructKernelGraph(func_graph, &all_out_graph, device_context->GetDeviceType());
+  } else {
+    graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.input_tensor,
+                                             op_run_info->base_op_run_info.input_mask,
+                                             device_context->GetDeviceType() == device::DeviceType::kAscend);
+  }
+  return graph;
+}
+
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                                       device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -76,9 +94,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
   py::gil_scoped_acquire acquire_gil;
-  KernelGraphPtr graph = session_->ConstructSingleOpGraph(
-    op_run_info, op_run_info->base_op_run_info.input_tensor, op_run_info->base_op_run_info.input_mask,
-    device_context->GetDeviceType() == device::DeviceType::kAscend);
+  KernelGraphPtr graph = GenerateKernelGraph(op_run_info, device_context);
   MS_EXCEPTION_IF_NULL(graph);
 
   graph->set_run_mode(device::RunMode::kKernelMode);

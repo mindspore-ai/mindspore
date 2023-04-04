@@ -77,6 +77,9 @@ class BACKEND_EXPORT OpCompiler {
   ~OpCompiler() = default;
   DISABLE_COPY_AND_ASSIGN(OpCompiler);
 
+  KernelGraphPtr GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
+                                     device::DeviceContext *device_context) const;
+
   // All operators shared the same session.
   session::SessionPtr session_;
   mindspore::HashMap<GraphInfo, OpCompilerInfoPtr> op_compiler_infos_;
