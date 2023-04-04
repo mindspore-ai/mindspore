@@ -29,6 +29,7 @@
 #include "proto/op_mapping_info.pb.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
+#include "include/common/debug/anf_dump_utils.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "plugin/device/ascend/hal/device/dump/dumper_base.h"
@@ -60,7 +61,7 @@ void DataDumper::LoadDumpInfo() {
   auto kernels = kernel_graph_->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (!KernelNeedDump(kernel)) {
+    if (!(KernelNeedDump(kernel) || DumpJsonParser::GetInstance().IsHCCLKernelInput(GetKernelNodeName(kernel)))) {
       continue;
     }
     if (common::AnfAlgo::IsNonTaskOp(kernel)) {
@@ -272,8 +273,7 @@ void DataDumper::OpDebugRegister() {
 }
 
 void DataDumper::OpDebugUnregister() {
-  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
-  if (op_debug_mode == kNoOverflow) {
+  if (!is_op_debug_) {
     MS_LOG(INFO) << "[DataDump] Op debug mode is no overflow, no need to unregister.";
     return;
   }
@@ -290,16 +290,10 @@ void DataDumper::OpDebugUnregister() {
 #ifndef ENABLE_SECURITY
 void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope())) {
-    if (!DumpJsonParser::GetInstance().HCCLOutputNeedDump(kernel->fullname_with_scope())) {
-      MS_LOG(INFO) << "The output of node = " << kernel->fullname_with_scope() << " is not hccl node output.";
-      return;
-    }
-  } else {
-    if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
-      MS_LOG(INFO) << "Skip dump output";
-      return;
-    }
+  if (!(DumpJsonParser::GetInstance().OutputNeedDump() ||
+        DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope()))) {
+    MS_LOG(INFO) << "Skip dump output";
+    return;
   }
   if (HasAbstractMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node output:" << kernel->fullname_with_scope();
@@ -341,10 +335,6 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel);
-  if (DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope())) {
-    MS_LOG(INFO) << "The input of node = " << kernel->fullname_with_scope() << " is hccl prev node input.";
-    return;
-  }
   if (common::AnfAlgo::IsNodeInputContainMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;
