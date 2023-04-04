@@ -217,7 +217,6 @@ class OrderedMap<std::shared_ptr<T>, ValueT> {
  public:
   using raw_key_t = const T *;
   using key_t = std::shared_ptr<T>;
-  using hash_t = PointerHash<T>;
   using value_t = ValueT;
   using pair_type = std::pair<key_t, value_t>;
   using sequential_type = std::list<pair_type>;
@@ -225,7 +224,7 @@ class OrderedMap<std::shared_ptr<T>, ValueT> {
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = mindspore::HashMap<raw_key_t, iterator, hash_t>;
+  using map_type = mindspore::HashMap<raw_key_t, iterator>;
   using value_type = typename sequential_type::value_type;
   using size_type = typename sequential_type::size_type;
 
