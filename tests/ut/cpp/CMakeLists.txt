@@ -52,11 +52,6 @@ file(GLOB_RECURSE UT_STUB_AND_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ./common/*.cc
         )
 
-# Kernel related testcases, total 367 testcases, 3371 tests.
-# Testcases distributions:
-#   1980(minddata) + 1145(ut_tests) + 209(ut_api_operators)=3388,
-#   119  (minddata) + 198(ut_tests) + 35 (ut_api_operators)=372
-# Before modification: 3330 tests from 353 test cases ran.
 file(GLOB_RECURSE UT_API_AND_OPERATORS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ./operator/*.cc
         ./vm/*.cc
