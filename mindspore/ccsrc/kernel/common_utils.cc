@@ -228,7 +228,7 @@ std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
 void KernelMeta::Initialize() {
   auto config_path = GetCompilerCachePath();
   kernel_meta_path_ = config_path + std::string(kAkgKernelMeta);
-  FileUtils::CreateNotExistDirs(kernel_meta_path_, true);
+  (void)(FileUtils::CreateNotExistDirs(kernel_meta_path_, true));
   initialized_ = true;
 }
 

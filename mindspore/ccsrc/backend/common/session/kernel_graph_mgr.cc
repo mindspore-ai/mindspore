@@ -488,7 +488,7 @@ CNodePtr KernelGraphMgr::CreateSwitchInput(const CNodePtr &cnode, const AnfNodeP
     MS_EXCEPTION_IF_NULL(backend_node);
     return backend_node->cast<CNodePtr>();
   } else if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
-    partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
+    (void)(partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input)));
   } else {
     KernelGraphPtr kernel_graph = NewKernelGraph();
     MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -501,8 +501,8 @@ CNodePtr KernelGraphMgr::CreateSwitchInput(const CNodePtr &cnode, const AnfNodeP
     MS_EXCEPTION_IF_NULL(return_node);
     return_node->set_abstract(cnode->abstract());
     kernel_graph->set_return(return_node);
-    partial_inputs.emplace_back(std::make_shared<ValueNode>(kernel_graph));
-    partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
+    (void)(partial_inputs.emplace_back(std::make_shared<ValueNode>(kernel_graph)));
+    (void)(partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input)));
   }
   auto partial_node = graph->NewCNode(partial_inputs);
   return partial_node;
@@ -572,7 +572,7 @@ void KernelGraphMgr::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *grap
     auto partial_inputs = return_input_cnode->inputs();
     (void)call_inputs.insert(call_inputs.cend(), partial_inputs.cbegin() + kFirstDataInputIndex, partial_inputs.cend());
   } else if (IsValueNode<KernelGraph>(return_input)) {  // return node is kernel graph
-    call_inputs.emplace_back(return_input);
+    (void)(call_inputs.emplace_back(return_input));
   } else {  // return node is value node
     KernelGraphPtr kernel_graph = NewKernelGraph();
     MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -600,7 +600,7 @@ void KernelGraphMgr::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *grap
   // new call node inputs
   for (auto &input_node : real_inputs) {
     auto parameter_for_input = CreateNewParameterFromCNode(input_node, graph);
-    call_inputs.emplace_back(parameter_for_input);
+    (void)(call_inputs.emplace_back(parameter_for_input));
   }
 
   auto call_node = graph->NewCNode(call_inputs);
@@ -631,7 +631,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
   // there are real inputs in call, should put it to make_tuple in switch_layer
   std::vector<AnfNodePtr> real_inputs;
   for (size_t idx = kFirstDataInputIndex; idx < cnode->inputs().size(); ++idx) {
-    real_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(idx)));
+    (void)(real_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(idx))));
   }
   std::vector<AnfNodePtr> new_make_tuple_inputs = {
     graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())))};
@@ -648,8 +648,8 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
       partial_kernel_graph = GetValueNode<KernelGraphPtr>(partial_input);
       new_partial_inputs = partial_node->inputs();
     } else if (IsValueNode<KernelGraph>(partial_idx)) {  // switch_layer node input is kernel graph value node
-      new_partial_inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name())));
-      new_partial_inputs.emplace_back(partial_idx);
+      (void)(new_partial_inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))));
+      (void)(new_partial_inputs.emplace_back(partial_idx));
       partial_kernel_graph = GetValueNode<KernelGraphPtr>(partial_idx);
     }
     // when branch in swich_layer return function
@@ -664,7 +664,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
     (void)new_partial_inputs.insert(new_partial_inputs.cend(), real_inputs.cbegin(), real_inputs.cend());
     // create new partial node
     auto new_partial = graph->NewCNode(new_partial_inputs);
-    new_make_tuple_inputs.emplace_back(new_partial);
+    (void)(new_make_tuple_inputs.emplace_back(new_partial));
   }
   auto new_make_tuple = graph->NewCNode(new_make_tuple_inputs);
   auto abstract = make_tuple_node->abstract();
@@ -674,7 +674,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
   new_make_tuple->set_abstract(abstract);
   switch_layer_inputs.emplace_back(new_make_tuple);
   auto new_switch_layer = graph->NewCNode(switch_layer_inputs);
-  cnode_inputs.emplace_back(new_switch_layer);
+  (void)(cnode_inputs.emplace_back(new_switch_layer));
   return cnode_inputs;
 }
 
@@ -777,11 +777,11 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateValueNode(const CNodePtr &cnode, K
     cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())))};
     // create a ValueNode<KernelGraph> as input of cnode:call
     if (graph->GetBackendAnfByFrontAnf(attr_input) != nullptr) {
-      cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(attr_input));
+      (void)(cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(attr_input)));
     } else {
       auto new_value_node = CreateValueNodeKernelGraph(attr_input, graph);
       if (new_value_node != nullptr) {
-        cnode_inputs.emplace_back(new_value_node);
+        (void)(cnode_inputs.emplace_back(new_value_node));
       }
     }
   }
