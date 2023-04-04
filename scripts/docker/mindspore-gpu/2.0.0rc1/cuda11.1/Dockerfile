@@ -4,11 +4,10 @@ MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
 ENV CUDA_PATH /usr/local/cuda
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${PYTHON_ROOT_PATH}:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
+ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
 # install basic tools
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
@@ -44,9 +43,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libnuma-dev
 
-# Configure cuDNN (v7.6.5)
-RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.8.0.5 /usr/local/cuda/lib64/libcudnn.so
-
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
@@ -79,15 +75,7 @@ RUN mkdir -pv /root/.pip \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir wheel \
     && pip cache purge
-
-# Install cmake (v3.14.1)
-RUN cd /tmp \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.sh \
-    && mkdir -p ${CMAKE_ROOT_PATH} \
-    && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
-    && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
 
 # Install openmpi (v4.0.3)
 RUN cd /tmp \
@@ -101,15 +89,7 @@ RUN cd /tmp \
     && rm -rf /tmp/openmpi-4.0.3 \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
-# Install nodejs
-RUN cd /tmp \
-    && wget https://mirrors.huaweicloud.com/nodejs/v12.18.4/node-v12.18.4-linux-x64.tar.gz \
-    && tar -zxf node-v12.18.4-linux-x64.tar.gz \
-    && rm -rf /usr/local/nodejs \
-    && mkdir -p /usr/local/nodejs \
-    && mv /tmp/node-v12.18.4-linux-x64 /usr/local/nodejs/ \
-    && chmod 755 -R /usr/local/nodejs \
-    && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/node /usr/bin/node \
-    && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/npm /usr/bin/npm \
-    && npm config set registry https://registry.npm.taobao.org/ \
-    && rm -f /tmp/node-v12.18.4-linux-x64.tar.gz
+# Install MindSpore cuda-11.1, MindInsight, Serving whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/MindSpore/unified/x86_64/mindspore-2.0.0rc1-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/MindInsight/any/mindinsight-2.0.0rc1-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/Serving/x86_64/mindspore_serving-2.0.0rc1-cp37-cp37m-linux_x86_64.whl
