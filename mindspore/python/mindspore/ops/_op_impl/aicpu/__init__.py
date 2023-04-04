@@ -121,7 +121,6 @@ from .mirror_pad import _mirror_pad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
-from .matmul import _matmul_aicpu
 from .mul import _mul_aicpu
 from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
@@ -339,7 +338,6 @@ from .resize_bicubic import _resize_bicubic_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu
 from .real_div import _real_div_aicpu
 from .multinomial_with_replacement import _multinomial_with_replacement_aicpu
-from .batch_matmul import _batch_matmul_aicpu
 from .coalesce import _coalesce_aicpu
 from .crop_and_resize_grad_boxes import _crop_and_resize_grad_boxes_aicpu
 from .crop_and_resize_grad_image import _crop_and_resize_grad_image_aicpu

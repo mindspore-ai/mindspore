@@ -4772,7 +4772,7 @@ def logaddexp(input, other):
 
     Args:
         input (Tensor): Input Tensor. The dtype of `input` must be float.
-        other (Tensor): Input Tensor.  The dtype of `input` must be float.
+        other (Tensor): Input Tensor. The dtype of `input` must be float.
             If the shape of `input` is not equal to the shape of `other`,
             they must be broadcastable to a common shape (which becomes the shape of the output).
 
@@ -5480,7 +5480,7 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     return beta * input + alpha * (matmul_op(mat1, mat2))
 
 
-def addmv(x, mat, vec, beta=1, alpha=1):
+def addmv(x, mat, vec, *, beta=1, alpha=1):
     """
     Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
 
@@ -5497,6 +5497,8 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         x (Tensor): Vector to be added. The shape of the tensor is :math:`(N,)`.
         mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
         vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
+
+    Keyword Args:
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
             float or bool. Default: 1.
         alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
@@ -5571,7 +5573,7 @@ def adjoint(x):
     return x.swapaxes(-1, -2).conj()
 
 
-def addr(x, vec1, vec2, beta=1, alpha=1):
+def addr(x, vec1, vec2, *, beta=1, alpha=1):
     """
     Computes the outer product of two vector `vec1` and `vec2`, and adds the resulting matrix to `x`.
 
@@ -5588,6 +5590,8 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         x (Tensor): Vector to be added. The shape of the tensor is :math:`(N, M)`.
         vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N,)`.
         vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
+
+    Keyword Args:
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
             float or bool, Default: 1.
         alpha (scalar[int, float, bool], optional): Multiplier for `vec1` ⊗ `vec2` (α). The `alpha` must
@@ -6468,7 +6472,9 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
     Note:
         Zero-shaped Tensor is not supported, a value error is raised if
-        an empty Tensor is encountered.
+        an empty Tensor is encountered. Any dimension of an Tensor is 0 is considered
+        an empty Tensor. Tensor with shape of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
+        empty Tensor.
 
     Args:
         x (Tensor): Input tensor.
@@ -6512,7 +6518,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         raise TypeError(f"For 'diff', 'x' must be a tensor, but got {type(x)}")
     if x.ndim < 1:
         raise TypeError(f"For 'diff', the dimension 'x' must be at least 1, but got {x.ndim}")
-    if x.shape[0] == 0:
+    if 0 in x.shape:
         raise ValueError(f"For 'diff', 'x' can not be an empty Tensor.")
     _check_is_int(n, 'n', 'diff')
     if n != 1:
@@ -6532,7 +6538,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     return a2 - a1
 
 
-def tril_indices(row, col, offset=0, dtype=mstype.int64):
+def tril_indices(row, col, offset=0, *, dtype=mstype.int64):
     r"""
     Calculates the indices of the lower triangular elements in a `row` * `col` matrix
     and returns them as a 2-by-N Tensor. The first row of the Tensor contains
@@ -6548,6 +6554,8 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+
+    Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
@@ -6577,7 +6585,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
     return tril_indices_()
 
 
-def triu_indices(row, col, offset=0, dtype=mstype.int64):
+def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
     r"""
     Calculates the indices of the upper triangular elements in a `row` * `col` matrix
     and returns them as a 2-by-N Tensor. The first row of the Tensor contains
@@ -6594,6 +6602,8 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+
+    Keyword Args:
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
@@ -7076,7 +7086,7 @@ def _check_non_negative_int(arg_value, arg_name, prim_name):
     validator.check_non_negative_int(arg_value, arg_name, prim_name)
 
 
-def hann_window(window_length, periodic=True):
+def hann_window(window_length, periodic=True, *, dtype=None):
     r"""
     Generates a Hann Window.
 
@@ -7089,6 +7099,9 @@ def hann_window(window_length, periodic=True):
         window_length (int): Length of window.
         periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
             When set to False, generates a symmetric window for filter design.Default: True.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: None.
 
     Returns:
         Tensor, a Hann window.
@@ -7114,10 +7127,15 @@ def hann_window(window_length, periodic=True):
         raise TypeError(
             f"For 'hann_window', 'periodic' must be a variable of Boolean type, but got {type(periodic)}"
         )
+    if dtype is not None and dtype not in mstype.float_type:
+        raise TypeError(f"For 'hann_window', 'dtype' must be floating point dtypes, but got {dtype}.")
     if periodic:
         window_length = window_length + 1
     n = np.arange(0, window_length)
     w = 0.5 - 0.5 * np.cos(2 * math.pi / (window_length - 1) * n)
+
+    if dtype is not None:
+        w = P.Cast()(w, dtype)
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
@@ -8043,7 +8061,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     return ret
 
 
-def kaiser_window(window_length, periodic=True, beta=12.0):
+def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
     r"""
     Generates a Kaiser window, which is also known as the Kaiser-Bessel window.
 
@@ -8064,6 +8082,9 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
         periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
             When set to False, generates a symmetric window for filter design. Default: True.
         beta (float, optional): Shape parameter, when `beta` gets large, the window narrows. Default: 12.0.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: None.
 
     Returns:
         Tensor, a Kaiser window.
@@ -8090,6 +8111,8 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
         raise TypeError(
             f"For 'kaiser_window', 'periodic' must be a variable of Boolean type, but got {type(periodic)}"
         )
+    if dtype is not None and dtype not in mstype.float_type:
+        raise TypeError(f"For 'kaiser_window', 'dtype' must be floating point dtypes, but got {dtype}.")
     if periodic:
         window_length = window_length + 1
     n = np.arange(0, window_length)
@@ -8097,6 +8120,8 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
     w = np.i0(
         beta * np.sqrt(1 - ((n - alpha) / alpha) ** 2.0)
     ) / np.i0(float(beta))
+    if dtype is not None:
+        w = P.Cast()(w, dtype)
     out = Tensor(w[:-1]) if periodic else Tensor(w)
     return out
 
@@ -9428,7 +9453,7 @@ def select_(feat, dim, index):
     return feat.gather_elements(dim, indexes).reshape(new_shape)
 
 
-def trapz(y, x=None, dx=1.0, dim=-1):
+def trapz(y, x=None, *, dx=1.0, dim=-1):
     r"""
     Integrates `y(x)` along given dim using trapezoidal rule.
     By default x-dim distances between points will be 1.0,
@@ -9444,7 +9469,10 @@ def trapz(y, x=None, dx=1.0, dim=-1):
             the sample points are assumed to be evenly spaced `dx` apart. Default: None.
             If `x` is not None, after subtracting 1 from the axis specified by `dim`, the shape of `x`
             should be same as `y` or can broadcast to `y`.
-        dx (float, optional): The spacing between sample points when `x` is None. Default: 1.0.
+
+    Keyword Args:
+        dx (float, optional): The spacing between sample points when `x` is None. If `x` is specified,
+            `dx` does not take effect. Default: 1.0.
         dim (int, optional): The dim along which to integrate. Default: -1.
 
     Returns:
@@ -10120,7 +10148,7 @@ def digamma(input):
 
 def polygamma(n, input):
     r"""
-    Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
+    Computes the `n`th derivative of the polygamma function on `input`.
 
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
@@ -10130,7 +10158,7 @@ def polygamma(n, input):
     Args:
         n (Tensor): The order of the polygamma function.
             Supported dtypes: int32, int64. The shape of `n` is :math:`()`.
-        input (Tensor): The tensor to compute the `n^{th}` derivative of the polygamma function with.
+        input (Tensor): The tensor to compute the `n`th derivative of the polygamma function with.
 
     Returns:
         Tensor, has the same dtype as `input`.
