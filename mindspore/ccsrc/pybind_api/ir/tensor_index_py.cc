@@ -109,8 +109,7 @@ void TensorIndex::CheckGetItemIndex(const TensorIndexType &index_data_type) {
   }
 }
 
-void TensorIndex::CheckSetItemIndex(const ShapeVector &data_shape, const TensorIndexType &index_data_type,
-                                    const TensorIndexType &value_data_type) {
+void TensorIndex::CheckSetItemIndex(const TensorIndexType &index_data_type, const TensorIndexType &value_data_type) {
   CheckGetItemIndex(index_data_type);
   bool valid = CheckTypeIsInstance<TensorIndexType>(
     value_data_type, {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean,
@@ -625,7 +624,7 @@ py::object TensorIndex::GenerateIndices(const std::vector<TensorPtr> &tuple_inde
 py::object TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, const std::vector<TensorIndex> &tuple_index,
                                              std::vector<int64_t> *data_transfer_types,
                                              std::vector<py::object> *data_transfer_args) {
-  size_t data_dims = SizeToLong(data_shape.size());
+  size_t data_dims = data_shape.size();
   std::vector<TensorPtr> tensor_indexes;
   std::vector<TensorPtr> tuple_index_new;
   std::vector<int64_t> slice_shapes;
@@ -869,7 +868,7 @@ bool TensorIndex::RemoveExpandedDimsParseTensorIndex(const ShapeVector &data_sha
     std::transform(nonzero_indices_tensors.begin(), nonzero_indices_tensors.end(),
                    std::back_inserter(true_index_tensors),
                    [](const TensorPtr &true_index) { return TensorIndex(true_index); });
-    int64_t true_index_nums = SizeToLong(nonzero_indices_tensors.size());
+    size_t true_index_nums = nonzero_indices_tensors.size();
     indices_out->insert(indices_out->end(), true_index_tensors.begin(), true_index_tensors.end());
     MS_EXCEPTION_IF_NULL(nonzero_indices_tensors[0]);
     std::vector<ShapeVector> true_index_shapes(true_index_nums, {nonzero_indices_tensors[0]->shape()});
@@ -951,7 +950,7 @@ std::pair<std::vector<TensorIndex>, ShapeVector> TensorIndex::RemoveExpandedDims
 
   bool expand_true = has_true && !(has_false || has_sequence);
   int64_t tensor_index_ndim = SizeToLong(broadcast_shape.size());
-  int64_t rem_ndim = SizeToLong(data_shape.size()) - cur_dim;
+  int64_t rem_ndim = SizeToLong(data_shape.size()) - SizeToLong(cur_dim);
   RemNotExpandedDims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim, &not_expanded_dim);
   if (indices_out.empty()) {
     indices_out = {TensorIndex(py::bool_(true))};
@@ -1679,7 +1678,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   TensorIndex::np_module_ = py::module::import("numpy");
   TensorIndex index = TensorIndex(new_py_index);
   const TensorIndexType value_type = TensorIndex(new_py_value).type();
-  CheckSetItemIndex(data_shape, index.type(), value_type);
+  CheckSetItemIndex(index.type(), value_type);
   if (index.IsList()) {
     if (data_shape.empty()) {
       MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
