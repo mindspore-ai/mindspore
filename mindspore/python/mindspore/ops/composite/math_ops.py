@@ -443,6 +443,7 @@ def dot(input, other):
     input_type = F.dtype(input)
     other_type = F.dtype(other)
     _typecheck_input_dot(input_type, other_type, 'dot')
+    _check_invalid_input(input_shape, other_shape, 'dot')
 
     if len(input_shape) > 2 or len(other_shape) > 2:
         other_shape_transpose = _get_transpose_shape(other_shape)
