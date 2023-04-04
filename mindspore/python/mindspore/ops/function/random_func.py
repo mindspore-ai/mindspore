@@ -440,7 +440,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         >>> rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
         >>> output = ops.random_poisson(shape, rate, seed=5, dtype=mindspore.float64)
         >>> print(output.shape, output.dtype)
-        (2, 2, 2, 2) float64
+        (2, 2, 2, 2) Float64
         >>> # case 2: 1-D shape, scalar rate, int64 output
         >>> shape = Tensor(np.array([2, 2]), mindspore.int64)
         >>> rate = Tensor(5.0, mindspore.float64)
