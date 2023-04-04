@@ -185,7 +185,7 @@ bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
         ParallelLaunchAutoSearch(shard_frame, sub_args.size_d, this, &parallel_search_info_);
       }
     };
-    ParallelLaunchAutoSearch(shard_template, orig_input_shape_dim_sizes[0], this, &parallel_search_info_);
+    shard_template(0, orig_input_shape_dim_sizes[0]);
   }
   for (int64_t i = 0; i < output_num; i++) {
     input_data_ptr_ret[i] = static_cast<SCALAR_T>(input_data_ptr[i]);
