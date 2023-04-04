@@ -952,3 +952,49 @@ def test_raise_with_raise_join():
         print("res:", res)
     assert "The input 1 should not equal 1" in str(
         raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_parse_with_interpret():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y, z):  # pylint: disable=R1711
+            if z >= 1:
+                raise TypeError(f"x: {type(x)}, y: {y}, z: {z}")
+            return None
+
+    input_x = [Tensor([1, 2, 3]), Tensor([4, 5, 6])]
+    input_y = [Tensor([1]), Tensor([2]), Tensor([3])]
+    input_z = Tensor(3)
+    net = RaiseNet()
+    with pytest.raises(TypeError) as raise_info_joinedstr_tensor:
+        net(input_x, input_y, input_z)
+    assert "x:" in str(raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_parse_with_interpret_2():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y, z):  # pylint: disable=R1711
+            if z >= 1:
+                raise TypeError(f"x: {type(x)}, y: {y}, z: {z}")
+            return None
+
+    input_x = [Tensor([1, 2, 3]), Tensor([4, 5, 6])]
+    input_y = [Tensor([1]), Tensor([2]), Tensor([3])]
+    input_z = Tensor(0)
+    net = RaiseNet()
+    assert net(input_x, input_y, input_z) is None
