@@ -60,7 +60,7 @@ int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
   std::vector<int64_t> shape_vec_item;
-  std::copy(seq_shape_.begin() + 1, seq_shape_.end(), std::back_inserter(shape_vec_item));
+  (void)std::copy(seq_shape_.begin() + 1, seq_shape_.end(), std::back_inserter(shape_vec_item));
   if (!IsSameShape(ele_shape_, shape_vec_item)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << " the input and target shape must be equal, but input_shape = " << shape_vec_item
@@ -100,7 +100,7 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   }
   size_t element_size =
     static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
-  size_t out_offset = static_cast<size_t>(idx * element_size);
+  size_t out_offset = static_cast<size_t>(idx) * element_size;
   if (element_size != 0) {
     auto cp_ret = memcpy_s(output_addr + out_offset, element_size * sizeof(T), value_addr, element_size * sizeof(T));
     if (cp_ret != EOK) {

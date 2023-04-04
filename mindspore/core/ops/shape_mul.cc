@@ -71,7 +71,7 @@ class ShapeMulInfer : public abstract::OpInferBase {
     int64_t result = 1;
     for (size_t i = 0; i < shpx_data.size(); i++) {
       int64_t value = GetValue<int64_t>(shpx_data[i]);
-      result = IntToLong(IntMulWithOverflowCheck(result, value));
+      result = IntToLong(IntMulWithOverflowCheck(LongToInt(result), LongToInt(value)));
     }
 
     return MakeValue(result);
