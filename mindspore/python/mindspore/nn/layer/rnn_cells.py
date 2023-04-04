@@ -65,7 +65,6 @@ def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
     if batch_size_x != batch_size_hx:
         raise ValueError(f"For '{cls_name}' batch size of x and hx must be equal, but got {batch_size_x} of x "
                          f"and {batch_size_hx} of hx.")
-    return None
 
 
 def _check_lstmcell_init(func):

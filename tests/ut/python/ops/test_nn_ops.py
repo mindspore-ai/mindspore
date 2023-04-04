@@ -879,7 +879,6 @@ def test_summary_nn_ops_security_on():
         assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
 
 
-
 @mindspore_test(pipeline_for_verify_exception_for_case_by_case_config)
 def test_check_exception():
     return test_cases_for_verify_exception

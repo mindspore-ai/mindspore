@@ -836,7 +836,6 @@ def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
         raise ValueError(f"{msg_prefix} 'logits' dimension must be greater than 1, but got {logits_dim}.")
     if label_dim < 2:
         raise ValueError(f"{msg_prefix} 'labels' dimension must be greater than 1, but got {label_dim}.")
-    return None
 
 
 @_primexpr
@@ -846,7 +845,6 @@ def _check_weights(weight_shape, label_shape, prim_name=None):
     if weight_shape != label_shape:
         raise ValueError(f"{msg_prefix} weight_shape[0] must be equal to label_shape[1], "
                          f"but got weight_shape[0]: {weight_shape} and label_shape[1]: {label_shape}.")
-    return None
 
 
 class MultiClassDiceLoss(LossBase):
@@ -1837,7 +1835,6 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
     if logits_nidm != labels_ndim:
         raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got "
                          f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
-    return None
 
 
 @_primexpr
@@ -1849,7 +1846,6 @@ def _check_channel_and_shape(logits, labels, prime_name=None):
     if not (labels == 1 or labels == logits):
         raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
                          f"but got {labels}.")
-    return None
 
 
 @constexpr

@@ -142,7 +142,6 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
                         _raise_message()
                 elif not len(arg_value) == 3:
                     _raise_message()
-            return None
 
         _check()
         if isinstance(arg_value, int):
@@ -162,13 +161,11 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
                 if not greater_zero and item >= 0:
                     continue
             _raise_message()
-        return None
 
     def _check_third_one(ret_value):
         if third_one:
             if ret_value[-3] != 1:
                 _raise_message(third_one_flag=third_one)
-        return None
 
     check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     if three_input and isinstance(arg_value, tuple):
@@ -190,7 +187,6 @@ def _check_dup(axes):
 
         if count > 1:
             raise ValueError(f"The element of parameter 'axis' can not be duplicate, but got {axes}.")
-    return None
 
 
 def _check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
@@ -219,7 +215,6 @@ def _check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=
             if type_mismatch:
                 raise TypeError(msg)
             raise ValueError(msg)
-        return None
 
     _check_param()
     return arg_value
@@ -243,7 +238,6 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
         else:
             raise TypeError("{} type of {} must be {}, but got '{}'".format(
                 prim_name, arg_name, arg_type.__name__, type(arg_value).__name__))
-        return None
     _check_param()
     return arg_value
 
@@ -268,7 +262,6 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
             rel_str = _format_str_two_value(lower_limit, upper_limit, rel)
             raise ValueError("{} {} must be in range of {}, but got {} with type '{}'.".format(
                 prim_name, arg_name, rel_str, arg_value, type(arg_value).__name__))
-        return None
     _check_param()
     return arg_value
 
@@ -284,7 +277,7 @@ def check(arg_name, arg_value, value_name, value, rel=EQ, prim_name=None, excp_c
             msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
             msg_subject = f"{msg_prefix} \'{arg_name}\'" if " " not in arg_name else f"{msg_prefix} {arg_name}"
             raise excp_cls(f'{msg_subject} should be {rel_str}, but got {arg_value}.')
-        return None
+
     _check()
     return arg_value
 
@@ -481,7 +474,6 @@ def check_number(arg_name, arg_value, value, rel, prim_name):
             rel_str = _format_str_one_value(value, rel)
             raise ValueError(f'For \'{prim_name}\', the argument \'{arg_name}\''
                              f'must {rel_str}, but got {arg_value}.')
-        return None
     _check()
     return arg_value
 
@@ -491,7 +483,6 @@ def check_isinstance(arg_name, arg_value, classes):
     def _check():
         if not isinstance(arg_value, classes):
             raise ValueError(f'The parameter \'{arg_name}\' must be isinstance of {classes}, but got {arg_value}.')
-        return None
     _check()
     return arg_value
 
@@ -509,7 +500,6 @@ def check_bool(arg_value, arg_name=None, prim_name=None):
     def _check():
         if not isinstance(arg_value, bool):
             raise TypeError(f"{prim_name} {arg_name} must be a bool, but got {type(arg_value).__name__}.")
-        return None
     _check()
     return arg_value
 
@@ -549,7 +539,6 @@ def check_string(arg_value, valid_values, arg_name=None, prim_name=None):
         if not (isinstance(arg_value, str) and arg_value in valid_values):
             raise ValueError(f"{msg_prefix} '{arg_name}' must be str and must be in '{valid_values}'," \
                              f" but got '{arg_value}'.")
-        return None
     _check()
     return arg_value
 
@@ -624,7 +613,6 @@ def check_valid_input(arg_name, arg_value, prim_name):
         if arg_value is None:
             raise ValueError(f"For \'{prim_name}\', the argument '{arg_name}'" \
                              f"can not be None, but got {arg_value}.")
-        return None
     _check()
     return arg_value
 
@@ -786,7 +774,6 @@ def check_transpose_axis(axes, ndim):
         if len(axes) != ndim:
             raise ValueError(f"For Tensor.transpose, the number of axes must be equal to the dimension of Tensor, " \
                              f"but got {len(axes)} in the number of axes.")
-        return None
 
     if not axes or (len(axes) == 1 and axes[0] is None):
         return tuple(range(ndim-1, -1, -1))
@@ -870,7 +857,6 @@ def prepare_shape_for_squeeze(shape, axes):
         if axes >= ndim or axes < -ndim:
             raise ValueError("For Tensor.squeeze, the 'axis' must be in the range of [-{0}, {0}), but got {1}." \
                 .format(ndim, axes))
-        return None
 
     def _check_for(axes, ndim):
         for axis in axes:
@@ -894,7 +880,6 @@ def prepare_shape_for_squeeze(shape, axes):
         # if an axis is selected with shape entry greater than one, an error is raised.
         if s != 1 and ((idx in axes) or (idx - ndim in axes)):
             raise ValueError(f"For Tensor.squeeze, the shape of parameter 'axis' {axes} must be 1, but got {s}.")
-        return None
 
     for idx, s in enumerate(shape):
         _check_axis(s, idx, axes, ndim)
@@ -910,9 +895,8 @@ def check_axis_in_range(axis, ndim):
         if not isinstance(axis, int):
             raise TypeError(f'The axes must be integers, but got {type(axis)}')
 
-        if not (-ndim <= axis and axis < ndim):
+        if axis >= ndim or axis < -ndim:
             raise ValueError(f"The 'axis' must be in the range of [-{ndim}, {ndim}), but got {axis}.")
-        return None
 
     _check()
     return (axis + ndim) % ndim
@@ -975,7 +959,6 @@ def infer_out_shape(*shapes):
             if item not in (1, max_size):
                 raise ValueError(f'For Tensor, the dimension on each axis must be 1 or the max on the axis' \
                                  f'to support broadcast, but got shapes {shapes,}')
-        return None
     shape_out = ()
     max_len = max([len(it) for it in shapes])
     for i in range(max_len):
@@ -1012,10 +995,8 @@ def check_and_canonicalize_axes(axes, ndim):
     def _check(axes, ax, ndim):
         if not isinstance(ax, int):
             raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axes}.")
-        # if not -ndim <= ax < ndim:
-        if not (-ndim <= ax and ax < ndim):
+        if ax >= ndim or ax < -ndim:
             raise ValueError(f"The 'axis' must be in the range of [-{ndim}, {ndim}), but got {ax}.")
-        return None
 
     axes = axes if isinstance(axes, tuple) else (axes,)
     new_axes = ()

@@ -6087,7 +6087,6 @@ def _create_cummin_perm(axis, x_shape):
             raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
         if axis < -len_axis or axis > len_axis:
             raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
-        return None
     len_axis = len(x_shape)
     _check(axis, len_axis)
     prem = [i for i in range(len_axis)]
@@ -7607,7 +7606,6 @@ def _check_dtype(d1, d2):
 def _check_last_dim_shape_eq(a, b):
     if a.shape[-1] != b.shape[-1]:
         raise ValueError('shapes are not aligned')
-    return None
 
 
 def dot(a, b):
@@ -8256,7 +8254,6 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
         if item != 1 and item != max_size:
             raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
                              f"shape2 {shape2}.")
-    return None
 
 
 @_primexpr
@@ -8272,7 +8269,6 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
             raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
                              f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
                              f"shape2[-2]: {shape2[-2]}.")
-        return None
     _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
@@ -8296,14 +8292,12 @@ def _check_need_broadcast(shape1, shape2):
 def _check_input_1d(input_shape, param_name, func_name):
     if len(input_shape) != 1:
         raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
-    return None
 
 
 @_primexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
         raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
-    return None
 
 
 @_primexpr
@@ -9353,7 +9347,6 @@ def _check_dim_in_range(dim, ndim):
             raise TypeError(f'axes should be integers, not {type(dim)}')
         if -ndim > dim or dim >= ndim:
             raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
-        return None
     _check(dim, ndim)
     return dim % ndim
 

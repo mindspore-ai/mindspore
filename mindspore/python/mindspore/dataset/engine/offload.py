@@ -105,7 +105,6 @@ def check_input_dims(x_shape, required_dim, offload_op_name):
     if input_dim is not required_dim:
         raise ValueError("For %s offload operation, the dimension of input should be %d, but got %d." %
                          (offload_op_name, required_dim, input_dim))
-    return None
 
 
 def assign_min_max_params(in_params, center=1):

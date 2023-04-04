@@ -76,7 +76,6 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
     if input_data is not None and len(input_data) != length:
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' must be '{length}', "
                         f"but got '{len(input_data)}'")
-    return None
 
 
 @_primexpr
@@ -84,7 +83,6 @@ def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
     if batch_size_x != seq_length_size:
         raise ValueError(f"For '{cls_name}' batch size of x and seq_length must be equal, "
                          f"but got {batch_size_x} of x and {seq_length_size} of seq_length.")
-    return None
 
 
 def sequence_mask(lengths, maxlen):
