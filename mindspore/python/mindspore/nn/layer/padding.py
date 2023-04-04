@@ -28,7 +28,7 @@ __all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d',
 def _check_dim(dim, target1, target2, cls_name):
     """check dim"""
     def _check_func():
-        if not (dim == target1 or dim == target2):
+        if dim not in (target1, target2):
             raise ValueError(f"For '{cls_name}', the in_shape must have {target1} or {target2} dims, but got {dim}.")
     _check_func()
 

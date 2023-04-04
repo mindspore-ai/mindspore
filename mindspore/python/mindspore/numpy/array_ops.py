@@ -1255,7 +1255,7 @@ def _check_can_broadcast_to(shape, target_shape):
     if ndim > ndim_target:
         return False
     for i, j in zip(reversed(shape), reversed(target_shape)):
-        if not (i == 1 or i == j):
+        if i not in (1, j):
             return False
     return True
 

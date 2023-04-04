@@ -1739,7 +1739,7 @@ def _check_channel_and_shape(logits, labels, prime_name=None):
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits == 1:
         raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
-    if not (labels == 1 or labels == logits):
+    if labels not in (1, logits):
         raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
                          f"but got {labels}.")
 

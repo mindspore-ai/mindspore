@@ -198,6 +198,7 @@ def _check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=
     """
     prim_name = f"For \'{prim_name}\', the " if prim_name else 'The '
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
+
     def _check_param():
         prim_info = f'{prim_name}' + f'{arg_name}'
         if isinstance(arg_value, arg_type):
@@ -231,6 +232,7 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     """
     prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
+
     def _check_param():
         if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
             if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
@@ -252,6 +254,7 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
     """
     prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
+
     def _check_param():
         type_mismatch = not isinstance(arg_value, (np.ndarray, np.generic, value_type)) or isinstance(arg_value, bool)
         if type_mismatch:
@@ -500,6 +503,7 @@ def check_bool(arg_value, arg_name=None, prim_name=None):
     """
     prim_name = f"For '{prim_name}', the" if prim_name else 'The'
     arg_name = f"'{arg_name}'" if arg_name else 'input value'
+
     def _check():
         if not isinstance(arg_value, bool):
             raise TypeError(f"{prim_name} {arg_name} must be a bool, but got {type(arg_value).__name__}.")
@@ -538,6 +542,7 @@ def check_string(arg_value, valid_values, arg_name=None, prim_name=None):
     """
     arg_name = arg_name if arg_name else "parameter"
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
+
     def _check():
         if not (isinstance(arg_value, str) and arg_value in valid_values):
             raise ValueError(f"{msg_prefix} '{arg_name}' must be str and must be in '{valid_values}'," \

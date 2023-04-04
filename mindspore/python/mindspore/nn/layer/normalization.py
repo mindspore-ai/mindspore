@@ -618,7 +618,7 @@ class SyncBatchNorm(_BatchNorm):
     @_primexpr
     def _check_input_dim(shape, cls_name):
         def _check(dim):
-            if not (dim == 2 or dim == 4):
+            if dim not in (2, 4):
                 raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
         dim = len(shape)
         _check(dim)
