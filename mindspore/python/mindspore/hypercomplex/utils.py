@@ -27,6 +27,7 @@ cat = P.Concat(0)
 
 
 def get_x_and_y(tensor):
+    """get real and image part of tensor"""
     if tensor.dtype == mindspore.complex64:
         return get_real(tensor), get_imag(tensor)
     return unstack(tensor)
