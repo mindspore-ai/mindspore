@@ -48,6 +48,8 @@ tensor_scatter_update_op_info = AiCPURegOp("TensorScatterUpdate") \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default, DataType.F64_Default) \
     .dtype_format(DataType.C64_Default, DataType.I64_Default, DataType.C64_Default, DataType.C64_Default) \
     .dtype_format(DataType.C128_Default, DataType.I64_Default, DataType.C128_Default, DataType.C128_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I64_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 
