@@ -1,17 +1,14 @@
-FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu18.04
+FROM ubuntu:18.04
 
 MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
-ENV CUDA_PATH /usr/local/cuda
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
+ENV PATH ${PYTHON_ROOT_PATH}/bin:/usr/local/bin:/root/.local/bin:$PATH
 
-# install basic tools
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt install -y \
+# Install base tools
+RUN apt update \
+    && DEBIAN_FRONTEND=noninteractive apt install -y \
     vim \
     wget \
     curl \
@@ -41,7 +38,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
 
 # Install the rest dependent tools
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
-    libnuma-dev
+    libnuma-dev                
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
@@ -77,17 +74,6 @@ RUN mkdir -pv /root/.pip \
     && pip install --upgrade pip \
     && pip cache purge
 
-# Install openmpi (v4.0.3)
-RUN cd /tmp \
-    && wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz \
-    && tar -xvf openmpi-4.0.3.tar.gz \
-    && cd /tmp/openmpi-4.0.3 \
-    && mkdir -p ${OMPI_ROOT_PATH} \
-    && ./configure --prefix=${OMPI_ROOT_PATH} \
-    && make -j4 \
-    && make install -j4 \
-    && rm -rf /tmp/openmpi-4.0.3 \
-    && rm -f /tmp/openmpi-4.0.3.tar.gz
-
-# Install frequently used python packages
-RUN pip install --no-cache-dir decorator pandas sklearn pyyaml
+# Install MindSpore cpu and MindInsight packages
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.10.1/MindSpore/cpu/x86_64/mindspore-1.10.1-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.10.1/MindInsight/any/mindinsight-1.10.0-py3-none-any.whl
