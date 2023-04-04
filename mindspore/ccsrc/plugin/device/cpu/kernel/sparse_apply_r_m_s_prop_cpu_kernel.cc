@@ -212,8 +212,8 @@ bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   auto task = [var, ms, mom, grad, indices, &lr, &rho, &momentum, &epsilon, &var_first_dim_size, &var_outer_dim_size](
                 size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      const int indices_pos = i / var_outer_dim_size;
-      const int inner_pos = i % var_outer_dim_size;
+      const int indices_pos = static_cast<int>(i / var_outer_dim_size);
+      const int inner_pos = static_cast<int>(i % var_outer_dim_size);
       size_t index = static_cast<size_t>(indices[indices_pos]);
       if (LongToSize(index) >= var_first_dim_size) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' must be in range [0, "
