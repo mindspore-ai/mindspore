@@ -3378,8 +3378,8 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
         On GPU, if the matrix is irreversible, an error may be reported or an unknown result may be returned.
 
     Args:
-        matrix (Tensor): The shape of tensor is :math:`[..., M, M]`.
-        rhs (Tensor): The shape of tensor is :math:`[..., M, K]`. `rhs` must have the same dtype as `matrix`.
+        matrix (Tensor): The shape of tensor is :math:`(..., M, M)` .
+        rhs (Tensor): The shape of tensor is :math:`(..., M, K)` . `rhs` must have the same dtype as `matrix`.
         adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: False.
 
     Returns:
@@ -9277,10 +9277,10 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         and width are scaled by 0.2 internally.
 
     Args:
-        anchor_boxes (Tensor): Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
+        anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . "N" indicates the number of anchor boxes,
             and the value "4" refers to "x0", "y0", "x1", and "y1".
             Data type must be either float16， float32 or float64.
-        gt_boxes (Tensor): Ground truth boxes, tensor of shape (M, 4). "M" indicates the number of ground
+        gt_boxes (Tensor): Ground truth boxes, tensor of shape :math:`(M, 4)` . "M" indicates the number of ground
             truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1".
             Data type must be either float16, float32 or float64.
         mode (string): The mode is used to specify the calculation method,
@@ -9288,7 +9288,7 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
             Default: 'iou'.
 
     Returns:
-        Tensor, the 'iou' values, tensor of shape (M, N), with the same data type as `anchor_boxes`.
+        Tensor, the 'iou' values, tensor of shape :math:`(M, N)` , with the same data type as `anchor_boxes`.
 
     Raises:
         KeyError: When `mode` is not 'iou' or 'iof'.

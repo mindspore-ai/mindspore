@@ -665,11 +665,11 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     Measures the distribution error between the probabilities of the input (computed with softmax function) and the
     labels where the classes are mutually exclusive (only one class is positive) using cross entropy loss.
 
-    Typical input into this function is unnormalized scores denoted as x whose shape is (N, C),
+    Typical input into this function is unnormalized scores denoted as x whose shape is :math:`(N, C)` ,
     and the corresponding targets.
 
     Typically, the input to this function is the fractional value of each category and the corresponding target value,
-    and the input format is (N, C).
+    and the input format is :math:`(N, C)` .
 
     For each instance :math:`x_i`, i ranges from 0 to N-1, the loss is given as:
 
@@ -690,8 +690,8 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
             If "none", do not perform reduction. Default: "none".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32.
-        - **labels** (Tensor) - Tensor of shape (N, ). If `sparse` is True, The type of
+        - **logits** (Tensor) - Tensor of shape :math:`(N, C)` . Data type must be float16 or float32.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, )` . If `sparse` is True, The type of
           `labels` is int32 or int64. Otherwise, the type of `labels` is the same as the type of `logits`.
 
     Outputs:
