@@ -5,6 +5,9 @@ mindspore.ops.BesselK0e
 
     逐元素计算输入数据的BesselK0e函数值。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x** (Tensor) - 输入Tensor。数据类型应为float16、float32或float64。
 

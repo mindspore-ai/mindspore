@@ -11,6 +11,9 @@ mindspore.ops.LogSpace
         &output = [base^{start}, base^{start + 1 * step}, ... , base^{start + (steps-2) * step}, base^{end}]
         \end{aligned}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **steps** (int，可选) - `steps` 必须为非负整数。默认值：10。
         - **base** (int，可选) - `base` 必须为非负整数。默认值：10。

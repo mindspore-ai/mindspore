@@ -5,6 +5,9 @@ mindspore.ops.Bincount
 
     计算整数数组中每个值的出现次数。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **array** (Tensor) - int32数据类型的Tensor。
         - **size** (Tensor) - int32数据类型的非负Tensor。

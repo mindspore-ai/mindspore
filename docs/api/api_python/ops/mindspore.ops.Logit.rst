@@ -5,6 +5,9 @@ mindspore.ops.Logit
 
     逐元素计算Tensor的logit值。 `x` 中的元素被截断到范围[eps, 1-eps]内。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     更多参考详见 :func:`mindspore.ops.logit`。
 
     参数：

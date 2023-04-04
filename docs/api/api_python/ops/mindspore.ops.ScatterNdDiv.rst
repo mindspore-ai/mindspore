@@ -7,4 +7,7 @@ mindspore.ops.ScatterNdDiv
 
     使用给定值通过除法运算和输入索引更新 `input_x` 的值。为便于使用更新后的值，函数返回 `input_x` 的副本。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     更多参考详见 :func:`mindspore.ops.scatter_nd_div` 。

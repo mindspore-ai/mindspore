@@ -147,6 +147,9 @@ class AdaptiveAvgPool3D(Primitive):
     r"""
     AdaptiveAvgPool3D operation.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Supported Platforms:
@@ -1965,6 +1968,9 @@ class MaxUnpool2D(Primitive):
         W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
         \end{array}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents height and width of the kernel, or a tuple
@@ -2065,6 +2071,9 @@ class MaxUnpool3D(Primitive):
         H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
         W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
         \end{array}
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
@@ -2395,6 +2404,9 @@ class MaxPool3DWithArgmax(Primitive):
         \text{output}(N_i, C_j, d, h, w) =
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
@@ -2930,6 +2942,9 @@ class MultiMarginLoss(Primitive):
     Creates a loss function that minimizes the hinge loss
     for multi-class classification tasks.
     The loss is calculated by comparing the input and output of the function.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
@@ -8051,6 +8066,9 @@ class CTCLossV2(Primitive):
     The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         blank (int, optional): The blank label. Default: 0.
         reduction (str, optional): Apply specific reduction method to the output. Currently only support 'none',
@@ -9102,6 +9120,9 @@ class GridSampler3D(Primitive):
     Given an input and a grid, the output is calculated using the input values
     and pixel positions in the grid. Only volume (5-D) input is supported.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.grid_sample` for more details.
 
     Supported Platforms:
@@ -9679,6 +9700,9 @@ class GridSampler2D(Primitive):
     This operation samples 2d `input_x` by using interpolation based on flow field grid,
     which is usually gennerated by :func:`mindspore.ops.affine_grid`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
             The optional values are
@@ -10223,6 +10247,9 @@ class GLU(Primitive):
     r"""
     Computes GLU (Gated Linear Unit activation function) of input tensors.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.glu` for more details.
 
     Supported Platforms:
@@ -10332,6 +10359,9 @@ class ChannelShuffle(Primitive):
     r"""
     Divide the channels in a tensor of shape (*, C, H, W) into g groups and
     rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.channel_shuffle` for more detail.
 

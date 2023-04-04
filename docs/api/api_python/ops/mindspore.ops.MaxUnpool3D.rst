@@ -16,6 +16,9 @@ mindspore.ops.MaxUnpool3D
         W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
         \end{array}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **ksize** (Union[int, tuple[int]]) - 用于取最大值的内核大小，
           是一个整数，表示内核的深度、高度和宽度，或一个元组包含三个整数，分别表示深度、高度和宽度。

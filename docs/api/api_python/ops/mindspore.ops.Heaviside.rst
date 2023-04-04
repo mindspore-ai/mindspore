@@ -12,6 +12,9 @@ mindspore.ops.Heaviside
             1, & \text { if x }>0
             \end{array}\right.
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x** (Tensor) - 输入Tensor，实数类型。
         - **values** (Tensor) - 在 `x` 中为0的位置应用其值。 `values` 可以同 `x` 进行广播。 `x` 与 `values` 的数据类型应该相同。

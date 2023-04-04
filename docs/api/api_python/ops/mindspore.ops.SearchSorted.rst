@@ -5,6 +5,9 @@ mindspore.ops.SearchSorted
 
     返回位置索引，根据这个索引将 `values` 插入 `sorted_sequence` 后，`sorted_sequence` 的元素大小顺序保持不变。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     更多参考详见 :func:`mindspore.ops.searchsorted`。
 
     参数：
