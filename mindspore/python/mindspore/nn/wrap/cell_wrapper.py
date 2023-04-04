@@ -472,7 +472,6 @@ def _check_shape_value_on_axis_divided_by_target_value(input_shape, micro_size):
     if input_shape[0] % micro_size != 0:
         raise ValueError(f"For micro batch initialization, the 0th dimension shape of input({input_shape[0]}) must be "
                          f"divided by micro size({micro_size})")
-    return None
 
 
 class _MicroBatch(Cell):

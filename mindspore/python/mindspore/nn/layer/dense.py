@@ -36,7 +36,6 @@ def check_dense_inputs_same_shape(input1, input2, prim_name=None):
     if input1[:-1] != input2[:-1]:
         raise ValueError(f"{msg_prefix} dimensions except the last of 'input1' must be same as 'input2', but got "
                          f"{input1} of 'input1' and {input2} of 'input2'")
-    return None
 
 
 @constexpr(check=False)
@@ -53,7 +52,6 @@ def check_last_dimension(input_dim, input_channels, input_name, input_channels_n
     if input_dim != input_channels:
         raise ValueError(f"{msg_prefix} last dimension of '{input_name}' must be same as '{input_channels_name}',"
                          f" but got {input_dim} of '{input_name}' and {input_channels} of '{input_channels_name}'")
-    return None
 
 
 class BiDense(Cell):

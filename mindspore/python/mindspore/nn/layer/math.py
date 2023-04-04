@@ -746,7 +746,6 @@ def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
             raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' must be equal to or greater than 2, "
                              f"but got the length of 'x_shape': {len(x_shape)} and the length of 'y_shape': "
                              f"{len(y_shape)}.")
-        return None
     _check_len()
     x_shape_batch = x_shape[:-2]
     y_shape_batch = y_shape[:-2]
@@ -762,7 +761,6 @@ def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
             raise ValueError(f"{msg_prefix} 'x_shape[{i}]' must be equal to 1, or the 'y_shape[{i}]' must be equal "
                              f"to 1, or the 'x_shape[{i}]' must be equal to 'y_shape[{i}]', but got "
                              f"'x_shape[{i}]': {x_val}, 'y_shape[{i}]': {y_val}.")
-        return None
 
     for i in range(-length, -2):
         _check_broadcast(x_shape[i], y_shape[i], i)
@@ -787,7 +785,6 @@ def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2, prim_nam
         if x1_col != x2_row:
             raise ValueError(f"{msg_prefix} column of matrix dimensions of 'x1' must be equal to "
                              f"the row of matrix dimensions of 'x2', but got 'x1_col' {x1_col} and 'x2_row' {x2_row}.")
-        return None
 
     if len(x1_shape) == 1:
         transpose_x1 = False

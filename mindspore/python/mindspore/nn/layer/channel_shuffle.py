@@ -93,7 +93,6 @@ class ChannelShuffle(Cell):
         if channels % groups != 0:
             raise ValueError(f"For {cls_name}, number of channels must be divisible by groups, "
                              f"but got {channels} channels and {groups} groups.")
-        return None
 
     def construct(self, x):
         x_shape = self.shape(x)

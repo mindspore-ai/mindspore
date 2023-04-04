@@ -33,7 +33,6 @@ def _check_reshape_pos(reshape_pos, inputs_shape, outputs_shape, prim_name=None)
                          f"'inputs_shape[reshape_pos]' must be equal to 'outputs_shape[reshape_pos]', but got "
                          f"'reshape_pos': {reshape_pos}, 'inputs_shape': {inputs_shape}, 'outputs_shape': "
                          f"{outputs_shape}. You may try pass parameters without 'reshape_with_axis'.")
-    return None
 
 
 @_primexpr
@@ -42,7 +41,6 @@ def _check_expand_dims_axis(time_axis, ndim, prim_name=None):
     if time_axis > ndim:
         raise ValueError(f"{msg_prefix} value of 'time_axis' must be in range of [{-ndim - 1}, {ndim}], "
                          f"but got {time_axis}.")
-    return None
 
 
 @constexpr
@@ -64,7 +62,6 @@ def _check_inputs_dim(shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(shape) < 3:
         raise ValueError(f"{msg_prefix} inputs shape must be at least 3D, but got {len(shape)}.")
-    return None
 
 
 class TimeDistributed(Cell):

@@ -151,7 +151,6 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
     def _check(indices_shape):
         if not indices_shape:
             raise ValueError("indices_shape is empty in _get_prefix.")
-        return None
 
     _check(indices_shape)
     indices_len = len(indices_shape)
@@ -363,7 +362,6 @@ def get_reshape_vmap_rule(prim, axis_size):
         def _check(neg_index, target_shape):
             if neg_index != -1:
                 raise ValueError(f'The shape can only has one -1 at most, but {target_shape}.')
-            return None
 
         if x_dim == 0:
             return (axis_size,) + target_shape, 0, False

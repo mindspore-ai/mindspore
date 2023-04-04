@@ -30,7 +30,6 @@ def _check_dim(dim, target1, target2, cls_name):
     def _check_func():
         if not (dim == target1 or dim == target2):
             raise ValueError(f"For '{cls_name}', the in_shape must have {target1} or {target2} dims, but got {dim}.")
-        return None
     _check_func()
 
 
@@ -44,7 +43,6 @@ def _check_padding_dimension(dimension, padding):
         if dimension < len(padding):
             raise ValueError(f"For padding with length {len(padding) * 2}, the dimension of the tensor should "
                              f"be at least {len(padding)}, but got {dimension}")
-        return None
     _check_padding(dimension, padding)
     # add place holders
     if dimension > len(padding):
@@ -78,7 +76,6 @@ def _check(input_shape, padding, name):
             msg = "For '{}', the dimension of input must more than or equal to len(padding)/2, " \
                 "but got {}".format(name, len(input_shape))
             raise ValueError(msg)
-        return None
 
     def _check_item(item, input_shape, index, dim_name):
         if item < -input_shape[index]:
@@ -86,7 +83,6 @@ def _check(input_shape, padding, name):
                   "value of parameter 'padding' applied to the {} dimension of input must " \
                   "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item)
             raise ValueError(msg)
-        return None
 
     def _check_item_two(item0, item1, input_shape, index, dim_name):
         if input_shape[index] + item0 + item1 <= 0:
@@ -94,7 +90,6 @@ def _check(input_shape, padding, name):
                   "but the {} dimension of input shape {} plus padding {} and {} resulted in a non-positive output " \
                   "shape.".format(name, input_shape, dim_name, input_shape[index], item0, item1)
             raise ValueError(msg)
-        return None
 
     _check_len(input_shape, padding)
     if len(input_shape) > len(padding):

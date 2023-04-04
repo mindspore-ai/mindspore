@@ -202,7 +202,6 @@ class Softmax2d(Cell):
         dim = len(shape)
         if not (dim == 3 or dim == 4):
             raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
-        return None
 
     def construct(self, x):
         x_shape = self.shape(x)
