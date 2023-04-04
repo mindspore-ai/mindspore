@@ -4953,7 +4953,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`mean` is the
-    mean of `x`, :math:`variance` is the variance of `x`.
+    mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
 
     .. warning::
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
