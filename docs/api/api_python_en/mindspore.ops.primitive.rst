@@ -520,7 +520,7 @@ Array Operation
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
     mindspore.ops.Qr
-    mindspore.op.RandomShuffle
+    mindspore.ops.RandomShuffle
     mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Renorm
