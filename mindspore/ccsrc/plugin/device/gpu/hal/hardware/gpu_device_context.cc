@@ -609,7 +609,7 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 #ifdef ENABLE_DUMP_IR
     const auto &ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->CanDump(kAdvanced)) {
+    if (ms_context->CanDump(kIntroductory)) {
       DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
     }
 #endif

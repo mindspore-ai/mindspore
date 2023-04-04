@@ -1570,7 +1570,7 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->CanDump(kAdvanced);
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled() &&

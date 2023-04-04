@@ -50,7 +50,7 @@ void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
     if (switch_order) {
       ExportIR(name + ".ir", root);

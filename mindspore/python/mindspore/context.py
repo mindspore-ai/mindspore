@@ -1031,7 +1031,7 @@ def set_context(**kwargs):
             continue
         if key == 'save_graphs':
             if value is True:
-                value = 1
+                value = 2
             if value is False:
                 value = 0
             if value > 3:

@@ -45,7 +45,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_before_ge_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }
@@ -80,7 +80,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_after_ge_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }
@@ -95,7 +95,7 @@ void ReduceOptimization(const FuncGraphPtr &func_graph) {
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_before_reduce_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }
@@ -109,7 +109,7 @@ void ReduceOptimization(const FuncGraphPtr &func_graph) {
   (void)optimizer->Optimize(func_graph);
 
 #ifdef ENABLE_DUMP_IR
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_after_reduce_optimization_graph_" + func_graph->ToString() + ".ir";
     DumpIR(file_name, func_graph);
   }

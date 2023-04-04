@@ -117,7 +117,7 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
   // Dump IR if save_graphs is set.
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
+  if (context->CanDump(kIntroductory)) {
     std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(filename, kernel_graph);
   }
@@ -167,7 +167,7 @@ void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &k
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name =
       "hwopt_common_eliminate_illegal_data_type_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
@@ -180,7 +180,7 @@ void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &k
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name =
       "hwopt_common_eliminate_illegal_data_type_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
@@ -194,7 +194,7 @@ void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name =
       "hwopt_d_before_dynamic_shape_convert_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
@@ -207,7 +207,7 @@ void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel
   optimizer->AddPassManager(dynamic_shape_convert_pm);
   (void)optimizer->Optimize(kernel_graph);
 #ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kAdvanced)) {
+  if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name =
       "hwopt_d_after_dynamic_shape_convert_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);

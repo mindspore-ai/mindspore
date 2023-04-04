@@ -67,7 +67,7 @@ void ActorSetOptimizer::DumpPassActorSet(const ActorSetPtr &actor_set, const std
   MS_EXCEPTION_IF_NULL(actor_set);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (!context->CanDump(kAdvanced)) {
+  if (!context->CanDump(kIntroductory)) {
     return;
   }
 
