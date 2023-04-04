@@ -565,6 +565,7 @@ enum PrimType {
   PrimType_Inner_EncoderLayer = 10006,
   PrimType_Inner_FseDecode = 10007,
   PrimType_Inner_DecoderLayer = 10008,
+  PrimType_Inner_UsePastEmbedding = 10009,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

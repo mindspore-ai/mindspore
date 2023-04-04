@@ -158,8 +158,8 @@ int MhaPlugin::RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvi
     inputs_attn[index++] = const_cast<void *>(inputs[bias_projection_tensor_idx]);
   }
   void *outputs_attn[] = {outputs[0]};
-  fastertransformer::forward_attn<T>(reinterpret_cast<T **>(inputs_attn), num_of_inputs_,
-                                     reinterpret_cast<T **>(outputs_attn), num_of_outputs_, &params_, workspace);
+  fastertransformer::forward_attn<T>(reinterpret_cast<T **>(inputs_attn), index, reinterpret_cast<T **>(outputs_attn),
+                                     num_of_outputs_, &params_, workspace);
   return RET_OK;
 }
 

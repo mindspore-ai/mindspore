@@ -52,6 +52,7 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   VectorRef DefineMPWithMaskPatternT5() const;
   VectorRef DefineMPWithMaskPatternT5New(bool transpose = true, bool no_div_flag = false) const;
   VectorRef DefineMPPatternSwin(bool flag = true) const;
+  VectorRef DefineMPPatternPanguDistributed(bool alpha) const;
   VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias, const BaseRef &axis,
                             const BaseRef &transpose_var, bool test_div = false, bool transpose = true,
                             bool mul = false) const;
@@ -92,6 +93,9 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAPatternNameSwin1 = "MPAPatternNameSwin1";
   const std::string kMPAPatternNameSwin2 = "MPAPatternNameSwin2";
   const std::string kMPAPatternNamePA = "kMPAPatternNamePA";
+  const std::string kPatternNameSigmaDistributedUsePast = "kPatternNameSigmaDistributedUsePast";
+  const std::string kPatternNameAlphaDistributedUsePast = "kPatternNameAlphaDistributedUsePast";
+
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
   mutable VarPtr input_v_{nullptr};

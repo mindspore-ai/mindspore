@@ -52,6 +52,25 @@ int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *o
   return RET_OK;
 }
 
+int DistributionCollective::AllReduceWrapper(const void *input_addr, void *output_addr, size_t count,
+                                             nvinfer1::DataType data_type, ReduceMode reduce_type, cudaStream_t stream,
+                                             const std::string &group) {
+  int rank_id = GetRankID();
+  MS_LOG(DEBUG) << "AllReduce on rank: " << rank_id;
+  ncclResult_t ret = AllReduce(input_addr, output_addr, count, ConvertNCCLDataType(data_type),
+                               ConvertNCCLReduceMode(reduce_type), stream, group);
+  if (ret != ncclSuccess) {
+    MS_LOG(ERROR) << "AllReduce failed: " << static_cast<int>(ret);
+    return RET_ERROR;
+  }
+  auto cuda_ret = cudaStreamSynchronize(stream);
+  if (cuda_ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaStreamSynchronize failed: " << static_cast<int>(cuda_ret);
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int DistributionCollective::AllGatherWrapper(const void *input_addr, void *output_addr, size_t count,
                                              nvinfer1::DataType data_type, cudaStream_t stream,
                                              const std::string &group_name) {

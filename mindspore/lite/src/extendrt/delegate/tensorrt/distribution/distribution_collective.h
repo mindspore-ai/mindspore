@@ -33,6 +33,9 @@ class DistributionCollective {
   int ReduceScatterWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
                            ReduceMode reduce_type, cudaStream_t stream, const std::string &group);
 
+  int AllReduceWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
+                       ReduceMode reduce_type, cudaStream_t stream, const std::string &group);
+
   int AllGatherWrapper(const void *input_addr, void *output_addr, size_t count, nvinfer1::DataType data_type,
                        cudaStream_t stream, const std::string &group_name);
 

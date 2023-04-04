@@ -30,6 +30,12 @@ int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *o
   return RET_OK;
 }
 
+int DistributionCollective::AllReduceWrapper(const void *input_addr, void *output_addr, size_t count,
+                                             nvinfer1::DataType data_type, ReduceMode reduce_type, cudaStream_t stream,
+                                             const std::string &group) {
+  return RET_OK;
+}
+
 int DistributionCollective::AllGatherWrapper(const void *input_addr, void *output_addr, size_t count,
                                              nvinfer1::DataType data_type, cudaStream_t stream,
                                              const std::string &group_name) {

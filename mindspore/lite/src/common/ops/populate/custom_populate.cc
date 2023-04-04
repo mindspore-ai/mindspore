@@ -36,6 +36,17 @@ bool GetDataFromPrim(void *dst, size_t len, const schema::Custom *custom_prim, s
   return true;
 }
 
+OpParameter *CreateParam(PrimType param_type) {
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc DecoderLayer failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(OpParameter));
+  param->type_ = param_type;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 OpParameter *PopulateCustomParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
@@ -98,25 +109,11 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
     return reinterpret_cast<OpParameter *>(param);
   } else if (type == "EncoderLayer") {
-    std::cout << "EncoderLayer populate" << std::endl;
-    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-    if (param == nullptr) {
-      MS_LOG(ERROR) << "malloc EncoderLayer failed.";
-      return nullptr;
-    }
-    memset(param, 0, sizeof(OpParameter));
-    param->type_ = PrimType_Inner_EncoderLayer;
-    return reinterpret_cast<OpParameter *>(param);
+    return CreateParam(PrimType_Inner_EncoderLayer);
   } else if (type == "DecoderLayer") {
-    std::cout << "DecoderLayer populate" << std::endl;
-    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-    if (param == nullptr) {
-      MS_LOG(ERROR) << "malloc DecoderLayer failed.";
-      return nullptr;
-    }
-    memset(param, 0, sizeof(OpParameter));
-    param->type_ = PrimType_Inner_DecoderLayer;
-    return reinterpret_cast<OpParameter *>(param);
+    return CreateParam(PrimType_Inner_DecoderLayer);
+  } else if (type == "UsePastEmbedding") {
+    return CreateParam(PrimType_Inner_UsePastEmbedding);
   } else if (type == "FSEDecode") {
     auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
     if (param == nullptr) {
