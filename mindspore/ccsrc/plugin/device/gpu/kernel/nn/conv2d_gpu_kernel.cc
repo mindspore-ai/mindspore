@@ -244,11 +244,16 @@ void Conv2dFwdGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t input_descri
   constexpr int requested_algo_count = 1;
   int returned_algo_count = 0;
   cudnnConvolutionFwdAlgoPerf_t perf_results;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                           requested_algo_count, &returned_algo_count, &perf_results),
-    "cudnnGetConvolutionForwardAlgorithm_v7 failed");
-  conv_algorithm_ = perf_results.algo;
+  std::string set_cudnn_conv2d_algo = common::GetEnv("SET_CUDNN_CONV2D_ALGO");
+  if (!set_cudnn_conv2d_algo.empty()) {
+    conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  } else {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_,
+                                            output_desc_,, requested_algo_count, &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionForwardAlgorithm_v7 failed");
+    conv_algorithm_ = perf_results.algo;
+  }
 #if CUDNN_VERSION < 8000
   if (group_ > 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
