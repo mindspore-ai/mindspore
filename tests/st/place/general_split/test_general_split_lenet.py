@@ -17,7 +17,7 @@ import mindspore.context as context
 from mindspore import set_seed
 from mindspore.train import Accuracy
 from mindspore.train import Model, LossMonitor, TimeMonitor
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 
 from src.lenet import Net, get_optimizer, get_loss, get_dataset
 
@@ -56,6 +56,7 @@ def run():
     acc = model.eval(ds_eval, dataset_sink_mode=False)
 
     print("Accuracy is:", acc)
-    assert acc.get('Accuracy') > 0.7
+    if get_rank() == 0:
+        assert acc.get('Accuracy') > 0.7
 
 run()
