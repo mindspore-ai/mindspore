@@ -108,26 +108,17 @@ std::vector<std::string> name_split(const std::string &node_name_, const std::st
   return res;
 }
 
-std::string get_node_name(const AnfNodePtr &node) {
+std::string get_node_prim_name(const AnfNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "Input node is nullptr, get name failed!";
     return "";
   }
-  std::string node_name = node->fullname_with_scope();
-  std::vector<string> split_words = name_split(node_name, "/");
-  if (split_words.empty()) {
-    MS_LOG(WARNING) << "Input node name is empty.";
+  PrimitivePtr node_prim = GetCNodePrimitive(node);
+  if (node_prim == nullptr) {
+    MS_LOG(DEBUG) << "The primitive of node " << node->fullname_with_scope() << " is nullptr!";
     return "";
   }
-  std::string name = split_words[split_words.size() - 1];  // name is like x-opx
-  std::vector<string> split_name = name_split(name, "-");
-  size_t qualified_split_len = 2;
-  if (split_name.size() != qualified_split_len) {
-    MS_LOG(ERROR) << "The size of split op_name must be 2, but got: " << split_name.size()
-                  << ". Complete name is: " << name;
-    return "";
-  }
-  return split_name[0];
+  return node_prim->ToString();
 }
 
 int get_op_num(const AnfNodePtr &node) {
@@ -156,11 +147,9 @@ ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node)
   }
   std::string parameter_name = "";
   for (auto input : node->inputs()) {
-    std::string op_name = get_node_name(input);
+    std::string op_name = get_node_prim_name(input);
     MS_LOG(INFO) << "op_name is: " << op_name;
-    int op_name_len = SizeToInt(op_name.size());
-    int load_len = 4;
-    if ((op_name_len >= load_len) && (op_name.substr(0, load_len) == "Load")) {
+    if (op_name == "Load") {
       for (auto param : input->cast<mindspore::CNodePtr>()->inputs()) {
         if (param->fullname_with_scope().find("weight") != std::string::npos) {
           parameter_name = param->fullname_with_scope();
@@ -282,19 +271,17 @@ std::string DynamicObfuscator::ObfuscateOpType(const AnfNodePtr &node) {
   }
   if (node->isa<CNode>()) {
     MS_LOG(INFO) << "The node_name is: " << node->fullname_with_scope();
-    std::string op_name = get_node_name(node);
+    std::string op_name = get_node_prim_name(node);
     std::vector<std::string> target_op_list;
     target_op_list.insert(target_op_list.end(), single_input_target_op_.begin(), single_input_target_op_.end());
     target_op_list.insert(target_op_list.end(), single_input_with_weight_target_op_.begin(),
                           single_input_with_weight_target_op_.end());
-    for (const auto &target_op_name : target_op_list) {
-      int op_name_len = SizeToInt(op_name.size());
-      int target_name_len = SizeToInt(target_op_name.size());
-      if ((op_name_len >= target_name_len) && (op_name.substr(0, target_name_len) == target_op_name)) {
-        return target_op_name;
-      }
+
+    auto found = std::find_if(target_op_list.cbegin(), target_op_list.cend(),
+                              [&](const auto &target_name) { return op_name == target_name; });
+    if (found != target_op_list.cend()) {
+      return *found;
     }
-    return "";
   }
   return "";
 }
@@ -546,20 +533,15 @@ void DynamicObfuscator::CheckDuplicatedParent(const AnfNodePtr &node) {
 
 bool DynamicObfuscator::IsTarget(const std::string &cnode_name) {
   if (cnode_name.empty()) {
-    MS_LOG(WARNING) << "CNode name is empty.";
+    MS_LOG(INFO) << "CNode name is empty.";
     return false;
   }
   std::vector<std::string> target_op_list;
   target_op_list.insert(target_op_list.end(), single_input_target_op_.begin(), single_input_target_op_.end());
   target_op_list.insert(target_op_list.end(), single_input_with_weight_target_op_.begin(),
                         single_input_with_weight_target_op_.end());
-  for (std::string target_op_name : target_op_list) {
-    int op_name_len = SizeToInt(cnode_name.size());
-    int target_name_len = SizeToInt(target_op_name.size());
-    if ((op_name_len >= target_name_len) && (cnode_name.substr(0, target_name_len) == target_op_name)) {
-      MS_LOG(INFO) << "find target node.";
-      return true;
-    }
+  if (std::find(target_op_list.cbegin(), target_op_list.cend(), cnode_name) != target_op_list.cend()) {
+    return true;
   }
   return false;
 }
@@ -571,7 +553,7 @@ mindspore::CNodePtr DynamicObfuscator::CheckInputNodes(const mindspore::CNodePtr
   }
   auto node_inputs = node->inputs();
   for (auto input_node : node_inputs) {
-    std::string cnode_name = get_node_name(input_node);
+    std::string cnode_name = get_node_prim_name(input_node);
     if (IsTarget(cnode_name)) {
       return input_node->cast<mindspore::CNodePtr>();
     }
@@ -625,7 +607,7 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputWithWeightNode(const FuncGra
     MS_LOG(ERROR) << "Build one input with weight node failed: node is nullptr.";
     return nullptr;
   }
-  std::string node_name = get_node_name(node);
+  std::string node_name = node->fullname_with_scope();
   if (input_node == nullptr) {
     MS_LOG(ERROR) << "Build " << node_name << " failed: input node is nullptr.";
     return nullptr;
@@ -1004,31 +986,33 @@ void DynamicObfuscator::SubGraphFakeBranch(const FuncGraphPtr func_graph) {
       MS_LOG(INFO) << "Find null node!" << std::endl;
       continue;
     }
-    if (node->isa<CNode>()) {
-      std::string cnode_name = get_node_name(node);
-      MS_LOG(INFO) << "CNode name is: " << cnode_name;
-      int cur_op_num = get_op_num(node);
-      float dropout_rate = 0.1;
-      int dropout_rand = rand() % static_cast<int>(1.0 / dropout_rate);
-      if (IsTarget(cnode_name) && IsValidOpNum(cur_op_num, op_num) && dropout_rand != 0 &&
-          (node_dict_.find(node->fullname_with_scope()) == node_dict_.cend())) {
-        UpdateDict(node, false);
-        op_num = cur_op_num;
-        bool stop_traverse = false;
-        mindspore::CNodePtr curr_cnode = node->cast<mindspore::CNodePtr>();
-        while (!stop_traverse) {
-          mindspore::CNodePtr valid_input = CheckInputNodes(curr_cnode);
-          dropout_rand = rand() % static_cast<int>(1.0 / dropout_rate);
-          if (valid_input && dropout_rand != 0 &&
-              (node_dict_.find(valid_input->fullname_with_scope()) == node_dict_.cend())) {
-            UpdateDict(valid_input, false);
-            op_num = get_op_num(valid_input);
-            curr_cnode = valid_input;
-          } else {
-            stop_traverse = true;
-            if (curr_cnode->inputs().size() > 1) {
-              CheckDuplicatedParent(curr_cnode->inputs()[1]);
-            }
+    if (!node->isa<CNode>()) {
+      MS_LOG(INFO) << "Not a Cnode." << std::endl;
+      continue;
+    }
+    std::string cnode_name = get_node_prim_name(node);
+    MS_LOG(INFO) << "CNode name is: " << cnode_name;
+    int cur_op_num = get_op_num(node);
+    float dropout_rate = 0.1;
+    int dropout_rand = rand() % static_cast<int>(1.0 / dropout_rate);
+    if (IsTarget(cnode_name) && IsValidOpNum(cur_op_num, op_num) && dropout_rand != 0 &&
+        (node_dict_.find(node->fullname_with_scope()) == node_dict_.cend())) {
+      UpdateDict(node, false);
+      op_num = cur_op_num;
+      bool stop_traverse = false;
+      mindspore::CNodePtr curr_cnode = node->cast<mindspore::CNodePtr>();
+      while (!stop_traverse) {
+        mindspore::CNodePtr valid_input = CheckInputNodes(curr_cnode);
+        dropout_rand = rand() % static_cast<int>(1.0 / dropout_rate);
+        if (valid_input && dropout_rand != 0 &&
+            (node_dict_.find(valid_input->fullname_with_scope()) == node_dict_.cend())) {
+          UpdateDict(valid_input, false);
+          op_num = get_op_num(valid_input);
+          curr_cnode = valid_input;
+        } else {
+          stop_traverse = true;
+          if (curr_cnode->inputs().size() > 1) {
+            CheckDuplicatedParent(curr_cnode->inputs()[1]);
           }
         }
       }
