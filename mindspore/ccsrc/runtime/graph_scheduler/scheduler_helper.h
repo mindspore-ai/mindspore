@@ -40,6 +40,9 @@ class SchedulerHelper {
 
   static void AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor);
 
+  static void AddMonadDeviceTensorStore(AbstractActor *const to_actor, const CNodePtr &kernel,
+                                        const KernelGraphPtr &graph);
+
   // Add the arrow between from actor and to actor.
   static void AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_output_index,
                            size_t to_input_index, const AnfNodePtr &from_kernel = nullptr);
