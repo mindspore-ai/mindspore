@@ -11,8 +11,8 @@ mindspore.ops.tensor_split
 
           - 如果 `indices_or_sections` 是整数类型n，输入tensor将分割成n份。
 
-            - 如果 :math:`input.size(axis)` 能被n整除，那么子切片的大小相同，为 :math:`input.size(axis) / n` 。
-            - 如果 :math:`input.size(axis)` 不能被n整除，那么前 :math:`input.size(axis) % n` 个切片的大小为 :math:`input.size(axis) // n + 1` ，其余切片的大小为 :math:`input.size(axis) // n` 。
+            - 如果 :math:`input.shape(axis)` 能被n整除，那么子切片的大小相同，为 :math:`input.shape(axis) / n` 。
+            - 如果 :math:`input.shape(axis)` 不能被n整除，那么前 :math:`input.shape(axis) % n` 个切片的大小为 :math:`input.shape(axis) // n + 1` ，其余切片的大小为 :math:`input.shape(axis) // n` 。
 
           - 如果 `indices_or_sections` 类型为tuple(int) 或 list(int)，那么输入tensor将在tuple或list中的索引处切分。例如：给定参数 :math:`indices\_or\_sections=[1, 4]` 和 :math:`axis=0` 将得到切片 :math:`input[:1]` ， :math:`input[1:4]` ，和 :math:`input[4:]` 。
         - **axis** (int) - 指定分割轴。默认值：0。
