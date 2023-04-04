@@ -52,6 +52,9 @@ abstract::ShapePtr HSigmoidGradInferShape(const PrimitivePtr &primitive,
   }
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (IsDynamicRank(grads_shape) || IsDynamicRank(input_x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
   CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, input_x_shape, primitive->name(), ValueError);
   return std::make_shared<abstract::Shape>(input_x_shape);
 }
