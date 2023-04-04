@@ -2148,7 +2148,7 @@ def unbind(input, dim=0):
     shape of the output tensors is :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)`.
 
     Args:
-        input (Tensor): The shape is :math:`(input_1, input_2, ..., input_R)`.
+        input (Tensor): The shape is :math:`(n_1, n_2, ..., n_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
         dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
 
@@ -4129,7 +4129,7 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`[I, J, ..., L, M, N]`. Let `max_diag_len` be the maximum length among all
+        Assume `x` has r dimensions :math:`[I, J, ..., M, N]`. Let `max_diag_len` be the maximum length among all
         diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
         Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
         If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`[I, J, ..., L, max\_diag\_len]`
