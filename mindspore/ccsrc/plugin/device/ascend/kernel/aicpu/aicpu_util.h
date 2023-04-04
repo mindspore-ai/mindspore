@@ -193,6 +193,7 @@ constexpr auto kSquaredDifference = "SquaredDifference";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
 constexpr auto kGreaterEqual = "GreaterEqual";
+constexpr auto kGreater = "Greater";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
 constexpr auto kFmax = "Fmax";
@@ -226,6 +227,7 @@ constexpr auto kAffineGrid = "AffineGrid";
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
                                           kGather,
+                                          kGreater,
                                           kDynamicStitch,
                                           kSort,
                                           kCTCLossV2,
