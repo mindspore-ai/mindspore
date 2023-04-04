@@ -1501,8 +1501,9 @@ class Cell(Cell_):
         return self
 
     def _add_init_args(self, **args):
-        if hasattr(self, '_cell_init_args'):
-            self._cell_init_args += str({**args})
+        if not hasattr(self, '_cell_init_args'):
+            self._cell_init_args = ""
+        self._cell_init_args += str({**args})
 
     def get_flags(self):
         """
