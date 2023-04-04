@@ -9,7 +9,7 @@ mindspore.ops.sinh
         out_i = \sinh(input_i)
 
     参数：
-        - **input** (Tensor) - sinh的输入Tensor，其秩范围必须在[0, 7]。
+        - **input** (Tensor) - sinh的输入Tensor。
 
     返回：
         Tensor，shape与 `input` 相同。

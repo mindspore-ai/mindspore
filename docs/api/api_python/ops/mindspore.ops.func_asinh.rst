@@ -10,7 +10,7 @@ mindspore.ops.asinh
         out_i = \sinh^{-1}(x_i)
 
     参数：
-        - **x** (Tensor) - 需要计算反双曲正弦函数的输入，其秩的范围必须在[0, 7]。
+        - **x** (Tensor) - 需要计算反双曲正弦函数的输入。
 
     返回：
         Tensor，数据类型和shape与 `x` 相同。

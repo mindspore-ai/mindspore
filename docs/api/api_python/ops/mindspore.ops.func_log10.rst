@@ -11,9 +11,6 @@ mindspore.ops.log10
     .. warning::
         如果log10的输入值范围在(0, 0.01]或[0.95, 1.05]区间，输出精度可能会受影响。
 
-    .. note::
-        Ascend上输入Tensor的维度要小于等于8，CPU或GPU上输入Tensor的维度要小于8。
-
     参数：
         - **input** (Tensor) - 任意维度的输入Tensor。Tensor内每个元素都必须大于0。
 

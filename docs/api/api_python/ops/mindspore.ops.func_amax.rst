@@ -6,7 +6,7 @@ mindspore.ops.amax
     默认情况下，移除输入所有维度，返回 `input` 中的最大值。也可仅缩小指定维度 `axis` 大小至1。 `keepdims` 控制输出和输入的维度是否相同。
 
     参数：
-        - **input** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
+        - **input** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: None，缩小所有维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。
         - **keepdims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
 

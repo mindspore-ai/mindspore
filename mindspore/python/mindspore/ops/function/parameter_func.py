@@ -31,7 +31,7 @@ def assign(variable, value):
 
     Args:
         variable (Parameter): The `Parameter`. :math:`(N,*)` where :math:`*` means,
-            any number of additional dimensions, its rank should be less than 8.
+            any number of additional dimensions.
         value (Tensor): The value to be assigned, has the same shape with `variable`.
 
     Returns:
@@ -77,7 +77,7 @@ def assign_sub(variable, value):
 
     Args:
         variable (Parameter): The `Parameter`.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank be should be less than 8.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         value (Tensor): The value to be subtracted from the `variable`.
             It must have the same shape as `variable`.
             it is recommended to use the same data type when using this operator.
@@ -124,7 +124,7 @@ def assign_add(variable, value):
 
     Args:
         variable (Parameter): The `Parameter`.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         value (Tensor): The value to be added to the `variable`.
             It must have the same shape as `variable`.
             it is recommended to use the same data type when using this operator.
