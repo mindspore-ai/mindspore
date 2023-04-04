@@ -136,14 +136,14 @@ class OpPrimPyRegister {
   ///
   /// \return The OpPrimPyRegister singleton.
   static OpPrimPyRegister &GetInstance() {
-    static OpPrimPyRegister instance;
+    static OpPrimPyRegister instance{};
     return instance;
   }
 
   /// \brief Get PrimPyMap of the OpPrimPyRegister singleton.
   ///
   /// \return The PrimPyMap of the OpPrimPyRegister singleton.
-  const HashMap<std::string, ValuePtr> &GetPrimPyMap() { return primpy_map_; }
+  const HashMap<std::string, ValuePtr> &GetPrimPyMap() const { return primpy_map_; }
 
   /// \brief Add an element into the PrimPyMap of the OpPrimPyRegister singleton.
   ///
