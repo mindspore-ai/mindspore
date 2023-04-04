@@ -158,8 +158,8 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
       !std::all_of(inputs_obj_types.begin(), inputs_obj_types.end(),
                    [](const auto &obj_type) { return obj_type == KernelObjectType::SCALAR; })) {
     auto new_obj_types = inputs_obj_types;
-    std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
-                   [](const auto &) { return KernelObjectType::TENSOR; });
+    (void)std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
+                         [](const auto &) { return KernelObjectType::TENSOR; });
     real_make_tuple_build_info->SetInputsKernelObjectType(new_obj_types);
     MS_LOG(DEBUG) << "Override RealMakeTuple input kernel object types from " << inputs_obj_types << " "
                   << new_obj_types;

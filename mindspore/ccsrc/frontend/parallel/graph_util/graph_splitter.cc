@@ -558,7 +558,7 @@ AnfNodePtrSet UpdateDependedSet(const AnfNodePtr &new_node, const AnfNodePtrSet 
     if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).count(stored_node) != 0) {
       MS_LOG(DEBUG) << "Replace old node " << stored_node->fullname_with_scope() << " with new node "
                     << new_node->fullname_with_scope();
-      updated.erase(stored_node);
+      (void)updated.erase(stored_node);
       (void)updated.insert(new_node);
     }
   }
@@ -1711,7 +1711,7 @@ void GraphSplitter::EliminateDataSyncNode() {
       auto load_node_replace_data_sync_src = func_graph_->NewCNode(load_inputs);
       MS_EXCEPTION_IF_NULL(load_node_replace_data_sync_src);
       load_node_replace_data_sync_src->set_abstract(cnode->abstract());
-      func_graph_->manager()->Replace(cnode, load_node_replace_data_sync_src);
+      (void)func_graph_->manager()->Replace(cnode, load_node_replace_data_sync_src);
     } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncDstOpName) {
       if (cnode->inputs().size() != kSizeTwo) {
         MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
