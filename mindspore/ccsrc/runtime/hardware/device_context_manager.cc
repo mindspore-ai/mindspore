@@ -223,7 +223,7 @@ bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
     }
     auto read_size = read(pipe_fd[0], buffer.data(), buffer.size());
     if (read_size <= 0) {
-      MS_LOG(WARNING) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
+      MS_LOG(INFO) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
       return false;
     } else {
       buffer.resize(read_size);
