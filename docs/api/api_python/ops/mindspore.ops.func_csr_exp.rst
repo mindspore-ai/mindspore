@@ -10,7 +10,7 @@ mindspore.ops.csr_exp
         out_i = e^{x_i}
 
     参数：
-        - **x** (CSRTensor) - 指数函数的输入CSRTensor。维度需要在 [0, 7] 的范围。
+        - **x** (CSRTensor) - 指数函数的输入CSRTensor。
 
     返回：
         CSRTensor，具有与 `x` 相同的数据类型和shape。

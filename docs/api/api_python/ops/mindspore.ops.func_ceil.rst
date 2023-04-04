@@ -9,7 +9,7 @@ mindspore.ops.ceil
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     参数：
-        - **input** (Tensor) - Ceil的输入。其数据类型为float16或float32。秩应小于8。
+        - **input** (Tensor) - Ceil的输入。其数据类型为float16或float32。
 
     返回：
         Tensor，shape与 `input` 相同。

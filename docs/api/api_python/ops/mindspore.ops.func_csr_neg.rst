@@ -9,7 +9,7 @@ mindspore.ops.csr_neg
         out_{i} = - x_{i}
 
     参数：
-        - **x** (CSRTensor) - Neg的输入。秩应小于8。其数据类型为数值型。
+        - **x** (CSRTensor) - Neg的输入。其数据类型为数值型。
 
     返回：
         CSRTensor，shape和类型与输入相同。

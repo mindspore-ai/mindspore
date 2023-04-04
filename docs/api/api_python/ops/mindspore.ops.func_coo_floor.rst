@@ -9,7 +9,7 @@ mindspore.ops.coo_floor
         out_i = \lfloor x_i \rfloor
 
     参数：
-        - **x** (COOTensor) - Floor的输入，任意维度的COOTensor，秩应小于8。其数据类型必须为float16、float32。
+        - **x** (COOTensor) - Floor的输入，任意维度的COOTensor。其数据类型必须为float16、float32。
 
     返回：
         COOTensor，shape与 `x` 相同。

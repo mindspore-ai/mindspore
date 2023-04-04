@@ -7,9 +7,6 @@ mindspore.ops.pixel_shuffle
 
     通常情况下，`input` shape :math:`(*, C \times r^2, H, W)` ，输出shape :math:`(*, C, H \times r, W \times r)` 。`r` 是缩小因子。 `*` 是大于等于0的维度。
 
-    .. note::
-        Ascend上输入Tensor的维度要小于7。
-
     参数：
         - **input** (Tensor) - Tensor，shape为 :math:`(*, C \times r^2, H, W)` 。 `input` 的维度需要大于2，并且倒数第三维length可以被 `upscale_factor` 的平方整除。
         - **upscale_factor** (int) - 打乱输入Tensor的因子，是正整数。 `upscale_factor` 是上面提到的 :math:`r` 。

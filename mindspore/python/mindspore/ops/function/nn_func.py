@@ -5265,9 +5265,6 @@ def pixel_shuffle(input, upscale_factor):
     Typically, the `input` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
 
-    Note:
-        The dimension of input Tensor on Ascend should be less than 7.
-
     Args:
         input (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `input` is larger than 2,
             and the length of third to last dimension can be divisible by `upscale_factor` squared.

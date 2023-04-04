@@ -11,7 +11,7 @@ mindspore.ops.assign_sub
         由于 `variable` 类型为 `Parameter` ，其数据类型不能改变，因此只允许 `value` 的数据类型转变为 `variable` 的数据类型。而且由于不同设备支持的转换类型会有所不同，推荐在使用此操作时使用相同的数据类型。
 
     参数：
-        - **variable** (Parameter) - 待更新的网络参数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其轶应小于8。
+        - **variable** (Parameter) - 待更新的网络参数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
         - **value** (Tensor) - 从 `variable` 减去的值，与 `variable` 的shape相同。使用此操作时推荐使用相同的数据类型。
 
     返回：
