@@ -227,8 +227,7 @@ class TensorIndex final {
   explicit TensorIndex(int integer) : TensorIndex((int64_t)integer) {}
   explicit TensorIndex(const py::int_ &integer) : TensorIndex(integer.cast<int64_t>()) {}
 
-  template <class T, class = typename std::enable_if<std::is_same<bool, T>::value>::type>
-  explicit TensorIndex(T boolean) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
+  explicit TensorIndex(bool boolean) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
   explicit TensorIndex(const py::bool_ &boolean) : TensorIndex(py::cast<bool>(boolean)) {}
 
   explicit TensorIndex(const Slice &slice) : slice_(slice), type_(TensorIndexType::Slice) {}
@@ -360,8 +359,7 @@ class TensorIndex final {
 
   // ***********************************************utils*******************************************
   static void CheckGetItemIndex(const TensorIndexType &index_data_type);
-  static void CheckSetItemIndex(const ShapeVector &data_shape, const TensorIndexType &index_data_type,
-                                const TensorIndexType &value_data_type);
+  static void CheckSetItemIndex(const TensorIndexType &index_data_type, const TensorIndexType &value_data_type);
   template <typename T>
   static inline bool CheckTypeIsInstance(const T &type, const std::vector<T> &target_types) {
     return std::any_of(target_types.begin(), target_types.end(),
@@ -455,7 +453,7 @@ class TensorIndex final {
                                   const ShapeVector &broadcast_shape, const ShapeVector &slice_shape,
                                   int64_t fancy_position);
 
-  static ShapeVector ComputeSliceShape(const ShapeVector &slice_shape, int64_t broadcast_shape_len, size_t slice_cnt,
+  static ShapeVector ComputeSliceShape(const ShapeVector &slice_shape, size_t broadcast_shape_len, size_t slice_cnt,
                                        int64_t fancy_position) {
     ShapeVector shape(slice_shape.size(), 1);
     if (slice_cnt >= shape.size()) {
@@ -497,9 +495,8 @@ class TensorIndex final {
   static constexpr int64_t set_item_by_tuple_tensor = 1;
   static constexpr int64_t set_item_by_non_tensor = 2;
   static constexpr int64_t int32_bytes_number = 4;
-  static inline std::tuple<int64_t, py::object, ShapeVector> GetValueTransferType(const TensorIndexType &py_value_type,
-                                                                                  int64_t op_type,
-                                                                                  const TypePtr &data_type);
+  static std::tuple<int64_t, py::object, ShapeVector> GetValueTransferType(const TensorIndexType &py_value_type,
+                                                                           int64_t op_type, const TypePtr &data_type);
 
   // This is the c++ version of format_tuple_indices in
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
@@ -571,7 +568,7 @@ class TensorIndex final {
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
   // Convert list indices to array or list indices based on its contents.
   static TensorIndex FormatList(const TensorIndex &tensor_index, int64_t length);
-  static inline TensorPtr IntToTensor(int64_t i, const ShapeVector &shape);
+  static TensorPtr IntToTensor(int64_t i, const ShapeVector &shape);
   static py::object GenerateIndicesFromTupleOfTensor(const std::vector<TensorIndex> &tuple_index,
                                                      ShapeVector *output_index_shape, py::object *data_transfer_arg);
   static void RemNotExpandedDims(int64_t *idx_advanced, bool expand_true, int64_t tensor_index_ndim, int64_t rem_ndim,
