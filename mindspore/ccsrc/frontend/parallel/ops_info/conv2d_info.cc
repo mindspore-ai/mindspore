@@ -1511,6 +1511,17 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
     InferNewPadListByDimension(W_DIMENSION);
   }
 
+  // the bottom pad and right pad are useless, and can not small than 0
+  if (new_pad_list_[1] < 0) {
+    new_pad_list_[1] = 0;
+    MS_LOG(WARNING) << name_ << ": The new_pad_list[1] is " << new_pad_list_[1] << ", set to 0";
+  }
+
+  if (new_pad_list_[3] < 0) {
+    new_pad_list_[3] = 0;
+    MS_LOG(WARNING) << name_ << ": The new_pad_list[3] is " << new_pad_list_[3] << ", set to 0";
+  }
+
   MS_LOG(INFO) << name_ << ": The new pad list is " << new_pad_list_;
 }
 
