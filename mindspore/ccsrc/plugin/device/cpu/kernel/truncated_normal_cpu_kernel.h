@@ -50,9 +50,9 @@ class TruncatedNormalCPUKernelMod : public NativeCpuKernelMod {
   TruncatedNormalFunc kernel_func_;
   TypeId output_type_{kTypeUnknown};
   TypeId input_type_{kTypeUnknown};
-  size_t seed_{0};
-  size_t seed2_{0};
-  size_t seedc_{0};
+  int64_t seed_{0};
+  int64_t seed2_{0};
+  int64_t seedc_{0};
   bool flag_{true};
 };
 }  // namespace kernel

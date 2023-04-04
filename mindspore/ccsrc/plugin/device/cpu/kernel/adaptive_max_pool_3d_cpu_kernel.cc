@@ -263,7 +263,7 @@ void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<A
   auto output_data = static_cast<T *>(outputs[0]->addr);
   auto indices_data = static_cast<int32_t *>(outputs[1]->addr);
   if (input_shape_.size() == kInputShapeDims4) {
-    input_shape_.insert(input_shape_.begin(), 1);
+    (void)input_shape_.insert(input_shape_.begin(), 1);
   }
   size_B_ = input_shape_[dimB];
   size_D_ = input_shape_[dimD];
