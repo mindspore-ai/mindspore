@@ -547,13 +547,13 @@ NodePtrList BinopGatherDGradCommon(const BpropIRBuilder *ib, const std::string &
     x_shp = ib->GetShape(x);
   }
   auto index_shp = ib->GetShape(index);
-  auto dim_before_axis = 1;
+  int64_t dim_before_axis = 1;
   for (size_t i = 0; i < dim; ++i) {
     dim_before_axis *= x_shp[i];
   }
   auto dim_at_axis_index = index_shp[dim];
   auto dim_at_axis_output = x_shp[dim];
-  auto dim_after_axis = 1;
+  int64_t dim_after_axis = 1;
   for (size_t i = dim + 1; i < x_shp.size(); ++i) {
     dim_after_axis *= x_shp[i];
   }
@@ -603,7 +603,7 @@ REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(i
   if (axis_int == 0) {
     ShapeVector values_shape{ib->GetSize(indices)};
     if (x_shp.size() > 1) {
-      values_shape.insert(values_shape.end(), x_shp.begin() + 1, x_shp.end());
+      (void)values_shape.insert(values_shape.end(), x_shp.begin() + 1, x_shp.end());
     }
     auto values = ib->Reshape(dout, values_shape);
     auto indices_new = ib->Reshape(indices, {values_shape[0]});
@@ -622,7 +622,8 @@ REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(i
   ind_shp = ib->GetShape(indices);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_int);
   auto values_transpose = ib->Transpose(dout, perm_1);
-  auto params_grad = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_int])});
+  auto params_grad =
+    ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[LongToSize(axis_int)])});
   auto perm_2 = GenerateInverseIndex(x_shp, axis_int);
   params_grad = ib->Transpose(params_grad, perm_2);
   return {params_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
@@ -1601,9 +1602,10 @@ REG_BPROP_BUILDER("ConjugateTranspose").SetUnusedInputs({i0, i2}).SetBody(BODYFU
   auto perm = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto tmp_perm = GetIntList(perm);
+  auto tmp_perm_sz = SizeToLong(tmp_perm.size());
   std::vector<int64_t> new_perm;
   (void)std::transform(tmp_perm.begin(), tmp_perm.end(), std::back_inserter(new_perm),
-                       [&tmp_perm](const int64_t v) { return v >= 0 ? v : v + tmp_perm.size(); });
+                       [&tmp_perm, tmp_perm_sz](const int64_t v) { return v >= 0 ? v : v + tmp_perm_sz; });
   auto res_perm = InvertPermutation(new_perm);
   return {ib->Emit("ConjugateTranspose", {dout, ib->Value<ShapeVector>(res_perm)}), ib->ZerosLike(perm)};
 });
@@ -1787,17 +1789,19 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
 
 REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
-  auto theta = ib->GetInput(kIndex0);
   auto output_size = GetIntList(ib->GetInput(kIndex1));
   auto dout = ib->GetInput(kIndex3);
-  auto dtype = ib->GetDtype(theta);
-
   auto start = ib->Tensor(-1, kFloat32);
   auto stop = ib->Tensor(1, kFloat32);
   auto zero = ib->Tensor(0, kFloat32);
-  ShapeVector perm1 = {1, 0};
-  ShapeVector perm2 = {0, 2, 1};
-  if (output_size.size() == 5) {
+  constexpr int64_t c0 = 0;
+  constexpr int64_t c1 = 1;
+  constexpr int64_t c2 = 2;
+  constexpr int64_t c3 = 3;
+  constexpr int64_t c4 = 4;
+  ShapeVector perm1{c1, c0};
+  ShapeVector perm2{c0, c2, c1};
+  if (output_size.size() == kDim5) {
     const auto n_value = output_size[kIndex0];
     const auto d_value = output_size[kIndex2];
     const auto h_value = output_size[kIndex3];
@@ -1827,14 +1831,13 @@ REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     if (n_value != 1) {
       output = ib->Tile(output, {n_value, 1});
     }
-    output = ib->Reshape(output, {n_value, 4, h_value * w_value * d_value});
-    dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, 3});
+    output = ib->Reshape(output, {n_value, c4, h_value * w_value * d_value});
+    dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, c3});
     dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
     dtheta = ib->Transpose(dtheta, perm2);
     return {dtheta, tre};
-  }
-  if (output_size.size() == 4) {
+  } else if (output_size.size() == kDim4) {
     auto x_shape = ib->GetShape(dout);
     const auto n_value = x_shape[kIndex0];
     const auto h_value = x_shape[kIndex1];
@@ -1854,8 +1857,8 @@ REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     auto output = ib->Concat({one, two, tre}, 1);
     output = ib->Transpose(output, perm1);
     output = ib->Tile(output, {n_value, 1});
-    output = ib->Reshape(output, {n_value, 3, h_value * w_value});
-    dout = ib->Reshape(dout, {n_value, h_value * w_value, 2});
+    output = ib->Reshape(output, {n_value, c3, h_value * w_value});
+    dout = ib->Reshape(dout, {n_value, h_value * w_value, c2});
     dout = ib->Cast(dout, kFloat32);
     auto dtheta = ib->BatchMatMul(output, dout);
     dtheta = ib->Transpose(dtheta, perm2);
@@ -1863,7 +1866,6 @@ REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   }
   MS_LOG(EXCEPTION) << "For op[" << ib->name() << "], the length of output_size should be 4 or 5, but got "
                     << output_size.size();
-  return {};
 });
 
 REG_BPROP_BUILDER("SegmentMax").SetBody(SegmentMinOrMaxGrad);

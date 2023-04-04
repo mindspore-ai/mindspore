@@ -46,7 +46,8 @@ static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const NodePtr &
   auto x_dtype = ib->GetDtype(x);
   auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
     auto x_shape = inputs.at(0);
-    ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
+    constexpr int c2 = 2;
+    ShapeVector shape2(x_shape.begin(), x_shape.end() - c2);
     return {{x_shape[x_shape.size() - kDim2]}, {x_shape.back()}, shape2};
   };
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
@@ -88,7 +89,8 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BOD
   auto dout = ib->GetInput(kIndex4);
   auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
     auto input_shape = inputs.at(0);
-    auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - kDim2);
+    constexpr int c2 = 2;
+    auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - c2);
     diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - 1]));
     return {diag_shape};
   };
@@ -231,7 +233,7 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
 REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
-  std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
+  (void)std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 
