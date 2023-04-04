@@ -19,3 +19,18 @@ mindspore.SparseTensor
 
     返回：
         SparseTensor，由 `indices` 、 `values` 和 `shape` 组成。
+
+    .. py:method:: indices
+        :property:
+
+        返回SparseTensor的索引值。
+
+    .. py:method:: values
+        :property:
+
+        返回SparseTensor的非零元素值。
+
+    .. py:method:: shape
+        :property:
+
+        返回SparseTensor的稠密shape。
