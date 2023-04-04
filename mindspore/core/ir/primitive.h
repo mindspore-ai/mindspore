@@ -55,7 +55,7 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] other An existing Primitive object.
   /// \return A Primitive object set with the same members as other.
-  virtual Primitive &operator=(const Primitive &other);
+  Primitive &operator=(const Primitive &other);
   MS_DECLARE_PARENT(Primitive, Named);
   abstract::AbstractBasePtr ToAbstract() override;
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
