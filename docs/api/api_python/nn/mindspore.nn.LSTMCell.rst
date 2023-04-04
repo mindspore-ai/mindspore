@@ -30,11 +30,11 @@ mindspore.nn.LSTMCell
         - **has_bias** (bool) - cell是否有偏置 `b_ih` 和 `b_hh` 。默认值：True。
 
     输入：
-        - **x** (Tensor) - shape为(batch_size, `input_size`)的Tensor。
-        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为(batch_size, `hidden_size`)。 `hx` 的数据类型必须与 `x` 相同。
+        - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。
+        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为 :math:`(batch\_size, hidden\_size)` 。 `hx` 的数据类型必须与 `x` 相同。
 
     输出：
-        - **hx'** (Tensor) - 两个Tensor(h', c')的元组，其shape为(batch_size, `hidden_size`)。
+        - **hx'** (Tensor) - 两个Tensor(h', c')的元组，其shape为 :math:`(batch\_size, hidden\_size)` 。
 
     异常：
         - **TypeError** - `input_size`， `hidden_size` 不是整数。

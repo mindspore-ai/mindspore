@@ -9687,11 +9687,10 @@ class Pdist(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.nn_ops import Pdist
+        >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
-        >>> op = Pdist(p=2.0)
+        >>> op = ops.Pdist(p=2.0)
         >>> y = op(x)
         >>> print(y)
         [1.4142135 2.828427  1.4142135]
@@ -10154,6 +10153,7 @@ class GLU(Primitive):
 
     Examples:
         >>> from mindspore import ops, Tensor
+        >>> import numpy as np
         >>> axis = 0
         >>> x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,

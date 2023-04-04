@@ -22,11 +22,11 @@ mindspore.nn.GRUCell
         - **has_bias** (bool) - cell是否有偏置项 `b_in` 和 `b_hn` 。默认值：True。
 
     输入：
-        - **x** (Tensor) - shape为(batch_size, `input_size` )的Tensor。
-        - **hx** (Tensor) - 数据类型为mindspore.float32、shape为(batch_size, `hidden_size` )的Tensor。 `hx` 的数据类型必须与 `x` 相同。
+        - **x** (Tensor) - shape为 :math:`(batch\_size, input\_size)` 的Tensor。
+        - **hx** (Tensor) - 数据类型为mindspore.float32、shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。 `hx` 的数据类型必须与 `x` 相同。
 
     输出：
-        - **hx'** (Tensor) - shape为(batch_size, `hidden_size`)的Tensor。
+        - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。
 
     异常：
         - **TypeError** - `input_size` 、 `hidden_size` 不是int。

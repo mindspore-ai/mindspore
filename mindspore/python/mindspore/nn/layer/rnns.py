@@ -804,9 +804,9 @@ class LSTM(_RNNBase):
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
-          shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
+          shape :math:`(seq\_len, batch\_size, input\_size)` or :math:`(batch\_size, seq\_len, input\_size)`.
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
-          or mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+          or mindspore.float16 and shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
           The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(batch\_size)`. Default: None.
@@ -817,7 +817,7 @@ class LSTM(_RNNBase):
     Outputs:
         Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
 
-        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * hidden_size).
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape
           (num_directions * `num_layers`, batch_size, `hidden_size`).
 

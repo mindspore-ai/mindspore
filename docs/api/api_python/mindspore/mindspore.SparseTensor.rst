@@ -25,12 +25,12 @@ mindspore.SparseTensor
 
         返回SparseTensor的索引值。
 
-    .. py:method:: values
-        :property:
-
-        返回SparseTensor的非零元素值。
-
     .. py:method:: shape
         :property:
 
         返回SparseTensor的稠密shape。
+
+    .. py:method:: values
+        :property:
+
+        返回SparseTensor的非零元素值。
