@@ -28,8 +28,8 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolWithArgmaxV2 = "MaxPoolWithArgmaxV2";
-constexpr auto kAiCoreNumTypeInt32 = 3;
-constexpr auto kAiCoreNumTypeInt64 = 4;
+constexpr int64_t kAiCoreNumTypeInt32 = 3;
+constexpr int64_t kAiCoreNumTypeInt64 = 4;
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPoolWithArgmaxV2 for more details
 class MIND_API MaxPoolWithArgmaxV2 : public BaseOperator {
  public:
