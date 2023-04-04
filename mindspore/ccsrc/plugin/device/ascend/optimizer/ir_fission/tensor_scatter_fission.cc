@@ -56,17 +56,6 @@ const AnfNodePtr TensorScatterFission::Process(const FuncGraphPtr &graph, const 
   return scatter_nd_node;
 }
 
-ValueNodePtr TensorScatterUpdateFission::GetScatterNdPrimNode() const {
-  return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdUpdate->name()));
-}
-
-const BaseRef TensorScatterUpdateFission::DefinePattern() const {
-  VarPtr input = std::make_shared<Var>();
-  VarPtr indices = std::make_shared<Var>();
-  VarPtr updates = std::make_shared<Var>();
-  return VectorRef({prim::kPrimTensorScatterUpdate, input, indices, updates});
-}
-
 ValueNodePtr TensorScatterAddFission::GetScatterNdPrimNode() const {
   return NewValueNode(std::make_shared<Primitive>(prim::kPrimScatterNdAdd->name()));
 }
