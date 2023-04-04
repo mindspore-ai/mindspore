@@ -69,6 +69,8 @@ class BACKEND_EXPORT OpCompiler {
   // and then compile the operators in parallel to improve compilation efficiency.
   static void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
 
+  std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim);
+
   // Clear anf resources before process exit.
   void ClearAllCache();
 

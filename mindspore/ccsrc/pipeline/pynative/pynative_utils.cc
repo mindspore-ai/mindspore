@@ -827,6 +827,8 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     ClonePrim(op_run_info);
   }
 
+  (void)op_run_info->base_op_run_info.input_tensor.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.input_mask.reserve(op_run_info->input_size);
   // Get input tensors.
   op_run_info->op_prim->BeginRecordAddAttr();
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
