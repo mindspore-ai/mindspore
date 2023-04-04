@@ -280,6 +280,23 @@ def test_ops_flatten_single_element(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_nn_flatten_single_element():
+    """
+    Feature: Flatten ops.
+    Description: test flatten with single element.
+    Expectation: success.
+    """
+    with pytest.raises(ValueError):
+        nn.Flatten()(Tensor(1))
+
+    with pytest.raises(ValueError):
+        nn.Flatten()(Tensor([1]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_ops_flatten_dynamic_shape():
     """
     Feature: Flatten ops.

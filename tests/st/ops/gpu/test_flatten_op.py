@@ -354,7 +354,7 @@ def test_flatten_order(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_flatten_single_element(mode):
+def test_ops_flatten_single_element(mode):
     """
     Feature: gpu Flatten ops.
     Description: test flatten with single element.
@@ -374,6 +374,22 @@ def test_flatten_single_element(mode):
 
     with pytest.raises(ValueError):
         NetFlattenOps()(y, start_dim=2)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_nn_flatten_single_element():
+    """
+    Feature: gpu Flatten ops.
+    Description: test flatten with single element.
+    Expectation: success.
+    """
+    with pytest.raises(ValueError):
+        nn.Flatten()(Tensor(1))
+
+    with pytest.raises(ValueError):
+        nn.Flatten()(Tensor([1]))
 
 
 @pytest.mark.level0
