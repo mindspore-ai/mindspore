@@ -97,19 +97,19 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto real_num_layers = attr_map[kGRUV2RealNumLayers];
   auto real_hidden_size = attr_map[kGRUV2RealHiddenSize];
   if (h_shape[kInputIndex1] != batch_size || seq_lengths_shape[kInputIndex0] != batch_size) {
-    MS_LOG(EXCEPTION) << "For dynamic rnn, the batch_size should be the same between input, h, and seq_lengths.";
+    MS_EXCEPTION(ValueError) << "For dynamic rnn, the batch_size should be the same between input, h, and seq_lengths.";
   }
 
   if (x_shape[kInputIndex2] != input_size) {
-    MS_LOG(EXCEPTION) << "For dynamic rnn, the input_shape[2] should equal to input_size.";
+    MS_EXCEPTION(ValueError) << "For dynamic rnn, the input_shape[2] should equal to input_size.";
   }
 
   if (h_shape[kInputIndex0] != real_num_layers) {
-    MS_LOG(EXCEPTION) << "For dynamic rnn, the h_shape[0] should equal to num_directions * num_layers.";
+    MS_EXCEPTION(ValueError) << "For dynamic rnn, the h_shape[0] should equal to num_directions * num_layers.";
   }
 
   if (h_shape[kInputIndex2] != hidden_size) {
-    MS_LOG(EXCEPTION) << "For dynamic rnn, the h_shape[2] should equal to hidden_size.";
+    MS_EXCEPTION(ValueError) << "For dynamic rnn, the h_shape[2] should equal to hidden_size.";
   }
   ShapeVector reserve_shape = {1, 1};
   auto reserve_shape_ptr = std::make_shared<abstract::Shape>(reserve_shape);
@@ -120,13 +120,13 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
 
   bool is_dynamic_shp = !x_shape_map[kMaxShape].empty();
   if (!w_shape_map[kMaxShape].empty()) {
-    MS_LOG(EXCEPTION) << "For GRUV2, the weight cannot be dynaimic shape.";
+    MS_EXCEPTION(ValueError) << "For GRUV2, the weight cannot be dynaimic shape.";
   }
   if (is_dynamic_shp) {
     // x_shape: (seq_len, batch_size, input_size)
     if (x_shape[kInputIndex0] == abstract::Shape::kShapeDimAny ||
         x_shape[kInputIndex2] == abstract::Shape::kShapeDimAny) {
-      MS_LOG(EXCEPTION) << "For GRUV2, only the batch size can be dynamic shape.";
+      MS_EXCEPTION(ValueError) << "For GRUV2, only the batch size can be dynamic shape.";
     }
   }
 
