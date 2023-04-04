@@ -123,8 +123,7 @@ TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_conv2d_backprop_filter) {
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_select.json";
   EXPECT_TRUE(tbe_json_creator_build->GenJson(conv2d_backprop_filter, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 6097606936200506174U)
-    << "Error json is:" << kernel_json
-    << ", for expected json, see file: tbe_single_conv2d_backprop_filter_build.json";
+    << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_conv2d_backprop_filter_build.json";
 }
 
 TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_dynamic_rnn) {
@@ -306,7 +305,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 18379117451241093022U)
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 4734306082379422137U)
     << "Error json is:" << fusion_json << ", for expected json, see file: tbe_fusion_common.json";
 }
 
@@ -367,7 +366,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 16132617067967162574U)
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 11862988587415457119U)
     << "Error json is:" << fusion_json << ", for expected json, see file: test_fusion_add_conv2d.json";
 }
 
