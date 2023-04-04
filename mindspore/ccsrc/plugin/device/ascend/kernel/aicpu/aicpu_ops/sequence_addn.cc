@@ -73,7 +73,8 @@ uint32_t SequenceAddNKernel::SequenceAddNTask() {
       AtomicAdd<T>(output_addr + id, input_x_addr[id]);
     }
   };
-  const int64_t per_unit_size = static_cast<int64_t>(element_size) / std::thread::hardware_concurrency();
+  const int64_t per_unit_size =
+    static_cast<int64_t>(element_size) / static_cast<int64_t>(std::thread::hardware_concurrency());
   for (size_t i = 0; i < element_num; i++) {
     input_x_addr = inputs_addr + i * element_size;
     ParallelFor(static_cast<int64_t>(element_size), per_unit_size, sequence_add_n);
