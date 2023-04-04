@@ -309,10 +309,272 @@ cudaError_t CalGeneralReduction(bool small, const T *input, const size_t bound, 
 }
 
 template <typename S>
+__global__ void ThreadReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
+                                half *output, S *output_index, half init_K) {
+  init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
+  const S init_V = static_cast<S>(-1);
+
+  for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < outer_size * inner_size;
+       t_idx += blockDim.x * gridDim.x) {
+    int outer_id = t_idx / inner_size;
+    int inner_id = t_idx % inner_size;
+
+    half threadK = init_K;
+    S threadV = init_V;
+
+    for (int i = 0; i < bound; i++) {
+      half other_K = input[outer_id * bound * inner_size + i * inner_size + inner_id];
+      S other_V = i;
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+
+    output[outer_id * inner_size + inner_id] = threadK;
+    output_index[outer_id * inner_size + inner_id] = threadV;
+  }
+}
+
+template <typename S>
+__global__ void WarpReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
+                              half *output, S *output_index, half init_K) {
+  init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
+  const S init_V = static_cast<S>(-1);
+
+  for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kWarpSize * outer_size * inner_size;
+       t_idx += blockDim.x * gridDim.x) {
+    int outer_id = t_idx / kWarpSize / inner_size;
+    int inner_id = t_idx / kWarpSize % inner_size;
+
+    int laneId = threadIdx.x % kWarpSize;
+
+    half threadK = init_K;
+    S threadV = init_V;
+
+    for (int i = laneId; i < bound; i += kWarpSize) {
+      half other_K = input[outer_id * bound * inner_size + i * inner_size + inner_id];
+      S other_V = i;
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+    __syncwarp();
+
+    for (int offset = kWarpSize / 2; offset > 0; offset /= 2) {
+      half other_K = __shfl_down_sync(0xffffffff, threadK, offset);
+      S other_V = __shfl_down_sync(0xffffffff, threadV, offset);
+
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+
+    __syncwarp();
+
+    if (laneId == 0) {
+      output[outer_id * inner_size + inner_id] = threadK;
+      output_index[outer_id * inner_size + inner_id] = threadV;
+    }
+    __syncthreads();
+  }
+}
+
+template <typename S>
+__global__ void Warp4Reduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
+                               half *output, S *output_index, half init_K) {
+  __shared__ half shared_K[kNumWarps];
+  __shared__ S shared_V[kNumWarps];
+  init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
+  const S init_V = static_cast<S>(-1);
+
+  for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kGroupSize * outer_size * inner_size;
+       t_idx += blockDim.x * gridDim.x) {
+    int outer_id = t_idx / kGroupSize / inner_size;
+    int inner_id = t_idx / kGroupSize % inner_size;
+
+    int groupId = threadIdx.x / kGroupSize;
+    int tgId = threadIdx.x % kGroupSize;
+    int warpId = threadIdx.x / kWarpSize;
+    int laneId = threadIdx.x % kWarpSize;
+
+    half threadK = init_K;
+    S threadV = init_V;
+
+    if (laneId == 0) {
+      shared_K[warpId] = init_K;
+      shared_V[warpId] = init_V;
+    }
+    __syncthreads();
+
+    for (int i = tgId; i < bound; i += kGroupSize) {
+      half other_K = input[outer_id * bound * inner_size + i * inner_size + inner_id];
+      S other_V = i;
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+    __syncwarp();
+
+    for (int offset = kWarpSize / 2; offset > 0; offset /= 2) {
+      half other_K = __shfl_down_sync(0xffffffff, threadK, offset);
+      S other_V = __shfl_down_sync(0xffffffff, threadV, offset);
+
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+
+    __syncwarp();
+
+    if (laneId == 0) {
+      shared_K[warpId] = threadK;
+      shared_V[warpId] = threadV;
+    }
+    __syncthreads();
+
+    if (tgId < 2) {
+      bool is_winner =
+        small ? Cmp<half, S>::gt(shared_K[(groupId * kWarpGroup) + tgId], shared_K[(groupId * kWarpGroup) + tgId + 2],
+                                 shared_V[(groupId * kWarpGroup) + tgId], shared_V[(groupId * kWarpGroup) + tgId + 2])
+              : Cmp<half, S>::lt(shared_K[(groupId * kWarpGroup) + tgId], shared_K[(groupId * kWarpGroup) + tgId + 2],
+                                 shared_V[(groupId * kWarpGroup) + tgId], shared_V[(groupId * kWarpGroup) + tgId + 2]);
+      ConditionAssign(is_winner, (shared_K + (groupId * kWarpGroup) + tgId),
+                      (shared_K[(groupId * kWarpGroup) + tgId + 2]));
+      ConditionAssign(is_winner, (shared_V + (groupId * kWarpGroup) + tgId),
+                      (shared_V[(groupId * kWarpGroup) + tgId + 2]));
+    }
+    __syncwarp();
+
+    if (tgId == 0) {
+      bool is_winner =
+        small ? Cmp<half, S>::gt(shared_K[(groupId * kWarpGroup) + tgId], shared_K[(groupId * kWarpGroup) + tgId + 1],
+                                 shared_V[(groupId * kWarpGroup) + tgId], shared_V[(groupId * kWarpGroup) + tgId + 1])
+              : Cmp<half, S>::lt(shared_K[(groupId * kWarpGroup) + tgId], shared_K[(groupId * kWarpGroup) + tgId + 1],
+                                 shared_V[(groupId * kWarpGroup) + tgId], shared_V[(groupId * kWarpGroup) + tgId + 1]);
+      ConditionAssign(is_winner, (shared_K + (groupId * kWarpGroup) + tgId),
+                      (shared_K[(groupId * kWarpGroup) + tgId + 1]));
+      ConditionAssign(is_winner, (shared_V + (groupId * kWarpGroup) + tgId),
+                      (shared_V[(groupId * kWarpGroup) + tgId + 1]));
+
+      // The first thread of each group write output
+      output[outer_id * inner_size + inner_id] = shared_K[groupId * kWarpGroup];
+      output_index[outer_id * inner_size + inner_id] = shared_V[groupId * kWarpGroup];
+    }
+    __syncthreads();
+  }
+}
+
+template <typename S>
+__global__ void BlockReduction1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
+                               half *output, S *output_index, half init_K) {
+  __shared__ half shared_K[kNumWarps];
+  __shared__ S shared_V[kNumWarps];
+  init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
+  const S init_V = static_cast<S>(-1);
+
+  for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kBlockSize * outer_size * inner_size;
+       t_idx += blockDim.x * gridDim.x) {
+    int outer_id = t_idx / kBlockSize / inner_size;
+    int inner_id = t_idx / kBlockSize % inner_size;
+
+    int tgId = threadIdx.x % kBlockSize;
+    int warpId = threadIdx.x / kWarpSize;
+    int laneId = threadIdx.x % kWarpSize;
+
+    half threadK = init_K;
+    S threadV = init_V;
+
+    if (laneId == 0) {
+      shared_K[warpId] = init_K;
+      shared_V[warpId] = init_V;
+    }
+    __syncthreads();
+
+    for (int i = tgId; i < bound; i += kBlockSize) {
+      half other_K = input[outer_id * bound * inner_size + i * inner_size + inner_id];
+      S other_V = i;
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+    __syncwarp();
+
+    for (int offset = kWarpSize / 2; offset > 0; offset /= 2) {
+      half other_K = __shfl_down_sync(0xffffffff, threadK, offset);
+      S other_V = __shfl_down_sync(0xffffffff, threadV, offset);
+
+      bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                             : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+      ConditionAssign(is_winner, &threadK, other_K);
+      ConditionAssign(is_winner, &threadV, other_V);
+    }
+
+    __syncwarp();
+
+    if (laneId == 0) {
+      shared_K[warpId] = threadK;
+      shared_V[warpId] = threadV;
+    }
+    __syncthreads();
+
+    // Shared memory reduction
+    // There are 16 items in shared memory, can be reduced within one warp.
+    if (warpId == 0) {
+      threadK = laneId < kNumWarps ? shared_K[laneId] : init_K;
+      threadV = laneId < kNumWarps ? shared_V[laneId] : init_V;
+    }
+    __syncwarp();
+
+    if (warpId == 0) {
+      for (int offset = kWarpSize / 4; offset > 0; offset /= 2) {
+        half other_K = __shfl_down_sync(0xffffffff, threadK, offset);
+        S other_V = __shfl_down_sync(0xffffffff, threadV, offset);
+
+        bool is_winner = small ? Cmp<half, S>::gt(threadK, other_K, threadV, other_V)
+                               : Cmp<half, S>::lt(threadK, other_K, threadV, other_V);
+        ConditionAssign(is_winner, &threadK, other_K);
+        ConditionAssign(is_winner, &threadV, other_V);
+      }
+    }
+    __syncwarp();
+
+    if (warpId == 0 && laneId == 0) {
+      output[outer_id * inner_size + inner_id] = threadK;
+      output_index[outer_id * inner_size + inner_id] = threadV;
+    }
+  }
+}
+
+template <typename S>
+void GeneralReductionImpl1(bool small, size_t outer_size, size_t bound, size_t inner_size, const half *input,
+                          half *output, S *output_index, half init_K, cudaStream_t stream) {
+  int block_num_limit = outer_size * inner_size;
+  if (bound <= kMaxThreadLoop) {
+    ThreadReduction1<S><<<GET_BLOCKS(block_num_limit), kBlockSize, 0, stream>>>(small, outer_size, bound, inner_size,
+                                                                                  input, output, output_index, init_K);
+  } else if (bound <= kMaxWarpLoop) {
+    WarpReduction1<S><<<GET_BLOCKS(block_num_limit * kWarpSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
+  } else if (bound <= kMaxGroupLoop) {
+    Warp4Reduction1<S><<<GET_BLOCKS(block_num_limit * kGroupSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
+  } else {
+    BlockReduction1<S><<<GET_BLOCKS(block_num_limit * kBlockSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
+  }
+}
+
+template <typename S>
 cudaError_t CalGeneralReduction(bool small, const half *input, const size_t bound, const size_t outerSize,
                                 const size_t innerSize, S *output_index, half *output, cudaStream_t stream) {
-  half init_K = small ? static_cast<half>(65504) : static_cast<half>(-65504);
-  GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
+  half init_K = small ? std::numeric_limits<half>::max() : std::numeric_limits<half>::lowest();
+  GeneralReductionImpl1(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
   CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
