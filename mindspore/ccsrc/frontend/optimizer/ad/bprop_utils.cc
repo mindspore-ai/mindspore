@@ -131,10 +131,7 @@ bool ExportBpropToMindIR(const std::string &prim_name, const FuncGraphPtr &func_
   return DumpBinaryProto(func_graph, bprop_mindir_path);
 }
 
-bool CheckBpropHash(const std::string &prim_name, const std::string &hash_in_mindir,
-                    const std::string &bprop_filepath) {
-  auto real_path = GetBpropDir() + bprop_filepath;
-  auto bprop_hash = system::sha256::GetHashFromString(GetBpropString(real_path, prim_name));
+bool CheckBpropHash(const std::string &prim_name, const std::string &hash_in_mindir, const std::string &bprop_hash) {
   if (hash_in_mindir == bprop_hash) {
     return true;
   }
@@ -146,6 +143,11 @@ bool CheckBpropHash(const std::string &prim_name, const std::string &hash_in_min
                 << "the hash in mindir: " << hash_in_mindir;
 
   return false;
+}
+
+std::string GetPythonBpropHash(const std::string &prim_name, const std::string &bprop_filepath) {
+  auto real_path = GetBpropDir() + bprop_filepath;
+  return system::sha256::GetHashFromString(GetBpropString(real_path, prim_name));
 }
 
 FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
@@ -163,7 +165,14 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
     MS_LOG(WARNING) << "Failed to load the bprop mindir " << bprop_mindir_realpath.value();
     return nullptr;
   }
-  if (!CheckBpropHash(prim->name(), bprop_fg->bprop_hash(), bprop_fg->bprop_filepath())) {
+  auto bprop_hash = GetPythonBpropHash(prim->name(), bprop_fg->bprop_filepath());
+  if (bprop_hash.empty()) {
+    MS_LOG(INFO) << "The bprop defined in python for " << prim->name()
+                 << " is not found. It should have been defined in c++.";
+    return nullptr;
+  }
+
+  if (!CheckBpropHash(prim->name(), bprop_fg->bprop_hash(), bprop_hash)) {
     MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date. The name of prim is: " << prim->name() << ".";
   }
   return bprop_fg;
@@ -301,7 +310,13 @@ bool CheckMindir(const py::object &obj) {
     MS_LOG(ERROR) << "Failed to load the bprop mindir " << bprop_mindir_realpath.value();
     return false;
   }
-  if (!CheckBpropHash(prim_name, bprop_fg->bprop_hash(), bprop_fg->bprop_filepath())) {
+  auto bprop_hash = GetPythonBpropHash(prim_name, bprop_fg->bprop_filepath());
+  if (bprop_hash.empty()) {
+    MS_LOG(INFO) << "The bprop defined in python for " << prim_name
+                 << " is not found. It should have been defined in c++.";
+    return true;
+  }
+  if (!CheckBpropHash(prim_name, bprop_fg->bprop_hash(), bprop_hash)) {
     MS_LOG(ERROR) << "The bprop mindir files are not up to date.";
     return false;
   }
