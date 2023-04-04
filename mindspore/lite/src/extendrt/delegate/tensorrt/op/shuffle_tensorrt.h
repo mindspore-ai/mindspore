@@ -42,6 +42,7 @@ class ShuffleTensorRT : public TensorRTOp {
   int AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer);
+  int IsSqueezeSupport();
 
   Format out_format_ = Format::NCHW;
   nvinfer1::ITensor *shuffler_input_{nullptr};

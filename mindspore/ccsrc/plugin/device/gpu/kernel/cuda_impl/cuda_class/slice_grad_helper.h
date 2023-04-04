@@ -26,7 +26,11 @@ namespace mindspore {
 namespace cukernel {
 constexpr size_t kSliceGradDefaultInputShapeSize = 4;
 constexpr size_t kSliceGradMaxInputShapeSize = 7;
+constexpr size_t kDim2 = 2;
+constexpr size_t kDim3 = 3;
 constexpr size_t kDim4 = 4;
+constexpr size_t kDim5 = 5;
+constexpr size_t kDim6 = 6;
 constexpr size_t kDim7 = 7;
 class SliceGradAttr : public GpuKernelAttrBase {
  public:
@@ -78,14 +82,14 @@ class SliceGradHelperGpuKernel : public GpuKernelHelperBase {
     auto &begin = attr_ptr_->begin;
     auto &size = attr_ptr_->size;
     if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
-      CalSlice4DGrad(begin[0], begin[1], begin[2], begin[3], size[0], size[1], size[2], size[3], input_shape[0],
-                     input_shape[1], input_shape[2], input_shape[3], dy, dx,
+      CalSlice4DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], size[0], size[1], size[kDim2], size[kDim3],
+                     input_shape[0], input_shape[1], input_shape[kDim2], input_shape[kDim3], dy, dx,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CalSlice7DGrad(begin[0], begin[1], begin[2], begin[3], begin[4], begin[5], begin[6], size[0], size[1], size[2],
-                     size[3], size[4], size[5], size[6], input_shape[0], input_shape[1], input_shape[2], input_shape[3],
-                     input_shape[4], input_shape[5], input_shape[6], dy, dx,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalSlice7DGrad(begin[0], begin[1], begin[kDim2], begin[kDim3], begin[kDim4], begin[kDim5], begin[kDim6], size[0],
+                     size[1], size[kDim2], size[kDim3], size[kDim4], size[kDim5], size[kDim6], input_shape[0],
+                     input_shape[1], input_shape[kDim2], input_shape[kDim3], input_shape[kDim4], input_shape[kDim5],
+                     input_shape[kDim6], dy, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     return 0;
   }

@@ -28,7 +28,6 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op_registration_factory.h"
 #include "src/extendrt/delegate/tensorrt/tensor_info.h"
-// #include "src/extendrt/delegate/tensorrt/cuda_impl/cublas_utils.h"
 #include "src/common/log_util.h"
 #include "ops/base_operator.h"
 #include "ops/op_name.h"

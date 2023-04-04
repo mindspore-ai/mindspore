@@ -28,11 +28,11 @@ namespace mindspore::lite {
 int ROIAlignTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                 const std::vector<TensorInfo> &out_tensors) {
   if (in_tensors.size() != INPUT_SIZE2) {
-    MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
+    MS_LOG(ERROR) << "Unsupported input tensor size for ROIAlignTensorRT, size is " << in_tensors.size();
     return RET_ERROR;
   }
   if (out_tensors.size() != 1) {
-    MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
+    MS_LOG(ERROR) << "Unsupported output tensor size for ROIAlignTensorRT, size is " << out_tensors.size();
     return RET_ERROR;
   }
   return RET_OK;

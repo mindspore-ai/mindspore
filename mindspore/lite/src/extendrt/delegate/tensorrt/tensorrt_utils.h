@@ -58,7 +58,6 @@ typedef union float32_bits {
   float f;
 } float32_bits;
 
-// #define PROFILER_
 #ifdef PROFILER_
 struct SimpleProfiler : public nvinfer1::IProfiler {
   struct Record {
