@@ -2606,19 +2606,19 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
   const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
   py::list py_values = python_adapter::GetPyObjAttr(node, "values");
   std::vector<AnfNodePtr> value_nodes{NewValueNode(prim::kPrimJoinedStr)};
-  AnfNodePtr interpret_node = nullptr;
+  bool has_interpret_node = false;
   for (size_t i = 0; i < py_values.size(); ++i) {
     AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
     str_value = HandleInterpret(block, str_value, py_values[i]);
     // If exist interpret node in JoinedStr, all object in py_values will convert to interpret node.
     // Need to parse all elements in py_values in order to put them in local param dict.
-    if (interpret_node == nullptr && IsPrimitiveCNode(str_value, prim::kPrimPyInterpret)) {
-      interpret_node = str_value;
+    if (!has_interpret_node && IsPrimitiveCNode(str_value, prim::kPrimPyInterpret)) {
+      has_interpret_node = true;
     }
     (void)value_nodes.emplace_back(str_value);
   }
-  if (interpret_node != nullptr) {
-    return MakeInterpretNode(block, interpret_node, script_text);
+  if (has_interpret_node) {
+    return MakeInterpretNode(block, value_nodes[1], script_text);
   }
   auto func_graph = block->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
