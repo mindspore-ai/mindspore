@@ -188,18 +188,19 @@ __global__ void ResizeBicubicGradHalfPixelCenters(const T *input, const S A, con
 
 template <typename T, typename S>
 void CalResizeBicubicGrad(const T *input, const int n, const int c, const int grad_h, const int grad_w,
-                          const int origin_h, const int origin_w, const float h_scale, const float w_scale, S *output,
-                          bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
+                          const int origin_h, const int origin_w, const float h_scale, const float w_scale, float *work,
+                          S *output, bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int hw = grad_w * grad_h;
   const int chw = c * hw;
   const int nchw = n * chw;
   const int origin_size = n * c * origin_h * origin_w;
-  cudaMemset(static_cast<void *>(output), 0, sizeof(S) * origin_size);
   if (origin_h == grad_h && origin_w == grad_w) {
     ResizeBicubicGradSame<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output,
                                                                                                      nchw);
     return;
   }
+  cudaMemset(static_cast<void *>(output), 0, sizeof(S) * origin_size);
+  cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
   S A = -0.75;
   if (half_pixel_centers == true) {
     A = -0.5;
@@ -213,15 +214,52 @@ void CalResizeBicubicGrad(const T *input, const int n, const int c, const int gr
   }
 }
 
+template <>
+void CalResizeBicubicGrad(const half *input, const int n, const int c, const int grad_h, const int grad_w,
+                          const int origin_h, const int origin_w, const float h_scale, const float w_scale, float *work,
+                          half *output, bool half_pixel_centers, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  const int hw = grad_w * grad_h;
+  const int chw = c * hw;
+  const int nchw = n * chw;
+  const int origin_size = n * c * origin_h * origin_w;
+  if (origin_h == grad_h && origin_w == grad_w) {
+    ResizeBicubicGradSame<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, output,
+                                                                                                     nchw);
+    return;
+  }
+  cudaMemset(static_cast<void *>(output), 0, sizeof(half) * origin_size);
+  cudaMemset(static_cast<void *>(work), 0, sizeof(float) * origin_size);
+  cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
+  float A = -0.75;
+  if (half_pixel_centers == true) {
+    A = -0.5;
+    ResizeBicubicGradHalfPixelCenters<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nchw, chw, hw, h_scale, w_scale, work);
+  } else {
+    ResizeBicubicGrad<<<CUDA_BLOCKS(device_id, nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      input, A, n, c, grad_h, grad_w, origin_h, origin_w, nchw, chw, hw, h_scale, w_scale, work);
+  }
+  cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
+  ResizeBicubicGradSame<<<CUDA_BLOCKS(device_id, origin_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(work, output,
+                                                                                                          origin_size);
+}
+
+template CUDA_LIB_EXPORT void CalResizeBicubicGrad<half, half>(const half *input, const int n, const int c,
+                                                               const int grad_h, const int grad_w, const int origin_h,
+                                                               const int origin_w, const float h_scale,
+                                                               const float w_scale, float *work, half *output,
+                                                               bool half_pixel_centers, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void CalResizeBicubicGrad<float, float>(const float *input, const int n, const int c,
                                                                  const int grad_h, const int grad_w, const int origin_h,
                                                                  const int origin_w, const float h_scale,
-                                                                 const float w_scale, float *output,
+                                                                 const float w_scale, float *work, float *output,
                                                                  bool half_pixel_centers, const uint32_t &device_id,
                                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeBicubicGrad<double, double>(const double *input, const int n, const int c,
                                                                    const int grad_h, const int grad_w,
                                                                    const int origin_h, const int origin_w,
                                                                    const float h_scale, const float w_scale,
-                                                                   double *output, bool half_pixel_centers,
+                                                                   float *work, double *output, bool half_pixel_centers,
                                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
