@@ -75,7 +75,7 @@ inline void Float16ToFloat32(const float16_t *__restrict input, float *__restric
     float32x4_t out1 = vcvt_f32_f16(in1);
     vst1q_f32(output + i, out1);
     float32x4_t out2 = vcvt_f32_f16(in2);
-    vst1q_f32(output + i + 4, out2);
+    vst1q_f32(output + i + C4NUM, out2);
   }
   for (; i < number; ++i) {
     output[i] = (float)input[i];
