@@ -23,6 +23,7 @@
 #include <exception>
 #include <string>
 
+#include "pybind11/pytypes.h"
 #include "pybind11/pybind11.h"
 #include "base/base.h"
 #include "ir/value.h"
@@ -88,8 +89,8 @@ class SequenceNode : public StubNode {
   void SetValue(const ValuePtr &val) override;
   void SetException(const std::exception_ptr &e_ptr) override;
 
-  void SetElement(int i, StubNodePtr node) { elements_[i] = node; }
-  std::vector<StubNodePtr> &Elements() { return elements_; }
+  void SetElement(size_t i, const StubNodePtr &node) { elements_[i] = node; }
+  const std::vector<StubNodePtr> &Elements() const { return elements_; }
 
  private:
   std::vector<StubNodePtr> elements_;
