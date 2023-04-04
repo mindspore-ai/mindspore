@@ -193,7 +193,7 @@ std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_grap
     if (para->has_default()) {
       auto value = para->default_param();
       MS_EXCEPTION_IF_NULL(value);
-      init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>());
+      (void)(init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>()));
     }
   }
   (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
