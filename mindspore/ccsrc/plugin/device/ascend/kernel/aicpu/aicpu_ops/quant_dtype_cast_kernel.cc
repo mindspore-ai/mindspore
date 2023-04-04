@@ -41,7 +41,7 @@ std::vector<int64_t> GetShape(const ::aicpuops::TensorShape &shape) {
   return res;
 }
 }  // namespace
-bool QuantDTypeCastKernel::CheckParams() { return true; }
+bool QuantDTypeCastKernel::CheckParams() const { return true; }
 
 void QuantDTypeCastKernel::FixedBitFloatDequantTask() {
   int8_t *input = reinterpret_cast<int8_t *>(io_addrs_[C0NUM]);
