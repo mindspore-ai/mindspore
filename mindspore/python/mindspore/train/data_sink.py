@@ -52,7 +52,7 @@ def _init_sink_dataset(dataset, sink_size, input_signature, create_info):
         _check_inputs(input_signature, dataset_shapes, dataset_types)
 
     queue_name = transfer_dataset.queue_name
-    if _need_to_full():
+    if _need_to_full() and context.get_context('mode') == context.GRAPH_MODE:
         device_num = _get_device_num() // _get_pipeline_stages()
         dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
     next_op = ops.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
