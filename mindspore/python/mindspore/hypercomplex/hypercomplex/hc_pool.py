@@ -317,7 +317,6 @@ class MaxPool1d(_PoolNd):
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
         if len(in_shape) != 3:
             raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
-        return None
 
     def _construct(self,
                    x: Tensor,
@@ -521,7 +520,6 @@ class AvgPool1d(_PoolNd):
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
         if len(in_shape) != 3:
             raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
-        return None
 
     def _construct(self,
                    x: Tensor,
@@ -608,14 +606,12 @@ class _AdaptivePoolNd(nn.Cell):
         if in_shape[2] % self.output_size != 0:
             raise ValueError("{} input's last dimension must be divisible by "
                              "output size {}, but got {}.".format(msg_prefix, self.output_size, in_shape[2]))
-        return None
 
     def _adaptive_dtype_check(self, x_dtype):
         """Check dtype."""
         if x_dtype not in [mstype.float16, mstype.float32]:
             raise TypeError("For {}, the x_dtype must be float16 or float32, "
                             "but got {}.".format(self.cls_name, x_dtype))
-        return None
 
 
 class AdaptiveAvgPool1d(_AdaptivePoolNd):

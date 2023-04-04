@@ -667,7 +667,6 @@ class Conv1d(_ConvNd):
     def _check_input_3d(self, input_shape: tuple):
         if len(input_shape) != 3:
             raise ValueError(f"For '{self.cls_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
-        return None
 
     def _construct(self,
                    x: Tensor,

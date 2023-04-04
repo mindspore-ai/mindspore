@@ -389,7 +389,6 @@ class BatchNorm1d(_BatchNorm):
                 raise ValueError(f"For '{self.cls_name}', the in_shape must have 2-3 dims, but got {dim}.")
         else:
             raise TypeError(f"Only float16, float32 and complex64 data types are supported, but got {dtype}.")
-        return None
 
 
 class BatchNorm2d(_BatchNorm):
@@ -484,7 +483,6 @@ class BatchNorm2d(_BatchNorm):
                 raise ValueError(f"For '{self.cls_name}', the in_shape must have 4 dims, but got {dim}.")
         else:
             raise TypeError(f"Only float16, float32 and complex64 data types are supported, but got {dtype}.")
-        return None
 
 
 class BatchNorm3d(nn.Cell):
@@ -622,4 +620,3 @@ class BatchNorm3d(nn.Cell):
                                  f"{len(dim)}.")
         else:
             raise TypeError(f"Only float16, float32 and complex64 data types are supported, but got {dtype}.")
-        return None
