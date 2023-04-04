@@ -106,7 +106,7 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
       // need ref shape when auto parallel
       auto build_shape = para->abstract()->BuildShape();
       if (build_shape != nullptr) {
-        tensor->set_shape(build_shape->cast<abstract::ShapePtr>()->shape());
+        (void)tensor->set_shape(build_shape->cast<abstract::ShapePtr>()->shape());
         MS_LOG(INFO) << "ref abstract Parameter: " << para->name() << ", tensor: " << tensor->ToString();
       }
       res.emplace(para->name(), tensor);
