@@ -124,4 +124,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, LiteKernelCreator<
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, LiteKernelCreator<ReshapeBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Unsqueeze, LiteKernelCreator<ReshapeBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Unsqueeze, LiteKernelCreator<ReshapeBaseCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Unsqueeze, LiteKernelCreator<ReshapeBaseCPUKernel>)
 }  // namespace mindspore::kernel
