@@ -3822,11 +3822,11 @@ void OnnxExporter::ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node,
         int64_proto->set_type(onnx::AttributeProto_AttributeType_INT);
         int64_proto->set_i(int64_attr);
       } else if (attr_value->isa<FloatImm>()) {
-        int64_t fp32_attr = attr_value->cast<FP32ImmPtr>()->value();
+        float fp32_attr = attr_value->cast<FP32ImmPtr>()->value();
         onnx::AttributeProto *fp32_proto = node_proto->add_attribute();
         fp32_proto->set_name(input_names_vec[i]);
         fp32_proto->set_type(onnx::AttributeProto_AttributeType_FLOAT);
-        fp32_proto->set_i(fp32_attr);
+        fp32_proto->set_f(fp32_attr);
       } else {
         MS_LOG(EXCEPTION) << "Unsupported attr input type: " << attr_value->ToString();
       }

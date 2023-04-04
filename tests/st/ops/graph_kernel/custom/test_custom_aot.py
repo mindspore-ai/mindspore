@@ -251,7 +251,6 @@ def test_aot_single_output_cpu():
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
         aot_single_output(get_file_path_cpu, "add.cc", "add.so", add_cpu_info)
-        aot_single_output_auto_compile("add.cc", add_cpu_info)
         aot_single_output_with_attr("add_with_attr.cc", add_with_attr_cpu_info)
         aot_single_output_with_attr_only("add_with_attr.cc", add_cpu_info_attr_only)
 

@@ -23,7 +23,7 @@ REG_BPROP_BUILDERS_BEGIN(GradScipyOps)
 REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
     ShapeVector perm;
-    for (int64_t i = shape.size() - 1; i >= 0; --i) {
+    for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
       perm.push_back(i);
     }
     return perm;
@@ -50,7 +50,7 @@ REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) 
     grad_a = ib->MatMul(x_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
   }
   int is_lower = static_cast<int>(GetValue<bool>(lower));
-  grad_a = ib->Neg(ib->Emit("MatrixBandPart", {grad_a, ib->Value(0 - is_lower), ib->Value(is_lower - 1)}));
+  grad_a = ib->Neg(ib->Emit("MatrixBandPart", {grad_a, ib->Value(-is_lower), ib->Value(is_lower - 1)}));
   if (GetValue<bool>(unit_diagonal)) {
     auto fill = ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(grad_a)), ib->Value<ShapeVector>(ShapeVector(1, row_size)),
                                   ib->Tensor(0, ib->GetDtype(grad_a))});
@@ -73,7 +73,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     auto conj = ib->Emit("Conj", {x});
     auto shape = ib->GetShape(conj);
     ShapeVector perm;
-    for (int64_t i = shape.size() - 1; i >= 0; --i) {
+    for (int64_t i = SizeToInt(shape.size()) - 1; i >= 0; --i) {
       perm.push_back(i);
     }
     return ib->Transpose(conj, perm);
@@ -96,8 +96,6 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   };
 
   // constants in the computation
-  std::vector<int32_t> zero_tensor_value = {0, 0};
-  ShapeVector zero_shape{2};
   auto zero_tensor = ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32);
   auto kValueNeg1 = ib->Value<int64_t>(-1);
   auto kValueNeg2 = ib->Value<int64_t>(-2);
@@ -109,14 +107,14 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     // _, v equal eigh(a)
     auto v = ib->TupleGetItem(ib->Emit("Eigh", {a}, {{"compute_eigenvectors", MakeValue(true)}}), 1);
     // grad_a is _matmul(v * F.expand_dims(dout, -2), _adjoint(v))
-    grad_a = ib->MatMul(ib->Mul(v, ib->Emit("ExpandDims", {dout, kValueNeg2})), Adjoint(ib, v), False, False);
+    grad_a = ib->MatMul(ib->Mul(v, ib->Emit("ExpandDims", {dout, kValueNeg2})), Adjoint(ib, v), false, false);
 
   } else {
     //  vh equal _adjoint(out[1])
     auto vh = Adjoint(ib, ib->TupleGetItem(out, 1));
 
     //  vh_gv equal _matmul(vh, dout[1])
-    auto vh_gv = ib->MatMul(vh, ib->TupleGetItem(dout, 1), False, False);
+    auto vh_gv = ib->MatMul(vh, ib->TupleGetItem(dout, 1), false, false);
 
     auto out_0 = ib->TupleGetItem(out, 0);
     // diff_inv equal diff / (diff * diff + epsilon)
@@ -130,7 +128,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     // _diag(a) equal F.expand_dims(a, -2) * F.eye(F.shape(a)[-1], F.shape(a)[-1], a.dtype)
     // compute F.eye(F.shape(a)[-1], F.shape(a)[-1], a.dtype)
     auto dout_0 = ib->TupleGetItem(dout, 0);
-    auto dout_0_size = ib->GetShape(dout_0).back();
+    auto dout_0_size = LongToInt(ib->GetShape(dout_0).back());
     auto eye_tensor_node = EyeTensor(ib, dout_0_size, dout_0_size);
 
     // compute the product
@@ -141,16 +139,17 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     auto mid_part = ib->Add(diag_dout_0, ib->Mul(f, vh_gv));
 
     //  grad_a equal _matmul(out[1], _matmul(mid_part, vh))
-    grad_a = ib->MatMul(ib->TupleGetItem(out, 1), ib->MatMul(mid_part, vh, False, False), False, False);
+    grad_a = ib->MatMul(ib->TupleGetItem(out, 1), ib->MatMul(mid_part, vh, false, false), false, false);
   }
   //  grad_a equal grad_a + _adjoint(grad_a)
   grad_a = ib->Add(grad_a, Adjoint(ib, grad_a));
-  grad_a = ib->Emit("MatrixBandPart", {grad_a, ib->Value<int64_t>(0 - lower), ib->Value<int64_t>(lower - 1)});
+  grad_a = ib->Emit("MatrixBandPart", {grad_a, ib->Value<int64_t>(-lower), ib->Value<int64_t>(lower - 1)});
 
   // grad_a.diagonal(0, -2, -1)
   NodePtr grad_a_diagonal;
   auto grad_a_shape = ib->GetShape(grad_a);
-  auto eye_node_for_diag = EyeTensor(ib, grad_a_shape[grad_a_shape.size() - kDim2], grad_a_shape.back());
+  auto eye_node_for_diag =
+    EyeTensor(ib, LongToInt(grad_a_shape[grad_a_shape.size() - kDim2]), LongToInt(grad_a_shape.back()));
   auto eye_tensor_broadcast = ib->Emit("BroadcastTo", {eye_node_for_diag}, {{"shape", MakeValue(grad_a_shape)}});
 
   auto prod = ib->Mul(grad_a, ib->Cast(eye_tensor_broadcast, ib->GetDtype(grad_a)));
@@ -160,7 +159,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   std::vector<int64_t> begin(grad_a_shape.size() - 1, 0);
   std::vector<int64_t> size_vec;
   for (int idx = 0; idx < static_cast<int>(grad_a_shape.size()) - 2; idx++) {
-    size_vec.push_back(grad_a_shape[idx]);
+    size_vec.push_back(LongToSize(grad_a_shape[idx]));
   }
   size_vec.push_back(std::min(grad_a_shape[grad_a_shape.size() - kDim2], grad_a_shape.back()));
 
