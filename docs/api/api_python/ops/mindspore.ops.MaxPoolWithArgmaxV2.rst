@@ -41,6 +41,6 @@ mindspore.ops.MaxPoolWithArgmaxV2
         - **TypeError** - `kernel_size` 、 `strides` 、 `pads` 或者 `dilation` 即不是int也不是tuple。
         - **ValueError** - `kernel_size` 、 `strides` 或者 `dilation` 的元素小于1。
         - **ValueError** - `pads` 的元素值小于0。
-        - **ValueError** - `pads` 的元素值大于`kernel_size`的一半。
+        - **ValueError** - `pads` 的元素值大于 `kernel_size` 的一半。
         - **ValueError** - `argmax_type` 即不是mindspore.int64也不是mindspore.int32。
         - **TypeError** - `ceil_mode` 不是bool。

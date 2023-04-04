@@ -2700,7 +2700,7 @@ class HingeEmbeddingLoss(LossBase):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examplse:
+    Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn

@@ -36,15 +36,15 @@ mindspore.nn.LSTM
         - **bidirectional** (bool) - 是否为双向LSTM。默认值：False。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(seq_len, batch_size, `input_size`)` 或 :math:`(batch_size, seq_len, `input_size`)` 的Tensor。
-        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为 :math:`(num_directions * `num_layers`, batch_size, `hidden_size`)` 。`hx` 的数据类型必须与 `x` 相同。
+        - **x** (Tensor) - shape为 :math:`(seq\_len, batch\_size, input\_size)` 或 :math:`(batch\_size, seq\_len, input\_size)` 的Tensor。
+        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。`hx` 的数据类型必须与 `x` 相同。
         - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 :math:`(batch\_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
 
     输出：
         Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。
 
-        - **output** (Tensor) - 形状为 :math:`(seq_len, batch_size, num_directions * `hidden_size`)` 的Tensor。
-        - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是 :math:`(num_directions * `num_layers`, batch_size, `hidden_size`)` 。
+        - **output** (Tensor) - 形状为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
+        - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。
 
     异常：
         - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是int。
