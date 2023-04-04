@@ -103,6 +103,8 @@ int TileCPUKernel::ReSize() {
     tile_parameter_->data_size_ = sizeof(float) / 2;
   } else if (data_type == kNumberTypeBool) {
     tile_parameter_->data_size_ = sizeof(bool);
+  } else if (data_type == kNumberTypeUInt8) {
+    tile_parameter_->data_size_ = sizeof(uint8_t);
   } else {
     MS_LOG(ERROR) << "tile not support data type: " << data_type;
     return RET_ERROR;
@@ -208,4 +210,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TileFusion, LiteKernelCreator
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
 }  // namespace mindspore::kernel

@@ -162,6 +162,9 @@ int CastCPUKernel::CastToOthers(const lite::Tensor *input, lite::Tensor *output,
   } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeBool) {
     Float32ToBool(reinterpret_cast<const float *>(input->data()) + offset,
                   reinterpret_cast<bool *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeUInt8) {
+    Float32ToUint8(reinterpret_cast<const float *>(input->data()) + offset,
+                   reinterpret_cast<uint8_t *>(output_data) + offset, data_num);
   } else {
     MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
     return RET_ERROR;
