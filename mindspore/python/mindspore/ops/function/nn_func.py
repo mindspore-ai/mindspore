@@ -4759,12 +4759,12 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
-            max_val, & \text{ if } input > max_val \\
-            min_val, & \text{ if } input < min_val \\
+            max\_val, & \text{ if } input > max\_val \\
+            min\_val, & \text{ if } input < min\_val \\
             input, & \text{ otherwise. }
         \end{cases}
 
-    Linear region range :math:`[min_val, max_val]` can be adjusted using `min_val` and `max_val`.
+    Linear region range :math:`[min\_val, max\_val]` can be adjusted using `min_val` and `max_val`.
 
     Args:
         input (Tensor): Input Tensor.
