@@ -168,8 +168,12 @@ void KernelDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_i
 }
 
 void KernelDumper::Init() {
+  if (already_print_) {
+    return;
+  }
   if (initialed_) {
     MS_LOG(INFO) << "[KernelDumper] already initialized, no need to do it again.";
+    already_print_ = true;
     return;
   }
   initialed_ = true;

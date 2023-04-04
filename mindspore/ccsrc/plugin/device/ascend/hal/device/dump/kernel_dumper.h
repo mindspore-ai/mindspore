@@ -87,6 +87,7 @@ class KernelDumper : public debug::OverflowDumper {
   uint32_t task_id_{0U};
   uint32_t stream_id_{0U};
   bool initialed_{false};
+  bool already_print_{false};
   bool is_op_debug_;
   uint32_t op_debug_mode_;
   std::mutex dump_mutex_;
