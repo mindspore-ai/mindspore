@@ -40,13 +40,16 @@ void ExpFp16(const float16_t *src, float16_t *dst, int num) {
   }
 }
 
-int ExpFusionFp16(const void *src_data, void *dst_data, const ExpParameter *param, int task_id) {
-  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
-  const float16_t *src = (const float16_t *)src_data;
+int ExpFusionFp16(const void *src_data, void *dst_data, const ExpStruct *exp, int task_id) {
+  NNACL_CHECK_ZERO_RETURN_ERR(exp->base_.thread_nr_);
+  ExpParameter *param = (ExpParameter *)exp->base_.param_;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
+
+  float16_t *src = (float16_t *)src_data;
   float16_t *dst = (float16_t *)dst_data;
-  int stride = UP_DIV(param->element_num_, param->op_parameter_.thread_num_);
+  int stride = UP_DIV(exp->element_num_, exp->base_.thread_nr_);
   int start = stride * task_id;
-  int end = MSMIN(param->element_num_, start + stride);
+  int end = MSMIN(exp->element_num_, start + stride);
   int num = end - start;
 
   if (param->scale_ == 1) {
@@ -54,17 +57,17 @@ int ExpFusionFp16(const void *src_data, void *dst_data, const ExpParameter *para
   } else {
     int i = 0;
 #ifdef ENABLE_ARM64
-    MS_FLOAT16X8 scale = MS_MOVQ_F16(param->in_scale_);
+    MS_FLOAT16X8 scale = MS_MOVQ_F16(exp->in_scale_);
     int count = (num / C8NUM) * C8NUM;
     for (; i < count; i += C8NUM) {
       simd_exp_fp16(MS_MULQ_F16(MS_LDQ_F16(src + i), scale), dst + i);
     }
 #endif
     for (; i < num; ++i) {
-      single_exp_fp16(src[i] * param->in_scale_, dst + i);
+      single_exp_fp16(src[i] * exp->in_scale_, dst + i);
     }
   }
-  if (param->out_scale_ != 1) {
+  if (exp->out_scale_ != 1) {
     int i = 0;
 #ifdef ENABLE_ARM64
     MS_FLOAT16X8 scale = MS_MOVQ_F16(param->out_scale_);
