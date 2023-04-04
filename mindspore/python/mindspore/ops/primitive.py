@@ -508,7 +508,7 @@ class PrimitiveWithCheck(Primitive):
         is_shape_known = True
         for x in args:
             shape = x['shape']
-            if not shape or -1 in shape or -2 in shape:
+            if shape is None or -1 in shape or -2 in shape:
                 is_shape_known = False
                 break
         if is_shape_known:

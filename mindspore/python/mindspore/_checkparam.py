@@ -475,7 +475,7 @@ def check_number(arg_name, arg_value, value, rel, prim_name):
     def _check():
         if not _check_binary_rel(arg_value, value, rel):
             rel_str = _format_str_one_value(value, rel)
-            raise ValueError(f'For \'{prim_name}\', the argument \'{arg_name}\''
+            raise ValueError(f'For \'{prim_name}\', the argument \'{arg_name}\' ' \
                              f'must {rel_str}, but got {arg_value}.')
     _check()
     return arg_value
