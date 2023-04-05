@@ -54,6 +54,7 @@
 #include "tools/optimizer/fusion/encoder_layer_fusion.h"
 #include "tools/optimizer/fusion/decoder_layer_fusion.h"
 #include "tools/optimizer/fusion/glu_fusion.h"
+
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/fusion/matmul_mul_fusion.h"
@@ -89,6 +90,7 @@
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
 #include "tools/optimizer/graph/eliminate_redundant_cast_pass.h"
+#include "tools/optimizer/fisson/use_past_embedding.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/spliter.h"
@@ -263,18 +265,7 @@ STATUS AnfTransform::MarkTrainOp(const FuncGraphPtr &func_graph) {
   }
   return RET_OK;
 }
-
-int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  auto status = MarkTrainOp(old_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "MarkTrainOp failed.";
-    return RET_ERROR;
-  }
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  CHECK_NULL_RETURN(optimizer);
-  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
-  CHECK_NULL_RETURN(fusion_pm);
-
+std::vector<opt::PassPtr> InitFusions(const std::shared_ptr<ConverterPara> &param) {
   // The training model only does the fusion of the inference part
   // remove quantdtype when awaretraining
   std::vector<opt::PassPtr> fusions{std::make_shared<opt::AddConcatActivationFusion>(),
@@ -331,7 +322,23 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
     fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
     fusions.push_back(std::make_shared<opt::DecoderLayerFusion>());
+    fusions.push_back(std::make_shared<opt::UsePastEmbedding>());
   }
+  return fusions;
+}
+
+int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto status = MarkTrainOp(old_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "MarkTrainOp failed.";
+    return RET_ERROR;
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+
+  auto fusions = InitFusions(param);
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
@@ -339,6 +346,11 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
     if (param->fusion_blacklists.find(pass_name) != param->fusion_blacklists.end()) {
       MS_LOG(INFO) << "Disable fusion: " << pass_name;
       continue;
+    }
+    if (param->optimize_transformer) {
+      if (pass_name == "ConstFoldPass") {
+        continue;
+      }
     }
     fusion_pm->AddPass(pass_ptr);
   }
@@ -654,14 +666,16 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 
   status = RunInt64CastInt32Pass(old_graph, param);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run const fold pass failed.";
+    MS_LOG(ERROR) << "RunInt64CastInt32Pass failed.";
     return RET_ERROR;
   }
 
-  status = RunConstFoldPass(old_graph, param);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run const fold pass failed.";
-    return RET_ERROR;
+  if (!param->optimize_transformer) {
+    status = RunConstFoldPass(old_graph, param);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run const fold pass failed.";
+      return RET_ERROR;
+    }
   }
 
   if (!RunEliminateRedundantPass(old_graph, param)) {

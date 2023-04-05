@@ -33,20 +33,23 @@ class EncoderTensorRT : public TensorRTOp {
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~EncoderTensorRT() override = default;
-  bool IsWeightInputHanledInner() const override {
-    return (runtime_->GetTransformerFfnFp16() && runtime_->GetRuntimePrecisionMode() == RuntimePrecisionMode_FP32);
-  }
+  bool IsWeightInputHanledInner() const override { return true; }
   int AddInnerOp(TensorRTContext *ctx) override;
-
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
+  static int unique_id_;
+  bool IsFfnMixPrecision() {
+    return (runtime_->GetTransformerFfnFp16() && runtime_->GetRuntimePrecisionMode() == RuntimePrecisionMode_FP32);
+  }
   nvinfer1::ITensor *CastTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
   int AddVsl(int encoder_input_idx, int input_number, TensorRTContext *ctx, nvinfer1::ITensor **inputTensors,
              const char *name);
   int InitParam(fastertransformer::encoderParamRun *params);
   void CastFfnTensors(fastertransformer::encoderParamRun *params, TensorRTContext *ctx);
+  void BuildUsePastTensors(TensorRTContext *ctx);
+  void BuildEncoderTensors(TensorRTContext *ctx);
 };
 constexpr auto ENCODER_PLUGIN_NAME{"EncoderPlugin"};
 class EncoderPlugin : public TensorRTPlugin {
