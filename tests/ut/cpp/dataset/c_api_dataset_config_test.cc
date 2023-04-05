@@ -119,7 +119,7 @@ TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
   uint32_t original_seed = config::get_seed();
   uint32_t original_num_parallel_workers = config::get_num_parallel_workers();
   MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  config::set_seed(654);
+  config::set_seed(654);  // not all seeds satisfy the assertions in this test.
   config::set_num_parallel_workers(1);
 
   // Create a TextFile Dataset with single text file which has three samples
@@ -183,7 +183,7 @@ TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
   uint32_t original_seed = config::get_seed();
   uint32_t original_num_parallel_workers = config::get_num_parallel_workers();
   MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
-  config::set_seed(655);  // not all seeds satisfy the assertions in this test.
+  config::set_seed(654);
   config::set_num_parallel_workers(1);
 
   // Create a TextFile Dataset with single text file which has three samples

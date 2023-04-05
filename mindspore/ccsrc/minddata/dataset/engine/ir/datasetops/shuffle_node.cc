@@ -45,7 +45,12 @@ void ShuffleNode::Print(std::ostream &out) const {
 
 // Function to build the ShuffleOp
 Status ShuffleNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  auto op = std::make_shared<ShuffleOp>(shuffle_size_, shuffle_seed_, connector_que_size_, reset_every_epoch_);
+  int64_t dataset_size = -1;
+  std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
+  RETURN_IF_NOT_OK(GetDatasetSize(size_getter, false, &dataset_size));
+  CHECK_FAIL_RETURN_UNEXPECTED(dataset_size > 0, "Cannot shuffle the Dataset pipeline when dataset size is undefined");
+  auto op =
+    std::make_shared<ShuffleOp>(shuffle_size_, shuffle_seed_, connector_que_size_, reset_every_epoch_, dataset_size);
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

@@ -37,7 +37,8 @@ constexpr int32_t ShuffleOp::kShuffleStateActive;
 constexpr int32_t ShuffleOp::kShuffleStateDrain;
 
 // Constructor of the ShuffleOp
-ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch)
+ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch,
+                     int64_t num_rows)
     : PipelineOp(op_connector_size),
       shuffle_size_(shuffle_size),
       shuffle_seed_(shuffle_seed),
@@ -45,7 +46,8 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
       rng_(shuffle_seed),
       shuffle_buffer_(std::make_unique<TensorTable>()),
       shuffle_last_row_idx_(0),
-      shuffle_buffer_state_(kShuffleStateInit) {}
+      shuffle_buffer_state_(kShuffleStateInit),
+      num_rows_(num_rows) {}
 
 Status ShuffleOp::PrepareOperator() {
   // Run any common code from super class first before adding our own
@@ -53,9 +55,8 @@ Status ShuffleOp::PrepareOperator() {
 
   // in reset mode, we need to move forward the random generator seed.
   if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
-    for (auto i = 0; i < op_current_repeats_; i++) {
-      RETURN_IF_NOT_OK(SelfReset());
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "[Internal Error] num_rows_ is not set properly!");
+    rng_.discard(num_rows_ * op_current_repeats_);
   }
   return Status::OK();
 }
@@ -67,11 +68,11 @@ Status ShuffleOp::SelfReset() {
   // If reshuffle_each_epoch is false, then we always use the same seed for every
   // epoch.
   // If reshuffle_each_epoch is true, then the first epoch uses the given seed,
-  // and we increment the seed by one in all subsequent epochs
-  if (reshuffle_each_epoch_) {
-    shuffle_seed_++;
+  // and all subsequent epochs will then keep on using the rng_ without resetting it
+  if (!reshuffle_each_epoch_) {
+    rng_ = std::mt19937_64(shuffle_seed_);
   }
-  rng_ = std::mt19937_64(shuffle_seed_);
+
   shuffle_buffer_ = std::make_unique<TensorTable>();
   shuffle_last_row_idx_ = 0;
   shuffle_buffer_state_ = kShuffleStateInit;
