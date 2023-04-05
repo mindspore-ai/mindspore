@@ -166,7 +166,8 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
                                                            const FuncGraphPtr &fprop_graph,
                                                            const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (IsPrimitiveCNode(cnode_morph, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode_morph, prim::kPrimMirror)) {
+  if (IsPrimitiveCNode(cnode_morph, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode_morph, prim::kPrimMirror) ||
+      IsPrimitiveCNode(cnode_morph, prim::kPrimPyExecute)) {
     return {};
   }
   // Use manager to get the link relation among nodes.

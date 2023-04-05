@@ -201,6 +201,9 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
 void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &used_forward_nodes = func_graph->used_forward_nodes();
+  if (used_forward_nodes.empty()) {
+    return;
+  }
 
   // Get original output node and abstract
   auto original_output_node = func_graph->output();
@@ -903,9 +906,8 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto ms_func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
-  // Not exist control flow
-  if (!ExistControlFlow(ms_func_graph)) {
-    auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
+  auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
+  if (clone_graph != nullptr) {
     clone_graph->set_flag(kFlagGraphGradByExpander, true);
     graph_executor->SetGradGraph(clone_graph, phase);
     return true;
