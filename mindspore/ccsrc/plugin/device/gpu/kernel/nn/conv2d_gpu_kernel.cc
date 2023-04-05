@@ -250,7 +250,7 @@ void Conv2dFwdGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t input_descri
   } else {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_,
-                                            output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
+                                             output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
       "cudnnGetConvolutionForwardAlgorithm_v7 failed");
     conv_algorithm_ = perf_results.algo;
   }
