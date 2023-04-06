@@ -256,7 +256,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     Raises:
         TypeError: If `scale_sense` is neither Cell nor Tensor.
-        ValueError: If shape of `scale_sense` is neither (1,) nor ().
+        ValueError: If shape of `scale_sense` is neither :math:`(1,)` nor :math:`()`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
