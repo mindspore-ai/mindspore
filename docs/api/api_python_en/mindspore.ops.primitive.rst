@@ -60,7 +60,6 @@ Neural Network
     mindspore.ops.DynamicGRUV2
     mindspore.ops.DynamicRNN
     mindspore.ops.Flatten
-    mindspore.ops.FractionalMaxPool3DWithFixedKsize
     mindspore.ops.GridSampler2D
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
@@ -77,7 +76,6 @@ Neural Network
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
-    mindspore.ops.PadV3
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
 
@@ -114,7 +112,6 @@ Activation Function
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.CeLU
     mindspore.ops.Elu
     mindspore.ops.FastGeLU
     mindspore.ops.GeLU
@@ -147,7 +144,6 @@ Optimizer
     mindspore.ops.AdamWeightDecay
     mindspore.ops.AdaptiveAvgPool2D
     mindspore.ops.AdaptiveAvgPool3D
-    mindspore.ops.AdaptiveMaxPool2D
     mindspore.ops.ApplyAdadelta
     mindspore.ops.ApplyAdagrad
     mindspore.ops.ApplyAdagradDA
@@ -211,11 +207,8 @@ Image Processing
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
     mindspore.ops.NonMaxSuppressionV3
-    mindspore.ops.ResizeArea
-    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
-    mindspore.ops.ScaleAndTranslate
 
 Text Processing
 ^^^^^^^^^^^^^^^
@@ -236,10 +229,7 @@ Mathematical Operators
     :template: classtemplate.rst
 
     mindspore.ops.Bincount
-    mindspore.ops.Bucketize
-    mindspore.ops.Cauchy
     mindspore.ops.Cholesky
-    mindspore.ops.CholeskyInverse
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
@@ -339,7 +329,6 @@ Element-wise Operator
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
-    mindspore.ops.Zeta
 
 
 Reduction Operator
@@ -361,7 +350,6 @@ Reduction Operator
     mindspore.ops.ReduceMean
     mindspore.ops.ReduceMin
     mindspore.ops.ReduceProd
-    mindspore.ops.ReduceStd
     mindspore.ops.ReduceSum
 
 Comparison Operator
@@ -462,7 +450,6 @@ Array Operation
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle
-    mindspore.ops.Coalesce
     mindspore.ops.Col2Im
     mindspore.ops.Concat
     mindspore.ops.Cummax
@@ -476,10 +463,8 @@ Array Operation
     mindspore.ops.Eig
     mindspore.ops.Expand
     mindspore.ops.ExpandDims
-    mindspore.ops.FFTWithSize
     mindspore.ops.FillV2
     mindspore.ops.FloatStatus
-    mindspore.ops.FillDiagonal
     mindspore.ops.Fmax
     mindspore.ops.Gather
     mindspore.ops.GatherD
@@ -491,7 +476,6 @@ Array Operation
     mindspore.ops.Identity
     mindspore.ops.Igamma
     mindspore.ops.Igammac
-    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
@@ -505,8 +489,6 @@ Array Operation
     mindspore.ops.LeftShift
     mindspore.ops.Lgamma
     mindspore.ops.LogSpace
-    mindspore.ops.Lstsq
-    mindspore.ops.LuSolve
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
@@ -526,11 +508,9 @@ Array Operation
     mindspore.ops.Rank
     mindspore.ops.Renorm
     mindspore.ops.Reshape
-    mindspore.ops.ResizeNearestNeighborV2
     mindspore.ops.ReverseSequence
     mindspore.ops.ReverseV2
     mindspore.ops.RightShift
-    mindspore.ops.Roll
     mindspore.ops.ScatterAddWithAxis
     mindspore.ops.ScatterNd
     mindspore.ops.ScatterNdDiv
@@ -564,7 +544,6 @@ Array Operation
     mindspore.ops.Transpose
     mindspore.ops.Tril
     mindspore.ops.TrilIndices
-    mindspore.ops.Triu
     mindspore.ops.TriuIndices
     mindspore.ops.Unique
     mindspore.ops.UniqueConsecutive
@@ -686,7 +665,6 @@ Frame Operators
     mindspore.ops.Map
     mindspore.ops.MultitypeFuncGraph
     mindspore.ops.Partial
-    mindspore.ops.StopGradient
 
 Operator Information Registration
 ---------------------------------
