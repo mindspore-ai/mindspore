@@ -1019,6 +1019,9 @@ def zeros_like(input, *, dtype=None):
     Raises:
         TypeError: If dtype is not a MindSpore dtype.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.arange(4).reshape(2, 2))
         >>> output = ops.zeros_like(x, dtype=mindspore.float32)

@@ -36,6 +36,9 @@ def eig(A):
     """
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         A (Tensor): Square matrices of shape :math:`(*, N, N)`,
             with float32, float64, complex64 or complex128 data type.

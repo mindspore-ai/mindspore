@@ -6575,7 +6575,7 @@ def tril_indices(row, col, offset=0, *, dtype=mstype.int64):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
+        >>> output = ops.tril_indices(4, 3, -1, dtype=mindspore.int64)
         >>> print(output)
         [[1 2 2 3 3 3]
          [0 0 1 0 1 2]]
@@ -6622,7 +6622,7 @@ def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
+        >>> output = ops.triu_indices(4, 4, 2, dtype=mindspore.int64)
         >>> print(output)
         [[0 0 1]
          [2 3 3]]
@@ -7698,7 +7698,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ValueError: If any elements of `dim` is out of range.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -10909,8 +10909,8 @@ __all__ = [
     'polygamma',
     'quantile',
     'tril_indices',
-    'triu_indices',
+    'histc',
     'nextafter',
-    'histc'
+    'triu_indices'
 ]
 __all__.sort()
