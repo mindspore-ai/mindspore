@@ -12,7 +12,7 @@ mindspore.nn.TransformerDecoderLayer
         - **dropout** (float) - 随机丢弃比例。默认值：``0.1``。
         - **activation** (Union[str, callable, Cell]) - 中间层的激活函数，可以输入字符串（``"relu"``、``"gelu"``）、函数接口（``ops.relu``、``ops.gelu``）或激活函数层实例（``nn.ReLU()``、``nn.GELU()``）。默认值：``"relu"``。
         - **layer_norm_eps** (float) - LayerNorm层的eps值，默认值：``1e-5``。
-        - **batch_first** (bool) - 如果为 ``True`` 则输入输出Shape为(batch, seq, feature)，反之，Shape为(seq, batch, feature)。默认值： ``False``。
+        - **batch_first** (bool) - 如果为 ``True`` 则输入输出Shape为 :math:`(batch, seq, feature)` ，反之，Shape为 :math:`(seq, batch, feature)` 。默认值： ``False``。
         - **norm_first** (bool) - 如果为 ``True``， 则LayerNorm层位于Self Attention层、MultiheadAttention层和FeedForward层之前，反之，位于其后。默认值： ``False``。
 
     输入：

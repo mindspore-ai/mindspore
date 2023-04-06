@@ -354,7 +354,7 @@ class BatchNorm3d(Cell):
         where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.
 
     Args:
-        num_features (int): `C` from an expected input of size (N, C, D, H, W).
+        num_features (int): `C` from an expected input of size :math:`(N, C, D, H, W)` .
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.

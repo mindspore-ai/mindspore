@@ -6248,9 +6248,9 @@ class MatrixSolve(Primitive):
             matrix is used during the computation. Default: False,  use its transpose instead.
 
     Inputs:
-        - **matrix** (Tensor) - A tensor of shape :math:`[..., M, M]`,
+        - **matrix** (Tensor) - A tensor of shape :math:`(..., M, M)`,
           is a matrix of coefficients for a system of linear equations.
-        - **rhs** (Tensor) - A tensor of shape :math:`[..., M, K]`,
+        - **rhs** (Tensor) - A tensor of shape :math:`(..., M, K)`,
           is a matrix of the resulting values of a system of linear equations.
           `rhs` must have the same type as `matrix`.
 

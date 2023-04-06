@@ -8,7 +8,7 @@
     此函数使用均匀分布从[0, range_max-1]中采样一组类（sampled_candidates）。如果 `unique` 为True，则候选采样没有重复；如果 `unique` 为False，则有重复。
 
     参数：
-        - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为(batch_size, num_true)。
+        - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch_size, num_true)` 。
         - **num_true** (int) - 每个训练样本的目标类数。
         - **num_sampled** (int) - 随机采样的类数。sampled_candidates的shape将为 `num_sampled` 。如果 `unique` 为True，则 `num_sampled` 必须小于或等于 `range_max` 。
         - **unique** (bool) - 表示一个batch中的所有采样类是否唯一。
@@ -17,9 +17,9 @@
         - **remove_accidental_hits** (bool) - 表示是否移除accidental hit。默认值：False。
 
     返回：
-        - **sampled_candidates** (Tensor) -  候选采样与目标类之间不存在联系，其shape为(num_sampled, )。
-        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数。Shape为(batch_size, num_true)。
-        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数。Shape为(num_sampled, )。
+        - **sampled_candidates** (Tensor) -  候选采样与目标类之间不存在联系，其shape为 :math:`(num_sampled, )` 。
+        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数。Shape为 :math:`(batch_size, num_true)` 。
+        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数。Shape为 :math:`(num_sampled, )` 。
 
     异常：
         - **TypeError** - `num_true` 和 `num_sampled` 都不是int。

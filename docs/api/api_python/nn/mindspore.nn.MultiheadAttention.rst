@@ -21,7 +21,7 @@ mindspore.nn.MultiheadAttention
         - **add_zero_attn** (bool) - 是否给key、value序列的一维添加0。默认值： ``False``。
         - **kdim** (int) - key的总特征数。默认值： ``None`` （即 `kdim=embed_dim`）。
         - **vdim** (int) - value的总特征数。默认值：``None`` （即 `vdim=embed_dim`）。
-        - **batch_first** (bool) - 如果为 ``True``，则输入输出Tensor的shape为 (batch, seq, feature)，否则shape为(seq, batch, feature)。 默认值： ``False`` 。
+        - **batch_first** (bool) - 如果为 ``True``，则输入输出Tensor的shape为 :math:`(batch, seq, feature)` ，否则shape为 :math:`(seq, batch, feature)` 。 默认值： ``False`` 。
 
     输入：
         - **query** (Tensor) - Query矩阵。当输入非Batch数据时，Shape为： :math:`(L, E_q)` 。当输入Batch数据，参数 `batch_first=False` 时，Shape为 :math:`(L, N, E_q)` ，

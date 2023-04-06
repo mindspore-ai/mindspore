@@ -80,7 +80,7 @@ class RowTensor(RowTensorInner):
     A sparse representation of a set of tensor slices at given indices.
 
     An RowTensor is typically used to represent a subset of a larger
-    tensor dense of shape [L0, D1, .. , DN] where L0 >> D0.
+    tensor dense of shape :math:`(L0, D1, .. , DN)` where L0 >> D0.
 
     The values in indices are the indices in the first dimension of the slices
     that have been extracted from the larger tensor.
@@ -89,7 +89,7 @@ class RowTensor(RowTensorInner):
     `dense[slices.indices[i], :, :, :, ...] = slices.values[i, :, :, :, ...]`.
 
     For example, if indices is [0], values is [[1, 2]], shape is
-    (3, 2), then the dense representation of the row tensor will be:
+     :math:`(3, 2)` , then the dense representation of the row tensor will be:
 
     .. code-block::
 
@@ -101,8 +101,8 @@ class RowTensor(RowTensorInner):
         This is an experimental API that is subjected to change or deletion.
 
     Args:
-        indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
-        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn]. Default: None.
+        indices (Tensor): A 1-D integer Tensor of shape :math:`(D0)` . Default: None.
+        values (Tensor): A Tensor of any dtype of shape :math:`(D0, D1, ..., Dn)` . Default: None.
         shape (tuple(int)): An integer tuple which contains the shape
             of the corresponding dense tensor. Default: None.
         row_tensor (RowTensor): A RowTensor object. Default: None.
@@ -236,11 +236,11 @@ class COOTensor(COOTensor_):
           If the indices contain out-of-bound values, the result will be undefined.
 
     Args:
-        indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
+        indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
             where N and ndims are the number of `values` and number of dimensions in
             the COOTensor, respectively. Currently, `ndims` must be 2.
             Please make sure that the indices are in range of the given shape.
-        values (Tensor): A 1-D tensor of any type and shape `[N]`, which
+        values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`.
         shape (tuple(int)): An integer tuple of size `ndims`,
             which specifies the dense_shape of the sparse tensor.

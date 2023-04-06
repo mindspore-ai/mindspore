@@ -4051,9 +4051,9 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Suppose `x` has r dimensions with shape `(I, J, ..., M, N)`. The output Tensor has rank r + 1 with shape
-        `(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
-        Otherwise, it has rank r with shape `(I, J, ..., num_rows, num_cols)`.
+        Suppose `x` has r dimensions with shape :math:`(I, J, ..., M, N)` . The output Tensor has rank r + 1 with shape
+        :math:`(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
+        Otherwise, it has rank r with shape :math:`(I, J, ..., num_rows, num_cols)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -4127,11 +4127,11 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`[I, J, ..., M, N]`. Let `max_diag_len` be the maximum length among all
+        Assume `x` has r dimensions :math:`(I, J, ..., L, M, N)` . Let `max_diag_len` be the maximum length among all
         diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
         Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
-        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`[I, J, ..., L, max\_diag\_len]`
-        Otherwise, the output tensor has rank r with dimensions :math:`[I, J, ..., L, num\_diags, max\_diag\_len]`
+        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
+        Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -4176,10 +4176,10 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
     The diagonal :math:`shape[-1]` must be
     equal to the longest diagonal value max_diag_len calculated
     by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))`.
-    Let x have r + 1 dimensions :math:`[I, J, ..., L, M, N]`.
-    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max\_diag\_len]`
+    Let x have r + 1 dimensions :math:`(I, J, ..., L, M, N)` .
+    The diagonal tensor has rank r with shape :math:`(I, J, ..., L, max\_diag\_len)`
     when k is an integer or :math:`k[0] == k[1]`. Otherwise, it has rank r + 1
-    with shape :math:`[I, J, ... L, num\_diags, max\_diag\_len]`.
+    with shape :math:`(I, J, ... L, num\_diags, max\_diag\_len)` .
 
     Args:
         x (Tensor): Rank r + 1, where r >= 1.
@@ -4197,8 +4197,8 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
             to the left (right-pads the row).
 
     Returns:
-        Tensor, The same type as x. Let x has r+1 dimensions :math:`[I, J, ..., L, M, N]`.
-        The output is a tensor of rank r+1 with dimensions :math:`[I, J, ..., L, M, N]`, the same as input x.
+        Tensor, The same type as x. Let x has r+1 dimensions :math:`(I, J, ..., L, M, N)` .
+        The output is a tensor of rank r+1 with dimensions :math:`(I, J, ..., L, M, N)` , the same as input x.
 
     Raises:
         TypeError: If input `x` or `diagonal` is not Tensor.
@@ -4332,23 +4332,24 @@ def affine_grid(theta, size, align_corners=False):
 
     Args:
         theta (Tensor): The input tensor of flow field whose dtype is float16, float32.
-            Input batch of affine matrices with shape (N, 2, 3) for 2D grid or (N, 3, 4) for 3D grid.
+            Input batch of affine matrices with shape :math:`(N, 2, 3)` for 2D grid or :math:`(N, 3, 4)` for 3D grid.
         size (tuple[int]): The target output image size.
-            The value of target output with format (N, C, H, W) for 2D grid or (N, C, D, H, W) for 3D grid.
+            The value of target output with format :math:`(N, C, H, W)` for 2D grid or :math:`(N, C, D, H, W)` for 3D
+            grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
             If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
             The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
             irrelevant to resolution of the image. Default: False.
     Returns:
-        Tensor, a tensor whose data type is same as 'theta', and the shape is (N, H, W, 2) for 2D grid
-        or (N, D, H, W, 3) for 3D grid.
+        Tensor, a tensor whose data type is same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
+        or :math:`(N, D, H, W, 3)` for 3D grid.
 
     Raises:
         TypeError: If `theta` is not a Tensor or `size` is not a tuple.
-        ValueError: If the shape of `theta` is not (N, 2, 3) or (N, 3, 4).
+        ValueError: If the shape of `theta` is not :math:`(N, 2, 3)` or :math:`(N, 3, 4)`.
         ValueError: If the size of `size` is not 4 or 5.
-        ValueError: If the shape of `theta` is (N, 2, 3), the size of `size` is not 4;
-                    If the shape of `theta` is (N, 3, 4), the size of `size` is not 5.
+        ValueError: If the shape of `theta` is :math:`(N, 2, 3)`, the size of `size` is not 4;
+                    If the shape of `theta` is :math:`(N, 3, 4)`, the size of `size` is not 5.
         ValueError: If the size[0] is not equal to the shape[0] of theta.
 
     Supported Platforms:
@@ -5042,8 +5043,8 @@ def diag(input):
     r"""
     Constructs a diagonal tensor with a given diagonal values.
 
-    Assume `input` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
-    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+    Assume `input` has dimensions :math:`(D_1,... D_k)` , the output is a tensor of
+    rank 2k with dimensions :math:`(D_1,..., D_k, D_1,..., D_k)` where:
     :math:`output[i_1,..., i_k, i_1,..., i_k] = input[i_1,..., i_k]` and 0 everywhere else.
 
     Args:

@@ -18,7 +18,7 @@ mindspore.ops.crop_and_resize
         - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值：0.0。
 
     返回：
-        Tensor，shape为(num_boxes, crop_height, crop_width, depth)，数据类型：float32 。
+        Tensor，shape为 :math:`(num_boxes, crop_height, crop_width, depth)` ，数据类型：float32 。
 
     异常：
         - **TypeError** - `image`、 `boxes` 或 `box_indices` 不是Tensor。
