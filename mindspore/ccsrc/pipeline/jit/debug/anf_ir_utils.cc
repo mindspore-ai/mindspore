@@ -253,7 +253,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   }
 
   std::ostringstream oss;
-  oss << meta_func_graph->type_name() << "::" << meta_func_graph->name();
+  oss << meta_func_graph->type_name() << "-" << meta_func_graph->name();
 
   if (meta_func_graph->isa<prim::MultitypeFuncGraph>()) {
     prim::MultitypeFuncGraphPtr mt_func_graph = meta_func_graph->cast<prim::MultitypeFuncGraphPtr>();
@@ -302,9 +302,7 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) const {
   if (prim == nullptr) {
     return oss.str();
   }
-  oss << prim->type_name() << "::" << prim->name();
-  // Output primitive type
-  oss << "{prim_type=" << static_cast<int>(prim->prim_type()) << "}";
+  oss << prim->name();
   // Output primitive attributes
   oss << prim->GetAttrsText();
 
@@ -327,7 +325,7 @@ std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) const {
   }
 
   // Dump related module information in Namespace
-  oss << ns->type_name() << "::" << ns->module();
+  oss << ns->module();
 
   return oss.str();
 }
@@ -517,7 +515,7 @@ void AnfExporter::OutputStatementComment(const CNodePtr &node, const FuncGraphPt
   auto &inputs = node->inputs();
   if (node != func_graph->get_return()) {
     if (inputs.size() > 1) {
-      oss << "\n      :(";
+      oss << "\n      : (";
       for (size_t i = 1; i < inputs.size(); ++i) {
         if (i != 1) {
           oss << ", ";
@@ -530,7 +528,7 @@ void AnfExporter::OutputStatementComment(const CNodePtr &node, const FuncGraphPt
           << "(" << GetNodeType(node) << ")";
     }
   } else {
-    oss << "\n      :(" << GetNodeType(node) << ")";
+    oss << "\n      : (" << GetNodeType(node) << ")";
   }
   // Output other comment, map the graph name to original representation(containing unicode character)
   oss << "\n";
