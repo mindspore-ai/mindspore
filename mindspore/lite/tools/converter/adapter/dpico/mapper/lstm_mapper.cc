@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
+constexpr int kNums1 = 1;
+constexpr int kNums2 = 2;
 STATUS LstmMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
                        const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
@@ -41,21 +43,57 @@ STATUS LstmMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
     return RET_ERROR;
   }
 
-  if (prim->GetAttr(kNumOutput) != nullptr) {
-    lstm_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
-  }
-  if (prim->GetAttr(kExposeHidden) != nullptr) {
-    lstm_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
+  // Caffe
+  if (api::GetValue<string>(prim->GetAttr("type")) == "Lstm") {
+    if (prim->GetAttr(kNumOutput) != nullptr) {
+      lstm_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
+    }
+    if (prim->GetAttr(kExposeHidden) != nullptr) {
+      lstm_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
+    }
+    if (SetRecurrentDataInfo(cnode, lstm_operator.get()) != RET_OK) {
+      MS_LOG(ERROR) << "set lstm data info failed.";
+      return RET_ERROR;
+    }
   }
 
-  if (SetRecurrentDataInfo(cnode, lstm_operator.get()) != RET_OK) {
-    MS_LOG(ERROR) << "set lstm data info failed.";
-    return RET_ERROR;
+  // ONNX
+  if (api::GetValue<string>(prim->GetAttr("type")) == "LSTM") {
+    lstm_operator->SetParserMode(mapper::PARSER_ONNX);
+    if (prim->GetAttr(kDirection) != nullptr) {
+      if (api::GetValue<string>(prim->GetAttr(kDirection)) == "forward") {
+        lstm_operator->SetRecurrentDirection(mapper::RECURRENT_FORWARD);
+        lstm_operator->SetNumOfDirection(kNums1);
+      }
+      if (api::GetValue<string>(prim->GetAttr(kDirection)) == "reverse") {
+        lstm_operator->SetRecurrentDirection(mapper::RECURRENT_REVERSE);
+        lstm_operator->SetNumOfDirection(kNums1);
+      }
+      if (api::GetValue<string>(prim->GetAttr(kDirection)) == "bidirectional") {
+        lstm_operator->SetRecurrentDirection(mapper::RECURRENT_BIDIRECTIONAL);
+        lstm_operator->SetNumOfDirection(kNums2);
+      }
+    }
+    if (prim->GetAttr(kClip) != nullptr) {
+      lstm_operator->SetAfClip(api::GetValue<float>(prim->GetAttr(kClip)));
+    }
+    if (prim->GetAttr(kHiddenSize) != nullptr) {
+      lstm_operator->SetRecurrentNumOutput(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(kHiddenSize))));
+    }
+    if (SetRecurrentOnnxInfo(cnode, lstm_operator.get()) != RET_OK) {
+      MS_LOG(ERROR) << "set lstm data info failed.";
+      return RET_ERROR;
+    }
+    if (PushOfflineArgs(cnode, lstm_operator.get(), 1) != RET_OK) {
+      MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
   }
 
   base_operators->push_back(std::move(lstm_operator));
   return RET_OK;
 }
 REG_MAPPER(Lstm, LstmMapper)
+REG_MAPPER(LSTM, LstmMapper)
 }  // namespace dpico
 }  // namespace mindspore

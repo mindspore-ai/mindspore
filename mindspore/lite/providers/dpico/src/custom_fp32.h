@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_PROVIDERS_DPICO_SRC_CUSTOM_FP32_H_
 
 #include <vector>
+#include <string>
 #include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "manager/acl_model_manager.h"
@@ -40,11 +41,17 @@ class CustomCPUKernel : public Kernel {
   int Execute() override;
 
  private:
+  int ParseAttrs();
   bool InferShapeDone() const;
   int PreProcess();
+  void UpdateInputOutputTensor();
 
  private:
   AclModelManagerPtr acl_model_manager_{nullptr};
+  std::string support_zero_copy_{"off"};
+  size_t stride_align_size_{16};
+  size_t custom_id_{0};
+  size_t custom_num_{0};
 };
 }  // namespace lite
 }  // namespace mindspore

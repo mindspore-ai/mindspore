@@ -30,6 +30,7 @@
 #include "op/base_operator.h"
 #include "op/recurrent_operator.h"
 #include "mindapi/base/logging.h"
+#include "mindapi/ir/tensor.h"
 #include "ops/op_name.h"
 
 using mindspore::lite::RET_ERROR;
@@ -54,6 +55,10 @@ STATUS SetCommonAttr(const api::CNodePtr &node, mapper::BaseOperator *base_opera
                      const api::CNodePtrList &output_cnodes);
 STATUS SetConvFcDataInfo(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator);
 STATUS SetRecurrentDataInfo(const api::CNodePtr &cnode, mapper::RecurrentOperator *recurrent_operator);
+STATUS SetRecurrentOnnxInfo(const api::CNodePtr &cnode, mapper::RecurrentOperator *recurrent_operator);
+STATUS CheckTensorInfoType(const api::TensorPtr &tensor_info, std::vector<float> *offline_data);
+STATUS SetOnnxLstmOffLineArgs(mapper::RecurrentOperator *recurrent_operator, size_t index,
+                              const vector<int32_t> &shape_vec, const float *data);
 STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator, size_t offline_args_size);
 }  // namespace dpico
 }  // namespace mindspore

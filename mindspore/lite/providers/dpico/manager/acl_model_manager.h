@@ -79,6 +79,7 @@ class AclModelManager {
   /** acl related variables */
   uint32_t acl_model_id_{0};
   int32_t acl_device_id_{0};
+  size_t stride_align_size_{16};
   AclModelType acl_model_type_{kCnn};
   void *acl_model_ptr_{nullptr};
   svp_acl_mdl_desc *acl_model_desc_{nullptr};

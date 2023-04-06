@@ -26,11 +26,13 @@
 #include "common/op_attr.h"
 #include "common/op_enum.h"
 #include "common/string_util.h"
+#include "common/graph_output_name_keeper.h"
 #include "src/mapper_config_parser.h"
 #include "src/om_generator.h"
 #include "src/graph_split_api.h"
 #include "ops/tuple_get_item.h"
 #include "third_party/securec/include/securec.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -112,13 +114,26 @@ api::CNodePtr CustomOpCreator::CreateCustomOp(const api::FuncGraphPtr &func_grap
                     "get subgraph inputs failed. subgraph id is " << subgraph->graph_id);
   auto custom_cnode = func_graph->NewCNode(prim, subgraph_inputs);
   MS_CHECK_TRUE_MSG(custom_cnode != nullptr, nullptr, "new cnode error");
-  custom_cnode->set_fullname_with_scope(kCustomName + std::to_string(custom_id_));
   custom_cnode->add_input(om_parameter);
 
   // build op outputs && replace origin subgraph with custom node
   if (SetCustomOutputs(func_graph, subgraph, custom_cnode, om_model_info) != RET_OK) {
     MS_LOG(ERROR) << "set supported custom op outputs failed";
     return nullptr;
+  }
+
+  // set custom op names
+  std::string output_name;
+  auto output_names = api::GetValue<std::vector<std::string>>(custom_cnode->GetAttr(kOutputsNames));
+  if (output_names.size() == 1) {
+    output_name = output_names.at(0);
+    custom_cnode->set_fullname_with_scope(kCustomName + std::to_string(custom_id_) + "_" + output_name);
+  } else {
+    output_name = output_names.at(0);
+    for (size_t i = 1; i < output_names.size(); ++i) {
+      output_name += '_' + output_names.at(i);
+    }
+    custom_cnode->set_fullname_with_scope(kCustomName + std::to_string(custom_id_) + "_" + output_name);
   }
 
   // set attr for custom op.
@@ -148,6 +163,10 @@ api::ParameterPtr CustomOpCreator::CreateOmParameter(const api::FuncGraphPtr &fu
   auto tensor_data = tensor_info->data();
   MS_CHECK_TRUE_MSG(tensor_data != nullptr, nullptr, "new api::Tensor failed.");
   MS_CHECK_TRUE_MSG(tensor_info->Size() != 0, nullptr, "tensor size shouldn't be 0");
+  if (om_model_info->modelBuffer == nullptr) {
+    MS_LOG(ERROR) << "model buffer is nullptr.";
+    return nullptr;
+  }
   if (memcpy_s(tensor_data, tensor_info->Size(), om_model_info->modelBuffer, om_model_info->modelSize) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     return nullptr;
@@ -168,21 +187,23 @@ STATUS CustomOpCreator::SetSubgraphInputOutputDims(Subgraph *subgraph, const api
       return RET_ERROR;
     }
     for (const auto &node : subgraph_inputs) {
-      auto node_name = RemoveSpecifiedChar(node->fullname_with_scope(), '\0');
+      auto in_name = RemoveSpecifiedChar(node->fullname_with_scope(), '\0');
       if (CheckPrimitiveType(node, api::MakeShared<ops::Custom>())) {
-        node_name = GetCustomOutputName(node);
-        MS_CHECK_TRUE_MSG(!node_name.empty(), RET_ERROR,
+        in_name = GetCustomOutputName(node);
+        MS_CHECK_TRUE_MSG(!in_name.empty(), RET_ERROR,
                           "get custom node output name failed." << node->fullname_with_scope());
       }
+      auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(node, &in_name, true);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine sub-graph's input name failed.");
       auto input_info_name = RemoveSpecifiedChar(input_info.name, '\0');
-      if (node_name == input_info_name) {  // DetectionOutput network has extra input, will filter it.
+      if (in_name == input_info_name) {  // DetectionOutput network has extra input, will filter it.
         ShapeVector ori_shape_vector;
         if (GetAnfNodeOutputShape(node, &ori_shape_vector)) {
           MS_LOG(ERROR) << "get " << node->fullname_with_scope() << " output shape failed.";
           return RET_ERROR;
         }
         if (ori_shape_vector.size() != input_info.shape.size()) {
-          MS_LOG(ERROR) << node_name << "'s input shape size " << ori_shape_vector.size()
+          MS_LOG(ERROR) << in_name << "'s input shape size " << ori_shape_vector.size()
                         << " is not equal to om input shape size " << input_info.shape.size();
           return RET_ERROR;
         }
@@ -250,6 +271,26 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
     std::vector<uint8_t> max_roi_frame_cnt_value(max_roi_frame_cnt_str.begin(), max_roi_frame_cnt_str.end());
     (void)custom_attrs.insert(std::make_pair("max_roi_frame_cnt", max_roi_frame_cnt_value));
   }
+
+  // add custom_num attr
+  auto custom_num_str = std::to_string(custom_num_);
+  std::vector<uint8_t> custom_num_vec(custom_num_str.begin(), custom_num_str.end());
+  (void)custom_attrs.insert(std::make_pair("custom_num", custom_num_vec));
+
+  // add custom_id attr
+  auto custom_id_str = std::to_string(custom_id_);
+  std::vector<uint8_t> custom_id_vec(custom_id_str.begin(), custom_id_str.end());
+  (void)custom_attrs.insert(std::make_pair("custom_id", custom_id_vec));
+
+  // add head_tail_op_is_custom attr
+  auto is_custom_str = std::to_string(head_tail_op_is_custom_);
+  std::vector<uint8_t> head_tail_op_is_custom_vec(is_custom_str.begin(), is_custom_str.end());
+  (void)custom_attrs.insert(std::make_pair("head_tail_op_is_custom", head_tail_op_is_custom_vec));
+
+  // add internal_stride attr
+  auto internal_stride = MapperConfigParser::GetInstance()->GetInternalStride();
+  std::vector<uint8_t> inter_stride_vec(internal_stride.begin(), internal_stride.end());
+  (void)custom_attrs.insert(std::make_pair(kLastDimStride, inter_stride_vec));
   prim->set_attr(custom_attrs);
   return RET_OK;
 }
@@ -268,6 +309,7 @@ STATUS CustomOpCreator::SetCustomOutputs(const api::FuncGraphPtr &func_graph, Su
     return RET_ERROR;
   }
   std::vector<std::string> custom_outputs_names;  // used for anf exporter
+  MS_CHECK_TRUE_MSG(custom_outputs_names.empty(), RET_ERROR, "custom_outputs_names is not empty.");
   if (om_model_info->outputInfos.size() == 1) {
     if (SetCustomSingleOutput(func_graph, subgraph, custom_cnode, om_model_info, &custom_outputs_names) != RET_OK) {
       MS_LOG(ERROR) << "set custom single output failed. " << custom_cnode->fullname_with_scope();
@@ -313,6 +355,9 @@ STATUS CustomOpCreator::SetCustomSingleOutput(const api::FuncGraphPtr &func_grap
       origin_node_name != output_name) {  // custom op could be a supported subgraph's input
     (void)MapperConfigParser::GetInstance()->AddImageList(output_name, image_lists.at(origin_node_name));
   }
+  if (!GraphOutputNameKeeper::GetInstance()->CanKeepOutputNames(*custom_outputs_names)) {
+    converter::ConverterContext::SetGraphOutputTensorNames(std::vector<std::string>{});
+  }
   return RET_OK;
 }
 
@@ -351,10 +396,11 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     auto output_name = RemoveSpecifiedChar(output_info.name, '\0');
     custom_outputs_names->push_back(output_name);
     subgraph_new_cnodes.push_back(get_item_cnode);
+    auto anf_name = GraphOutputNameKeeper::GetInstance()->GetAnfOutputNameFromOm(custom_outputs_names->at(i));
     if (has_unsupported_) {
       auto ori_node_iter = std::find_if(  // extra or inconsistent output will be found.
         subgraph_outputs.begin(), subgraph_outputs.end(),
-        [output_name](const api::AnfNodePtr &anf_node) { return IsCorrespondOutput(anf_node, output_name); });
+        [anf_name](const api::AnfNodePtr &anf_node) { return IsCorrespondOutput(anf_node, anf_name); });
       if (ori_node_iter == subgraph_outputs.end()) {
         continue;
       }
@@ -370,10 +416,24 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     get_item_cnode->set_fullname_with_scope(output_name);
     // the whole network is not segmented
     if (i < subgraph_outputs.size()) {
-      subgraph->outputs_format[i] = output_formats[i];
-      if (!manager->Replace(subgraph_outputs[i], get_item_cnode)) {
-        MS_LOG(ERROR) << "replace node failed. " << get_item_cnode->fullname_with_scope();
-        return RET_ERROR;
+      if (subgraph_outputs.size() < om_model_info->outputInfos.size()) {
+        subgraph->outputs_format[i] = output_formats[i];
+        if (!manager->Replace(subgraph_outputs[i], get_item_cnode)) {
+          MS_LOG(ERROR) << "replace node failed. " << get_item_cnode->fullname_with_scope();
+          return RET_ERROR;
+        }
+      } else {
+        auto ori_node_iter = std::find_if(  // extra or inconsistent output will be found.
+          subgraph_outputs.begin(), subgraph_outputs.end(),
+          [anf_name](const api::AnfNodePtr &anf_node) { return IsCorrespondOutput(anf_node, anf_name); });
+        if (ori_node_iter == subgraph_outputs.end()) {
+          continue;
+        }
+        subgraph->outputs_format[i] = output_formats[ori_node_iter - subgraph_outputs.begin()];
+        if (!manager->Replace(*ori_node_iter, get_item_cnode)) {
+          MS_LOG(ERROR) << "replace node failed. " << get_item_cnode->fullname_with_scope();
+          return RET_ERROR;
+        }
       }
     } else {
       auto return_cnode = func_graph->get_return();
@@ -388,6 +448,13 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
   if (has_replace_num < subgraph_outputs.size()) {
     MS_LOG(ERROR) << "origin outputs haven't been all replaced.";
     return RET_ERROR;
+  }
+  std::vector<std::string> outputDetectionName;
+  for (size_t i = 0; i < custom_outputs_names->size(); ++i) {
+    outputDetectionName.emplace_back((*custom_outputs_names)[i]);
+  }
+  if (subgraph_outputs.size() < custom_outputs_names->size()) {
+    converter::ConverterContext::SetGraphOutputTensorNames(outputDetectionName);
   }
   subgraph->cnodes = subgraph_new_cnodes;
   auto abstract_tuple = api::MakeShared<api::AbstractTuple>(abstract_list);

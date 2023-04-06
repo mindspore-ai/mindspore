@@ -31,6 +31,7 @@ constexpr size_t kMaxPixelVal = 255;
 constexpr int kMaxVarReciChn = 65504;
 const std::unordered_set<std::string> kSupportedInputFormat = {"YUV400", "BGR_PLANAR", "RGB_PLANAR"};
 const std::unordered_set<std::string> kSupportedModelFormat = {"RGB", "BGR"};
+const std::unordered_set<std::string> kSupportedInterStride = {"16", "32", "64", "128", "256"};
 const std::unordered_map<std::string, TypeId> kDpicoDataTypeMap = {
   {"FP16", kNumberTypeFloat16},  {"FP32", kNumberTypeFloat32}, {"INT16", kNumberTypeInt16}, {"INT8", kNumberTypeInt8},
   {"S16", kNumberTypeInt16},     {"S8", kNumberTypeInt8},      {"U16", kNumberTypeUInt16},  {"U8", kNumberTypeUInt8},
@@ -277,7 +278,7 @@ int MapperConfigParser::AddImageList(const std::string &op_name, const std::stri
   return RET_OK;
 }
 
-int MapperConfigParser::Parse(const std::string &cfg_file, const std::vector<std::string> &graph_input_names) {
+int MapperConfigParser::ParserFile(const std::string &cfg_file) {
   std::ifstream ifs;
   if (ReadFileToIfstream(cfg_file, &ifs) != RET_OK) {
     MS_LOG(ERROR) << "read file to ifstream failed.";
@@ -322,6 +323,14 @@ int MapperConfigParser::Parse(const std::string &cfg_file, const std::vector<std
       }
     }
   }
+  return RET_OK;
+}
+
+int MapperConfigParser::Parse(const std::string &cfg_file, const std::vector<std::string> &graph_input_names) {
+  if (ParserFile(cfg_file) != RET_OK) {
+    MS_LOG(ERROR) << "parse file failed.";
+    return RET_ERROR;
+  }
   if (mapper_config_.find(kInputType) != mapper_config_.end()) {
     if (ParseInputType(mapper_config_.at(kInputType), graph_input_names) != RET_OK) {
       MS_LOG(ERROR) << "parse input type failed.";
@@ -329,6 +338,18 @@ int MapperConfigParser::Parse(const std::string &cfg_file, const std::vector<std
     }
   }
 
+  if (mapper_config_.find(kInternalStride) != mapper_config_.end()) {
+    auto inter_stride_value = mapper_config_.at(kInternalStride);
+    if (kSupportedInterStride.count(inter_stride_value) == 0) {
+      MS_LOG(ERROR) << "The 'internal_stride' value " << inter_stride_value
+                    << " is invalid, only support {16, 32, 64, 128, 256}.";
+      return RET_ERROR;
+    }
+    internal_stride_ = inter_stride_value;
+    MS_LOG(INFO) << "The 'internal_stride' is " << internal_stride_;
+  } else {
+    MS_LOG(INFO) << "Has not configure 'internal_stride', then will use default value " << internal_stride_;
+  }
   if (mapper_config_.find(kImageList) != mapper_config_.end()) {
     if (ParseImageList(mapper_config_.at(kImageList), graph_input_names) != RET_OK) {
       MS_LOG(ERROR) << "parse image list failed.";

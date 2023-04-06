@@ -135,12 +135,12 @@ STATUS DpicoPreprocessPass::PreProcessBiadAdd(const api::FuncGraphPtr &func_grap
     return RET_ERROR;
   }
   auto abstract = GetCNodeInputAbstract(cnode, kInputIndex1);
-  if (abstract == nullptr) {
+  if (abstract == nullptr && cnode->input(1) != nullptr) {
     MS_LOG(ERROR) << "abstract is nullptr. " << cnode->input(1)->fullname_with_scope();
     return RET_ERROR;
   }
   ShapeVector shape_vector;
-  if (FetchShapeFromAbstract(abstract, &shape_vector) != RET_OK) {
+  if (FetchShapeFromAbstract(abstract, &shape_vector) != RET_OK && cnode->input(1) != nullptr) {
     MS_LOG(ERROR) << "fetch shape from abstract failed. " << cnode->input(1)->fullname_with_scope();
     return RET_ERROR;
   }

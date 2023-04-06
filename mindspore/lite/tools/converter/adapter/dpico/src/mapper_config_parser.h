@@ -47,6 +47,7 @@ constexpr auto kVarReciChn0 = "var_reci_chn_0";
 constexpr auto kVarReciChn1 = "var_reci_chn_1";
 constexpr auto kVarReciChn2 = "var_reci_chn_2";
 constexpr auto kVarReciChn3 = "var_reci_chn_3";
+constexpr auto kInternalStride = "[internal_stride]";
 constexpr size_t kNumPrecision = 10;
 
 struct AippModule {
@@ -66,6 +67,7 @@ class MapperConfigParser {
   const std::unordered_map<std::string, struct AippModule> &GetAippModules() const { return aipp_; }
   const std::string &GetOriginConfigPath() const { return origin_config_file_path_; }
   const std::string &GetOutputPath() const { return tmp_generated_file_dir_; }
+  const std::string &GetInternalStride() const { return internal_stride_; }
   void SetOriginConfigFilePath(const std::string &origin_config_file_path);
 
  private:
@@ -76,12 +78,14 @@ class MapperConfigParser {
   int ParseRawLine(const std::string &raw_line, const std::vector<std::string> &graph_input_names,
                    size_t *graph_input_idx);
   int ParseAippModule(const std::string &aipp_cfg, const std::vector<std::string> &graph_input_names);
+  int ParserFile(const std::string &cfg_file);
 
   std::unordered_map<std::string, std::string> mapper_config_;
   std::unordered_map<std::string, std::string> image_lists_;
   std::unordered_map<std::string, struct AippModule> aipp_;
   std::string origin_config_file_path_;
   std::string tmp_generated_file_dir_;
+  std::string internal_stride_ = "16";
 };
 }  // namespace dpico
 }  // namespace mindspore

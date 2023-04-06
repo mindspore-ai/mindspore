@@ -165,6 +165,14 @@ STATUS CaffeModelParser::ConvertLayers() {
       continue;
     }
 
+    if (layer.top_size() == 1) {
+      auto top_name = layer.top(0);
+      if (top_name.size() > lite::kTopNameMaxSize) {  // mapper don't support node name length > 31
+        top_name = top_name.substr(top_name.size() - lite::kTopNameMaxSize, lite::kTopNameMaxSize);
+      }
+      (void)base_operator_ptr->AddAttr(lite::kTopName, mindspore::api::MakeValue(top_name));
+    }
+
     // build inputs
     std::vector<api::AnfNodePtr> input_nodes;
     status = ConvertBottom(layer, &input_nodes);
@@ -351,11 +359,12 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     }
     auto valueNode = api::NewValueNode(return_prim);
     std::vector<api::AnfNodePtr> opInputs{valueNode};
-    if (nodes_.find(*caffeInspector.GetGraphOutput().begin()) == nodes_.end()) {
+    std::string top_name = *caffeInspector.GetGraphOutput().begin();
+    if (nodes_.find(top_name) == nodes_.end()) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
-    auto cnode = nodes_.find(*caffeInspector.GetGraphOutput().begin())->second;
+    auto cnode = nodes_.find(top_name)->second;
     if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
@@ -364,7 +373,25 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     auto returnCnode = res_graph_->NewCNode(opInputs);
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
+
+    const std::string top_name_suffix = "duplicate";
+    const size_t max_loop = 1000;
+    for (size_t i = 0; i < max_loop; i++) {
+      std::string top_name_tmp = top_name + "_" + top_name_suffix + std::to_string(i);
+      if (nodes_.find(top_name_tmp) != nodes_.end()) {
+        auto cnode_tmp = nodes_[top_name_tmp];
+        if (cnode_tmp == nullptr) {
+          MS_LOG(ERROR) << "Can't find input node.";
+          return RET_NOT_FIND_OP;
+        }
+        res_graph_->set_attr(top_name_tmp, api::MakeValue(cnode_tmp->fullname_with_scope()));
+      } else {
+        break;
+      }
+    }
   }
+  // save original output tensor names.
+  converter::ConverterContext::SetGraphOutputTensorNames(caffeInspector.GetGraphOutput());
   return RET_OK;
 }
 
@@ -467,6 +494,24 @@ STATUS CaffeModelParser::ConvertBottom(const caffe::LayerParameter &layer, std::
 
 STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const api::CNodePtr &cnode) {
   if (layer.top_size() == 1) {
+    const std::string top_name_suffix = "duplicate";
+    const size_t max_loop = 1000;
+    std::string top_name = layer.top(0);
+    if (nodes_.find(top_name) != nodes_.end()) {
+      std::string top_name_new = "";
+      for (size_t i = 0; i < max_loop; i++) {
+        std::string top_name_tmp = top_name + "_" + top_name_suffix + std::to_string(i);
+        if (nodes_.find(top_name_tmp) == nodes_.end()) {
+          top_name_new = top_name_tmp;
+          break;
+        }
+      }
+      if (top_name_new.empty()) {
+        MS_LOG(ERROR) << "Create new top name failed";
+        return RET_ERROR;
+      }
+      nodes_[top_name_new] = nodes_[top_name];
+    }
     auto abstract = dpico::CreateTensorAbstract({}, kNumberTypeFloat32);
     if (abstract == nullptr) {
       MS_LOG(ERROR) << "Create tensor abstarct failed";
@@ -495,6 +540,11 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const ap
     std::vector<api::AnfNodePtr> inputs{tuple_get_item_prim, cnode, get_item_value};
     api::CNodePtr get_item_cnode = res_graph_->NewCNode(inputs);
     get_item_cnode->set_fullname_with_scope(layer.top(i));
+    auto top_name = layer.top(i);
+    if (top_name.size() > lite::kTopNameMaxSize) {
+      top_name = top_name.substr(top_name.size() - lite::kTopNameMaxSize, lite::kTopNameMaxSize);
+    }
+    (void)tuple_get_item_prim_ptr->AddAttr(lite::kTopName, api::MakeValue(top_name));
     nodes_[layer.top(i)] = get_item_cnode;
   }
   auto abstract_tuple = api::MakeShared<api::AbstractTuple>(abstract_list);

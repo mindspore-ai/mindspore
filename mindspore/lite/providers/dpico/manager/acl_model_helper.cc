@@ -209,6 +209,7 @@ int WriteDetBoxesToTensorData(const std::vector<std::vector<float>> &det_boxes,
                               mindspore::MSTensor *detect_boxes_tensor) {
   size_t total_box_num = det_boxes.size();
   auto bbox_pararm_size = DetectBoxParam::kDetectBoxParamEnd - DetectBoxParam::kDetectBoxParamBegin;
+  MS_CHECK_TRUE_MSG(detect_boxes_tensor != nullptr, RET_ERROR, "detect_boxes_tensor is nullptr.");
   MS_CHECK_TRUE_MSG(static_cast<size_t>(detect_boxes_tensor->ElementNum()) >= total_box_num * bbox_pararm_size,
                     RET_ERROR, "detect box tensor element num is too few");
   auto *bbox_tensor_data = reinterpret_cast<float *>(detect_boxes_tensor->MutableData());

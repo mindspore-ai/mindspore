@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #include <mutex>
 #include "include/errorcode.h"
 #include "common/check_base.h"
+#include "common/infer_util.h"
+#include "common/op_attr.h"
 #include "src/custom_allocator.h"
 #include "manager/acl_model_helper.h"
 #include "manager/acl_buf_manager.h"
@@ -102,10 +104,13 @@ int AclModelManager::SetDetectParams(void *data) {
 
 int AclModelManager::AddDetectParamInput() {
   void *data = nullptr;
-  int ret = AclMalloc(&data, sizeof(float) * kDetectParamNum);
+  size_t detect_param_stride = sizeof(float) * kDetectParamNum;
+  int ret = AclMalloc(&data, actual_batch_size_ * detect_param_stride);
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc detect input buffer failed.");
-  ret = SetDetectParams(data);
-  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "set detect params failed.");
+  for (size_t loop = 0; loop < actual_batch_size_; loop++) {
+    ret = SetDetectParams(reinterpret_cast<uint8_t *>(data) + loop * detect_param_stride);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "set detect params failed.");
+  }
   AclDataInfo acl_data_info(AclDataInfo::Input);
   acl_data_info.data_size = sizeof(float) * kDetectParamNum;
   acl_data_info.stride = sizeof(float) * kDetectParamNum;
@@ -193,7 +198,6 @@ int AclModelManager::CopyTensorDataToAclInputs(const std::vector<mindspore::MSTe
     MS_CHECK_TRUE_MSG(inputs_mem_managed_by_tensor.find(i) != inputs_mem_managed_by_tensor.end(), RET_ERROR,
                       "invalid input index");
     if (inputs_mem_managed_by_tensor[i]) {
-      MS_LOG(INFO) << "input tensor data is managed by tensor already, no need to copy";
       continue;
     }
 
@@ -248,7 +252,6 @@ int AclModelManager::CopyAclOutputsToTensorData(const std::vector<mindspore::MST
     }
 
     if (outputs_mem_managed_by_tensor[i]) {
-      MS_LOG(INFO) << "output tensor data is managed by tensor already, no need to copy";
       continue;
     }
     auto output_tensor = output_tensors.at(i);
@@ -402,6 +405,10 @@ int AclModelManager::UpdateBatchSize(const std::vector<mindspore::MSTensor> &inp
   int ret = svp_acl_mdl_get_input_dims(acl_model_desc_, 0, &acl_mdl_input_0_dims);
   MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "acl get input dims failed.");
   auto ms_input_batch = static_cast<size_t>(input_shape.front());
+  if (input_shape.size() == 1 && ms_input_batch > 1) {
+    MS_LOG(ERROR) << "When input dim is 1, batch size can't be more than 1";
+    return RET_ERROR;
+  }
   if (acl_model_type_ == AclModelType::kRecurrent) {
     custom_config_manager_ptr_->SetGTotalT(ms_input_batch);
   } else {
@@ -431,12 +438,14 @@ int AclModelManager::PrepareAclInputs(std::vector<mindspore::MSTensor> *input_te
     void *data = nullptr;
     if (acl_data_info.data_size * actual_batch_size_ != input_tensors->at(i).DataSize()) {
       inputs_mem_managed_by_tensor[i] = false;
-      MS_LOG(INFO) << "input 16 bytes not align, will memcpy";
+      MS_LOG(INFO) << "The size of the last dimension of the input tensor "
+                   << "does not align with 'internal_stride' value, will memcpy";
       ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
       MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl input buffer failed.");
     } else {
       inputs_mem_managed_by_tensor[i] = true;
-      MS_LOG(INFO) << "input 16 bytes has aligned, not memcpy";
+      MS_LOG(INFO) << "The size of the last dimension of the input tensor "
+                   << "is equal to 'internal_stride' value, will not memcpy";
       input_tensors->at(i).SetAllocator(custom_allocator_);
       data = input_tensors->at(i).MutableData();  // svp malloc memory for ms tensor
     }
@@ -473,12 +482,14 @@ int AclModelManager::PrepareAclOutputs(std::vector<mindspore::MSTensor> *output_
     void *data = nullptr;
     if (acl_data_info.data_size * actual_batch_size_ != output_tensors->at(i).DataSize()) {
       outputs_mem_managed_by_tensor[i] = false;
-      MS_LOG(INFO) << "output 16 bytes not align, will memcpy";
+      MS_LOG(INFO) << "The size of the last dimension of the output tensor "
+                   << "does not align with 'internal_stride' value, will memcpy";
       ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
       MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl output buffer failed.");
     } else {
       outputs_mem_managed_by_tensor[i] = true;
-      MS_LOG(INFO) << "output 16 bytes has aligned, not memcpy";
+      MS_LOG(INFO) << "The size of the last dimension of the output tensor "
+                   << "aligns with 'internal_stride' value, will not memcpy";
       output_tensors->at(i).SetAllocator(custom_allocator_);
       data = output_tensors->at(i).MutableData();  // svp malloc memory for ms tensor
     }
@@ -501,18 +512,29 @@ int AclModelManager::UpdateAclInputs(std::vector<mindspore::MSTensor> *input_ten
     MS_CHECK_TRUE_MSG(inputs_mem_managed_by_tensor.find(i) != inputs_mem_managed_by_tensor.end(), RET_ERROR,
                       "invalid input index: " << i);
     auto input_tensor = input_tensors->at(i);
-    if (!inputs_mem_managed_by_tensor[i]) {
-      MS_LOG(INFO)
-        << "input data isn't managed by tensor, which hasn't been freed, no need to update input tensor addr. "
-        << input_tensor.Name();
-      continue;
-    }
     auto data_buffer = svp_acl_mdl_get_dataset_buffer(acl_inputs_, i);
     MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "data_buffer is nullptr.");
     auto stride = svp_acl_mdl_get_input_default_stride(acl_model_desc_, i);
-    auto ret = svp_acl_update_data_buffer(data_buffer, input_tensors->at(i).MutableData(),
-                                          input_tensors->at(i).DataSize(), stride);
-    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp update data buffer failed. " << input_tensor.Name());
+    if (!inputs_mem_managed_by_tensor[i]) {
+      MS_LOG(INFO) << "input data isn't managed by tensor." << input_tensor.Name();
+      void *tmp_buffer = svp_acl_get_data_buffer_addr(data_buffer);
+      auto ret = AclFree(&tmp_buffer);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "execute AclFree failed");
+      AclDataInfo acl_data_info(AclDataInfo::Input);
+      ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, i);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "get acl data info failed.");
+      void *data = nullptr;
+      ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl input buffer failed.");
+      auto svp_ret =
+        svp_acl_update_data_buffer(data_buffer, data, acl_data_info.data_size * actual_batch_size_, stride);
+      MS_CHECK_TRUE_MSG(svp_ret == SVP_ACL_SUCCESS, RET_ERROR,
+                        "svp update data buffer failed. " << input_tensor.Name());
+    } else {
+      auto ret = svp_acl_update_data_buffer(data_buffer, input_tensors->at(i).MutableData(),
+                                            input_tensors->at(i).DataSize(), stride);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp update data buffer failed. " << input_tensor.Name());
+    }
   }
 
   if (acl_model_type_ == AclModelType::kRoi) {
@@ -521,8 +543,19 @@ int AclModelManager::UpdateAclInputs(std::vector<mindspore::MSTensor> *input_ten
     MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "data_buffer is nullptr.");
     void *data = svp_acl_get_data_buffer_addr(data_buffer);
     MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "detect param data is nullptr.");
-    auto ret = SetDetectParams(data);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "set detect params failed.");
+    auto ret = AclFree(&data);
+    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "execute AclFree failed");
+    void *data_tmp = nullptr;
+    size_t detect_param_stride = sizeof(float) * kDetectParamNum;
+    ret = AclMalloc(&data_tmp, actual_batch_size_ * detect_param_stride);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc detect input buffer failed.");
+    for (size_t loop = 0; loop < actual_batch_size_; loop++) {
+      ret = SetDetectParams(reinterpret_cast<uint8_t *>(data_tmp) + loop * detect_param_stride);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "set detect params failed.");
+    }
+    auto svp_ret =
+      svp_acl_update_data_buffer(data_buffer, data_tmp, detect_param_stride * actual_batch_size_, detect_param_stride);
+    MS_CHECK_TRUE_MSG(svp_ret == SVP_ACL_SUCCESS, RET_ERROR, "svp update data buffer for detect_param failed. ");
   }
   return RET_OK;
 }
@@ -533,17 +566,28 @@ int AclModelManager::UpdateAclOutputs(std::vector<mindspore::MSTensor> *output_t
     MS_CHECK_TRUE_MSG(outputs_mem_managed_by_tensor.find(i) != outputs_mem_managed_by_tensor.end(), RET_ERROR,
                       "invalid output index: " << i);
     auto output_tensor = output_tensors->at(i);
-    if (!outputs_mem_managed_by_tensor[i]) {
-      MS_LOG(INFO)
-        << "output data isn't managed by tensor, which hasn't been freed, no need to update output tensor addr. "
-        << output_tensor.Name();
-      continue;
-    }
     auto data_buffer = svp_acl_mdl_get_dataset_buffer(acl_outputs_, i);
     MS_CHECK_TRUE_MSG(data_buffer != nullptr, RET_ERROR, "data_buffer is nullptr.");
     auto stride = svp_acl_mdl_get_output_default_stride(acl_model_desc_, i);
-    auto ret = svp_acl_update_data_buffer(data_buffer, output_tensor.MutableData(), output_tensor.DataSize(), stride);
-    MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp update data buffer failed. " << output_tensor.Name());
+    if (!outputs_mem_managed_by_tensor[i]) {
+      MS_LOG(INFO) << "output data isn't managed by tensor." << output_tensor.Name();
+      void *tmp_buffer = svp_acl_get_data_buffer_addr(data_buffer);
+      auto ret = AclFree(&tmp_buffer);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "execute AclFree failed");
+      AclDataInfo acl_data_info(AclDataInfo::Output);
+      ret = GetAclDataInfo(&acl_data_info, acl_model_desc_, i);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "get acl data info failed.");
+      void *data = nullptr;
+      ret = AclMalloc(&data, acl_data_info.data_size * actual_batch_size_);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "svp acl rt malloc acl output buffer failed.");
+      auto svp_ret =
+        svp_acl_update_data_buffer(data_buffer, data, acl_data_info.data_size * actual_batch_size_, stride);
+      MS_CHECK_TRUE_MSG(svp_ret == SVP_ACL_SUCCESS, RET_ERROR,
+                        "svp update data buffer failed. " << output_tensor.Name());
+    } else {
+      auto ret = svp_acl_update_data_buffer(data_buffer, output_tensor.MutableData(), output_tensor.DataSize(), stride);
+      MS_CHECK_TRUE_MSG(ret == SVP_ACL_SUCCESS, RET_ERROR, "svp update data buffer failed. " << output_tensor.Name());
+    }
   }
   return RET_OK;
 }
