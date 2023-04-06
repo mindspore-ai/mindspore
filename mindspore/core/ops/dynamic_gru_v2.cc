@@ -87,11 +87,11 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
     int64_t input_size = x_shape[kInputIndex2];
     int64_t hidden_size = whidden_shape[kInputIndex0];
 
-    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"weight input shape", winput_shape_ptr}},
+    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"weight input", winput_shape_ptr}},
                                                      std::vector<int64_t>{input_size, 3 * hidden_size}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"weight hidden shape", whidden_shape_ptr}},
+    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"weight hidden", whidden_shape_ptr}},
                                                      std::vector<int64_t>{hidden_size, 3 * hidden_size}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"init h shape", h_shape_ptr}},
+    (void)CheckAndConvertUtils::CheckTensorShapeSame({{"init h", h_shape_ptr}},
                                                      std::vector<int64_t>{batch_size, hidden_size}, prim_name);
 
     std::vector<int64_t> valid_shape = {3 * hidden_size};
@@ -100,7 +100,7 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
       auto binput_shape_ptr = input_args[kInputIndex3]->BuildShape();
       if (!IsDynamic(binput_shape)) {
-        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"binput_shape", binput_shape_ptr}}, valid_shape, prim_name);
+        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"binput", binput_shape_ptr}}, valid_shape, prim_name);
         placeholder_map[kInputIndex3] = false;
       }
     }
@@ -110,8 +110,7 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
       auto bhidden_shape_ptr = input_args[kInputIndex4]->BuildShape();
       if (!IsDynamic(bhidden_shape)) {
-        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"bhidden_shape", bhidden_shape_ptr}}, valid_shape,
-                                                         prim_name);
+        (void)CheckAndConvertUtils::CheckTensorShapeSame({{"bhidden", bhidden_shape_ptr}}, valid_shape, prim_name);
         placeholder_map[kInputIndex4] = false;
       }
     }

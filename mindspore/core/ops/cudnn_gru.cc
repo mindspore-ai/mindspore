@@ -109,8 +109,9 @@ abstract::TupleShapePtr CudnnGRUInferShape(const PrimitivePtr &primitive,
     }
     if (h_shape[kInputIndex1] != abstract::Shape::kShapeDimAny) {
       if (batch_size != abstract::Shape::kShapeDimAny && batch_size != h_shape[kInputIndex1]) {
-        MS_LOG(EXCEPTION) << "For " << op_name << ", input_shape[1] and h_shape[1] should be -1 or equal, but got "
-                          << batch_size << " and " << h_shape[kInputIndex1] << ".";
+        MS_EXCEPTION(ValueError) << "For " << op_name
+                                 << ", input_shape[1] and h_shape[1] should be -1 or equal, but got " << batch_size
+                                 << " and " << h_shape[kInputIndex1] << ".";
       }
       batch_size = h_shape[kInputIndex1];
     }
