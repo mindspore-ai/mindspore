@@ -1126,14 +1126,15 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     if ((!copy_actor->output_data_arrows_.empty()) || (!copy_actor->output_control_arrows_.empty())) {
       continue;
     }
-    if (copy_actor->from_kernel_ == nullptr) {
+    KernelGraphPtr kernel_graph = nullptr;
+    if (copy_actor->from_graph_ != nullptr) {
+      kernel_graph = copy_actor->from_graph_;
+    } else if (copy_actor->from_kernel_ != nullptr) {
+      kernel_graph = std::dynamic_pointer_cast<KernelGraph>(copy_actor->from_kernel_->func_graph());
+    }
+    if (kernel_graph == nullptr) {
       MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid copy actor:" << copy_actor->GetAID().Name();
     }
-    MS_EXCEPTION_IF_NULL(copy_actor->from_kernel_);
-    auto graph = copy_actor->from_kernel_->func_graph();
-    MS_EXCEPTION_IF_NULL(graph);
-    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(graph);
-    MS_EXCEPTION_IF_NULL(kernel_graph);
     auto exit_actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kExitActorNameSuffix;
     auto exit_actor = FetchActor(exit_actor_name);
     MS_EXCEPTION_IF_NULL(exit_actor);
