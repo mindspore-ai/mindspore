@@ -663,6 +663,10 @@ std::string AkgKernelBuilder::CollectBuildAttrs() {
   if (!flags.repository_path.empty()) {
     build_attrs_["repository_path"] = flags.repository_path;
   }
+  auto compile_cache = GetCompilerCachePath();
+  if (!compile_cache.empty()) {
+    build_attrs_["compile_cache"] = compile_cache;
+  }
   return build_attrs_.empty() ? "" : build_attrs_.dump();
 }
 }  // namespace kernel
