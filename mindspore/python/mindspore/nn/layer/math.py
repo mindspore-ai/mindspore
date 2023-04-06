@@ -741,6 +741,7 @@ class LBeta(Cell):
 def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
     """get broadcast_matmul shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
     def _check_len():
         if (len(x_shape) < 2) or (len(y_shape) < 2):
             raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' must be equal to or greater than 2, "

@@ -200,7 +200,7 @@ class Softmax2d(Cell):
     @_primexpr
     def _check_input_dim(shape, cls_name):
         dim = len(shape)
-        if not (dim == 3 or dim == 4):
+        if dim not in (3, 4):
             raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
 
     def construct(self, x):

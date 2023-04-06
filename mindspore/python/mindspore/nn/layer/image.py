@@ -483,7 +483,7 @@ class PSNR(Cell):
 def _check_rank(rank, input_shape, param_name, func_name):
     """raise error if input is not 3d or 4d"""
     def _check():
-        if not (rank == 3 or rank == 4):
+        if rank not in (3, 4):
             raise ValueError(f"{func_name} {param_name} must be 3d or 4d, but got shape {input_shape}")
     _check()
 
