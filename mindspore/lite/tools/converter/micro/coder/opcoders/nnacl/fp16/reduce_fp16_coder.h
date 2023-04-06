@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_REDUCE_FP32_CODER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_REDUCE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_REDUCE_FP16_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_REDUCE_FP16_CODER_H_
 
 #include <string>
 #include <vector>
+#include "coder/opcoders/nnacl/fp32/reduce_fp32_coder.h"
 #include "coder/opcoders/base/reduce_base_coder.h"
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ReduceFP32Coder : public ReduceBaseCoder {
+class ReduceFP16Coder final : public ReduceFP32Coder {
  public:
-  ReduceFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+  ReduceFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const LiteGraph::Node *node, size_t node_index, Target target)
-      : ReduceBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
+      : ReduceFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~ReduceFP32Coder() override = default;
+  ~ReduceFP16Coder() override = default;
 
   int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
-
- protected:
-  void GenerateCode(CoderContext *const context);
-  int MallocTmpBuffer(mindspore::TypeId type_id);
-
-  std::string reduce_;
-  std::string int_reduce_;
-  TypeIdC data_type_{::kNumberTypeFloat32};
-  std::vector<float *> data_buffers_;
-
- private:
-  int ReSize() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_REDUCE_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_REDUCE_FP16_CODER_H_

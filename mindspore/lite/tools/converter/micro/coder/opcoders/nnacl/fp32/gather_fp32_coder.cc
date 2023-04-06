@@ -18,7 +18,6 @@
 #include <string>
 #include "nnacl/gather_parameter.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "coder/log.h"
 #include "coder/opcoders/parallel.h"
 #include "coder/opcoders/file_collector.h"
 
@@ -95,4 +94,5 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Gather, CPUOpCoderCreator<GatherFP32Coder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Gather, CPUOpCoderCreator<GatherFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Gather, CPUOpCoderCreator<GatherFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl
