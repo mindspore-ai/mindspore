@@ -1708,8 +1708,14 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   CopyActor *copy_actor = dynamic_cast<CopyActor *>(FetchActor(name));
   // Link between from actor and copy actor.
   if (copy_actor == nullptr) {
+    KernelGraphPtr from_graph = nullptr;
+    if (from_actor->type() == KernelTransformType::kSuperKernelActor) {
+      auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(from_actor);
+      MS_EXCEPTION_IF_NULL(super_kernel_actor);
+      from_graph = super_kernel_actor->graph();
+    }
     // Create the copy actor.
-    auto copy_actor_shared_ptr = std::make_shared<CopyActor>(name, from_kernel.get(), memory_manager_aid_);
+    auto copy_actor_shared_ptr = std::make_shared<CopyActor>(name, from_kernel.get(), from_graph, memory_manager_aid_);
     (void)copy_actors_.emplace_back(copy_actor_shared_ptr);
     copy_actor = copy_actor_shared_ptr.get();
     MS_EXCEPTION_IF_NULL(copy_actor);
@@ -2416,12 +2422,17 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
         continue;
       }
       AnfNode *from_kernel = nullptr;
+      KernelGraphPtr from_graph = nullptr;
       if (auto_monad_actor->type() == KernelTransformType::kKernelActor) {
         auto kernel_actor = dynamic_cast<KernelActor *>(auto_monad_actor);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         from_kernel = kernel_actor->kernel().get();
+      } else if (auto_monad_actor->type() == KernelTransformType::kSuperKernelActor) {
+        auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(auto_monad_actor);
+        MS_EXCEPTION_IF_NULL(super_kernel_actor);
+        from_graph = super_kernel_actor->graph();
       }
-      auto copy_actor = std::make_shared<CopyActor>(name, from_kernel, memory_manager_aid_);
+      auto copy_actor = std::make_shared<CopyActor>(name, from_kernel, from_graph, memory_manager_aid_);
       MS_EXCEPTION_IF_NULL(copy_actor);
       (void)copy_actors_.emplace_back(copy_actor);
       InsertActor(copy_actor.get());
