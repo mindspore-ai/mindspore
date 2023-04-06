@@ -156,8 +156,8 @@ class AutoBoost:
 
               Here:
 
-              - pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
-              - bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+              - pca_mat (array): Shape :math:`(k*n)`, k is part of n_components, n is the size of weight.
+              - bk (array): Shape :math:`(k*k)`, is the symmetric positive definite matrix in Quasi-Newton method.
 
               we need to find the m satisfy:
 
