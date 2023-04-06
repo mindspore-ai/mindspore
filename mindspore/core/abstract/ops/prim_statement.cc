@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,6 +192,9 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
     MS_LOG(EXCEPTION) << "For syntax like 'a is b', b supports True, False and None, but got " << t->ToString();
   }
   ValuePtr x = args_abs_list[0]->BuildValue();
+  if (args_abs_list[0]->isa<AbstractNone>() && args_abs_list[1]->isa<AbstractNone>()) {
+    return std::make_shared<AbstractScalar>(true);
+  }
 
   return std::make_shared<AbstractScalar>(*t == *x);
 }
