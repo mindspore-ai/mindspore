@@ -39,10 +39,10 @@ class UbPatternFusion : public PassWithSwitch {
   bool RunPass(const FuncGraphPtr &graph) override;
 
  private:
-  void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
-                           mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
-                           mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> *remove_updatestate_infos,
-                           std::vector<int64_t> *remove_updatestate_ids) const;
+  void GetBufferFusionInfo(
+    session::KernelGraph *kernel_graph, mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+    mindspore::HashMap<int64_t, RemovedUpdateStateInfo> *removed_updatestate_infos,
+    mindspore::HashMap<AnfNodePtr, std::vector<int64_t>> *newest_updatestate_related_fusion_ids) const;
   bool ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
                        session::KernelGraph *kernel_graph) const;
   bool FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const;
