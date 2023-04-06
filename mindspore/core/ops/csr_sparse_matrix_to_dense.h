@@ -44,4 +44,11 @@ MIND_API abstract::AbstractBasePtr CSRSparseMatrixToDenseInfer(
 }  // namespace ops
 }  // namespace mindspore
 
+#define MS_EXCEPTION_VALUE_ERR_IF_CHECK(condition, error_info) \
+  do {                                                         \
+    if (condition) {                                           \
+      MS_EXCEPTION(ValueError) << error_info;                  \
+    }                                                          \
+  } while (0)
+
 #endif  // MINDSPORE_CORE_OPS_CSR_SPARSE_MATRIX_TO_DENSE
