@@ -35,6 +35,8 @@ class MIND_API Gather : public BaseOperator {
   Gather() : BaseOperator(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Gather for the inputs.
   void Init() const {}
+  void set_batch_dims(int64_t batch_dims);
+  int64_t get_batch_dims() const;
 };
 
 MIND_API abstract::AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
