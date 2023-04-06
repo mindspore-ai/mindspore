@@ -20,6 +20,7 @@
 #include <memory>
 #include "tools/converter/optimizer.h"
 #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
+#include "src/train/optimizer/fusion/gru_fusion_pass.h"
 #include "src/train/optimizer/fusion/matmul_activation_fusion_pass.h"
 #include "src/train/optimizer/fusion/reshape_gather_reshape_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
@@ -39,6 +40,12 @@ std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT
 STATUS GraphFusion::Run(schema::MetaGraphT *graph) {
   if (graph == nullptr) {
     MS_LOG(ERROR) << "graph is nullptr.";
+    return RET_ERROR;
+  }
+  auto gru_fusion = std::make_shared<GruFusionPass>();
+  MS_CHECK_TRUE_MSG(gru_fusion != nullptr, RET_NULL_PTR, "Create GruFusion object failed.");
+  if (gru_fusion->Run(graph) != RET_OK) {
+    MS_LOG(ERROR) << "Do GruFusion failed.";
     return RET_ERROR;
   }
   auto old_nodes = GetGraphNodes(*graph);
