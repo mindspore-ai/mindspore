@@ -113,8 +113,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
             其中：
 
-            - pca_mat (array)：维度(k*n)，k是 *n_components* 的大小，n是权重的大小。
-            - bk (array)：维度(k*k)，bk是拟牛顿法中的对称正定矩阵。
+            - pca_mat (array)：维度 :math:`(k*n)`，k是 *n_components* 的大小，n是权重的大小。
+            - bk (array)：维度 :math:`(k*k)`，bk是拟牛顿法中的对称正定矩阵。
 
             我们需要找到满足以下条件的m：
 
@@ -310,7 +310,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     异常：
         - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。
-        - **ValueError** - `scale_sense` 的shape既不是(1,)也不是()。
+        - **ValueError** - `scale_sense` 的shape既不是 :math:`(1,)` 也不是 :math:`()`。
 
 .. py:class:: mindspore.boost.LessBN(network, fn_flag=False)
 
@@ -424,8 +424,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     其中:
 
-    - pca_mat (array): PCA矩阵，维度(k*n)，k是 `n_components` 的大小，n是权重的大小。
-    - bk (array): 维度(k*k)，bk是拟牛顿法中的对称正定矩阵。
+    - pca_mat (array): PCA矩阵，维度 :math:`(k*n)`，k是 `n_components` 的大小，n是权重的大小。
+    - bk (array): 维度 :math:`(k*k)`，bk是拟牛顿法中的对称正定矩阵。
 
     我们需要找到满足以下条件的m:
 

@@ -98,7 +98,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
             if it is None, the gradient will be estimated with gradient of ``func``.
             if it is a callable, it should be a function that returns the gradient vector:
             :math:`jac(x, *args) -> array\_like, shape (n,)`
-            where x is an array with shape (n,) and args is a tuple with the fixed parameters.
+            where x is an array with shape :math:`(n,)` and args is a tuple with the fixed parameters.
         tol (float, optional): tolerance for termination. For detailed control, use solver-specific
             options. Default: None.
         constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates

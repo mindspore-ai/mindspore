@@ -776,7 +776,7 @@ def check_shape(x_shape, indices_shape, func_name):
 
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes the inverse of :func:`mindspore.ops.max_pool1d`.
+    Computes the inverse of `max_pool1d`.
 
     `max_unpool1d` keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
@@ -887,7 +887,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
 def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes the inverse of :func:`mindspore.ops.max_pool2d`.
+    Computes the inverse of `max_pool2d`.
 
     `max_unpool2d` keeps the maximal value and set all position of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
