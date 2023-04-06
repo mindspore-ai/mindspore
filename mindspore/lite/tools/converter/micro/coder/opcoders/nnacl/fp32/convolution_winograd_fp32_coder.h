@@ -38,7 +38,13 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
   ~ConvolutionWinogradFP32Coder() override = default;
 
  private:
-  int InitWeightBias();
+  int InitParameter();
+
+  int InitWeightBiasOffline();
+
+  int InitWeightBiasOnline();
+
+  void InitCodeOnline(CoderContext *const context);
 
   int ConfigInputOutput();
 
@@ -46,13 +52,13 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
 
   int ReSize();
 
-  int WinogradFilterTransform(const float *weight_data, float *matrix_g, const float *matrix_gt, int oc_block);
-
   std::string GetInputTransFunc(int input_unit);
 
   std::string GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
 
+  size_t trans_weight_size_{0};
   float *trans_weight_{nullptr};
+  size_t packed_bias_size_{0};
   float *new_bias_{nullptr};
 
   int kernel_unit_{0};
@@ -70,6 +76,9 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
   float *col_buffer_{nullptr};
 
   TransFuncStr trans_func_str_;
+  TypeId data_type_{kNumberTypeFloat32};
+  std::vector<float> matrix_g_;
+  std::vector<float> matrix_gt_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONVOLUTION_WINOGRAD_FP32_CODER_H_

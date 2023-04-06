@@ -56,7 +56,8 @@ class MemoryAllocator {
   /*
    * assign model's input, original weights and all tensors memory addr
    */
-  int Assign(const std::vector<Tensor *> &inputs, const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
+  int Assign(const std::vector<Tensor *> &inputs, const std::vector<std::unique_ptr<OperatorCoder>> &nodes,
+             const std::vector<Tensor *> &all_tensors, const std::string &changeable_weights_name = {});
 
   // allocator holds the space malloced by opcoders, will free before session coder destroy
   void Free();
@@ -143,13 +144,18 @@ class MemoryAllocator {
   void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type, const std::string &tensor_name = "");
   void MarkSharedWeight(const Tensor *src, void *pack_weight);
   void *GetSharedWeightAddr(const Tensor *src);
+  std::string GetAuxiliaryWeight(Tensor *src);
+  std::vector<Tensor *> origin_weights() const { return origin_weights_; }
+  std::map<Tensor *, std::pair<Tensor *, std::string>> auxiliary_weights() const { return auxiliary_weights_; }
 
  private:
   int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
   void AssignGraphInputs(const std::vector<Tensor *> &inputs);
   void AssignWorkspaces(void *addr, size_t size);
-  void RecordOriginWeightsAddr(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
+  int RecordOriginWeightsAddr(const std::vector<Tensor *> &all_tensors,
+                              const std::string &changeable_weights_name = {});
   void RecordTensorsAddr(const std::map<Tensor *, size_t> &offsets);
+  int RecordChangeableWeights(Tensor *src);
 
   MemoryAllocator() = default;
   ~MemoryAllocator() = default;
@@ -162,11 +168,13 @@ class MemoryAllocator {
   bool is_next_{false};
   size_t offset_{0};
   std::vector<void *> allocated_;
+  std::vector<Tensor *> origin_weights_;
   std::map<std::string, Tensor *> saved_weights_addr_;
   std::map<Tensor *, std::string> origin_weights_addr_;
   std::map<Tensor *, std::string> malloc_weights_addr_;
   std::map<Tensor *, std::string> tensors_addr_;
   std::map<const Tensor *, void *> shared_pack_weights_;
+  std::map<Tensor *, std::pair<Tensor *, std::string>> auxiliary_weights_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_ALLOCATOR_H_

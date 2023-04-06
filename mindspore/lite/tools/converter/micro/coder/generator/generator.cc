@@ -483,7 +483,7 @@ int Generator::CodeWeightFile() {
     cofs << "unsigned char *" << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char *" << ctx_->weight_name() << " = 0; \n";
     std::string net_file = model_dir_ + "net" + std::to_string(ctx_->GetCurModelIndex()) + ".bin";
-    SaveDataToNet(ctx_->saved_weights(), net_file);
+    SaveDataToNet(ctx_, net_file, config_->keep_original_weight());
   } else {
     if (!ctx_->weight_buffer_size_code_blocks().empty()) {
       MS_LOG(ERROR) << "Weight init code generation error ";

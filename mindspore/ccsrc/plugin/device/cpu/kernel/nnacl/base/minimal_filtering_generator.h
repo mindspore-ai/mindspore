@@ -21,7 +21,6 @@
 #include <arm_neon.h>
 #endif
 #include <stdbool.h>
-#include "nnacl/pack.h"
 
 #ifdef __cplusplus
 extern "C" {

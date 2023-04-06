@@ -26,12 +26,14 @@ enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
 struct MicroParam {
   std::string codegen_mode = "Inference";
   std::string target;
+  std::string changeable_weights_name;
   bool enable_micro{false};
   bool support_parallel{false};
   bool debug_mode{false};
   std::string save_path;
   std::string project_name;
   bool is_last_model{false};
+  bool keep_original_weight{false};
 };
 
 class Configurator {
@@ -59,6 +61,12 @@ class Configurator {
   void set_proj_dir(std::string dir) { proj_dir_ = dir; }
   std::string proj_dir() const { return proj_dir_; }
 
+  void set_keep_original_weight(bool keep_weight) { keep_original_weight_ = keep_weight; }
+  bool keep_original_weight() const { return keep_original_weight_; }
+
+  void set_changeable_weights_name(const std::string &weights_name) { changeable_weights_name_ = weights_name; }
+  const std::string &changeable_weights_name() const { return changeable_weights_name_; }
+
  private:
   Configurator() = default;
   ~Configurator() = default;
@@ -67,7 +75,9 @@ class Configurator {
   CodeMode code_mode_{Code_Unknown};
   bool support_parallel_{false};
   bool debug_mode_{false};
+  bool keep_original_weight_{false};
   std::string proj_dir_;
+  std::string changeable_weights_name_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MICRO_CODER_CONFIG_H

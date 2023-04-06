@@ -490,13 +490,16 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
 int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
   if (maps.find(kMicroParam) != maps.end()) {
     const auto &map = maps.at(kMicroParam);
-    std::map<std::string, std::string &> parse_map{{"target", micro_param_string_.target},
-                                                   {"codegen_mode", micro_param_string_.codegen_mode},
-                                                   {"debug_mode", micro_param_string_.debug_mode},
-                                                   {"support_parallel", micro_param_string_.support_parallel},
-                                                   {"enable_micro", micro_param_string_.enable_micro},
-                                                   {"save_path", micro_param_string_.save_path},
-                                                   {"project_name", micro_param_string_.project_name}};
+    std::map<std::string, std::string &> parse_map{
+      {"target", micro_param_string_.target},
+      {"codegen_mode", micro_param_string_.codegen_mode},
+      {"debug_mode", micro_param_string_.debug_mode},
+      {"support_parallel", micro_param_string_.support_parallel},
+      {"enable_micro", micro_param_string_.enable_micro},
+      {"save_path", micro_param_string_.save_path},
+      {"project_name", micro_param_string_.project_name},
+      {"keep_original_weight", micro_param_string_.keep_original_weight},
+      {"changeable_weights_name", micro_param_string_.changeable_weights_name}};
     return SetMapData(map, parse_map, kMicroParam);
   }
   return RET_OK;

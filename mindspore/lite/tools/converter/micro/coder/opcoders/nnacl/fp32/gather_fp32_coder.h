@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_FP32_CODER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_FP32_CODER_H_
 
+#include <string>
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/base/tile_base.h"
@@ -35,7 +36,9 @@ class GatherFP32Coder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
+  void InitCodeInChange(CoderContext *const context, std::string *auxiliary_variable);
   int32_t *indices_{nullptr};
+  int axis_{0};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_GATHER_FP32_CODER_H_

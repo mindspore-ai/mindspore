@@ -66,6 +66,8 @@ CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 int CoderSession::PassArgsToContext(const std::string &model_name) {
   context_->set_tensor_map(allocator_->tensors_map());
   context_->set_saved_weights(allocator_->saved_weights());
+  context_->set_origin_weights(allocator_->origin_weights());
+  context_->set_auxiliary_weights(allocator_->auxiliary_weights());
   size_t de_quant_max_workspace_size = nnacl::Dequant::GetInstance()->de_quant_max_workspace();
   size_t final_total_size = allocator_->total_buffer_size() > de_quant_max_workspace_size
                               ? allocator_->total_buffer_size()
@@ -83,13 +85,19 @@ int CoderSession::PassArgsToContext(const std::string &model_name) {
     context_->set_code_blocks(blocks);
   }
   context_->set_model_name(model_name);
+  if (!context_->JudgeIsValid(Configurator::GetInstance()->keep_original_weight())) {
+    MS_LOG(ERROR) << "Current model cannot keep-original-weight, due to existing generated tensor-data, please set "
+                     "'keep_original_weight' to false.";
+    return RET_NOT_SUPPORT;
+  }
   return RET_OK;
 }
 
 int CoderSession::Preprocess() {
   // assign memory
   std::vector<lite::Tensor *> inputs = coder_graph_->input_tensors();
-  int ret = allocator_->Assign(inputs, op_coders_);
+  int ret = allocator_->Assign(inputs, op_coders_, coder_graph_->all_tensors(),
+                               Configurator::GetInstance()->changeable_weights_name());
   MS_CHECK_RET_CODE(ret, "assign memory failed");
 
   // prepare, init model parameters

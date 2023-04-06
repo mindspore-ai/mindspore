@@ -20,40 +20,86 @@
 #include "coder/opcoders/parallel.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "src/common/utils.h"
 
 namespace mindspore::lite::micro::nnacl {
 int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder::Init() failed!");
-  MS_CHECK_RET_CODE(InitWeightBias(), "dwconvolution do init weightbais failed");
+  MS_CHECK_RET_CODE(InitParameter(), "dwconvolution do InitParamter failed");
+  if (Configurator::GetInstance()->keep_original_weight()) {
+    MS_CHECK_RET_CODE(InitWeightBiasOnline(), "dwconvolution do InitWeightBiasOnline failed");
+  } else {
+    MS_CHECK_RET_CODE(InitWeightBiasOffline(), "dwconvolution do InitWeightBiasOffline failed");
+  }
   conv_param_->thread_num_ = MSMIN(thread_num_, conv_param_->output_h_);
   return RET_OK;
 }
 
-int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
+int ConvolutionDepthwiseFP32Coder::InitParameter() {
+  auto shape = filter_tensor_->shape();
+  MS_CHECK_TRUE_MSG(shape.size() == C4NUM, RET_ERROR, "Conv: filter-weight's shape must be 4D.");
+  packed_weight_size_ =
+    filter_tensor_->Batch() * filter_tensor_->Height() * filter_tensor_->Width() * DataTypeSize(data_type_);
+  packed_bias_size_ = filter_tensor_->Batch() * DataTypeSize(data_type_);
+  return RET_OK;
+}
+
+int ConvolutionDepthwiseFP32Coder::InitWeightBiasOffline() {
   auto *origin_weight = reinterpret_cast<float *>(filter_tensor_->data());
   MS_CHECK_PTR(origin_weight);
   int channel = filter_tensor_->Batch();
-  size_t pack_weight_size = filter_tensor_->Batch() * filter_tensor_->Height() * filter_tensor_->Width();
-  size_t packed_weight_data_size = pack_weight_size * sizeof(float);
-  packed_weight_ =
-    reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, packed_weight_data_size, kOfflinePackWeight));
+  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, packed_weight_size_, kOfflinePackWeight));
   MS_CHECK_PTR(packed_weight_);
-  MS_CHECK_RET_CODE(memset_s(packed_weight_, packed_weight_data_size, 0, packed_weight_data_size),
+  MS_CHECK_RET_CODE(memset_s(packed_weight_, packed_weight_size_, 0, packed_weight_size_),
                     "memset packed weight failed!");
   PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel,
                      kDefaultTaskId, 0);
 
-  auto bias_size = static_cast<size_t>(channel * sizeof(float));
-  bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, bias_size, kOfflinePackWeight));
+  bias_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, packed_bias_size_, kOfflinePackWeight));
   MS_CHECK_PTR(bias_);
-  MS_CHECK_RET_CODE(memset_s(bias_, bias_size, 0, bias_size), "memset bias failed!");
+  MS_CHECK_RET_CODE(memset_s(bias_, packed_bias_size_, 0, packed_bias_size_), "memset bias failed!");
   // init bias
   if (input_tensors_.size() == kInputSize2) {
     auto *ori_bias = reinterpret_cast<float *>(bias_tensor_->data());
     MS_CHECK_TRUE(bias_tensor_->ElementsNum() > 0, "invalid bias length");
-    MS_CHECK_RET_CODE(memcpy_s(bias_, bias_size, ori_bias, bias_tensor_->Size()), "memcpy_s bias failed!");
+    MS_CHECK_RET_CODE(memcpy_s(bias_, packed_bias_size_, ori_bias, bias_tensor_->Size()), "memcpy_s bias failed!");
   }
   return RET_OK;
+}
+
+int ConvolutionDepthwiseFP32Coder::InitWeightBiasOnline() {
+  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight));
+  MS_CHECK_PTR(packed_weight_);
+  bias_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight));
+  MS_CHECK_PTR(bias_);
+  return RET_OK;
+}
+
+void ConvolutionDepthwiseFP32Coder::InitCodeOnline(CoderContext *const context) {
+  if (!Configurator::GetInstance()->keep_original_weight()) {
+    return;
+  }
+  Collect(context,
+          {
+            "nnacl/fp32/pack_fp32.h",
+          },
+          {"pack_fp32.c"});
+  NNaclFp32Serializer init_code;
+  init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), packed_weight_size_);
+  auto filter_str = allocator_->GetRuntimeAddr(filter_tensor_);
+  init_code.CodeFunction("PackNCHWToNHWCFp32", filter_str, packed_weight_, 1,
+                         filter_tensor_->Height() * filter_tensor_->Width(), filter_tensor_->Batch(), 0, 0);
+  init_code.CodeBufferOffsetExpression(bias_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), packed_bias_size_);
+  if (input_tensors_.size() == kInputSize2) {
+    auto bias_str = allocator_->GetRuntimeAddr(bias_tensor_);
+    init_code.CodeFunction("memcpy", bias_, bias_str, bias_tensor_->Size());
+  } else {
+    init_code.CodeFunction("memcpy", bias_, 0, packed_bias_size_);
+  }
+  context->AppendInitWeightSizeCode(packed_weight_size_ + packed_bias_size_);
+  context->AppendInitCode(init_code.str());
 }
 
 int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
@@ -78,6 +124,7 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
             "activation_fp32.c",
           },
           {});
+  InitCodeOnline(context);
   nnacl::NNaclFp32Serializer code;
   // call the op function
   std::string param_name = "conv_parameter";

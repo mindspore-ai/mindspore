@@ -1034,9 +1034,9 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
 
   if (param->microParam.enable_micro) {
     if (!is_multi_model) {
-      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
-                                                       param->microParam.target, param->microParam.support_parallel,
-                                                       param->microParam.debug_mode, true, param->weight_fp16);
+      param->microParam.is_last_model = true;
+      status =
+        micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam, param->weight_fp16);
     } else {
       if (param->microParam.save_path.empty() || param->microParam.project_name.empty()) {
         MS_LOG(ERROR) << "Micro param for invalid: save_path or project name is needed";
@@ -1047,10 +1047,7 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
           param->microParam.save_path[param->microParam.save_path.size() - 1] != '\\') {
         output_path = param->microParam.save_path + kSlash + param->microParam.project_name;
       }
-      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam.codegen_mode,
-                                                       param->microParam.target, param->microParam.support_parallel,
-                                                       param->microParam.debug_mode, param->microParam.is_last_model,
-                                                       param->weight_fp16);
+      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam, param->weight_fp16);
     }
   } else {
     status = ConverterToMetaGraph::Save(meta_graph, param, model_data, data_size, not_save);
