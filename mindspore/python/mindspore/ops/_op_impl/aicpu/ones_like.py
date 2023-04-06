@@ -31,8 +31,6 @@ ones_like_op_info = AiCPURegOp("OnesLike") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default)   \
     .dtype_format(DataType.F64_Default, DataType.F64_Default)   \
     .dtype_format(DataType.F64_Default, DataType.F64_Default)   \
-    .dtype_format(DataType.C64_Default, DataType.C64_Default)   \
-    .dtype_format(DataType.C128_Default, DataType.C128_Default) \
     .get_op_info()
 
 @op_info_register(ones_like_op_info)

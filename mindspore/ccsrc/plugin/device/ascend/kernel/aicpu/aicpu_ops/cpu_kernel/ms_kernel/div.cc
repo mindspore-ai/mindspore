@@ -130,12 +130,7 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
-          T mod;
-          mod = (*(input1 + i)) % (*(input2 + i));
-          if (((*(input1 + i)) * (*(input2 + i)) < static_cast<T>(0)) && (mod != 0))
-            *(output + i) = (*(input1 + i)) / (*(input2 + i)) - static_cast<T>(1);
-          else
-            *(output + i) = (*(input1 + i)) / (*(input2 + i));
+          *(output + i) = (*(input1 + i)) / (*(input2 + i));
         }
       }
       break;
@@ -145,12 +140,7 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
-          T mod;
-          mod = (*input1) % (*(input2 + i));
-          if (((*input1) * (*(input2 + i)) < static_cast<T>(0)) && (mod != 0))
-            *(output + i) = (*input1) / (*(input2 + i)) - static_cast<T>(1);
-          else
-            *(output + i) = (*input1) / (*(input2 + i));
+          *(output + i) = (*input1) / (*(input2 + i));
         }
       }
       break;
@@ -160,12 +150,7 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
-          T mod;
-          mod = (*(input1 + i)) % (*input2);
-          if (((*(input1 + i)) * (*input2) < static_cast<T>(0)) && (mod != 0))
-            *(output + i) = (*(input1 + i)) / (*input2) - static_cast<T>(1);
-          else
-            *(output + i) = (*(input1 + i)) / (*input2);
+          *(output + i) = (*(input1 + i)) / (*input2);
         }
       }
       break;
