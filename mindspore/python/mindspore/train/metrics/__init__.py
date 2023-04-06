@@ -113,7 +113,7 @@ def get_metric_fn(name, *args, **kwargs):
     Gets the metric method based on the input name.
 
     Args:
-        name (str): The name of metric method. Names can be obtained by `mindspore.train.names` .
+        name (str): The name of metric method. Names can be obtained by :func:`mindspore.train.names` .
             object for the currently supported metrics.
         args: Arguments for the metric function.
         kwargs: Keyword arguments for the metric function.
