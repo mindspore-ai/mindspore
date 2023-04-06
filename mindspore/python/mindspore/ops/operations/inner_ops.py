@@ -50,6 +50,7 @@ class ScalarCast(Primitive):
             dtype = dtype.element_type()
         np_dtype = str(dtype)
         value = np.cast[np_dtype.lower()](x)
+        value = value.item()
         return value
 
 

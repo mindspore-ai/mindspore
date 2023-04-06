@@ -128,8 +128,8 @@ class ScalarCastInfer : public abstract::OpInferBase {
     }
     auto output_dtype = attr->cast<TypePtr>();
 
-    const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,     kUInt8,     kUInt16,
-                                           kUInt32, kUInt64, kFloat32, kFloat64, kComplex64, kComplex128};
+    const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
+                                           kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     return CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, op_name);
   }
 
@@ -171,6 +171,9 @@ class ScalarCastInfer : public abstract::OpInferBase {
         return MakeValue(GetRealValue<uint32_t>(x_value, op_name, is_tensor));
       case kNumberTypeUInt64:
         return MakeValue(GetRealValue<uint32_t>(x_value, op_name, is_tensor));
+      case kNumberTypeFloat16:
+        MS_LOG(INFO) << "ScalarCast input_dtype is float16";
+        return MakeValue(GetRealValue<float>(x_value, op_name, is_tensor));
       case kNumberTypeFloat32:
         return MakeValue(GetRealValue<float>(x_value, op_name, is_tensor));
       case kNumberTypeFloat64:
