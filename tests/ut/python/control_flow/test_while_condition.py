@@ -31,6 +31,6 @@ def test_while_tensor_condition_():
 
     x = Tensor([[1, 1], [2, 2]])
     y = Tensor([[3, 3], [4, 4]])
-    with pytest.raises(RuntimeError) as ex:
+    with pytest.raises(ValueError) as ex:
         foo(x > y, x, y)
     assert "The truth value of an array with more than one element is ambiguous." in str(ex.value)
