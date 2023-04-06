@@ -65,6 +65,7 @@
 #define C512NUM 512
 #define C1500NUM 1500
 #define TILE_NUM 8
+#define MAX_SPLIT_NUM 2048
 
 #define FP16_DATA_TYPE_LEN 2
 
