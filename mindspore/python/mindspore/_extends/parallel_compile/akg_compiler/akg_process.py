@@ -21,7 +21,7 @@ from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 from mindspore._extends.parallel_compile.akg_compiler.util import get_ascend_compile_dirs, create_compile_dirs, \
-    get_log_level, update_attr, select_best, print_compile_log, check_tbe_support
+    get_log_level, update_attr, select_best, print_compile_log, check_tbe_support, get_kernel_meta_parent_dir
 
 
 def _compile_akg_task_default(json_strs, attrs):
@@ -35,6 +35,7 @@ def _compile_akg_task_default(json_strs, attrs):
     sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
+    os.environ["MS_COMPILER_CACHE_PATH"] = get_kernel_meta_parent_dir(attrs)
 
     for json_str in json_strs:
         res = func(json_str, attrs)
@@ -66,7 +67,7 @@ def _compile_akg_task_ascend(json_strs, attrs):
         return
     log_level = get_log_level(attrs)
     compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
-    compile_dirs = get_ascend_compile_dirs()
+    compile_dirs = get_ascend_compile_dirs(attrs)
     kernel_meta_dir = compile_dirs.get("kernel_meta_dir")
     akg_compile_dir = compile_dirs.get("akg_compile_dir")
     tbe_compile_dir = compile_dirs.get("tbe_compile_dir")
@@ -151,7 +152,7 @@ class AkgProcess:
                              "not be zero.")
         args = list((arg, attrs) for arg in self.args)
         if self.platform == "ASCEND":
-            create_compile_dirs(get_ascend_compile_dirs())
+            create_compile_dirs(get_ascend_compile_dirs(attrs))
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
