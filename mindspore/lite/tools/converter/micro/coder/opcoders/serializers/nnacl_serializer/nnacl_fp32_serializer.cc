@@ -200,6 +200,11 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const BroadcastSha
                         ToString(param.output_shape_), param.output_shape_size_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const CustomGruParameter &op_param) {
+  CodeBaseStruct<false>("CustomGruParameter", name, op_param.op_parameter_, op_param.num_step, op_param.batch_size,
+                        op_param.input_size, op_param.hidden_size);
+}
+
 void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
   std::vector<std::string> tensor_names;
   int size = tensor.size();

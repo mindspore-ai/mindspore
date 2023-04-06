@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
 
 #include <map>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <string>
@@ -34,10 +35,14 @@ class CoderKey {
  public:
   CoderKey() = delete;
 
-  CoderKey(Target target, TypeId data_type, int op_type) : target_(target), data_type_(data_type), op_type_(op_type) {}
+  CoderKey(Target target, TypeId data_type, int op_type, std::string builtin_custom_type = "")
+      : target_(target),
+        data_type_(data_type),
+        op_type_(op_type),
+        builtin_custom_type_(std::move(builtin_custom_type)) {}
 
   CoderKey AllKey() const {
-    CoderKey key(kAllTargets, data_type_, op_type_);
+    CoderKey key(kAllTargets, data_type_, op_type_, builtin_custom_type_);
     return key;
   }
 
@@ -50,6 +55,7 @@ class CoderKey {
   Target target_ = kTargetUnknown;
   TypeId data_type_ = kTypeUnknown;
   int op_type_ = schema::PrimitiveType_NONE;
+  std::string builtin_custom_type_;
 };
 
 class OpCoderFactory {
@@ -59,7 +65,7 @@ class OpCoderFactory {
   static OpCoderFactory *GetInstance();
 
   int RegistOpCoder(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                    const CoderCreatorFunc &creator_func);
+                    const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func);
 
   CoderCreatorFunc FindOpCoder(const CoderKey &key);
 
@@ -75,11 +81,16 @@ class OpCoderRegister {
   OpCoderRegister() = delete;
 
   OpCoderRegister(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                  const CoderCreatorFunc &creator_func);
+                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func);
 
   ~OpCoderRegister() = default;
 };
-#define REG_OPERATOR_CODER(target, data_type, operator_type, creator_func) \
-  static OpCoderRegister g_##target##data_type##operator_type##Creator(target, data_type, operator_type, creator_func);
+#define REG_OPERATOR_CODER(target, data_type, operator_type, creator_func)                                   \
+  static OpCoderRegister g_##target##data_type##operator_type##Creator(target, data_type, operator_type, "", \
+                                                                       creator_func);
+
+#define REG_BUILIN_CUSTOM_CODER(target, data_type, custom_type, creator_func) \
+  static OpCoderRegister g_##target##data_type##operator_type##Creator(       \
+    target, data_type, schema::PrimitiveType_Custom, custom_type, creator_func);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
