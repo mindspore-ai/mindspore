@@ -32,7 +32,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
-from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
+from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.context import ParallelMode
 from mindspore.log import _LogActionOnce
 from mindspore.parallel._transformer.layers import _LayerNorm, _Linear, \
@@ -450,7 +450,7 @@ class FeedForward(Cell):
         if hidden_act is None or not (isinstance(hidden_act, str) or issubclass(hidden_act, nn.Cell)):
             raise TypeError(f"For FeedForward cell, the hidden_act should str type or nn.Cell type, "
                             f"but got {hidden_act}.")
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             _check_config(parallel_config)
             mp = parallel_config.model_parallel
             if expert_num > 1:
@@ -902,7 +902,7 @@ class MultiHeadAttention(Cell):
             ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         if batch_size:
             Validator.check_positive_int(batch_size)
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             _check_config(parallel_config)
             self.src_seq_length = src_seq_length
             self.tgt_seq_length = tgt_seq_length
@@ -1497,7 +1497,7 @@ class TransformerEncoderLayer(Cell):
         if batch_size or use_past:
             Validator.check_positive_int(batch_size)
         self.batch_size = batch_size
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             _check_config(parallel_config)
             if num_heads % parallel_config.model_parallel != 0:
                 raise ValueError(
@@ -1889,7 +1889,7 @@ class TransformerDecoderLayer(Cell):
         config_to_attention = parallel_config.dpmp if self.use_moe else parallel_config
         if batch_size or use_past:
             Validator.check_positive_int(batch_size)
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             _check_config(parallel_config)
             if num_heads % parallel_config.model_parallel != 0:
                 raise ValueError("For 'TransformerDecoderLayer', the class variable 'num_heads' must be divisibled by "
@@ -2424,7 +2424,7 @@ class TransformerEncoder(Cell):
         _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         config_to_layer = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             self.add = P.Add()
             self.aux_loss = Tensor(0.0, mstype.float32)
             self.num_layers = num_layers
@@ -2660,7 +2660,7 @@ class TransformerDecoder(Cell):
         _check_config(parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         config_to_layer = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             self.add = P.Add()
             self.aux_loss = Tensor(0.0, mstype.float32)
             self.num_layers = num_layers
@@ -2923,7 +2923,7 @@ class Transformer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(Transformer, self).__init__()
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             _check_config(parallel_config)
             self.batch_size = batch_size
             self.hidden_size = hidden_size
