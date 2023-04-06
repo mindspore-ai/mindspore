@@ -20,13 +20,15 @@ import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple
-from mindspore import context
+from mindspore import context, mutable
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import ops
+from mindspore._extends import cell_attr_register
 
+context.set_context(mode=context.GRAPH_MODE)
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -89,7 +91,7 @@ class WithParameter(nn.Cell):
 def test_with_param():
     with_param = WithParameter()
     with pytest.raises(RuntimeError):
-        grad_all(with_param)(1, 2)
+        grad_all(with_param)(mutable(1), 2)
 
 
 class WithNoBprop(nn.Cell):
@@ -394,8 +396,8 @@ class MulAddWithWrongOutputNum(nn.Cell):
 def test_grad_mul_add_with_wrong_output_num():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputNum()
-    with pytest.raises(TypeError):
-        grad_all(mul_add)(1, 2)
+    with pytest.raises(ValueError):
+        grad_all(mul_add)(mutable(1), 2)
 
 
 class MulAddWithWrongOutputType(nn.Cell):
@@ -434,7 +436,7 @@ class MulAddWithWrongOutputShape(nn.Cell):
 def test_grad_mul_add_with_wrong_output_shape():
     context.set_context(check_bprop=True)
     mul_add = MulAddWithWrongOutputShape()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
 
 
@@ -645,6 +647,7 @@ def test_pynative_forward_with_parameter():
                           [4.2, 2.4, 6.6]]).astype(np.float32)
     assert np.allclose(out[0].asnumpy(), expect_dx)
     assert np.allclose(out[1].asnumpy(), expect_dy)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
@@ -701,6 +704,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
                           [4.2, 2.4, 6.6]]).astype(np.float32)
     assert np.allclose(out[0].asnumpy(), expect_dx)
     assert np.allclose(out[1].asnumpy(), expect_dy)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
@@ -761,6 +765,7 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[0][0].asnumpy(), expect_dx)
     assert np.allclose(out[0][1].asnumpy(), expect_dy)
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
@@ -772,7 +777,6 @@ def test_dde_self_define_cell_output_not_use():
     Description: Fprop output[1] only used by bprop, it should not erased by dde.
     Expectation: Get the correct gradients.
     """
-    context.set_context(mode=context.GRAPH_MODE)
 
     class SelfDefineCell(ms.nn.Cell):
         def construct(self, x):
@@ -805,3 +809,33 @@ def test_dde_self_define_cell_output_not_use():
     x_input = ms.Tensor([1])
     out = net(x_input)
     assert out[0] == ms.Tensor([3])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bprop_defined_in_cell_attr_register():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of input for the cell which has been added @cell_attr_register.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        @cell_attr_register
+        def __init__(self):
+            super().__init__()
+            self.z = Parameter(Tensor(2, mstype.float32), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            return x * y
+
+        def bprop(self, x, y, out, dout):
+            return y, x
+
+    net = Net()
+    x = Tensor(3, mstype.float32)
+    y = Tensor(4, mstype.float32)
+    output = ops.grad(net)(x, y)
+    assert output == 4
