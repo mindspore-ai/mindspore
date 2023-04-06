@@ -2092,8 +2092,8 @@ class MaxUnpool3D(Primitive):
               pads[1] and pads[2] correspondingly.
 
         output_shape (tuple[int], optional) : The target output size. Default: ().
-            If output_shape == (), then the shape of output computed by kszie, strides and pads shown above.
-            If output_shape != (), then output_shape format must be :math:`(N, C, D, H, W)` or
+            If :math:`output\_shape == ()`, then the shape of output computed by kszie, strides and pads shown above.
+            If :math:`output\_shape != ()`, then output_shape format must be :math:`(N, C, D, H, W)` or
             :math:`(N, D, H, W, C)` and output_shape must be in range
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.

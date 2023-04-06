@@ -422,17 +422,17 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         delta\_loss &= sigma \cdot grad\_k.T \cdot sk
         \end{align}
 
-    其中:
+    其中：
 
     - pca_mat (array): PCA矩阵，维度 :math:`(k*n)`，k是 `n_components` 的大小，n是权重的大小。
     - bk (array): 维度 :math:`(k*k)`，bk是拟牛顿法中的对称正定矩阵。
 
-    我们需要找到满足以下条件的m:
+    我们需要找到满足以下条件的m：
 
     .. math::
         new\_loss < old\_loss + delta\_loss
 
-    然后使用delta_grad去更新模型的权重:
+    然后使用delta_grad去更新模型的权重：
 
     .. math::
 
@@ -456,14 +456,14 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **rank_size** (int) - Rank总数。
 
     输入：
-        - **loss** (Tensor) - 网络loss，标量Tensor。
+        - **loss** (Tensor) - 网络loss，shape为 :math:`()` 的标量Tensor。
         - **old_grad** (Tuple(Tensor)) - 网络权重提取组成的元组。
         - **weight** (Tuple(Tensor)) - 网络权重组成的元组。
         - **weight_clone** (Tuple(Tensor)) - 网络权重的副本。
-        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，shape为 :math:`(N, \ldots)`。
 
     输出：
-        - **loss** (Tensor) - 网络loss，标量Tensor。
+        - **loss** (Tensor) - 网络loss，shape为 :math:`()` 的标量Tensor。
 
 .. py:class:: mindspore.boost.GroupLossScaleManager(init_loss_scale, loss_scale_groups)
 
