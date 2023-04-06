@@ -80,11 +80,11 @@ int BiasRun(void *cdata, int task_id, float l, float r) {
   BiasAddStruct *bias_add = (BiasAddStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(bias_add);
 
-  float *input = (float *)(bias_add->base_.in_[FIRST_INPUT].data_);
+  float *input = (float *)(bias_add->base_.in_[FIRST_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(input);
-  float *bias = (float *)(bias_add->base_.in_[SECOND_INPUT].data_);
+  float *bias = (float *)(bias_add->base_.in_[SECOND_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(bias);
-  float *output = (float *)(bias_add->base_.out_[FIRST_INPUT].data_);
+  float *output = (float *)(bias_add->base_.out_[FIRST_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
   int64_t block_start = bias_add->split_points_[task_id];
@@ -106,8 +106,8 @@ int biasadd_resize(struct KernelBase *self) {
   BiasAddStruct *bias_add = (BiasAddStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(bias_add);
 
-  TensorC *in_tensor = &self->in_[FIRST_INPUT];
-  TensorC *add_tensor = &self->in_[SECOND_INPUT];
+  TensorC *in_tensor = self->in_[FIRST_INPUT];
+  TensorC *add_tensor = self->in_[SECOND_INPUT];
   MS_CHECK_FALSE(in_tensor->shape_size_ == 0, NNACL_ERR);
   MS_CHECK_FALSE(add_tensor->shape_size_ == 0, NNACL_ERR);
   MS_CHECK_FALSE(in_tensor->shape_size_ < add_tensor->shape_size_, NNACL_ERR);

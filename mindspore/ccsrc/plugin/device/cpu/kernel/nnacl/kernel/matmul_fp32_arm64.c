@@ -53,7 +53,7 @@ int MatmulFp32Arm64_PackMatrixAImplOpt(MatmulFp32Struct *matmul) {
   int64_t kPackAMinUnitNum = 1 << 13;
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   float *src_ptr =
-    matmul->matrix_a_.has_origin_ ? matmul->matrix_a_.origin_ptr_ : (float *)(matmul->base_.in_[FIRST_INPUT].data_);
+    matmul->matrix_a_.has_origin_ ? matmul->matrix_a_.origin_ptr_ : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
   MS_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
 

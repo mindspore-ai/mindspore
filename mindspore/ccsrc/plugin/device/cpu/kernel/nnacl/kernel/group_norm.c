@@ -39,7 +39,7 @@ static int groupnorm_resize(struct KernelBase *self) {
 
   groupnorm_release(self);
 
-  TensorC *in0 = &(self->in_[0]);
+  TensorC *in0 = self->in_[0];
   MS_CHECK_FALSE(in0->shape_size_ < C1NUM, NNACL_GROUP_NORM_SHAPE_SIZE_INVALID);
   MS_CHECK_FALSE(in0->format_ != NCHW, NNACL_GROUP_NORM_FORMAT_INVALID);
 
@@ -92,13 +92,13 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
   GroupNormParameter *groupnorm_param = (GroupNormParameter *)groupnorm_stru->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param);
 
-  const void *input_data = groupnorm_stru->base.in_[0].data_;
+  const void *input_data = groupnorm_stru->base.in_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
-  const void *scale_data = groupnorm_stru->base.in_[C1NUM].data_;
+  const void *scale_data = groupnorm_stru->base.in_[C1NUM]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(scale_data);
-  const void *offset_data = groupnorm_stru->base.in_[C2NUM].data_;
+  const void *offset_data = groupnorm_stru->base.in_[C2NUM]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(offset_data);
-  void *output_data = groupnorm_stru->base.out_[0].data_;
+  void *output_data = groupnorm_stru->base.out_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
 
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param->mean_);

@@ -31,7 +31,7 @@ int gather_d_prepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(param);
   MS_CHECK_FALSE(self->in_size_ < kInputSize2 || self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
 
-  param->axis_ = ((int *)(gather_d->base.in_[1].data_))[0];
+  param->axis_ = ((int *)(gather_d->base.in_[1]->data_))[0];
   return NNACL_OK;
 }
 
@@ -40,7 +40,7 @@ int gather_d_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  int input_rank = gather_d->base.in_[0].shape_size_;
+  int input_rank = gather_d->base.in_[0]->shape_size_;
   MS_CHECK_FALSE(param->axis_ >= input_rank || param->axis_ < -input_rank, NNACL_GATHER_D_AXIS_INVALID);
 
   if (param->axis_ < 0) {
@@ -57,13 +57,13 @@ int gather_d_compute(struct KernelBase *self) {
   GatherParameter *param = (GatherParameter *)gather_d_stru->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
 
-  TensorC *input = &(gather_d_stru->base.in_[0]);
+  TensorC *input = gather_d_stru->base.in_[0];
   NNACL_CHECK_NULL_RETURN_ERR(input);
-  TensorC *output = &(gather_d_stru->base.out_[0]);
+  TensorC *output = gather_d_stru->base.out_[0];
   NNACL_CHECK_NULL_RETURN_ERR(output);
   const void *input_data = input->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
-  const void *index_data = gather_d_stru->base.in_[2].data_;
+  const void *index_data = gather_d_stru->base.in_[2]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(index_data);
   void *output_data = output->data_;
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
@@ -78,7 +78,7 @@ int gather_d_compute(struct KernelBase *self) {
   }
 
   TypeIdC input_dtype = input->data_type_;
-  TypeIdC index_dtype = gather_d_stru->base.in_[2].data_type_;
+  TypeIdC index_dtype = gather_d_stru->base.in_[2]->data_type_;
   int status = NNACL_ERR;
   if (index_dtype == kNumberTypeInt32) {
     if (input_dtype == kNumberTypeFloat32) {

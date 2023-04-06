@@ -36,9 +36,9 @@ typedef struct KernelBase {
   OpParameter *param_;
   int thread_nr_;
   ExecEnv *env_;
-  TensorC *in_;
+  TensorC **in_;
   size_t in_size_;
-  TensorC *out_;
+  TensorC **out_;
   size_t out_size_;
   bool train_session_;
   void *workspace_; /* only used in train */
@@ -59,7 +59,7 @@ void RegKernelCreator(int opType, int dataType, KernelCreator func);
 #ifdef __cplusplus
 extern "C" {
 #endif
-KernelBase *CreateKernel(OpParameter *param, TensorC *ins, size_t in_size, TensorC *outs, size_t out_size,
+KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, TensorC **outs, size_t out_size,
                          int data_type, ExecEnv *env);
 bool SupportKernelC(int opType, int dataType);
 #ifdef __cplusplus

@@ -38,12 +38,11 @@ class NnaclKernel : public kernel::LiteKernel {
 
  protected:
   void UpdateTensorC();
-  void UpdateTensorData();
 
  protected:
   KernelBase *kernel_ = nullptr;
-  TensorC *in_ = nullptr;
-  TensorC *out_ = nullptr;
+  TensorC **in_ = nullptr;
+  TensorC **out_ = nullptr;
   size_t in_size_ = 0;
   size_t out_size_ = 0;
 };

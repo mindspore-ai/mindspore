@@ -119,8 +119,8 @@ int MatmulFp32Base_PackMatrixAImplOpt(MatmulFp32Struct *matmul) { return NNACL_E
 
 int MatmulFp32Base_PackMatrixAImpl(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  float *src_ptr =
-    (matmul->matrix_a_.has_origin_) ? (matmul->matrix_a_.origin_ptr_) : (float *)(matmul->base_.in_[FIRST_INPUT].data_);
+  float *src_ptr = (matmul->matrix_a_.has_origin_) ? (matmul->matrix_a_.origin_ptr_)
+                                                   : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
   MS_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_a_pack_fun_ != NULL, NNACL_ERR);
@@ -142,7 +142,7 @@ int MatmulFp32Base_PackMatrixBImpl(MatmulFp32Struct *matmul) {
   float *src_ptr = matmul->matrix_b_.has_origin_
                      ? matmul->matrix_b_.origin_ptr_
                      : (matmul->conv1x1_origin_weight_ != NULL ? matmul->conv1x1_origin_weight_
-                                                               : (float *)(matmul->base_.in_[SECOND_INPUT].data_));
+                                                               : (float *)(matmul->base_.in_[SECOND_INPUT]->data_));
   MS_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_b_.pack_ptr_ != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_b_pack_fun_ != NULL, NNACL_ERR);
@@ -165,7 +165,7 @@ int MatmulFp32Base_PackMatrixBImpl(MatmulFp32Struct *matmul) {
 int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
   if (!matmul->a_const_) {
     if (!matmul->matrix_a_.need_pack_) {
-      matmul->matrix_a_.pack_ptr_ = (float *)matmul->base_.in_[0].data_;
+      matmul->matrix_a_.pack_ptr_ = (float *)matmul->base_.in_[0]->data_;
       return NNACL_OK;
     }
     if (matmul->base_.train_session_) {
@@ -179,7 +179,7 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_a_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[FIRST_INPUT].data_, data_size, &is_packed);
+      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[FIRST_INPUT]->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -199,7 +199,7 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
 int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
   if (!matmul->b_const_) {
     if (!matmul->matrix_b_.need_pack_) {
-      matmul->matrix_b_.pack_ptr_ = (float *)matmul->base_.in_[SECOND_INPUT].data_;
+      matmul->matrix_b_.pack_ptr_ = (float *)matmul->base_.in_[SECOND_INPUT]->data_;
       return NNACL_OK;
     }
     if (matmul->base_.train_session_) {
@@ -210,14 +210,14 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
     }
   } else {
     if (!matmul->matrix_b_.need_pack_ && matmul->weight_is_packed_) {
-      matmul->matrix_b_.pack_ptr_ = (float *)matmul->base_.in_[SECOND_INPUT].data_;
+      matmul->matrix_b_.pack_ptr_ = (float *)matmul->base_.in_[SECOND_INPUT]->data_;
       return NNACL_OK;
     }
     bool is_packed = false;
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_b_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[SECOND_INPUT].data_, data_size, &is_packed);
+      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[SECOND_INPUT]->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -232,11 +232,11 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
 
 int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matrix_info, int index) {
   MS_CHECK_TRUE_RET(index < matmul->base_.in_size_, NNACL_ERR);
-  int backup_size = GetElementNum(&(matmul->base_.in_[0])) * sizeof(float);
+  int backup_size = GetElementNum(matmul->base_.in_[0]) * sizeof(float);
   MS_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
   matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
   NNACL_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
-  void *src_ptr = matmul->base_.in_[0].data_;
+  void *src_ptr = matmul->base_.in_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
   (void)memcpy(matrix_info->origin_ptr_, src_ptr, backup_size * sizeof(float));
   matrix_info->has_origin_ = true;
@@ -399,7 +399,7 @@ int MatmulFp32Base_PackBiasMatrix(MatmulFp32Struct *matmul) {
     MS_CHECK_FALSE(matmul->matrix_c_.pack_size_ < matmul->col_align_, NNACL_ERR);
     return NNACL_OK;
   }
-  TensorC *bias_tensor = &(matmul->base_.in_[THIRD_INPUT]);
+  TensorC *bias_tensor = matmul->base_.in_[THIRD_INPUT];
   float *bias_src =
     matmul->matrix_c_.has_origin_
       ? matmul->matrix_c_.origin_ptr_
@@ -535,12 +535,12 @@ int matmul_fp32_prepare(struct KernelBase *self) {
 
   MS_CHECK_FALSE(matmul->base_.in_size_ < C2NUM, NNACL_ERR);
   MS_CHECK_FALSE(matmul->base_.out_size_ < 1, NNACL_ERR);
-  MS_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT].data_type_ != kNumberTypeFloat32, NNACL_ERR);
-  MS_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT].data_type_ != kNumberTypeFloat32, NNACL_ERR);
+  MS_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
+  MS_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
 
   if (matmul->base_.in_size_ == FOURTH_INPUT) {
-    MS_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT].data_type_ != kNumberTypeFloat32, NNACL_ERR);
-    if (self->in_[THIRD_INPUT].data_ == NULL) {
+    MS_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
+    if (self->in_[THIRD_INPUT]->data_ == NULL) {
       return NNACL_ERR;
     }
   }
@@ -575,7 +575,7 @@ int matmul_fp32_prepare(struct KernelBase *self) {
 int matmul_fp32_compute(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
-  float *out_data = (float *)(matmul->base_.out_[FIRST_INPUT].data_);
+  float *out_data = (float *)(matmul->base_.out_[FIRST_INPUT]->data_);
   MS_CHECK_FALSE(out_data == NULL, NNACL_ERR);
   if (!matmul->out_need_aligned_) {
     matmul->output_data_ = out_data;

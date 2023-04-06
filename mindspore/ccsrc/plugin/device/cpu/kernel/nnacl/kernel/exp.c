@@ -28,7 +28,7 @@ int exp_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base_.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  exp->element_num_ = GetElementNum(&(exp->base_.in_[0]));
+  exp->element_num_ = GetElementNum(exp->base_.in_[FIRST_INPUT]);
   return NNACL_OK;
 }
 
@@ -59,7 +59,7 @@ int exp_release(struct KernelBase *self) { return NNACL_OK; }
 int exp_do_compute(void *cdata, int task_id, float l, float r) {
   ExpStruct *exp = (ExpStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(exp);
-  return exp->ExpCompute(exp->base_.in_[0].data_, exp->base_.out_[0].data_, exp, task_id);
+  return exp->ExpCompute(exp->base_.in_[0]->data_, exp->base_.out_[0]->data_, exp, task_id);
 }
 
 int exp_compute(struct KernelBase *self) {

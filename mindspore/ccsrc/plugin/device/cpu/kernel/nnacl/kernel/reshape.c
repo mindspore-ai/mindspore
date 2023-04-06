@@ -29,8 +29,8 @@ int reshape_do_compute(void *param, int task_id, float lhs_scale, float rhs_scal
   NNACL_CHECK_NULL_RETURN_ERR(param);
   ReshapeStruct *reshape = (ReshapeStruct *)param;
 
-  uint8_t *in_start = (uint8_t *)(reshape->base.in_[0].data_) + task_id * reshape->block_size_;
-  uint8_t *out_start = (uint8_t *)(reshape->base.out_[0].data_) + task_id * reshape->block_size_;
+  uint8_t *in_start = (uint8_t *)(reshape->base.in_[0]->data_) + task_id * reshape->block_size_;
+  uint8_t *out_start = (uint8_t *)(reshape->base.out_[0]->data_) + task_id * reshape->block_size_;
   int copy_size = reshape->block_size_;
   if (task_id == (reshape->base.thread_nr_ - 1)) {
     copy_size = reshape->total_size_ - task_id * reshape->block_size_;
@@ -42,7 +42,7 @@ int reshape_do_compute(void *param, int task_id, float lhs_scale, float rhs_scal
 int reshape_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReshapeStruct *reshape = (ReshapeStruct *)self;
-  reshape->total_size_ = GetSize(&(self->in_[0]));
+  reshape->total_size_ = GetSize(self->in_[0]);
 
   self->thread_nr_ = MSMIN(self->thread_nr_, UP_DIV(reshape->total_size_, kMinCostPerThread));
   if (self->thread_nr_ < 1) {
