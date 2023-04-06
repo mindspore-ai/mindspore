@@ -21,6 +21,10 @@ using mindspore::schema::PrimitiveType_ReduceFusion;
 namespace mindspore::lite::micro::nnacl {
 int ReduceFP16Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(ReduceBaseCoder::Init(), "init failed");
+  if (input_tensors_.at(0)->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Reduce fp16 coder only supports fp16 input.";
+    return RET_ERROR;
+  }
   data_type_ = ::kNumberTypeFloat16;
   MS_CHECK_RET_CODE(ReduceBaseCoder::ReSize(), "resize failed");
   MS_CHECK_RET_CODE(ReduceFP32Coder::MallocTmpBuffer(kNumberTypeFloat16), "malloc buffer failed");
@@ -70,5 +74,6 @@ int ReduceFP16Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl
