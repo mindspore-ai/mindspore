@@ -414,7 +414,7 @@ void AddUsersUniqueIdWhenSharingParameter(
 void AddParamUsersForRec(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     if (node->isa<Parameter>()) {
-      ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes);
+      ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes, false);
       AddUsersUniqueIdWhenSharingParameter(parameter_users_info);
     }
   }
@@ -829,7 +829,7 @@ void ApplyApproximationForParaNode(const OperatorInfoPtr &target_op_info) {
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
   // Step 3
   for (auto &node : all_nodes) {
-    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsAutoParallelCareNode, all_nodes);
+    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsAutoParallelCareNode, all_nodes, false);
     auto parameter_name = parameter_users_info.first;
     auto target_parameter = parameter_users_info.second.first;
     auto target_set = parameter_users_info.second.second;

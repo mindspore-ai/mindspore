@@ -98,6 +98,56 @@ static ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bo
   return parameter_user_info;
 }
 
+// A short fix plan for the performance iusse of compile graph when using SEMI mode.
+static ParameterUsersInfo FastFindParameterNodeUsers(const AnfNodePtr &node) {
+  ParameterUsersInfo parameter_user_info;
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+  MS_EXCEPTION_IF_NULL(node->func_graph()->manager());
+  auto candidate_set = node->func_graph()->manager()->node_users()[node];
+  for (auto &candidate : candidate_set) {
+    auto candidate_node = candidate.first;
+    if (IsPrimitiveCNode(candidate_node, prim::kPrimLoad)) {
+      if (candidate.second != 1) {
+        continue;
+      }
+      auto load_node_users = node->func_graph()->manager()->node_users()[candidate_node];
+      for (auto &node_user : load_node_users) {
+        auto cnode = node_user.first->cast<CNodePtr>();
+        if (IsSomePrimitive(cnode, DEPEND)) {
+          auto depend_node_users = node->func_graph()->manager()->node_users()[node_user.first];
+          for (auto depend_user : depend_node_users) {
+            if (IsPrimitiveCNode(depend_user.first, prim::kPrimLoad)) {
+              auto local_load_node_users = node->func_graph()->manager()->node_users()[depend_user.first];
+              for (auto local_load_user : local_load_node_users) {
+                auto local_cnode = local_load_user.first->cast<CNodePtr>();
+                if (local_cnode == nullptr || !local_cnode->has_user_data<OperatorInfo>() ||
+                    IsSomePrimitive(local_cnode, RECEIVE)) {
+                  continue;
+                }
+                parameter_user_info.second.second.insert(local_load_user);
+              }
+            }
+          }
+        }
+
+        if (cnode == nullptr || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
+          continue;
+        }
+        parameter_user_info.second.second.insert(node_user);
+      }
+    } else {
+      auto c = candidate_node->cast<CNodePtr>();
+      if (c == nullptr || !c->has_user_data<OperatorInfo>() || IsSomePrimitive(c, RECEIVE)) {
+        continue;
+      }
+      parameter_user_info.second.second.insert(candidate);
+    }
+  }
+  parameter_user_info.first = node->cast<ParameterPtr>()->name();
+  parameter_user_info.second.first = node;
+  return parameter_user_info;
+}
+
 static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, const std::vector<AnfNodePtr> &all_nodes) {
   // In this case, node is a Parameter
   ParameterUsersInfo parameter_user_info;
@@ -165,7 +215,7 @@ static RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode) {
 }
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &),
-                                      const std::vector<AnfNodePtr> &all_nodes) {
+                                      const std::vector<AnfNodePtr> &all_nodes, bool isFast) {
   ParameterUsersInfo parameter_users_info;
 
   auto cnode_with_refkeys = CNodeWithRefKeys(node);
@@ -177,6 +227,9 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
     MS_EXCEPTION_IF_NULL(param_ptr);
     // the node is a parameter node
     if (param_ptr->has_default()) {
+      if (isFast) {
+        return FastFindParameterNodeUsers(node);
+      }
       return FindParameterNodeUsers(node, all_nodes);
     }
   }
@@ -287,7 +340,7 @@ bool IsSameTensorInfo(const TensorInfo &a, const TensorInfo &b) {
 
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
-    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes);
+    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes, true);
     auto &users_set = parameter_users_info.second.second;
     if (users_set.size() <= 1) {
       continue;
