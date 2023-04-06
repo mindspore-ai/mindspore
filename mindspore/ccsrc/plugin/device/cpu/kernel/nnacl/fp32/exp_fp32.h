@@ -18,6 +18,7 @@
 #define MINDSPORE_NNACL_FP32_EXP_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/kernel/exp.h"
 #include "nnacl/exp_parameter.h"
 
 #ifdef __cplusplus
@@ -25,7 +26,7 @@ extern "C" {
 #endif
 
 void ExpFp32(const float *src, float *dst, int num);
-int ExpFusionFp32(const void *src_data, void *dst_data, const ExpParameter *param, int task_id);
+int ExpFusionFp32(const void *src_data, void *dst_data, const ExpStruct *exp, int task_id);
 
 #ifdef __cplusplus
 }

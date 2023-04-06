@@ -17,6 +17,7 @@
 #define MINDSPORE_NNACL_FP16_EXP_FP16_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/kernel/exp.h"
 #include "nnacl/exp_parameter.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
@@ -25,7 +26,7 @@
 extern "C" {
 #endif
 void ExpFp16(const float16_t *src, float16_t *dst, int num);
-int ExpFusionFp16(const void *src_data, void *dst_data, const ExpParameter *param, int task_id);
+int ExpFusionFp16(const void *src_data, void *dst_data, const ExpStruct *exp, int task_id);
 
 #ifdef ENABLE_NEON
 static inline float16x8_t VexpFp16(float16x8_t input) {

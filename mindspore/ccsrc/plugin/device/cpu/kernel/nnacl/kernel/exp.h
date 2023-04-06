@@ -20,6 +20,14 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+typedef struct ExpStruct {
+  KernelBase base_;
+  float in_scale_;
+  float out_scale_;
+  int element_num_;
+  int (*ExpCompute)(const void *in, void *out, const struct ExpStruct *exp, int task_id);
+} ExpStruct;
+
 KernelBase *CreateExp(OpParameter *param, int data_type);
 
 #endif  // MINDSPORE_NNACL_KERNEL_EXP_H_
