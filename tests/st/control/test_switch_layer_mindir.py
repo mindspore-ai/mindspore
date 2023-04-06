@@ -46,7 +46,7 @@ def test_mindir_switch_layer():
     net = CaseNet()
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
     idx = Tensor(0, mstype.int32)
-    idx2 = Tensor(-1, mstype.int32)
+    idx2 = Tensor(1, mstype.int32)
 
     file_name = "switch_layer_net"
     mindir_name = file_name + ".mindir"
@@ -71,7 +71,7 @@ def test_mindir_export():
     net = CaseNet()
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
     idx = Tensor(0, mstype.int32)
-    idx2 = Tensor(-1, mstype.int32)
+    idx2 = Tensor(1, mstype.int32)
 
     file_name = "switch_layer_net"
     mindir_name = file_name + ".mindir"
@@ -86,7 +86,7 @@ def test_mindir_load():
     context.set_context(mode=context.GRAPH_MODE)
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
     idx = Tensor(0, mstype.int32)
-    idx2 = Tensor(-1, mstype.int32)
+    idx2 = Tensor(1, mstype.int32)
 
     file_name = "switch_layer_net"
     mindir_name = file_name + ".mindir"
