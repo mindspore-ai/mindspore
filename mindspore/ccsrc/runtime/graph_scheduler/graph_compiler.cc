@@ -291,12 +291,15 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     bool enable = false;
     if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
       if (kernel::IfNeedSkipResize(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
-        MS_LOG(DEBUG) << "Enable Run Graph By Single Op";
+        MS_LOG(INFO) << "Enable Run Graph By Single Op";
         enable = true;
       }
     }
     // BpGraph contain bprop_cut node.
-    if (common::AnfAlgo::IsControlOpExecInBackend(node) || enable) {
+    auto contain_bprop_cut = common::AnfAlgo::IsControlOpExecInBackend(node);
+    if (enable || contain_bprop_cut) {
+      MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: NeedSkipResize:" << enable
+                   << "     BpGraph contain bprop_cut node:" << contain_bprop_cut;
       graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       break;
     }
@@ -424,6 +427,7 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
 
   // Dynamic shape or dynamic graph structure flag.
   graph->set_flag(kAttrMutableKernel, true);
+  MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
   graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
   OptimizeDynamicGraph(graph, device_context);
@@ -543,6 +547,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   } else {
     for (auto &node : root_graph->execution_order()) {
       if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
+        MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: IsControlOpExecInBackend";
         root_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }

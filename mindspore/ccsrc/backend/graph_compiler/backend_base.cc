@@ -699,6 +699,8 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
       graph_id =
         graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);
       if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
+        MS_LOG(INFO)
+          << "Set kFlagEnableRunGraphBySingleOp: require the root_graph and subgraph to have the same markings ";
         root_graph_->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }
