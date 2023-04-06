@@ -73,7 +73,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     auto conj = ib->Emit("Conj", {x});
     auto shape = ib->GetShape(conj);
     ShapeVector perm;
-    for (int64_t i = SizeToInt(shape.size()) - 1; i >= 0; --i) {
+    for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
       perm.push_back(i);
     }
     return ib->Transpose(conj, perm);

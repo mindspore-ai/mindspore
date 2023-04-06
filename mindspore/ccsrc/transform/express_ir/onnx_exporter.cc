@@ -3780,11 +3780,11 @@ void OnnxExporter::ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node,
   node_proto->set_name("Custom_" + node_name);
   mindspore::HashSet<size_t> input_attrs;
 
-  constexpr auto kAttrInputNames = "input_names";
-  constexpr auto kAttrAttrNames = "attr_names";
-  auto input_names_vec = GetOpAttribute<std::vector<std::string>>(node, kAttrInputNames);
+  constexpr auto kAttrCusInputNames = "input_names";
+  constexpr auto kAttrCusAttrNames = "attr_names";
+  auto input_names_vec = GetOpAttribute<std::vector<std::string>>(node, kAttrCusInputNames);
   auto primitive = GetPrimitive(node);
-  auto attr_names = primitive->GetAttr(kAttrAttrNames);
+  auto attr_names = primitive->GetAttr(kAttrCusAttrNames);
   if (attr_names != nullptr) {
     auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
     if (input_names_vec.size() >= attr_names_vec.size()) {
