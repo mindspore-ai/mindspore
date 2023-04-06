@@ -47,6 +47,7 @@ constexpr size_t MULTI_ELTWISE_SIZE = 4;
 constexpr int64_t kBNTrainingUpdateOutputUsedTotalNum = 5;
 constexpr int64_t kConvOutputUsedTotalNum = 4;
 using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
+using RemovedUpdateStateInfo = mindspore::HashMap<AnfNodePtr, std::pair<AnfNodePtr, size_t>>;
 
 struct BufferFusionInfo_t {
   std::string full_name;
@@ -61,9 +62,9 @@ struct BufferFusionInfo_t {
   bool all_outputs_from_last_node = true;
 };
 
-struct RemoveUpdateStateInfo_t {
-  std::pair<AnfNodePtr, AnfNodePtr> origin_new_updatestate;
-  bool remove_all_inputs;
+struct RemovedInputsInfo_t {
+  std::vector<AnfNodePtr> removed_inputs;
+  size_t origin_input_size;
 };
 
 class FusionBasePass : public PassWithSwitch {
