@@ -124,7 +124,7 @@ class Profiler:
               Then the operator is returned to the CPU after execution, and the end timestamp is recorded,
               The duration of the operator is the difference between the two timestamps.
             - False: The asynchronous way. The duration of the operator is that of sending from the CPU to the GPU.
-              This method can reduce the impact of adding profiler on training time.
+              This method can reduce the impact of adding profiler on overall training time.
         data_process (bool, optional): (Ascend/GPU) Whether to collect data to prepare performance data.
             Default value: True.
         timeline_limit (int, optional): Set the maximum storage size of the timeline file (unit M). When using this
