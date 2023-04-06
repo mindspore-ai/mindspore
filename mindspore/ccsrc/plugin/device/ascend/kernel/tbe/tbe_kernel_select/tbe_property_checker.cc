@@ -36,7 +36,9 @@ constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 bool CheckValueType(const AnfNodePtr &input_node, size_t inputs_num) {
   MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
+  if (value_node == nullptr) {
+    return true;
+  }
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<tensor::Tensor>()) {
