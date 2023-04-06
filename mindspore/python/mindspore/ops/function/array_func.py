@@ -2083,7 +2083,7 @@ def stack(tensors, axis=0):
 
     Raises:
         TypeError: If the data types of elements in `tensors` are not the same.
-        ValueError: If the length of `tensors` is not greater than 1;
+        ValueError: If the length of `tensors` is not greater than 0;
                     or if axis is out of the range [-(R+1), R+1);
                     or if the shapes of elements in tensors are not the same.
 
