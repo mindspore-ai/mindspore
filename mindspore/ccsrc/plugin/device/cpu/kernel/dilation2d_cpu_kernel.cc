@@ -90,17 +90,21 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   size_t stride_width = LongToSize(stride_[kFormatNCHWIndexW]);
   size_t rate_height = LongToSize(dilation_[kFormatNCHWIndexH]);
   size_t rate_width = LongToSize(dilation_[kFormatNCHWIndexW]);
-  int64_t pad_top;
-  int64_t pad_left;
+  // default value for VALID pad_mode
+  int64_t pad_top = 0;
+  int64_t pad_left = 0;
 
   if (pad_mode_.compare("VALID") == 0 || pad_mode_.compare("valid") == 0) {
     pad_top = 0;
     pad_left = 0;
   }
+
   if (pad_mode_.compare("SAME") == 0 || pad_mode_.compare("same") == 0) {
-    int64_t pad_height = (output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height;
+    int64_t pad_height = (SizeToLong(output_height) - 1) * SizeToLong(stride_height) +
+                         SizeToLong(rate_height) * (SizeToLong(filter_height) - 1) + 1 - SizeToLong(input_height);
     pad_height = pad_height >= 0 ? pad_height : 0;
-    int64_t pad_width = (output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width;
+    int64_t pad_width = (SizeToLong(output_width) - 1) * SizeToLong(stride_width) +
+                        SizeToLong(rate_width) * (SizeToLong(filter_width) - 1) + 1 - SizeToLong(input_width);
     pad_width = pad_width >= 0 ? pad_width : 0;
     pad_top = pad_height / kValue2;
     pad_left = pad_width / kValue2;
