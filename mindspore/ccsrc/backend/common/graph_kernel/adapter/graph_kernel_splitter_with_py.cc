@@ -231,7 +231,36 @@ class CostModelSplitSchemer : public SplitSchemer {
       MS_LOG(ERROR) << "Failed to decode split graphs. input json:\n" << split_graphs_str;
       return false;
     }
+
+    if (split_plan_.size() > 1 && GraphKernelFlags::GetInstance().enable_recompute_fusion) {
+      RemoveHangingNodes();
+    }
     return true;
+  }
+
+  void RemoveHangingNodes() {
+    auto todo = TopoSort(func_graph_->get_return());
+    std::set<AnfNodePtr> new_all_nodes(todo.begin(), todo.end());
+    std::vector<size_t> empty_groups;
+    for (size_t i = 0; i < split_plan_.size(); i++) {
+      for (int j = SizeToInt(split_plan_[i].size()) - 1; j >= 0; j--) {
+        if (new_all_nodes.count(split_plan_[i][j]) == 0) {
+          MS_LOG(INFO) << "Recompute remove hanging node " << split_plan_[i][j]->fullname_with_scope();
+          (void)split_plan_[i].erase(split_plan_[i].begin() + j);
+        }
+      }
+      if (split_plan_[i].empty()) {
+        empty_groups.push_back(i);
+      }
+    }
+    if (!empty_groups.empty()) {
+      MS_LOG(INFO) << "Recompute remove empty groups " << empty_groups;
+      std::reverse(empty_groups.begin(), empty_groups.end());
+      for (auto i : empty_groups) {
+        (void)split_plan_.erase(split_plan_.begin() + i);
+        (void)need_inline_.erase(need_inline_.begin() + i);
+      }
+    }
   }
 
   virtual bool DecodeJson(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map) {
