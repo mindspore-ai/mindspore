@@ -994,7 +994,7 @@ def _jac_postprocess(x, shape, grad_position, mode):
     for i in range(output_num):
         input_grad = ()
         for j in range(input_num):
-            input_grad += (res[i * input_num + j],)
+            input_grad += (res[i * input_num + j],) if mode == 'forward' else (res[j * output_num + i],)
         jac += (input_grad,)
     return jac
 
