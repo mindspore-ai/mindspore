@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace dataset {
 
-RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : repeat_count_(count), op_(nullptr) {
+RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : op_(nullptr), repeat_count_(count) {
   this->AddChild(child);
 }
 
