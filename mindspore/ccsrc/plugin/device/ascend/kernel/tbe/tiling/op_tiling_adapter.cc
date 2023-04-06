@@ -153,7 +153,7 @@ void OpTilingCalculateAdapter::ConstructNodeInputAnchor(
       auto op_desc_tmp = std::make_shared<::ge::OpDesc>(op_name_tmp, op_name_tmp);
       MS_EXCEPTION_IF_NULL(op_desc_tmp);
       ::ge::GeTensorDesc output_tensor;
-      op_desc_tmp->AddOutputDesc("y", output_tensor);
+      (void)op_desc_tmp->AddOutputDesc("y", output_tensor);
       input_node = (*ge_graph)->AddNode(op_desc_tmp);
     }
     if (input_node->Init() != ::ge::GRAPH_SUCCESS) {
@@ -491,7 +491,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
 }
 
 ::ge::NodePtr OpTilingCalculateAdapter::CreateGeNode(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                                     const std::map<uint32_t, tensor::TensorPtr> &,
                                                      const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
   op_name_ = common::AnfAlgo::GetCNodeName(node);
