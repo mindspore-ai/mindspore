@@ -19,7 +19,7 @@ mindspore.ops.matrix_set_diag
 
     返回：
         Tensor，与 `x` 的类型相同。
-        设 `x` 有 `r+1` 维 :math:`[I, J, ..., M, N]` 。输出Tensor的维度为 `r+1` ，为 :math:`[I, J, ..., L, M, N]` 。
+        设 `x` 有 `r+1` 维 :math:`(I, J, ..., L, M, N)` 。输出Tensor的维度为 `r+1` ，为 :math:`(I, J, ..., L, M, N)` 。
 
     异常：
         - **TypeError** - `x` 或者 `diagonal` 不为Tensor。

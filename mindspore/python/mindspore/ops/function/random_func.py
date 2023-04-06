@@ -224,7 +224,6 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
 
     Args:
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated.
-          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         minval (Tensor): The distribution parameter `a`.
           It defines the minimum possible generated value, with int32 or float32 data type.
           If dtype is int32, only one number is allowed.

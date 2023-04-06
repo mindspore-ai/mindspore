@@ -18,7 +18,7 @@ mindspore.ops.fractional_max_pool3d
         - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 或 :math:`(1, C, 3)` 的Tensor。数值范围（0，1）。默认值：None。
 
     返回：
-        - **y** (Tensor) - 3D分数最大池化的输出，是一个Tensor。数据类型和 `input` 相同，shape是 :math:`(N, C, D, H, W)` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。其中，:math:`(D_{out}, H_{out}, W_{out})` = `output_size` 或 :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` 。
+        - **y** (Tensor) - 3D分数最大池化的输出，是一个Tensor。数据类型和 `input` 相同，shape是 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。其中，:math:`(D_{out}, H_{out}, W_{out})` = `output_size` 或 :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` 。
         - **argmax** (Tensor) - 仅当 `return_indices` 为True时，输出最大池化的索引值。shape和输出 `y` 一致。
 
     异常：

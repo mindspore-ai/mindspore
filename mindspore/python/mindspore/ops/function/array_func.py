@@ -2591,7 +2591,6 @@ def scatter_div(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do divide operation whose data type must be mindspore.int32 or
           mindspore.int64.
         updates (Tensor): The tensor doing the divide operation with `input_x`, the data type is same as `input_x`,
@@ -3116,7 +3115,6 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
         indices (Tensor): The index to do maximum operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the max operation with `input_x`.

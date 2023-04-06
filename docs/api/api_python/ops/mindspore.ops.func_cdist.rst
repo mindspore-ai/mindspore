@@ -6,7 +6,7 @@ mindspore.ops.cdist
     计算两个Tensor每对列向量之间的p-norm距离。
 
     参数：
-        - **x1** (Tensor) - 输入Tensor，shape为 :math:`(B, P, M)` ，B维度为0时该维度被忽略，shape为 :math:`(P, M)` 。在GPU上支持数据类型为[float32, float64]，在CPU上支持[float32]。 
+        - **x1** (Tensor) - 输入Tensor，shape为 :math:`(B, P, M)` ， :math:`B` 维度为0时该维度被忽略，shape为 :math:`(P, M)` 。在GPU上支持数据类型为[float32, float64]，在CPU上支持[float32]。 
         - **x2** (Tensor) - 输入Tensor，shape为 :math:`(B, R, M)` ，与 `x1` 的数据类型一致。
         - **p** (float，可选) - 计算向量对p-norm距离的P值，P∈[0，∞]。默认值：2.0。
 
