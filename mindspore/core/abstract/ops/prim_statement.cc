@@ -68,7 +68,7 @@ void CheckTensorCondValid(const AbstractBasePtr &cond) {
         cond_shape[i] != Shape::kShapeRankAny) {
       MS_LOG(ERROR) << "The condition value of control flow can be a tensor with one element, "
                     << "but got tensor with shape " << base_shape->ToString();
-      MS_LOG(EXCEPTION) << "The truth value of an array with more than one element is ambiguous.";
+      MS_EXCEPTION(ValueError) << "The truth value of an array with more than one element is ambiguous.";
     }
   }
   return;
