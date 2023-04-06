@@ -2186,7 +2186,7 @@ void GradExecutor::CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_func
   bool use_dynamic_shape_process = IsGraphDynamic(anf_node, node_idx, is_ms_function_node, graph_phase);
   top_cell()->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
-    MS_LOG(WARNING) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
+    MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
     top_cell()->set_use_dynamic_shape_process(use_dynamic_shape_process);
     (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell()->obj_id_with_grad_order());
   }
