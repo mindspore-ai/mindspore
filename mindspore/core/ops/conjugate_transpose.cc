@@ -98,6 +98,8 @@ TypePtr ConjugateTransposeInferType(const PrimitivePtr &prim, const std::vector<
                                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), all_types_with_complex,
                                                    prim->name());
+  const std::set<TypePtr> perm_valid_types = {kTuple};
+  (void)CheckAndConvertUtils::CheckTypeValid("perm", input_args[1]->BuildType(), perm_valid_types, prim->name());
   return input_args[0]->BuildType();
 }
 }  // namespace
