@@ -925,7 +925,7 @@ def set_context(**kwargs):
             of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
             If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
-            Default: 600.
+            Default: 1900.
         save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: 0.
             Available values are:
 
