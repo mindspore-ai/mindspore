@@ -436,7 +436,11 @@ void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abst
 }
 
 void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
-  if (context == nullptr || graph_infer_stack.empty()) {
+  // The stack maybe empty in multiple thread.
+  if (graph_infer_stack.empty()) {
+    return;
+  }
+  if (context == nullptr) {
     MS_LOG(EXCEPTION) << "The context is null, or call stack is empty.";
   }
   if (context != graph_infer_stack.back().first) {

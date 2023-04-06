@@ -1102,12 +1102,12 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
                                    const AnfNodePtr &node, const std::string &error_info) {
   constexpr int recursive_level = 2;
   std::ostringstream buffer;
-  buffer << "Cannot join the return values of different branches, perhaps you need to make them equal.\n"
-         << error_info
-         << "#dmsg#Framework Error Message:#dmsg#The abstract type of the return value of the current branch is:\n"
-         << abs->ToString() << ",\n and that of the previous branch is:\n"
-         << last_out_abs->ToString() << ".\n"
-         << "The node is " << node->DebugString(recursive_level);
+  buffer
+    << "Joint the branches' results of different types or shapes to any type. You can make them equal to avoid it.\n"
+    << error_info << "\nThe abstract type of the return value of the current branch is:\n"
+    << abs->ToString() << ",\n and that of the previous branch is:\n"
+    << last_out_abs->ToString() << ".\n"
+    << "The node is " << node->DebugString(recursive_level);
   if (node->isa<CNode>()) {
     auto cnode = node->cast_ptr<CNode>()->input(0);
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
@@ -1163,13 +1163,19 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
       joined_abs = joined_abs->Join(abs);
     } catch (const py::type_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
-      MS_EXCEPTION(TypeError) << JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      const auto info = JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      MS_LOG(WARNING) << info;
+      return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
     } catch (const py::value_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
-      MS_EXCEPTION(ValueError) << JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      const auto info = JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      MS_LOG(WARNING) << info;
+      return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
     } catch (const std::exception &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
-      MS_LOG(EXCEPTION) << JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      const auto info = JoinBranchesFailedInfo(abs, last_out_abs, node, error_info);
+      MS_LOG(WARNING) << info;
+      return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
     }
     MS_EXCEPTION_IF_NULL(joined_abs);
     last_out_abs = abs;
