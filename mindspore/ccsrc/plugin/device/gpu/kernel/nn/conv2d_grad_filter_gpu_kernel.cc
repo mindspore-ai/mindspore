@@ -197,11 +197,16 @@ void ConvGradFilterBkwGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t x_de
   constexpr int requested_algo_count = 1;
   int returned_algo_count = 0;
   cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
-                                                  requested_algo_count, &returned_algo_count, &perf_results),
-    "GetConvolutionBackwardFilterAlgorithm failed");
-  algo_ = perf_results.algo;
+  std::string set_cudnn_conv2d_algo = common::GetEnv("SET_CUDNN_CONV2D_ALGO");
+  if (!set_cudnn_conv2d_algo.empty()) {
+    algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+  } else {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
+                                                    requested_algo_count, &returned_algo_count, &perf_results),
+      "GetConvolutionBackwardFilterAlgorithm failed");
+    algo_ = perf_results.algo;
+  }
 #if CUDNN_VERSION < 8000
   if (group_ > 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
