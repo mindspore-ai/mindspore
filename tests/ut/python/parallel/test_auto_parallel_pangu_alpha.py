@@ -726,3 +726,26 @@ def test_pangu_alpha_shard_propagation():
         elif re.search("BatchMatmul", k) is not None:
             assert v == [[2, 8, 1, 1], [2, 8, 1, 1]]
     context.reset_auto_parallel_context()
+
+
+def test_pangu_alpha_recursive_programming():
+    '''
+    Feature: recursive_programming
+    Description: pangu with recursive_programming
+    Expectation: success
+    '''
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16,
+                                      search_mode="recursive_programming")
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    pangu_alpha = PanguAlphaModel()
+    loss = CrossEntropyLoss()
+    pangu_alpha_loss = PanGUAlphaWithLoss(pangu_alpha, loss)
+    net = _VirtualDatasetCell(pangu_alpha_loss)
+    input_ids = Tensor(np.ones((2, 1025)), mstype.int32)
+    input_position = Tensor(np.ones((2, 1024)), mstype.int32)
+    attention_mask = Tensor(np.ones((2, 1024, 1024)), mstype.float16)
+    dataset = Dataset(input_ids, input_position, attention_mask)
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
+    context.reset_auto_parallel_context()
