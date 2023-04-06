@@ -285,31 +285,7 @@ class SymbolTree(Observer, Observable):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
 
-    def create_assign_node(self, targets, func_name, args, kwargs):
-        """
-        Create a ast.Assign type node.
-
-        Args:
-            targets (list): _description_
-            func_name (_type_): _description_
-            args (_type_): _description_
-            kwargs (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        # create targets
-        ast_targets = [ast_creator_registry.get("Name")(targets)]
-        # create call
-        ast_func = ast_creator_registry.get("Attribute")(func_name)
-        ast_args = ast_creator_registry.get("Args")(args)
-        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
-        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
-        # create assign
-        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
-        return ast_node
-
-    def create_call_function(self, func, targets, args, kwargs):
+    def _create_call_function(self, func, targets, args, kwargs):
         """
         Create a Node object and generate the execution code to insert into the source code.
         The source code calls the 'func' function with 'args' and' kwargs' as parameters.
@@ -348,6 +324,30 @@ class SymbolTree(Observer, Observable):
         node = self.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
                                                call_kwargs)
         return node
+
+    def create_assign_node(self, targets, func_name, args, kwargs):
+        """
+        Create a ast.Assign type node.
+
+        Args:
+            targets (list): _description_
+            func_name (_type_): _description_
+            args (_type_): _description_
+            kwargs (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        # create targets
+        ast_targets = [ast_creator_registry.get("Name")(targets)]
+        # create call
+        ast_func = ast_creator_registry.get("Attribute")(func_name)
+        ast_args = ast_creator_registry.get("Args")(args)
+        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
+        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
+        # create assign
+        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
+        return ast_node
 
     def inner_create_call_function(self, node_name, ast_node, func_name, func, targets, args, kwargs):
         '''
@@ -462,12 +462,6 @@ class SymbolTree(Observer, Observable):
         self._init_func_ast = ast_node
 
     def get_inputs(self):
-        """
-        Getter of `_inputs` which represents parameters of current forward method.
-
-        Returns:
-            A list of instance of Node whose node_type is NodeType.Input as input nodes.
-        """
         return self._inputs
 
     def get_head_node(self):
@@ -1014,18 +1008,15 @@ class SymbolTree(Observer, Observable):
         return new_net
 
     def set_saved_file_name(self, file_name: str):
-        """Sets the filename used to save the network."""
         if file_name.endswith(".py"):
             self._saved_file_name = file_name
         else:
             self._saved_file_name = file_name + ".py"
 
     def get_saved_file_name(self):
-        """Gets the filename used to save the network."""
         return self._saved_file_name
 
     def save_network_to_file(self):
-        """Save the modified network to a file."""
         abs_path = os.path.abspath(self._saved_file_name)
         if os.path.isfile(abs_path):
             os.remove(abs_path)
