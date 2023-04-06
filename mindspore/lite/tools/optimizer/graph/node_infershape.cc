@@ -92,7 +92,8 @@ bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   if (prim_t == nullptr) {
     return false;
   }
-  static const std::set<schema::PrimitiveType> nnacl_to_ops_infer = {schema::PrimitiveType_Abs};
+  static const std::set<schema::PrimitiveType> nnacl_to_ops_infer = {schema::PrimitiveType_Abs,
+                                                                     schema::PrimitiveType_Resize};
 
   if (nnacl_to_ops_infer.find(prim_t->value.type) != nnacl_to_ops_infer.end()) {
     return false;
