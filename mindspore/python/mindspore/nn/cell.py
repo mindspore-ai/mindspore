@@ -2217,19 +2217,26 @@ class Cell(Cell_):
         """
         if not isinstance(net_input, Tensor):
             raise TypeError(
-                f"The {index + 1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
+                f"For 'set_inputs' and tuple(list) in 'set_inputs',the type of {index + 1}th input must be Tensor, "
+                f"but got {type(net_input)}.")
+        is_param_set_input = isinstance(set_input, Parameter)
+        is_param_net_input = isinstance(net_input, Parameter)
+        if (is_param_set_input and not is_param_net_input) or (is_param_net_input and not is_param_set_input):
+            raise ValueError(
+                f"For 'set_inputs' and tuple(list) in 'set_inputs', the {index + 1}th input must be the same "
+                f"as network's input, but got 'set_inputs': {type(set_input)} and network's input: {type(net_input)}.")
         if set_input.dtype != net_input.dtype:
             raise ValueError(
-                f"The {index + 1}th input type of 'set_inputs' must be the same as network's input, "
-                f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
+                f"For 'set_inputs' and tuple(list) in 'set_inputs',the dtype of {index + 1}th input must be the same "
+                f"as network's input, but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
         if net_input.dim() != 0 and set_input.dim() != net_input.dim():
             raise ValueError(
-                f"The {index + 1}th input dims of 'set_inputs' must be the same as network's input, "
-                f"but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
+                f"For 'set_inputs' and tuple(list) in 'set_inputs',the dims of {index + 1}th input must be the same as "
+                f"network's input, but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
         if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
             raise ValueError(
-                f"The {index + 1}th input shape of 'set_inputs' must be the same as network's input, "
-                f"but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
+                f"For 'set_inputs' and tuple(list) in 'set_inputs',the shape of {index + 1}th input must be the same "
+                f"as network's input, but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
 
     def _check_compile_dynamic_shape(self, set_inputs, net_inputs):
         """
@@ -2241,22 +2248,24 @@ class Cell(Cell_):
         set_inputs_len = len(set_inputs)
         net_inputs_len = len(net_inputs)
         if set_inputs_len != net_inputs_len:
-            raise ValueError("The length of 'set_inputs' must be equal to network's inputs, "
-                             f"but got 'set_inputs': {set_inputs_len} and network's input: {net_inputs_len}.")
+            raise ValueError("The length of 'set_inputs' or tuple(list) in 'set_inputs' must be equal to network's "
+                             f"inputs, but got 'set_inputs': {set_inputs_len} and network's input: {net_inputs_len}.")
         for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
             if isinstance(set_input, Tensor):
                 self._check_dynamic_tensor(set_input, net_input, index)
             elif isinstance(set_input, (tuple, list)):
                 if not isinstance(net_input, (tuple, list)):
                     raise TypeError(
-                        f"The {index + 1}th input type of 'set_inputs' must be tuple or list, "
-                        f"but got {type(net_input)}.")
+                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in 'set_inputs' must be tuple or "
+                        f"list, but got {type(net_input)}.")
                 self._check_compile_dynamic_shape(set_input, net_input)
             else:
+                if context._get_mode() == context.PYNATIVE_MODE and set_input is None:
+                    continue
                 if net_input != set_input:
                     raise ValueError(
-                        f"The {index + 1}th input of 'set_inputs' must be the same with network's input, but got "
-                        f"set_inputs: {set_input} and network's input: {net_input}.")
+                        f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
+                        f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
 
 
 class GraphCell(Cell):
