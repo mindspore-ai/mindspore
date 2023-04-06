@@ -1308,6 +1308,41 @@ int TrainSession::Export(Buffer *model_buffer, ModelType model_type, Quantizatio
   return ExportInner<Buffer *>(model_buffer, model_type, quant_type, format, out_put_tensor_name);
 }
 
+int TrainSession::ExportWeightsCollaborateWithMicro(const std::string &file_name, lite::ModelType model_type,
+                                                    FormatType format, bool enable_fp16,
+                                                    const std::vector<std::string> &changeable_weights_name) {
+  MS_CHECK_FALSE_MSG(file_name.empty(), RET_ERROR, "File name cannot be empty");
+  struct stat path_type;
+  if (stat(file_name.c_str(), &path_type) == RET_OK) {
+    if (path_type.st_mode & S_IFDIR) {
+      MS_LOG(ERROR) << "Destination must be path, now is a directory";
+      return RET_ERROR;
+    }
+  }
+  MS_CHECK_FALSE_MSG(format != FT_FLATBUFFERS, RET_ERROR, "File name cannot be empty");
+  MS_CHECK_FALSE_MSG(model_type != mindspore::lite::MT_INFERENCE, RET_ERROR,
+                     "Currently, can only export inference-model's weights.");
+  int status = Eval();
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Eval failed");
+
+  TrainExport texport(file_name);
+  status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to init export");
+
+  status = texport.ExportNet(inference_kernels_, tensors_, eval_output_tensor_names_, model_.get(), QT_DEFAULT);
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to export Network.");
+  status = texport.TrainModelDrop();
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelDrop failed.");
+  status = texport.TrainModelFusion();
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelFusion failed.");
+  status = texport.SaveWeightsToFile(enable_fp16, changeable_weights_name);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "failed to save to " << file_name;
+    return status;
+  }
+  return RET_OK;
+}
+
 std::vector<lite::Tensor *> TrainSession::GetFeatureMaps() const {
   std::vector<lite::Tensor *> features;
   for (auto cur_tensor : this->tensors_) {

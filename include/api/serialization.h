@@ -105,6 +105,21 @@ class MS_API Serialization {
                                    QuantizationType quantization_type = kNoQuant, bool export_inference_only = true,
                                    std::vector<std::string> output_tensor_name = {});
 
+  /// \brief Experimental feature. Export model's weights, which can be used in micro only.
+  ///
+  /// \param[in] model The model data.
+  /// \param[in] model_type The model file type.
+  /// \param[in] weight_file The path of exported weight file.
+  /// \param[in] is_inference Whether to export weights from a reasoning model. Currently, only support this is `true`.
+  /// \param[in] enable_fp16 Float-weight is whether to be saved in float16 format.
+  /// \param[in] changeable_weights_name The set the name of these weight tensors, whose shape is changeable.
+  ///
+  /// \return Status.
+  inline static Status ExportWeightsCollaborateWithMicro(const Model &model, ModelType model_type,
+                                                         const std::string &weight_file, bool is_inference = true,
+                                                         bool enable_fp16 = false,
+                                                         const std::vector<std::string> &changeable_weights_name = {});
+
  private:
   static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph, const Key &dec_key,
                      const std::vector<char> &dec_mode);
@@ -120,6 +135,10 @@ class MS_API Serialization {
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data,
                             QuantizationType quantization_type, bool export_inference_only,
                             const std::vector<std::vector<char>> &output_tensor_name);
+  static Status ExportWeightsCollaborateWithMicro(const Model &model, ModelType model_type,
+                                                  const std::vector<char> &weight_file, bool is_inference,
+                                                  bool enable_fp16,
+                                                  const std::vector<std::vector<char>> &changeable_weights_name);
 };
 
 Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
@@ -155,5 +174,12 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, Buff
                      VectorStringToChar(output_tensor_name));
 }
 
+Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, ModelType model_type,
+                                                        const std::string &weight_file, bool is_inference,
+                                                        bool enable_fp16,
+                                                        const std::vector<std::string> &changeable_weights_name) {
+  return ExportWeightsCollaborateWithMicro(model, model_type, StringToChar(weight_file), is_inference, enable_fp16,
+                                           VectorStringToChar(changeable_weights_name));
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_SERIALIZATION_H
