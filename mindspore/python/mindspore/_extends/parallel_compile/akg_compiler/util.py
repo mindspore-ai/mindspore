@@ -58,14 +58,19 @@ def print_compile_log(compile_log):
                     logger.info(log)
 
 
-def get_kernel_meta_parent_dir():
+def get_kernel_meta_parent_dir(attrs):
     """Get kernel_meta parent dir."""
-    return os.path.realpath(os.getenv('MS_COMPILER_CACHE_PATH', './'))
+    attrs_dict = {}
+    if isinstance(attrs, str):
+        attrs_dict = json.loads(attrs)
+    elif isinstance(attrs, dict):
+        attrs_dict = attrs
+    return os.path.realpath(attrs_dict.get("compile_cache"))
 
 
-def get_ascend_compile_dirs():
+def get_ascend_compile_dirs(attrs):
     """Get several Ascend compile dirs."""
-    kernel_meta_dir = os.path.join(get_kernel_meta_parent_dir(), "akg_kernel_meta")
+    kernel_meta_dir = os.path.join(get_kernel_meta_parent_dir(attrs), "akg_kernel_meta")
     compile_dirs = {"kernel_meta_dir": kernel_meta_dir,
                     "akg_compile_dir": os.path.join(kernel_meta_dir, "akg"),
                     "tbe_compile_dir": os.path.join(kernel_meta_dir, "tbe"),
