@@ -467,6 +467,33 @@ def test_multi_col_map():
            in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 
 
+def test_single_col_map():
+    """
+    Feature: Batch op
+    Description: Test Batch op with single columns with concat per_batch_map args with valid inputs
+    Expectation: Output is equal to the expected output for valid input
+    """
+    def gen_1_cols():
+        for i in range(1, 11):
+            yield (np.array([i]),)
+
+    def batch_map_config(f, value):
+        dst = ds.GeneratorDataset(gen_1_cols(), ["col1"])
+        dst = dst.batch(batch_size=2, input_columns=["col1"], per_batch_map=f)
+        for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
+            assert row["col1"] == value
+
+    # test dict
+    def per_batch_batch_dict(x, batch_info):
+        return {"anno": [100, 200, 300, 400], "label": 4}
+    batch_map_config(per_batch_batch_dict, {"anno": [100, 200, 300, 400], "label": 4})
+
+    # test numpy
+    def per_batch_batch_numpy(x, batch_info):
+        return (np.array(10),)
+    batch_map_config(per_batch_batch_numpy, 10)
+
+
 def test_multi_col_concat_map():
     """
     Feature: Batch op
@@ -662,6 +689,9 @@ if __name__ == '__main__':
 
     logger.info("Running test_var_batch_map.py test_multi_col_map() function")
     test_multi_col_map()
+
+    logger.info("Running test_var_batch_map.py test_single_col_map() function")
+    test_single_col_map()
 
     logger.info("Running test_var_batch_map.py test_exceptions_2() function")
     test_exceptions_2()
