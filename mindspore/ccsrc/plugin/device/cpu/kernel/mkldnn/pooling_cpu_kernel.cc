@@ -35,10 +35,28 @@ void PoolingCpuKernelMod::InitPoolingFields(const BaseOperatorPtr &base_operator
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   dtype_ = inputs[0]->GetDtype();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
+
+  format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
+  pad_mode = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
+  kernel_include_nc = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
+  strides_include_nc = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
+
   if (base_operator->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = base_operator->GetPrim()->GetAttr(CEIL_MODE);
     ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
                  (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
+  }
+
+  if (kernel_name_ == kAvgPool3DOpName && (pad_mode == PAD_MODE_LOWER_PAD || pad_mode == PAD_MODE_UPPER_PAD) &&
+      base_operator->HasAttr(DIVISOR_OVERRIDE) && GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE)) != 0 &&
+      base_operator->HasAttr(COUNT_INCLUDE_PAD) && !GetValue<bool>(base_operator->GetAttr(COUNT_INCLUDE_PAD))) {
+    auto pad = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
+    if (std::any_of(pad.begin(), pad.end(), [](int64_t pad) { return pad > 0; })) {
+      MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode
+                        << " && padding > 0 && count_include_pad == False && divisor_override != None";
+    }
   }
 
   if (kernel_name_ == kAvgPoolOpName || kernel_name_ == kAvgPool3DOpName) {
@@ -50,12 +68,6 @@ void PoolingCpuKernelMod::InitPoolingFields(const BaseOperatorPtr &base_operator
       divisor_override_ = GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE));
     }
   }
-  format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
-  pad_mode = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
-  kernel_include_nc = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
-  strides_include_nc = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 }
 
 bool PoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
