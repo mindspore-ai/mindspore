@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ class BatchNorm1d(_BatchNorm):
     @_primexpr
     def _check_input_dim(shape, cls_name):
         def _check(dim):
-            if not (dim == 2 or dim == 3):
+            if dim not in (2, 3):
                 raise ValueError(f"For '{cls_name}', the must have 2 dims or 3 dims, but got {dim}.")
         dim = len(shape)
         _check(dim)
