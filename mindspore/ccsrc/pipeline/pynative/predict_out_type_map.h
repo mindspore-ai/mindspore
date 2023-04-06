@@ -251,6 +251,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SparseSplit", kTuple},
                                                        {"SparseTensorToCSRSparseMatrix", kTupleTensor5},
                                                        {"Split", kTuple},
+                                                       {"SplitV", kTuple},
                                                        {"SquareSumAll", kTupleTensor2},
                                                        {"SquareSumV2", kTupleTensor2},
                                                        {"Sspaddmm", kTupleTensor3},
