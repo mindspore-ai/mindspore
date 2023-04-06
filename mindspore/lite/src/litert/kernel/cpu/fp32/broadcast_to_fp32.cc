@@ -66,6 +66,8 @@ int BroadcastToCPUKernel::Run() {
       return BroadcastToSize32(input_data, &shape_info_, output_data);
     case kNumberTypeBool:
       return BroadcastToSize8(input_data, &shape_info_, output_data);
+    case kNumberTypeUInt8:
+      return BroadcastToSize8(input_data, &shape_info_, output_data);
     default:
       MS_LOG(ERROR) << "UnSupported data type: " << data_type;
       return RET_ERROR;
@@ -76,4 +78,5 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_BroadcastTo, LiteKernelCreator<
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 }  // namespace mindspore::kernel
