@@ -8,7 +8,7 @@ mindspore.ops.MultinomialWithReplacement
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
-    更多参考详见 :func:`multinomial_with_replacement`。
+    更多参考详见 :func:`mindspore.ops.multinomial_with_replacement`。
 
     .. note::
         输入的行不需要求和为1（在这种情况下，使用值作为权重），但必须是非负的、有限的，并且具有非零和。

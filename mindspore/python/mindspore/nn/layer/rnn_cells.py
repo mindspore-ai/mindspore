@@ -266,12 +266,12 @@ class LSTMCell(RNNCellBase):
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(batch_size, `input_size`)` .
+        - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
-          and shape :math:`(batch_size, `hidden_size`)` . The data type of `hx` must be the same as `x`.
+          and shape :math:`(batch\_size, hidden\_size)` . The data type of `hx` must be the same as `x`.
 
     Outputs:
-        - **hx'** (Tensor) - A tuple of two Tensors (h', c') both of data shape :math:`(batch_size, `hidden_size`)` .
+        - **hx'** (Tensor) - A tuple of two Tensors (h', c') both of data shape :math:`(batch\_size, hidden\_size)` .
 
     Raises:
         TypeError: If `input_size`, `hidden_size` is not an int.
@@ -351,12 +351,12 @@ class GRUCell(RNNCellBase):
         has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: True.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(batch_size, `input_size`)` .
-        - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape :math:`(batch_size, `hidden_size`)` .
+        - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
+        - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape :math:`(batch\_size, hidden\_size)` .
           Data type of `hx` must be the same as `x`.
 
     Outputs:
-        - **hx'** (Tensor) - Tensor of shape :math:`(batch_size, `hidden_size`)` .
+        - **hx'** (Tensor) - Tensor of shape :math:`(batch\_size, hidden\_size)` .
 
     Raises:
         TypeError: If `input_size`, `hidden_size` is not an int.

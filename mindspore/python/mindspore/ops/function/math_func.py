@@ -4782,6 +4782,7 @@ def logaddexp(input, other):
 
     Raises:
         TypeError: If `input`, `other` is not a Tensor.
+        TypeError: The dtype of `input` or `other` is not float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6602,9 +6603,9 @@ def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
 
     Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
@@ -10149,7 +10150,7 @@ def digamma(input):
 
 def polygamma(n, input):
     r"""
-    Computes the `n`th derivative of the polygamma function on `input`.
+    Computes the :math:`n`-th derivative of the polygamma function on `input`.
 
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
