@@ -34,7 +34,6 @@ Neural Network
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
-    mindspore.ops.unfold
     mindspore.ops.fold
     mindspore.ops.fractional_max_pool3d
     mindspore.ops.lp_pool1d
@@ -81,7 +80,6 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.elu
     mindspore.ops.fast_gelu
     mindspore.ops.gelu
@@ -276,7 +274,6 @@ Element-wise Operations
     mindspore.ops.real
     mindspore.ops.reciprocal
     mindspore.ops.remainder
-    mindspore.ops.roll
     mindspore.ops.rot90
     mindspore.ops.round
     mindspore.ops.rsqrt
@@ -388,7 +385,6 @@ Linear Algebraic Functions
     mindspore.ops.addr
     mindspore.ops.adjoint
     mindspore.ops.cholesky
-    mindspore.ops.cholesky_inverse
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
@@ -397,7 +393,6 @@ Linear Algebraic Functions
     mindspore.ops.geqrf
     mindspore.ops.ger
     mindspore.ops.kron
-    mindspore.ops.lstsq
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
@@ -574,7 +569,6 @@ Array Operation
     mindspore.ops.tensor_split
     mindspore.ops.tile
     mindspore.ops.tril
-    mindspore.ops.triu
     mindspore.ops.transpose
     mindspore.ops.unbind
     mindspore.ops.unique

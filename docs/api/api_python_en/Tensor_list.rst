@@ -78,7 +78,6 @@
     mindspore.Tensor.broadcast_to
     mindspore.Tensor.ceil
     mindspore.Tensor.cholesky
-    mindspore.Tensor.cholesky_inverse
     mindspore.Tensor.choose
     mindspore.Tensor.chunk
     mindspore.Tensor.clamp
@@ -192,7 +191,6 @@
     mindspore.Tensor.logit
     mindspore.Tensor.logsumexp
     mindspore.Tensor.long
-    mindspore.Tensor.lstsq
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
@@ -252,7 +250,6 @@
     mindspore.Tensor.reverse
     mindspore.Tensor.reverse_sequence
     mindspore.Tensor.round
-    mindspore.Tensor.roll
     mindspore.Tensor.rot90
     mindspore.Tensor.rsqrt
     mindspore.Tensor.scatter
@@ -304,11 +301,9 @@
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
     mindspore.Tensor.tril
-    mindspore.Tensor.triu
     mindspore.Tensor.true_divide
     mindspore.Tensor.trunc
     mindspore.Tensor.unbind
-    mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad
     mindspore.Tensor.unsorted_segment_max
