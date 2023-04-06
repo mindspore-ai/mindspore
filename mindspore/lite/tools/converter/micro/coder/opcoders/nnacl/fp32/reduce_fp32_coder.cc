@@ -16,7 +16,6 @@
 
 #include "coder/opcoders/nnacl/fp32/reduce_fp32_coder.h"
 #include <string>
-#include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
@@ -25,14 +24,14 @@ namespace mindspore::lite::micro::nnacl {
 int ReduceFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(ReduceBaseCoder::Init(), "init failed");
   MS_CHECK_RET_CODE(ReSize(), "resize failed");
-  MS_CHECK_RET_CODE(MallocTmpBuffer(), "malloc buffer failed");
+  MS_CHECK_RET_CODE(MallocTmpBuffer(kNumberTypeFloat), "malloc buffer failed");
   return RET_OK;
 }
 
-int ReduceFP32Coder::MallocTmpBuffer() {
+int ReduceFP32Coder::MallocTmpBuffer(mindspore::TypeId type_id) {
   data_buffers_.clear();
   for (auto size : buffer_sizes_) {
-    auto *buffer = static_cast<float *>(allocator_->Malloc(kNumberTypeFloat, size * sizeof(float), kWorkspace));
+    auto *buffer = static_cast<float *>(allocator_->Malloc(type_id, size * lite::DataTypeSize(type_id), kWorkspace));
     MS_CHECK_PTR(buffer);
     data_buffers_.emplace_back(buffer);
   }
@@ -57,41 +56,42 @@ int ReduceFP32Coder::DoCode(CoderContext *const context) {
             "reduce_fp32.c",
           });
 
-  NNaclFp32Serializer code;
   // call the op function
-  std::string reduce;
-  std::string int_reduce;
   switch (mode_) {
     case static_cast<int>(schema::ReduceMode_ReduceSum): {
-      reduce = "ReduceSum";
+      reduce_ = "ReduceSum";
       break;
     }
     case static_cast<int>(schema::ReduceMode_ReduceMean): {
-      reduce = "ReduceMean";
+      reduce_ = "ReduceMean";
       break;
     }
     case static_cast<int>(schema::ReduceMode_ReduceMax): {
-      reduce = "ReduceMax";
+      reduce_ = "ReduceMax";
       break;
     }
     case static_cast<int>(schema::ReduceMode_ReduceMin): {
-      reduce = "ReduceMin";
+      reduce_ = "ReduceMin";
       break;
     }
     case static_cast<int>(schema::ReduceMode_ReduceProd): {
-      reduce = "ReduceProd";
-      int_reduce = "IntReduceProd";
+      reduce_ = "ReduceProd";
+      int_reduce_ = "IntReduceProd";
       break;
     }
     case static_cast<int>(schema::ReduceMode_ReduceSumSquare): {
-      reduce = "ReduceSumSquare";
+      reduce_ = "ReduceSumSquare";
       break;
     }
     default:
-      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
+      MS_LOG(ERROR) << "Reduce unsupported reduce_ mode: " << mode_;
       return RET_ERROR;
   }
-
+  GenerateCode(context);
+  return RET_OK;
+}
+void ReduceFP32Coder::GenerateCode(CoderContext *const context) {
+  NNaclFp32Serializer code;
   std::string src_addr = allocator_->GetRuntimeAddr(input_tensor_);
   std::string dst_addr;
   for (int i = 0; i < num_axes_; ++i) {
@@ -103,16 +103,16 @@ int ReduceFP32Coder::DoCode(CoderContext *const context) {
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
     axis_size_ = axis_sizes_.at(i);
-    if (data_type_ == ::kNumberTypeFloat32) {
-      code.CodeFunction(reduce, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
+    if (data_type_ == ::kNumberTypeInt32) {
+      code.CodeFunction(int_reduce_, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
     } else {
-      code.CodeFunction(int_reduce, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
+      code.CodeFunction(reduce_, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
     }
     src_addr = dst_addr;
   }
   context->AppendCode(code.str());
-  return RET_OK;
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl
