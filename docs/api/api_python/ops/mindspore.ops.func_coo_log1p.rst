@@ -11,7 +11,6 @@ mindspore.ops.coo_log1p
     参数：
         - **x** (COOTensor) - 输入COOTensor。数据类型为float16或float32。
           该值必须大于-1。
-          shape： :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度。
 
     返回：
         COOTensor，与 `x` 的shape相同。
