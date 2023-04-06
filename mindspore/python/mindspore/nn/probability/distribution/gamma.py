@@ -34,7 +34,7 @@ class Gamma(Distribution):
         f(x, \alpha, \beta) = \beta^\alpha / \Gamma(\alpha) x^{\alpha - 1} \exp(-\beta x).
 
     where :math:`G` is the Gamma function,
-    and :math:`\alpha, \beta` are the concentration and the rate of the distribution respectively.
+    and :math:`\alpha` and :math:`\beta` are the concentration and the rate of the distribution respectively.
 
     Args:
         concentration (int, float, list, numpy.ndarray, Tensor): The concentration,

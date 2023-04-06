@@ -80,7 +80,7 @@ class RowTensor(RowTensorInner):
     A sparse representation of a set of tensor slices at given indices.
 
     An RowTensor is typically used to represent a subset of a larger
-    tensor dense of shape :math:`(L0, D1, .. , DN)` where L0 >> D0.
+    tensor dense of shape :math:`(L0, D1, .., DN)` where L0 >> D0.
 
     The values in indices are the indices in the first dimension of the slices
     that have been extracted from the larger tensor.
