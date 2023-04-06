@@ -300,7 +300,7 @@ const bool SelectAscendPlugin = []() -> bool {
   (void)rtGetIsHeterogenous(&is_heterogenous);
   if (is_heterogenous == 1) {
     if (std::string(EXPECT_ASCEND_VERSION) == k910BAscnedVersion) {
-      MS_LOG(EXCEPTION) << "1980B does not want to be heterogeneous.";
+      exit(0);
     } else {
       return true;
     }
@@ -312,11 +312,10 @@ const bool SelectAscendPlugin = []() -> bool {
   }
   auto iter = kAscendSocVersions.find(soc_version);
   if (iter == kAscendSocVersions.end()) {
-    MS_LOG(EXCEPTION) << "Soc version: " << soc_version << " can not be found in kAscendSocVersions.";
+    exit(0);
   }
   if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
-    MS_LOG(EXCEPTION) << "Real soc version is: " << soc_version << ", but got " << std::string(EXPECT_ASCEND_VERSION)
-                      << " from shell.";
+    exit(0);
   }
   return true;
 }();
