@@ -672,7 +672,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
     abstract = std::make_shared<abstract::AbstractTuple>(AbstractBasePtrList());
   }
   new_make_tuple->set_abstract(abstract);
-  switch_layer_inputs.emplace_back(new_make_tuple);
+  (void)(switch_layer_inputs.emplace_back(new_make_tuple));
   auto new_switch_layer = graph->NewCNode(switch_layer_inputs);
   (void)(cnode_inputs.emplace_back(new_switch_layer));
   return cnode_inputs;
