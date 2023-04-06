@@ -20,13 +20,13 @@
           - 当 `uniform_noise` 为True， `noise` 仅可以为 "uniform" 。当 `uniform_noise` 为False， `noise` 可以为 "uniform" 、 "gaussian" 和 "zero" 。
 
     输入：
-        - **x** (Tensor) - 一个 `4-D` 的Tensor，shape为 `[batch_size, height, width, channels]` ，dtype为float32。
+        - **x** (Tensor) - 一个 `4-D` 的Tensor，shape为 :math:`(batch_size, height, width, channels)` ，dtype为float32。
         - **size** (Tensor) - 一个包含2个元素的 `1-D` Tensor，包含了提取glimpses的大小。
           `glimpse` 的高度必须首先指定，然后是其宽度，数据类型为int32，其大小必须大于0。
-        - **offsets** (Tensor) - 一个 `2-D` 的Tensor，shape为[batch_size, 2]，包含了每个窗口中心点的y、x位置，数据类型为float32。
+        - **offsets** (Tensor) - 一个 `2-D` 的Tensor，shape为 :math:`(batch_size, 2)`，包含了每个窗口中心点的y、x位置，数据类型为float32。
 
     输出：
-        一个 `4-D` 的Tensor，shape为 `[batch_size, glimpse_height, glimpse_width, channels]` ，数据类型为float32。
+        一个 `4-D` 的Tensor，shape为 :math:`(batch_size, glimpse_height, glimpse_width, channels)` ，数据类型为float32。
 
     异常：
         - **TypeError** - 如果 `centered` 不是一个bool。

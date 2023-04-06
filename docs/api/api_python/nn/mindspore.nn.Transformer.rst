@@ -16,7 +16,7 @@ mindspore.nn.Transformer
         - **custom_encoder** (Cell) - 自定义Encoder层。默认值：``None``。
         - **custom_decoder** (Cell) - 自定义Decoder层。默认值：``None``。
         - **layer_norm_eps** (float) - LayerNorm层的eps值，默认值：``1e-5``。
-        - **batch_first** (bool) - 如果为 ``True`` 则输入输出Shape为(batch, seq, feature)，反之，Shape为(seq, batch, feature)。默认值： ``False``。
+        - **batch_first** (bool) - 如果为 ``True`` 则输入输出Shape为 :math:`(batch, seq, feature)` ，反之，Shape为 :math:`(seq, batch, feature)` 。默认值： ``False``。
         - **norm_first** (bool) - 如果为 ``True``，则LayerNorm层位于MultiheadAttention层和FeedForward层之前，反之，位于其后。默认值： ``False``。
 
     输入：
