@@ -27,6 +27,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "src/common/common.h"
 #include "src/common/file_utils.h"
+#include "cxx_api/acl_utils.h"
 
 namespace mindspore {
 namespace {
@@ -250,7 +251,7 @@ void GetGeGraphOptions(const FuncGraphPtr &anf_graph, const std::shared_ptr<Cont
   auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
   auto precision_mode = ascend_device_info->GetPrecisionMode();
   if (!precision_mode.empty()) {
-    (*ge_options)["ge.exec.precision_mode"] = precision_mode;
+    (*ge_options)["ge.exec.precision_mode"] = TransforPrecisionToAcl(precision_mode);
   }
   if (config_infos.find(lite::kAscendContextSection) == config_infos.end()) {
     return;

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_CXX_API_ACL_UTILS_H
 
 #include <string>
+#include <unordered_map>
 #include "acl/acl_base.h"
 namespace mindspore {
 static inline bool IsAscend910Soc() {
@@ -42,6 +43,16 @@ static inline bool IsAscendNo910Soc() {
     return false;
   }
   return true;
+}
+
+static inline std::string TransforPrecisionToAcl(std::string precision_mode) {
+  static const std::unordered_map<std::string, std::string> precision_map = {
+    {"enforce_fp32", "force_fp32"},
+    {"preferred_fp32", "allow_fp32_to_fp16"},
+    {"enforce_fp16", "force_fp16"},
+    {"enforce_origin", "must_keep_origin_dtype"},
+    {"preferred_optimal", "allow_mix_precision"}};
+  return precision_map.find(precision_mode) != precision_map.end() ? precision_map.at(precision_mode) : precision_mode;
 }
 }  // namespace mindspore
 
