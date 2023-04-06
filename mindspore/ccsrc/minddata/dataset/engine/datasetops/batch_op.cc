@@ -496,11 +496,21 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       input_args[input->size()] = info;
       // Invoke batch map func
       py::object ret_py_obj = batch_map_func_(*input_args);
+
+      // return value from per_batch_map can be:
+      // case 1: int, float, str, bytes, np.ndarray, dict
+      // case 2: item1, item2, item3, ...
+      py::tuple ret_tuple;
+      if (py::isinstance<py::dict>(ret_py_obj)) {
+        ret_tuple = py::make_tuple(ret_py_obj);
+      } else {
+        ret_tuple = py::cast<py::tuple>(ret_py_obj);
+      }
+
       // Parse batch map return value
-      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_py_obj),
+      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple),
                                    "Invalid per_batch_map, 'per_batch_map' function should return a tuple, but got " +
                                      std::string(ret_py_obj.get_type().str()));
-      py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(),
                                    "Invalid per_batch_map, the number of columns returned in 'per_batch_map' function "
                                    "should be " +
