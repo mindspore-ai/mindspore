@@ -17,11 +17,21 @@
 #define MINDSPORE_LITE_INFER_GRAPH_COMPILER_H_
 
 #include <memory>
-
+#include <string>
 #include "infer/execution_plan.h"
 #include "infer/execution_flow.h"
 
 namespace mindspore::infer::abstract {
+constexpr char kDeviceCPU[] = "CPU";
+constexpr char kDeviceGPU[] = "GPU";
+constexpr char kDeviceNPU[] = "NPU";
+constexpr char kDeviceAscend[] = "Ascend";
+struct CompileOption {
+  Format format{Format::NHWC};
+  std::string device{kDeviceCPU};
+  TypeId datatype{kNumberTypeFloat32};
+};
+
 class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
  public:
   virtual ~GraphCompiler() = default;
@@ -34,7 +44,7 @@ class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
   virtual ExecutionPlanPtr Compile(FuncGraphPtr graph) = 0;
 
   virtual ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                   const AnfNodePtrList &outputs) = 0;
+                                   const AnfNodePtrList &outputs, const CompileOption &option) = 0;
 };
 }  // namespace mindspore::infer::abstract
 

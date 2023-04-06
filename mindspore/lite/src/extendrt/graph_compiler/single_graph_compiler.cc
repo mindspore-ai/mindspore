@@ -23,28 +23,20 @@
 namespace mindspore {
 namespace infer {
 CompileResultPtr SingleGraphCompiler::Build(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                            const AnfNodePtrList &outputs) {
-  // assume graph_format is NHWC
-  auto graph_format = NHWC;
-  auto builder = std::make_shared<CompileResultBuilder>(graph_format);
+                                            const AnfNodePtrList &outputs, const abstract::CompileOption &option) {
+  auto builder = std::make_shared<CompileResultBuilder>(option.format);
   return builder->Build(segment, inputs, outputs);
 }
 
-abstract::ExecutionFlowPtr SingleGraphCompiler::Schedule(const CompileResultPtr &node_list) {
-  // infershape
-  // choose lite-kernel else choose kernel-mod
-  // tensor data type/format transform
+abstract::ExecutionFlowPtr SingleGraphCompiler::Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
+                                                        const AnfNodePtrList &outputs,
+                                                        const abstract::CompileOption &option) {
+  auto node_list = this->Build(segment, inputs, outputs, option);
+  std::cout << node_list->Dump() << std::endl;
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->context_.get());
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->context_.get(), option);
   }
   return scheduler_->Schedule(node_list);
-}
-
-abstract::ExecutionFlowPtr SingleGraphCompiler::Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                                        const AnfNodePtrList &outputs) {
-  auto node_list = this->Build(segment, inputs, outputs);
-  std::cout << node_list->Dump() << std::endl;
-  return this->Schedule(node_list);
 }
 }  // namespace infer
 }  // namespace mindspore

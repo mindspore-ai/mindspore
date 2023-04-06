@@ -23,6 +23,7 @@
 #include "src/extendrt/graph_compiler/compile_result.h"
 #include "src/extendrt/execution_flow.h"
 #include "src/litert/inner_context.h"
+#include "src/infer/graph_compiler.h"
 
 namespace mindspore {
 namespace infer {
@@ -34,7 +35,8 @@ enum KernelType {
 
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(lite::InnerContext *context) : context_(context) {}
+  explicit SingleGraphScheduler(lite::InnerContext *context, const abstract::CompileOption &option)
+      : context_(context), compile_option_(option) {}
   virtual ~SingleGraphScheduler() = default;
   ExecutionFlowPtr Schedule(const CompileResultPtr &node_list);
 
@@ -48,6 +50,7 @@ class SingleGraphScheduler {
 
  private:
   lite::InnerContext *context_;
+  const abstract::CompileOption &compile_option_;
   ExecutionFlowPtr execution_flow_{nullptr};
   kernel::KERNEL_ARCH graph_arch_;
   TypeId graph_data_type_ = kTypeUnknown;

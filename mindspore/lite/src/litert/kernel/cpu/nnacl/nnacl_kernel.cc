@@ -103,7 +103,7 @@ int NnaclKernel::InferShape() {
   return kernel_->infershape(kernel_);
 }
 
-int NnaclKernel::InitKernel(const kernel::KernelKey &key, const lite::InnerContext *ctx) {
+int NnaclKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *ctx) {
   CHECK_NULL_RETURN(ctx);
 
   in_size_ = in_tensors_.size();
@@ -125,8 +125,8 @@ int NnaclKernel::InitKernel(const kernel::KernelKey &key, const lite::InnerConte
   }
 
   UpdateTensorC();
-  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type,
-                         const_cast<ExecEnv *>(ctx->GetExecEnv()));
+  kernel_ =
+    CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, data_type, const_cast<ExecEnv *>(ctx->GetExecEnv()));
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }

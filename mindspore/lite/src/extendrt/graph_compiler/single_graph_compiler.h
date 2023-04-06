@@ -38,11 +38,11 @@ class SingleGraphCompiler : public abstract::GraphCompiler {
   ~SingleGraphCompiler() override = default;
   abstract::ExecutionPlanPtr Compile(FuncGraphPtr graph) override { return nullptr; }
   abstract::ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                     const AnfNodePtrList &outputs) override;
+                                     const AnfNodePtrList &outputs, const abstract::CompileOption &option) override;
 
  private:
-  CompileResultPtr Build(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs, const AnfNodePtrList &outputs);
-  abstract::ExecutionFlowPtr Schedule(const CompileResultPtr &node_list);
+  CompileResultPtr Build(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs, const AnfNodePtrList &outputs,
+                         const abstract::CompileOption &option);
 
   SingleGraphSchedulerPtr scheduler_{nullptr};
   std::shared_ptr<lite::InnerContext> context_{nullptr};
