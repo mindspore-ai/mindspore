@@ -93,6 +93,40 @@ int32_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_k
   int32_t id = SizeToInt(distributed::kEmbeddingCacheOps.size()) * param_key + iter->second;
   return id;
 }
+
+// Parallelly generate fixed or random numbers continuously using specified algorithm.
+template <typename T, typename Generator, typename Distribution, typename... Args>
+void GenerateDistributionParallel(size_t size, T *output, Args... args) {
+  std::thread threads[kMaxThreadNum];
+  std::random_device rd;
+  const std::uint64_t seed = rd();
+
+  // 1. Compute total thread number need to parallelly generate distribution and the size of new numbers that each
+  // thread need to generate.
+  // Once calculation of the normal distribution may produce two random values, so each thread should be responsible for
+  // producing an even number of random numbers, except for the last thread.
+  auto [thread_num, size_per_thread] = random::ComputeTaskNumSize(size, kMaxThreadNum);
+
+  // For performance, multi-thread concurrency is not required when the total size is small.
+  if (thread_num == 1) {
+    random::GenerateRandoms<T, Generator, Distribution, Args...>(seed, 0, output, size, args...);
+    return;
+  }
+
+  // 2. Parallelly generate specified distribution using specified algorithm.
+  // Note that the offset need to be set to 'Generator' to prevent generating same sequence of each thread.
+  size_t offset = 0;
+  for (size_t i = 0; i < thread_num; ++i) {
+    size_t task_len = ((i < (thread_num - 1)) ? size_per_thread : (size - ((thread_num - 1) * size_per_thread)));
+    threads[i] = std::thread(&random::GenerateRandoms<T, Generator, Distribution, Args...>, seed, offset,
+                             output + offset, task_len, args...);
+    offset += task_len;
+  }
+
+  for (size_t j = 0; j < thread_num; j++) {
+    threads[j].join();
+  }
+}
 }  // namespace
 
 void EmbeddingCachePrefetchActor::Initialize() {
@@ -104,15 +138,6 @@ void EmbeddingCachePrefetchActor::Initialize() {
   if (!device_context_->device_res_manager_->CreateStream(&stream_id_)) {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
-
-  // Create and Initialize the random number generator for embedding values.
-  const std::uint64_t seed = 0;
-  const size_t skip = 0;
-  rnd_gen_ = std::make_unique<distributed::RandomGenerator<DataType, Generator, Distribution>>(seed, skip);
-
-  const double mean = 0.0;
-  const double sigma = 0.01;
-  (void)rnd_gen_->Initialize(mean, sigma);
 
   // Get embedding cache table info.
   local_host_cache_size_ = embedding_cache_table_manager.host_cache_size_;
@@ -173,10 +198,6 @@ void EmbeddingCachePrefetchActor::Finalize(bool finalize_remote) {
   if (emb_ops_ != nullptr) {
     delete emb_ops_;
     emb_ops_ = nullptr;
-  }
-
-  if (rnd_gen_ != nullptr) {
-    (void)rnd_gen_->Finalize();
   }
 
   rpc_operators_.clear();
@@ -451,14 +472,12 @@ bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &h
   // Initialize accumulate values with the configured constant value.
   if (hash_info.param_init_info_.param_type_ == distributed::ParamType::kAccumulation) {
     auto init_value = hash_info.param_init_info_.init_val_;
-    for (size_t i = 0; i < total_size; ++i) {
-      init_result[i] = init_value;
-    }
+    GenerateDistributionParallel<DataType, Generator, ConstantDistribution>(total_size, init_result.data(), init_value);
   } else {
     // Initialize embedding values from local random generator for feature ids that have never been seen before.
-    for (size_t i = 0; i < total_size; ++i) {
-      init_result[i] = rnd_gen_->Next();
-    }
+    const double mean = 0.0;
+    const double sigma = 0.01;
+    GenerateDistributionParallel<DataType, Generator, NormalDistribution>(total_size, init_result.data(), mean, sigma);
   }
 
   // Insert initialized feature values into the local hash cache.
@@ -1126,6 +1145,7 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
   message->data = rpc_data;
   message->size = data_size;
 
+  errno_t ret;
   size_t offset = 0;
   for (size_t i = 0; i < data_list.size(); i++) {
     const ShapeVector &shape = shapes[i];
@@ -1140,29 +1160,29 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
     // Message format:
     // |RPC_DYNAMIC_SHAPE_DATA | dynamic shape PB data size |---dynamic shape PB data----|---real data----|
     // 1. The dynamic shape header.
-    if (EOK !=
-        memcpy_s(rpc_data + offset, strlen(kRpcDynamicShapeData), kRpcDynamicShapeData, strlen(kRpcDynamicShapeData))) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kRpcDynamicShapeData";
+    if ((ret = memcpy_s(rpc_data + offset, strlen(kRpcDynamicShapeData), kRpcDynamicShapeData,
+                        strlen(kRpcDynamicShapeData))) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kRpcDynamicShapeData, errno[" << ret << "].";
     }
     offset += strlen(kRpcDynamicShapeData);
 
     // 2. The size of the protobuf DynamicShapeMessage.
     size_t ds_pb_msg_size = ds_pb_msg_str.size();
-    if (EOK != memcpy_s(rpc_data + offset, sizeof(ds_pb_msg_size), &ds_pb_msg_size, sizeof(ds_pb_msg_size))) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message size.";
+    if ((ret = memcpy_s(rpc_data + offset, sizeof(ds_pb_msg_size), &ds_pb_msg_size, sizeof(ds_pb_msg_size))) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message size, errno[" << ret << "].";
     }
     offset += sizeof(ds_pb_msg_size);
 
     // 3. Protobuf DynamicShapeMessage.
-    if (EOK != memcpy_s(rpc_data + offset, ds_pb_msg_str.size(), ds_pb_msg_str.c_str(), ds_pb_msg_str.size())) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message.";
+    if ((ret = memcpy_s(rpc_data + offset, ds_pb_msg_str.size(), ds_pb_msg_str.c_str(), ds_pb_msg_str.size())) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message, errno[" << ret << "].";
     }
     offset += ds_pb_msg_str.size();
 
     // 4. The real data buffer need to be sent.
     MS_EXCEPTION_IF_NULL(data);
-    if (EOK != memcpy_s(rpc_data + offset, data->size, data->addr, data->size)) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for real data.";
+    if ((ret = memcpy_s(rpc_data + offset, data->size, data->addr, data->size)) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for real data, errno[" << ret << "].";
     }
     offset += data->size;
   }
@@ -1170,13 +1190,14 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
   // 5. Finalize remote command.
   if (finalize_remote) {
     size_t header_len = strlen(distributed::kFinalizeMuxRecvActor);
-    if (EOK != memcpy_s(rpc_data + offset, header_len, distributed::kFinalizeMuxRecvActor, header_len)) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kFinalizeMuxRecvActor.";
+    if ((ret = memcpy_s(rpc_data + offset, header_len, distributed::kFinalizeMuxRecvActor, header_len)) != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kFinalizeMuxRecvActor, errno[" << ret << "].";
     }
     offset += header_len;
 
-    if (EOK != memcpy_s(rpc_data + offset, sizeof(finalize_remote), &finalize_remote, sizeof(finalize_remote))) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s for finalize_remote.";
+    if ((ret = memcpy_s(rpc_data + offset, sizeof(finalize_remote), &finalize_remote, sizeof(finalize_remote))) !=
+        EOK) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for finalize_remote, errno[" << ret << "].";
     }
   }
 

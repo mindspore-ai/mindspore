@@ -43,9 +43,9 @@ using distributed::HashTableInfo;
 using mindspore::session::KernelGraph;
 
 // Maximum number of threads for concurrent accelerated cache processing.
-constexpr size_t kMaxThreadNum = 16;
+using distributed::kMaxThreadNum;
 // Maximum number of feature ids processed per thread.
-constexpr size_t kMaxIdsPerThread = 10000;
+using distributed::kMaxIdsPerThread;
 
 class DeviceEmbeddingOperation {
  public:
@@ -136,7 +136,7 @@ class DeviceEmbeddingOperation {
   // Statistics on the cache hit rate of the host and device and the information used to update cache.
   EmbeddingCacheStatisticsInfo *statistics_info_;
 
-  // Cache embeding cache ops kernel graphs.
+  // Cache embedding cache ops kernel graphs.
   std::vector<KernelGraphPtr> embedding_cache_graphs_;
 
   // The device stream used to async memcpy operators and launch device kernels, such as embedding cache look up and
