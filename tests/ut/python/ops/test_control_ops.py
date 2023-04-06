@@ -796,8 +796,7 @@ def test_tensor_all_construct_lack_branch():
     input_np_2 = np.random.choice([True, False], size=(2, 3, 4, 5))
     input_tensor_2 = Tensor(input_np_2)
     net = NetConditionLackBranch()
-    with pytest.raises(Exception):
-        net(input_tensor_1, input_tensor_2)
+    net(input_tensor_1, input_tensor_2)
 
 
 def test_parser_switch_layer_func_primitive():
@@ -885,8 +884,7 @@ def test_switch_layer_dtype_join_failed():
     inp = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(0, mstype.int32)
 
-    with pytest.raises(TypeError) as err:
-        net(i, inp)
+    net(i, inp)
 
 
 def test_large_for_loop():

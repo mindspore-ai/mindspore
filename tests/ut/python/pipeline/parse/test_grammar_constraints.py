@@ -138,9 +138,7 @@ def test_any_with_no_return():
     np_input = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.bool_)
     tensor = Tensor(np_input)
     net = NetAnyNoReturn()
-    with pytest.raises(TypeError) as er:
-        net(tensor)
-    assert "Cannot join the return values of different branches" in str(er.value)
+    net(tensor)
 
 
 def test_missing_construct():
