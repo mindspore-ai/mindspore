@@ -17,7 +17,7 @@ mindspore.ops.gather_nd
         - **indices** (Tensor) - 索引Tensor，其数据类型为int32或int64。
 
     返回：
-        Tensor，数据类型与 `input_x` 相同，shape为 :math:`indices_shape[:-1] + input_x_shape[indices_shape[-1]:]` 。
+        Tensor，数据类型与 `input_x` 相同，shape为 :math:`indices\_shape[:-1] + input\_x\_shape[indices\_shape[-1]:]` 。
 
     异常：
         - **ValueError** - `input_x` 的shape长度小于 `indices` 的最后一维的长度。
