@@ -18,7 +18,8 @@ script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
 DEVICE_TARGET=$1
 
-python ${self_path}/test_dynamic_embedding_standalone.py --device_target=$DEVICE_TARGET &>dynamic_embedding.log 2>&1 &
+python ${self_path}/test_dynamic_embedding_standalone.py                          \
+       --device_target=$DEVICE_TARGET &> ${self_path}/dynamic_embedding.log 2>&1 &
 pid=`echo $!`
 
 wait ${pid}
