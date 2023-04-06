@@ -353,7 +353,12 @@ class TupleToTensor(PrimitiveWithCheck):
         return self.infer_value(x, dtype)
 
     def infer_value(self, x, dtype):
-        if x is not None and (isinstance(x, tuple) and None not in x):
+        """infer value"""
+        if x is None:
+            return None
+        if isinstance(x, range):
+            x = tuple(x)
+        if isinstance(x, tuple) and None not in x:
             return Tensor(x, dtype=dtype)
         return None
 
