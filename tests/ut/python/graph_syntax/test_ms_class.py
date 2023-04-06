@@ -261,3 +261,44 @@ def test_raise_error_decorate_cell():
         x = Tensor(1)
         net = Net()
         net(x)
+
+
+def test_with_as_exception():
+    """
+    Feature: Support with as statement.
+    Description: Support with as statement.
+    Expectation: No exception.
+    """
+    @jit_class
+    class Sample():
+        def __init__(self):
+            super(Sample, self).__init__()
+            self.num = Tensor([1])
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            print("type:", exc_type)
+            print("value:", exc_value)
+            print("trace:", traceback)
+            return self.do_something(1)
+
+        def do_something(self, x):
+            bar = 2 / 0 + x + self.num
+            return bar + 10
+
+    class TestNet(nn.Cell):
+        def construct(self, x):
+            a = 1
+            with Sample() as sample:
+                a = sample.do_something(a + x)
+            return x * a
+
+    with pytest.raises(ValueError) as as_exception:
+        x = Tensor([1])
+        test_net = TestNet()
+        res = test_net(x)
+        print("res:", res)
+        assert res == 10
+    assert "The divisor could not be zero" in str(as_exception.value)
