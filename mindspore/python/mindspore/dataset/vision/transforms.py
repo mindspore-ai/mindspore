@@ -1357,9 +1357,9 @@ class MixUp(PyTensorOperation):
     """
     Randomly mix up a batch of numpy.ndarray images together with its labels.
 
-    Each image will be multiplied by a random weight lambda generated from the Beta distribution and then added
-    to another image multiplied by 1 - lambda. The same transformation will be applied to their labels with the
-    same value of lambda. Make sure that the labels are one-hot encoded in advance.
+    Each image will be multiplied by a random weight :math:`lambda` generated from the Beta distribution and then added
+    to another image multiplied by :math:`1 - lambda`. The same transformation will be applied to their labels with the
+    same value of :math:`lambda`. Make sure that the labels are one-hot encoded in advance.
 
     Args:
         batch_size (int): The number of images in a batch.

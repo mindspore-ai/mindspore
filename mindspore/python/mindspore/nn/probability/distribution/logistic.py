@@ -32,7 +32,7 @@ class Logistic(Distribution):
     .. math::
         f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
 
-    where a and b are loc and scale parameter respectively.
+    where :math:`a, b` are loc and scale parameter respectively.
 
     Args:
         loc (float, list, numpy.ndarray, Tensor): The location of the Logistic distribution. Default: None.
