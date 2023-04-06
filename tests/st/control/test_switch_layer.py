@@ -85,7 +85,7 @@ def test_switch_layer():
     net = CaseNet()
     data = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
     idx = Tensor(0, mstype.int32)
-    idx2 = Tensor(-1, mstype.int32)
+    idx2 = Tensor(1, mstype.int32)
     value = net(data, idx, idx2)
     relu = nn.ReLU()
     true_value = relu(data)
