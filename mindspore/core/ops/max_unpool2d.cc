@@ -107,7 +107,8 @@ abstract::ShapePtr MaxUnpool2DInferShape(const PrimitivePtr &primitive,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto data_format = GetValue<std::string>(primitive->GetAttr("format"));
   auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
-  if (attr_output_shape.size() != kDimSize4 && attr_output_shape.size() != kDim0) {
+  constexpr size_t output_shape_size = 0;
+  if (attr_output_shape.size() != kDimSize4 && attr_output_shape.size() != output_shape_size) {
     MS_EXCEPTION(ValueError) << "MaxUnpool2D: Output_shape size must be 0 or 4.";
   }
 

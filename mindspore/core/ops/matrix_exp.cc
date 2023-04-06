@@ -58,11 +58,13 @@ abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std:
   }
   (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   if (!IsDynamicShape(x_shape)) {
-    if (x_shape[x_rank - kNumber1] != x_shape[x_rank - kNumber2]) {
+    size_t last_shape = LongToSize(x_rank - kNumber1);
+    size_t second_last_shape = LongToSize(x_rank - kNumber2);
+    if (x_shape[last_shape] != x_shape[second_last_shape]) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
                                << ", but got shape " << x_shape << ".";
     }
-    if (x_shape[x_rank - kNumber1] < kNumber1) {
+    if (x_shape[last_shape] < kNumber1) {
       MS_EXCEPTION(ValueError) << "For MatrixExp, the input x's last dimension must be at least 1.";
     }
   }

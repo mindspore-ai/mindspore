@@ -73,8 +73,8 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
 AbstractBasePtr SequenceLessInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
                                        const bool is_less_equal = true) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   constexpr int64_t input_num = 2;
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -82,14 +82,14 @@ AbstractBasePtr SequenceLessInferInner(const PrimitivePtr &primitive, const std:
 
   constexpr size_t x_index = 0;
   constexpr size_t y_index = 1;
-  auto x_abs = input_args[x_index];
-  auto y_abs = input_args[y_index];
-  if (!(x_abs->isa<abstract::AbstractSequence>() && y_abs->isa<abstract::AbstractSequence>())) {
+  auto x_input = input_args[x_index];
+  auto y_input = input_args[y_index];
+  if (!(x_input->isa<abstract::AbstractSequence>() && y_input->isa<abstract::AbstractSequence>())) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
-                            << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
+                            << "but got: " << x_input->ToString() << " and " << y_input->ToString();
   }
-  auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
-  auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
+  auto seqx_abs = x_input->cast<abstract::AbstractSequencePtr>();
+  auto seqy_abs = y_input->cast<abstract::AbstractSequencePtr>();
   if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len()) {
     auto dynamic_output = std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
     return dynamic_output;
