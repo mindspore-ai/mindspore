@@ -191,7 +191,7 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
         ValueError: If `numsamples` equal or less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
@@ -621,7 +621,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> n = 4
