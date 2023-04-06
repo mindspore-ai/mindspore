@@ -4175,6 +4175,93 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('qr')(self, 'reduced' if some else 'complete')
 
 
+    def masked_scatter(self, mask, tensor):
+        r"""
+        Returns a Tensor. Updates the value in the "self Tensor" with the `tensor` value according to the mask.
+        The shape of `mask` and the "self Tensor" must be the same or `mask` is broadcastable.
+
+        Args:
+            mask (Tensor[bool]): A bool tensor with a shape broadcastable to the "self Tensor".
+            tensor (Tensor): A tensor with the same data type as the "self Tensor". The number
+                of elements must be greater than or equal to the number of True's in `mask`.
+
+        Returns:
+            Tensor, with the same type and shape as the "self Tensor".
+
+        Raises:
+            TypeError: If `mask` or `tensor` is not a Tensor.
+            TypeError: If data type of the "self Tensor" is not be supported.
+            TypeError: If dtype of `mask` is not bool.
+            TypeError: If the dim of the "self Tensor" less than the dim of `mask`.
+            ValueError: If `mask` can not be broadcastable to the "self Tensor".
+            ValueError: If the number of elements in `tensor` is less than the number required for the updates.
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+            >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+            >>> tensor = Tensor(np.array([5., 6., 7.]), mindspore.float32)
+            >>> output = x.masked_scatter(mask, tensor)
+            >>> print(output)
+            [5. 6. 3. 7.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('masked_scatter')()(self, mask, tensor)
+
+
+    def index_put(self, indices, values, accumulate=False):
+        r"""
+        Returns a Tensor. According to the index number of `indices` ,
+        replace the value corresponding to the "self Tensor" with the value in `values`.
+
+        Args:
+            indices (tuple[Tensor], list[Tensor]): the indices of type int32 or int64, used to index into the "self
+                Tensor". The rank of tensors in indices should be 1-D, size of indices should <= "self Tensor".rank
+                and the tensors in indices should be broadcastable.
+            values (Tensor): 1-D Tensor of the same type as "self Tensor". if size == 1 will be broadcast
+            accumulate (bool): If `accumulate` is True, the elements in values are added to "self Tensor",
+                else the elements in `values` replace the corresponding element in the "self Tensor".
+                Default: False.
+
+        Returns:
+            Tensor, with the same type and shape as the "self Tensor".
+
+        Raises:
+            TypeError: If the dtype of the "self Tensor" is not equal to the dtype of `values`.
+            TypeError: If the dtype of `indices` is not tuple[Tensor], list[Tensor].
+            TypeError: If the dtype of tensors in `indices` are not int32 or int64.
+            TypeError: If the dtype of tensors in `indices` are inconsistent.
+            TypeError: If the dtype of `accumulate` is not bool.
+            ValueError: If rank(`values`) is not 1-D.
+            ValueError: If size(`values`) is not 1 or max size of the tensors in `indices` when
+                rank("self Tensor") == size(`indices`).
+            ValueError: If size(`values`) is not 1 or "self Tensor".shape[-1] when
+                rank("self Tensor") > size(`indices`).
+            ValueError: If the rank of tensors in `indices` is not 1-D.
+            ValueError: If the tensors in `indices` is not be broadcastable.
+            ValueError: If size(`indices`) > rank("self Tensor").
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32))
+            >>> values = Tensor(np.array([3]).astype(np.int32))
+            >>> indices = [Tensor(np.array([0, 1, 1]).astype(np.int32)), Tensor(np.array([1, 2, 1]).astype(np.int32))]
+            >>> accumulate = True
+            >>> output = x.index_put(indices, values, accumulate)
+            >>> print(output)
+            [[1 5 3]
+            [4 8 9]]
+        """
+        self._init_check()
+        validator.check_value_type('accumulate', accumulate, bool, 'Tensor.index_put')
+        _index_put = tensor_operator_registry.get('index_put')(0 if accumulate is False else 1)
+        return _index_put(self, values, indices)
+
+
 def _vm_compare(*args):
     """Implement `vm_compare` for tensor."""
     obj_str = args[-1]
