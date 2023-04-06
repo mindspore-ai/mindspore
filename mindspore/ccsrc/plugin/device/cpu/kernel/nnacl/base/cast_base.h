@@ -131,6 +131,12 @@ inline void Float32ToBool(const float *input, bool *output, int number) {
   }
 }
 
+inline void Float32ToUint8(const float *input, uint8_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (uint8_t)input[i];
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif
