@@ -36,6 +36,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
+#include "utils/tensor_construct_utils.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 
 namespace mindspore {
@@ -929,6 +930,13 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
+tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node) {
+  auto out_shapes = GetNodeShape(node);
+  auto out_shape_type = GetShapeType(node, out_shapes[0]);
+  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes[0]);
+  return zero_tensor;
+}
+
 void PipelineTransformer::CutGraph() {
   std::vector<AnfNodePtr> make_tuple_inputs;
   CreateForwardGroup();
@@ -951,20 +959,21 @@ void PipelineTransformer::CutGraph() {
   }
   auto real_out = GetRealKernelNode(main_graph_->output(), -1).first;
   MS_EXCEPTION_IF_NULL(real_out);
-  std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), send_ops.back()};
+  std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   if (IsPrimitiveCNode(real_out, prim::kPrimMakeTuple)) {
     auto real_out_cnode = real_out->cast<CNodePtr>();
     for (size_t i = 1; i < real_out_cnode->inputs().size(); ++i) {
-      out_tuple_inputs.emplace_back(NewValueNode(0));
+      out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i))));
     }
   }
   auto make_tuple = main_graph_->NewCNode(make_tuple_inputs);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
-  if (out_tuple_inputs.size() > INDEX_TWO) {
+  if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
     out.emplace_back(out_tuple);
   } else {
-    out.emplace_back(send_ops.back());
+    auto out_tensor = NewValueNode(CreateZeroseOutput(real_out));
+    out.emplace_back(out_tensor);
   }
   out.push_back(make_tuple);
   auto out_node = main_graph_->NewCNode(out);
@@ -975,71 +984,6 @@ void PipelineTransformer::ElimGraphStage() {
   for (auto &fg : manager_->func_graphs()) {
     fg->set_stage(-1);
   }
-}
-
-std::pair<CNodePtr, FuncGraphPtr> PipelineTransformer::FindSensNode() {
-  std::pair<CNodePtr, FuncGraphPtr> sens_graph_pair;
-  CNodePtr sens_cnode;
-  FuncGraphPtr func_graph;
-  for (auto &node : root_->nodes()) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    sens_cnode = node->cast<CNodePtr>();
-    AnfNodePtr expect_tuple_getitem = sens_cnode->input(0);
-    MS_EXCEPTION_IF_NULL(expect_tuple_getitem);
-    if (!expect_tuple_getitem->isa<CNode>()) {
-      continue;
-    }
-
-    auto expect_tuple_getitem_cnode = expect_tuple_getitem->cast<CNodePtr>();
-    if (!IsPrimitiveCNode(expect_tuple_getitem_cnode, prim::kPrimTupleGetItem)) {
-      continue;
-    }
-    auto expect_anonymous = expect_tuple_getitem_cnode->input(1);
-    if (!expect_anonymous->isa<CNode>()) {
-      continue;
-    }
-    auto expect_anonymous_cnode = expect_anonymous->cast<CNodePtr>();
-    AnfNodePtr expect_j = expect_anonymous_cnode->input(0);
-    if (!expect_j->isa<CNode>()) {
-      continue;
-    }
-    auto expect_j_cnode = expect_j->cast<CNodePtr>();
-    if (!IsPrimitiveCNode(expect_j_cnode, prim::kPrimJ)) {
-      continue;
-    }
-    func_graph = GetValueNode<FuncGraphPtr>(expect_j_cnode->input(1));
-    break;
-  }
-  sens_graph_pair = std::make_pair(sens_cnode, func_graph);
-  return sens_graph_pair;
-}
-
-void PipelineTransformer::CoverSensShape() {
-  if (IsLastStage()) {
-    return;
-  }
-  auto sens_graph_pair = FindSensNode();
-  auto sens_cnode = sens_graph_pair.first;
-  MS_EXCEPTION_IF_NULL(sens_cnode);
-  OperatorAttrs attrs;
-  auto fill_op = CreateOpInstance(attrs, "Fill", "");
-  MS_EXCEPTION_IF_NULL(type_ptr_);
-  MS_EXCEPTION_IF_NULL(shape_);
-  std::vector<AnfNodePtr> fill_input = {NewValueNode(fill_op), NewValueNode(type_ptr_),
-                                        NewValueNode(MakeValue(shape_->value())), NewValueNode(0)};
-  auto fill = root_->NewCNode(fill_input);
-  auto sens_value = sens_cnode->input(1);
-  AnfNodePtr new_sens = fill;
-  if (IsPrimitiveCNode(sens_value, prim::kPrimMakeTuple)) {
-    std::vector<AnfNodePtr> tuple_sens_inputs = {NewValueNode(prim::kPrimMakeTuple), fill};
-    for (size_t i = 1; i < sens_cnode->inputs().size(); ++i) {
-      tuple_sens_inputs.emplace_back(NewValueNode(0));
-    }
-    new_sens = root_->NewCNode(tuple_sens_inputs);
-  }
-  manager_->SetEdge(sens_cnode, 1, new_sens);
 }
 
 void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
