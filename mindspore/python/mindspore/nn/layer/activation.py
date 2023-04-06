@@ -774,7 +774,7 @@ class Hardtanh(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If dtype of `min_val` is neither float nor int.
         TypeError: If dtype of `max_val` is neither float nor int.
-        ValueError: If `max_val` is less than `min_val`.
+        ValueError: If `min_val` is not less than `max_val`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -795,6 +795,9 @@ class Hardtanh(Cell):
         super(Hardtanh, self).__init__()
         self.min_val = min_val
         self.max_val = max_val
+        if self.min_val >= self.max_val:
+            raise ValueError(f"For Hardtanh, min_val should be less than max_val,"
+                             f"but got {self.min_val} and {self.max_val}")
 
     def construct(self, x):
         return F.hardtanh(x, self.min_val, self.max_val)

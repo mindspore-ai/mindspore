@@ -32,4 +32,4 @@ mindspore.nn.Hardtanh
         - **TypeError** - `x` 的数据类型既不是float16也不是float32。
         - **TypeError** - `min_val` 的数据类型既不是int也不是float。
         - **TypeError** - `max_val` 的数据类型既不是int也不是float。
-        - **ValueError** - `max_val` 小于 `min_val` 。
+        - **ValueError** - `min_val` 不小于 `max_val` 。
