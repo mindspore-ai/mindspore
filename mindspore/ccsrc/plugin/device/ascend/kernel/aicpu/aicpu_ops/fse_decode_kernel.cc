@@ -25,7 +25,6 @@
 
 namespace aicpu {
 namespace {
-// constexpr size_t kFSEDecodeOutputShapeRank = 2;
 const size_t hw_h = 1;
 const size_t hw_w = 2;
 const size_t fnz_w1 = 4;
@@ -123,9 +122,9 @@ std::vector<int> GetShape(const ::aicpuops::TensorShape &shape) {
   return res;
 }
 }  // namespace
-bool FSEDecodeKernel::CheckParams() { return true; }
+bool FSEDecodeKernel::CheckParams() const { return true; }
 
-uint64_t FSEDecodeKernel::Pop(const uint64_t *chunks, uint8_t bit_count) {
+uint64_t FSEDecodeKernel::Pop(const uint64_t *chunks, uint64_t bit_count) {
   const int kMaxBitCount = 64;
   uint64_t right = curr_chunk_ >> static_cast<size_t>(kMaxBitCount - curr_bit_count_);
   uint64_t res = right & ((1u << bit_count) - 1);
@@ -147,7 +146,7 @@ uint64_t FSEDecodeKernel::Pop(const uint64_t *chunks, uint8_t bit_count) {
   return right;
 }
 
-void FSEDecodeKernel::FixedBitFloatDequantTask() {
+uint32_t FSEDecodeKernel::FixedBitFloatDequantTask() {
   uint64_t *chunks = reinterpret_cast<uint64_t *>(io_addrs_[C0NUM]);
   uint16_t *states_table = reinterpret_cast<uint16_t *>(io_addrs_[C1NUM]);
   uint8_t *bit_count_table = reinterpret_cast<uint8_t *>(io_addrs_[C2NUM]);
@@ -159,15 +158,16 @@ void FSEDecodeKernel::FixedBitFloatDequantTask() {
   uint64_t state = Pop(chunks, table_log_);
   while ((curr_chunk_index_ >= 0) || (bit_count_table[state] == 0) || (curr_bit_count_ > 0)) {
     if (out_count == 0) {
-      return;
+      return kAicpuKernelStateSucess;
     }
     output[--out_count] = static_cast<float>(centroids[symbol_table[state]]);
     // state = newStateBaseline + rest
     state = states_table[state] + Pop(chunks, bit_count_table[state]);
   }
+  return kAicpuKernelStateSucess;
 }
 
-void FSEDecodeKernel::FixedBitHalfDequantTask() {
+uint32_t FSEDecodeKernel::FixedBitHalfDequantTask() {
   uint64_t *chunks = reinterpret_cast<uint64_t *>(io_addrs_[C0NUM]);
   uint16_t *states_table = reinterpret_cast<uint16_t *>(io_addrs_[C1NUM]);
   uint8_t *bit_count_table = reinterpret_cast<uint8_t *>(io_addrs_[C2NUM]);
@@ -179,17 +179,21 @@ void FSEDecodeKernel::FixedBitHalfDequantTask() {
   int out_count = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int>());
   std::vector<int> input_shape_vector(intput_shape, intput_shape + input_shape_size_);
   std::vector<int> index_maps;
-  NCHW_TO_FRAC_NZ(input_shape_vector, output_shape_, &index_maps);
+  auto ret = NCHW_TO_FRAC_NZ(input_shape_vector, output_shape_, &index_maps);
+  if (ret != 0) {
+    return kAicpuKernelStateFailed;
+  }
   uint64_t state = Pop(chunks, table_log_);
   while ((curr_chunk_index_ >= 0) || (bit_count_table[state] == 0) || (curr_bit_count_ > 0)) {
     if (out_count == 0) {
-      return;
+      return kAicpuKernelStateSucess;
     }
     auto out_index = index_maps.at(--out_count);
     output[out_index] = static_cast<Eigen::half>(centroids[symbol_table[state]]);
     // state = newStateBaseline + rest
     state = states_table[state] + Pop(chunks, bit_count_table[state]);
   }
+  return kAicpuKernelStateSucess;
 }
 
 uint32_t FSEDecodeKernel::FSEDecodeTask() {

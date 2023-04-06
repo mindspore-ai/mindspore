@@ -29,7 +29,7 @@ class QuantDTypeCastKernel : public KernelBase {
  protected:
   uint32_t ParseKernelParam() override;
   uint32_t DoCompute() override;
-  bool CheckParams();
+  bool CheckParams() const;
   uint32_t QuantDTypeCastTask();
   void FixedBitHalfDequantTask();
   void FixedBitFloatDequantTask();
