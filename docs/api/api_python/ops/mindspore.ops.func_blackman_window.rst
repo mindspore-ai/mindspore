@@ -10,7 +10,7 @@ mindspore.ops.blackman_window
     .. math::
         w[n] = 0.42 - 0.5 cos(\frac{2\pi n}{N - 1}) + 0.08 cos(\frac{4\pi n}{N - 1})
 
-    其中，N是总的窗口长度 `window_length` ，n为小于N的自然数 [0, 1, ..., N-1]。
+    其中， :math:`N` 是总的窗口长度 `window_length` ，n为小于 :math:`N` 的自然数 [0, 1, ..., N-1]。
 
     参数：
         - **window_length** (Tensor) - 返回窗口的大小，数据类型为int32，int64。输入数据的值为[0, 1000000]的整数。

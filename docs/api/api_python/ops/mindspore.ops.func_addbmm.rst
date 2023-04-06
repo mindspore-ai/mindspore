@@ -7,7 +7,7 @@
     `alpha` 和 `beta` 分别是 `batch1` 和 `batch2` 矩阵乘法和 `input` 的乘数。如果 `beta` 是0，那么 `input` 将会被忽略。
 
     .. math::
-        output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1 @ batch2})
+        output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1_i @ batch2_i})
 
     参数：
         - **input** (Tensor) - 被添加的Tensor。

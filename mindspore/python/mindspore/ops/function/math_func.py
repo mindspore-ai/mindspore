@@ -1453,7 +1453,7 @@ def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-
             float16, float32, float64.
         indices (Tensor): The indies along `axis` to perform the addition. A 1D Tensor
             of shape :math:`(updates.shape[axis],)`, every value of it
-            should be in range :math:`[0,  var.shape[axis])` with data type int32.
+            should be in range :math:`[0, var.shape[axis])` with data type int32.
         updates (Tensor): The input Tensor with the value to add. Must have same data type as `var`.
             The shape must be the same as `var` except the `axis` th dimension.
         axis (int): The dimension along which to index. It should be in range :math:`[0, len(var.dim))`.
@@ -4555,6 +4555,7 @@ def orgqr(input, input2):
     where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
     :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
     The output matrix is the same size as the input matrix `input`.
+    :math:`tau` is corresponding to `input2`.
 
     Args:
         input (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
@@ -4636,7 +4637,7 @@ def heaviside(input, values):
     .. math::
             \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
             0, & \text { if input }<0 \\
-            \text { values, } & \text { if input }==0 \\
+            \text { values, } & \text { if input }=0 \\
             1, & \text { if input }>0
             \end{array}\right.
 
