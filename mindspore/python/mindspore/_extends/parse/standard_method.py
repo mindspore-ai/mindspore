@@ -3889,7 +3889,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
     r"""
     Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
     """
-    return F.addmv(x, mat, vec, beta, alpha)
+    return F.addmv(x, mat, vec, beta=beta, alpha=beta)
 
 
 def adjoint(x):
