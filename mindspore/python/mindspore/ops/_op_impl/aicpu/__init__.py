@@ -224,7 +224,6 @@ from .reservoir_replay_buffer import _rrb_create_op_cpu
 from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
-from .parallel_concat import _parallel_concat_aicpu
 from .concat_offset import _concat_offset_aicpu
 from .range import _range_aicpu
 from .slice_grad import _slice_grad_aicpu
@@ -301,6 +300,8 @@ from .dense_to_sparse_set_operation import _dense_to_sparse_set_operation_aicpu
 from .diag import _diag_aicpu
 from .diagonal import _diagonal_aicpu
 from .diag_part import _diag_part_aicpu
+from .bias_add import _bias_add_aicpu
+from .bias_add_grad import _bias_add_grad_aicpu
 from .eig import _eig_aicpu
 from .eye import _eye_aicpu
 from .fmin import _fmin_aicpu

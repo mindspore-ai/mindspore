@@ -256,7 +256,8 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto bc_x = ib->Emit(kDivOpName, {dout, y});
   auto bc_y = -(bc_x * out);
-  return BinopGradCommon(ib, x, y, bc_x, bc_y);
+  auto result = BinopGradCommon(ib, x, y, bc_x, bc_y);
+  return {ib->Emit("Conj", {result[0]}), ib->Emit("Conj", {result[1]})};
 });
 
 REG_BPROP_BUILDER("Less").SetUnusedInputs({i0, i1, i2, i3}).SetBody(CompareBpropExpander);
