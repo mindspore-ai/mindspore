@@ -241,7 +241,7 @@ std::shared_ptr<T> ParserScalarAttrValue(const std::string &attr_name, const min
   auto replace = [&](const string &orgStr, const string &newStr) {
     std::string::size_type pos;
     while ((pos = str.find(orgStr)) != std::string::npos) {
-      str.replace(pos, orgStr.length(), newStr);
+      (void)str.replace(pos, orgStr.length(), newStr);
     }
     return str;
   };
@@ -261,7 +261,7 @@ std::shared_ptr<abstract::AbstractTuple> ParserAttrShape(
   auto replace = [&](const string &orgStr, const string &newStr) {
     std::string::size_type pos;
     while ((pos = str.find(orgStr)) != std::string::npos) {
-      str.replace(pos, orgStr.length(), newStr);
+      (void)str.replace(pos, orgStr.length(), newStr);
     }
     return str;
   };
@@ -472,7 +472,7 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
     if (!attr_tensor.has_external_data()) {
       data_size = attr_tensor.raw_data().size();
     } else {
-      data_size = attr_tensor.external_data().length();
+      data_size = LongToSize(attr_tensor.external_data().length());
     }
     tensor =
       std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
@@ -1055,7 +1055,7 @@ bool MSANFModelParser::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const
     MS_LOG(ERROR) << "Obtain attr in type-form has not support input type:" << attr_tensor_type;
     return false;
   }
-  prim->AddAttr(attr_proto.name(), TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]));
+  (void)prim->AddAttr(attr_proto.name(), TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]));
   return true;
 }
 
@@ -1184,7 +1184,7 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
                   << " from the proto.";
     return false;
   }
-  prim->AddAttr(attr_proto.name(), MakeValue(tensor_info));
+  (void)prim->AddAttr(attr_proto.name(), MakeValue(tensor_info));
   return true;
 }
 
@@ -1225,7 +1225,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
   mindspore::HashMap<std::string, ValuePtr> multi_value_map;
   switch (type) {
     case FORM_PARSE_TYPE: {
-      ObtainCNodeAttrInTypeForm(prim, attr_proto);
+      (void)ObtainCNodeAttrInTypeForm(prim, attr_proto);
       break;
     }
     case FORM_PARSE_SCALAR: {
@@ -1257,7 +1257,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       break;
     }
     case FORM_PARSE_TENSOR: {
-      ObtainCNodeAttrInTensorForm(prim, attr_proto);
+      (void)ObtainCNodeAttrInTensorForm(prim, attr_proto);
       break;
     }
     case FORM_PARSE_NONE: {
@@ -1317,7 +1317,7 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
       if (!attr_tensor.has_external_data()) {
         data_size = attr_tensor.raw_data().size();
       } else {
-        data_size = attr_tensor.external_data().length();
+        data_size = LongToSize(attr_tensor.external_data().length());
       }
       tensor_info =
         std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
@@ -1598,7 +1598,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   mindspore::HashMap<std::string, ValuePtr> multi_value_map;
   switch (type) {
     case FORM_PARSE_TYPE: {
-      ObtainValueNodeInTypeForm(value_node_name, attr_proto.tensors(0));
+      (void)ObtainValueNodeInTypeForm(value_node_name, attr_proto.tensors(0));
       break;
     }
     case FORM_PARSE_SCALAR: {
@@ -1626,7 +1626,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_TENSOR: {
-      ObtainValueNodeInTensorForm(value_node_name, attr_proto.tensors(0));
+      (void)ObtainValueNodeInTensorForm(value_node_name, attr_proto.tensors(0));
       break;
     }
     case FORM_PARSE_NONE: {
@@ -1634,7 +1634,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_MONAD: {
-      ObtainValueNodeInMonadForm(value_node_name, attr_proto);
+      (void)ObtainValueNodeInMonadForm(value_node_name, attr_proto);
       break;
     }
     default:

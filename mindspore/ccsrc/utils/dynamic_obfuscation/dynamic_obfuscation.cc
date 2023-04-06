@@ -185,7 +185,7 @@ ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node)
 ValueNodePtr build_tuple_value_node(const std::vector<int64_t> &values) {
   mindspore::ValueNodePtr v_node = std::make_shared<mindspore::ValueNode>(MakeValue(values));
   AbstractBasePtrList abs_list;
-  std::transform(values.cbegin(), values.cend(), std::back_inserter(abs_list), [](const int64_t &item) {
+  (void)std::transform(values.cbegin(), values.cend(), std::back_inserter(abs_list), [](const int64_t &item) {
     return std::make_shared<mindspore::abstract::AbstractScalar>(int64_t(item));
   });
   auto abs_tuple = std::make_shared<mindspore::abstract::AbstractTuple>(abs_list);
