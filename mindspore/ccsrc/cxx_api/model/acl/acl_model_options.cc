@@ -19,26 +19,12 @@
 #include "utils/log_adapter.h"
 #include "external/ge/ge_api_types.h"
 #include "acl/acl_base.h"
+#include "cxx_api/acl_utils.h"
 
 namespace mindspore {
 static const std::map<enum DataType, std::string> kSupportedDtypeOptionMap = {{DataType::kNumberTypeFloat16, "FP16"},
                                                                               {DataType::kNumberTypeFloat32, "FP32"},
                                                                               {DataType::kNumberTypeUInt8, "UINT8"}};
-
-std::string TransforPrecisionToAcl(std::string getPrecisionMode) {
-  if (getPrecisionMode == "enforce_fp32") {
-    return "force_fp32";
-  } else if (getPrecisionMode == "preferred_fp32") {
-    return "allow_fp32_to_fp16";
-  } else if (getPrecisionMode == "enforce_fp16") {
-    return "force_fp16";
-  } else if (getPrecisionMode == "enforce_origin") {
-    return "must_keep_origin_dtype";
-  } else if (getPrecisionMode == "preferred_optimal") {
-    return "allow_mix_precision";
-  }
-  return getPrecisionMode;
-}
 
 AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (context == nullptr) {
