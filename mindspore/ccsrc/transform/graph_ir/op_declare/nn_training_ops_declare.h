@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nn_training_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ApplyAdam)
 DECLARE_OP_USE_OUTPUT(ApplyAdam)
 
@@ -151,5 +150,4 @@ DECLARE_OP_USE_OUTPUT(ApplyAdadelta)
 
 DECLARE_OP_ADAPTER(SparseApplyAdadelta)
 DECLARE_OP_USE_OUTPUT(SparseApplyAdadelta)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_

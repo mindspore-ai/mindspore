@@ -515,7 +515,7 @@ class OpAdapter : public BaseOpAdapter {
     return output_size;
   }
 
-  OperatorPtr getOp() {
+  static OperatorPtr getOp() {
     if (op_ == nullptr) {
       op_ = std::make_shared<OpType>();
     }
@@ -541,7 +541,7 @@ class OpAdapter : public BaseOpAdapter {
   const std::shared_ptr<OpAdapterImpl> impl_;
   std::string op_type_;
   // cache the Operator to avoid memory leak caused by 'std::make_shared<OpType>()'
-  OperatorPtr op_{nullptr};
+  inline static OperatorPtr op_ = nullptr;
 };
 
 template <typename T>

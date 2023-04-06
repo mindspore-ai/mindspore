@@ -21,12 +21,10 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/control_flow_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Merge)
 DECLARE_OP_USE_DYN_INPUT(Merge)
 DECLARE_OP_USE_OUTPUT(Merge)
 
 DECLARE_OP_ADAPTER(Switch)
 DECLARE_OP_USE_OUTPUT(Switch)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_CONTROL_FLOW_OPS_DECLARE_H_

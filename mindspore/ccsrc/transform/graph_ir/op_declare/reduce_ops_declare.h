@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/reduce_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ReduceMean)
 DECLARE_OP_USE_OUTPUT(ReduceMean)
 
@@ -57,5 +56,4 @@ DECLARE_OP_USE_OUTPUT(ReduceStd)
 
 DECLARE_OP_ADAPTER(ReduceProd)
 DECLARE_OP_USE_OUTPUT(ReduceProd)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_REDUCE_OPS_DECLARE_H_
