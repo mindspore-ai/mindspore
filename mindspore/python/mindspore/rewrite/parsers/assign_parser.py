@@ -65,7 +65,7 @@ class AssignParser(Parser):
         tuple_elts = node.elts
         tuple_values = []
         for tuple_elt in tuple_elts:
-            if not isinstance(tuple_elt, (ast.Constant, ast.Name)):
+            if not isinstance(tuple_elt, (ast.Constant, ast.Name, ast.Attribute)):
                 raise RuntimeError(f"Only support ast.Constant or ast.Name as elts of ast.Tuple, "
                                    f"but got ast type {type(tuple_elt).__name__}",
                                    child_node=tuple_elt, father_node=node)
@@ -73,6 +73,8 @@ class AssignParser(Parser):
                 tuple_values.append(tuple_elt.value)
             elif isinstance(tuple_elt, ast.Name):
                 tuple_values.append(tuple_elt.id)
+            elif isinstance(tuple_elt, ast.Attribute):
+                tuple_values.append("".join([tuple_elt.value.id, '.', tuple_elt.attr]))
         return ScopedValue.create_variable_value(tuple(tuple_values))
 
     @staticmethod
@@ -547,6 +549,7 @@ class AssignParser(Parser):
                     error_str(f"only support one target in assign now.", child_node=targets, father_node=node))
             value = node.value
             if isinstance(value, ast.Call):
+                stree.update_scope_for_unique(value)
                 node_ = self._convert_ast_call_to_node(value, node, stree)
                 stree.append_origin_field(node_)
             elif isinstance(value, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare)):
@@ -555,6 +558,7 @@ class AssignParser(Parser):
             elif isinstance(value, ast.Subscript):
                 logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                             f"ignored as a python node now")
+                stree.update_scope_for_unique(value)
                 stree.try_append_python_node(node, node)
             elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant,
                                     ast.Bytes, ast.Str)):
@@ -562,8 +566,11 @@ class AssignParser(Parser):
                     node_name = "name_assign"
                 elif isinstance(value, ast.Constant):
                     node_name = "constant_assign"
-                else:
+                elif isinstance(value, ast.Attribute):
                     node_name = "attribute_assign"
+                    stree.update_scope_for_unique(value)
+                else:
+                    node_name = "other_assign"
                 targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
                 call_args = [AssignParser._create_scopedvalue(value)]
                 node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)

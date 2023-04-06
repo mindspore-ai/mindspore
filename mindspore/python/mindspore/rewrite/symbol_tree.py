@@ -1049,6 +1049,23 @@ class SymbolTree(Observer, Observable):
             f.write(source.encode('utf-8'))
             f.flush()
 
+    def update_scope_for_unique(self, node: Union[ast.Attribute, ast.Call, ast.Subscript]):
+        """ Update scope of ast node because of unique-ing of targets of other nodes. """
+        if isinstance(node, ast.Call):
+            self.update_scope_for_unique(node.func)
+            return
+        if not isinstance(node, (ast.Attribute, ast.Subscript)):
+            logger.warning(f"Cannot update node {astunparse.unparse(node)} for unique, type of node should "
+                           f"be one of (ast.Attribute, ast.Subscript).")
+            return
+        scope = node.value
+        if not isinstance(scope, ast.Name):
+            self.update_scope_for_unique(scope)
+            return
+        scope_name = scope.id
+        scope_name_unique = self._target_namer.get_real_arg(scope_name)
+        scope.id = scope_name_unique
+
     def _remove_unused_import(self):
         """remove unused import in self._module_ast"""
         str_checker = StrChecker(self._module_ast)

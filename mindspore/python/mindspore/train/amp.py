@@ -90,13 +90,37 @@ class _OutputTo32(nn.Cell):
         return F.mixed_precision_cast(mstype.float32, out)
 
 
+def _allow_mix_precision(node, allowed_list) -> bool:
+    """
+    Check whether current node need do mix precision. Follow conditions need to be satisfied:
+        1) Type of node is one of (Primitive, nn.Cell)
+        2) Node is not P.Cast()
+        3) to_float(mindspore.float16) is not set in Cell
+    """
+    if node.get_instance() in allowed_list:
+        return True
+    if not issubclass(node.get_instance_type(), (Primitive, nn.Cell)):
+        return False
+    if isinstance(node.get_instance(), P.Cast):
+        return False
+    if issubclass(node.get_instance_type(), nn.Cell):
+        # if cell is already in allowed_list, it means to_float(mindspore.float16) is set by amp.
+        # if cell is not in allowed_list, but has to_float(mindspore.float16),
+        # it means to_float(mindspore.float16) is set by user.
+        if hasattr(node.get_instance(), "cell_init_args"):
+            cell_config = node.get_instance().cell_init_args
+            to_float16_config = "'fp16': True"
+            if cell_config.find(to_float16_config) != -1:
+                return False
+    allowed_list.append(node.get_instance())
+    return True
+
+
 def _insert_cast_operator_process(node, stree):
     """insert cast for operators in white_list."""
     new_cast_node = None
-    in_white_list = False
-    # insert cast before the primitive operators in white_list
+    # insert cast float16 before the primitive operators
     if issubclass(node.get_instance_type(), Primitive):
-        in_white_list = True
         for idx in range(len(node.get_inputs())):
             position = stree.before(node)
             new_node = P.Cast()
@@ -108,65 +132,102 @@ def _insert_cast_operator_process(node, stree):
                                                              name='incast_{}{}'.format(node.get_name(), idx))
             stree.insert(position, new_cast_node)
             node.set_arg_by_node(idx, new_cast_node)
-    # insert cast before the Cell operators in white_list
+    # insert cast float16 before the Cell operators
     elif issubclass(node.get_instance_type(), nn.Cell):
-        in_white_list = True
         node.get_instance().to_float(mstype.float16)
+    # ignore if subclass is not one of (Primitive, nn.Cell)
+    else:
+        return
 
-    # insert cast after the operators in white_list
-    if in_white_list:
-        position = stree.after(node)
-        new_node = P.Cast()
-        arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
-                                                         "mindspore.float32"])
-        new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                         targets=['x_cast_{}'.format(node.get_name())],
-                                                         args=arg,
-                                                         name='outcast_{}'.format(node.get_name()))
-        for i in range(len(node.get_users())):
-            follow_node = node.get_users()[i]
-            stree.insert(position, new_cast_node)
-            idx = follow_node.get_args().index(node.get_targets()[0])
-            follow_node.set_arg_by_node(idx, new_cast_node)
+    # insert cast float32 after the operators
+    position = stree.after(node)
+    new_node = P.Cast()
+    arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
+                                                     "mindspore.float32"])
+    new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
+                                                     targets=['x_cast_{}'.format(node.get_name())],
+                                                     args=arg,
+                                                     name='outcast_{}'.format(node.get_name()))
+    # insert node & unique names
+    stree.insert(position, new_cast_node)
+    # update argument names
+    for user in node.get_users():
+        if user.get_name() == new_cast_node.get_name():
+            continue
+        for idx, arg in enumerate(user.get_args()):
+            if arg == node.get_targets()[0]:
+                user.set_arg_by_node(idx, new_cast_node)
 
 
-def _insert_cast_operator(stree, white_list):
+def _insert_cast_operator_white_list(stree, white_list):
     """insert cast for operators in white_list."""
+    allowed_list = []
     for node in stree.nodes():
         if node.get_targets() is None:
             continue
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _insert_cast_operator(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)), white_list)
+                    _insert_cast_operator_white_list(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)),
+                                                     white_list)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
-            _insert_cast_operator(substree, white_list)
-        elif node.get_instance_type() in white_list:
+            _insert_cast_operator_white_list(substree, white_list)
+        elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list):
             _insert_cast_operator_process(node, stree)
-        else:
-            # type of node not in white list
-            continue
 
 
-def _removed_cast_pair(node):
-    """the cast pairs should be removed."""
-    for i in range(len(node.get_users())):
-        follow_node = node.get_users()[i]
-        if follow_node.get_instance_type() != P.Cast:
-            return False
-    node_dtype = node.get_args()[1]
-    if len(node.get_users()).__trunc__() == 0:
+def _need_removed_cast_pair(node):
+    """check whether the cast pairs should be removed."""
+    cast_dtypes = ms.rewrite.ScopedValue.create_name_values(["mindspore.float16", "mindspore.float32"])
+    cast_dtype_f16 = cast_dtypes[0]
+    cast_dtype_f32 = cast_dtypes[1]
+    # current node should be P.Cast()(x, mindspore.float32)
+    if node.get_instance_type() != P.Cast:
         return False
-    follow_node_dtype = node.get_users()[0].get_args()[1]
-    for i in range(1, len(node.get_users())):
-        dtype = node.get_users()[i].get_args()[1]
-        if dtype == follow_node_dtype:
-            continue
-    if i == len(node.get_users()) - 1 and follow_node_dtype != node_dtype:
-        return True
+    node_cast_type = node.get_args()[1]
+    if node_cast_type != cast_dtype_f32:
+        return False
+    # all user nodes should be P.Cast()(x, mindspore.float16) or Cell with to_float(mindspore.float16)
+    if not node.get_users():
+        return False
+    for user in node.get_users():
+        if isinstance(user.get_instance(), nn.Cell):
+            if not hasattr(user.get_instance(), "cell_init_args"):
+                return False
+            cell_config = user.get_instance().cell_init_args
+            to_float16_config = "'fp16': True"
+            if cell_config.find(to_float16_config) == -1:
+                return False
+        elif user.get_instance_type() == P.Cast:
+            user_cast_type = user.get_args()[1]
+            if user_cast_type != cast_dtype_f16:
+                return False
+        else:
+            return False
+    return True
 
-    return False
+
+def _removed_cast_pair_process(stree, cast_f32_node):
+    """remove the duplicated cast operators."""
+    for user_node in cast_f32_node.get_users():
+        # remove cast f16 nodes
+        if user_node.get_instance_type() == P.Cast:
+            cast_f16_node = user_node
+            # modify arguments using cast_f16's target[0] to cast_f32's args[0], which is f16 type
+            for cast_f16_user in cast_f16_node.get_users():
+                for idx, arg in enumerate(cast_f16_user.get_args()):
+                    if arg == cast_f16_node.get_targets()[0]:
+                        cast_f16_user.set_arg(idx, cast_f32_node.get_args()[0])
+            stree.erase_node(cast_f16_node)
+        # update args of cell f16 nodes
+        elif isinstance(user_node.get_instance(), nn.Cell):
+            cell_f16_node = user_node
+            for idx, arg in enumerate(cell_f16_node.get_args()):
+                if arg == cast_f32_node.get_targets()[0]:
+                    cell_f16_node.set_arg(idx, cast_f32_node.get_args()[0])
+    # remove the cast f32 node
+    stree.erase_node(cast_f32_node)
 
 
 def _remove_duplicated_cast(stree):
@@ -178,28 +239,20 @@ def _remove_duplicated_cast(stree):
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
                     _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)))
-        elif node.get_node_type() != ms.rewrite.NodeType.Tree:
-            if node.get_instance_type() == P.Cast and _removed_cast_pair(node):
-                # remove the following cast node first
-                len_users = len(node.get_users())
-                for i in range(len_users):
-                    follow_node = node.get_users()[i]
-                    for n in follow_node.get_users():
-                        idx = n.get_args().index(follow_node.get_targets()[0])
-                        n.set_arg_by_node(idx, node.get_inputs()[0])
-                    stree.erase_node(follow_node)
-                # remove the current cast node
-                stree.erase_node(node)
-        else:
+            continue
+        elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
             _remove_duplicated_cast(substree)
+            continue
+        elif _need_removed_cast_pair(node):
+            _removed_cast_pair_process(stree, node)
 
 
 def _auto_white_list(network, white_list):
     """process the white list of network."""
     global STREE
     STREE = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator(STREE, white_list)
+    _insert_cast_operator_white_list(STREE, white_list)
     _remove_duplicated_cast(STREE)
     return STREE.get_network()
 
