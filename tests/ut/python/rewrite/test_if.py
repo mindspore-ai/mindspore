@@ -18,7 +18,6 @@ from collections import OrderedDict
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore.rewrite import SymbolTree, PatternEngine, Replacement, PatternNode, Node, ScopedValue
-from .conv_bn_act import Conv2dBnAct
 
 
 class IfNet(nn.Cell):
@@ -83,20 +82,20 @@ class ConvBnReplace(Replacement):
         conv_p = pattern.get_inputs()[0]
         conv_node: Node = matched.get(conv_p.name())
         conv: nn.Conv2d = conv_node.get_instance()
-        newconv = Conv2dBnAct(conv.in_channels,
-                              conv.out_channels,
-                              conv.kernel_size,
-                              conv.stride,
-                              conv.pad_mode,
-                              conv.padding,
-                              conv.dilation,
-                              conv.group,
-                              conv.has_bias,
-                              conv.weight_init,
-                              conv.bias_init,
-                              True,
-                              bn.momentum,
-                              bn.eps)
+        newconv = nn.Conv2dBnAct(conv.in_channels,
+                                 conv.out_channels,
+                                 conv.kernel_size,
+                                 conv.stride,
+                                 conv.pad_mode,
+                                 conv.padding,
+                                 conv.dilation,
+                                 conv.group,
+                                 conv.has_bias,
+                                 conv.weight_init,
+                                 conv.bias_init,
+                                 True,
+                                 bn.momentum,
+                                 bn.eps)
         newconv_node = Node.create_call_cell(newconv, bn_node.get_targets(), conv_node.get_args(),
                                              conv_node.get_kwargs(), "Conv2dBnAct")
         return [newconv_node]
