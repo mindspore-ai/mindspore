@@ -13,7 +13,7 @@ mindspore.nn.ReLU6
     input是具有任何有效形状的张量。
 
     输入：
-        - **x** (Tensor) - ReLU6的输入，任意维度的Tensor，其数据类型为float16或float32。
+        - **x** (Tensor) - ReLU6的输入，其数据类型为float16或float32。
 
     输出：
         Tensor，数据类型与 `x` 相同。

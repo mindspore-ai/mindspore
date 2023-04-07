@@ -6560,9 +6560,9 @@ def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: 0.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
 
     Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
             An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
 
     Returns:
@@ -7655,7 +7655,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ValueError: If any elements of `dim` is out of range.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -10859,6 +10859,7 @@ __all__ = [
     'quantile',
     'tril_indices',
     'histc',
-    'nextafter'
+    'nextafter',
+    'triu_indices'
 ]
 __all__.sort()
