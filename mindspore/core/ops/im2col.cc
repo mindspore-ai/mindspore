@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "utils/ms_context.h"
 #include "abstract/abstract_value.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -154,6 +155,14 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
                              << dilation_h << ", " << dilation_w << ", pads=(" << pads
                              << "), calculated shape of output as (" << in_h << ", " << in_c << ", " << kernel_product
                              << ", " << total_block << "), which is too small (non-positive).";
+  }
+
+  // padding pads to 4 for tbe
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    std::vector<int64_t> padding_pads{pads.front(), pads.front(), pads.back(), pads.back()};
+    (void)primitive->AddAttr(kPads, MakeValue(padding_pads));
   }
 
   // current only support NCHW

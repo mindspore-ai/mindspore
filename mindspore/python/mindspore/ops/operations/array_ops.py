@@ -596,7 +596,7 @@ class Reshape(PrimitiveWithCheck):
     def infer_value(self, x, shape):
         """infer value"""
         # for shape is not constant
-        if shape is None or (isinstance(shape, (tuple, list)) and None in shape) or x is None:
+        if shape is None or self.none_in_tuple_or_list(shape) or x is None:
             return None
         if isinstance(shape, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),
@@ -634,6 +634,9 @@ class Reshape(PrimitiveWithCheck):
                                  f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
             out = Tensor(x.asnumpy().reshape(shape))
         return out
+
+    def none_in_tuple_or_list(self, x):
+        return isinstance(x, (tuple, list)) and None in x
 
 
 class Shape(Primitive):

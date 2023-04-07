@@ -147,6 +147,8 @@ class ReshapeInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
     return x_dtype;
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Reshape, prim::kPrimReshape, ReshapeInfer, false);
 }  // namespace ops
