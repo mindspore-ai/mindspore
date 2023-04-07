@@ -1245,6 +1245,13 @@ def tril(m, k=0):
         m = asarray_const(m)
     dtype = m.dtype
     device_target = _device_target()
+    # check rank
+    rank = len(m.shape)
+    if rank < 1:
+        _raise_value_error("input m's rank should be larger than 0")
+    elif rank == 1:
+        mask = tri(m.shape[0], k=k, dtype=mstype.bool_)
+        return where(mask, m, zeros(1, m.dtype))
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
         m = m.astype(mstype.float32)
@@ -1292,6 +1299,13 @@ def triu(m, k=0):
         m = asarray_const(m)
     dtype = m.dtype
     device_target = _device_target()
+    # check rank
+    rank = len(m.shape)
+    if rank < 1:
+        _raise_value_error("input m's rank should be larger than 0")
+    elif rank == 1:
+        mask = tri(m.shape[0], k=k-1, dtype=mstype.bool_)
+        return where(mask, zeros(1, m.dtype), m)
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
         m = m.astype(mstype.float32)
