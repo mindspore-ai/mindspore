@@ -335,7 +335,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
          TensorCompressionType compression_type);
 
-  virtual Tensor &operator=(const Tensor &tensor) {
+  Tensor &operator=(const Tensor &tensor) {
     if (this == &tensor) {
       return *this;
     }

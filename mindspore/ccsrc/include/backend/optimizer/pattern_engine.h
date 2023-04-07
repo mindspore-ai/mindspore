@@ -54,7 +54,7 @@ class BACKEND_EXPORT Var : public Base {
     EnsureTag();
   }
   Var(const Var &other) : Base(other), tag_(other.tag_), primitive_(other.primitive_) {}
-  virtual Var &operator=(const Var &other) {
+  Var &operator=(const Var &other) {
     if (&other == this) {
       return *this;
     }

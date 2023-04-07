@@ -62,17 +62,21 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Copy constructor
   /// \param[in] abstract_base an abstract
-  AbstractBase(const AbstractBase &other) : value_(other.value_), type_(other.type_), shape_(other.shape_) {}
+  AbstractBase(const AbstractBase &other)
+      : Base(other), value_(other.value_), type_(other.type_), shape_(other.shape_) {}
 
   /// \brief Overloads operator '=' for Named.
   ///
   /// \param[in] other An an abstract.
   /// \return An abstract set with the same type, value and shape as abstract_base.
-  virtual AbstractBase &operator=(const AbstractBase &other) {
+  AbstractBase &operator=(const AbstractBase &other) {
     if (&other != this) {
       this->value_ = other.value_;
       this->type_ = other.type_;
       this->shape_ = other.shape_;
+      this->name_ = other.name_;
+      this->user_data_ = other.user_data_;
+      this->value_desc_ = other.value_desc_;
     }
     return *this;
   }
