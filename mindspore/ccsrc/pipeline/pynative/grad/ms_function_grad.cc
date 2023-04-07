@@ -46,6 +46,13 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kPyInterpretOpName,
 };
 
+const mindspore::HashSet<std::string> kExpanderWhiteList{
+  kVmapStackAssignOpName,
+  kVmapUnstackAssignOpName,
+  kPyExecuteOpName,
+  kPrintOpName,
+};
+
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
                                   bool modify_output, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
@@ -164,7 +171,11 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
       grad_graph->AddValueNode(output_vnode);
     }
     MS_LOG(DEBUG) << "Old output value node: " << output_vnode->ToString();
+    bool is_tuple_out = output_vnode->abstract()->isa<abstract::AbstractSequence>();
     size_t output_num = GetOutputTensorNumForTuple(cnode);
+    if (output_num == 0) {
+      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty";
+    }
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
                         << ", but the current index: " << index << ", output num: " << output_num;
@@ -176,22 +187,21 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
     }
     index = index + output_num;
     // Replace new tensors.
-    if (output_num == 1) {
-      output_vnode->set_value(new_values[0]);
-    } else if (output_num > 1) {
+    // Can not use output_num > 1, because output can be (a), tuple just have only one element
+    if (is_tuple_out) {
       output_vnode->set_value(std::make_shared<ValueTuple>(new_values));
     } else {
-      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty, forward cnode info: " << cnode->ToString();
+      output_vnode->set_value(new_values[0]);
     }
     if (is_dynamic_shape) {
-      if (output_num == 1) {
-        output_vnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[0]->ToAbstract()));
-      } else {
+      if (is_tuple_out) {
         AbstractBasePtrList abs_list;
         for (size_t j = 0; j < output_num; ++j) {
           (void)abs_list.emplace_back(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[j]->ToAbstract()));
         }
         output_vnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+      } else {
+        output_vnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[0]->ToAbstract()));
       }
     }
     MS_LOG(DEBUG) << "New output value node: " << output_vnode->ToString();
@@ -443,7 +453,8 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
 
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
     const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
-    if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX) {
+    if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX &&
+        kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
       MS_LOG(DEBUG) << "Prim " << prim->name() << " is not support by expander";
       return nullptr;
     }
