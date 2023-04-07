@@ -1082,9 +1082,6 @@ MS_CORE_API FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
 // Used to check whether an AnfNode is a cnode with a kind of Primitive as first input.
 MS_CORE_API bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
-// Used to check whether an AnfNode is a Summary Node.
-MS_CORE_API bool IsSummaryNode(const AnfNodePtr &node);
-
 // Used to get PrimitivePtr from a cnode first input
 MS_CORE_API PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 

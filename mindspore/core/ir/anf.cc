@@ -233,11 +233,6 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   return (value == nullptr) || ((prim->Hash() == value->Hash()) && (prim->name() == value->name()));
 }
 
-bool IsSummaryNode(const AnfNodePtr &node) {
-  return (IsPrimitiveCNode(node, prim::kPrimScalarSummary) || IsPrimitiveCNode(node, prim::kPrimTensorSummary) ||
-          IsPrimitiveCNode(node, prim::kPrimImageSummary) || IsPrimitiveCNode(node, prim::kPrimHistogramSummary));
-}
-
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
   auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr || cnode->size() == 0) {

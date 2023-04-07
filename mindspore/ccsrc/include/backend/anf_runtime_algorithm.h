@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,8 +234,12 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // Check whether the input scalar need converted to tensor.
   static bool IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node);
   static tensor::TensorPtr CreateMapTensor(const AnfNodePtr &output_node, size_t output_index);
+
+  // Used to check whether an AnfNode is a Summary Node.
+  static bool IsSummaryNode(const AnfNodePtr &node);
 };
 }  // namespace session
+
 using AnfAlgo = session::AnfRuntimeAlgorithm;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ANF_RUNTIME_ALGORITHM_H
