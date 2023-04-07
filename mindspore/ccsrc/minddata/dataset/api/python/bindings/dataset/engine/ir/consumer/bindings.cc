@@ -33,8 +33,11 @@ PYBIND_REGISTER(PythonIteratorConsumer, 1, ([](const py::module *m) {
                   (void)py::class_<PythonIteratorConsumer, TreeConsumer, std::shared_ptr<PythonIteratorConsumer>>(
                     *m, "PythonIteratorConsumer")
                     .def(py::init<int32_t>())
-                    .def("Init", [](PythonIteratorConsumer &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("Init",
+                         [](PythonIteratorConsumer &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("GetNextAsMap",
                          [](PythonIteratorConsumer &self) {
                            py::dict output;
@@ -55,7 +58,10 @@ PYBIND_REGISTER(
       *m, "PythonPullBasedIteratorConsumer")
       .def(py::init<int32_t>())
       .def("Init",
-           [](PythonPullBasedIteratorConsumer &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+           [](PythonPullBasedIteratorConsumer &self, std::shared_ptr<DatasetNode> d) {
+             py::gil_scoped_release gil_release;
+             THROW_IF_ERROR(self.Init(d));
+           })
       .def("GetNextAsMap",
            [](PythonPullBasedIteratorConsumer &self) {
              py::dict output;
@@ -75,7 +81,10 @@ PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                                                                                                         "TreeGetters")
                     .def(py::init<>())
                     .def("Init",
-                         [](PythonTreeGetters &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                         [](PythonTreeGetters &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("GetOutputShapes",
                          [](PythonTreeGetters &self, bool estimate) {
                            std::vector<TensorShape> shapes = {};
@@ -125,7 +134,11 @@ PYBIND_REGISTER(PythonRuntimeContext, 2, ([](const py::module *m) {
                   (void)py::class_<PythonRuntimeContext, std::shared_ptr<PythonRuntimeContext>>(*m,
                                                                                                 "PythonRuntimeContext")
                     .def(py::init<>())
-                    .def("Init", [](PythonRuntimeContext &self) { THROW_IF_ERROR(self.Init()); })
+                    .def("Init",
+                         [](PythonRuntimeContext &self) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init());
+                         })
                     .def("AssignConsumer", &PythonRuntimeContext::AssignConsumer)
                     .def("Terminate", [](PythonRuntimeContext &self) { THROW_IF_ERROR(self.Terminate()); })
                     .def("GetConsumer", &PythonRuntimeContext::GetPythonConsumer, py::return_value_policy::reference)
@@ -136,15 +149,22 @@ PYBIND_REGISTER(PythonBuildVocabConsumer, 1, ([](const py::module *m) {
                   (void)py::class_<PythonBuildVocabConsumer, TreeConsumer, std::shared_ptr<PythonBuildVocabConsumer>>(
                     *m, "PythonBuildVocabConsumer")
                     .def(py::init<>())
-                    .def("Init", [](PythonBuildVocabConsumer &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("Init",
+                         [](PythonBuildVocabConsumer &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("Start", [](PythonBuildVocabConsumer &self) { THROW_IF_ERROR(self.Start()); });
                 }));
 
 PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                   (void)py::class_<ToDevice, TreeConsumer, std::shared_ptr<ToDevice>>(*m, "ToDevice")
                     .def(py::init<int32_t>())
-                    .def("Init", [](ToDevice &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("Init",
+                         [](ToDevice &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("Send", [](ToDevice &self) { THROW_IF_ERROR(self.Send()); })
                     .def("ContinueSend", [](ToDevice &self) { THROW_IF_ERROR(self.Continue()); })
                     .def("StopSend", [](ToDevice &self) { THROW_IF_ERROR(self.Stop()); })
@@ -180,7 +200,10 @@ PYBIND_REGISTER(PythonSaveToDisk, 1, ([](const py::module *m) {
                       return save;
                     }))
                     .def("Init",
-                         [](PythonSaveToDisk &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                         [](PythonSaveToDisk &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("Save", [](PythonSaveToDisk &self) { THROW_IF_ERROR(self.Save()); });
                 }));
 
@@ -188,8 +211,11 @@ PYBIND_REGISTER(PythonDatasetSizeGetter, 1, ([](const py::module *m) {
                   (void)py::class_<PythonDatasetSizeGetter, TreeConsumer, std::shared_ptr<PythonDatasetSizeGetter>>(
                     *m, "DatasetSizeGetters")
                     .def(py::init<>())
-                    .def("Init", [](PythonDatasetSizeGetter &self,
-                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("Init",
+                         [](PythonDatasetSizeGetter &self, std::shared_ptr<DatasetNode> d) {
+                           py::gil_scoped_release gil_release;
+                           THROW_IF_ERROR(self.Init(d));
+                         })
                     .def("GetDatasetSize", [](PythonDatasetSizeGetter &self, bool estimate) {
                       int64_t size;
                       THROW_IF_ERROR(self.GetDatasetSize(&size, estimate));
