@@ -1318,7 +1318,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   for (auto it = tuple_getitem_list.begin(); it != tuple_getitem_list.end();) {
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
-  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names, root);
+  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
   std::vector<std::vector<size_t>> param_users_ops_index =
     GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
 
@@ -1333,7 +1333,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   // To specify the process is training or inference. For training, if optimizer parallel is activated, it requires at
   // least one cut on DP dimension.
   bool isTraining = IsTraining(root->manager());
-
   if (PartitionForAllDevices(num_device, device_memory, graph, isTraining) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {
@@ -1353,7 +1352,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   ReInitCostGraph(all_nodes, root);
   ops = entire_costgraph->GetOperators();
 
-  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, param_users_ops_index, root);
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, param_users_ops_index);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";

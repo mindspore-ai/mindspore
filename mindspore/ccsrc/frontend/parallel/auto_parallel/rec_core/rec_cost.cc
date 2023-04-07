@@ -169,7 +169,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
 
   // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
   // node.apply.arguments[0].tensor_str.str_h == 1 means that the batch dimension is not partitioned.
-  if (ParallelContext::GetInstance()->enable_parallel_optimizer() && node.apply.arguments[0].tensor_str.str_h == 1 &&
+  if (ParallelContext::GetInstance()->enable_parallel_optimizer() && node.apply.arguments[0].tensor_str.str_h == 1.0 &&
       isTraining) {
     cost_op[0] = DOUBLE_MIN;
   }

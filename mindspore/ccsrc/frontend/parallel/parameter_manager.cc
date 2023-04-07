@@ -115,7 +115,9 @@ static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, const s
       for (auto &node_user : load_node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
         std::pair<AnfNodePtr, int> child_parallel_care_node;
-        if (IsSomePrimitive(cnode, UPDATESTATE)) continue;
+        if (IsSomePrimitive(cnode, UPDATESTATE)) {
+          continue;
+        }
         if (!IsSomePrimitive(cnode, MAKE_TUPLE) && (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode))) {
           child_parallel_care_node = node_user;
         } else {

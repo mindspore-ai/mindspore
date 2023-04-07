@@ -635,8 +635,10 @@ void AddVisitedNode(std::queue<std::pair<std::shared_ptr<AnfNode>, int>> *visite
   auto node_users = node_users_map.at(key_node);
   for (auto &node_user : node_users) {
     auto cnode = node_user.first->cast<CNodePtr>();
-    if (!cnode || !cnode->in_forward_flag() || IsSomePrimitiveList(cnode->cast<CNodePtr>(), {MAKE_TUPLE, UPDATESTATE}))
+    if (!cnode || !cnode->in_forward_flag() ||
+        IsSomePrimitiveList(cnode->cast<CNodePtr>(), {MAKE_TUPLE, UPDATESTATE})) {
       continue;
+    }
     if (node_user.first) {
       visited->push(node_user);
     }
@@ -649,7 +651,9 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
   std::queue<std::pair<std::shared_ptr<AnfNode>, int>> visited;
   CNodePtr cnode = nullptr;
   AnfNodePtr node = nullptr;
-  if (!node_ptr) return std::make_pair(nullptr, 0);
+  if (!node_ptr) {
+    return std::make_pair(nullptr, 0);
+  }
   auto users_map = node_users_map;
   AddVisitedNode(&visited, node_users_map, node_ptr);
   while (!visited.empty()) {
@@ -678,7 +682,9 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
         FindReturnUser(cnode, all_nodes, &queue_node);
       } else if (IsSomePrimitive(cnode, prim::kTupleGetItem)) {
         auto tuple_index = LongToSize(GetValue<int64_t>(GetValueNode(cnode->input(2))));
-        if (tuple_index != IntToSize(index - 1)) continue;
+        if (tuple_index != IntToSize(index - 1)) {
+          continue;
+        }
       }
       AddVisitedNode(&visited, node_users_map, queue_node.first);
     }
@@ -1231,7 +1237,7 @@ bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t *out_index) {
+void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t out_index) {
   if (IsValueNode<FuncGraph>((*cnode)->input(0))) {
     auto graph = GetValueNode<FuncGraphPtr>((*cnode)->input(0));
     auto output = graph->output();
@@ -1243,7 +1249,7 @@ void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t *out_index) {
     }
     while (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
       auto make_tuple_cnode = output->cast<CNodePtr>();
-      output = make_tuple_cnode->input(*out_index + 1);
+      output = make_tuple_cnode->input(out_index + 1);
     }
     *cnode = output->cast<CNodePtr>();
   }
@@ -1257,7 +1263,7 @@ AnfNodePtr FindRealInputByFormalParameter(const CNodePtr &node, const AnfNodePtr
   int64_t param_index = -1;
   for (size_t j = 0; j < params.size(); ++j) {
     if (params[j] == input) {
-      param_index = j;
+      param_index = SizeToLong(j);
     }
   }
   if (param_index == -1) {
@@ -1476,7 +1482,8 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
 
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
-         IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
+         IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
          IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
 }
 

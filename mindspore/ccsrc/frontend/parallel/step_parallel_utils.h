@@ -111,7 +111,7 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
 std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &node_ptr,
                                                              const NodeUsersMap &node_users_map, const int index,
                                                              const std::vector<AnfNodePtr> &all_nodes);
-void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t *out_index);
+void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t out_index);
 bool CrossInterNode(CNodePtr *prev_cnode, ValueNodePtr *prev_prim_anf_node, PrimitivePtr *prev_prim);
 bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim);
 void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter);
