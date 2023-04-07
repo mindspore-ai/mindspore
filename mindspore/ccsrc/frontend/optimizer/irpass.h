@@ -167,6 +167,9 @@ class OptimizeIRPassLib {
 
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
+  SubstitutionPtr add_recompute_primal_;
+  SubstitutionPtr remove_not_recompute_node_;
+  SubstitutionPtr add_recompute_depend_;
 };
 
 // the collection of irpass for resolve action

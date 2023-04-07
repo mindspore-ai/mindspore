@@ -27,13 +27,20 @@ class MS_CORE_API FuncGraphTransform {
  public:
   enum Type { kGtPrimitive, kGtFuncGraph };
 
-  explicit FuncGraphTransform(const PrimitivePtr prim, const FuncGraphPtr func_graph = nullptr)
-      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)) {}
+  explicit FuncGraphTransform(const PrimitivePtr &prim, const FuncGraphPtr &func_graph = nullptr,
+                              const CNodePtr &primal_cnode = nullptr)
+      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {}
 
-  explicit FuncGraphTransform(const FuncGraphPtr &func_graph, const PrimitivePtr &prim = func_graph_prim_)
-      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)) {}
+  explicit FuncGraphTransform(const FuncGraphPtr &func_graph, const PrimitivePtr &prim = func_graph_prim_,
+                              const CNodePtr &primal_cnode = nullptr)
+      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {}
 
-  FuncGraphTransform(const FuncGraphTransform &t) : prim_(t.prim_), func_graph_(t.func_graph_) {}
+  explicit FuncGraphTransform(const CNodePtr &primal_cnode, const PrimitivePtr &prim = func_graph_prim_,
+                              const FuncGraphPtr &func_graph = nullptr)
+      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {}
+
+  FuncGraphTransform(const FuncGraphTransform &t)
+      : prim_(t.prim_), func_graph_(t.func_graph_), primal_cnode_(t.primal_cnode_) {}
 
   ~FuncGraphTransform() = default;
 
@@ -49,6 +56,7 @@ class MS_CORE_API FuncGraphTransform {
   bool IsFuncGraph() const { return (func_graph_.lock() != nullptr); }
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
   PrimitivePtr primitive() const { return prim_; }
+  CNodePtr primal_cnode() const { return primal_cnode_; }
 
   FuncGraphTransform &operator=(const FuncGraphTransform &t) {
     if (this != &t) {
@@ -65,6 +73,7 @@ class MS_CORE_API FuncGraphTransform {
   // FPropRemapper::FinalizeGraph().
   FuncGraphWeakPtr func_graph_;
   static const PrimitivePtr func_graph_prim_;
+  CNodePtr primal_cnode_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CORE_IR_FUNC_GRAPH_TRANSFORM_H_

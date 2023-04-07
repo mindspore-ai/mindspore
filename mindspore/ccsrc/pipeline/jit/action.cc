@@ -587,6 +587,7 @@ void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphP
   origin_graph->set_output(out);
   MS_LOG(DEBUG) << "The original graph's new out: " << out->DebugString();
   origin_graph->erase_flag(FUNC_GRAPH_FLAG_NO_INLINE);
+  origin_graph->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
 }
 }  // namespace
 
