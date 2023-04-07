@@ -63,9 +63,9 @@ void CheckTensorCondValid(const AbstractBasePtr &cond) {
   if (cond_shape.empty()) {
     return;
   }
+  constexpr auto num_one = 1;
   for (size_t i = 0; i < cond_shape.size(); i++) {
-    if (cond_shape[i] != Shape::kDynamicRankLen && cond_shape[i] != Shape::kShapeDimAny &&
-        cond_shape[i] != Shape::kShapeRankAny) {
+    if (cond_shape[i] != num_one && cond_shape[i] != Shape::kShapeDimAny && cond_shape[i] != Shape::kShapeRankAny) {
       MS_LOG(ERROR) << "The condition value of control flow can be a tensor with one element, "
                     << "but got tensor with shape " << base_shape->ToString();
       MS_EXCEPTION(ValueError) << "The truth value of an array with more than one element is ambiguous.";
