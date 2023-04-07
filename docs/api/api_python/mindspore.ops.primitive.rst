@@ -70,7 +70,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxPool3D
     mindspore.ops.MaxPool3DWithArgmax
     mindspore.ops.MaxPoolWithArgmax
-    mindspore.ops.MaxPoolWithArgmaxV2
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
@@ -206,7 +205,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
-    mindspore.ops.NonMaxSuppressionV3
     mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
 
@@ -446,7 +444,6 @@ Array操作
     mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
-    mindspore.ops.BatchToSpaceNDV2
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle
@@ -475,7 +472,6 @@ Array操作
     mindspore.ops.Hypot
     mindspore.ops.Identity
     mindspore.ops.Igamma
-    mindspore.ops.Igammac
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
@@ -487,7 +483,6 @@ Array操作
     mindspore.ops.IsClose
     mindspore.ops.Lcm
     mindspore.ops.LeftShift
-    mindspore.ops.Lgamma
     mindspore.ops.LogSpace
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
@@ -511,7 +506,6 @@ Array操作
     mindspore.ops.ReverseSequence
     mindspore.ops.ReverseV2
     mindspore.ops.RightShift
-    mindspore.ops.ScatterAddWithAxis
     mindspore.ops.ScatterNd
     mindspore.ops.ScatterNdDiv
     mindspore.ops.ScatterNdMax
@@ -532,7 +526,6 @@ Array操作
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
-    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterMul

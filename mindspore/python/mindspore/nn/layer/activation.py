@@ -422,7 +422,6 @@ class ReLU6(Cell):
 
     Inputs:
         - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, which has the same type as `x`.
@@ -1021,7 +1020,7 @@ class PReLU(Cell):
     Activation_function#/media/File:Activation_prelu.svg>`_.
 
     Args:
-        channel (int): The elements number of parameter.
+        channel (int): The elements number of parameter `w`.
           It could be an int, and the value is 1 or the channels number of input tensor `x`. Default: 1.
         w (Union[float, list, Tensor]): The initial value of parameter. It could be a float, a float list or
           a tensor has the same dtype as the input tensor `x`. Default: 0.25.
