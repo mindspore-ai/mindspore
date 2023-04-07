@@ -621,7 +621,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> n = 4

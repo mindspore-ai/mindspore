@@ -239,7 +239,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.gcd
     mindspore.ops.hypot
     mindspore.ops.igamma
-    mindspore.ops.igammac
     mindspore.ops.imag
     mindspore.ops.i0
     mindspore.ops.inv
@@ -247,7 +246,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.lcm
     mindspore.ops.ldexp
     mindspore.ops.lerp
-    mindspore.ops.lgamma
     mindspore.ops.log
     mindspore.ops.log2
     mindspore.ops.log10

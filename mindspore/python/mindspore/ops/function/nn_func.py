@@ -818,7 +818,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
@@ -2924,8 +2924,7 @@ def relu6(x):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        x (Tensor): Tensor of shape :math:`(N, *)` with float16 or float32 data type.
 
     Returns:
         Tensor, with the same dtype and shape as the `x`.
