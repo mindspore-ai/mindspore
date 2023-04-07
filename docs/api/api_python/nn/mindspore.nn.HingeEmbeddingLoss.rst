@@ -5,7 +5,7 @@ mindspore.nn.HingeEmbeddingLoss
 
     Hinge Embedding 损失函数。根据输入 `logits` 和 `labels` （只包含1或-1）计算Hinge Embedding损失值。通常被用来衡量两个输入之间的相似度。
 
-    mini-batch中的第n个样例的损失函数为：
+    mini-batch中的第 :math:`n` 个样例的损失函数为：
 
     .. math::
         l_n = \begin{cases}
@@ -28,7 +28,7 @@ mindspore.nn.HingeEmbeddingLoss
         - **reduction** (str) - 指定应用于输出结果的计算方式，'none'、'mean'、'sum'，默认值：'mean'。
 
     输入：
-        - **logits** (Tensor) - 预测值，公式中表示为 :math:`x`，shape为 :math:`(*)`。`*` 代表着任意数量的维度。
+        - **logits** (Tensor) - 预测值，公式中表示为 :math:`x`，shape为 :math:`(*)`。 :math:`*` 代表着任意数量的维度。
         - **labels** (Tensor) - 标签值，公式中表示为 :math:`y`，和 `logits` 具有相同shape，包含1或-1。
 
     返回：

@@ -1163,7 +1163,8 @@ class Conv1dTranspose(_Conv):
     Calculates a 1D transposed convolution, which can be regarded as Conv1d for the gradient of the input,
     also called deconvolution (although it is not an actual deconvolution).
 
-    The input is typically of shape :math:`(N, C, L)`, where :math:`N` is batch size, :math:`C` is a number of channels
+    The input is typically of shape :math:`(N, C_{in}, L_{in})`, where :math:`N` is batch size,
+    :math:`C` is a number of channels
     and :math:`L_{in}` is a length of sequence.
 
     When Conv1d and ConvTranspose1d are initialized with the same parameters, and `pad_mode` is set to 'pad',

@@ -15,7 +15,7 @@ mindspore.nn.DynamicLossScaleUpdateCell
         - **scale_window** (int) - 未溢出时，增大损失缩放系数的最大连续训练步数。
 
     输入：
-        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。
+        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量，shape为 :math:`()`。
         - **overflow** (bool) - 是否发生溢出。
 
     输出：

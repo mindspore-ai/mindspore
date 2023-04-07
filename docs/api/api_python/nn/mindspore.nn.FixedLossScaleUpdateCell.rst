@@ -11,7 +11,7 @@ mindspore.nn.FixedLossScaleUpdateCell
         - **loss_scale_value** (float) - 初始损失缩放系数。
 
     输入：
-        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。在当前类中，该值被忽略。
+        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量，shape为 :math:`()`。在当前类中，该值被忽略。
         - **overflow** (bool) - 是否发生溢出。
 
     输出：
