@@ -46,6 +46,11 @@ namespace {
 abstract::ShapePtr HistogramFixedWidthInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+
+  auto range_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'range'", range_shape.size(), kEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("first rank of 'range'", range_shape[0], kEqual, 2, primitive->name());
+
   int32_t nbins = static_cast<int32_t>(GetValue<int64_t>(primitive->GetAttr(kNbins)));
   ShapeVector out_shape = std::vector<int64_t>(1, nbins);
   return std::make_shared<abstract::Shape>(out_shape);
