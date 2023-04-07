@@ -133,7 +133,6 @@ class Dropout(Cell):
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, output tensor with the same shape as the `x`.

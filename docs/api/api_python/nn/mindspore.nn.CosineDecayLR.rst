@@ -20,7 +20,7 @@ mindspore.nn.CosineDecayLR
         - **global_step** (Tensor) - 当前step数，即current_step。
 
     输出：
-        标量Tensor。当前step的学习率值。
+        标量Tensor。当前step的学习率值，shape为 :math:`()`。
 
     异常：
         - **TypeError** - `min_lr` 或  `max_lr` 不是float。

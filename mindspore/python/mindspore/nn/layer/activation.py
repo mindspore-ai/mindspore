@@ -1135,8 +1135,6 @@ class HSigmoid(Cell):
     .. math::
         \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
-
     Inputs:
         - **input_x** (Tensor) - The input of HSigmoid. Tensor of any dimension.
 

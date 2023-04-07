@@ -12,7 +12,7 @@ mindspore.ops.ExtractVolumePatches
         - **padding** (str) - 要使用的填充算法的类型。可选值有"SAME"和"VALID"。
 
     输入：
-        - **input_x** (Tensor) - 一个五维的输入Tensor。数据类型必须为float16、float32，shape为 :math:`(x_n、x_c、x_d、x_h、x_w)` 。
+        - **input_x** (Tensor) - 一个五维的输入Tensor。数据类型必须为float16、float32，shape为 :math:`(x_n, x_c, x_d, x_h, x_w)` 。
 
     输出：
         Tensor，与输入的类型相同。如果填充为"VALID"，则shape为 :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
