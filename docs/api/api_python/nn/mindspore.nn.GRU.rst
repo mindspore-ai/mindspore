@@ -17,7 +17,7 @@ mindspore.nn.GRU
             h_t = (1 - z_t) * n_t + z_t * h_{(t-1)}
         \end{array}
 
-    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W,b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
+    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
 
     .. note:: 当GRU运行在Ascend上时，hidden size仅支持16的倍数。
 
@@ -33,7 +33,7 @@ mindspore.nn.GRU
     输入：
         - **x** (Tensor) - 数据类型为mindspore.float32、shape为(seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的tensor。     
         - **hx** (Tensor) - 数据类型为mindspore.float32、shape为(num_directions * `num_layers` , batch_size, `hidden_size` )的tensor。 `hx` 的数据类型必须与 `x` 相同。
-        - **seq_length** (Tensor) - 输入batch中每个序列的长度。shape为 `(batch_size)` 的Tensor。默认值：None。此输入指示填充前的真实序列长度，避免填充元素被用于计算隐藏状态而影响最终输出。当 `x` 含填充元素时，建议使用此输入。
+        - **seq_length** (Tensor) - 输入batch中每个序列的长度。shape为 :math:`(\text{batch_size})` 的Tensor。默认值：None。此输入指示填充前的真实序列长度，避免填充元素被用于计算隐藏状态而影响最终输出。当 `x` 含填充元素时，建议使用此输入。
 
     输出：
         Tuple，包含(`output`, `h_n`)的tuple。

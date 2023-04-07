@@ -1332,7 +1332,8 @@ class MatrixSetDiagV3(Primitive):
           `k` can either be a single integer, which represents a single diagonal,
           or a pair of integers that specify the low and high ends of a matrix band.
           In this case, `k[0]` should not be greater than `k[1]`.
-          The value of `k` has restructions, which means that value of `k` must be in range (-x.shape[-2], x.shape[-1]).
+          The value of `k` has restructions, which means that value of `k` must be in range
+          :math:`(-x.shape[-2], x.shape[-1])`.
           Input `k` must be const Tensor when taking Graph mode.
 
           - `k > 0` refers to a superdiagonal.
@@ -1353,9 +1354,9 @@ class MatrixSetDiagV3(Primitive):
         ValueError: If `k[1]` is not greater equal to `k[0]` in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
-        ValueError: If the diagonal.shape[-2] is not equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
-        ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
-        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by
+        ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
+        ValueError: If the value of `k` is not in :math:`(-x.shape[-2], x.shape[-1])`.
+        ValueError: If the diagonal :math:`shape[-1]` is not equal to the max_diag_len calculated by
             :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
 
     Supported Platforms:
@@ -6863,7 +6864,7 @@ class ExtractVolumePatches(Primitive):
         padding (str): A string from: "SAME", "VALID". The type of padding algorithm to use.
 
     Inputs:
-        - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
+        - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`()`.
 
     Outputs:
         Tensor, has the same type as input.
@@ -6882,11 +6883,11 @@ class ExtractVolumePatches(Primitive):
         ValueError: If input_x is not a tensor in dimension 5.
         ValueError: If input_x's shape has zero.
         ValueError: If one of kernel_size or strides' first two numbers is not 1.
-        ValueError: If padding = "VALID" and input - kernel_size is less than 0 in d, h or w dimension.
+        ValueError: If padding = "VALID" and :math:`input\_x - kernel\_size` is less than 0 in d, h or w dimension.
         ValueError: If padding = "SAME" and :math:`padding\_needed = ((input\_x + strides - 1) / strides - 1) *
-                    strides + kernel\_size - input` is less than 0 in d, h or w dimension.
-        ValueError: If x_h is not 1 or x_w is not 1 and x_w + padding_needed - k_w - s_w is less than 0.
-        ValueError: If x_d * x_h * x_w is greater than 2048.
+                    strides + kernel\_size - input\_x` is less than 0 in d, h or w dimension.
+        ValueError: If x_h is not 1 or x_w is not 1 and :math:`x_w + padding\_needed - k_w - s_w` is less than 0.
+        ValueError: If :math:`x_d * x_h * x_w` is greater than 2048.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

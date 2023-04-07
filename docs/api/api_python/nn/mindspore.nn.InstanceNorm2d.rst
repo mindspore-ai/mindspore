@@ -20,7 +20,7 @@ mindspore.nn.InstanceNorm2d
         需要注意的是，更新滑动平均和滑动方差的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ,其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。
 
     参数：
-        - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N,C,H,W)` 中的 `C` 。
+        - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N, C, H, W)` 中的 `C` 。
         - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值：1e-5。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.1。
         - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值：True。

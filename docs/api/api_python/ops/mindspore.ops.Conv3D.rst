@@ -23,7 +23,7 @@ mindspore.ops.Conv3D
     参数：
         - **out_channel** (int) - 输出的通道数 :math:`C_{out}` 。
         - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。数据类型为int或包含三个整数的Tuple。一个整数表示卷积核的深度、高度和宽度均为该值。包含三个整数的Tuple分别表示卷积核的深度、高度和宽度。
-        - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值: 1。
+        - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。
         - **stride** (Union[int, tuple[int]]，可选) - 卷积核移动的步长，数据类型为int或两个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值：1。
         - **pad_mode** (str，可选) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
 
