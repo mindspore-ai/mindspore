@@ -62,7 +62,7 @@ class MS_CORE_API Named : public Value {
   ///
   /// \param[in] other An existing Named object.
   /// \return A Named object set with the same type, name and hash_id as other.
-  virtual Named &operator=(const Named &other) {
+  Named &operator=(const Named &other) {
     if (&other != this) {
       this->type_ = other.type_;
       this->name_ = other.name_;

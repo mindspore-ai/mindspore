@@ -927,7 +927,7 @@ class MS_CORE_API Value : public Base {
   ///
   /// \param[in] other The Value object to be compared.
   /// \return Whether the input is the current Value object.
-  virtual Value &operator=(const Value &other) {
+  Value &operator=(const Value &other) {
     if (&other == this) {
       return *this;
     }
