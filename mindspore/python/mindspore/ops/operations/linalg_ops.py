@@ -32,6 +32,8 @@ class Geqrf(Primitive):
 
     This function returns two tensors (`y`, `tau`).
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,

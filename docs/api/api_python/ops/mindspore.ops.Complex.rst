@@ -5,6 +5,9 @@
 
     给定复数的实部与虚部，返回一个复数的Tensor。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **real** (Tensor) - 实部的取值。数据类型：float32，float64。
         - **imag** (Tensor) - 虚部的取值。数据类型：float32，float64。

@@ -8,6 +8,9 @@ mindspore.ops.Trace
     .. note::
         输入必须是Tensor，复数类型暂不支持。
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     输入：
         - **x** (Tensor) - 二维Tensor。
 

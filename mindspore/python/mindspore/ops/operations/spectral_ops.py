@@ -23,6 +23,9 @@ class BartlettWindow(Primitive):
     r"""
     Bartlett window function.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.bartlett_window` for more details.
 
     Args:
@@ -62,6 +65,9 @@ class BartlettWindow(Primitive):
 class BlackmanWindow(Primitive):
     r"""
     Blackman window function.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.blackman_window` for more details.
 

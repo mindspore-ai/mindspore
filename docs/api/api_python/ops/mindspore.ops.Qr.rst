@@ -5,6 +5,9 @@ mindspore.ops.Qr
 
     返回一个或多个矩阵的QR（正交三角）分解。如果 `full_matrices` 设为True，则计算全尺寸q和r，如果为False（默认值），则计算q的P列，其中P是 `x` 的2个最内层维度中的最小值。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **full_matrices** (bool，可选) - 是否进行全尺寸的QR分解。默认值：False。
 

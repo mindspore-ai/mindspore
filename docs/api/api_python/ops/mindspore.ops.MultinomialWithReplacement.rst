@@ -5,6 +5,9 @@ mindspore.ops.MultinomialWithReplacement
 
     返回一个Tensor，其中每行包含从重复采样的多项式分布中抽取的 `numsamples` 个索引。与 `Multinomial` 不同， `MultinomialWithReplacement` 允许多次选择相同的结果。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     更多参考详见 :func:`mindspore.ops.multinomial_with_replacement`。
 
     .. note::
