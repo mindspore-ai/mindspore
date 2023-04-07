@@ -24,7 +24,7 @@ usage()
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 10.1|11.1|310|910|910b] [-I arm64|arm32|x86_64] [-K on|off] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-H on|off] \\"
   echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|avx512|off] \\"
-  echo "              [-L Tensor-RT path] [-y on|off] [-F on|off] [-G common|auto]\\"
+  echo "              [-L Tensor-RT path] [-y on|off] [-F on|off] [-G common|auto] [-o]\\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -66,4 +66,5 @@ usage()
   echo "    -G Select an architecture to build, set 'common' to build with common architectures(eg. gpu: 5.3, 6.0, 6.2, 7.0, 7.2, 7.5),\\"
   echo "       set auto to detect automatically, default: 'auto'. Only effective for GPU currently."
   echo "    -f Faster build process for device plugins, only build plugin."
+  echo "    -o Compile aio plugin, default off"
 }

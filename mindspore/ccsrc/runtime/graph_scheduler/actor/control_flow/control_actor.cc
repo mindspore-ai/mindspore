@@ -432,7 +432,7 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     }
 
     // Ref node may use the ptr of device tensor as the output address, so need set the ptr from data.
-    device_tensor->set_ptr(data->GetValidPtr(kDefaultStreamIndex));
+    device_tensor->set_ptr(data->GetMutablePtr());
     MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
                   << " for the ref formal parameter: " << formal_parameter.first->DebugString()
                   << " in the actor: " << GetAID().Name();

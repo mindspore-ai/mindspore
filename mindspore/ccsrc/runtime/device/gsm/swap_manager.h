@@ -26,6 +26,7 @@
 #include "include/backend/device_address.h"
 #include "runtime/device/gsm/io_handle.h"
 #include "runtime/device/gsm/pin_mem_pool.h"
+#include "include/backend/kernel_info.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -55,6 +56,11 @@ class BACKEND_EXPORT SwapManager {
   // Swapping and swappable tensors
   void AddSwappableTensor(const DeviceAddressPtr &device_address);
   void AddSwappingTensor(const DeviceAddress *device_address);
+
+  void SetSwappableBeforeMemAllocate(const std::vector<DeviceAddress *> &inputs,
+                                     const std::vector<DeviceAddress *> &outputs);
+  void SetSwappableBeforeMemFree(const std::vector<DeviceAddress *> &inputs,
+                                 const std::vector<DeviceAddress *> &outputs, const KernelInfo *kernel_info);
 
  private:
   void *AllocDeviceMemorySimply(const size_t &size);

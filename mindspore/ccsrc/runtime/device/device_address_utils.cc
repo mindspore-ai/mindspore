@@ -22,6 +22,7 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "include/backend/device_address.h"
+#include "include/backend/kernel_info.h"
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -425,19 +426,20 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
 
 void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
-  for (auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
-    if (output_num == 0) {
-      MS_LOG(DEBUG) << "This kernel has no output size.";
-      continue;
-    }
-    for (size_t i = 0; i < output_num; ++i) {
-      session::AnfWithOutIndex out_pair(kernel, i);
-      if (graph->IsInRefOutputMap(out_pair)) {
-        const auto &origin_pair = graph->GetRefNodeRecursive(out_pair);
-        UpdateDeviceAddress(out_pair, origin_pair);
+  AnfAlgo::UpdateGraphValidRefPair(graph);
+  for (const auto &ref_pair : graph->GetRefMap()) {
+    const auto &out_pair = ref_pair.first;
+    const auto &origin_pair = ref_pair.second;
+    const auto &recursive_origin_pair = graph->GetRefNodeRecursive(out_pair);
+    UpdateDeviceAddress(out_pair, recursive_origin_pair);
+    // Update ref map in kernel info which will be used in kernel actor on swap scenario.
+    for (size_t input_index = 0; input_index < common::AnfAlgo::GetInputTensorNum(out_pair.first); ++input_index) {
+      const auto &prev_node_output = common::AnfAlgo::GetPrevNodeOutput(out_pair.first, input_index, false);
+      if (prev_node_output == origin_pair) {
+        auto kernel_info = dynamic_cast<device::KernelInfo *>(out_pair.first->kernel_info());
+        MS_EXCEPTION_IF_NULL(kernel_info);
+        kernel_info->AddRefMap(out_pair.second, input_index);
+        break;
       }
     }
   }

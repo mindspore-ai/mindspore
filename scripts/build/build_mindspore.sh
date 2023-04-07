@@ -112,6 +112,9 @@ build_mindspore()
     if [[ "X$FASTER_BUILD_FOR_PLUGINS" == "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DONLY_BUILD_DEVICE_PLUGINS=ON"
     fi
+    if [[ "X$ENABLE_AIO" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AIO=ON"
+    fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ${BASEPATH}

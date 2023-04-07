@@ -190,7 +190,7 @@ void MsContext::RefreshMemoryOffload() {
     return;
   }
   MS_LOG(INFO) << "Set memory pool block size to max device memory size for memory offload.";
-  set_param(MS_CTX_MEMPOOL_BLOCK_SIZE, get_param<float>(MS_CTX_MAX_DEVICE_MEMORY));
+  set_param_inner(MS_CTX_MEMPOOL_BLOCK_SIZE, get_param<float>(MS_CTX_MAX_DEVICE_MEMORY));
 }
 
 bool MsContext::set_backend_policy(const std::string &policy) {

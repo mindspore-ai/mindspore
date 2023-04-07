@@ -492,6 +492,7 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_device_address = dynamic_cast<const AscendDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_device_address);
+  src_device_address->MoveToDevice(false);
   if (format_ == src_device_address->format() && type_id_ == src_device_address->type_id()) {
     if (src_device_address->mem_offloaded()) {
       auto device_context = GetDeviceContext();

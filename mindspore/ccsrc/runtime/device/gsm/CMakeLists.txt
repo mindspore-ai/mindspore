@@ -1,0 +1,6 @@
+if(ENABLE_AIO)
+    find_library(AIO aio REQUIRED)
+    set(AIO_PLUGIN_SRC "aio_plugin.cc")
+    add_library(aio_plugin SHARED ${AIO_PLUGIN_SRC})
+    target_link_libraries(aio_plugin PRIVATE aio)
+endif()

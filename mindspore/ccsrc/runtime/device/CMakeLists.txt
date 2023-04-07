@@ -6,6 +6,9 @@ file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*
     "common_somas_allocator.cc" "device_address_utils.cc" "loadable_device_address.cc"
 )
 
+list(REMOVE_ITEM DEVICE_SRC_LIST "gsm/aio_plugin.cc")
+add_subdirectory(gsm)
+
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)
     string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

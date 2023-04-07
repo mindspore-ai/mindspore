@@ -392,3 +392,10 @@ install(
     COMPONENT mindspore
 )
 
+if(ENABLE_AIO)
+    install(
+        TARGETS aio_plugin
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
