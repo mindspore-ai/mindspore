@@ -63,7 +63,13 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Copy constructor
   /// \param[in] abstract_base an abstract
   AbstractBase(const AbstractBase &other)
-      : Base(other), value_(other.value_), type_(other.type_), shape_(other.shape_) {}
+      : Base(other),
+        name_(other.name_),
+        value_(other.value_),
+        type_(other.type_),
+        shape_(other.shape_),
+        value_desc_(other.value_desc_),
+        user_data_(other.user_data_) {}
 
   /// \brief Overloads operator '=' for Named.
   ///

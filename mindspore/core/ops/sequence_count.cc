@@ -16,7 +16,6 @@
 
 #include "ops/sequence_count.h"
 
-#include <vector>
 #include <memory>
 #include <string>
 

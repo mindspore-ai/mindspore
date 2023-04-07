@@ -62,7 +62,7 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (IsDynamic(output_size_shape)) {
     auto out_shape = x_shape;
-    for (size_t i = LongToSize(out_shape.size() - kOutputSizeNumElem); i < out_shape.size(); ++i) {
+    for (size_t i = LongToSize(SizeToLong(out_shape.size()) - kOutputSizeNumElem); i < out_shape.size(); ++i) {
       out_shape[i] = abstract::Shape::kShapeDimAny;
     }
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
