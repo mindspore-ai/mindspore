@@ -566,14 +566,6 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
           (such as list/dict/int/float/string) with non referenced data types
           (such as Pandas, Numpy or PyArrow objects) for member variables, or load less meta data in member variables,
           or configure `python_multiprocessing=False` to use multi-threading mode.
-
-          There are several classes/functions that can help you reduce the size of member variables, and you can choose
-          to use them:
-
-          1. :class:`mindspore.dataset.utils.LineReader`: Use this class to initialize your text file object in the
-          `__init__` function. Then read the file content based on the line number of the object with the `__getitem__`
-          function.
-
         - Input `source` accepts user-defined Python functions (PyFuncs), Do not add network computing operators from
           mindspore.nn and mindspore.ops or others into this `source` .
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.

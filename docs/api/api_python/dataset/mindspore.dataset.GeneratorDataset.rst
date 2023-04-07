@@ -42,11 +42,6 @@
           那这可能会导致产生OOM的问题（总内存的预估使用量是：(子进程数量 + 1) * 父进程的内存大小）。最简单的解决方法是成员变量用非引用数据类型
           （如：Pandas、Numpy或PyArrow对象）替换Python对象（如：list / dict / int / float / string等），或者加载更少的元数据以减小成员变量，
           或者配置 `python_multiprocessing=False` 使用多线程方式。
-
-          下面有几个类/函数可以帮助你减少成员变量的大小，你可以选择来使用：
-
-          1. :class:`mindspore.dataset.utils.LineReader` ：在 `__init__` 函数中，使用该类初始化你的文本文件对象，然后在 `__getitem__` 函数中通过该对象按行号读取文件内容。
-
         - `source` 参数接收用户自定义的Python函数（PyFuncs），不要将 `mindspore.nn` 和 `mindspore.ops` 目录下或其他的网络计算算子添加
           到 `source` 中。
         - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
