@@ -60,8 +60,9 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
       ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
     } else {
-      MS_LOG(EXCEPTION) << "For " << primitive->name()
-                        << ", the type of axis must be Tensor/Int64Imm/Int32Imm, which got " << input_value->ToString();
+      MS_EXCEPTION(TypeError) << "For " << primitive->name()
+                              << ", the type of axis must be Tensor/Int64Imm/Int32Imm, which got "
+                              << input_value->ToString();
     }
   } else if (input_args.size() == 1) {
     auto value_ptr = primitive->GetAttr(kAxis);
@@ -71,12 +72,12 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
       (void)axis.emplace_back(GetValue<int64_t>(primitive->GetAttr(kAxis)));
     }
   } else {
-    MS_LOG(EXCEPTION) << " The input number of ExpandDims must be 1 or 2, but got " << input_args.size();
+    MS_EXCEPTION(ValueError) << " The input number of ExpandDims must be 1 or 2, but got " << input_args.size();
   }
   for (size_t idx = 0; idx < axis.size(); ++idx) {
     if (axis[idx] > rank || axis[idx] < -rank - 1) {
-      MS_LOG(EXCEPTION) << "For " << primitive->name() << ", the value of axis should be in range of [" << -rank - 1
-                        << ", " << rank << "], but got axis: " << axis;
+      MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the value of axis should be in range of ["
+                               << -rank - 1 << ", " << rank << "], but got axis: " << axis;
     }
     axis[idx] = axis[idx] < 0 ? axis[idx] + rank + 1 : axis[idx];
     (void)x_shape.insert(x_shape.begin() + axis[idx], 1);
@@ -105,7 +106,7 @@ TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<Abstract
                               << num_value->ToString();
     }
   } else {
-    MS_LOG(EXCEPTION) << " The num of ExpandDims must be 1 or 2, but got " << input_args.size();
+    MS_EXCEPTION(ValueError) << " The num of ExpandDims must be 1 or 2, but got " << input_args.size();
   }
 
   return input_args[kInputIndex0]->BuildType();
