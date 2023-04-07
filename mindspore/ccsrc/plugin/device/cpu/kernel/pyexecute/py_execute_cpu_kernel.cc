@@ -35,6 +35,7 @@ namespace mindspore {
 namespace kernel {
 void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_LOG(DEBUG) << "kernel_node: " << kernel_node << ", " << kernel_node->DebugString();
+  py::gil_scoped_acquire gil_acquire;
   inputs_info_.clear();
   kernel_node_ = kernel_node;
   for (size_t i = 1; i < kernel_node->size(); ++i) {
@@ -43,7 +44,6 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     // Check if PyExecuteOutputUserData exists.
     py::object obj = py::none();
     if (input->has_user_data<PyExecuteOutputUserData>()) {
-      py::gil_scoped_acquire gil_acquire;
       const auto &output_data = input->user_data<PyExecuteOutputUserData>();
       obj = output_data->obj;
       MS_LOG(DEBUG) << "Has \'PyExecuteOutputUserData\', obj: " << obj;
