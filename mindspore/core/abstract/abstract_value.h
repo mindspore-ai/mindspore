@@ -849,10 +849,50 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
 
   TypePtr BuildType() const override;
 
-  std::string ToString() const override { return type_name(); };
+  std::string ToString() const override { return type_name(); }
 };
 using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
 using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;
+
+/// \brief Class AbstractJoinedAny describes a type, whose shape and value is unknown.
+///
+/// AbstractJoinedAny is even not a Tensor type, but any type.
+class MS_CORE_API AbstractJoinedAny : public AbstractAny {
+ public:
+  /// \brief Constructor of AbstractJoinedAny.
+  AbstractJoinedAny() : AbstractAny() {}
+
+  /// \brief Destructor of AbstractJoinedAny.
+  ~AbstractJoinedAny() override = default;
+  MS_DECLARE_PARENT(AbstractJoinedAny, AbstractAny)
+
+  enum ExceptionType {
+    kDefault,
+    kTypeError,
+    kValueError,
+  };
+
+  std::string message() const { return message_; }
+  void set_message(const std::string &message) { message_ = message; }
+  ExceptionType exception() const { return exception_; }
+  void set_exception(ExceptionType exception) { exception_ = exception; }
+
+  void ThrowException() const {
+    if (exception_ == kTypeError) {
+      MS_EXCEPTION(TypeError) << message_;
+    } else if (exception_ == kValueError) {
+      MS_EXCEPTION(ValueError) << message_;
+    } else {
+      MS_LOG(EXCEPTION) << message_;
+    }
+  }
+
+ private:
+  std::string message_;
+  ExceptionType exception_{kDefault};
+};
+using AbstractJoinedAnyPtr = std::shared_ptr<AbstractJoinedAny>;
+using AbstractJoinedAnyPtrList = std::vector<AbstractJoinedAnyPtr>;
 
 /// \brief Class AbstractSequence describes the abstract value of a tuple or list.
 class MS_CORE_API AbstractSequence : public AbstractBase {
