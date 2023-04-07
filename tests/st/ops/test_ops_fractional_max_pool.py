@@ -46,8 +46,8 @@ def test_fractional_maxpool2d_normal(mode):
     net = FractionalMaxPool2dNet()
     input_x = Tensor(np.random.rand(25).reshape([1, 5, 5]), mstype.float32)
     output1, output2 = net(input_x)
-    assert output1[0].shape == output1[1].shape == (1, 1, 2, 2)
-    assert output2[0].shape == output2[1].shape == (1, 1, 2, 2)
+    assert output1[0].shape == output1[1].shape == (1, 2, 2)
+    assert output2[0].shape == output2[1].shape == (1, 2, 2)
     input_x = Tensor([[[[5.58954370e-001, 6.63938331e-001, 6.21228504e-001, 2.42979444e-001, 3.76893662e-001],
                         [1.81983045e-003, 3.52343421e-001, 4.62048613e-001, 1.10343760e-001, 1.39571702e-001],
                         [4.99799584e-001, 4.64907907e-001, 6.20357162e-001, 3.59420753e-001, 1.26215309e-001],
