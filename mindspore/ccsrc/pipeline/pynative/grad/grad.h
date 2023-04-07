@@ -188,8 +188,6 @@ class GradExecutor {
   bool IsBpropGraph(const std::string &cell_id) const;
   void NewGraphInner(const py::object &obj, const py::args &args);
   InputArgsInfoPtr GetInputArgsInfo(const py::object &obj, const py::args &args);
-  void NewGraphImpl(const InputArgsInfoPtr &input_args_info);
-  void AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info);
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
   void UpdateInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::object &out,
                            const py::args &args);

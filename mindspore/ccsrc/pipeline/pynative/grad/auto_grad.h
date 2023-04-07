@@ -201,7 +201,7 @@ class AutoGradCellImpl {
                         const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
-  void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
+  void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const;
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
   void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
   void DoParameterReplaceByManager(const AnfNodePtrList &weights, bool has_sens_arg);
