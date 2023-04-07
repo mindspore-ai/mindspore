@@ -39,6 +39,26 @@ py::object CallPythonPushGlobalParams(const py::object &dict) {
   constexpr auto python_merge_dict = "merge_global_params";
   return python_adapter::CallPyModFn(mod, python_merge_dict, dict);
 }
+
+void FuncGraphToPyData(const ValueDictionaryPtr &value_dict, py::object *global_params_dict) {
+  MS_EXCEPTION_IF_NULL(value_dict);
+  MS_EXCEPTION_IF_NULL(global_params_dict);
+  for (const auto &element : value_dict->value()) {
+    const auto &element_name = element.first;
+    const auto &element_abs = element.second;
+    if (element_abs->IsFromTypeId(FuncGraph::kTypeId)) {
+      auto fg = element_abs->cast<FuncGraphPtr>();
+      MS_EXCEPTION_IF_NULL(fg);
+      auto wrapper_obj = fg->python_obj();
+      if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+        auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
+        (*global_params_dict)[ValueToPyData(element_name)] = fn_py_obj;
+        MS_LOG(DEBUG) << "Found python function object for " << element_name << ", add it to global dict.";
+      }
+    }
+  }
+  return;
+}
 }  // namespace
 
 // Convert PyInterpret into PyExecute:
@@ -78,7 +98,9 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
                         << cnode->input(input_index_two)->DebugString();
     }
     const auto &global_dict = GetValueNode<ValueDictionaryPtr>(cnode->input(input_index_two));
+    auto value_dict = global_dict->cast<ValueDictionaryPtr>();
     py::object py_global_dict = ValueToPyData(global_dict);
+    (void)FuncGraphToPyData(value_dict, &py_global_dict);
     MS_LOG(DEBUG) << "py_global_dict: " << py::str(py_global_dict);
     (void)CallPythonPushGlobalParams(py_global_dict);
 

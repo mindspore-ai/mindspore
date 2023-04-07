@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
 import math
+from functools import reduce
 import pytest
 import numpy as np
 
@@ -1222,3 +1223,32 @@ def test_pyexecute_as_multitype_fg_input():
     with pytest.raises(RuntimeError) as err:
         net(1)
     assert "current input arguments types are" in str(err.value)
+
+
+def user_mul(x, y):
+    return x * y
+
+
+@ms.jit
+def reduce_user_mul(x):
+    out = reduce(user_mul, x)
+    return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_func_graph_input():
+    """
+    Feature: Fallback runtime.
+    Description: The pyexecute node has FuncGraph input.
+    Expectation: No error.
+    """
+    x1 = (1, 2, 3)
+    x2 = mutable((1, 2, 3), False)
+    ret1 = reduce_user_mul(x1)
+    ret2 = reduce_user_mul(x2)
+    assert ret1 == 6
+    assert ret2 == 6
