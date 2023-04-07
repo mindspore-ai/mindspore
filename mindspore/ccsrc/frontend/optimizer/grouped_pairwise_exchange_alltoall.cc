@@ -212,7 +212,7 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   for (size_t i = 0; i < input_shape.size(); i++) {
     shape.push_back(input_shape[i]);
   }
-  shape[split_dim] /= split_num;
+  shape[split_dim] /= SizeToLong(split_num);
   std::vector<ShapeVector> shapes(split_num, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
 
