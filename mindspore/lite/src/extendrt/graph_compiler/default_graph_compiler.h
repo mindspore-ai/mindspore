@@ -34,7 +34,8 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
   std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
   infer::abstract::ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                            const AnfNodePtrList &outputs) override {
+                                            const AnfNodePtrList &outputs,
+                                            const infer::abstract::CompileOption &option) override {
     return nullptr;
   }
 

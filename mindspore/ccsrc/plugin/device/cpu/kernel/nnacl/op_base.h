@@ -77,6 +77,14 @@
 #endif
 #endif
 
+#ifndef MS_LIKELY
+#ifdef _MSC_VER
+#define MS_LIKELY(x) (x)
+#else
+#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
+#endif
+#endif
+
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
 #define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))

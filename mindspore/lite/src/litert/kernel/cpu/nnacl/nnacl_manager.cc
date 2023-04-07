@@ -41,7 +41,7 @@ NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite:
     return nullptr;
   }
 
-  auto ret = kernel->InitKernel(key, ctx);
+  auto ret = kernel->InitKernel(key.data_type, ctx);
   if (ret != RET_OK) {
     MS_LOG(WARNING) << "Init nnacl kernel failed:  " << parameter->name_;
     kernel->set_parameter(nullptr);  // Do not free parameter here, free where it was malloced.

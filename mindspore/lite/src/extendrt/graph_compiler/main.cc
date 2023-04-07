@@ -133,6 +133,8 @@ int main() {
   context->MutableDeviceInfo().emplace_back(device_info);
   auto inner_context = std::shared_ptr<mindspore::lite::InnerContext>(mindspore::ContextUtils::Convert(context.get()));
   auto compiler = std::make_shared<mindspore::infer::SingleGraphCompiler>(inner_context);
-  compiler->Compile(segment, inputs, outputs);
+  mindspore::infer::abstract::CompileOption option{mindspore::NHWC, mindspore::infer::abstract::kDeviceCPU,
+                                                   mindspore::kNumberTypeFloat32};
+  compiler->Compile(segment, inputs, outputs, option);
   return 0;
 }

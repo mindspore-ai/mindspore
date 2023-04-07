@@ -64,6 +64,17 @@ inline std::string DumpTensor(const Tensor *tensor, int indent = 0) {
 }
 }  // namespace
 
+kernel::KernelAttr CompileNode::GetKernelAttr() const {
+  kernel::KernelAttr attr;
+  for (auto &input : inputs_) {
+    attr.AddInputAttr(input->data_type(), FormatEnumToString(input->format()));
+  }
+  for (auto &output : outputs_) {
+    attr.AddOutputAttr(output->data_type(), FormatEnumToString(output->format()));
+  }
+  return attr;
+}
+
 CompileNode *CompileNode::Create(CNodePtr cnode) {
   if (cnode == nullptr) {
     return nullptr;

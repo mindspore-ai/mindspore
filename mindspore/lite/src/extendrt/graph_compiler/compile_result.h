@@ -28,6 +28,7 @@
 #include "ops/base_operator.h"
 #include "utils/hash_map.h"
 #include "include/api/status.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace infer {
@@ -53,7 +54,7 @@ class CompileNode {
   void AppendInputTensor(Tensor *tensor);
   void AppendOutputTensor(Tensor *tensor);
   void ReplaceInputTensor(Tensor *dst, Tensor *src);
-
+  kernel::KernelAttr GetKernelAttr() const;
   std::string Dump(int indent = 0) const;
 
  private:
