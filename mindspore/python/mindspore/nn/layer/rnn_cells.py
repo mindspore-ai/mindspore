@@ -340,11 +340,6 @@ class GRUCell(RNNCellBase):
     `Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation
     <https://aclanthology.org/D14-1179.pdf>`_.
 
-    The LSTMCell can be simplified in NN layer, the following formula:
-
-    .. math::
-        h^{'},c^{'} = LSTMCell(x, (h_0, c_0))
-
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.

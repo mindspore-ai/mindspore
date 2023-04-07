@@ -774,9 +774,8 @@ class DiceLoss(LossBase):
                         Default: 1e-5.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits`.
+        - **logits** (Tensor) - Input predicted value. The data type must be float16 or float32.
+        - **labels** (Tensor) - Input target value. Same shape as the `logits`.
           The data type must be float16 or float32.
 
     Outputs:
