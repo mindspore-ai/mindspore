@@ -476,7 +476,7 @@ class MaxPool2d(_PoolNd):
         If `return_indices` is True, output is a Tuple of 2 Tensors, representing the maxpool result and where
         the max values are generated.
 
-        - **output** (Tensor) - Maxpooling result, with shape :math:`(N, C, H_{out}, W_{out})` or
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})` or
           :math:`(C_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
@@ -765,7 +765,7 @@ def _check_tuple_length(arg_name, prim_name, length, cls_name):
 class AvgPool3d(_PoolNd):
     r"""
     Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
-    Typically, the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, and AvgPool3D outputs
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, and AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     is :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
