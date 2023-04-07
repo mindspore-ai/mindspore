@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test len of array"""
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -48,6 +47,5 @@ def test_len_a_0D_tensor():
 
     net = Net()
     x = Tensor(np.array(100))
-    with pytest.raises(TypeError) as err:
-        _ = net(x)
-    assert "Not support len of a 0-D tensor." in str(err.value)
+    ret = net(x)
+    assert ret == 1
