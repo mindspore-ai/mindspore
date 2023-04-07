@@ -4099,13 +4099,6 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     return (loss, log_alpha)
 
 
-@constexpr
-def _check_gaussian_nll_loss(full, eps, reduction):
-    validator.check_value_type('full', full, [bool], 'gaussian_nll_loss')
-    validator.check_positive_float(eps, 'eps', 'gaussian_nll_loss')
-    validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', 'gaussian_nll_loss')
-
-
 def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     r"""
     Gaussian negative log likelihood loss.
@@ -4180,7 +4173,13 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         raise TypeError(f"For 'gaussian_nll_loss', 'target' must be a tensor, but got {type(target)}.")
     if not isinstance(var, Tensor):
         raise TypeError(f"For 'gaussian_nll_loss', 'var' must be a tensor, but got {type(var)}.")
-    _check_gaussian_nll_loss(full, eps, reduction)
+    if not isinstance(full, bool):
+        raise TypeError(f"For 'gaussian_nll_loss', 'full' must be a bool, but got {type(full)}.")
+    if not isinstance(eps, float) or eps <= 0:
+        raise ValueError(f"For 'gaussian_nll_loss', 'eps' must be a positive float, but got {eps}.")
+    if reduction not in ('none', 'mean', 'sum'):
+        raise ValueError(f"For 'gaussian_nll_loss', 'reduction' must be one of 'none', 'mean', or 'sum',\
+        but got {reduction}.")
     max_op = P.Maximum()
     log_op = P.Log()
     square_op = P.Square()
@@ -4470,7 +4469,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     r"""
     Applies a 1D convolution over an input tensor.
     The input tensor is typically of shape :math:`(N, C_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
+    where :math:`N` is batch size, :math:`C_{in}` is channel number, :math:`W` is width, :math:`X_i` is
     the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
     For each batch of shape :math:`(C_{in}, W_{in})`, the formula is defined as:
 
@@ -4540,7 +4539,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
-        ValueError: If the shape of `bias` is not :math:`C_{out}` .
+        ValueError: If the shape of `bias` is not :math:`(C_{out})` .
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 1.

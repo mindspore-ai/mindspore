@@ -8454,6 +8454,9 @@ def inner(input, other):
         ValueError: If neither `input` nor `other` is scalar, and the last dimension of the two input tensors do not
             match.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> # case1: 2 1D tensors
         >>> input = ms.Tensor([1, 2, 3], mstype.float32)
