@@ -119,6 +119,23 @@ const BaseRef DropoutForGE::DefinePattern() const {
   return VectorRef({prim::kPrimDropout, x1});
 }
 
+AnfNodePtr GenCastNode(TypeId dtype_id, const AnfNodePtr &node, const AnfNodePtr &keep_prob_node) {
+  auto dtype_value = MakeValue(TypeIdToType(dtype_id));
+  auto stype_value = MakeValue(TypeIdToType(TypeId::kNumberTypeFloat32));
+  auto cast_input_type = NewValueNode(dtype_value);
+  cast_input_type->set_abstract(dtype_value->ToAbstract());
+
+  auto cast_node = node->func_graph()->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(kCastOpName)), keep_prob_node, cast_input_type});
+  MS_EXCEPTION_IF_NULL(cast_node);
+  common::AnfAlgo::SetNodeAttr(kSrcAttrName, stype_value, cast_node);
+  common::AnfAlgo::SetNodeAttr(kDstAttrName, dtype_value, cast_node);
+  common::AnfAlgo::SetNodeAttr(kDstTypeAttrName, dtype_value, cast_node);
+  auto cast_abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(dtype_id));
+  cast_node->set_abstract(cast_abstract);
+  return cast_node;
+}
+
 const AnfNodePtr DropoutForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
@@ -137,20 +154,7 @@ const AnfNodePtr DropoutForGE::Process(const FuncGraphPtr &graph, const AnfNodeP
   AnfNodePtr gen_mask_input_prob = keep_prob_node;
   auto dtype_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(dropout_node, 0);
   if (dtype_id == TypeId::kNumberTypeFloat16) {
-    auto dtype_value = MakeValue(TypeIdToType(dtype_id));
-    auto stype_value = MakeValue(TypeIdToType(TypeId::kNumberTypeFloat32));
-    auto cast_input_type = NewValueNode(dtype_value);
-    cast_input_type->set_abstract(dtype_value->ToAbstract());
-
-    auto cast_node = node->func_graph()->NewCNode(
-      {NewValueNode(std::make_shared<Primitive>(kCastOpName)), keep_prob_node, cast_input_type});
-    MS_EXCEPTION_IF_NULL(cast_node);
-    common::AnfAlgo::SetNodeAttr(kSrcAttrName, stype_value, cast_node);
-    common::AnfAlgo::SetNodeAttr(kDstAttrName, dtype_value, cast_node);
-    common::AnfAlgo::SetNodeAttr(kDstTypeAttrName, dtype_value, cast_node);
-    auto cast_abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(dtype_id));
-    cast_node->set_abstract(cast_abstract);
-    gen_mask_input_prob = cast_node;
+    gen_mask_input_prob = GenCastNode(dtype_id, node, keep_prob_node);
   }
   CNodePtr dropout_gen_mask_node =
     CreateDropoutGenMaskCNode(graph, dropout_node, gen_mask_input_prob, input_shape_ptr, seed_0, seed_1);
@@ -192,19 +196,7 @@ const AnfNodePtr DropoutGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   AnfNodePtr do_mask_input_prob = keep_prob_node;
   auto dtype_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(dropout_grad_node, 0);
   if (dtype_id == TypeId::kNumberTypeFloat16) {
-    auto dtype_value = MakeValue(TypeIdToType(dtype_id));
-    auto stype_value = MakeValue(TypeIdToType(TypeId::kNumberTypeFloat32));
-    auto cast_input_type = NewValueNode(dtype_value);
-    cast_input_type->set_abstract(dtype_value->ToAbstract());
-    auto cast_node = node->func_graph()->NewCNode(
-      {NewValueNode(std::make_shared<Primitive>(kCastOpName)), keep_prob_node, cast_input_type});
-    MS_EXCEPTION_IF_NULL(cast_node);
-    common::AnfAlgo::SetNodeAttr(kSrcAttrName, stype_value, cast_node);
-    common::AnfAlgo::SetNodeAttr(kDstAttrName, dtype_value, cast_node);
-    common::AnfAlgo::SetNodeAttr(kDstTypeAttrName, dtype_value, cast_node);
-    auto cast_abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(dtype_id));
-    cast_node->set_abstract(cast_abstract);
-    do_mask_input_prob = cast_node;
+    do_mask_input_prob = GenCastNode(dtype_id, node, keep_prob_node);
   }
   auto dropout_do_mask_node = node->func_graph()->NewCNode(
     {NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), dropout_grad_node->input(kInputIndexOne),
