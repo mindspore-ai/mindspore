@@ -8,7 +8,7 @@ mindspore.ops.conv1d
     .. math::
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
 
-    其中， :math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`W_{ij}` 对应第 :math:`j` 个过滤器的第 :math:`i` 个通道， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。 :math:`W_{ij}` 为卷积核的切片，其shape为 :math:`(\text{kernel_size[0]},\text{kernel_size[1]})` ，其中 :math:`\text{kernel_size[0]}` 和 :math:`\text{kernel_size[1]}` 是卷积核的高度和宽度。完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，其中 `groups` 是在通道上分割输入 `input` 的组数。
+    其中， :math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`W_{ij}` 对应第 :math:`j` 个过滤器的第 :math:`i` 个通道， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。 :math:`W_{j}` 为卷积核的切片，其shape为 :math:`(\text{kernel_size})` ，其中 :math:`\text{kernel_size}` 是卷积核的宽度。完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size})` ，其中 `groups` 是在通道上分割输入 `input` 的组数。
 
     如果 `pad_mode` 设置为"valid"，则输出宽度为 :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[0]} - \text{kernel_size} - (\text{kernel_size} - 1) \times(\text{dilation} - 1)}{\text { stride }}} \right \rfloor` 。
     其中， :math:`dialtion` 为卷积核元素之间的间距， :math:`stride` 为移动步长， :math:`padding` 为添加到输入两侧的零填充。
@@ -21,7 +21,7 @@ mindspore.ops.conv1d
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, W_{in})` 的Tensor。
-        - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in}, W_{kernel}})` ，则卷积核shape为 :math:`(W_{kernel})` 。
+        - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in}/ \text{groups}, \text{kernel_size})` ，则卷积核shape为 :math:`(\text{kernel_size})` 。
         - **bias** (Tensor) - 偏置Tensor，shape为 :math:`(C_{out})` 的Tensor。如果 `bias` 是None，将不会添加偏置。默认值：None。
         - **stride** (Union(int, tuple[int])，可选) - 卷积核移动的步长，数据类型为int或1个int组成的tuple。表示在宽度方向的移动步长。默认值：1。
         - **pad_mode** (str，可选) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
