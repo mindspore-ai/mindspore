@@ -112,8 +112,8 @@ class WeightQuantizer : public Quantizer {
                           const std::set<PrimitivePtr> &support_weight_quant_types,
                           const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
                           bool compression = true);
-  int PreLinearQuant(const CNodePtr &cnode, int idx, const AnfNodePtr &input, const ParameterPtr &parameter,
-                     tensor::TensorPtr tensor_info);
+  int PreLinearQuant(const CNodePtr &cnode, int idx, const AnfNodePtr &input, ParameterPtr *parameter,
+                     tensor::TensorPtr *tensor_info);
   int LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::set<PrimitivePtr> &per_layer_types,
                   const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
                   bool compression = true);
