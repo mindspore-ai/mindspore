@@ -52,6 +52,9 @@ Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   float_t translation_x = translation_[0] * width;
   float_t translation_y = translation_[1] * height;
   std::vector<float_t> new_translation{translation_x, translation_y};
+  if (fill_value_.size() == 1) {
+    fill_value_ = {fill_value_[0], fill_value_[0], fill_value_[0]};
+  }
   return Affine(input, output, degrees_, new_translation, scale_, shear_, interpolation_, fill_value_);
 }
 }  // namespace dataset
