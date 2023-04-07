@@ -35,14 +35,14 @@ int activation_resize(struct KernelBase *self) {
   ActivationStruct *activation = (ActivationStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(activation);
   self->thread_nr_ = self->update_thread_(TC_TYPE(PrimType_Activation, activation->act_type_), 1, 1,
-                                          GetElementNum(&self->out_[0]), self->thread_nr_);
+                                          GetElementNum(self->out_[0]), self->thread_nr_);
   return NNACL_OK;
 }
 
 int activation_fp32_run(ActivationStruct *activation, int task_id, int count, int stride) {
   ActivationParameter *param = (ActivationParameter *)activation->base.param_;
-  float *input = activation->base.in_[0].data_;
-  float *output = activation->base.out_[0].data_;
+  float *input = activation->base.in_[0]->data_;
+  float *output = activation->base.out_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input);
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
@@ -77,8 +77,8 @@ int activation_fp32_run(ActivationStruct *activation, int task_id, int count, in
 }
 
 int activation_int32_run(ActivationStruct *activation, int task_id, int count, int stride) {
-  int32_t *input = activation->base.in_[0].data_;
-  int32_t *output = activation->base.out_[0].data_;
+  int32_t *input = activation->base.in_[0]->data_;
+  int32_t *output = activation->base.out_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input);
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
@@ -93,8 +93,8 @@ int activation_int32_run(ActivationStruct *activation, int task_id, int count, i
 int activation_fp16_run(ActivationStruct *activation, int task_id, int count, int stride) {
 #ifdef ENABLE_FP16
   ActivationParameter *param = (ActivationParameter *)activation->base.param_;
-  float16_t *input = activation->base.in_[0].data_;
-  float16_t *output = activation->base.out_[0].data_;
+  float16_t *input = activation->base.in_[0]->data_;
+  float16_t *output = activation->base.out_[0]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input);
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
@@ -133,7 +133,7 @@ int activation_fp16_run(ActivationStruct *activation, int task_id, int count, in
 int activation_do_compute(void *cdata, int task_id, float l, float r) {
   ActivationStruct *activation = (ActivationStruct *)cdata;
 
-  int ele_num = GetElementNum(&activation->base.in_[0]);
+  int ele_num = GetElementNum(activation->base.in_[0]);
   NNACL_CHECK_ZERO_RETURN_ERR(activation->base.thread_nr_);
   int stride = UP_DIV(ele_num, activation->base.thread_nr_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, NNACL_ERR);

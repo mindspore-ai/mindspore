@@ -84,7 +84,7 @@ bool SupportKernelC(int opType, int dataType) {
 
 int NnaclKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *ins, size_t in_size, TensorC *outs, size_t out_size,
+KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, TensorC **outs, size_t out_size,
                          int data_type, ExecEnv *env) {
   Init_MSC_VER_kernels();
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][REGIST_DT(data_type)];
