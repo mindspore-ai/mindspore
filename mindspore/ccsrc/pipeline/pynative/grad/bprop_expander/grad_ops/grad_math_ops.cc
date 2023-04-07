@@ -202,8 +202,7 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto w_type = ib->GetDtype(w);
   if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
       (*w_type) == (*kComplex128)) {
-    x = ib->Emit("Conj", {x});
-    w = ib->Emit("Conj", {w});
+    MS_EXCEPTION(TypeError) << "For 'MatMul', gradient not support for complex type currently.";
   }
 
   auto dout = ib->GetInput(kIndex3);
