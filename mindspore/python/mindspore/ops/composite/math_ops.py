@@ -56,7 +56,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         keep_dims (bool, optional): Whether to maintain dimensions specified by `axis`.
             If true, keep these reduced dimensions and the length is 1.
             If false, don't keep these dimensions. Default: False.
-        dtype (Union[Number, mindspore.bool\_], optinoal): The data type of the output tensor.
+        dtype (Union[Number, mindspore.bool\_], optional): The data type of the output tensor.
             Default: mindspore.int32.
 
     Returns:

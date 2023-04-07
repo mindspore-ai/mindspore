@@ -1,7 +1,7 @@
 mindspore.dataset.vision.RandAugment
 ====================================
 
-.. py:class:: mindspore.dataset.vision.RandAugment(num_ops=2, magnitude=9, num_magnitude_bins=32, interpolation=Inter.NEAREST, fill_value=0)
+.. py:class:: mindspore.dataset.vision.RandAugment(num_ops=2, magnitude=9, num_magnitude_bins=31, interpolation=Inter.NEAREST, fill_value=0)
 
     对输入图像应用RandAugment数据增强方法。
 

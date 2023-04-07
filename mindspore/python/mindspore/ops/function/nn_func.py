@@ -5156,9 +5156,6 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
         pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 

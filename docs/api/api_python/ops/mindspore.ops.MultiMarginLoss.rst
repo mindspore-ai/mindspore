@@ -18,10 +18,11 @@ mindspore.ops.MultiMarginLoss
           - 'none'：不应用规约方法。
           - 'mean'：输出的值总和除以输出的元素个数。
           - 'sum'：输出的总和。
+
     输入：
         - **inputs** (Tensor) - 输入，shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。
         - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。
         - **weight** (Tensor) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。
 
-    返回：
+    输出：
         - **outputs** - (Tensor)，当 `reduction` 为"none"时，shape为 :math:`(N,)`。否则，为标量。类型与 `inputs` 相同。
