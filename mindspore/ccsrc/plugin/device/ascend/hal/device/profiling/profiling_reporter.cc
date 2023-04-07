@@ -305,6 +305,7 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
   task_info.taskId = task_id;
   task_info.timeStamp = 0;
   task_info.threadId = 0;
+  task_info.contextId = DEFAULT_CONTEXT_ID;
 
   ReportData(device_id_, reinterpret_cast<unsigned char *>(&task_info), sizeof(task_info), "task_desc_info");
 }
