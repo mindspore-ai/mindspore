@@ -42,7 +42,6 @@ class ResizeFP32Coder : public ResizeBaseCoder {
   void CalTmpBufferLen();
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-  int ResizePrepare();
   virtual int DataTypeLen() { return sizeof(float); }
 
   ResizeCoordinate coordinate_;
@@ -56,6 +55,9 @@ class ResizeFP32Coder : public ResizeBaseCoder {
   void *line_buffer_{nullptr};
   CalculateOriginalCoordinate calculate_{nullptr};
   std::string calculate_str_;
+
+ private:
+  int ResizePrepare();
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_RESIZE_FP32_CODER_H_

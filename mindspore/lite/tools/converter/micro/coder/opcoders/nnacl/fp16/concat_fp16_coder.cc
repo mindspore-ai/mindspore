@@ -83,5 +83,6 @@ int ConcatFP16Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

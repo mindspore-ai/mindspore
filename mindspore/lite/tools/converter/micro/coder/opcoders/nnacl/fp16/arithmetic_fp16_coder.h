@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 #include "coder/opcoders/nnacl/fp32/arithmetic_fp32_coder.h"
-#include "nnacl/base/cast_base.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+
 namespace mindspore::lite::micro::nnacl {
 class ArithmeticFP16Coder final : public ArithmeticFP32Coder {
  public:
@@ -42,6 +42,7 @@ class ArithmeticFP16Coder final : public ArithmeticFP32Coder {
 
   int ExecuteCode(const std::string &input0, const std::string &input1, const std::string &output, int size,
                   CoderContext *const context, NNaclFp32Serializer *const code);
+  void *broadcast_temp_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ARITHMETIC_FP16_CODER_H_

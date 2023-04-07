@@ -44,31 +44,31 @@ int ActivationFP16Coder::DoCode(CoderContext *const context) {
 
   switch (activation_parameter->type_) {
     case schema::ActivationType_RELU:
-      code.CodeFunction("ReluFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("ReluFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_RELU6:
-      code.CodeFunction("Relu6Fp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("Relu6Fp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_LEAKY_RELU:
-      code.CodeFunction("LReluFp16", input_tensor_, count, output_tensor_, activation_parameter->alpha_);
+      code.CodeFunction("LReluFp16", input_tensor_, output_tensor_, count, activation_parameter->alpha_);
       break;
     case schema::ActivationType_SIGMOID:
-      code.CodeFunction("SigmoidFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("SigmoidFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_TANH:
-      code.CodeFunction("TanhFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("TanhFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_HSWISH:
-      code.CodeFunction("HSwishFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("HSwishFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_SWISH:
-      code.CodeFunction("SwishFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("SwishFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_HSIGMOID:
-      code.CodeFunction("HSigmoidFp16", input_tensor_, count, output_tensor_);
+      code.CodeFunction("HSigmoidFp16", input_tensor_, output_tensor_, count);
       break;
     case schema::ActivationType_ELU:
-      code.CodeFunction("EluFp16", input_tensor_, count, output_tensor_, activation_parameter->alpha_);
+      code.CodeFunction("EluFp16", input_tensor_, output_tensor_, count, activation_parameter->alpha_);
       break;
     default:
       MS_LOG(ERROR) << "Activation type error";
@@ -79,5 +79,6 @@ int ActivationFP16Coder::DoCode(CoderContext *const context) {
   return lite::RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Activation, CPUOpCoderCreator<ActivationFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Activation, CPUOpCoderCreator<ActivationFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Activation, CPUOpCoderCreator<ActivationFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

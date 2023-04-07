@@ -68,7 +68,9 @@ int ResizeFP32Coder::ReSize() {
   }
 
   MS_CHECK_RET_CODE_WITH_EXE(MallocTmpBuffer(), "MallocTmpBuffer failed", FreeTmpBuffer());
-  MS_CHECK_RET_CODE_WITH_EXE(ResizePrepare(), "ResizePrepare failed", FreeTmpBuffer());
+  if (input_tensor_->data_type() == kNumberTypeFloat32 || input_tensor_->data_type() == kNumberTypeFloat) {
+    MS_CHECK_RET_CODE_WITH_EXE(ResizePrepare(), "ResizePrepare failed", FreeTmpBuffer());
+  }
 
   return RET_OK;
 }

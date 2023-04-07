@@ -23,8 +23,6 @@
 #include <string>
 #include "include/errorcode.h"
 #include "src/litert/kernel_exec.h"
-#include "src/litert/kernel/cpu/fp16/resize_fp16.h"
-#include "nnacl/base/cast_base.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ResizeFP16Coder : public ResizeFP32Coder {

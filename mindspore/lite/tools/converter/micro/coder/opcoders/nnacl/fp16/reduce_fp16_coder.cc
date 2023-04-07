@@ -74,6 +74,6 @@ int ReduceFP16Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
 REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

@@ -16,6 +16,7 @@
 
 #include "coder/opcoders/nnacl/fp16/transpose_fp16_coder.h"
 #include <vector>
+#include <unordered_set>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
@@ -28,30 +29,53 @@ int TransposeFp16Coder::Prepare(CoderContext *const context) {
     MS_LOG(INFO) << "Input tensor data type is invalid";
     return lite::RET_INPUT_PARAM_INVALID;
   }
+  thread_num_ = 1;
   MS_CHECK_RET_CODE(Init(), "init failed");
   return RET_OK;
 }
 
-void TransposeFp16Coder::GetNHNCTransposeFunc() {
-  auto out_shape = output_tensor_->shape();
-  if (input_tensor_->shape().size() == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kTwo &&
-      param_->perm_[kTwo] == kThree && param_->perm_[kThree] == 1 && out_shape.size() >= kThree) {
-    nhnc_param_[0] = out_shape[0];
-    nhnc_param_[1] = out_shape[1] * out_shape[kTwo];
-    nhnc_param_[kTwo] = out_shape[kThree];
-    if (input_tensor_->data_type() == kNumberTypeFloat16) {
-      NHNCTransposeFunc_ = "PackNCHWToNHWCFp16";
+int TransposeFp16Coder::ResetStatus() {
+  auto in_shape = input_tensors_[FIRST_INPUT]->shape();
+  if (in_shape.size() > MAX_TRANSPOSE_DIM_SIZE) {
+    MS_LOG(ERROR) << "input shape out of range.";
+    return RET_ERROR;
+  }
+  int trans_nd[MAX_TRANSPOSE_DIM_SIZE] = {0, 2, 1};
+  int *perm_data{nullptr};
+  if (in_shape.size() != static_cast<size_t>(param_->num_axes_)) {
+    perm_data = trans_nd;
+    if (in_shape.size() == C3NUM && param_->num_axes_ == C4NUM) {
+      param_->num_axes_ = C3NUM;
+    }
+    if (param_->num_axes_ == 0) {
+      for (int i = 0; i < static_cast<int>(in_shape.size()); ++i) {
+        trans_nd[i] = static_cast<int>(in_shape.size()) - 1 - i;
+      }
+      param_->num_axes_ = static_cast<int>(in_shape.size());
+    }
+  } else {
+    if (input_tensors_.size() != C2NUM) {
+      MS_LOG(ERROR) << "input tensors size is not equal to 2.";
+      return RET_ERROR;
+    }
+    auto perm_tensor = input_tensors_.at(SECOND_INPUT);
+    if (perm_tensor->data_type() != kNumberTypeInt32) {
+      MS_LOG(ERROR) << "Unsupported type id: " << perm_tensor->data_type() << " of perm tensor.";
+      return RET_ERROR;
+    }
+    perm_data = reinterpret_cast<int *>(perm_tensor->data());
+    MSLITE_CHECK_PTR(perm_data);
+    std::vector<int> perm(perm_data, perm_data + input_tensors_[SECOND_INPUT]->ElementsNum());
+    if (perm.size() != std::unordered_set<int>(perm.cbegin(), perm.cend()).size()) {
+      MS_LOG(ERROR) << "Invalid perm, the same element exits in perm.";
+      return RET_ERROR;
     }
   }
-  if (input_tensor_->shape().size() == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kThree &&
-      param_->perm_[kTwo] == 1 && param_->perm_[kThree] == kTwo && out_shape.size() >= kThree) {
-    nhnc_param_[0] = out_shape[0];
-    nhnc_param_[1] = out_shape[kTwo] * out_shape[kThree];
-    nhnc_param_[kTwo] = out_shape[1];
-    if (input_tensor_->data_type() == kNumberTypeFloat16) {
-      NHNCTransposeFunc_ = "PackNHWCToNCHWFp16";
-    }
+  MS_CHECK_TRUE_MSG(param_->num_axes_ <= MAX_TRANSPOSE_DIM_SIZE, RET_ERROR, "transpose perm is invalid.");
+  for (int i = 0; i < param_->num_axes_; ++i) {
+    param_->perm_[i] = perm_data[i];
   }
+  return RET_OK;
 }
 
 int TransposeFp16Coder::DoCode(CoderContext *const context) {
@@ -66,66 +90,25 @@ int TransposeFp16Coder::DoCode(CoderContext *const context) {
           });
 
   NNaclFp32Serializer code;
-  if (input_tensor_->shape().size() != static_cast<size_t>(param_->num_axes_)) {
+  if (input_tensor_->data() != output_tensor_->data()) {
     code.CodeFunction("memcpy", output_tensor_, input_tensor_, input_tensor_->Size());
     context->AppendCode(code.str());
-    return RET_OK;
-  }
-  if (input_tensors_.size() == DIMENSION_2D) {
-    auto input_perm = input_tensors_.at(1);
-    MS_CHECK_TRUE_RET(input_perm != nullptr, RET_ERROR);
-    MS_CHECK_TRUE_RET(input_perm->data() != nullptr, RET_ERROR);
-    int *perm_data = reinterpret_cast<int *>(input_perm->data());
-    for (int i = 0; i < input_perm->ElementsNum(); ++i) {
-      param_->perm_[i] = perm_data[i];
-    }
-    for (int i = input_perm->ElementsNum(); i < MAX_SHAPE_SIZE; ++i) {
-      param_->perm_[i] = 0;
-    }
-  }
-  GetNHNCTransposeFunc();
-  if (!NHNCTransposeFunc_.empty()) {
-    Collect(context,
-            {
-              "nnacl/fp16/pack_fp16.h",
-            },
-            {
-              "pack_fp16.c",
-            });
-    code.CodeFunction(NHNCTransposeFunc_, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1],
-                      nhnc_param_[kTwo], kDefaultTaskId, 1);
-    context->AppendCode(code.str());
-    return RET_OK;
   }
 
+  auto out_shape = output_tensor_->shape();
+  dims_ = static_cast<int>(out_shape.size());
+  code.CodeArray("output_shape", out_shape.data(), dims_, true);
   code.CodeStruct("trans_param", *param_);
-  dims_ = output_tensor_->shape().size();
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
-    int *dim_size = reinterpret_cast<int *>(malloc(dims_ * sizeof(int)));
-    if (dim_size == nullptr) {
-      return RET_NULL_PTR;
-    }
-    *(dim_size + dims_ - 1) = 1;
-    for (int i = dims_ - 1; i > 0; --i) {
-      *(dim_size + i - 1) = *(dim_size + i) * out_shape_[i];
-    }
-    code.CodeArray("dim_size", dim_size, dims_);
-    int *position = reinterpret_cast<int *>(malloc(dims_ * thread_num_ * sizeof(int)));
-    if (position == nullptr) {
-      free(dim_size);
-      return RET_NULL_PTR;
-    }
-    code.CodeArray("position", position, dims_ * thread_num_);
-    code.CodeFunction("TransposeDimsFp16", input_tensor_, output_tensor_, out_shape_, "dim_size", "position",
-                      "&trans_param", kDefaultTaskId, thread_num_);
-    free(dim_size);
-    free(position);
+  if (param_->num_axes_ > DIMENSION_6D) {
+    code.CodeFunction("TransposeDimsFp16", input_tensor_, output_tensor_, "output_shape", "&trans_param",
+                      kDefaultTaskId, kDefaultThreadNum);
   } else {
-    code.CodeFunction("DoTransposeFp16", input_tensor_, output_tensor_, out_shape_, "&trans_param");
+    code.CodeFunction("DoTransposeFp16", input_tensor_, output_tensor_, "output_shape", "&trans_param");
   }
   context->AppendCode(code.str());
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Transpose, CPUOpCoderCreator<TransposeFp16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Transpose, CPUOpCoderCreator<TransposeFp16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Transpose, CPUOpCoderCreator<TransposeFp16Coder>)
 }  // namespace mindspore::lite::micro::nnacl
