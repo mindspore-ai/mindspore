@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@
 #include <memory>
 #include "src/litert/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors) {
   split_ = new (std::nothrow) hiai::op::SplitV(name_);
@@ -39,16 +40,22 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
   auto split_dim = in_tensor.Shape().at(axis_);
   auto sizes_split = split_prim->size_splits();
   int size = split_prim->output_num();
+  MS_CHECK_TRUE_MSG(size > 0, RET_ERROR, "The split output_number is illegal to be no more than 0!");
   std::vector<int> sizes_split_vec;
-  CHECK_NULL_RETURN(sizes_split);
-  for (int i = 0; i < size; ++i) {
-    auto cur_size = sizes_split->Get(i);
-    if (i == size - 1 && cur_size == -1) {
-      sizes_split_vec.emplace_back(split_dim);
-      break;
+  if (sizes_split == nullptr) {
+    for (int i = 0; i < size; i++) {
+      sizes_split_vec.emplace_back(static_cast<int>(split_dim / size));
     }
-    split_dim -= cur_size;
-    sizes_split_vec.emplace_back(cur_size);
+  } else {
+    for (int i = 0; i < size; ++i) {
+      auto cur_size = sizes_split->Get(i);
+      if (i == size - 1 && cur_size == -1) {
+        sizes_split_vec.emplace_back(split_dim);
+        break;
+      }
+      split_dim -= cur_size;
+      sizes_split_vec.emplace_back(cur_size);
+    }
   }
   ge::TensorDesc size_splits_tensor_desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr size_splits_tensor = std::make_shared<hiai::Tensor>(size_splits_tensor_desc);
@@ -109,4 +116,5 @@ SplitNPUOp::~SplitNPUOp() {
     split_dim_ = nullptr;
   }
 }
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

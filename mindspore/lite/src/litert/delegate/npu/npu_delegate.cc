@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@
 #include "src/litert/delegate/npu/op/abs_npu.h"
 #include "src/litert/delegate/npu/op/flatten_npu.h"
 #include "src/litert/delegate/npu/op/broadcast_to_npu.h"
+#include "src/litert/delegate/npu/op/unpack_npu.h"
 #include "src/litert/delegate/npu/npu_graph.h"
 #include "src/litert/delegate/delegate_utils.h"
 #include "src/litert/delegate/npu/pass/npu_transform_pass.h"
@@ -189,6 +190,7 @@ Status NPUDelegate::Init() {
     {schema::PrimitiveType_Abs, GetNPUOp<AbsNPUOp>},
     {schema::PrimitiveType_Flatten, GetNPUOp<FlattenNPUOp>},
     {schema::PrimitiveType_BroadcastTo, GetNPUOp<BroadcastToNPUOp>},
+    {schema::PrimitiveType_Unstack, GetNPUOp<UnpackNPUOp>},
   };
   return mindspore::kSuccess;
 }

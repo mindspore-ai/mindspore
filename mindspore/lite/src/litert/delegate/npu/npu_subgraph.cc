@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,10 +190,10 @@ int NPUSubGraph::BuildNPUInputOp() {
       // weight tensor
       if (is_weight_tensor) {
         if (npu_specific_weight_nodes.find(op->type()) == npu_specific_weight_nodes.end()) {
-          auto name = op->name() + "_" + std::to_string(count++);
-          auto weight_const = new (std::nothrow) hiai::op::Const(op->name() + "_" + std::to_string(count++));
+          auto name = op->name() + "_const_input_" + std::to_string(i);
+          auto weight_const = new (std::nothrow) hiai::op::Const(name);
           if (weight_const == nullptr) {
-            MS_LOG(ERROR) << "New weight const failed.";
+            MS_LOG(ERROR) << "New weight const " << name << " failed.";
             return RET_ERROR;
           }
           auto weight_tensor = ConverterToNPUTensor(in_tensor);
