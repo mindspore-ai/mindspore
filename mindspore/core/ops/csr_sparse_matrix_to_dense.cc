@@ -68,37 +68,33 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
                              << ", 'x_col_indices' rank " << c_ind_shape.size() << ", 'x_values' rank "
                              << values_shape.size() << ".";
   }
-  // Dynamic Rank
-  std::vector<ShapeVector> tensor_shapes{d_shape_shape, c_ind_shape, values_shape, r_ptrs_shape, b_ptrs_shape};
-  if (std::any_of(tensor_shapes.cbegin(), tensor_shapes.cend(),
-                  [](const ShapeVector shp) { return IsDynamicRank(shp); })) {
+  // Dynamic
+  if (IsDynamic(d_shape_shape)) {
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
-  bool rankExcept = !IsDynamic(d_shape_shape) && rank != kDefaultRank && rank != kBatchRank;
+
+  bool rankExcept = rank != kDefaultRank && rank != kBatchRank;
   if (rankExcept) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dense form of the input "
                              << "should have rank 2 or 3, but got " << d_shape_shape[kZero] << ".";
   }
-  bool dynShape =
+
+  bool shape_valid =
     input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
     (input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() || input_args[kInputIndex0]->BuildValue()->isa<None>());
-  // Dynamic Shape
-  if (dynShape) {
-    auto shape_size = d_shape_shape[kZero];
-    if (shape_size == -1) {
-      ShapeVector dense_shape = {-2};
-      return std::make_shared<abstract::Shape>(dense_shape);
-    }
+  if (shape_valid) {
     ShapeVector dense_shape;
+    auto shape_size = d_shape_shape[kZero];
     dense_shape.resize(static_cast<size_t>(shape_size), -1);
     return std::make_shared<abstract::Shape>(dense_shape);
   }
   // Static Shape
-  bool staShape = !IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero];
-  MS_EXCEPTION_VALUE_ERR_IF_CHECK(
-    staShape, "For '" + primitive->name() + "', 'col_indices' and 'values' " + "should have the same length.");
-
+  bool static_shape = !IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero];
+  if (static_shape) {
+    (MS_EXCEPTION(ValueError) << "For '" + primitive->name() + "', 'col_indices' and 'values' " +
+                                   "should have the same length.");
+  }
   auto shape_abs_ptr = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_abs_ptr);
   ShapeVector y_shape;
