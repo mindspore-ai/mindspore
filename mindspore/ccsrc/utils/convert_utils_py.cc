@@ -780,8 +780,9 @@ tensor::TensorPtr ConvertStubTensor(const py::handle &obj) {
   if (stub == nullptr) {
     return py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
   }
-  auto res = stub->WaitValue()->cast<tensor::TensorPtr>();
-  return res;
+  auto func_sync = obj.attr(stub::PY_ATTR_SYNC);
+  auto res = func_sync();
+  return res.cast<tensor::TensorPtr>();
 }
 
 ValuePtr PyStubNodeCast(const py::handle &obj) {
