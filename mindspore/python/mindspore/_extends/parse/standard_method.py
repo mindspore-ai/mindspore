@@ -31,6 +31,7 @@ from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for
     check_axis_in_range, check_axis_valid, check_and_canonicalize_axes
 from ...ops import functional as F
 from ...ops import operations as P
+from ...ops import composite
 from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
@@ -1210,6 +1211,13 @@ def deg2rad(x):
     Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
     """
     return F.deg2rad(x)
+
+
+def dot(input, other):
+    r"""
+    For details, please refer to :func:`mindspore.ops.dot`.
+    """
+    return composite.dot(input, other)
 
 
 def copysign(x, other):
