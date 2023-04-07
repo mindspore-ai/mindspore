@@ -29,18 +29,19 @@
 #include "utils/hash_map.h"
 #include "include/api/status.h"
 #include "kernel/common_utils.h"
+#include "src/extendrt/kernel/primitive_type.h"
 
 namespace mindspore {
 namespace infer {
 class CompileNode {
  public:
-  explicit CompileNode(std::string name) : name_(std::move(name)) {}
+  explicit CompileNode(std::string name, const kernel::PrimitiveType &type) : name_(std::move(name)), type_(type) {}
   static CompileNode *Create(CNodePtr cnode);
 
   virtual ~CompileNode() = default;
 
   std::string GetName() const { return name_; }
-  std::string GetType() const { return type_; }
+  kernel::PrimitiveType GetType() const { return type_; }
   std::shared_ptr<ops::BaseOperator> GetBaseOperator() const { return base_operator_; }
   CNodePtr GetCNode() const { return cnode_; }
   const std::vector<Tensor *> &GetInputs() const { return inputs_; }
@@ -59,7 +60,7 @@ class CompileNode {
 
  private:
   std::string name_{};
-  std::string type_{};
+  kernel::PrimitiveType type_{};
   std::shared_ptr<ops::BaseOperator> base_operator_{nullptr};
   CNodePtr cnode_{nullptr};
   std::vector<Tensor *> inputs_{};

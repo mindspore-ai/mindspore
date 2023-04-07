@@ -49,7 +49,7 @@ class CompileResultBuilder {
   StatusCode AppendInputValueNodeToInputs(const ValueNodePtr &value_node, const CompileNode *compile_node);
   // methods about tensor
   static StatusCode CreateTensorsFromAbstract(const mindspore::abstract::AbstractBasePtr &abstract,
-                                              std::vector<Tensor *> *results);
+                                              std::vector<std::unique_ptr<Tensor>> *results);
   StatusCode BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNode *compile_node);
   // methods about optimize
   StatusCode RemoveSeqGetItemNode();

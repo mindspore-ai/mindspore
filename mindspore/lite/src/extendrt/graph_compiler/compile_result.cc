@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include "src/extendrt/tensor.h"
 #include "ops/base_operator.h"
 #include "utils/hash_map.h"
@@ -79,41 +78,48 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
-  auto node = new CompileNode(cnode->fullname_with_scope());
   auto primitive = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "Node has no primitive, first input of cnode(" << cnode->fullname_with_scope()
                   << ") is : " << cnode->input(0);
     return nullptr;
   }
-  node->type_ = primitive->name();
+  auto node = new (std::nothrow) CompileNode(cnode->fullname_with_scope(), kernel::PrimitiveType(primitive->name()));
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "Alloc CompileNode for " << cnode->fullname_with_scope() << " failed.";
+    return nullptr;
+  }
   ops::PrimitiveCPtr primc{nullptr};
   if (utils::isa<ops::PrimitiveCPtr>(primitive)) {
     primc = utils::cast<ops::PrimitiveCPtr>(primitive);
   } else {
     static auto ops_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-    auto primc_creator_iter = ops_primc_fns.find(node->type_);
+    auto primc_creator_iter = ops_primc_fns.find(node->type_.PBType());
     if (primc_creator_iter == ops_primc_fns.end()) {
       MS_LOG(ERROR) << "Can not find primitive_c create function for: " << node->type_;
+      delete (node);
       return nullptr;
     }
     primc = primc_creator_iter->second();
     if (primc == nullptr) {
       MS_LOG(ERROR) << "Create primitive_c failed, type: " << node->type_;
+      delete (node);
       return nullptr;
     }
     primc->SetAttrs(primitive->attrs());
   }
   static auto baseops_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  auto baseops_creator_iter = baseops_fns.find(node->type_);
+  auto baseops_creator_iter = baseops_fns.find(node->type_.PBType());
   if (baseops_creator_iter == baseops_fns.end()) {
     MS_LOG(ERROR) << "Can not find base-operator create function for: " << node->type_;
+    delete (node);
     return nullptr;
   }
   auto baseops_creator = baseops_creator_iter->second;
   node->base_operator_ = baseops_creator(primc);
   if (node->base_operator_ == nullptr) {
     MS_LOG(ERROR) << "Create base-operator failed, type: " << node->type_;
+    delete (node);
     return nullptr;
   }
   node->cnode_ = std::move(cnode);
@@ -129,7 +135,7 @@ void CompileNode::AppendInputTensor(Tensor *tensor) {
 
 void CompileNode::AppendOutputTensor(Tensor *tensor) {
   if (tensor->tensor_name().empty()) {
-    tensor->set_tensor_name(this->name_ + "_out_" + std::to_string(this->inputs_.size()));
+    tensor->set_tensor_name(this->name_ + "_out_" + std::to_string(this->outputs_.size()));
   }
   this->outputs_.emplace_back(tensor);
 }
