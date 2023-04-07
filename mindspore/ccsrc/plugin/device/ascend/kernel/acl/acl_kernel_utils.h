@@ -125,6 +125,11 @@ class AclUtils {
 
   static std::vector<std::string> GetOpInputAnchorNames(const AnfNodePtr &node);
 
+  static void UpdateShape(const AnfNodePtr &node, ShapeVector *shape, std::string *format);
+
+  static bool NoNeedPadShapeNode(const std::string &node_name, const std::string &format, size_t index,
+                                 bool is_input = false);
+
   static std::vector<std::string> GetOpOutputAnchorNames(const AnfNodePtr &node);
 };
 }  // namespace kernel

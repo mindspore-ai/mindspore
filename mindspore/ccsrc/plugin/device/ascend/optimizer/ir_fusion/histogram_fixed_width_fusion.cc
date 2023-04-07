@@ -53,7 +53,6 @@ const AnfNodePtr HistogramFixedWidthFusion::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(attr_value->ToAbstract());
   cnode->add_input(new_value_node);
-  origin_prim->EraseAttr(kNbins);
   MS_LOG(DEBUG) << "End, new node: " << node->DebugString();
   return cnode;
 }

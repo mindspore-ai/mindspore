@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <optional>
+#include <tuple>
 #include <unordered_map>
 
 #include "ir/value.h"
@@ -64,6 +65,22 @@ static const std::map<::ge::Format, aclFormat> kMsFormatToAclFormat = {
 
 static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatMul", ACL_FORMAT_ND},
                                                                      {"MatMul", ACL_FORMAT_ND}};
+
+static const std::unordered_map<std::string, std::vector<std::string>> kMsNeedPad = {
+  {kTransDataOpName, {}},
+  {kBNTrainingReduceOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingUpdateOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingReduceGradOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingUpdateGradOpName, {"", kOpFormat_NCHW}},
+  {kBNInferOpName, {"", kOpFormat_NCHW}},
+  {kBNInferGradOpName, {"", kOpFormat_NCHW}},
+  {kTensorMoveOpName, {"", kOpFormat_NCHW}},
+  {kBiasAddOpName, {kOpFormat_NCHW, kOpFormat_NCHW}},
+  {kBiasAddGradOpName, {kOpFormat_NCHW, kOpFormat_NCHW}}};
+
+static const std::unordered_map<std::string, std::set<std::tuple<bool, std::string, size_t>>> kMsNoNeedPad = {
+  // {op_name, {is_input, format, index}}
+  {kBiasAddOpName, {{true, kOpFormat_NC1HWC0, 1}}}};
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
@@ -710,11 +727,45 @@ bool AclUtils::UpdateTensorDesc(const AnfNodePtr &anf_node, std::vector<GeTensor
   return true;
 }
 
+bool AclUtils::NoNeedPadShapeNode(const std::string &node_name, const std::string &format, size_t index,
+                                  bool is_input) {
+  auto iter = kMsNoNeedPad.find(node_name);
+  if (iter == kMsNoNeedPad.end()) {
+    return false;
+  }
+  auto tmp_tuple = std::make_tuple(is_input, format, index);
+  return iter->second.count(tmp_tuple) != 0;
+}
+
+void AclUtils::UpdateShape(const AnfNodePtr &node, ShapeVector *shape, std::string *format) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(format);
+  auto node_name = common::AnfAlgo::GetCNodeName(node);
+  if (kMsNeedPad.count(node_name) == 0 || shape->size() >= kDim4) {
+    return;
+  }
+  const auto &default_format_str = kMsNeedPad.at(node_name);
+  if (!default_format_str.empty()) {
+    if (default_format_str.size() != KFormatLimitNumber) {
+      MS_LOG(EXCEPTION) << "kMsNeedPad's node name:" << node_name << "'s size is invalid";
+    }
+    auto update_format = default_format_str.at(1);
+    std::string format_pad = (shape->size() < kDim2) ? default_format_str.at(0) : update_format;
+    *shape = trans::PaddingShape(*shape, *format, format_pad);
+    *format = update_format.empty() ? kOpFormat_ND : update_format;
+  } else if (!IsOneOfNoPaddingFormat(*format)) {
+    *shape = trans::PaddingShape(*shape, *format);
+  }
+  return;
+}
+
 std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   const auto &input_names = AclUtils::GetOpInputAnchorNames(anf_node);
   std::vector<GeTensorDescPtr> res(input_names.size(), nullptr);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   for (size_t i = 0; i < input_num; ++i) {
     auto index = AclUtils::GetInputKernelIdxByGraphIdx(anf_node, i);
     if (index < 0) {
@@ -741,9 +792,10 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
       input_shape = ori_shape;
       input_format = ori_format;
-    } else {
+    } else if (!NoNeedPadShapeNode(op_name, input_format, i, true)) {
       ori_shape = trans::GetRuntimePaddingShape(input, idx);
     }
+    UpdateShape(anf_node, &ori_shape, &input_format);
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
     input_desc->SetName(input_names[index]);
@@ -758,7 +810,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
   const auto &output_names = AclUtils::GetOpOutputAnchorNames(anf_node);
   std::vector<GeTensorDescPtr> res(output_names.size(), nullptr);
   auto op_runtime_info = anf_node->user_data<runtime::OpRuntimeInfo>();
-
   for (size_t i = 0; i < output_num; ++i) {
     auto index = AclUtils::GetOutputKernelIdxByGraphIdx(anf_node, i);
     if (index < 0) {
@@ -783,6 +834,7 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     } else {
       ori_shape = trans::GetRuntimePaddingShape(anf_node, i);
     }
+    UpdateShape(anf_node, &ori_shape, &output_format);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
     output_desc->SetName(output_names[index]);
