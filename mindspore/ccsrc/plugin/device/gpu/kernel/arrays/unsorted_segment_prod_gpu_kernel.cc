@@ -110,17 +110,6 @@ bool UnsortedSegmentProdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
     S *ids_batch_addr = ids_addr + i * ids_stride_;
     T *output_batch_addr = output_addr + i * out_stride_;
 
-    std::vector<S> ids(loop_size_);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpy(ids.data(), ids_addr, ids_unit_size_ * loop_size_, cudaMemcpyDeviceToHost),
-      "For '" << kernel_name_ << "', cudaMemcpy input 'segment_ids' device to host failed.");
-    for (size_t index = 0; index < loop_size_; index++) {
-      if (ids[index] >= num_segments_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, " << num_segments_ << ")";
-        return false;
-      }
-    }
-
     UnsortedSegmentProd(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
                         output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
   }
