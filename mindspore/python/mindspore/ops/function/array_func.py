@@ -992,8 +992,8 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     shape_tensor = size
     if isinstance(size, (list, tuple)) and not size:
         shape_tensor = Tensor(size, dtype=mstype.int64)
-    elif not isinstance(shape, Tensor):
-        shape_tensor = Tensor(size)
+    elif not isinstance(size, Tensor):
+        shape_tensor = Tensor(size, dtype=mstype.int64)
     if shape_tensor.ndim == 0 and shape_tensor.size == 1:
         shape_tensor = shape_tensor.reshape(1)
     output = zero_op(shape_tensor, value)
