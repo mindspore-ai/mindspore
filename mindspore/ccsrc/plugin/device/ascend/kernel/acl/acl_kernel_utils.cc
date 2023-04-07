@@ -795,7 +795,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
     } else if (!NoNeedPadShapeNode(op_name, input_format, i, true)) {
       ori_shape = trans::GetRuntimePaddingShape(input, idx);
     }
-    UpdateShape(anf_node, &ori_shape, &input_format);
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
     input_desc->SetName(input_names[index]);
@@ -834,7 +833,6 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
     } else {
       ori_shape = trans::GetRuntimePaddingShape(anf_node, i);
     }
-    UpdateShape(anf_node, &ori_shape, &output_format);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
     output_desc->SetName(output_names[index]);
