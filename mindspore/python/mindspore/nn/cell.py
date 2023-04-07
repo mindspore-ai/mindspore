@@ -649,7 +649,7 @@ class Cell(Cell_):
             _pynative_executor.set_grad_flag(True)
 
         if self._dynamic_shape_inputs is not None:
-            self._check_compile_dynamic_shape(*args)
+            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
@@ -929,11 +929,11 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
-        if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
+        if self._dynamic_shape_inputs is None:
             _cell_graph_executor.compile(self, phase=self.phase,
                                          jit_config_dict=self._jit_config_dict, *args, **kwargs)
         else:
-            self._check_compile_dynamic_shape(*args)
+            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
                                          jit_config_dict=self._jit_config_dict, **kwargs)
@@ -2204,35 +2204,57 @@ class Cell(Cell_):
         for op in all_ops:
             op.place(role, rank_id)
 
-    def _check_compile_dynamic_shape(self, *inputs):
+    def _check_dynamic_tensor(self, set_input, net_input, index):
+        """
+        Check if tensor is correctly set for dynamic shape.
+
+        Args:
+            set_input (Tensor): Tensor set for dynamic shape.
+            net_input (Tensor): Input tensor of the Cell object.
+            index (int): Tensor index for set inputs.
+        """
+        if not isinstance(net_input, Tensor):
+            raise TypeError(
+                f"The {index + 1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
+        if set_input.dtype != net_input.dtype:
+            raise ValueError(
+                f"The {index + 1}th input type of 'set_inputs' must be the same as network's input, "
+                f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
+        if net_input.dim() != 0 and set_input.dim() != net_input.dim():
+            raise ValueError(
+                f"The {index + 1}th input dims of 'set_inputs' must be the same as network's input, "
+                f"but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
+        if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
+            raise ValueError(
+                f"The {index + 1}th input shape of 'set_inputs' must be the same as network's input, "
+                f"but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
+
+    def _check_compile_dynamic_shape(self, set_inputs, net_inputs):
         """
         Check if graph has been compiled with dynamic shape.
 
         Args:
-            inputs (tuple): Inputs of the Cell object.
+            net_inputs (tuple): Inputs of the Cell object.
         """
-        set_inputs_len = len(self._dynamic_shape_inputs)
-        inputs_len = len(inputs)
-        if set_inputs_len != inputs_len:
-            raise ValueError("The number of 'set_inputs' Tensor must be equal to network's inputs,"
-                             f" but got 'set_inputs': {set_inputs_len} and network's input: {inputs_len}.")
-        for index, (net_input, set_input) in enumerate(zip(inputs, self._dynamic_shape_inputs)):
+        set_inputs_len = len(set_inputs)
+        net_inputs_len = len(net_inputs)
+        if set_inputs_len != net_inputs_len:
+            raise ValueError("The length of 'set_inputs' must be equal to network's inputs, "
+                             f"but got 'set_inputs': {set_inputs_len} and network's input: {net_inputs_len}.")
+        for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
             if isinstance(set_input, Tensor):
-                if not isinstance(net_input, Tensor):
+                self._check_dynamic_tensor(set_input, net_input, index)
+            elif isinstance(set_input, (tuple, list)):
+                if not isinstance(net_input, (tuple, list)):
                     raise TypeError(
-                        f"The {index + 1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
-                if set_input.dtype != net_input.dtype:
+                        f"The {index + 1}th input type of 'set_inputs' must be tuple or list, "
+                        f"but got {type(net_input)}.")
+                self._check_compile_dynamic_shape(set_input, net_input)
+            else:
+                if net_input != set_input:
                     raise ValueError(
-                        f"The {index + 1}th input type of 'set_inputs' must be the same as network's input, "
-                        f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
-                if net_input.dim() != 0 and set_input.dim() != net_input.dim():
-                    raise ValueError(
-                        f"The {index + 1}th input dims of 'set_inputs' must be the same as network's input, "
-                        f"but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
-                if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
-                    raise ValueError(
-                        f"The {index + 1}th input shape of 'set_inputs' must be the same as network's input, "
-                        f"but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
+                        f"The {index + 1}th input of 'set_inputs' must be the same with network's input, but got "
+                        f"set_inputs: {set_input} and network's input: {net_input}.")
 
 
 class GraphCell(Cell):
