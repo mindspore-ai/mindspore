@@ -182,7 +182,9 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
       MS_LOG(DEBUG) << "float";
       float_value = value->cast<FP32ImmPtr>()->value();
       doubel_value = value->cast<FP32ImmPtr>()->prim_value();
-      if (std::abs(float_value - doubel_value) < eps) {
+      // If double value is default value 0, don't use double value.
+      if (std::abs(doubel_value) > std::numeric_limits<double>::epsilon() &&
+          std::abs(float_value - doubel_value) < eps) {
         float_v = doubel_value;
       } else {
         float_v = float_value;
