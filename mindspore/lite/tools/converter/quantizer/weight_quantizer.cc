@@ -126,18 +126,22 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
   return RET_OK;
 }
 
-int WeightQuantizer::PreLinearQuant(const CNodePtr &cnode, int idx, const AnfNodePtr &input,
-                                    const ParameterPtr &parameter, tensor::TensorPtr tensor_info) {
-  if (parameter == nullptr || tensor_info == nullptr || tensor_info->compression_type() != mindspore::kNoCompression) {
-    MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+int WeightQuantizer::PreLinearQuant(const CNodePtr &cnode, int idx, const AnfNodePtr &input, ParameterPtr *parameter,
+                                    tensor::TensorPtr *tensor_info) {
+  CHECK_NULL_RETURN(parameter);
+  CHECK_NULL_RETURN(tensor_info);
+  GetParameterAndTensor(input, parameter, tensor_info);
+  if (*parameter == nullptr || *tensor_info == nullptr ||
+      (*tensor_info)->compression_type() != mindspore::kNoCompression) {
+    MS_LOG(INFO) << "This op " << input->fullname_with_scope() << " dont need quant weight";
     return RET_NO_CHANGE;
   }
-  tensor_info = ConvertParameterFp16TensorToFp32(parameter);
-  if (tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
+  *tensor_info = ConvertParameterFp16TensorToFp32(*parameter);
+  if ((*tensor_info) == nullptr || (*tensor_info)->data_type() != TypeId::kNumberTypeFloat32) {
     MS_LOG(INFO) << "This op " << input->fullname_with_scope() << " is null or dtype is not fp32.";
     return RET_NO_CHANGE;
   }
-  auto preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+  auto preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32((*tensor_info)->shape()));
   if (quant_strategy_ != nullptr && !quant_strategy_->CanTensorQuantized(cnode, input, preferred_dim)) {
     MS_LOG(INFO) << input->fullname_with_scope() << " will not quantify";
     return RET_NO_CHANGE;
@@ -172,8 +176,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     auto input = cnode->input(idx);
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
-    GetParameterAndTensor(input, &parameter, &tensor_info);
-    auto status = PreLinearQuant(cnode, idx, input, parameter, tensor_info);
+    auto status = PreLinearQuant(cnode, idx, input, &parameter, &tensor_info);
     if (status == RET_NO_CHANGE) {
       continue;
     } else if (status != RET_OK) {
