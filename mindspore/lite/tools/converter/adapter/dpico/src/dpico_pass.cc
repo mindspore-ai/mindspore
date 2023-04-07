@@ -30,12 +30,12 @@
 #include "common/anf_util.h"
 #include "common/string_util.h"
 #include "common/op_attr.h"
+#include "common/graph_output_name_keeper.h"
 #include "checker/op_checker.h"
 #include "src/om_generator.h"
 #include "include/registry/pass_registry.h"
 #include "src/data_preprocessor.h"
 #include "src/mapper_config_parser.h"
-#include "include/registry/converter_context.h"
 #include "src/calib_data_generator.h"
 #include "src/custom_creator.h"
 
@@ -52,9 +52,13 @@ bool CheckInputDimSize(const api::CNodePtr &cnode) {
     }
     ShapeVector shape_vector;
     if (GetInputShapeFromCNode(cnode, i, &shape_vector) == RET_OK) {
-      if (shape_vector.size() <= 1 || shape_vector.size() > kDims4) {
+      if (shape_vector.size() < 1 || shape_vector.size() > kDims4) {
         MS_LOG(DEBUG) << cnode->fullname_with_scope() << " input:" << i << " 's input shape size "
-                      << shape_vector.size() << " should be in range [2, 4].";
+                      << shape_vector.size() << " should be in range [1, 4].";
+        return false;
+      }
+      if (shape_vector.size() == 1 && shape_vector.front() > 1) {
+        MS_LOG(ERROR) << "When input dim is 1, batch size can't be more than 1";
         return false;
       }
     }
@@ -80,12 +84,48 @@ bool CheckOpHasInferred(const api::CNodePtr &cnode) {
 }
 
 STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgraph, api::AnfNodePtrList *dump_kernels,
-                      std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> *param_to_cnode) {
+                      std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> *param_to_cnode,
+                      std::map<std::string, int> *input_fomat_infos) {
   MS_ASSERT(func_graph != nullptr && dump_kernels != nullptr && param_to_cnode != nullptr);
   auto subgraph_inputs = GetSubgraphInputs(subgraph, func_graph);
   MS_CHECK_TRUE_MSG(!subgraph_inputs.empty(), RET_ERROR,
                     "get subgraph inputs failed. subgraph id is " << subgraph.graph_id);
   (void)dump_kernels->insert(dump_kernels->end(), subgraph_inputs.begin(), subgraph_inputs.end());
+  for (auto &input_node : subgraph_inputs) {
+    if (input_node == nullptr) {
+      continue;
+    }
+    auto input_cnode = input_node->cast<api::CNodePtr>();
+    if (input_cnode == nullptr) {
+      continue;
+    }
+    (*input_fomat_infos)[input_node->fullname_with_scope()] = 0;
+    for (const auto &inner_cnode : subgraph.cnodes) {
+      if (inner_cnode == nullptr) {
+        MS_LOG(ERROR) << "inner is nullptr.";
+        return RET_ERROR;
+      }
+      auto cnode_inputs = inner_cnode->inputs();
+      auto iter = std::find(cnode_inputs.begin(), cnode_inputs.end(), input_node);
+      if (iter == cnode_inputs.end()) {
+        continue;
+      }
+
+      auto inner_prim = api::GetValueNode<api::PrimitivePtr>(inner_cnode->input(0));
+      MS_CHECK_TRUE_MSG(inner_prim != nullptr, RET_ERROR, "inner_prim primitive is nullptr.");
+      auto value_ptr = inner_prim->GetAttr(ops::kFormat);
+      if (value_ptr == nullptr) {
+        MS_LOG(ERROR) << "value_ptr is nullptr.";
+        return RET_ERROR;
+      }
+      auto value = api::GetValue<int64_t>(value_ptr);
+      MS_CHECK_TRUE_MSG(value >= NCHW && value <= NCW, RET_ERROR, "format val is out of enum's range.");
+      auto input_format = static_cast<Format>(value);
+      MS_LOG(DEBUG) << "subgraph next node name " << inner_cnode->fullname_with_scope()
+                    << " inputformat = " << input_format;
+      (*input_fomat_infos)[input_node->fullname_with_scope()] = input_format;
+    }
+  }
   bool is_main_graph =
     func_graph->get_attr(kIsMainGraph) != nullptr && api::GetValue<bool>(func_graph->get_attr(kIsMainGraph));
   if (is_main_graph) {
@@ -99,7 +139,7 @@ STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgr
       continue;
     }
     for (const auto &inner_cnode : subgraph.cnodes) {
-      MS_CHECK_TRUE_MSG(api::utils::isa<api::CNodePtr>(inner_cnode), RET_ERROR, "inner cnode is nullptr");
+      MS_CHECK_TRUE_MSG(api::utils::isa<api::CNodePtr>(inner_cnode), RET_ERROR, "inner cnode is nullptr.");
       auto cnode_inputs = inner_cnode->inputs();
       auto iter = std::find(cnode_inputs.begin(), cnode_inputs.end(), node);
       if (iter == cnode_inputs.end()) {
@@ -307,7 +347,6 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
 STATUS DpicoPass::ParseMapperConfig(const api::FuncGraphPtr &func_graph) {
   if (graph_split_info_.num_of_segments < kMinimumNumbOfSegments) {  // no segment
     MapperConfigParser::GetInstance()->SetOriginConfigFilePath(dpico_config_path_);
-    return RET_OK;
   }
 
   std::vector<std::string> graph_input_names;
@@ -337,13 +376,16 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
     }
 
     api::AnfNodePtrList dump_kernels;
+    std::map<std::string, int> input_fomat_infos;
     std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> param_to_cnode;
     for (auto &graph : func_graphs_) {
       for (auto &subgraph : graph_split_info_.subgraphs_map[graph]) {
         if (!subgraph.is_supported) {
           continue;
         }
-        if (AddDumpKernels(graph, subgraph, &dump_kernels, &param_to_cnode) != RET_OK) {
+        // reset GraphOutputNameKeeper
+        GraphOutputNameKeeper::GetInstance()->ResetOutputNameMapper();
+        if (AddDumpKernels(graph, subgraph, &dump_kernels, &param_to_cnode, &input_fomat_infos) != RET_OK) {
           MS_LOG(ERROR) << "add dump kernels failed.";
           return RET_ERROR;
         }
@@ -358,7 +400,7 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
     int dump_level = static_cast<int>(param_to_cnode.empty() ? kDumpOutput : kDumpInputOutput);
     auto calib_data_generator = std::make_shared<CalibDataGenerator>(dump_level, param_to_cnode);
     MS_CHECK_TRUE_MSG(calib_data_generator != nullptr, RET_ERROR, "new calib generator failed.");
-    if (calib_data_generator->Run(graph_inputs, dump_kernels) != RET_OK &&
+    if (calib_data_generator->Run(graph_inputs, dump_kernels, input_fomat_infos) != RET_OK &&
         mapper_config.find(kGfpqParamFile) == mapper_config.end()) {
       MS_LOG(ERROR) << "generate calib data failed.";
       return RET_ERROR;
@@ -458,14 +500,13 @@ bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "check dynamic graph input failed.";
     return false;
   }
-  std::vector<std::string> output_names;
-  converter::ConverterContext::SetGraphOutputTensorNames(output_names);
 
   if (InitDpicoConfigInfo() != RET_OK) {
     MS_LOG(ERROR) << "get dpico config info from converter context failed.";
     return false;
   }
-
+  status = GraphOutputNameKeeper::GetInstance()->SaveOriginalOutputs(func_graph);
+  MS_CHECK_TRUE_MSG(status == RET_OK, false, "save outputs node failed.");
   for (auto &graph : func_graphs_) {
     if (MarkNodes(graph) != RET_OK) {
       MS_LOG(ERROR) << "mark graph nodes failed.";
@@ -490,7 +531,8 @@ bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
   }
 
   bool has_unsupported = graph_split_info_.num_of_segments >= kMinimumNumbOfSegments;
-  custom_op_creator_ = std::make_shared<CustomOpCreator>(0, has_unsupported);
+  custom_op_creator_ = std::make_shared<CustomOpCreator>(0, graph_split_info_.num_of_custom_op,
+                                                         graph_split_info_.head_tail_op_is_custom, has_unsupported);
   MS_CHECK_TRUE_MSG(custom_op_creator_ != nullptr, false, "make a custom op creator failed.");
   for (auto &graph : func_graphs_) {
     if (ReplaceSubgraphWithCustom(graph, use_origin_config) != RET_OK) {
@@ -502,6 +544,7 @@ bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "remove temporarily generated files failed.";
     return false;
   }
+  GraphOutputNameKeeper::GetInstance()->RecycleResource();
   return true;
 }
 REG_PASS(DpicoPass, dpico::DpicoPass)

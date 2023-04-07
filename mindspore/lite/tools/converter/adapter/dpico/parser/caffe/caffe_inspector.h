@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <vector>
 #include "./pico_caffe.pb.h"
 #include "include/errorcode.h"
 
@@ -32,21 +33,21 @@ class CaffeInspector {
   ~CaffeInspector() = default;
 
   STATUS InspectModel(const caffe::NetParameter &proto);
+
+  std::set<std::string> GetGraphInput() { return graphInput; }
+  std::vector<std::string> GetGraphOutput() { return graphOutput; }
+
+ private:
   void ParseInput();
   void FindGraphInputsAndOutputs();
   void SetLayerTopsAndBottoms();
-
-  std::set<std::string> GetGraphInput() { return graphInput; }
-  std::set<std::string> GetGraphOutput() { return graphOutput; }
-
- private:
   caffe::NetParameter net;
 
-  std::set<std::string> layerTops;
+  std::vector<std::string> layerTops;
   std::set<std::string> layerBottoms;
 
   std::set<std::string> graphInput;
-  std::set<std::string> graphOutput;
+  std::vector<std::string> graphOutput;
 };
 
 using CaffeInspectorPtr = std::shared_ptr<CaffeInspector>;

@@ -27,6 +27,7 @@
 #include "common/string_util.h"
 #include "mapper/op_mapper_registry.h"
 #include "common/op_attr.h"
+#include "common/graph_output_name_keeper.h"
 #include "./pico_mapper_api.h"
 #include "op/preprocess_operator.h"
 #include "src/mapper_config_parser.h"
@@ -111,7 +112,7 @@ std::string GetOutNodesStr(const api::FuncGraphManagerPtr &manager, const Subgra
   return out_nodes_str;
 }
 std::string GetInputTypeStr(const api::AnfNodePtrList &subgraph_inputs,
-                            const std::unordered_map<std::string, std::string> &mapper_config) {
+                            const std::unordered_map<std::string, std::string> &) {
   std::string input_type_str;
   for (const auto &input : subgraph_inputs) {
     auto node_name = input->fullname_with_scope();
@@ -119,6 +120,8 @@ std::string GetInputTypeStr(const api::AnfNodePtrList &subgraph_inputs,
       node_name = GetCustomOutputName(input);
       MS_CHECK_TRUE_MSG(!node_name.empty(), {}, "get custom node origin name failed." << input->fullname_with_scope());
     }
+    auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(input, &node_name, true);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, "", "determine sub-graph's input name failed.");
     auto abstract = GetAbstractFromAnfNode(input);
     MS_CHECK_TRUE_MSG(abstract != nullptr, "", "get abstract failed. " << input->fullname_with_scope());
     TypeId type_id;
@@ -143,7 +146,7 @@ std::string GetInputTypeStr(const api::AnfNodePtrList &subgraph_inputs,
 }
 STATUS ConfigImageList(const api::AnfNodePtrList &subgraph_inputs, std::ofstream *mapper_ofs) {
   MS_CHECK_TRUE_MSG(mapper_ofs != nullptr, RET_ERROR, "mapper_ofs is nullptr.");
-  auto image_lists = MapperConfigParser::GetInstance()->GetImageLists();
+  auto &image_lists = MapperConfigParser::GetInstance()->GetImageLists();
   if (image_lists.empty()) {
     MS_LOG(ERROR) << "image_lists shouldn't be empty.";
     mapper_ofs->close();
@@ -152,26 +155,33 @@ STATUS ConfigImageList(const api::AnfNodePtrList &subgraph_inputs, std::ofstream
   *mapper_ofs << kImageList << " ";
 
   for (const auto &input : subgraph_inputs) {
-    auto node_name = input->fullname_with_scope();
-    if (node_name.empty()) {
+    auto in_name = input->fullname_with_scope();
+    if (in_name.empty()) {
       MS_LOG(ERROR) << "graph input node name is empty.";
       mapper_ofs->close();
       return RET_ERROR;
     }
     if (CheckPrimitiveType(input, api::MakeShared<ops::Custom>())) {
-      node_name = GetCustomOutputName(input);
-      if (node_name.empty()) {
+      in_name = GetCustomOutputName(input);
+      if (in_name.empty()) {
         MS_LOG(ERROR) << "get custom node origin name failed." << input->fullname_with_scope();
         mapper_ofs->close();
         return RET_ERROR;
       }
     }
-    if (image_lists.find(node_name) == image_lists.end()) {
-      MS_LOG(ERROR) << "can't find " << node_name << " in image_lists.";
-      mapper_ofs->close();
-      return RET_ERROR;
+    auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(input, &in_name, true);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine sub-graph's input name failed.");
+    if (image_lists.find(in_name) == image_lists.end()) {
+      auto node_name = input->fullname_with_scope();
+      auto iter = image_lists.find(node_name);
+      if (iter == image_lists.end()) {
+        MS_LOG(ERROR) << "can't find " << in_name << " in image_lists.";
+        mapper_ofs->close();
+        return RET_ERROR;
+      }
+      MapperConfigParser::GetInstance()->AddImageList(in_name, iter->second);
     }
-    *mapper_ofs << node_name << ":" << image_lists[node_name] << ";";
+    *mapper_ofs << in_name << ":" << image_lists.at(in_name) << ";";
   }
   *mapper_ofs << std::endl;
   return RET_OK;
@@ -288,6 +298,8 @@ int OmGenerator::TransformSubGraphInputs(const api::AnfNodePtrList &inputs,
       MS_CHECK_TRUE_MSG(!op_name.empty(), RET_ERROR,
                         "get custom node output name failed." << input->fullname_with_scope());
     }
+    auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(input, &op_name, true);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine sub-graph's input name failed.");
     preprocess_operator->SetOpName(op_name);
     preprocess_operator->SetOutputNamesVec({op_name});
 

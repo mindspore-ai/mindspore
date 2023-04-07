@@ -192,6 +192,7 @@ int CalibDataGenerator::TransBinsToTxt(const std::vector<DumpOpInfo> &dump_op_in
           return RET_ERROR;
         }
         struct OpAttr op_attr;
+        op_attr.input_format = dump_op_info.input_format;
         if (ParseAttrFromFilename(&op_attr, file_name, is_input) != RET_OK) {
           MS_LOG(ERROR) << "parse attr from file name failed.";
           return RET_ERROR;
@@ -230,7 +231,8 @@ int CalibDataGenerator::TransBinsToTxt(const std::vector<DumpOpInfo> &dump_op_in
   return RET_OK;
 }
 
-int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes) {
+int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes,
+                            const std::map<std::string, int> &input_format_infos) {
   if (graph_inputs.empty()) {
     MS_LOG(ERROR) << "graph inputs shouldn't be empty.";
     return RET_ERROR;
@@ -243,7 +245,7 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
       continue;
     }
     (void)has_visited.insert(node);
-    DumpOpInfo dump_op_info = {node->fullname_with_scope(), node->fullname_with_scope(), -1, -1};
+    DumpOpInfo dump_op_info = {node->fullname_with_scope(), node->fullname_with_scope(), -1, -1, 0};
     if (control_flow_inputs_.find(node) != control_flow_inputs_.end()) {
       dump_op_info.dump_op_name = control_flow_inputs_[node].first->fullname_with_scope();
       dump_op_info.input_index = control_flow_inputs_[node].second;
@@ -255,9 +257,19 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
           MS_LOG(ERROR) << "tuple_get_item_node is invalid. " << node->fullname_with_scope();
           return RET_ERROR;
         }
+        if (tuple_get_item_cnode->input(1) == nullptr) {
+          MS_LOG(ERROR) << "tuple_get_item_node input 1 is invalid. ";
+          return RET_ERROR;
+        }
         dump_op_info.dump_op_name = tuple_get_item_cnode->input(1)->fullname_with_scope();
         dump_op_info.output_index = static_cast<int32_t>(GetTupleGetItemOutIndex(tuple_get_item_cnode));
       }
+    }
+    auto iter = input_format_infos.find(dump_op_info.dump_op_name);
+    if (iter != input_format_infos.end()) {
+      dump_op_info.input_format = iter->second;
+    } else {
+      MS_LOG(WARNING) << "not find " << dump_op_info.dump_op_name << " in input_format_infos.";
     }
     if (image_lists.find(dump_op_info.dump_op_name) == image_lists.end()) {
       (void)dump_op_infos.emplace_back(dump_op_info);

@@ -24,9 +24,13 @@ namespace mindspore {
 namespace lite {
 std::mutex acl_context_mutex;
 AclContextManager::~AclContextManager() {
+  if (!acl_init_flag_) {
+    return;
+  }
   std::unique_lock<std::mutex> lock(acl_context_mutex);
   auto ret = svp_acl_finalize();
   MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "finalize acl failed.");
+  acl_init_flag_ = false;
 }
 
 int AclContextManager::Init(const std::string &acl_config_path) {

@@ -19,6 +19,8 @@
 
 namespace mindspore {
 constexpr auto kAclConfigPath = "AclConfigPath";
+constexpr auto kLastDimStride = "internal_stride";
+constexpr auto kSupportZeroCopy = "SupportZeroCopy";
 constexpr auto kDetectionPostProcess = "DetectionPostProcess";
 constexpr auto kDpico = "dpico";
 constexpr auto kInputsShape = "inputs_shape";
@@ -26,9 +28,9 @@ constexpr auto kGTotalT = "GTotalT";
 constexpr auto kMaxRoiNum = "MaxRoiNum";
 constexpr auto kMinHeight = "MinHeight";
 constexpr auto kMinWidth = "MinWidth";
-constexpr auto kModelSharingKey = "inner_sharing_workspace";
-constexpr auto kModelSharingPrepareKey = "inner_calc_workspace_size";
-constexpr auto kModelSharingSection = "inner_common";
+constexpr auto kModelSharingKey = "multi_model_sharing_mem";
+constexpr auto kModelSharingPrepareKey = "multi_model_sharing_mem_prepare";
+constexpr auto kModelSharingSection = "common";
 constexpr auto kNetType = "net_type";
 constexpr auto kNmsThreshold = "NmsThreshold";
 constexpr auto kOutputsFormat = "outputs_format";
