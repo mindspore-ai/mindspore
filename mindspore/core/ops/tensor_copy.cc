@@ -29,10 +29,7 @@ namespace {
 abstract::ShapePtr TensorMoveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);
-  if (input_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
-  }
-  return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  return input_shape_ptr->cast<abstract::ShapePtr>();
 }
 
 TypePtr TensorMoveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -51,9 +48,9 @@ AbstractBasePtr TensorMoveInfer(const abstract::AnalysisEnginePtr &, const Primi
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto infer_type = TensorMoveInferType(primitive, input_args);
-  auto infer_shape = TensorMoveInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  // Just check dtype is tensor, shape is not change
+  (void)TensorMoveInferType(primitive, input_args);
+  return input_args[kIndex0]->Clone();
 }
 
 // AG means auto generated
