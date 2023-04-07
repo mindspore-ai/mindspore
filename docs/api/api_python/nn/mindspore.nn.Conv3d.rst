@@ -20,7 +20,7 @@ mindspore.nn.Conv3d
     参数：
         - **in_channels** (int) - Conv3d层输入Tensor的空间维度。
         - **out_channels** (int) - Conv3d层输出Tensor的空间维度。
-        - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。数据类型为int或包含三个整数的tuple。一个整数表示卷积核的深度、高度和宽度均为该值该值。包含三个整数的tuple分别表示卷积核的深度、高度和宽度。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。数据类型为int或包含三个整数的tuple。一个整数表示卷积核的深度、高度和宽度均为该值。包含三个整数的tuple分别表示卷积核的深度、高度和宽度。
         - **stride** (Union[int, tuple[int]]) - 三维卷积核的移动步长。数据类型为整型或三个整型的tuple。一个整数表示在深度、高度和宽度方向的移动步长均为该值。三个整数的tuple分别表示在深度、高度和宽度方向的移动步长。默认值：1。
         - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值："same"。
 
