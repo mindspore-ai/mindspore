@@ -14,7 +14,7 @@ mindspore.ops.BoundingBoxDecode
         - **wh_ratio_clip** (float) - 解码框计算的宽高比限制。默认值：0.016。
 
     输入：
-        - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n,4)` 。
+        - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。
         - **deltas** (Tensor) - 框的增量。它的shape与 `anchor_box` 相同。
 
     输出：

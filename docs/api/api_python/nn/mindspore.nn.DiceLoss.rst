@@ -17,8 +17,8 @@ mindspore.nn.DiceLoss
         - **smooth** (float) - 将添加到分母中，以提高数值稳定性的参数。取值大于0。默认值：1e-5。
 
     输入：
-        - **logits** (Tensor) - 输入预测值，任意维度的Tensor。数据类型必须为float16或float32。
-        - **labels** (Tensor) - 输入目标值，任意维度的Tensor，一般与 `logits` 的shape相同。数据类型必须为float16或float32。
+        - **logits** (Tensor) - 输入预测值。数据类型必须为float16或float32。
+        - **labels** (Tensor) - 输入目标值，一般与 `logits` 的shape相同。数据类型必须为float16或float32。
 
     输出：
         Tensor，shape为每样本采样的Dice系数的Tensor。

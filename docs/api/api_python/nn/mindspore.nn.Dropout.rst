@@ -20,7 +20,7 @@ mindspore.nn.Dropout
         - **dtype** (:class:`mindspore.dtype`) - `input` 的数据类型。默认值：mindspore.float32。
 
     输入：
-        - **x** (Tensor) - Dropout的输入，任意维度的Tensor。数据类型必须为float16或float32。
+        - **x** (Tensor) - Dropout的输入。数据类型必须为float16或float32。
 
     输出：
         Tensor，输出为Tensor，其shape与 `x` shape相同。
