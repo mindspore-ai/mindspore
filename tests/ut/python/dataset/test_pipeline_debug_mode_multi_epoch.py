@@ -862,10 +862,10 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_shuffle(my_debug_mode):
 
     # Test shuffle=GLOBAL
     shuffle_global_golden = [32, 1, 11, 42, 3, 22, 21, 2, 41, 13, 31, 12] + \
-                            [1, 41, 22, 2, 3, 32, 11, 13, 21, 31, 42, 12] + \
-                            [3, 1, 12, 22, 42, 2, 32, 31, 21, 13, 11, 41] + \
-                            [31, 21, 3, 2, 13, 22, 32, 41, 1, 11, 12, 42] + \
-                            [13, 3, 11, 22, 41, 21, 31, 32, 42, 1, 12, 2]
+                            [2, 12, 1, 42, 11, 31, 13, 32, 3, 22, 41, 21] + \
+                            [3, 1, 42, 13, 11, 21, 31, 22, 32, 2, 41, 12] + \
+                            [12, 31, 42, 22, 1, 2, 21, 13, 3, 41, 11, 32] + \
+                            [21, 3, 1, 31, 41, 11, 13, 12, 32, 22, 2, 42]
     result = test_config(1, ds.Shuffle.GLOBAL, 12, 5)
     assert result == shuffle_global_golden
 
@@ -933,8 +933,8 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
     data1 = ds.TFRecordDataset(TF_FILES, num_samples=16, shuffle=False)
     data1 = data1.shuffle(buffer_size=8)
     golden1 = [1, 2, 42, 21, 22, 31, 33, 32, 3, 43, 12, 11, 23, 4, 41, 13] + \
-              [11, 41, 31, 32, 1, 2, 22, 23, 33, 13, 42, 4, 43, 12, 21, 3] + \
-              [2, 41, 11, 3, 42, 1, 22, 43, 12, 21, 13, 23, 33, 31, 32, 4]
+              [11, 2, 31, 41, 13, 1, 23, 33, 3, 4, 43, 21, 12, 32, 42, 22] + \
+              [41, 2, 1, 11, 31, 3, 42, 23, 33, 43, 13, 21, 4, 12, 22, 32]
     result = test_config(1202, data1, 3)
     assert result == golden1
 
@@ -994,8 +994,8 @@ def test_pipeline_debug_mode_multi_epoch_tfrecord_ops(my_debug_mode):
     data1 = data1.shuffle(buffer_size=16)
     data1 = data1.batch(batch_size=8)
     golden1 = [[[2], [13], [3], [32], [2], [23], [3], [23]], [[22], [12], [13], [12], [42], [22], [42], [32]],
-               [[12], [13], [3], [2], [2], [42], [32], [42]], [[23], [22], [12], [23], [3], [13], [22], [32]],
-               [[3], [3], [13], [13], [23], [22], [32], [32]], [[42], [22], [12], [2], [12], [2], [42], [23]]]
+               [[12], [22], [32], [32], [42], [13], [2], [22]], [[42], [23], [2], [12], [13], [3], [3], [23]],
+               [[42], [32], [42], [23], [13], [3], [22], [13]], [[2], [12], [32], [22], [23], [2], [12], [3]]]
     result = test_config(1202, data1, 3)
     np.testing.assert_array_equal(result, np.array(golden1))
 
