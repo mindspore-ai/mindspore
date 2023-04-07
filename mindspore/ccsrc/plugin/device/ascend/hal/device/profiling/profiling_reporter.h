@@ -80,6 +80,7 @@ class ProfilingReporter {
   vector<uint32_t> task_ids_;
   std::map<string, int> node_name_index_map_;
   const uint32_t MSPROF_DIFFERENCE = 200;
+  const uint32_t DEFAULT_CONTEXT_ID = 4294967295;
 
   bool CheckStreamTaskValid() const;
   static uint32_t GetBlockDim(const CNodePtr &node);
