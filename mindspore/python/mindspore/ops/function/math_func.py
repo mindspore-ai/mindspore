@@ -4744,6 +4744,7 @@ def logaddexp(input, other):
 
     Raises:
         TypeError: If `input`, `other` is not a Tensor.
+        TypeError: The dtype of `input` or `other` is not float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8389,8 +8390,8 @@ def inner(input, other):
     For higher dimensions, returns a sum product over the last axis.
 
     Note:
-         If `input` or `other` is a Tensor scalar, :func:`mindspore.ops.inner` will be the same as
-         :func:`mindspore.ops.mul` .
+        If `input` or `other` is a Tensor scalar, :func:`mindspore.ops.inner` will be the same as
+        :func:`mindspore.ops.mul` .
 
     Args:
         input (Tensor): First input.
@@ -10103,7 +10104,7 @@ def digamma(input):
 
 def polygamma(n, input):
     r"""
-    Computes the `n`th derivative of the polygamma function on `input`.
+    Computes the :math:`n`-th derivative of the polygamma function on `input`.
 
     .. math::
         \psi^{(n)}(x) = \frac{d^{(n)}}{dx^{(n)}} \psi(x)
@@ -10113,7 +10114,7 @@ def polygamma(n, input):
     Args:
         n (Tensor): The order of the polygamma function.
             Supported dtypes: int32, int64. The shape of `n` is :math:`()`.
-        input (Tensor): The tensor to compute the `n`th derivative of the polygamma function with.
+        input (Tensor): The tensor to compute the :math:`n`-th derivative of the polygamma function with.
 
     Returns:
         Tensor, has the same dtype as `input`.

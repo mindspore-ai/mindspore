@@ -2987,11 +2987,11 @@ class MultiMarginLoss(Primitive):
             - 'sum': the output will be summed.
 
     Inputs:
-        inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
-        target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-            value of target should be non-negative, less than C.
-        weight (Tensor): The rescaling weight to each class with shape :math:`(C,)`. Data type only
-            support float16, float32 or float64.
+        - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float16, float32 or float64.
 
     Outputs:
         Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
@@ -7501,15 +7501,15 @@ class AvgPool3D(Primitive):
 
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`(kD,kH,kW)` and stride, the operation is as follows.
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. warning::
         "kernel_size" is in the range [1, 255]. "strides" is in the range [1, 63].
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
-        \frac{1}{kD * kH * kW} \sum_{l=0}^{kD-1} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
-        \text{input}(N_i, C_j, stride[0] \times d + l, stride[1] \times h + m, stride[2] \times w + n)
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,

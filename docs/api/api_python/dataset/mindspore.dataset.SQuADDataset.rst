@@ -1,7 +1,7 @@
 mindspore.dataset.SQuADDataset
 ==============================
 
-.. py:class:: mindspore.dataset.SQuADDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.SQuADDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
     SQuAD 1.1和SQuAD 2.0数据集。
 
@@ -30,7 +30,7 @@ mindspore.dataset.SQuADDataset
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
-        - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
+        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。

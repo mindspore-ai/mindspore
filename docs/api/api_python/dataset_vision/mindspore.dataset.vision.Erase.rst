@@ -10,7 +10,7 @@ mindspore.dataset.vision.Erase
         - **left** (int) - 擦除区域左上角位置的横坐标。
         - **height** (int) - 擦除区域的高度。
         - **width** (int) - 擦除区域的宽度。
-        - **value** (Union[int, Sequence[int, int, int]]) - 擦除区域的像素填充值。默认值：0。
+        - **value** (Union[int, Sequence[int, int, int]]，可选) - 擦除区域的像素填充值。默认值：0。
           若输入int，将以该值填充RGB通道；
           若输入Sequence[int, int, int]，将分别用于填充R、G、B通道。
         - **inplace** (bool，可选) - 是否直接在原图上执行擦除。默认值：False。

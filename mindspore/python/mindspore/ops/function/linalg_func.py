@@ -40,7 +40,7 @@ def eig(A):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        A (Tensor) - Square matrices of shape :math:`(*, N, N)`,
+        A (Tensor): Square matrices of shape :math:`(*, N, N)`,
           with float32, float64, complex64 or complex128 data type.
 
     Returns:
@@ -82,12 +82,12 @@ def geqrf(input):
 
 
      Args:
-        input (Tensor) - Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
-          with dtype of float32, float64, complex64, complex128.
+        input (Tensor): Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
+            with dtype of float32, float64, complex64, complex128.
 
     Returns:
-        y (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
-        tau (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
+        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
