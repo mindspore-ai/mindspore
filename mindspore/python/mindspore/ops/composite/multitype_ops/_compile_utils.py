@@ -391,12 +391,10 @@ def _transform_ellipsis_to_slice(data, tuple_index, op_name):
 
 def handle_empty_tensor(arg, data):
     """handle data update with empty tensor"""
-    if arg is None:
-        return Tensor([])
     if 0 in arg:
         init_func = Zero()
         init_func.__enable_zero_dim__ = True
-        return Tensor(shape=(0), dtype=data.dtype, init=init_func)
+        return Tensor(shape=arg, dtype=data.dtype, init=init_func)
     return const_utils.make_tensor([], data.dtype, arg)
 
 
