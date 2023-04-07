@@ -289,6 +289,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"tanh", std::string("tanh")},                                      // P.Tanh()
        {"rad2deg", std::string("rad2deg")},                                // F.rad2deg()
        {"deg2rad", std::string("deg2rad")},                                // F.deg2rad()
+       {"dot", std::string("dot")},                                        // composite.dot()
        {"round", std::string("round_")},                                   // P.Round()
        {"roll", std::string("roll")},                                      // P.Roll()
        {"rot90", std::string("rot90")},                                    // rot90()
