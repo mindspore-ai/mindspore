@@ -467,7 +467,7 @@ class SyncBatchNorm(_BatchNorm):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): :math:`\epsilon`, a value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
         affine (bool): A bool value. When set to True, :math:`\gamma` and :math:`\beta` can be learned.

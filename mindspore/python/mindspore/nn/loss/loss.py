@@ -2684,7 +2684,8 @@ class HingeEmbeddingLoss(LossBase):
             Default: 'mean'.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
+        - **logits** (Tensor) - The predicted value, expressed as :math:`x` in the equation.
+          Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
         - **labels** (Tensor) - Same shape as the logits, contains -1 or 1.
 
     Returns:

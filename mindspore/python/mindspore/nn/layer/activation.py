@@ -274,8 +274,6 @@ class LogSoftmax(Cell):
 
         \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right),
 
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
-
     Args:
         axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: -1.
 
@@ -1100,8 +1098,6 @@ class HSwish(Cell):
 
     .. math::
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
-
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
         - **x** (Tensor) - The input of HSwish, data type must be float16 or float32.

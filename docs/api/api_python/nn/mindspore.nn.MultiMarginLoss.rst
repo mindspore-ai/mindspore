@@ -3,7 +3,7 @@ mindspore.nn.MultiMarginLoss
 
 .. py:class:: mindspore.nn.MultiMarginLoss(p=1, margin=1.0, reduction='mean', weight=None)
 
-    多分类场景下用于计算 `x` 和 `y` 之间的合页损失（Hinge Loss），其中 `x` 为一个2-D Tensor，`y` 为一个表示类别索引的1-D Tensor， :math:`0 \leq y \leq \text{x.size}(1)-1`。
+    多分类场景下用于计算 :math:`x` 和 :math:`y` 之间的合页损失（Hinge Loss），其中 `x` 为一个2-D Tensor，`y` 为一个表示类别索引的1-D Tensor， :math:`0 \leq y \leq \text{x.size}(1)-1`。
 
     对于每个小批量样本，1D输入 :math:`x` 和标量 :math:`y` 的损失为：
 
