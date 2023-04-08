@@ -1100,7 +1100,14 @@ AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &nod
     return NewValueNode(py::cast<int64_t>(obj));
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Constant is float:" << (std::string)py::str(obj);
-    return NewValueNode(py::cast<float>(obj));
+    auto data = py::cast<float>(obj);
+    auto ret = NewValueNode(data);
+    auto fp32_val = ret->value()->cast<FP32ImmPtr>();
+    if (fp32_val != nullptr) {
+      MS_LOG(DEBUG) << "Set float64 value to FP32Imm.";
+      fp32_val->set_prim_value(py::cast<double>(obj));
+    }
+    return ret;
   } else if (py::isinstance<py::str>(obj)) {
     MS_LOG(INFO) << "The Constant is string:" << (std::string)py::str(obj);
     return NewValueNode(py::cast<std::string>(obj));

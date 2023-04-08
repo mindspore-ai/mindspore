@@ -195,7 +195,7 @@ def test_list_pop_type_error():
     with pytest.raises(TypeError) as error_info:
         res = list_pop()
         print("res:", res)
-    assert "Integer argument expected, but got FP32Imm type value: 1.000000" in str(error_info)
+    assert "Integer argument expected, but got FP32Imm type value: 1" in str(error_info)
 
 
 def test_list_pop_no_return():
