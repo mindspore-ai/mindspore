@@ -43,9 +43,11 @@ const size_t kUniformOutputsNum = 1;
 }  // namespace
 
 uint64_t UniformCpuKernelMod::New64() const {
+  const int64_t int64_t_max = (std::numeric_limits<int64_t>::max)();
   std::random_device device("/dev/urandom");
+  std::uniform_int_distribution<int64_t> distrib(0, int64_t_max);
   static std::mt19937_64 rng = std::mt19937_64(device());
-  return (rng)();
+  return distrib(rng);
 }
 
 void UniformCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
