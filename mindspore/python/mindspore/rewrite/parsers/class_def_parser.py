@@ -116,15 +116,63 @@ class ClassDefParser(Parser):
         """Parse target type"""
         return ast.ClassDef
 
+    def handle_father_class(self, stree, node: ast.ClassDef):
+        """Handle father class."""
+        for base in node.bases:
+            parser: Parser = ParserRegister.instance().get_parser(type(base))
+            father_class = parser.process(stree, base)
+            if "Cell" not in father_class:
+                for k, m in sys.modules.items():
+                    if k in ("_ast", "ast"):
+                        continue
+                    if hasattr(m, father_class):
+                        cls = getattr(m, father_class)
+                        source_code = inspect.getsource(cls)
+                        ast_root: ast.Module = ast.parse(source_code)
+                        stree._father_class_ast.append(ast_root) # pylint: disable=protected-access
+                        break
+
+    def process(self, stree: SymbolTree, node: ast.ClassDef):
+        """
+        Parse init and construct in ast.ClassDef.
+
+        Args:
+            stree ([SymbolTree]): Symbol Tree under parsing.
+            node ([ast.ClassDef]): An ast.ClassDef node.
+        """
+        replacer = AstReplacer(node)
+        replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
+
+        stree.set_class_ast(node)
+        self.handle_father_class(stree, node)
+
+        if self._need_add_init_func(node):
+            self._add_init_func(node)
+
+        for body in node.body:
+            if isinstance(body, ast.FunctionDef):
+                if body.name == "__init__":
+                    self._process_init_func_ast(stree, node, body)
+                    stree.set_init_func_ast(body)
+                elif body.name == "construct":
+                    parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
+                    parser.process(stree, body)
+                else:
+                    logger.info(
+                        "Ignoring ast.FunctionDef in ast.ClassDef except __init__ and construct function: %s",
+                        body.name)
+            else:
+                logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
+
     def _is_subtree_field(self, ori_net, field) -> bool:
         op = getattr(ori_net, field)
         return not type(op).__name__ in self._cell_namespace
 
-    def _process_init_func_ast(self, stree: SymbolTree, init_ast: ast.FunctionDef):
+    def _process_init_func_ast(self, stree: SymbolTree, cls_ast: ast.ClassDef, init_ast: ast.FunctionDef):
         """Process init func"""
         super_index = ClassDefParser._find_super_expr_of_init_func(init_ast)
         ClassDefParser._modify_arguments_of_init_func(init_ast)
-        self._replace_ori_field_of_init_func(stree, init_ast.body, super_index)
+        self._replace_ori_field_of_init_func(stree, cls_ast, init_ast.body, super_index)
 
     @staticmethod
     def _find_super_expr_of_init_func(ast_init_fn: ast.FunctionDef) -> int:
@@ -187,7 +235,7 @@ class ClassDefParser(Parser):
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
 
-    def _handle_bodies_for_replace_ori_field(self, body_index, body, super_index, scope_checker, stree,
+    def _handle_bodies_for_replace_ori_field(self, cls_ast, body_index, body, super_index, scope_checker, stree,
                                              body_index_to_be_deleted, new_node_to_be_inserted):
         """ handle_bodies_for_replace_ori_field. """
 
@@ -205,10 +253,24 @@ class ClassDefParser(Parser):
             return  # ignoring super.__init__()
         if isinstance(body, ast.If):
             if scope_checker.check(body.test):
-                self._replace_ori_field_of_init_func(stree, body.body, -1)
-                self._replace_ori_field_of_init_func(stree, body.orelse, -1)
-                return
-            logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
+                self._replace_ori_field_of_init_func(stree, cls_ast, body.body, -1)
+                self._replace_ori_field_of_init_func(stree, cls_ast, body.orelse, -1)
+            else:
+                logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
+            return
+        if isinstance(body, ast.Expr) and isinstance(body.value, ast.Call):
+            ast_call = body.value
+            func = ast_call.func
+            if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name) and func.value.id == 'self':
+                for cls_func_def in cls_ast.body:
+                    if isinstance(cls_func_def, ast.FunctionDef) and cls_func_def.name == func.attr:
+                        ClassDefParser._modify_arguments_of_init_func(cls_func_def)
+                        self._replace_ori_field_of_init_func(stree, cls_ast, cls_func_def.body, -1)
+                        ast_call.args = [ast.Name(id='obj', ctx=ast.Load())]
+                        ast_call.keywords = []
+                        ast_call.starargs = None
+                        ast_call.kwargs = None
+                        return
         if not isinstance(body, ast.Assign):  # if not assign node, delete
             body_index_to_be_deleted.append(body_index)
             return
@@ -234,7 +296,50 @@ class ClassDefParser(Parser):
                               [ast.Name('obj', ast.Load()),
                                ast.Constant(value=field_name, kind=None)], [], lineno=0, col_offset=0)
 
-    def _replace_ori_field_of_init_func(self, stree: SymbolTree, bodies: [], super_index: int):
+    def _need_add_init_func(self, cls_ast: ast.ClassDef) -> bool:
+        """If class has base nn.Cell but not have init func, then we need to add init func"""
+        base_nn_cell = False
+        for base in cls_ast.bases:
+            if isinstance(base, ast.Name) and base.id == 'Cell'\
+                or isinstance(base, ast.Attribute) and isinstance(base.value, ast.Name)\
+                and base.value.id == "nn" and base.attr == 'Cell':
+                base_nn_cell = True
+                break
+        if not base_nn_cell:
+            return False
+        for body in cls_ast.body:
+            if isinstance(body, ast.FunctionDef) and body.name == '__init__':
+                return False
+        return True
+
+    def _add_init_func(self, cls_ast: ast.ClassDef):
+        """Add init func with super().__init__()"""
+        init_func_ast = ast.FunctionDef(
+            name='__init__',
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[
+                    ast.arg(arg='self')],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[]),
+            body=[
+                ast.Expr(
+                    value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Call(
+                                func=ast.Name(id='super', ctx=ast.Load()),
+                                args=[],
+                                keywords=[]),
+                            attr='__init__',
+                            ctx=ast.Load()),
+                        args=[],
+                        keywords=[]))],
+            decorator_list=[])
+        cls_ast.body.insert(0, init_func_ast)
+        ast.fix_missing_locations(cls_ast)
+
+    def _replace_ori_field_of_init_func(self, stree: SymbolTree, cls_ast: ast.ClassDef, bodies: [], super_index: int):
         """
         Replace original field in init func to self.XX = getattr(self._handler, "XX").
         Only keep following two kinds of ast nodes in bodies right now:
@@ -254,57 +359,13 @@ class ClassDefParser(Parser):
         new_node_to_be_inserted = []
         scope_checker = AstScopeChecker("self")
         for body_index, body in enumerate(bodies):
-            self._handle_bodies_for_replace_ori_field(body_index, body, super_index, scope_checker, stree,
+            self._handle_bodies_for_replace_ori_field(cls_ast, body_index, body, super_index, scope_checker, stree,
                                                       body_index_to_be_deleted, new_node_to_be_inserted)
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
         for n in new_node_to_be_inserted:
             bodies.append(n)
         ClassDefParser._remove_empty_ast_in_init_func(bodies)
-
-    def handle_father_class(self, stree, node: ast.ClassDef):
-        """Handle father class."""
-        for base in node.bases:
-            parser: Parser = ParserRegister.instance().get_parser(type(base))
-            father_class = parser.process(stree, base)
-            if "Cell" not in father_class:
-                for k, m in sys.modules.items():
-                    if k in ("_ast", "ast"):
-                        continue
-                    if hasattr(m, father_class):
-                        cls = getattr(m, father_class)
-                        source_code = inspect.getsource(cls)
-                        ast_root: ast.Module = ast.parse(source_code)
-                        stree._father_class_ast.append(ast_root) # pylint: disable=protected-access
-                        break
-
-    def process(self, stree: SymbolTree, node: ast.ClassDef):
-        """
-        Parse init and construct in ast.ClassDef.
-
-        Args:
-            stree ([SymbolTree]): Symbol Tree under parsing.
-            node ([ast.ClassDef]): An ast.ClassDef node.
-        """
-        replacer = AstReplacer(node)
-        replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
-
-        stree.set_class_ast(node)
-        self.handle_father_class(stree, node)
-        for body in node.body:
-            if isinstance(body, ast.FunctionDef):
-                if body.name == "__init__":
-                    self._process_init_func_ast(stree, body)
-                    stree.set_init_func_ast(body)
-                elif body.name == "construct":
-                    parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
-                    parser.process(stree, body)
-                else:
-                    logger.info(
-                        "Ignoring ast.FunctionDef in ast.ClassDef except __init__ and construct function: %s",
-                        body.name)
-            else:
-                logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
 
 
 g_classdef_parser = reg_parser(ClassDefParser())
