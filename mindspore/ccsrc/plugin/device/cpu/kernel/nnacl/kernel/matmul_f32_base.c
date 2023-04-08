@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/op_base.h"
 #if defined(ENABLE_AVX512)
-#include "nnacl/kernel/matmul_fp32_avx512.h"
+#include "nnacl/kernel/matmul_f32_avx512.h"
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
 #endif
 #if defined(ENABLE_AVX)
-#include "nnacl/kernel/matmul_fp32_avx.h"
+#include "nnacl/kernel/matmul_f32_avx.h"
 #endif
 #if defined(ENABLE_SSE)
-#include "nnacl/kernel/matmul_fp32_sse.h"
+#include "nnacl/kernel/matmul_f32_sse.h"
 #endif
 #if defined(ENABLE_ARM32)
-#include "nnacl/kernel/matmul_fp32_arm32.h"
+#include "nnacl/kernel/matmul_f32_arm32.h"
 #endif
 #if defined(ENABLE_ARM64)
-#include "nnacl/kernel/matmul_fp32_arm64.h"
+#include "nnacl/kernel/matmul_f32_arm64.h"
 #endif
 
 #define kNumDeepThreshold 512
@@ -139,10 +139,10 @@ int MatmulFp32Base_PackMatrixAImpl(MatmulFp32Struct *matmul) {
 int MatmulFp32Base_PackMatrixBImpl(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
 
-  float *src_ptr = matmul->matrix_b_.has_origin_
-                     ? matmul->matrix_b_.origin_ptr_
-                     : (matmul->conv1x1_origin_weight_ != NULL ? matmul->conv1x1_origin_weight_
-                                                               : (float *)(matmul->base_.in_[SECOND_INPUT]->data_));
+  float *origin_data = matmul->conv1x1_origin_weight_ != NULL ? matmul->conv1x1_origin_weight_
+                                                              : (float *)(matmul->base_.in_[SECOND_INPUT]->data_);
+  float *src_ptr = matmul->matrix_b_.has_origin_ ? matmul->matrix_b_.origin_ptr_ : origin_data;
+
   MS_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_b_.pack_ptr_ != NULL, NNACL_ERR);
   MS_CHECK_TRUE_RET(matmul->matrix_b_pack_fun_ != NULL, NNACL_ERR);
@@ -157,7 +157,7 @@ int MatmulFp32Base_PackMatrixBImpl(MatmulFp32Struct *matmul) {
     matmul->pack_b_dst_ = matmul->matrix_b_.pack_ptr_ + i * matmul->deep_ * matmul->col_align_;
     int ret = matmul->base_.env_->parallel_launch(matmul->base_.env_->thread_pool_, MatmulFp32PackMatrixBRun, matmul,
                                                   matmul->base_.thread_nr_);
-    MS_CHECK_FALSE(ret != NNACL_OK, NNACL_ERR);
+    MS_CHECK_FALSE(ret != NNACL_OK, ret);
   }
   return NNACL_OK;
 }
@@ -179,7 +179,8 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_a_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[FIRST_INPUT]->data_, data_size, &is_packed);
+      matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_, matmul->base_.in_[FIRST_INPUT]->data_,
+                                               data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -217,7 +218,8 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_b_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->base_.in_[SECOND_INPUT]->data_, data_size, &is_packed);
+      matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_, matmul->base_.in_[SECOND_INPUT]->data_,
+                                               data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -232,18 +234,18 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
 
 int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matrix_info, int index) {
   MS_CHECK_TRUE_RET(index < matmul->base_.in_size_, NNACL_ERR);
-  int backup_size = GetElementNum(matmul->base_.in_[0]) * sizeof(float);
+  int backup_size = GetElementNum(matmul->base_.in_[index]) * sizeof(float);
   MS_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
   matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
   NNACL_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
-  void *src_ptr = matmul->base_.in_[0]->data_;
+  void *src_ptr = matmul->base_.in_[index]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
-  (void)memcpy(matrix_info->origin_ptr_, src_ptr, backup_size * sizeof(float));
+  (void)memcpy(matrix_info->origin_ptr_, src_ptr, backup_size);
   matrix_info->has_origin_ = true;
   return NNACL_OK;
 }
 
-int MatmulFp32Base_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) { return NNACL_OK; }
+int MatmulFp32Base_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) { return NNACL_ERR; }
 
 int MatmulFp32Base_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
@@ -437,12 +439,11 @@ int MatmulFp32Base_InitTmpOutBuffer(MatmulFp32Struct *matmul) {
     // avx need to malloc dst aligned to C8NUM
     // avx512 need to malloc dst aligned to C16NUM
     int out_channel = matmul->col_;
+    NNACL_CHECK_ZERO_RETURN_ERR(matmul->col_tile_);
     int oc_block_num = UP_DIV(out_channel, matmul->col_tile_);
     int data_size = matmul->batch_ * matmul->row_ * oc_block_num * matmul->col_tile_ * sizeof(float);
     matmul->output_data_ = (float *)(malloc(data_size));
-    if (matmul->output_data_ == NULL) {
-      return NNACL_ERR;
-    }
+    NNACL_CHECK_NULL_RETURN_ERR(matmul->output_data_);
   }
   return NNACL_OK;
 }
@@ -477,7 +478,7 @@ void MatmulFp32Base_FreePackedMatrixB(KernelBase *self) {
   matmul->matrix_b_.pack_ptr_ = NULL;
 }
 
-int matmul_fp32_resize(KernelBase *self) {
+int matmul_f32_resize(KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
   int ret = matmul->init_parameter_(matmul);
@@ -498,7 +499,7 @@ int matmul_fp32_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int matmul_fp32_release(struct KernelBase *self) {
+int matmul_f32_release(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
   // packed const-matrix will be delete by framework.
@@ -512,7 +513,7 @@ int matmul_fp32_release(struct KernelBase *self) {
   }
   if (matmul->a_const_) {
     if (matmul->is_sharing_pack_) {
-      matmul->free_by_sharing_weight_(matmul->matrix_a_.pack_ptr_);
+      matmul->free_by_sharing_weight_(matmul->pack_weight_manager_, matmul->matrix_a_.pack_ptr_);
     } else {
       free(matmul->matrix_a_.pack_ptr_);
     }
@@ -522,7 +523,7 @@ int matmul_fp32_release(struct KernelBase *self) {
       return NNACL_OK;
     }
     if (matmul->is_sharing_pack_) {
-      matmul->free_by_sharing_weight_(matmul->matrix_b_.pack_ptr_);
+      matmul->free_by_sharing_weight_(matmul->pack_weight_manager_, matmul->matrix_b_.pack_ptr_);
     } else {
       free(matmul->matrix_b_.pack_ptr_);
     }
@@ -530,25 +531,23 @@ int matmul_fp32_release(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int matmul_fp32_prepare(struct KernelBase *self) {
+int matmul_f32_prepare(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
-  MS_CHECK_FALSE(matmul->base_.in_size_ < C2NUM, NNACL_ERR);
-  MS_CHECK_FALSE(matmul->base_.out_size_ < 1, NNACL_ERR);
-  MS_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
-  MS_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
+  MS_CHECK_FALSE(matmul->base_.in_size_ < C2NUM, NNACL_INPUT_TENSOR_ERROR);
+  MS_CHECK_FALSE(matmul->base_.out_size_ < 1, NNACL_OUTPUT_TENSOR_ERROR);
+  MS_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
+  MS_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
 
   if (matmul->base_.in_size_ == FOURTH_INPUT) {
-    MS_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_ERR);
-    if (self->in_[THIRD_INPUT]->data_ == NULL) {
-      return NNACL_ERR;
-    }
+    MS_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
+    MS_CHECK_FALSE(self->in_[THIRD_INPUT]->data_ == NULL, NNACL_MATMUL_BIAS_INVALID);
   }
 
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
-    return NNACL_ERR;
-  }
+  MS_CHECK_FALSE(
+    param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6,
+    NNACL_MATMUL_ACT_TYPE_INVALID);
 
   int ret = matmul->init_parameter_(matmul);
   MS_CHECK_FALSE(ret != NNACL_OK, ret);
@@ -572,7 +571,7 @@ int matmul_fp32_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int matmul_fp32_compute(struct KernelBase *self) {
+int matmul_f32_compute(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
   float *out_data = (float *)(matmul->base_.out_[FIRST_INPUT]->data_);
@@ -623,18 +622,22 @@ void InitMatrixInfo(MatrixInfo *info) {
 KernelBase *CreateMatmulFp32Base() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)malloc(sizeof(MatmulFp32Struct));
   NNACL_CHECK_NULL_RETURN_NULL(matmul);
-  matmul->base_.prepare = matmul_fp32_prepare;
-  matmul->base_.resize = matmul_fp32_resize;
-  matmul->base_.release = matmul_fp32_release;
-  matmul->base_.compute = matmul_fp32_compute;
+  memset(matmul, 0, sizeof(MatmulFp32Struct));
+  matmul->base_.prepare = matmul_f32_prepare;
+  matmul->base_.resize = matmul_f32_resize;
+  matmul->base_.release = matmul_f32_release;
+  matmul->base_.compute = matmul_f32_compute;
   InitMatrixInfo(&(matmul->matrix_a_));
   InitMatrixInfo(&(matmul->matrix_b_));
   InitMatrixInfo(&(matmul->matrix_c_));
   matmul->pack_opt_ = false;
+  matmul->a_const_ = false;
+  matmul->b_const_ = false;
   matmul->out_need_aligned_ = false;
   matmul->conv1x1_origin_bias_ = NULL;
   matmul->model_thread_nr_ = -1;
   matmul->support_mul_batch_cut_by_row_ = false;
+  matmul->matmul_type_ = kMatmulFp32BaseCpu;
   matmul->get_thread_cutting_policy_ = MatmulFp32Base_GetThreadCuttingPolicy;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Base_CheckThreadCuttingByRow;
   matmul->get_thread_cutting_info_by_row_ = MatmulFp32Base_GetThreadCuttingInfoByRow;

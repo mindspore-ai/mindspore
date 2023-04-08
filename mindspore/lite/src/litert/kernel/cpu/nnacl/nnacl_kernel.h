@@ -35,6 +35,7 @@ class NnaclKernel : public kernel::LiteKernel {
   int Run() override;
   int InferShape();
   virtual int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);
+  const KernelBase *Kernel() const { return kernel_; }
 
  protected:
   void UpdateTensorC();

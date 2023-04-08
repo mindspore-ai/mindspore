@@ -20,7 +20,7 @@ CPU_TRAIN_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_train.cf
 [ -n "${CPU_TRAIN_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 
 ops_list=()
-DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL -DENABLE_MINDRT -DUSE_GLOG"
+DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DENABLE_MINDRT -DUSE_GLOG"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
   FLATBUFFERS_LIST=()
@@ -231,8 +231,11 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/litert/*.h)
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/control_flow/*.h)
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/extendrt/mindir_loader/*.h)
-  nnacl_files_h=()
-  while IFS='' read -r line; do nnacl_files_h+=("$line"); done < <(ls mindspore/lite/src/litert/kernel/cpu/nnacl/*.h)
+  nnacl_files_h=(
+    mindspore/lite/src/litert/kernel/cpu/nnacl/cxx_utils.h
+    mindspore/lite/src/litert/kernel/cpu/nnacl/nnacl_kernel.h
+    mindspore/lite/src/litert/kernel/cpu/nnacl/nnacl_manager.h
+  )
   mindrt_files_h=()
   while IFS='' read -r line; do mindrt_files_h+=("$line"); done < <(ls mindspore/core/mindrt/src/actor/*.h)
   while IFS='' read -r line; do mindrt_files_h+=("$line"); done < <(ls mindspore/core/mindrt/src/thread/*.h)
@@ -292,8 +295,11 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/litert/*.cc)
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/control_flow/*.cc)
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/extendrt/mindir_loader/*.cc)
-  nnacl_files_cc=()
-  while IFS='' read -r line; do nnacl_files_cc+=("$line"); done < <(ls mindspore/lite/src/litert/kernel/cpu/nnacl/*.cc)
+  nnacl_files_cc=(
+    mindspore/lite/src/litert/kernel/cpu/nnacl/cxx_utils.cc
+    mindspore/lite/src/litert/kernel/cpu/nnacl/nnacl_kernel.cc
+    mindspore/lite/src/litert/kernel/cpu/nnacl/nnacl_manager.cc
+  )
   # sava all assembly files
   assembly_files=()
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/assembly/*/*.S)
@@ -425,6 +431,11 @@ getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/devic
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt8" "kNumberTypeInt8" &
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeInt32" &
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeBool" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeFloat32" "kNumberTypeFloat32" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeFloat16" "kNumberTypeFloat16" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt8" "kNumberTypeInt8" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeInt32" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeBool" &
 
 wait
 sleep 0.5

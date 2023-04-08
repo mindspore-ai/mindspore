@@ -147,4 +147,3 @@ KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
 }
 
 REG_KERNEL_CREATOR(PrimType_BiasAdd, kNumberTypeFloat32, CreateBiasAdd);
-REG_KERNEL_CREATOR(PrimType_BiasAdd, kNumberTypeFloat16, CreateBiasAdd);

@@ -15,8 +15,8 @@
  */
 
 #ifdef ENABLE_AVX512
-#include "nnacl/kernel/matmul_fp32_avx512.h"
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_avx512.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/matmul_avx512_fp32.h"
@@ -246,23 +246,23 @@ void MatmulFp32Avx512_InitGlobalVariable(MatmulFp32Struct *matmul) {
   matmul->col_tile_ = C16NUM;
   matmul->col_min_unit_ = C64NUM;
 
-  if (param->row_ == 1) {
-    if (!param->b_const_ && param->col_ <= C128NUM) {
+  if (matmul->row_ == 1) {
+    if (!matmul->b_const_ && matmul->col_ <= C128NUM) {
       matmul->out_need_aligned_ = true;
     }
-  } else if (param->col_ == 1) {
+  } else if (matmul->col_ == 1) {
     matmul->out_need_aligned_ = true;
   } else {
     matmul->out_need_aligned_ = false;
   }
 
-  if (param->deep_ >= C128NUM) {
+  if (matmul->deep_ >= C128NUM) {
     matmul->out_need_aligned_ = false;
   }
 }
 int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  if (param->deep_ < C128NUM) {
+  if (matmul->deep_ < C128NUM) {
     return MatmulFp32Base_InitParameter(matmul);
   }
   matmul->init_global_varibale_(matmul);
@@ -320,22 +320,22 @@ int MatmulFp32Avx512_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
   if (row_num <= 0) {
     return NNACL_OK;
   }
-  const float *input = matmul->matrix_a_.pack_ptr_ + start_row * param->deep_;
+  const float *input = matmul->matrix_a_.pack_ptr_ + start_row * matmul->deep_;
   float *output = matmul->output_data_ + start_row * matmul->col_step_;
-  if (param->col_ == 1) {
+  if (matmul->col_ == 1) {
     float bias = 0;
     if (matmul->matrix_c_.pack_ptr_ != NULL) {
       bias = matmul->matrix_c_.pack_ptr_[0];
     }
-    matmul->gemm_not_pack_fun_(input, matmul->matrix_b_.pack_ptr_, output, &bias, row_num, param->deep_,
+    matmul->gemm_not_pack_fun_(input, matmul->matrix_b_.pack_ptr_, output, &bias, row_num, matmul->deep_,
                                param->act_type_);
   } else {
     if (matmul->out_need_aligned_) {
       MatMulAvx512Fp32(input, matmul->matrix_b_.pack_ptr_, output, matmul->matrix_c_.pack_ptr_, param->act_type_,
-                       param->deep_, param->col_align_, param->col_align_, row_num);
+                       matmul->deep_, matmul->col_align_, matmul->col_align_, row_num);
     } else {
       MatMulMaskAvx512Fp32(input, matmul->matrix_b_.pack_ptr_, output, matmul->matrix_c_.pack_ptr_, param->act_type_,
-                           param->deep_, param->col_, param->col_, row_num);
+                           matmul->deep_, matmul->col_, matmul->col_, row_num);
     }
   }
   return NNACL_OK;
@@ -354,30 +354,30 @@ int MatmulFp32Avx512_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
     return NNACL_OK;
   }
   int func_flag = 0;
-  if (param->row_ == 1) {
-    func_flag += (!param->b_const_ && param->col_ <= C128NUM) ? C2NUM : C1NUM;
+  if (matmul->row_ == 1) {
+    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
   }
-  int b_stride = func_flag == C2NUM ? 1 : param->deep_;
-  for (int i = 0; i < param->batch; ++i) {
-    float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[i] * param->row_align_ * param->deep_;
+  int b_stride = func_flag == C2NUM ? 1 : matmul->deep_;
+  for (int i = 0; i < matmul->batch_; ++i) {
+    float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[i] * matmul->row_align_ * matmul->deep_;
     float *b =
-      matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[i] * param->deep_ * param->col_align_ + start_oc * b_stride;
-    float *c = matmul->output_data_ + i * param->row_ * matmul->col_step_ + start_oc;
+      matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[i] * matmul->deep_ * matmul->col_align_ + start_oc * b_stride;
+    float *c = matmul->output_data_ + i * matmul->row_ * matmul->col_step_ + start_oc;
     float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_ + start_oc;
     if (func_flag == 0) {
       if (matmul->out_need_aligned_) {
-        MatMulAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, param->col_align_, param->row_);
+        MatMulAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_align_, matmul->row_);
       } else {
-        MatMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, param->col_, param->row_);
+        MatMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_, matmul->row_);
       }
     } else if (func_flag == C1NUM) {
       if (matmul->out_need_aligned_) {
-        MatVecMulAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, param->col_align_);
+        MatVecMulAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_align_);
       } else {
-        MatVecMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, param->col_);
+        MatVecMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_);
       }
     } else {
-      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, matmul->col_step_);
+      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_step_);
     }
   }
   return NNACL_OK;
@@ -386,33 +386,33 @@ int MatmulFp32Avx512_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
 
   int start_batch = task_id * matmul->batch_stride_;
-  int end_batch = MSMIN(param->batch, start_batch + matmul->batch_stride_);
+  int end_batch = MSMIN(matmul->batch_, start_batch + matmul->batch_stride_);
   int func_flag = 0;
-  if (param->row_ == 1) {
-    func_flag += (!param->b_const_ && param->col_ <= C128NUM) ? C2NUM : C1NUM;
+  if (matmul->row_ == 1) {
+    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
   }
 
   for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * param->row_align_ * param->deep_;
-    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * param->deep_ * param->col_align_;
-    float *c = matmul->output_data_ + index * param->row_ * matmul->col_step_;
+    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * matmul->row_align_ * matmul->deep_;
+    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * matmul->deep_ * matmul->col_align_;
+    float *c = matmul->output_data_ + index * matmul->row_ * matmul->col_step_;
     float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_;
     if (func_flag == 0) {
       if (matmul->out_need_aligned_) {
-        MatMulAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, matmul->col_step_, param->col_align_,
-                         param->row_);
+        MatMulAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_align_,
+                         matmul->row_);
       } else {
-        MatMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, matmul->col_step_, param->col_,
-                             param->row_);
+        MatMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_,
+                             matmul->row_);
       }
     } else if (func_flag == C1NUM) {
       if (matmul->out_need_aligned_) {
-        MatVecMulAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, matmul->col_step_, param->col_align_);
+        MatVecMulAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_align_);
       } else {
-        MatVecMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, param->deep_, matmul->col_step_, param->col_);
+        MatVecMulMaskAvx512Fp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_);
       }
     } else {
-      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, param->deep_, matmul->col_step_, matmul->col_step_);
+      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_step_);
     }
   }
   return NNACL_OK;
@@ -672,6 +672,7 @@ int MatmulFp32Avx512_ParallelRunByBatchColRowGEMM(MatmulFp32Struct *matmul, int 
 
 KernelBase *CreateMatmulFp32Avx512() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  matmul->matmul_type_ = kNotImplemented;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Avx512_CheckThreadCuttingByRow;
   matmul->get_thread_cutting_policy_ = MatmulFp32Avx512_GetThreadCuttingPolicy;
   matmul->init_parameter_ = MatmulFp32Avx512_InitParameter;

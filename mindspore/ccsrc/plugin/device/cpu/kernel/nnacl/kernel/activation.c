@@ -138,7 +138,9 @@ int activation_do_compute(void *cdata, int task_id, float l, float r) {
   int stride = UP_DIV(ele_num, activation->base.thread_nr_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, NNACL_ERR);
   int count = MSMIN(stride, ele_num - stride * task_id);
-  MS_CHECK_FALSE(count <= 0, NNACL_OK);
+  if (count <= 0) {
+    return NNACL_OK;
+  }
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(stride, task_id), NNACL_ERR);
 
   switch (activation->data_type_) {

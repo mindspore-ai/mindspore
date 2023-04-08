@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_KERNEL_FULLCONNECTION_H_
+#define MINDSPORE_NNACL_KERNEL_FULLCONNECTION_H_
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX512_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX512_H_
-#ifdef ENABLE_AVX512
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateMatmulFp32Avx512();
+KernelBase *CreateFullconnection(OpParameter *param, int data_type);
 
-#endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX512_H_
+#endif  // MINDSPORE_NNACL_KERNEL_FULLCONNECTION_H_

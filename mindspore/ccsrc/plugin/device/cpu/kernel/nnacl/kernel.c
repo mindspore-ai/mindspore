@@ -22,6 +22,8 @@
 #include "nnacl/kernel/gather_d.h"
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/matmul.h"
+#include "nnacl/kernel/fullconnection.h"
 #endif
 
 static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
@@ -66,6 +68,8 @@ void Init_MSC_VER_kernels(void) {
     g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
     g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt64)] = CreateReshape;
     g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
+    g_kernelCreatorRegistry[PrimType_FullConnection][REGIST_DT(kNumberTypeFloat32)] = CreateFullconnection;
+    g_kernelCreatorRegistry[PrimType_MatMulFusion][REGIST_DT(kNumberTypeFloat32)] = CreateMatmul;
     inited = true;
   }
 #endif
@@ -96,6 +100,7 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
   kernel_base->env_ = env;
   kernel_base->param_ = param;
   kernel_base->thread_nr_ = param->thread_num_;
+  kernel_base->train_session_ = param->is_train_session_;
   kernel_base->in_ = ins;
   kernel_base->in_size_ = in_size;
   kernel_base->out_ = outs;

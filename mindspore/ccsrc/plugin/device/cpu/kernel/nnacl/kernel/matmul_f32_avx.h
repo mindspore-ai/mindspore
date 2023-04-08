@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_
+#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX_H_
+#define MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX_H_
 
 #ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
@@ -25,4 +25,4 @@
 KernelBase *CreateMatmulFp32Avx();
 
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_
+#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX_H_
