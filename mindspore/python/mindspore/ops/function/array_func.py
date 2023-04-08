@@ -5827,8 +5827,8 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
 
     Examples:
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> index, output = ops.min(x, keepdims=True)
-        >>> print(index, output)
+        >>> output, index = ops.min(x, keepdims=True)
+        >>> print(output, index)
         0.0 0
     """
     if not input.shape:
