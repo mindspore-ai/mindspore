@@ -237,6 +237,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   // Used to check whether an AnfNode is a Summary Node.
   static bool IsSummaryNode(const AnfNodePtr &node);
+  static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
+  static void UpdateValueNodeShape(const AnfNodePtr &node);
 };
 }  // namespace session
 

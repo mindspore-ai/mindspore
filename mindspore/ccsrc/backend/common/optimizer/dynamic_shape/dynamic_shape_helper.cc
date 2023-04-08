@@ -102,7 +102,7 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
   MS_EXCEPTION_IF_NULL(abs);
 
   ShapeVector shape;
-  TypeId type;
+  TypeId type = TypeId::kTypeUnknown;
   if (abs->isa<abstract::AbstractScalar>()) {
     shape = {1};
     type = abs->BuildType()->type_id();
@@ -118,11 +118,10 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
     shape = {SizeToLong(elem_num)};
   } else if (abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractSequence>()) {
     shape = trans::GetRuntimePaddingShape(real_input, real_input_index);
-    if (real_input->isa<ValueNode>()) {
-      // the type of ValueNode in KernelInfo is kTypeUnknown
+    type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
+    if (type == TypeId::kTypeUnknown) {
+      // The type of weight parameter of cpu and ValueNode in KernelInfo is kTypeUnknown.
       type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-    } else {
-      type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
     }
   } else {
     MS_LOG(EXCEPTION) << "For node:" << real_input->fullname_with_scope() << ", abstract(" << abs->ToString()
@@ -278,6 +277,9 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       (void)args_spec_list.emplace_back(updated_abs);
     } else {
       auto abs = real_input->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      MS_LOG(DEBUG) << "Real input node:" << real_input->DebugString() << " abs:" << abs->ToString()
+                    << " index:" << real_input_index;
       if (abs->isa<abstract::AbstractSequence>() && !AnfAlgo::IsRealSquenceOutput(real_input)) {
         auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
         MS_EXCEPTION_IF_NULL(abs_seq);
