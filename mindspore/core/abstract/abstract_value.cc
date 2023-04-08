@@ -2024,7 +2024,7 @@ AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const Value
       value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
 
 AbstractMapTensor::AbstractMapTensor(const AbstractMapTensor &other)
-    : AbstractBase(other.GetValueTrack(), other.GetTypeTrack(), other.GetShapeTrack()),
+    : AbstractBase(other),
       ref_key_value_(other.ref_key_value_),
       default_value_(other.default_value_),
       permit_filter_value_(other.permit_filter_value()),
