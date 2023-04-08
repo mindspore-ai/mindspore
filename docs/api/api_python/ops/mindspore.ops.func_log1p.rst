@@ -6,7 +6,7 @@ mindspore.ops.log1p
     对输入Tensor逐元素加一后计算自然对数。
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = {log_e}(input_i + 1)
 
     参数：
         - **input** (Tensor) - 输入Tensor。数据类型为float16或float32。
