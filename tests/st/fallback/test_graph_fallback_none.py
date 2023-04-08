@@ -785,3 +785,43 @@ def test_parser_fallback_none_control_flow():
     net_ms = NoneNet()
     res = net_ms(Tensor(1), Tensor(10), Tensor(100))
     assert res == 11
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_return_tuple_none_control_flow():
+    """
+    Feature: Support None.
+    Description: Support None is the tuple return in control flow.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(input_x):
+        if input_x:
+            return None, input_x, {"1": input_x}
+        return None, input_x * 2, {"2": input_x * 2}
+
+    x = ms.Tensor(10)
+    out = func(x)
+    assert out == (None, 10, {"1": 10})
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_none_in_nest_tuple_list_control_flow():
+    """
+    Feature: Support None.
+    Description: Support None is the tuple return in control flow.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(input_x):
+        if input_x:
+            return None, (None, [input_x, None])
+        return None, (None, [input_x * 2, None])
+
+    x = ms.Tensor(10)
+    out = func(x)
+    assert out == (None, (None, [x, None]))

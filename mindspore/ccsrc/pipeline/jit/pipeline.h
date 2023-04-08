@@ -85,6 +85,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
                    abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
   std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value) const;
+  template <typename T>
+  std::pair<py::object, bool> GetPyExecuteData(const py::object &res, const BaseRef &value) const;
+  std::pair<py::object, bool> GetPyExecuteSequenceOutputFromAddress(const py::object &obj, const BaseRef &value) const;
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   void SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase);
