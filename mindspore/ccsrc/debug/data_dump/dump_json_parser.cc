@@ -828,11 +828,6 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
-bool DumpJsonParser::HCCLOutputNeedDump(const std::string &kernel_name) const {
-  return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly ||
-         DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel_name);
-}
-
 /*
  * Feature group: Dump.
  * Target device group: Ascend.
@@ -868,7 +863,6 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel)) &&
         DumpJsonParser::GetInstance().InputNeedDump()) {
-      hccl_input_kernels_.insert(GetKernelNodeName(kernel));
       auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);

@@ -74,7 +74,6 @@ class BACKEND_EXPORT DumpJsonParser {
   bool DumpEnabledForIter() const;
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
-  bool HCCLOutputNeedDump(const std::string &kernel_name) const;
   std::string GetOpOverflowBinPath(uint32_t graph_id) const;
   void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
