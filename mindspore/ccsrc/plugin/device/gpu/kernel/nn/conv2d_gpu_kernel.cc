@@ -187,7 +187,11 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
   }
-  SelectAlgorithm(input_descriptor_real);
+  conv_algorithm_ = SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
+                                           group_, kConv2dFwdAlgoName);
+  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+    conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  }
   InitSizeLists();
   return KRET_OK;
 }
@@ -238,33 +242,6 @@ void Conv2dFwdGpuKernelMod::Set4DDesc(const ShapeVector &in_shape, const ShapeVe
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensorNdDescriptor(output_desc_, cudnn_data_type_, kInputDimSize, dimAout, strideAout),
     "cudnnSetTensor4dDescriptor failed");
-}
-
-void Conv2dFwdGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t input_descriptor_real) {
-  constexpr int requested_algo_count = 1;
-  int returned_algo_count = 0;
-  cudnnConvolutionFwdAlgoPerf_t perf_results;
-  std::string set_cudnn_conv2d_algo = common::GetEnv("SET_CUDNN_CONV2D_ALGO");
-  if (!set_cudnn_conv2d_algo.empty()) {
-    conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-  } else {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_,
-                                             output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionForwardAlgorithm_v7 failed");
-    conv_algorithm_ = perf_results.algo;
-  }
-#if CUDNN_VERSION < 8000
-  if (group_ > 1) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                          CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm_),
-      "cudnnGetConvolutionForwardAlgorithm failed");
-  }
-#endif
-  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-    conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-  }
 }
 
 void Conv2dFwdGpuKernelMod::ResetResource() noexcept {

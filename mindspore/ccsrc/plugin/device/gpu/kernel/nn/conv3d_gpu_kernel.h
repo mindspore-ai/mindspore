@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "plugin/device/gpu/kernel/nn/conv_gpu_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -190,7 +191,6 @@ class Conv3dGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<C
                     const std::vector<kernel::AddressPtr> &outputs);
 
   void SetNDDesc(const ShapeVector &in_shape, const ShapeVector &filter_shape, const ShapeVector &output_shape);
-  void SelectAlgorithm(cudnnTensorDescriptor_t input_descriptor_real);
   void SetStrideAndDilation(std::vector<int64_t> stride_me, std::vector<int64_t> dilation_me);
   void SetPad(const std::vector<int> &pad_list);
   cudnnTensorDescriptor_t GetInputDescReal(const std::vector<int> &pad_list);

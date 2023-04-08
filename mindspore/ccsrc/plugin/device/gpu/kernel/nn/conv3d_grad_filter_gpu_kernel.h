@@ -28,6 +28,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
+#include "plugin/device/gpu/kernel/nn/conv_gpu_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -193,7 +194,11 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     pad_mode_ = kernel_ptr->get_pad_mode();
     SetStrideAndDilation(kernel_ptr->get_stride(), kernel_ptr->get_dilation());
     auto x_desc_real = GetXDescReal(pad_list);
-    SelectAlgorithm(x_desc_real);
+    algo_ = SelectBackwardFilterAlgorithm(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_, group_,
+                                          kConv3dBwdFilterAlgoName);
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+    }
     InitSizeLists();
     return KRET_OK;
   }
@@ -287,20 +292,6 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
-    const int requested_algo_count = 1;
-    int returned_algo_count = 0;
-    cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
-                                                    requested_algo_count, &returned_algo_count, &perf_results),
-      "GetConvolutionBackwardFilterAlgorithm failed");
-    algo_ = perf_results.algo;
-    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
-    }
-  }
-
   void SetNDDesc(const ShapeVector &dy_shape, const ShapeVector &input_shape, const ShapeVector &filter_shape) {
     const int kDims = 5;
     int dimA[kDims];

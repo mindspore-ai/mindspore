@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "include/common/utils/utils.h"
+#include "plugin/device/gpu/kernel/nn/conv_gpu_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -81,7 +82,6 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod, public MatchKern
   void Set4DDesc(const ShapeVector &dy_shape, const ShapeVector &input_shape, const ShapeVector &filter_shape);
   void SetStrideAndDilation(const std::vector<int64_t> &stride_me, const std::vector<int64_t> &dilation_me,
                             const std::string &format_me);
-  void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real);
   void ResetResource() noexcept;
   void InitSizeLists();
   void SetDilaA(int *dilaA);

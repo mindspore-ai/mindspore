@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "plugin/device/gpu/kernel/nn/conv_gpu_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -168,7 +169,8 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                           "cudnnSetConvolutionMathType failed.")
     }
-    SelectAlgorithm(dx_desc_real);
+    algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_,
+                                        kConv3dBwdDataAlgoName);
     auto inplace_algo_ptr = base_operator->GetAttr("inplace_algo");
     if (inplace_algo_ptr == nullptr) {
       beta_ = 0;
@@ -261,17 +263,6 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  void SelectAlgorithm(cudnnTensorDescriptor_t dx_desc_real) {
-    const int requested_algo_count = 1;
-    int returned_algo_count = 0;
-    cudnnConvolutionBwdDataAlgoPerf_t perf_results;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardDataAlgorithm_v7(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
-                                                  requested_algo_count, &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
-    algo_ = perf_results.algo;
-  }
-
   void SetNDDesc(const ShapeVector &dy_shape, const ShapeVector &input_shape, const ShapeVector &filter_shape) {
     const int kDims = 5;
     int dimA[kDims];

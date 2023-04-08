@@ -169,32 +169,21 @@ int Conv3dTransposeFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
   }
-  SelectAlgorithm(input_desc_real, output_desc_real);
+  algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, filter_desc_, input_desc_real, conv_desc_, output_desc_real,
+                                      group_, kConv3dTransposeAlgoName);
 
   if (base_operator->GetAttr("inplace_algo") == nullptr) {
     beta_ = 0;
   } else {
     beta_ = GetValue<std::string>(base_operator->GetAttr("inplace_algo")) == "cover" ? 0 : 1;
   }
-
-  InitSizeLists();
-  return KRET_OK;
-}
-
-void Conv3dTransposeFwdGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t input_desc_real,
-                                                     cudnnTensorDescriptor_t output_desc_real) {
-  constexpr int requested_algo_count = 1;
   constexpr int cudnn_major_num = 8;
-  int returned_algo_count;
-  cudnnConvolutionBwdDataAlgoPerf_t perf_results;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetConvolutionBackwardDataAlgorithm_v7(
-                                        cudnn_handle_, filter_desc_, input_desc_real, conv_desc_, output_desc_real,
-                                        requested_algo_count, &returned_algo_count, &perf_results),
-                                      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
-  algo_ = perf_results.algo;
   if (compute_format_ == CUDNN_TENSOR_NHWC && cudnn_data_type_ == CUDNN_DATA_HALF && CUDNN_MAJOR < cudnn_major_num) {
     MS_LOG(ERROR) << "Conv3dTransposeFwdGpuKernelMod does not support float16 data with NDHWC format.";
   }
+
+  InitSizeLists();
+  return KRET_OK;
 }
 
 void Conv3dTransposeFwdGpuKernelMod::Set5DDesc(const ShapeVector &input_shape, const ShapeVector &output_shape,
