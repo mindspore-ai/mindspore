@@ -24,7 +24,7 @@
 #include "graph/model.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
-#include "acl/acl_tdt.h"
+#include "acl/acl_rt.h"
 #include "acl/acl_base.h"
 #include "toolchain/plog.h"
 #include "framework/common/helper/model_helper.h"
@@ -261,9 +261,9 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
 
   (void)ErrorManagerAdapter::Init();
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  auto ret = rtSetDevice(static_cast<int32_t>(device_id));
+  auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret)
+    MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
                       << "]. The details refer to 'Ascend Error Message'.";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
@@ -288,9 +288,9 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     DestroyTensorPrintThread();
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
+    auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret)
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
                         << "]. The details refer to 'Ascend Error Message'.";
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
