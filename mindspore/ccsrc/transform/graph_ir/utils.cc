@@ -280,8 +280,8 @@ DfGraphWrapperPtr GetGraphByName(const std::string &name) { return DfGraphManage
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::shared_ptr<DfGraphConvertContext> &context) {
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, context);
   return converter;
 }
 

@@ -200,7 +200,7 @@ build_lite_jni_and_jar() {
 }
 
 build_python_wheel_package() {
-  local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
+  local python_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
   if [[ "${python_version}" == "3" ]]; then
     cd ${BASEPATH}/mindspore/lite/build/
     local lite_wrapper_so=`ls python/_c_lite_wrapper*.so` || true
@@ -231,6 +231,9 @@ build_python_wheel_package() {
       fi
       if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so" ]; then
         cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libtensorrt_plugin.so package/mindspore_lite/lib/
+      fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so package/mindspore_lite/lib/
       fi
     else
       if [[ "${MSLITE_ENABLE_ACL}" ]]; then
@@ -267,8 +270,8 @@ build_python_wheel_package() {
     export TOP_DIR=${BASEPATH}
     cd package
     rm -rf dist/mindspore_lite-*.whl
-    python setup.py bdist_wheel
-    local minor_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
+    python3 setup.py bdist_wheel
+    local minor_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
     local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
     if [[ "${minor_version}" == "7" ]]; then
       py_tags="cp37-cp37m"

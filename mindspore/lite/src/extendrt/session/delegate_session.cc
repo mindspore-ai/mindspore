@@ -68,7 +68,7 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   return kSuccess;
 }
 
-Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
+Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *graph_id) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
   // This lock can be removed when LiteRT supports concurrent multithreading compilation.
   std::lock_guard<std::mutex> lock(g_build_graph_mutex);
@@ -80,107 +80,112 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
       lite::AscendGeExecutorPlugin::GetInstance().AdaptGraph(graph);
     }
   }
-  func_graph_ = graph;
-  auto status = InitGraphInputsOutputs();
+  DelegateGraphInfo graph_info;
+  auto status = InitGraphInputsOutputs(graph, &graph_info);
   if (!status.IsOk()) {
     MS_LOG(ERROR) << "Failed to get inputs and outputs info from graph";
     return status;
   }
-  auto ret = graph_executor_->CompileGraph(func_graph_, options_);
+  auto ret = graph_executor_->CompileGraph(graph, options_, graph_id);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::CompileGraph compile graph failed";
     return kCoreFailed;
   }
-  status = UpdateGraphInputsOutputs();
+  status = UpdateGraphInputsOutputs(*graph_id, &graph_info);
   if (!status.IsOk()) {
     MS_LOG(ERROR) << "Failed to update inputs and outputs info from graph executor";
     return status;
   }
+  graph_infos_[*graph_id] = graph_info;
   return kSuccess;
 }
 
-Status GraphSinkSession::InitGraphInputsOutputs() {
+Status GraphSinkSession::InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info_ptr) {
+  auto &info = *graph_info_ptr;
   std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
   {
     std::unique_lock<std::mutex> l(kernel_graph_mutex);
-    FuncGraphReuseManager::GetInstance()->GetInOut(config_infos_, &graph_inputs, &graph_outputs, &input_names_,
-                                                   &output_names_);
-    if (graph_inputs.empty() || graph_outputs.empty() || input_names_.empty() || output_names_.empty()) {
-      FuncGraphUtils::GetFuncGraphInputsInfo(func_graph_, &graph_inputs, &input_names_);
-      FuncGraphUtils::GetFuncGraphOutputsInfo(func_graph_, &graph_outputs, &output_names_);
-      FuncGraphReuseManager::GetInstance()->StoreInOut(config_infos_, graph_inputs, graph_outputs, input_names_,
-                                                       output_names_);
+    FuncGraphReuseManager::GetInstance()->GetInOut(config_infos_, &graph_inputs, &graph_outputs, &info.input_names,
+                                                   &info.output_names);
+    if (graph_inputs.empty() || graph_outputs.empty() || info.input_names.empty() || info.output_names.empty()) {
+      FuncGraphUtils::GetFuncGraphInputsInfo(graph, &graph_inputs, &info.input_names);
+      FuncGraphUtils::GetFuncGraphOutputsInfo(graph, &graph_outputs, &info.output_names);
+      FuncGraphReuseManager::GetInstance()->StoreInOut(config_infos_, graph_inputs, graph_outputs, info.input_names,
+                                                       info.output_names);
     } else {
       MS_LOG(INFO) << "the input and output are the same as the last time. We do not need to construct, and we can "
                       "directly use the cached input and output info.";
     }
   }
-  if (graph_inputs.size() != input_names_.size()) {
-    MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << input_names_.size();
+  if (graph_inputs.size() != info.input_names.size()) {
+    MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << info.input_names.size();
     return kCoreFailed;
   }
-  if (graph_outputs.size() != output_names_.size()) {
-    MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size " << output_names_.size();
+  if (graph_outputs.size() != info.output_names.size()) {
+    MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size "
+                  << info.output_names.size();
     return kCoreFailed;
   }
-  inputs_.clear();
-  for (size_t i = 0; i < input_names_.size(); i++) {
+  info.inputs.clear();
+  for (size_t i = 0; i < info.input_names.size(); i++) {
     auto &input = graph_inputs[i];
     auto data_type = static_cast<enum DataType>(input->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
-    inputs_.push_back(impl);
+    auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input->shape_c());
+    info.inputs.push_back(impl);
   }
-  outputs_.clear();
-  for (size_t i = 0; i < output_names_.size(); i++) {
+  info.outputs.clear();
+  for (size_t i = 0; i < info.output_names.size(); i++) {
     auto &output = graph_outputs[i];
     auto data_type = static_cast<enum DataType>(output->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
-    outputs_.push_back(impl);
+    auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output->shape_c());
+    info.outputs.push_back(impl);
   }
   return kSuccess;
 }
 
-Status GraphSinkSession::UpdateGraphInputsOutputs() {
-  auto new_inputs = graph_executor_->GetInputInfos(func_graph_);
+Status GraphSinkSession::UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info_ptr) {
+  auto &info = *graph_info_ptr;
+  auto new_inputs = graph_executor_->GetInputInfos(graph_id);
   if (!new_inputs.empty()) {
-    if (new_inputs.size() != input_names_.size()) {
+    if (new_inputs.size() != info.input_names.size()) {
       MS_LOG(ERROR) << "Input count " << new_inputs.size() << " get from executor != input names count "
-                    << input_names_.size();
+                    << info.input_names.size();
       return kCoreFailed;
     }
-    inputs_.clear();
-    for (size_t i = 0; i < input_names_.size(); i++) {
+    info.inputs.clear();
+    for (size_t i = 0; i < info.input_names.size(); i++) {
       auto &input = new_inputs[i];
       auto data_type = static_cast<enum DataType>(input.data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input.shape_c());
-      inputs_.push_back(impl);
+      auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input.shape_c());
+      info.inputs.push_back(impl);
     }
   }
-  auto new_outputs = graph_executor_->GetOutputInfos(func_graph_);
+  auto new_outputs = graph_executor_->GetOutputInfos(graph_id);
   if (!new_outputs.empty()) {
-    if (new_outputs.size() != output_names_.size()) {
+    if (new_outputs.size() != info.output_names.size()) {
       MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != output names count "
-                    << output_names_.size();
+                    << info.output_names.size();
       return kCoreFailed;
     }
-    outputs_.clear();
-    for (size_t i = 0; i < output_names_.size(); i++) {
+    info.outputs.clear();
+    for (size_t i = 0; i < info.output_names.size(); i++) {
       auto &output = new_outputs[i];
       auto data_type = static_cast<enum DataType>(output.data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output.shape_c());
-      outputs_.push_back(impl);
+      auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output.shape_c());
+      info.outputs.push_back(impl);
     }
   }
   return kSuccess;
 }
 
-Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                                  const MSKernelCallBack &before, const MSKernelCallBack &after) {
+Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                                  std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+                                  const MSKernelCallBack &after) {
   MS_LOG(INFO) << "GraphSinkSession::RunGraph";
   MS_EXCEPTION_IF_NULL(outputs);
   graph_executor_->SetBefore(before);
   graph_executor_->SetAfter(after);
-  bool ret = graph_executor_->RunGraph(func_graph_, inputs, outputs, options_);
+  bool ret = graph_executor_->RunGraph(graph_id, inputs, outputs, options_);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::RunGraph run graph failed";
     return kCoreFailed;
@@ -188,55 +193,106 @@ Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
   return kSuccess;
 }
 
-Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
-  return RunGraph(inputs, outputs, nullptr, nullptr);
+Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                                  std::vector<tensor::Tensor> *outputs) {
+  return RunGraph(graph_id, inputs, outputs, nullptr, nullptr);
 }
 
-Status GraphSinkSession::Resize(const std::vector<tensor::Tensor> &inputs,
+Status GraphSinkSession::Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                                 const std::vector<std::vector<int64_t>> &new_shapes) {
   MS_LOG(INFO) << "GraphSinkSession::Resize";
   MS_EXCEPTION_IF_NULL(graph_executor_);
-  auto ret = graph_executor_->Resize(func_graph_, inputs, new_shapes);
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return kCoreFailed;
+  }
+  auto &info = info_it->second;
+  auto ret = graph_executor_->Resize(graph_id, inputs, new_shapes);
   if (!ret) {
     return kCoreFailed;
   }
-  auto new_outputs = graph_executor_->GetOutputInfos(func_graph_);
+  auto new_outputs = graph_executor_->GetOutputInfos(graph_id);
   if (new_outputs.empty()) {
     return kSuccess;
   }
-  if (new_outputs.size() != outputs_.size()) {
+  if (new_outputs.size() != info.outputs.size()) {
     MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != last output count "
-                  << outputs_.size();
+                  << info.outputs.size();
     return kCoreFailed;
   }
   for (size_t i = 0; i < new_shapes.size(); i++) {
     auto &input_shape = new_shapes[i];
-    inputs_[i]->SetShape(input_shape);
-    inputs_[i]->SetData(nullptr, false);  // reset data
+    info.inputs[i]->SetShape(input_shape);
+    info.inputs[i]->SetData(nullptr, false);  // reset data
   }
-  for (size_t i = 0; i < outputs_.size(); i++) {
+  for (size_t i = 0; i < info.outputs.size(); i++) {
     auto &output = new_outputs[i];
-    outputs_[i]->SetShape(output.shape_c());
-    outputs_[i]->SetData(nullptr, false);  // reset data
+    info.outputs[i]->SetShape(output.shape_c());
+    info.outputs[i]->SetData(nullptr, false);  // reset data
   }
   return kSuccess;
 }
-std::vector<MutableTensorImplPtr> GraphSinkSession::GetOutputs() { return outputs_; }
-std::vector<MutableTensorImplPtr> GraphSinkSession::GetInputs() { return inputs_; }
-std::vector<std::string> GraphSinkSession::GetOutputNames() { return output_names_; }
-std::vector<std::string> GraphSinkSession::GetInputNames() { return input_names_; }
-MutableTensorImplPtr GraphSinkSession::GetOutputByTensorName(const std::string &tensorName) {
-  for (size_t i = 0; i < output_names_.size(); i++) {
-    if (output_names_[i] == tensorName) {
-      return outputs_[i];
+std::vector<MutableTensorImplPtr> GraphSinkSession::GetOutputs(uint32_t graph_id) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  return info.outputs;
+}
+std::vector<MutableTensorImplPtr> GraphSinkSession::GetInputs(uint32_t graph_id) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  return info.inputs;
+}
+std::vector<std::string> GraphSinkSession::GetOutputNames(uint32_t graph_id) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  return info.output_names;
+}
+std::vector<std::string> GraphSinkSession::GetInputNames(uint32_t graph_id) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  return info.input_names;
+}
+MutableTensorImplPtr GraphSinkSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  for (size_t i = 0; i < info.output_names.size(); i++) {
+    if (info.output_names[i] == tensorName) {
+      return info.outputs[i];
     }
   }
   return nullptr;
 }
-MutableTensorImplPtr GraphSinkSession::GetInputByTensorName(const std::string &name) {
-  for (size_t i = 0; i < input_names_.size(); i++) {
-    if (input_names_[i] == name) {
-      return inputs_[i];
+MutableTensorImplPtr GraphSinkSession::GetInputByTensorName(uint32_t graph_id, const std::string &name) {
+  auto info_it = graph_infos_.find(graph_id);
+  if (info_it == graph_infos_.end()) {
+    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
+    return {};
+  }
+  auto &info = info_it->second;
+  for (size_t i = 0; i < info.input_names.size(); i++) {
+    if (info.input_names[i] == name) {
+      return info.inputs[i];
     }
   }
   return nullptr;

@@ -81,8 +81,11 @@ LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Contex
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()), config_infos_);
 }
 
-bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
+bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
+                                       uint32_t *graph_id) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(graph_id);
+  *graph_id = 0;
   if (graph->isa<mindspore::session::KernelGraph>()) {
     MS_LOG(INFO) << "LiteRTGraphExecutor not support kernel garph, please pass func graph instead";
     return false;
@@ -137,7 +140,7 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
   return true;
 }
 
-bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
+bool LiteRTGraphExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                    std::vector<tensor::Tensor> *outputs,
                                    const std::map<string, string> &compile_options) {
   MS_LOG(INFO) << "LiteRTGraphExecutor::RunGraph with input and outputs";
@@ -234,7 +237,7 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   return true;
 }
 
-bool LiteRTGraphExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+bool LiteRTGraphExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                  const std::vector<std::vector<int64_t>> &dims) {
   auto input_tensors = lite_session_->GetInputs();
   if (input_tensors.empty()) {
@@ -257,7 +260,7 @@ bool LiteRTGraphExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor:
   return true;
 }
 
-std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(const FuncGraphPtr &) {
+std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(uint32_t) {
   if (lite_session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
     return {};
@@ -275,7 +278,7 @@ std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(const FuncGraphPt
   return input_tensors;
 }
 
-std::vector<tensor::Tensor> LiteRTGraphExecutor::GetOutputInfos(const FuncGraphPtr &) {
+std::vector<tensor::Tensor> LiteRTGraphExecutor::GetOutputInfos(uint32_t) {
   auto outputs = GetLiteSessionOutputs();
   std::vector<tensor::Tensor> output_tensors;
   for (size_t i = 0; i < outputs.size(); ++i) {

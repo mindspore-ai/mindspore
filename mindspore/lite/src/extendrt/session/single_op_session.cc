@@ -219,7 +219,7 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
   return kSuccess;
 }
 
-Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
+Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
 
   auto nodes = graph->TopoSort(graph->get_return());
@@ -259,12 +259,14 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   return kSuccess;
 }
 
-Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  return RunGraph(inputs, outputs);
+Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                                      std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+                                      const MSKernelCallBack &after) {
+  return RunGraph(graph_id, inputs, outputs);
 }
 
-Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
+                                      std::vector<tensor::Tensor> *outputs) {
   if (outputs == nullptr) {
     MS_LOG(ERROR) << "outputs cannot be nullptr";
     return kLiteError;
@@ -383,17 +385,17 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
   return kSuccess;
 }
 
-Status SingleOpInferSession::Resize(const std::vector<tensor::Tensor> &,
+Status SingleOpInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &,
                                     const std::vector<std::vector<int64_t>> &dims) {
   return OnNewInputShapes(dims);
 }
 
-std::vector<MutableTensorImplPtr> SingleOpInferSession::GetOutputs() { return outputs_; }
-std::vector<MutableTensorImplPtr> SingleOpInferSession::GetInputs() { return inputs_; }
-std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }
-std::vector<std::string> SingleOpInferSession::GetInputNames() { return input_names_; }
+std::vector<MutableTensorImplPtr> SingleOpInferSession::GetOutputs(uint32_t) { return outputs_; }
+std::vector<MutableTensorImplPtr> SingleOpInferSession::GetInputs(uint32_t) { return inputs_; }
+std::vector<std::string> SingleOpInferSession::GetOutputNames(uint32_t) { return output_names_; }
+std::vector<std::string> SingleOpInferSession::GetInputNames(uint32_t) { return input_names_; }
 
-MutableTensorImplPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensor_name) {
+MutableTensorImplPtr SingleOpInferSession::GetOutputByTensorName(uint32_t, const std::string &tensor_name) {
   for (size_t idx = 0; idx < output_names_.size(); ++idx) {
     if (output_names_[idx] == tensor_name) {
       if (idx < outputs_.size()) {
@@ -405,7 +407,7 @@ MutableTensorImplPtr SingleOpInferSession::GetOutputByTensorName(const std::stri
   return nullptr;
 }
 
-MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(const std::string &tensor_name) {
+MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(uint32_t, const std::string &tensor_name) {
   for (size_t idx = 0; idx < input_names_.size(); ++idx) {
     if (input_names_[idx] == tensor_name) {
       if (idx < inputs_.size()) {

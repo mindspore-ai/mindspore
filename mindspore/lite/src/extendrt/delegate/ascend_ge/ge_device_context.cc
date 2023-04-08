@@ -97,7 +97,12 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto training = common::GetEnv("MS_GE_TRAIN");
+  (*ge_options)["ge.graphRunMode"] = "0";
   if (env_ge == "1" && training == "1") {
+    (*ge_options)["ge.graphRunMode"] = "1";
+  }
+  auto graph_run_mode = common::GetEnv("MS_GE_GRAPH_RUN_MODE");
+  if (graph_run_mode == "1") {
     (*ge_options)["ge.graphRunMode"] = "1";
   }
 
@@ -175,7 +180,6 @@ void GeDeviceContext::SetHcclOptions(std::map<std::string, std::string> *ge_opti
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
     (*ge_options)["ge.exec.podName"] = env_rank_id;
-    (*ge_options)["ge.graphRunMode"] = "1";
   } else {
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;

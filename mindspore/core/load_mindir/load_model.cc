@@ -288,8 +288,6 @@ class MSANFModelParser {
 
   void SetLite() { is_lite_ = true; }
   bool IsLite() const { return is_lite_; }
-  void SetIncLoad() { inc_load_ = true; }
-  bool IsIncLoad() const { return inc_load_; }
   void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
   void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
   void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
@@ -360,7 +358,6 @@ class MSANFModelParser {
   std::string model_version_;
   std::string ir_version_;
   bool is_lite_ = false;
-  bool inc_load_ = false;
   bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
@@ -369,13 +366,7 @@ class MSANFModelParser {
   std::string mindir_dec_mode_;
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
-
-  static std::map<std::string, tensor::TensorPtr> load_tensor_map_;
-  static std::mutex load_tensor_map_mutex_;
 };
-
-std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
-std::mutex MSANFModelParser::load_tensor_map_mutex_;
 
 ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
   auto attr_name = attr_proto.name();
@@ -439,25 +430,6 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
   }
 }
 
-tensor::TensorPtr MSANFModelParser::GetIncTensor(const std::string &tensor_name) {
-  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
-  auto it = load_tensor_map_.find(tensor_name);
-  if (it != load_tensor_map_.end()) {
-    return it->second;
-  }
-  return nullptr;
-}
-
-void MSANFModelParser::SetIncTensor(const std::string &tensor_name, const tensor::TensorPtr &tensor) {
-  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
-  load_tensor_map_[tensor_name] = tensor;
-}
-
-void MSANFModelParser::LoadTensorMapClear() {
-  std::lock_guard<std::mutex> lock(load_tensor_map_mutex_);
-  load_tensor_map_.clear();
-}
-
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {
   ShapeVector shape;
   const int attr_tensor_type = attr_tensor.data_type();
@@ -483,9 +455,6 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   auto quantization_param_vector = GenerateQuantizationParam(attr_tensor);
   if (!quantization_param_vector.empty()) {
     tensor->set_quant_param(quantization_param_vector);
-  }
-  if (!IsIncLoad() || !GetIncTensor(attr_tensor.name())) {
-    SetIncTensor(attr_tensor.name(), tensor);
   }
 
   MS_EXCEPTION_IF_NULL(tensor);
@@ -686,17 +655,6 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   param_info->set_name(debug_info_name);
 
   MS_LOG(DEBUG) << "Load parameter name: " << parameter_proto.name();
-  if (IsIncLoad()) {
-    auto load_tensor_info = GetIncTensor(parameter_proto.name());
-    if (load_tensor_info) {
-      MS_LOG(DEBUG) << "Parameter: " << parameter_proto.name() << " has been already loaded, use it again.";
-      load_tensor_info->set_param_info(param_info);
-      node->set_default_param(load_tensor_info);
-      node->set_abstract(load_tensor_info->ToAbstract());
-      anfnode_build_map_[parameter_proto.name()] = node;
-      return true;
-    }
-  }
   auto tensor = GenerateTensorPtrFromTensorProto(parameter_proto);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Build tensor failed from the parameter proto.";
@@ -820,11 +778,6 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   param_info->set_name(debug_info_name);
 
   MS_LOG(DEBUG) << "Load map parameter name: " << map_parameter_proto.name();
-  if (IsIncLoad() && GetIncTensor(map_parameter_proto.name()) != nullptr) {
-    MS_LOG(ERROR) << "MapParameter dose not support incremental loading, param_name: " << map_parameter_proto.name();
-    return false;
-  }
-
   // default value
   if (!map_parameter_proto.has_default_value()) {
     MS_LOG(ERROR) << "MapTensorProto should have default value: " << map_parameter_proto.name();
@@ -2384,11 +2337,6 @@ void InitModelParser(MSANFModelParser *model_parser, const MindIRLoader *loader)
   model_parser->SetMindIRKeySize(loader->key_len());
   model_parser->SetMindIRDecMode(loader->dec_mode());
 
-  if (!loader->inc_load()) {
-    MSANFModelParser::LoadTensorMapClear();
-  } else {
-    model_parser->SetIncLoad();
-  }
   if (loader->is_lite()) {
     model_parser->SetLite();
   }

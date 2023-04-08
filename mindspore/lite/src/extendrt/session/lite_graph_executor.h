@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #include "include/api/types.h"
 #include "runtime/hardware/device_context.h"
@@ -28,16 +29,36 @@ namespace mindspore {
 class LiteGraphExecutor : public device::GraphExecutor {
  public:
   LiteGraphExecutor() = default;
-  ~LiteGraphExecutor() = default;
+  virtual ~LiteGraphExecutor() = default;
 
-  virtual bool Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+  virtual bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
+                            uint32_t *graph_id) {
+    return false;
+  }
+  virtual bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                        std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
+    (void)graph_id;
+    (void)inputs;
+    (void)outputs;
+    (void)compile_options;
+    return false;
+  }
+
+  virtual bool Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                       const std::vector<std::vector<int64_t>> &new_shapes) {
+    (void)graph_id;
     (void)inputs;
     (void)new_shapes;
     return true;
   }
-  virtual std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) { return {}; }
-  virtual std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) { return {}; }
+  virtual std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) {
+    (void)graph_id;
+    return {};
+  }
+  virtual std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) {
+    (void)graph_id;
+    return {};
+  }
 
   void SetBefore(const MSKernelCallBack &before) { before_ = before; }
 

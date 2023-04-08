@@ -204,6 +204,47 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 #endif
 }
 
+std::vector<std::shared_ptr<Model>> Model::Build(const std::vector<char> &model_path,
+                                                 const std::vector<char> &inc_model_path, ModelType model_type,
+                                                 const std::shared_ptr<Context> &model_context,
+                                                 const std::vector<char> &config_file) {
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Failed to build model, model context cannot be nullptr";
+    return {};
+  }
+  auto device_infos = model_context->MutableDeviceInfo();
+  if (device_infos.empty()) {
+    MS_LOG(ERROR) << "Failed to build model, incremental graph build is supported only in Ascend backend and GE "
+                     "provider scenarios.";
+    return {};
+  }
+  auto info0 = device_infos[0];
+  if (!info0 || info0->GetDeviceType() != DeviceType::kAscend || info0->GetProvider() != "ge") {
+    MS_LOG(ERROR) << "Failed to build model, incremental graph build is supported only in Ascend backend and GE "
+                     "provider scenarios.";
+    return {};
+  }
+
+  auto model0 = std::make_shared<Model>();
+  auto model1 = std::make_shared<Model>();
+  if (!model0->LoadConfig(config_file).IsOk()) {
+    MS_LOG(ERROR) << "Failed to load config for model, config file: " << CharToString(config_file);
+    return {};
+  }
+  if (!model1->LoadConfig(config_file).IsOk()) {
+    MS_LOG(ERROR) << "Failed to load config for model, config file: " << CharToString(config_file);
+    return {};
+  }
+
+  auto model_impls = {model0->impl_, model1->impl_};
+  auto model_paths = {CharToString(model_path), CharToString(inc_model_path)};
+  if (!ModelImpl::Build(model_impls, model_paths, model_type, model_context).IsOk()) {
+    MS_LOG(ERROR) << "Failed to build models, model path: " << model_paths;
+    return {};
+  }
+  return {model0, model1};
+}
+
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -374,7 +415,7 @@ Status Model::UpdateConfig(const std::vector<char> &section,
   return kSuccess;
 }
 
-bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
+bool Model::CheckModelSupport(DeviceType device_type, ModelType model_type) {
   return ModelImpl::CheckModelSupport(device_type, model_type);
 }
 

@@ -268,7 +268,7 @@ void FuncGraphUtils::GetFuncGraphInputsInfo(const FuncGraphPtr &func_graph, std:
   MS_EXCEPTION_IF_NULL(inputs_name);
   std::vector<AnfWithOutIndex> input_idxs;
   if (!GetFuncGraphInputs(func_graph, &input_idxs)) {
-    MS_LOG(WARNING) << "Failed to get input infos from graph";
+    MS_LOG(ERROR) << "Failed to get input infos from graph";
     return;
   }
   inputs->clear();
@@ -291,7 +291,7 @@ void FuncGraphUtils::GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std
   MS_EXCEPTION_IF_NULL(output_names);
   std::vector<AnfWithOutIndex> output_idxs;
   if (!GetFuncGraphOutputs(func_graph, &output_idxs)) {
-    MS_LOG(WARNING) << "Failed to get input infos from graph";
+    MS_LOG(ERROR) << "Failed to get input infos from graph";
     return;
   }
   outputs->clear();

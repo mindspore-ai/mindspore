@@ -631,6 +631,26 @@ class _Ascend(_Target):
             raise ValueError(f"ascend_device_id must be a non-negative int.")
         self._device_info.set_device_id(ascend_device_id)
 
+    @property
+    def provider(self):
+        """Get the device id."""
+        return self._device_info.get_provider()
+
+    @provider.setter
+    def provider(self, ascend_provider):
+        """
+        Set the device id.
+
+        Args:
+            ascend_provider(str): The ascend provider.
+
+        Raises:
+            TypeError: `ascend_device_id` is not an int.
+            ValueError: `ascend_device_id` is less than 0.
+        """
+        check_isinstance("ascend_device_id", ascend_provider, str)
+        self._device_info.set_provider(ascend_provider)
+
 
 class _Parallel:
     """

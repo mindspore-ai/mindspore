@@ -39,7 +39,7 @@ Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
   return kSuccess;
 }
 
-Status LiteInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
+Status LiteInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "LiteInferSession::CompileGraph";
   // This lock can be removed when LiteRT supports concurrent multithreading compilation.
   std::lock_guard<std::mutex> lock(g_build_graph_mutex);
@@ -129,7 +129,8 @@ std::vector<int32_t> LiteInferSession::TruncateShape(const std::vector<int64_t> 
   return truncated_shape;
 }
 
-Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+Status LiteInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
+                                  std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(lite_session_);
@@ -203,7 +204,7 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
   return kSuccess;
 }
 
-std::vector<MutableTensorImplPtr> LiteInferSession::GetOutputs() {
+std::vector<MutableTensorImplPtr> LiteInferSession::GetOutputs(uint32_t) {
   auto outputs = lite_session_->GetOutputs();
   std::vector<MutableTensorImplPtr> output_tensors;
   for (auto &iter : outputs) {
@@ -214,7 +215,7 @@ std::vector<MutableTensorImplPtr> LiteInferSession::GetOutputs() {
   return output_tensors;
 }
 
-std::vector<MutableTensorImplPtr> LiteInferSession::GetInputs() {
+std::vector<MutableTensorImplPtr> LiteInferSession::GetInputs(uint32_t) {
   auto inputs = lite_session_->GetInputs();
   std::vector<MutableTensorImplPtr> input_tensors;
   for (auto &input : inputs) {
@@ -224,7 +225,7 @@ std::vector<MutableTensorImplPtr> LiteInferSession::GetInputs() {
   return input_tensors;
 }
 
-std::vector<std::string> LiteInferSession::GetOutputNames() {
+std::vector<std::string> LiteInferSession::GetOutputNames(uint32_t) {
   auto outputs = lite_session_->GetOutputs();
   std::vector<std::string> output_names;
   std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_names),
@@ -232,8 +233,10 @@ std::vector<std::string> LiteInferSession::GetOutputNames() {
   return output_names;
 }
 
-std::vector<std::string> LiteInferSession::GetInputNames() { return ConvertToTensorNames(lite_session_->GetInputs()); }
-MutableTensorImplPtr LiteInferSession::GetOutputByTensorName(const std::string &name) {
+std::vector<std::string> LiteInferSession::GetInputNames(uint32_t) {
+  return ConvertToTensorNames(lite_session_->GetInputs());
+}
+MutableTensorImplPtr LiteInferSession::GetOutputByTensorName(uint32_t graph_id, const std::string &name) {
   auto outputs = lite_session_->GetOutputs();
   for (auto &iter : outputs) {
     auto output = iter.second;
@@ -244,7 +247,7 @@ MutableTensorImplPtr LiteInferSession::GetOutputByTensorName(const std::string &
   return nullptr;
 }
 
-MutableTensorImplPtr LiteInferSession::GetInputByTensorName(const std::string &name) {
+MutableTensorImplPtr LiteInferSession::GetInputByTensorName(uint32_t graph_id, const std::string &name) {
   auto inputs = lite_session_->GetInputs();
   for (auto &input : inputs) {
     if (input->tensor_name() == name) {

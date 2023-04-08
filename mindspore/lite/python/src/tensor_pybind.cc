@@ -139,6 +139,8 @@ std::string GetPyTypeFormat(DataType data_type) {
       return py::format_descriptor<bool>::format();
     case DataType::kObjectTypeString:
       return py::format_descriptor<uint8_t>::format();
+    case DataType::kNumberTypeFloat16:
+      return "e";
     default:
       MS_LOG(ERROR) << "Unsupported DataType " << static_cast<int>(data_type) << ".";
       return "";
