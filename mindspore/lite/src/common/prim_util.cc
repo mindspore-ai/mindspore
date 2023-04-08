@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
 

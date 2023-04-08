@@ -192,13 +192,6 @@
 #define MS_CHECK_TRUE_RET(value, errcode)
 #define MS_CHECK_TRUE_RET_VOID(value)
 #define MS_CHECK_FALSE(value, errcode)
-#define MS_CHECK_TRUE_MSG(value, errcode, msg)
-#define MS_CHECK_FALSE_MSG(value, errcode, msg)
-#define MS_CHECK_LT(value1, value2, errcode)
-#define MS_CHECK_GT(value1, value2, errcode)
-#define MS_CHECK_LE(value1, value2, errcode)
-#define MS_CHECK_GE(value1, value2, errcode)
-#define MS_CHECK_PTR_IF_NULL(ptr)
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
 #define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
@@ -230,72 +223,6 @@
     if ((value)) {                     \
       return errcode;                  \
     }                                  \
-  } while (0)
-
-// Check whether value is true, if not return 'errcode'
-// and print error string msg
-#define MS_CHECK_TRUE_MSG(value, errcode, msg) \
-  do {                                         \
-    if (!(value)) {                            \
-      MS_LOG(ERROR) << #msg;                   \
-      return errcode;                          \
-    }                                          \
-  } while (0)
-
-#define MS_CHECK_FALSE_MSG(value, errcode, msg) \
-  do {                                          \
-    if ((value)) {                              \
-      MS_LOG(ERROR) << #msg;                    \
-      return errcode;                           \
-    }                                           \
-  } while (0)
-
-#define MS_CHECK_LT(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) >= (value2)) {                                                      \
-      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
-  } while (0)
-
-#define MS_CHECK_GT(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) <= (value2)) {                                                      \
-      MS_LOG(ERROR) << "check gt fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
-  } while (0)
-
-#define MS_CHECK_LE(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) > (value2)) {                                                       \
-      MS_LOG(ERROR) << "check le fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
-  } while (0)
-
-#define MS_CHECK_GE(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) < (value2)) {                                                       \
-      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
-  } while (0)
-
-#define MS_CHECK_EQ(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) != (value2)) {                                                      \
-      MS_LOG(ERROR) << "check eq fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
-  } while (0)
-
-#define MS_CHECK_PTR_IF_NULL(ptr)                                \
-  do {                                                           \
-    if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
-      return;                                                    \
-    }                                                            \
   } while (0)
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \
@@ -338,6 +265,12 @@
     }                                     \
   } while (0)
 #endif
+
+#define NNACL_CHECK_TRUE_RET(v, e) MS_CHECK_TRUE_RET(v, e)
+#define NNACL_CHECK_TRUE_RET_VOID(v) MS_CHECK_TRUE_RET_VOID(v)
+#define NNACL_CHECK_FALSE(v, e) MS_CHECK_FALSE(v, e)
+#define NNACL_CHECK_INT_MUL_NOT_OVERFLOW(v1, v2, e) MS_CHECK_INT_MUL_NOT_OVERFLOW(v1, v2, e)
+#define NNACL_CHECK_INT_ADD_NOT_OVERFLOW(v1, v2, e) MS_CHECK_INT_ADD_NOT_OVERFLOW(v1, v2, e)
 
 enum PrimType {
   PrimType_NONE = 0,

@@ -102,6 +102,72 @@
     }                                                                 \
   } while (0)
 
+// Check whether value is true, if not return 'errcode'
+// and print error string msg
+#define MS_CHECK_TRUE_MSG(value, errcode, msg) \
+  do {                                         \
+    if (!(value)) {                            \
+      MS_LOG(ERROR) << #msg;                   \
+      return errcode;                          \
+    }                                          \
+  } while (0)
+
+#define MS_CHECK_FALSE_MSG(value, errcode, msg) \
+  do {                                          \
+    if ((value)) {                              \
+      MS_LOG(ERROR) << #msg;                    \
+      return errcode;                           \
+    }                                           \
+  } while (0)
+
+#define MS_CHECK_LT(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) >= (value2)) {                                                      \
+      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_GT(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) <= (value2)) {                                                      \
+      MS_LOG(ERROR) << "check gt fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_LE(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) > (value2)) {                                                       \
+      MS_LOG(ERROR) << "check le fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_GE(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) < (value2)) {                                                       \
+      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_EQ(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) != (value2)) {                                                      \
+      MS_LOG(ERROR) << "check eq fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
+#define MS_CHECK_PTR_IF_NULL(ptr)                                \
+  do {                                                           \
+    if ((ptr) == nullptr) {                                      \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      return;                                                    \
+    }                                                            \
+  } while (0)
+
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_NULL_RETURN_VOID(ptr)
@@ -109,5 +175,13 @@
 #define CHECK_NOT_EQUAL_RETURN(size1, size2)
 #define CHECK_EQUAL_RETURN(size1, size2)
 #define CHECK_LESS_RETURN_RET(size1, size2, ret, do_exec)
+#define MS_CHECK_TRUE_MSG(value, errcode, msg)
+#define MS_CHECK_FALSE_MSG(value, errcode, msg)
+#define MS_CHECK_LT(value1, value2, errcode)
+#define MS_CHECK_GT(value1, value2, errcode)
+#define MS_CHECK_LE(value1, value2, errcode)
+#define MS_CHECK_GE(value1, value2, errcode)
+#define MS_CHECK_EQ(value1, value2, errcode)
+#define MS_CHECK_PTR_IF_NULL(ptr)
 #endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_UTIL_H_

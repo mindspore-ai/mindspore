@@ -20,6 +20,7 @@
 #include <vector>
 #include "inner/model_generated.h"
 #include "include/errorcode.h"
+#include "src/common/log_util.h"
 namespace mindspore::lite {
 std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
 
