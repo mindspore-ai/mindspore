@@ -7544,12 +7544,13 @@ def prod(input, axis=None, keep_dims=False):
 def _multi_svd_norm(x, row_axis, col_axis, op):
     """_multi_svd_norm for norm."""
     y = _moveaxis(x.astype(mstype.float32), (row_axis, col_axis), (-2, -1))
+    svd_res = ops.svd(y, compute_uv=False)
     if op == 'amax':
-        return ops.svd(y, compute_uv=False).max(axis=-1)
+        return svd_res.max(axis=-1)
     if op == 'amin':
-        return ops.svd(y, compute_uv=False).min(axis=-1)
+        return svd_res.min(axis=-1)
     if op == 'sum':
-        return ops.svd(y, compute_uv=False).sum(axis=-1)
+        return ops.sum(svd_res, dim=-1)
     raise ValueError(f"For svd_norm, the op input must be one of ['amax', 'amin', 'sum'], but got f{op}")
 
 
