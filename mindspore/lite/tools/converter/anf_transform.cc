@@ -92,6 +92,7 @@
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
+#include "tools/optimizer/graph/input_data_type_trans_pass.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl/acl_pass.h"
 #include "src/common/log_util.h"
@@ -368,6 +369,9 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
+
+  convert_pm->AddPass(std::make_shared<opt::InputDTypeTransPass>(param->input_data_type, DataType::kNumberTypeInt32,
+                                                                 DataType::kNumberTypeInt64));
   convert_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
   convert_pm->AddPass(std::make_shared<opt::CastOpAdjust>());
   convert_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
