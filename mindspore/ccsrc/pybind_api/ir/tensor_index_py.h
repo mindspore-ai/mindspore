@@ -449,7 +449,7 @@ class TensorIndex final {
   // This is the c++ version of convert_slice_to_tensor in
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
   // Converts slice index into array
-  static TensorIndex SliceToArray(const TensorPtr &index, const ShapeVector &final_shape, int64_t slice_cnt,
+  static TensorIndex SliceToArray(const TensorPtr &index, const ShapeVector &final_shape, size_t slice_cnt,
                                   const ShapeVector &broadcast_shape, const ShapeVector &slice_shape,
                                   int64_t fancy_position);
 
