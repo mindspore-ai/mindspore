@@ -40,6 +40,12 @@ bool KernelNeedDump(const CNodePtr &kernel) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(kernel);
+  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
+  // If overflow detection is turned on, all kernels should be monitored.
+  if (op_debug_mode != kNoOverflow) {
+    MS_LOG(INFO) << "Overflow detection is turned on, all kernels should be monitored.";
+    return true;
+  }
   // dump all kernel if mode is set 0 in data_dump.json
   return DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope());
 }
