@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
                                     common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
     return false;
   }
-  if ((AnfUtils::IsRealKernel(node) || IsSummaryNode(node)) &&
+  if ((AnfUtils::IsRealKernel(node) || AnfAlgo::IsSummaryNode(node)) &&
       !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     return true;
   }
@@ -122,7 +122,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(ret);
   auto all_nodes = DeepLinkedGraphSearch(ret);
   for (auto &n : all_nodes) {
-    if (IsSummaryNode(n)) {
+    if (AnfAlgo::IsSummaryNode(n)) {
       return true;
     }
   }
