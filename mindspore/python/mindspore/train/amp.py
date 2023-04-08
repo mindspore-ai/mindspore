@@ -107,11 +107,8 @@ def _allow_mix_precision(node, allowed_list) -> bool:
         # if cell is already in allowed_list, it means to_float(mindspore.float16) is set by amp.
         # if cell is not in allowed_list, but has to_float(mindspore.float16),
         # it means to_float(mindspore.float16) is set by user.
-        if hasattr(node.get_instance(), "cell_init_args"):
-            cell_config = node.get_instance().cell_init_args
-            to_float16_config = "'fp16': True"
-            if cell_config.find(to_float16_config) != -1:
-                return False
+        if node.get_instance().to_float_fp16:
+            return False
     allowed_list.append(node.get_instance())
     return True
 
@@ -193,11 +190,7 @@ def _need_removed_cast_pair(node):
         return False
     for user in node.get_users():
         if isinstance(user.get_instance(), nn.Cell):
-            if not hasattr(user.get_instance(), "cell_init_args"):
-                return False
-            cell_config = user.get_instance().cell_init_args
-            to_float16_config = "'fp16': True"
-            if cell_config.find(to_float16_config) == -1:
+            if not user.get_instance().to_float_fp16:
                 return False
         elif user.get_instance_type() == P.Cast:
             user_cast_type = user.get_args()[1]
@@ -239,11 +232,9 @@ def _remove_duplicated_cast(stree):
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
                     _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)))
-            continue
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
             _remove_duplicated_cast(substree)
-            continue
         elif _need_removed_cast_pair(node):
             _removed_cast_pair_process(stree, node)
 

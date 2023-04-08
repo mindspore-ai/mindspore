@@ -793,8 +793,9 @@ class SymbolTree(Observer, Observable):
         Returns:
             An instance of python node which has been appended to SymbolTree.
         """
-        logger.warning("Ignoring unsupported node(%s) in %s.", type(ast_node).__name__, type(ast_scope).__name__)
+        logger.info("Ignoring unsupported node (%s) (%s).", type(ast_node).__name__, type(ast_scope).__name__)
         node_name = self._node_name_namer.get_name(type(ast_node).__name__)
+        self._update_names_for_unique(ast_node)
         node = Node.create_python_node(ast_node, node_name)
         self._insert_node(Position.create(self, self._tail, False), node)
         return node
@@ -1361,3 +1362,50 @@ class SymbolTree(Observer, Observable):
                     else:
                         node.get_instance()[index] = n.get_instance()
                     index += 1
+
+    def _update_names_for_unique(self, node: ast.AST):
+        """ Update names of ast nodes for unique. """
+        if isinstance(node, (ast.For, ast.If, ast.While)):
+            self._update_names_for_unique_branchs(node)
+        elif isinstance(node, ast.Assign):
+            self._update_names_for_unique(node.value)
+            for target in node.targets:
+                self._update_names_for_unique(target)
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Attribute):
+                self._update_names_for_unique(node.func.value)
+            for arg in node.args:
+                self._update_names_for_unique(arg)
+            for keyword in node.keywords:
+                self._update_names_for_unique(keyword)
+        elif isinstance(node, ast.UnaryOp):
+            self._update_names_for_unique(node.operand)
+        elif isinstance(node, ast.BinOp):
+            self._update_names_for_unique(node.left)
+            self._update_names_for_unique(node.right)
+        elif isinstance(node, (ast.Attribute, ast.Subscript, ast.Return)):
+            self._update_names_for_unique(node.value)
+        elif isinstance(node, (ast.List, ast.Tuple)):
+            for elt in node.elts:
+                self._update_names_for_unique(elt)
+        elif isinstance(node, ast.Compare):
+            for comparator in node.comparators:
+                self._update_names_for_unique(comparator)
+        elif isinstance(node, ast.Name):
+            node.id = self._target_namer.get_real_arg(node.id)
+
+    def _update_names_for_unique_branchs(self, node: Union[ast.For, ast.If, ast.While]):
+        """ Update names of ast nodes for unique with ast.For, ast.If or ast.While """
+        if isinstance(node, ast.For):
+            self._update_names_for_unique(node.target)
+            self._update_names_for_unique(node.iter)
+            for body in node.body:
+                self._update_names_for_unique(body)
+            for body in node.orelse:
+                self._update_names_for_unique(body)
+        elif isinstance(node, (ast.If, ast.While)):
+            self._update_names_for_unique(node.test)
+            for body in node.body:
+                self._update_names_for_unique(body)
+            for body in node.orelse:
+                self._update_names_for_unique(body)
