@@ -1845,6 +1845,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
       common::AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
     MS_EXCEPTION_IF_NULL(real_depend_input_with_idx.first);
     auto real_depend_kernel = real_depend_input_with_idx.first;
+    auto real_graph = graph;
     // Update the real depend kernel in the subgraphs connecting scene.
     if (IsInternalParameter(real_depend_kernel, graph)) {
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(real_depend_kernel);
@@ -1860,6 +1861,12 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
                           << front_output_with_index.first->DebugString();
       }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
+      const auto &func_graph = real_depend_kernel->func_graph();
+      if (func_graph == nullptr || std::dynamic_pointer_cast<KernelGraph>(func_graph) == nullptr) {
+        MS_LOG(WARNING) << "Cannot get kernel graph for node:" << real_depend_kernel->DebugString();
+      } else {
+        real_graph = std::dynamic_pointer_cast<KernelGraph>(func_graph);
+      }
       MS_EXCEPTION_IF_NULL(real_depend_kernel);
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " link control arrow by auto monad from internal parameter: "
                    << real_depend_input_with_idx.first->DebugString()
@@ -1876,7 +1883,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
 
     // The monad node and make tuple node need recursion.
     if (IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
-      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser, cnode_to_monad_inputs, checked_nodes);
+      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, real_graph, parser, cnode_to_monad_inputs,
+                                  checked_nodes);
       continue;
     }
 

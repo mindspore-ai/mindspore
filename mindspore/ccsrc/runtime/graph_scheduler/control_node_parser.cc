@@ -238,6 +238,95 @@ std::vector<FuncGraphPtr> TopoSortForFuncGraph(const FuncGraphPtr &root, FuncGra
   return result;
 }
 
+TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  TypeId type_id = kTypeUnknown;
+  if (node->isa<ValueNode>() && node->abstract() != nullptr) {
+    // For valuenode, fetch type from abstract.
+    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
+    MS_EXCEPTION_IF_NULL(abs);
+    const auto &type = abs->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->isa<TensorType>()) {
+      const auto &tensor_type = type->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      const auto &element = tensor_type->element();
+      type_id = element->type_id();
+    } else if (common::AnfAlgo::IsDynamicSequence(node)) {
+      const auto &sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abs);
+      if (sequence_abs->dynamic_len_element_abs() == nullptr) {
+        type_id = type->type_id();
+      } else {
+        const auto &element_type = sequence_abs->dynamic_len_element_abs()->BuildType();
+        MS_EXCEPTION_IF_NULL(element_type);
+        type_id = element_type->type_id();
+      }
+    } else {
+      type_id = type->type_id();
+    }
+  } else {
+    type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
+  }
+  return type_id;
+}
+
+size_t FetchOutputSizeByValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Scalar>()) {
+    return GetTypeByte(value->type());
+  } else if (value->isa<tensor::Tensor>()) {
+    const auto &tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    return tensor->Size();
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_sequence = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_sequence);
+    if (value_sequence->size() == 0) {
+      return 0;
+    }
+    size_t size = 0;
+    for (const auto &sub_value : value_sequence->value()) {
+      MS_EXCEPTION_IF_NULL(sub_value);
+      size += FetchOutputSizeByValue(sub_value);
+    }
+    return size;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
+  }
+}
+
+size_t FetchOutputSizeByNode(const AnfNodePtr &node, size_t index, TypeId type_id) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t size = GetTypeByte(TypeIdToType(type_id));
+  if (node->isa<ValueNode>() && node->abstract() != nullptr) {
+    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
+    MS_EXCEPTION_IF_NULL(abs);
+    const auto &shape_ptr = abs->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    if (shape_ptr->isa<abstract::Shape>()) {
+      const auto &shapes = shape_ptr->cast<abstract::ShapePtr>()->shape();
+      size = std::accumulate(shapes.begin(), shapes.end(), size, std::multiplies<int64_t>());
+    } else if (shape_ptr->isa<abstract::DynamicSequenceShape>()) {
+      const auto &value_node = node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      const auto &value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      size = FetchOutputSizeByValue(value);
+      MS_LOG(INFO) << "Abstract;" << abs->ToString() << " for node:" << node->DebugString() << " index:" << index
+                   << " shape:" << shape_ptr->ToString() << " size:" << size;
+    } else if (abs->isa<abstract::AbstractMonad>() || abs->isa<abstract::AbstractScalar>()) {
+      MS_LOG(DEBUG) << "For scalar, the output shape is 1.";
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid abstract;" << abs->ToString() << " for node:" << node->DebugString()
+                        << " index:" << index << " shape:" << shape_ptr->ToString();
+    }
+  } else {
+    size = AnfAlgo::GetOutputTensorMemSize(node, index);
+  }
+  return size;
+}
+
 // Create a device tensor for the front node.
 // Get the output format and select kernel build info from the backend node corresponding to the front node to
 // create the device address.
@@ -259,6 +348,10 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   if (output_type_id == kTypeUnknown) {
     output_type_id = common::AnfAlgo::GetOutputInferDataType(backend_node, 0);
   }
+  if (front_node->abstract() != nullptr && front_node->abstract()->isa<abstract::AbstractSequence>() &&
+      front_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+    tensor_size = FetchOutputSizeByNode(front_node, front_node_with_index.second, output_type_id);
+  }
   CreateBuildInfoForFrontNode(front_node_with_index, backend_node);
   device::DeviceAddressPtr address = nullptr;
   if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
@@ -277,52 +370,6 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
                 << " index:" << front_node_with_index.second << " addr:" << address << " size:" << tensor_size;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
   UpdateRefCount(address.get(), true);
-}
-
-TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
-  MS_EXCEPTION_IF_NULL(node);
-  TypeId type_id = kTypeUnknown;
-  if (node->isa<ValueNode>() && node->abstract() != nullptr) {
-    // For valuenode, fetch type from abstract.
-    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
-    MS_EXCEPTION_IF_NULL(abs);
-    const auto &type = abs->BuildType();
-    MS_EXCEPTION_IF_NULL(type);
-    if (type->isa<TensorType>()) {
-      const auto &tensor_type = type->cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(tensor_type);
-      const auto &element = tensor_type->element();
-      type_id = element->type_id();
-    } else {
-      type_id = type->type_id();
-    }
-  } else {
-    type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
-  }
-  return type_id;
-}
-
-size_t FetchOutputSizeByNode(const AnfNodePtr &node, size_t index, TypeId type_id) {
-  MS_EXCEPTION_IF_NULL(node);
-  size_t size = GetTypeByte(TypeIdToType(type_id));
-  if (node->isa<ValueNode>() && node->abstract() != nullptr) {
-    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
-    MS_EXCEPTION_IF_NULL(abs);
-    const auto &shape_ptr = abs->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape_ptr);
-    if (shape_ptr->isa<abstract::Shape>()) {
-      const auto &shapes = shape_ptr->cast<abstract::ShapePtr>()->shape();
-      size = std::accumulate(shapes.begin(), shapes.end(), size, std::multiplies<int64_t>());
-    } else if (abs->isa<abstract::AbstractMonad>() || abs->isa<abstract::AbstractScalar>()) {
-      MS_LOG(DEBUG) << "For scalar, the output shape is 1.";
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid abstract;" << abs->ToString() << " for node:" << node->DebugString()
-                        << " index:" << index;
-    }
-  } else {
-    size = AnfAlgo::GetOutputTensorMemSize(node, index);
-  }
-  return size;
 }
 
 // Create a device tensor for front node.
