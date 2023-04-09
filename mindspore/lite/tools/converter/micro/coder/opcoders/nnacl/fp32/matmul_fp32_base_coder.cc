@@ -47,16 +47,16 @@ int MatMulFP32BaseCoder::ReSize() {
   return RET_OK;
 }
 
-int MatMulFP32BaseCoder::InitBiasData() {
+int MatMulFP32BaseCoder::InitBufferForBias() {
   if (input_tensors_.size() == DIMENSION_3D) {
     int max_bias_data = params_->col_align_;
-    bias_pack_ptr_size_ = static_cast<size_t>(max_bias_data * sizeof(float));
+    bias_pack_ptr_size_ = static_cast<size_t>(max_bias_data * DataTypeSize(data_type_));
     if (bias_tensor_->ElementsNum() == 1) {
       is_bias_broadcast_ = true;
     }
-    ori_bias_pack_ptr_size_ = bias_tensor_->ElementsNum() * sizeof(float);
-    bias_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
-                                                             bias_tensor_->tensor_name() + "_online_pack"));
+    ori_bias_pack_ptr_size_ = bias_tensor_->ElementsNum() * DataTypeSize(data_type_);
+    bias_ptr_ =
+      allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight, bias_tensor_->tensor_name() + "_online_pack");
     MS_CHECK_PTR(bias_ptr_);
   }
   return RET_OK;
@@ -83,18 +83,19 @@ int MatMulFP32BaseCoder::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  a_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float));
+  a_pack_ptr_size_ =
+    static_cast<size_t>(params_->batch * params_->row_align_ * params_->deep_ * DataTypeSize(data_type_));
   if (params_->a_const_) {
-    a_pack_ptr_ = reinterpret_cast<float *>(allocator_->GetSharedWeightAddr(input_tensors_.at(0)));
+    a_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensors_.at(0));
     if (a_pack_ptr_ == nullptr) {
-      a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
-                                                                 input_tensors_.at(0)->tensor_name() + "_online_pack"));
+      a_pack_ptr_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight,
+                                       input_tensors_.at(0)->tensor_name() + "_online_pack");
       allocator_->MarkSharedWeight(input_tensors_.at(0), a_pack_ptr_);
     } else {
       a_packed_ = true;
     }
   } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, a_pack_ptr_size_, kWorkspace));
+    a_pack_ptr_ = allocator_->Malloc(data_type_, a_pack_ptr_size_, kWorkspace);
   }
   MS_CHECK_PTR(a_pack_ptr_);
   return RET_OK;
@@ -104,37 +105,38 @@ int MatMulFP32BaseCoder::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  b_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float));
+  b_pack_ptr_size_ =
+    static_cast<size_t>(params_->batch * params_->col_align_ * params_->deep_ * DataTypeSize(data_type_));
   if (params_->b_const_) {
-    b_pack_ptr_ = reinterpret_cast<float *>(allocator_->GetSharedWeightAddr(input_tensors_.at(1)));
+    b_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensors_.at(1));
     if (b_pack_ptr_ == nullptr) {
-      b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
-                                                                 input_tensors_.at(1)->tensor_name() + "_online_pack"));
+      b_pack_ptr_ = allocator_->Malloc(data_type_, b_pack_ptr_size_, kOnlinePackWeight,
+                                       input_tensors_.at(1)->tensor_name() + "_online_pack");
       allocator_->MarkSharedWeight(input_tensors_.at(1), b_pack_ptr_);
     } else {
       b_packed_ = true;
     }
   } else {
-    b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, b_pack_ptr_size_, kWorkspace));
+    b_pack_ptr_ = allocator_->Malloc(data_type_, b_pack_ptr_size_, kWorkspace);
   }
   MS_CHECK_PTR(b_pack_ptr_);
   return RET_OK;
 }
 
 int MatMulFP32BaseCoder::InitMatrixA(const float *src_ptr) {
-  ::InitMatrixA(src_ptr, a_pack_ptr_, params_, vec_matmul_);
+  ::InitMatrixA(src_ptr, static_cast<float *>(a_pack_ptr_), params_, vec_matmul_);
   return RET_OK;
 }
 
 int MatMulFP32BaseCoder::InitMatrixB(const float *src_ptr) {
-  ::InitMatrixB(src_ptr, b_pack_ptr_, params_, vec_matmul_);
+  ::InitMatrixB(src_ptr, static_cast<float *>(b_pack_ptr_), params_, vec_matmul_);
   return RET_OK;
 }
 
 int MatMulFP32BaseCoder::Init() {
   thread_count_ = thread_num_;
   ResizeParameter();
-  MS_CHECK_RET_CODE(InitBiasData(), "InitBiasData failed");
+  MS_CHECK_RET_CODE(InitBufferForBias(), "InitBufferForBias failed");
   if (params_->a_const_) {
     MS_CHECK_RET_CODE(InitBufferA(), "InitBufferA failed");
   }
@@ -196,7 +198,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code, init_code;
   size_t w_buf_size = 0;
   std::string param_name = "mat_mul_parameter";
-
   code.CodeStruct(param_name, *params_);
   if (support_parallel_) {
     code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
@@ -209,7 +210,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     int max_bias_data = params_->col_align_;
     if (is_bias_broadcast_) {
       float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data()))[0];
-      std::string bias_ptr_str = "((float *)(" + allocator_->GetRuntimeAddr(bias_ptr_) + "))";
+      std::string bias_ptr_str = allocator_->GetRuntimeAddr(bias_ptr_);
       init_code << "\t    for (int i = 0; i < " << max_bias_data << "; ++i) {\n";
       init_code << "\t\t    " << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";
       init_code << "   }\n";
@@ -222,8 +223,8 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   std::string a_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string b_str = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string c_str = allocator_->GetRuntimeAddr(output_tensor_);
-  std::string a_pack_str = allocator_->GetRuntimeAddr(a_pack_ptr_);
-  std::string b_pack_str = allocator_->GetRuntimeAddr(b_pack_ptr_);
+  std::string a_pack_str = allocator_->GetRuntimeAddr(static_cast<float *>(a_pack_ptr_));
+  std::string b_pack_str = allocator_->GetRuntimeAddr(static_cast<float *>(b_pack_ptr_));
   // do const value packing to init
   if ((params_->a_const_ && !a_packed_) || (params_->b_const_ && !b_packed_)) {
     init_code.CodeStruct("mat_mul_parameter", *params_);
@@ -273,7 +274,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     code << "      const float *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
     code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
     code << "      float *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n  ";
-
     code.CodeFunction("MatVecMulFp32", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, cur_oc);
   } else {
@@ -282,7 +282,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_
          << ";\n";
     code << "      float *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n  ";
-
     code.CodeFunction("MatMulOpt", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, params_->row_, cur_oc, params_->col_, "OutType_Nhwc");
   }

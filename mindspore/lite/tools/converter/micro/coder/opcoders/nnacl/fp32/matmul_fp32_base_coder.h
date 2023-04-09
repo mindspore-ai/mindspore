@@ -36,30 +36,28 @@ class MatMulFP32BaseCoder : public OperatorCoder {
 
   virtual int ReSize();
 
- private:
+ protected:
   void ResizeParameter();
-  int InitBiasData();
-  int InitBufferA();
-  int InitBufferB();
+  virtual int InitBufferForBias();
+  virtual int InitBufferA();
+  virtual int InitBufferB();
+  virtual int CollectFilesForTarget(CoderContext *const context);
+  virtual int Init();
+  virtual void InitParameter();
+
+ private:
   int InitMatrixA(const float *src_ptr);
   int InitMatrixB(const float *src_ptr);
-  int CollectFilesForTarget(CoderContext *const context);
-
- protected:
-  virtual int Init();
-  void InitParameter();
 
  protected:
   Tensor *filter_tensor_{nullptr};
   Tensor *bias_tensor_{nullptr};
   MatMulParameter *params_{nullptr};
-  float *a_pack_ptr_ = nullptr;
-  float *b_pack_ptr_ = nullptr;
-  float *bias_ptr_{nullptr};
+  void *a_pack_ptr_ = nullptr;
+  void *b_pack_ptr_ = nullptr;
+  void *bias_ptr_{nullptr};
   bool vec_matmul_{false};
   bool de_quant_flag_{false};
-
- private:
   bool a_packed_{false};
   bool b_packed_{false};
   int col_tile_{0};
@@ -71,6 +69,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   size_t a_pack_ptr_size_{0};
   size_t b_pack_ptr_size_{0};
   bool is_bias_broadcast_{false};
+  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_MATMUL_FP32_BASE_CODER_H_
