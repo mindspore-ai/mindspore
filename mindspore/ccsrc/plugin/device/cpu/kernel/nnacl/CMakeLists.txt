@@ -44,6 +44,7 @@ endfunction()
 file(GLOB SIMD_CONFIG_HEADER
         ${NNACL_DIR}/base/*_simd.h.in
         ${NNACL_DIR}/fp32/*_simd.h.in
+        ${NNACL_DIR}/fp32/online_fusion/*_simd.h.in
         ${NNACL_DIR}/fp32_grad/*_simd.h.in
         )
 file(GLOB SIMD_F16_CONFIG_HEADER ${NNACL_DIR}/fp16/*_simd.h.in)
