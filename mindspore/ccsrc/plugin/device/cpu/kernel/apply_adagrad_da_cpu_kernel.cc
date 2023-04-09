@@ -135,7 +135,7 @@ void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
       LaunchApplyAdagradDA(var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step,
                            start, end);
     };
-    CPUKernelUtils::ParallelForAutoSearch(task, input_elements_, &parallel_search_info_);
+    ParallelLaunch(task, input_elements_, 0, this, pool_);
     var += input_elements_;
     gradient_accumulator += input_elements_;
     gradient_squared_accumulator += input_elements_;
