@@ -72,10 +72,10 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
       }
     }
   }
-  return EmitOp(primc, inputs, attrs);
+  return EmitOp(primc, inputs);
 }
 
-NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs, const DAttr &attrs) const {
+NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const {
   AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
   cnode_inputs.reserve(inputs.size() + 1);
   (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
@@ -309,7 +309,7 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
       MS_LOG(DEBUG) << "For ReduceSum, it may wrong with a empty axis for dynamic rank case.";
     } else {
       for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
-        (void)real_axis.emplace_back(i);
+        real_axis.push_back(i);
       }
     }
   }
