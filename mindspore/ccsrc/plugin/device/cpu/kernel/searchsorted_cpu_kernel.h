@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
   template <typename S>
   const S *CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) const;
   template <typename S, typename T>
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   template <typename S, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using SearchSortedFunc = std::function<bool(SearchSortedCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
