@@ -56,6 +56,7 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternEncoderLayerNormT5Pre = "PatternEncoderLayerNormT5Pre";
   const std::string kPatternQueryLayerUsePast = "PatternQueryLayerUsePast";
   const std::string kPatternSigmaDistributed = "PatternSigmaDistributed";
+  const std::string kPatternSigmaDistributedFirstScale = "PatternSigmaDistributedFirstScale";
   const std::string kPatternSigmaMoeDistributed = "PatternSigmaMoeDistributed";
   const std::string kPatternSigmaMoeWithLastLayerNormDistributed = "PatternSigmaMoeWithLastLayerNormDistributed";
   const std::string kPatternSigmaWithLastLayerNormDistributed = "PatternSigmaWithLastLayerNormDistributed";
@@ -70,8 +71,8 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternSigmaQueryLayerMoe = "PatternSigmaQueryLayerMoe";
   VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_, bool mask,
                                       bool is_layer_norm) const;
-  VectorRef DefinePatternEncoderSigma(bool moe, bool use_past, bool distributed, bool is_layer_norm,
-                                      bool query_layer) const;
+  VectorRef DefinePatternEncoderSigma(bool moe, bool use_past, bool distributed, bool is_layer_norm, bool query_layer,
+                                      bool first_norm_scale) const;
 
   VectorRef DefinePatternEncoderAlpha(bool moe, bool distributed, bool is_layer_norm, bool query_layer,
                                       bool use_past) const;

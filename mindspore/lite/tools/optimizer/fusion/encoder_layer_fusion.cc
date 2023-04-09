@@ -126,7 +126,7 @@ VectorRef EncoderLayerFusion::getTuple(bool post_layernorm, bool layernorm_fusio
 }
 
 VectorRef EncoderLayerFusion::DefineLayerNorm(bool is_position_bias, BaseRef input, VarPtr gamma, VarPtr beta,
-                                              VarPtr eps, bool sigma = false) const {
+                                              VarPtr eps, bool not_scale = false) const {
   auto var1 = std::make_shared<Var>("var1");
   MS_CHECK_TRUE_RET(var1 != nullptr, {});
   auto is_reduce = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion), "reduce");
@@ -159,7 +159,7 @@ VectorRef EncoderLayerFusion::DefineLayerNorm(bool is_position_bias, BaseRef inp
     return mul;
   } else {
     auto real_div = VectorRef({is_div, sub, sqr2});
-    if (sigma) {
+    if (not_scale) {
       auto mul = VectorRef({is_mul, real_div, gamma});
       auto is_add2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is-add");
       MS_CHECK_TRUE_RET(is_add2 != nullptr, {});
@@ -497,17 +497,18 @@ VectorRef EncoderLayerFusion::DefinePatternSigmaFfn(BaseRef input) const {
 
 VectorRef EncoderLayerFusion::DefinePatternEncoderSigma(bool moe = false, bool use_past = true,
                                                         bool distributed = false, bool is_layer_norm = false,
-                                                        bool query_layer = false) const {
+                                                        bool query_layer = false, bool not_scale = true) const {
   auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "reshape-encoder");
   MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
   auto var = std::make_shared<Var>("var");
   MS_CHECK_TRUE_RET(var != nullptr, {});
-  auto reshape =
-    VectorRef({is_reshape, DefinePatternInitReset(DefineLayerNorm(false, input_, gamma1_, beta1_, eps1_, true)), var});
+  auto reshape = VectorRef(
+    {is_reshape, DefinePatternInitReset(DefineLayerNorm(false, input_, gamma1_, beta1_, eps1_, not_scale)), var});
   auto attention = (query_layer) ? VectorRef({is_attention_, input_q_, reshape, reshape, weight_attn_q_,
                                               weight_attn_qkv_, weight_attn_o_, bias_attn_qkv_, bias_attn_o_, mask_})
                                  : VectorRef({is_attention_, reshape, reshape, reshape, weight_attn_qkv_,
                                               weight_attn_o_, bias_attn_qkv_, bias_attn_o_, mask_});
+
   auto is_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem), "tuple_get_itme");
   auto var_tuple = std::make_shared<Var>("var_tuple");
   auto tuple = VectorRef({is_tuple, attention, var_tuple});
@@ -726,6 +727,7 @@ std::unordered_map<std::string, VectorRef> EncoderLayerFusion::DefinePatterns() 
   }
   // pangu sigma
   patterns[kPatternSigmaDistributed] = DefinePatternEncoderSigma(false, true, true, false, false);
+  patterns[kPatternSigmaDistributedFirstScale] = DefinePatternEncoderSigma(false, true, true, false, false, false);
   patterns[kPatternSigmaMoeDistributed] = DefinePatternEncoderSigma(true, true, true, false, false);
   patterns[kPatternSigmaMoeWithLastLayerNormDistributed] = DefinePatternEncoderSigma(true, true, true, true, false);
   patterns[kPatternSigmaQueryLayerDistributed] = DefinePatternEncoderSigma(true, true, true, false, true);
@@ -755,8 +757,8 @@ std::unordered_map<std::string, VectorRef> EncoderLayerFusion::DefinePatterns() 
 bool EncoderLayerFusion::IsUsePast(const std::string &pattern_name) const {
   if (pattern_name == kPatternQueryLayerUsePast || pattern_name == kPatternEncoderLayerPreNormUsePast ||
       pattern_name == kPatternEncoderLayerUsePastWithLastNorm || pattern_name == kPatternSigmaDistributed ||
-      pattern_name == kPatternSigmaMoeDistributed || pattern_name == kPatternDistributedAlpha ||
-      pattern_name == kPatternQueryLayerUsePastDistributed ||
+      pattern_name == kPatternSigmaDistributedFirstScale || pattern_name == kPatternSigmaMoeDistributed ||
+      pattern_name == kPatternDistributedAlpha || pattern_name == kPatternQueryLayerUsePastDistributed ||
       pattern_name == kPatternDistributedAlphaWithLastLayerNorm ||
       pattern_name == kPatternSigmaWithLastLayerNormDistributed || pattern_name == kPatternSigmaQueryLayerDistributed ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed || pattern_name == kPatternSigma ||
