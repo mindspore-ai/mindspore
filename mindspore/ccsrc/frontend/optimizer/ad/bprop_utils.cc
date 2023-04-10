@@ -28,13 +28,13 @@
 #include "utils/system/sha256.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #include "pipeline/jit/parse/resolve.h"
-#include "pipeline/pynative/grad/bprop_expander/bprop.h"
-#include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
-#include "frontend/optimizer/expander.h"
+#include "frontend/expander/bprop/bprop.h"
+#include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "frontend/expander/utils.h"
 #include "include/common/debug/dump_proto.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
 
 namespace mindspore {
 namespace ad {

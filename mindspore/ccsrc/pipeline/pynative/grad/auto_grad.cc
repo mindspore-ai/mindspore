@@ -30,7 +30,7 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "utils/info.h"
 #include "pipeline/jit/debug/trace.h"
-#include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "utils/profile.h"
 #include "include/common/utils/primitive_utils.h"

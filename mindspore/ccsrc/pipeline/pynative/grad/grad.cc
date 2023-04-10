@@ -26,9 +26,9 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
-#include "frontend/optimizer/expander.h"
+#include "frontend/expander/utils.h"
 #include "pipeline/jit/pass.h"
-#include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
@@ -352,7 +352,7 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool need_renor
   MS_EXCEPTION_IF_NULL(bprop_graph);
   if (need_renormalize && bprop_graph->has_flag(kPrimCPrimPyMixed)) {
     MS_LOG(DEBUG) << "Convert PrimitiveC to PrimitivePy";
-    if (!opt::ConvertPrimToPrimPy(bprop_graph)) {
+    if (!expander::ConvertPrimToPrimPy(bprop_graph)) {
       MS_LOG(EXCEPTION) << "Convert PrimitiveC to PrimitivePy failed";
     }
   }

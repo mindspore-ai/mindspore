@@ -27,8 +27,7 @@
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
-#include "frontend/operator/graph_bprop/bprop_expander_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 
 namespace mindspore {
@@ -487,7 +486,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     debug_info = this->bound_node()->debug_info();
   }
   if (meta_func_graph_->isa<graph_bprop::BpropMetaFuncGraph>()) {
-    auto method = !meta_func_graph_->isa<graph_bprop::BpropExpanderMetaFuncGraph>() ? "-meta" : "-expand";
+    auto method = "-expand";
     auto new_scope = std::make_shared<Scope>(scope_->name() + method);
     cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph, this->bound_node(), new_scope);
   } else {
