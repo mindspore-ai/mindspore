@@ -5,15 +5,15 @@
 
     对输入的多维数据进行三维的平均池化运算。
 
-    一般，输入shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` ，AvgPool3D在 :math:`(D_{in}, H_{in}, W_{in})` 维度上输出区域平均值。给定 `kernel_size` 为 :math:`(kD,kH,kW)` 和 `stride` ，运算如下：
+    一般，输入shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` ，AvgPool3D在 :math:`(D_{in}, H_{in}, W_{in})` 维度上输出区域平均值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` :math:`s = (s_0, s_1, s_2)` ，运算如下：
 
     .. warning::
         "kernel_size"在[1, 255]范围中。"strides"在[1, 63]范围中。
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
-        \frac{1}{kD * kH * kW} \sum_{l=0}^{kD-1} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
-        \text{input}(N_i, C_j, stride[0] \times d + l, stride[1] \times h + m, stride[2] \times w + n)
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，是一个整数，对应深度、高度和宽度，或者是含3个分别对应深度、高度和宽度整数的tuple。默认值：1。

@@ -895,7 +895,7 @@ class AvgPool2d(_PoolNd):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool2d outputs
     regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`(kH,kW)` and stride, the operation is as follows:
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}

@@ -5,12 +5,12 @@ mindspore.ops.MaxPool3D
 
     对输入的多维数据进行三维的最大池化运算。
 
-    一般，输入shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(D_{in}, H_{in}, W_{in})` 维上的区域最大值。给定 `kernel_size` 为 :math:`(kD,kH,kW)` 和 `stride` ，运算如下：
+    一般，输入shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(D_{in}, H_{in}, W_{in})` 维上的区域最大值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 stride 为 :math:`s = (s_0, s_1, s_2)`，运算如下：
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
-        \max_{l=0, \ldots, kD-1} \max_{m=0, \ldots, kH-1} \max_{n=0, \ldots, kW-1}
-        \text{input}(N_i, C_j, stride[0] \times d + l, stride[1] \times h + m, stride[2] \times w + n)
+        \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。整数类型，表示池化核深度、高和宽，或者是三个整数组成的元组，表示深、高和宽。默认值：1。

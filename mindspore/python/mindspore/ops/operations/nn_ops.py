@@ -3538,7 +3538,8 @@ class L2Normalize(Primitive):
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
-        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`.
+        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`,
+          where :math:`*` means any number of additional dimensions.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5443,7 +5444,7 @@ class BinaryCrossEntropy(Primitive):
         \end{cases}
 
     .. warning::
-        - The value of "x" must range from 0 to 1.
+        - The value of :math:`x` must range from 0 to 1.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
@@ -6115,7 +6116,7 @@ class SparseApplyProximalAdagrad(Primitive):
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be non-negative.
         - **grad** (Tensor) - A tensor of the same type as `var` and
-          grad.shape[1:] = var.shape[1:] if var.shape > 1.
+          :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
           following types: int32, int64 and :math:`indices.shape[0] = grad.shape[0]`.
@@ -7539,15 +7540,15 @@ class AvgPool3D(Primitive):
 
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`(kD,kH,kW)` and stride, the operation is as follows.
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. warning::
         "kernel_size" is in the range [1, 255]. "strides" is in the range [1, 63].
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
-        \frac{1}{kD * kH * kW} \sum_{l=0}^{kD-1} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
-        \text{input}(N_i, C_j, stride[0] \times d + l, stride[1] \times h + m, stride[2] \times w + n)
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
