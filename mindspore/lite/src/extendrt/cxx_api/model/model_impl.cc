@@ -246,7 +246,7 @@ Status ModelImpl::Build(const std::vector<std::shared_ptr<ModelImpl>> &model_imp
     return ret;
   }
 
-  std::map<std::string, tensor::TensorPtr> total_params;
+  std::set<std::string> total_params;
   for (size_t i = 0; i < model_impls.size(); i++) {
     auto &impl = model_impls[i];
     auto &model_path = model_paths[i];
@@ -272,7 +272,7 @@ Status ModelImpl::Build(const std::vector<std::shared_ptr<ModelImpl>> &model_imp
       if (total_params.find(param.first) != total_params.end()) {
         param.second->set_init_flag(true);
       } else {
-        total_params.emplace(param);
+        total_params.emplace(param.first);
       }
     }
     std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);

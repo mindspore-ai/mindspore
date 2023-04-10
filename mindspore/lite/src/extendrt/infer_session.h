@@ -136,9 +136,6 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   ///
   /// \return The Session type, eg kSingleOpSession for Ascend, etc.
   static SessionType SelectSession(const std::shared_ptr<Context> &context);
-
-  // FuncGraph pointer for model.
-  FuncGraphPtr graph_;
 };  // namespace mindspore
 }  // namespace mindspore
 #endif
