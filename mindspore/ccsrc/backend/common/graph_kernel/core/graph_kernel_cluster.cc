@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -461,6 +461,7 @@ void GraphKernelCluster::ConvertInputToAttrForClusterGraph(const AnfNodePtr &gra
   EliminateRedundantParameters(gk_graph, &fn_inputs);
   cnode->set_inputs(fn_inputs);
 }
+
 void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id) {
   AnfNodePtrList old_nodes;
   (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),

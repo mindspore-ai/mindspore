@@ -58,7 +58,6 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
     }
     return std::make_shared<TensorNode>();
   }
-  return nullptr;
 }
 
 py::object MakeOutput(const StubNodePtr &node) {
@@ -220,7 +219,7 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
   auto children = seq_abs->elements();
   if (!is_elements_build_.load()) {
     for (auto child : children) {
-      elements_.emplace_back(MakeStubNode(child->BuildType()));
+      (void)elements_.emplace_back(MakeStubNode(child->BuildType()));
     }
   }
   is_elements_build_ = true;
