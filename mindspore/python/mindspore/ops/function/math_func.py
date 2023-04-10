@@ -10164,7 +10164,7 @@ def polygamma(n, input):
     Args:
         n (Tensor): The order of the polygamma function.
             Supported dtypes: int32, int64. The shape of `n` is :math:`()`.
-        input (Tensor): The tensor to compute the `n`th derivative of the polygamma function with.
+        input (Tensor): The tensor to compute the :math:`n`-th derivative of the polygamma function with.
 
     Returns:
         Tensor, has the same dtype as `input`.
