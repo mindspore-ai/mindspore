@@ -731,6 +731,31 @@ void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
   attached_primitive_ = prim;
 }
 
+void PrimitivePyAdapter::SetUserData(const py::str &key, const py::object &value) {
+  auto prim = attached_primitive_.lock();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get attached primitive failed.";
+    return;
+  }
+
+  const std::string name = std::string("__primitive_user_data_") + key.cast<std::string>();
+  const auto &primitive_data = std::make_shared<PrimitiveUserData>();
+  primitive_data->obj = value;
+  prim->set_user_data<PrimitiveUserData>(name, primitive_data);
+}
+
+py::object PrimitivePyAdapter::UserData(const py::str &key) const {
+  auto prim = attached_primitive_.lock();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Get attached primitive failed.";
+    return py::none();
+  }
+
+  const std::string name = std::string("__primitive_user_data_") + key.cast<std::string>();
+  const auto primitive_data = prim->user_data<PrimitiveUserData>(name);
+  return primitive_data->obj;
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
@@ -751,6 +776,8 @@ void RegPrimitive(const py::module *m) {
     .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
     .def("remove_backward_hook_fn", &PrimitivePyAdapter::RemoveBackwardHookFn,
          "Remove primitive backward hook function.")
-    .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.");
+    .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.")
+    .def("set_user_data", &PrimitivePyAdapter::SetUserData, "Set primitive user data.")
+    .def("get_user_data", &PrimitivePyAdapter::UserData, "Get primitive user data.");
 }
 }  // namespace mindspore

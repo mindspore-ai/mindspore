@@ -404,6 +404,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
 CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_cnode = std::make_shared<CNode>(*cnode);
+  new_cnode->CloneUserData(cnode);
   // if a cnode is created not from front,this cnode won't be in map,so when replace it,we shouldn't update map
   if (BackendNodeExistInFrontBackendMap(cnode)) {
     FrontBackendlMapUpdate(cnode, new_cnode);
