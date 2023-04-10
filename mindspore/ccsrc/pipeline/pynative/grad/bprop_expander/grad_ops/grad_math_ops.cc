@@ -543,15 +543,27 @@ REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->Shape(x);
-  auto y_shape = ib->Shape(y);
   auto dx = ib->MulNoNan(dout, y);
   auto dy = ib->MulNoNan(x, dout);
-  auto bc_axis = ib->DynamicBroadcastGradientArgs(x_shape, y_shape);
-  auto broadcast_x = ib->TupleGetItem(bc_axis, 0);
-  auto broadcast_y = ib->TupleGetItem(bc_axis, 1);
-  dx = ib->Reshape(ib->ReduceSum(dx, broadcast_x, false, true), x_shape);
-  dy = ib->Reshape(ib->ReduceSum(dy, broadcast_y, false, true), y_shape);
+  auto x_sh = ib->GetShape(x);
+  auto y_sh = ib->GetShape(y);
+  if (IsDynamic(x_sh) || IsDynamic(y_sh)) {
+    auto x_shape = ib->Shape(x);
+    auto y_shape = ib->Shape(y);
+    auto bc_axis = ib->DynamicBroadcastGradientArgs(x_shape, y_shape);
+    auto broadcast_x = ib->TupleGetItem(bc_axis, 0);
+    auto broadcast_y = ib->TupleGetItem(bc_axis, 1);
+    dx = ib->Reshape(ib->ReduceSum(dx, broadcast_x, false, true), x_shape);
+    dy = ib->Reshape(ib->ReduceSum(dy, broadcast_y, false, true), y_shape);
+  } else {
+    auto bc_axis = BroadcastGradientArgs(x_sh, y_sh);
+    if (!bc_axis[0].empty()) {
+      dx = ib->Reshape(ib->ReduceSum(dx, bc_axis[0], false), x_sh);
+    }
+    if (!bc_axis[1].empty()) {
+      dy = ib->Reshape(ib->ReduceSum(dy, bc_axis[1], false), y_sh);
+    }
+  }
   return {dx, dy};
 });
 
