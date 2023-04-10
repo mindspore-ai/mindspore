@@ -4663,7 +4663,7 @@ def histc(input, bins=100, min=0., max=0.):
 
     Examples:
         >>> x = Tensor([1., 2, 1])
-        >>> y = histc(x, bins=4, min=0.0, max=3.0)
+        >>> y = ops.histc(x, bins=4, min=0.0, max=3.0)
         >>> print(y)
         [0 2 1 0]
     """

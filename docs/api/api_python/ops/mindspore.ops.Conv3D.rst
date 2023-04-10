@@ -40,7 +40,7 @@ mindspore.ops.Conv3D
           - pad: 在输入深度、高度和宽度各维度两侧添加 `pad` 数量的填充。如果设置此模式， `pad` 的值必须大于或等于0。
 
         - **pad** (Union(int, tuple[int])) - 在输入各维度两侧的填充长度。如果 `pad` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `pad` 。如果 `pad` 是6个整数的Tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `pad[0]` 、 `pad[1]` 、 `pad[2]` 、 `pad[3]` 、 `pad[4]` 和 `pad[5]` 。默认值：0。
-        - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的Tuple :math:`(dilation_d, dilation_h, dilation_w)` 。目前在深度维度仅支持取值为1。若 :math:`k > 1` ，则kernel间隔 `k` 个元素取样。取值大于等于1且小于对应的高度或宽度大小。默认值：1。
+        - **dilation** (Union[int, tuple[int]]，可选) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的Tuple :math:`(dilation_d, dilation_h, dilation_w)` 。目前在深度维度仅支持取值为1。若 :math:`k > 1` ，则kernel间隔 `k` 个元素取样。取值大于等于1且小于对应的高度或宽度大小。默认值：1。
         - **group** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：1。目前仅支持取值为1。
         - **data_format** (str) - 支持的数据模式。目前仅支持"NCDHW"。
 
