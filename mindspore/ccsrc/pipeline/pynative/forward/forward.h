@@ -93,6 +93,7 @@ class ForwardExecutor {
   void WorkerJoin() { forward_queue_->WorkerJoin(); }
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
+  std::string GetCurrentCellObjId() const;
 
  private:
   GradExecutorPtr grad() const;

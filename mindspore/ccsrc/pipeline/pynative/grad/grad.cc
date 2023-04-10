@@ -2012,7 +2012,7 @@ CNodePtr GradExecutor::ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_
   }
   const auto &cnode = curr_g()->NewCNodeInOrder(inputs);
   if (IsPrimitiveCNode(cnode, prim::kPrimCellBackwardHook)) {
-    top_cell()->RecordCellBackwardHookOp(top_input_args_info()->obj_order_id, cnode);
+    top_cell()->RecordCellBackwardHookOp(op_run_info->cell_obj_id, cnode);
   }
 
   MS_LOG(DEBUG) << "Make CNode for " << op_run_info->base_op_run_info.op_name << ", new cnode is "

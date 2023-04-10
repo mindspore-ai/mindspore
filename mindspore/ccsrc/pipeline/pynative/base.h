@@ -72,6 +72,7 @@ struct FrontendOpRunInfo {
   ValuePtr out_value{nullptr};
   std::string op_info;
   std::string out_value_id;
+  std::string cell_obj_id;
   std::vector<AbstractBasePtr> input_abs;
   std::vector<ValuePtr> input_value;
   std::vector<std::string> input_value_id;
