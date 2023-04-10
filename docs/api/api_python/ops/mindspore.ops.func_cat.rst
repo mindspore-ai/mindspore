@@ -11,7 +11,7 @@
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
     参数：
-        - **tensors** (Union[tuple, list]) - 输入为Tensor组成的tuple或list。假设在这个tuple或list中有两个Tensor，即 `t1` 和 `t2` 。要在0轴方向上执行 `Concat` ，除0轴外，其他轴的shape都应相等，即 :math:`t1.shape[1] = t2.shape[1]，t1.shape[2] = t2.shape[2]，...，t1.shape[R-1] = t2.shape[R-1]` ，其中 :math:`R` 是Tensor的秩。
+        - **tensors** (Union[tuple, list]) - 输入为Tensor组成的tuple或list。假设在这个tuple或list中有两个Tensor，即 `t1` 和 `t2` 。要在0轴方向上执行 `Concat` ，除  :math:`0` 轴外，其他轴的shape都应相等，即 :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]` ，其中 :math:`R` 是Tensor的秩。
         - **axis** (int) - 表示指定的轴，取值范围是 :math:`[-R, R)` 。默认值：0。
 
     返回：
