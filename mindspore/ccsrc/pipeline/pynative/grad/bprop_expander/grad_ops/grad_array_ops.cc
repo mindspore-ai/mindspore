@@ -1575,7 +1575,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
 
   auto dvalue_shape = dvalue->shape();
   if (IsDynamicRank(dvalue_shape)) {
-    auto axis_node = ib->Range(ib->Shape(dvalue, true));
+    auto axis_node = ib->Range(ib->Reshape(ib->Shape(ib->Shape(dvalue, true), true), {-1}));
     dvalue = ib->ReduceSum(bout[1], axis_node);
   } else {
     dvalue = ib->ReduceSum(bout[1]);
