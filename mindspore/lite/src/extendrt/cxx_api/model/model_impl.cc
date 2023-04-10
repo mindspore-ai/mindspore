@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <set>
 #include <shared_mutex>
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
@@ -239,7 +240,14 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
-
+  if (model_type == kMindIR_Lite) {
+    ret = session_->CompileGraph(model_buff, model_size, &graph_id_);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "compile graph failed.";
+      return ret;
+    }
+    return kSuccess;
+  }
   // for model pool
   FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
   if (func_graph != nullptr) {

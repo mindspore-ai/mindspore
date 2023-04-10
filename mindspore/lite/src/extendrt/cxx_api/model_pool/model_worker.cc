@@ -44,14 +44,15 @@ void ModelWorker::WaitCreateWorkerDone() {
 
 void ModelWorker::InitModelWorker(const char *model_buf, size_t size,
                                   const std::shared_ptr<WorkerConfig> &worker_config,
-                                  const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success) {
+                                  const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success,
+                                  ModelType model_type) {
   worker_config_ = worker_config;
   MS_LOG(INFO) << "worker bind core id list: " << worker_config_->context->GetThreadAffinityCoreList();
   MS_LOG(INFO) << "worker thread num: " << worker_config_->context->GetThreadNum();
   worker_id_ = worker_config_->worker_id;
   predict_task_queue_ = predict_task_queue;
   numa::NUMAAdapter::GetInstance()->Bind(worker_config_->numa_id);
-  auto status = Init(model_buf, size);
+  auto status = Init(model_buf, size, model_type);
   if (status != kSuccess) {
     PrintWorkerInfo();
     MS_LOG(ERROR) << "init failed in model worker.";
@@ -104,15 +105,13 @@ void ModelWorker::Run() {
   MS_LOG(INFO) << "delete model.";
 }
 
-Status ModelWorker::Init(const char *model_buf, size_t size) {
+Status ModelWorker::Init(const char *model_buf, size_t size, ModelType model_type) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
   model_ = new Model();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
-  mindspore::ModelType model_type = kMindIR;
-
   if (!worker_config_->config_path.empty()) {
     auto status = model_->LoadConfig(worker_config_->config_path);
     if (status != kSuccess) {
