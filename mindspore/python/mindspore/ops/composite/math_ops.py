@@ -50,7 +50,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
 
     Args:
         x (Tensor): Input data is used to count non-zero numbers. With shape
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
             Default: (), reduce all dimensions.
         keep_dims (bool, optional): Whether to maintain dimensions specified by `axis`.

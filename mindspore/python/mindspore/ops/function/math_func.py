@@ -4735,7 +4735,7 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         dtype (mindspore.dtype, optional): The dtype of output. Default: mstype.float32.
 
     Returns:
-        Tensor has the shape as (step, ). Its datatype is set by the attr 'dtype'.
+        Tensor has the shape as :math:`(step, )`. Its datatype is set by the attr 'dtype'.
 
     Raises:
         TypeError: If `start` is not a float or a Tensor.
@@ -7862,10 +7862,11 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     from the LU decomposition of a matrix.
 
     Args:
-        LU_data (Tensor): The packed LU factorization data. A Tensor of shape :math:`(*, M, N)`, where * is batch
-          dimensions. The dim of `LU_data` must be equal to or greater than 2.
-        LU_pivots (Tensor): The packed LU factorization pivots. A Tensor of shape :math:`(*, min(M, N))`, where * is
-          batch dimensions, with data type int8, uint8, int16, int32, int64.
+        LU_data (Tensor): The packed LU factorization data. A Tensor of shape :math:`(*, M, N)`, where :math:`*` is
+            batch dimensions. The dim of `LU_data` must be equal to or greater than 2.
+        LU_pivots (Tensor): The packed LU factorization pivots. A Tensor of shape :math:`(*, min(M, N))`,
+            where :math:`*` is
+            batch dimensions, with data type int8, uint8, int16, int32, int64.
         unpack_data (bool, optional): A flag indicating if the `LU_data` should be unpacked. If False,
             then the returned L and U are None. Default: True.
         unpack_pivots (bool, optional): A flag indicating if the `LU_pivots` should be unpacked into
