@@ -36,7 +36,7 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
     MS_LOG(ERROR) << "Please don't call BuildOutputs twice.";
     return kLiteError;
   }
-  std::vector<Tensor *> results;
+  std::vector<std::unique_ptr<Tensor>> results;
   for (auto &input : inputs) {
     results.clear();
     auto ret = CreateTensorsFromAbstract(input->abstract(), &results);
@@ -45,17 +45,23 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
                     << input->fullname_with_scope();
       return ret;
     }
-    auto arg_node = new CompileNode(input->fullname_with_scope());
+    auto arg_node = new (std::nothrow) CompileNode(input->fullname_with_scope(), kernel::PrimitiveType());
+    if (arg_node == nullptr) {
+      MS_LOG(ERROR) << "New argument node failed, input : " << input->fullname_with_scope();
+      return kLiteMemoryFailed;
+    }
     ret = graph_->AppendArgNode(arg_node);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Append input lite-node to graph failed, input : " << input->fullname_with_scope();
       return ret;
     }
     for (auto &result : results) {
-      arg_node->AppendOutputTensor(result);
-      ret = graph_->AppendInputTensor(result);
+      auto tensor = result.release();
+      arg_node->AppendOutputTensor(tensor);
+      ret = graph_->AppendInputTensor(tensor);
       if (ret != kSuccess) {
         MS_LOG(ERROR) << "Append output tensor to argument node failed, node: " << input->fullname_with_scope();
+        delete (tensor);
         return ret;
       }
     }
@@ -399,7 +405,7 @@ StatusCode CompileResultBuilder::CreateAndAppendNode(const CNodePtr &cnode) {
 }
 
 StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr &abstract,
-                                                           std::vector<Tensor *> *results) {
+                                                           std::vector<std::unique_ptr<Tensor>> *results) {
   if (results == nullptr) {
     MS_LOG(ERROR) << "Result is nullptr.";
     return kLiteInputParamInvalid;
@@ -414,7 +420,7 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
         return kLiteError;
       }
-      results->emplace_back(tensor);
+      results->emplace_back(std::unique_ptr<Tensor>(tensor));
     }
     return kSuccess;
   }
@@ -425,7 +431,7 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
       MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
       return kLiteError;
     }
-    results->emplace_back(tensor);
+    results->emplace_back(std::unique_ptr<Tensor>(tensor));
     return kSuccess;
   }
   MS_LOG(ERROR) << "Unsupported abstract: " << abstract;
@@ -441,7 +447,7 @@ StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, co
     MS_LOG(ERROR) << "Input compile_node is nullptr.";
     return kLiteInputParamInvalid;
   }
-  std::vector<Tensor *> results;
+  std::vector<std::unique_ptr<Tensor>> results;
   auto ret = CreateTensorsFromAbstract(cnode->abstract(), &results);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Create tensors from output abstract of cnode failed, cnode : " << cnode->fullname_with_scope();
@@ -452,9 +458,11 @@ StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, co
     return kLiteError;
   }
   for (auto &result : results) {
-    ret = graph_->AppendNodeOutputTensor(compile_node, result);
+    auto tensor = result.release();
+    ret = graph_->AppendNodeOutputTensor(compile_node, tensor);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Append output tensor to node failed, node: " << compile_node->GetName();
+      delete (tensor);
       return ret;
     }
   }
