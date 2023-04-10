@@ -294,6 +294,12 @@ class SummaryLandscape:
                 Default: None. The default save path is the same as the summary file.
         """
 
+        executor = None
+        if len(device_ids) > 1:
+            executor = ProcessPoolExecutor(len(device_ids))
+            futures = [executor.submit(self._set_context, i) for i in device_ids]
+            wait(futures, return_when=ALL_COMPLETED)
+
         output_path = os.path.realpath(output) if output is not None else self._summary_dir
         summary_record = SummaryRecord(output_path)
         self._check_device_ids(device_ids)
@@ -321,13 +327,14 @@ class SummaryLandscape:
                 json.dump(data, file)
             os.chmod(json_path, stat.S_IRUSR)
 
-        for interval, landscape in self._list_landscapes(callback_fn=callback_fn, device_ids=device_ids):
+        for interval, landscape in self._list_landscapes(callback_fn=callback_fn, executor=executor,
+                                                         device_ids=device_ids):
             summary_record.add_value(PluginEnum.LANDSCAPE.value, f'landscape_{str(interval)}', landscape)
             summary_record.record(0)
             summary_record.flush()
         summary_record.close()
 
-    def _list_landscapes(self, callback_fn, device_ids=None):
+    def _list_landscapes(self, callback_fn, executor=None, device_ids=None):
         """Create landscape with single device and list all landscape."""
 
         if not os.path.exists(os.path.join(self._ckpt_dir, 'train_metadata.json')):
@@ -343,39 +350,30 @@ class SummaryLandscape:
         kwargs = dict(proz=0.2, landscape_size=data['landscape_size'], device_ids=device_ids, callback_fn=callback_fn)
 
         start = time.time()
-        with ProcessPoolExecutor(max_workers=len(device_ids)) as executor:
-            if len(device_ids) > 1:
-                futures = []
-                for device_id in device_ids:
-                    future = executor.submit(self._set_context, device_id)
-                    futures.append(future)
-                wait(futures, return_when=ALL_COMPLETED)
-
-            kwargs['executor'] = executor if len(device_ids) > 1 else None
-
-            if data['create_landscape']['train']:
-                for i, epochs in enumerate(self._epoch_group.values()):
-                    self._log_message(data['create_landscape'], index=i, interval=epochs)
-                    kwargs['epochs'] = epochs
-                    mid_time = time.time()
-                    landscape_data = self._create_landscape_by_pca(**kwargs)
-                    logger.info("Create landscape end, use time: %s s." % (round(time.time() - mid_time, 6)))
-                    landscape_data.unit = data['unit']
-                    landscape_data.step_per_epoch = data['step_per_epoch']
-                    landscape_data.num_samples = data['num_samples']
-                    yield [epochs[0], epochs[-1]], landscape_data.transform_to_loss_landscape_msg(landscape_data)
-
-            if data['create_landscape']['result']:
-                final_epochs = [list(self._epoch_group.values())[-1][-1]]
-                self._log_message(data['create_landscape'], final_epochs=final_epochs)
-                kwargs['epochs'] = final_epochs
+        kwargs['executor'] = executor
+        if data['create_landscape']['train']:
+            for i, epochs in enumerate(self._epoch_group.values()):
+                self._log_message(data['create_landscape'], index=i, interval=epochs)
+                kwargs['epochs'] = epochs
                 mid_time = time.time()
-                landscape_data = self._create_landscape_by_random(**kwargs)
+                landscape_data = self._create_landscape_by_pca(**kwargs)
                 logger.info("Create landscape end, use time: %s s." % (round(time.time() - mid_time, 6)))
                 landscape_data.unit = data['unit']
                 landscape_data.step_per_epoch = data['step_per_epoch']
                 landscape_data.num_samples = data['num_samples']
-                yield final_epochs, landscape_data.transform_to_loss_landscape_msg(landscape_data)
+                yield [epochs[0], epochs[-1]], landscape_data.transform_to_loss_landscape_msg(landscape_data)
+
+        if data['create_landscape']['result']:
+            final_epochs = [list(self._epoch_group.values())[-1][-1]]
+            self._log_message(data['create_landscape'], final_epochs=final_epochs)
+            kwargs['epochs'] = final_epochs
+            mid_time = time.time()
+            landscape_data = self._create_landscape_by_random(**kwargs)
+            logger.info("Create landscape end, use time: %s s." % (round(time.time() - mid_time, 6)))
+            landscape_data.unit = data['unit']
+            landscape_data.step_per_epoch = data['step_per_epoch']
+            landscape_data.num_samples = data['num_samples']
+            yield final_epochs, landscape_data.transform_to_loss_landscape_msg(landscape_data)
         logger.info("Total use time: %s s." % (round(time.time() - start, 6)))
 
     def _log_message(self, create_landscape, index=None, interval=None, final_epochs=None):
