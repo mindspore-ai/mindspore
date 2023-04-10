@@ -71,7 +71,8 @@ using distributed::rpc::TCPServer;
 
 using DataType = float;
 using Generator = random::Philox;
-using Distribution = random::NormalDistribution<double>;
+using NormalDistribution = random::NormalDistribution<double>;
+using ConstantDistribution = random::ConstantDistribution<DataType>;
 
 // The EmbeddingCachePrefetchActor is used to cache large embedding table scenarios. The cache level is: Device
 // Cache->Local Host Cache->Remote Cache. This Actor is used to perform Local and Device Cache hit analysis and cache
@@ -292,9 +293,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Record latest error information user related.
   std::string error_info_{""};
-
-  // The random number generator is used to initialize the embedding values when needed.
-  std::unique_ptr<distributed::RandomGenerator<DataType, Generator, Distribution>> rnd_gen_;
 };
 
 // RpcOperator is used to do rpc with other processes in distributed execution.

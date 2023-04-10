@@ -546,6 +546,24 @@ class TruncatedNormal {
     }
   }
 };
+
+//
+// Constant distribution.
+//
+template <typename T>
+class ConstantDistribution {
+ public:
+  explicit ConstantDistribution(T value) : value_(value) {}
+  ~ConstantDistribution() = default;
+
+  template <typename Generator>
+  T operator()(Generator &&) const {
+    return value_;
+  }
+
+ private:
+  T value_;
+};
 }  // namespace mindspore::random
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_RANDOM_H_
