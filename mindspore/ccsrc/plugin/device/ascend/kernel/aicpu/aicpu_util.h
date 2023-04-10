@@ -88,6 +88,7 @@ constexpr auto kDropout3D = "Dropout3D";
 constexpr auto kNonMaxSuppressionV3 = "NonMaxSuppressionV3";
 constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
+constexpr auto kMaskedScatter = "MaskedScatter";
 constexpr auto kDynamicStitch = "DynamicStitch";
 constexpr auto kSort = "Sort";
 constexpr auto kSearchSorted = "SearchSorted";
@@ -200,6 +201,7 @@ constexpr auto kFmax = "Fmax";
 constexpr auto kGLU = "GLU";
 constexpr auto kFmin = "Fmin";
 constexpr auto kFillV2 = "FillV2";
+constexpr auto kFillDiagonal = "FillDiagonal";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kResizeV2 = "ResizeV2";
@@ -226,6 +228,7 @@ constexpr auto kAffineGrid = "AffineGrid";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
+                                          kMaskedScatter,
                                           kGather,
                                           kGreater,
                                           kDynamicStitch,
@@ -235,6 +238,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kSearchSorted,
                                           kSparseSegmentSum,
                                           kResizeBilinear,
+                                          kRandpermV2,
                                           kResizeBilinearGrad,
                                           kTensorScatterElements,
                                           kAdd,
@@ -342,6 +346,7 @@ const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kReservoirReplayBufferSample,
                                              kIdentityN,
                                              kIndexPut,
+                                             kFillDiagonal,
                                              kSparseConcat,
                                              kConcatOffsetV1};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{

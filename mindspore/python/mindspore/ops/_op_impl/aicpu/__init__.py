@@ -17,6 +17,7 @@ from .adaptive_max_pool_3d_grad import _adaptive_max_pool_3d_grad_aicpu
 from .adaptive_max_pool_2d_grad import _adaptive_max_pool_2d_grad_aicpu
 from .adaptive_avg_pool_3d_grad import _adaptiveavgpool3d_grad_aicpu
 from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
+from .adaptive_max_pool_3d import _adaptive_max_pool_3d_aicpu
 from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
 from .less import _less_aicpu
@@ -91,6 +92,8 @@ from .acos_grad import _acos_grad_aicpu
 from .expand import _expand_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
+from .randperm_v2 import _randperm_v2_aicpu
+from .random_poisson import _random_poisson_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .rsqrt import _rsqrt_aicpu
 from .sqrt import _sqrt_aicpu
@@ -119,6 +122,7 @@ from .tanh_grad import _tanh_grad_aicpu
 from .cast import _cast_aicpu
 from .mirror_pad import _mirror_pad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
+from .masked_scatter import _masked_scatter_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
 from .mul import _mul_aicpu
@@ -234,6 +238,7 @@ from .reduce_sum import _reduce_sum_aicpu
 from .adaptive_avg_pool_2d import _adaptive_avg_pool_2d_aicpu
 from .adaptive_avg_pool_2d_grad import _adaptive_avg_pool_2d_grad_aicpu
 from .fill_v2 import _fill_v2_aicpu
+from .fill_diagonal import _fill_diagonal_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
 from .multinomial import _multinomial_aicpu
 from .fft_with_size import _fft_with_size_aicpu
@@ -317,6 +322,7 @@ from .heaviside import _heaviside_aicpu
 from .hypot import _hypot_aicpu
 from .identity_n import _identity_n_aicpu
 from .index_fill import _index_fill_aicpu
+from .index_put import _index_put_aicpu
 from .kldivloss import _kldiv_loss_aicpu
 from .kldivlossgrad import _kldiv_loss_grad_aicpu
 from .lcm import _lcm_aicpu
@@ -332,7 +338,9 @@ from .pad_v3 import _pad_v3_aicpu
 from .cholesky import _cholesky_aicpu
 from .hsv_to_rgb import _hsv_to_rgb_aicpu
 from .im2col import _im2col_aicpu
+from .bessel_i0 import _bessel_i0_aicpu
 from .lu_solve import _lu_solve_aicpu
+from .lu import _lu_aicpu
 from .relu_grad_v3 import _relu_grad_v3_aicpu
 from .resize_bicubic import _resize_bicubic_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu
