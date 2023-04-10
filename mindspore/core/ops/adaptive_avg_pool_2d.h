@@ -31,6 +31,7 @@ class MIND_API AdaptiveAvgPool2D : public BaseOperator {
   MIND_API_BASE_MEMBER(AdaptiveAvgPool2D);
   AdaptiveAvgPool2D() : BaseOperator(kNameAdaptiveAvgPool2D) { InitIOName({"x"}, {"y"}); }
   explicit AdaptiveAvgPool2D(const std::string &kName) : BaseOperator(kName) { InitIOName({"x"}, {"y"}); }
+  std::vector<int64_t> get_output_size() const;
 };
 MIND_API abstract::AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &,
                                                           const PrimitivePtr &primitive,

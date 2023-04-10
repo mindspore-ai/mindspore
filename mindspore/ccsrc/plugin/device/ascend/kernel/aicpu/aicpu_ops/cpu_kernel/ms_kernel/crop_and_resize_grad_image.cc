@@ -195,7 +195,7 @@ uint32_t CropAndResizeGradImageCpuKernel::GradOfImageComputeShared(CpuKernelCont
   const int64_t nums_boxes = grads_shape_[0];
   const int64_t crop_depth = grads_shape_[3];
   KERNEL_CHECK_FALSE((depth == crop_depth), KERNEL_STATUS_PARAM_INVALID, "image_size and grads are incompatible.");
-  const int64_t num_image1 = nums_boxes * image_height * image_width * depth;
+  const int64_t num_image1 = output_tensor->NumElements();
 
   // Set the output data to 0.
   T temp = static_cast<T>(0.0);
