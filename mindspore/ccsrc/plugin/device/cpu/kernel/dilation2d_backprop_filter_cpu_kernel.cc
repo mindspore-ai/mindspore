@@ -91,8 +91,8 @@ bool Dilation2DBackpropFilterCpuKernelMod::LaunchKernel(const std::vector<kernel
   size_t filter_width = LongToSize(f_filter_shape_[kFormatCHWIndexW]);
   size_t out_backprop_height = LongToSize(f_out_backprop_shape_[kFormatNCHWIndexH]);
   size_t out_backprop_width = LongToSize(f_out_backprop_shape_[kFormatNCHWIndexW]);
-  size_t output_height = LongToSize(f_output_shape_[kFormatNCHWIndexH]);
-  size_t output_width = LongToSize(f_output_shape_[kFormatNCHWIndexW]);
+  size_t output_height = LongToSize(f_output_shape_[kFormatCHWIndexH]);
+  size_t output_width = LongToSize(f_output_shape_[kFormatCHWIndexW]);
   size_t stride_height = LongToSize(stride_[kFormatNCHWIndexH]);
   size_t stride_width = LongToSize(stride_[kFormatNCHWIndexW]);
   size_t rate_height = LongToSize(dilation_[kFormatNCHWIndexH]);
