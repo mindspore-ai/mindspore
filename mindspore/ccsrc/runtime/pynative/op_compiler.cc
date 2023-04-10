@@ -68,6 +68,7 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
     auto func_graph = recent_graph->cast<FuncGraphPtr>();
     std::vector<KernelGraphPtr> all_out_graph;
     graph = session_->ConstructKernelGraph(func_graph, &all_out_graph, device_context->GetDeviceType());
+    graph->set_attr(kAttrPackFunction, MakeValue(True));
   } else {
     graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.input_tensor,
                                              op_run_info->base_op_run_info.input_mask,

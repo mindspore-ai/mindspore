@@ -17,8 +17,9 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn, Tensor
 from mindspore.ops._packfunc import pack
+from mindspore.ops import functional as F
 
 
 @pytest.mark.level0
@@ -34,12 +35,16 @@ def test_pack_basic_cell():
     class Net(nn.Cell):
         @pack
         def construct(self, x, y):
-            z = x + y
+            if F.is_sequence_shape_unknown(x.shape):
+                z = x + y
+                return z * z
+            z = x + y + 1
             return z * z
     ms.set_context(mode=ms.PYNATIVE_MODE)
     net = Net()
-    x = ms.Tensor([1, 2, 3, 4])
-    y = ms.Tensor([4, 5, 6, 7])
+    x = Tensor([1, 2, 3, 4])
+    y = Tensor([4, 5, 6, 7], ms.float64)
     output = net(x, y)
-    expect = np.array([25, 49, 81, 121])
+    expect = np.array([36., 64., 100., 144.])
     assert np.allclose(output.asnumpy(), expect)
+    assert output.dtype == ms.float64
