@@ -285,7 +285,10 @@ void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const A
 // Only one of the static and dynamic reference counts will take effect.
 void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                                               const std::string &op_name) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
+  // May be the ignored input address that is not used in the kernel launch.
+  if (device_tensor == nullptr) {
+    return;
+  }
 
   std::lock_guard<std::mutex> locker(mem_free_mutex_);
   if (device_tensor->original_ref_count() != SIZE_MAX) {

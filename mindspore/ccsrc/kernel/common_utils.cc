@@ -1602,6 +1602,11 @@ KernelAttr &KernelAttr::AddAllOutInRef(const bool &all_out_in_ref) {
   return *this;
 }
 
+KernelAttr &KernelAttr::AddIgnoredInputAddress(size_t input_index) {
+  (void)ignored_input_addresses_.emplace_back(input_index);
+  return *this;
+}
+
 void KernelAttr::SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format) {
   if (index >= input_type_.size()) {
     MS_LOG(EXCEPTION) << "Invalid index for input: " << index << ", out of range.";

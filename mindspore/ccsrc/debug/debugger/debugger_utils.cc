@@ -67,13 +67,24 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  */
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
                 const DeviceContext *device_context, const bool trans_flag) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(launch_info);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
   // get inputs
   auto kernel_inputs = launch_info->inputs_;
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t j = 0; j < input_size; ++j) {
+    auto addr = kernel_inputs[j];
+    MS_EXCEPTION_IF_NULL(addr);
+    // Ignore the input address that is not used in the kernel launch.
+    if ((addr->addr == nullptr) && kernel_info->IsIgnoredInputAddress(j)) {
+      continue;
+    }
     auto input_kernel = cnode->input(j + 1);
     std::string input_kernel_name = GetKernelNodeName(input_kernel);
-    auto addr = kernel_inputs[j];
     auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, kParameterOutputIndex);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(input_kernel, kParameterOutputIndex);
     auto type = trans_flag ? host_type : device_type;
@@ -81,7 +92,6 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     if (type == kMetaTypeNone) {
       continue;
     }
-
     auto host_format = kOpFormat_DEFAULT;
     auto device_format =
       E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, kParameterOutputIndex);
