@@ -27,8 +27,8 @@ mindspore.ops.LSTM
         - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
         - **h_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
         - **c_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
-        - **reserve** (Tensor) - shape为 :math:`(r,1)` 。
-        - **state** (Tensor) - 使用随机数生成状态及其shape为 :math:`(s,1)` 。
+        - **reserve** (Tensor) - shape为 :math:`(r, 1)` 。
+        - **state** (Tensor) - 使用随机数生成状态及其shape为 :math:`(s, 1)` 。
 
     异常：
         - **TypeError** - 如果 `input_size` ， `hidden_size` 或 `num_layers` 不是int。

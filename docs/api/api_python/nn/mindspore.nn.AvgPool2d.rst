@@ -5,11 +5,11 @@ mindspore.nn.AvgPool2d
 
     在输入Tensor上应用2D平均池化运算，可视为二维输入平面的组合。
 
-    通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`(kH,kW)` 和 `stride` ，公式定义如下：
+    通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (h_{ker}, w_{ker})` 和 `stride` :math:`s = (s_0, s_1)`，公式定义如下：
 
     .. math::
-        \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
-        \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
+        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为整数或单元素tuple，则代表池化核的高和宽。如果为tuple且长度不为1，其值必须包含两个整数值分别表示池化核的高和宽。默认值：1。

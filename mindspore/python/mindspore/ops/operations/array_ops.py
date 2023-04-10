@@ -237,7 +237,7 @@ class DType(Primitive):
     Returns the data type of the input tensor as mindspore.dtype.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - Input Tensor.
 
     Outputs:
         mindspore.dtype, the data type of a tensor.
@@ -494,8 +494,8 @@ class Col2Im(Primitive):
         L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
             - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
 
-    where :math:`d` is over all spatial dimensions. The :attr:`padding`, :attr:`stride`
-    and :attr:`dilation` arguments specify how the sliding blocks are retrieved.
+    where :math:`d` is over all spatial dimensions. The `padding`, `stride`
+    and `dilation` arguments specify how the sliding blocks are retrieved.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -6997,7 +6997,7 @@ class Lstsq(Primitive):
     .. math::
 
        \begin{array}{ll}
-       \min_y & \|xy-a\|_2.
+       \min_y & \|xy-a\|_2
        \end{array}
 
     If :math:`m < n`, `Lstsq` solves the least-norm problem:
@@ -7005,7 +7005,7 @@ class Lstsq(Primitive):
     .. math::
 
        \begin{array}{llll}
-       \min_y & \|y\|_2 & \text{subject to} & xy = a.
+       \min_y & \|y\|_2 & \text{subject to} & xy = a
        \end{array}
 
     Args:

@@ -3565,7 +3565,8 @@ class L2Normalize(Primitive):
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
-        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`.
+        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`,
+          where :math:`*` means any number of additional dimensions.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5470,7 +5471,7 @@ class BinaryCrossEntropy(Primitive):
         \end{cases}
 
     .. warning::
-        - The value of "x" must range from 0 to 1.
+        - The value of :math:`x` must range from 0 to 1.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
@@ -6142,7 +6143,7 @@ class SparseApplyProximalAdagrad(Primitive):
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be non-negative.
         - **grad** (Tensor) - A tensor of the same type as `var` and
-          grad.shape[1:] = var.shape[1:] if var.shape > 1.
+          :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
           following types: int32, int64 and :math:`indices.shape[0] = grad.shape[0]`.
