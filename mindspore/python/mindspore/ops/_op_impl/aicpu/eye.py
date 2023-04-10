@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Eye op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
@@ -22,9 +21,10 @@ eye_op_info = AiCPURegOp("Eye")                                                \
     .attr("num_rows", "int") \
     .attr("num_columns", "int") \
     .attr("dtype", "int") \
-    .dtype_format(DataType.I8_Default)       \
-    .dtype_format(DataType.I16_Default)    \
-    .dtype_format(DataType.I32_Default)    \
+    .dtype_format(DataType.BOOL_Default) \
+    .dtype_format(DataType.I8_Default) \
+    .dtype_format(DataType.I16_Default) \
+    .dtype_format(DataType.I32_Default) \
     .dtype_format(DataType.I64_Default) \
     .dtype_format(DataType.U8_Default) \
     .dtype_format(DataType.U16_Default) \

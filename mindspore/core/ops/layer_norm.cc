@@ -16,21 +16,26 @@
 
 #include "ops/layer_norm.h"
 
-#include "utils/ms_context.h"
-#include "utils/check_convert_utils.h"
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
+
 #include "abstract/abstract_value.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 #include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "abstract/param_validator.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ir/dtype/container.h"
+#include "ir/dtype.h"
 #include "ir/dtype/number.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindapi/base/shared_ptr.h"
-#include "mindapi/ir/value.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
@@ -38,6 +43,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -57,106 +63,102 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(LayerNorm, BaseOperator);
-AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  // Inputs: three tensors(x, gamma, beta).
-  // outputs: y, mean, variance
-  MS_EXCEPTION_IF_NULL(primitive);
-  const std::string op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  const int64_t x_index = 0;
-  const int64_t gamma_index = 1;
-  const int64_t beta_index = 2;
-  auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, x_index);
-  auto gamma = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, gamma_index);
-  auto beta = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, beta_index);
-
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  std::vector<TypePtr> types_list;
-  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (is_ascend) {
-    types_list = {input_x->BuildType(), input_x->BuildType(), input_x->BuildType()};
-  } else {
-    types_list = {input_x->BuildType(), kFloat32, kFloat32};
-  }
-
-  auto input_shape = input_x->shape();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto gamma_shape = dyn_cast<abstract::Shape>(gamma->BuildShape());
-  auto beta_shape = dyn_cast<abstract::Shape>(beta->BuildShape());
-  MS_EXCEPTION_IF_NULL(gamma_shape);
-  MS_EXCEPTION_IF_NULL(beta_shape);
-
-  auto const &input_shape_list = input_shape->shape();
-  auto const &gamma_shape_list = gamma_shape->shape();
-  auto const &beta_shape_list = beta_shape->shape();
-
-  if (IsDynamicRank(input_shape_list) || IsDynamicRank(gamma_shape_list) || IsDynamicRank(beta_shape_list)) {
-    auto any_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-    std::vector<BaseShapePtr> shapes_list = {any_shape, any_shape, any_shape};
-    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
-                                  std::make_shared<Tuple>(types_list));
-  }
-
-  const size_t input_rank = input_shape_list.size();
-  if (input_rank == 0) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << input_rank << ".";
-  }
-
-  // begin_norm_axis and begin_params_axis must be smaller than the size of input_x and >= -1
-  ValuePtr bna_ptr = primitive->GetAttr("begin_norm_axis");
-  int64_t begin_norm_axis =
-    abstract::CheckAxis(op_name, "begin_norm_axis", bna_ptr, -1, SizeToLong(input_rank), "input_x");
-  ValuePtr bpa_ptr = primitive->GetAttr("begin_params_axis");
-  int64_t begin_params_axis =
-    abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(input_rank), "input_x");
-
-  // the beta and gama shape must be x_shape[begin_params_axis:]
-  auto valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", input_args[x_index]->BuildType(), valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", input_args[gamma_index]->BuildType(), valid_types,
-                                                   op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("beta_dtype", input_args[beta_index]->BuildType(), valid_types,
-                                                   op_name);
-
-  if (gamma_shape_list.empty() || beta_shape_list.empty()) {
-    MS_EXCEPTION(ValueError) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
-  }
-
-  size_t begin_params_axis_u = LongToSize(begin_params_axis);
-  if ((begin_params_axis_u > input_shape_list.size()) ||
-      (gamma_shape_list.size() + begin_params_axis_u < input_shape_list.size()) ||
-      (beta_shape_list.size() + begin_params_axis_u < input_shape_list.size())) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << op_name
-      << "', begin_params_axis must be less than or equal to input_x shape size, gamma shape size add "
-         "begin_params_axis must be equal to or greater than input_x shape size, and beta shape size add "
-         "begin_params_axis must be equal to or greater than input_x shape size, But got begin_params_axis: "
-      << begin_params_axis_u << ", input_x shape size: " << input_shape_list.size()
-      << ", gamma shape size: " << gamma_shape_list.size() << ", beta shape size: " << beta_shape_list.size() << ".";
-  }
-  for (size_t i = begin_params_axis_u; i < input_shape_list.size(); ++i) {
-    size_t gamma_beta_shape_dim = i - begin_params_axis_u;
-    if (input_shape_list[i] > 0 && ((gamma_shape_list[gamma_beta_shape_dim] != input_shape_list[i]) ||
-                                    (beta_shape_list[gamma_beta_shape_dim] != input_shape_list[i]))) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', gamma or beta shape must match input shape, but got input shape: "
-                               << input_shape->ToString() << ", gamma shape: " << gamma_shape->ToString()
-                               << ", beta shape: " << beta_shape->ToString() << ".";
+class MIND_API LayerNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto gamma_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto beta_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    auto gamma_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(gamma_shape_ptr)[kShape];
+    auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(beta_shape_ptr)[kShape];
+    const size_t x_rank = x_shape.size();
+    if (x_rank == 0) {
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << x_rank << ".";
     }
+    if (gamma_shape.empty() || beta_shape.empty()) {
+      MS_EXCEPTION(ValueError) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
+    }
+
+    if (IsDynamicRank(x_shape) || IsDynamicRank(gamma_shape) || IsDynamicRank(beta_shape)) {
+      auto any_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+      std::vector<BaseShapePtr> shapes_list = {any_shape, any_shape, any_shape};
+      return std::make_shared<abstract::TupleShape>(shapes_list);
+    }
+
+    // begin_norm_axis and begin_params_axis must be smaller than the size of input_x and >= -1
+    ValuePtr bna_ptr = primitive->GetAttr("begin_norm_axis");
+    int64_t begin_norm_axis =
+      abstract::CheckAxis(op_name, "begin_norm_axis", bna_ptr, -1, SizeToLong(x_rank), "input_x");
+    ValuePtr bpa_ptr = primitive->GetAttr("begin_params_axis");
+    int64_t begin_params_axis =
+      abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(x_rank), "input_x");
+
+    size_t begin_params_axis_u = LongToSize(begin_params_axis);
+    if ((begin_params_axis_u > x_rank) || (gamma_shape.size() + begin_params_axis_u < x_rank) ||
+        (beta_shape.size() + begin_params_axis_u < x_rank)) {
+      MS_EXCEPTION(ValueError)
+        << "For '" << op_name
+        << "', begin_params_axis must be less than or equal to input_x shape size, gamma shape size add "
+           "begin_params_axis must be equal to or greater than input_x shape size, and beta shape size add "
+           "begin_params_axis must be equal to or greater than input_x shape size, But got begin_params_axis: "
+        << begin_params_axis_u << ", input_x shape size: " << x_rank << ", gamma shape size: " << gamma_shape.size()
+        << ", beta shape size: " << beta_shape.size() << ".";
+    }
+    for (size_t i = begin_params_axis_u; i < x_rank; ++i) {
+      size_t gamma_beta_shape_dim = i - begin_params_axis_u;
+      if (x_shape[i] > 0 &&
+          ((gamma_shape[gamma_beta_shape_dim] != x_shape[i]) || (beta_shape[gamma_beta_shape_dim] != x_shape[i]))) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name
+                                 << "', gamma or beta shape must match input shape, but got input shape: " << x_shape
+                                 << ", gamma shape: " << gamma_shape << ", beta shape: " << beta_shape << ".";
+      }
+    }
+
+    std::vector<BaseShapePtr> shapes_list = {x_shape_ptr};
+    auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, x_shape);
+    (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
+    (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
+
+    return std::make_shared<abstract::TupleShape>(shapes_list);
   }
 
-  std::vector<BaseShapePtr> shapes_list = {input_x->BuildShape()};
-  auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, input_shape->shape());
-  (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
-  (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    // Inputs: three tensors(x, gamma, beta).
+    // outputs: y, mean, variance
+    MS_EXCEPTION_IF_NULL(primitive);
+    const std::string op_name = primitive->name();
+    MS_EXCEPTION_IF_NULL(primitive);
+    const int64_t input_num = 3;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
 
-  return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
-                                std::make_shared<Tuple>(types_list));
-}
+    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto gamma_type = input_args[kInputIndex1]->BuildType();
+    auto beta_type = input_args[kInputIndex2]->BuildType();
+    // the beta and gama shape must be x_shape[begin_params_axis:]
+    auto valid_types = {kFloat16, kFloat32, kFloat64};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_types, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", gamma_type, valid_types, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("beta_dtype", beta_type, valid_types, op_name);
+
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    std::vector<TypePtr> types_list;
+    bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+    if (is_ascend) {
+      types_list = {x_type, x_type, x_type};
+    } else {
+      types_list = {x_type, kFloat32, kFloat32};
+    }
+
+    return std::make_shared<Tuple>(types_list);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LayerNorm, prim::kPrimLayerNorm, LayerNormInfer, false);
 
 void LayerNorm::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis, const float epsilon) {
   this->set_begin_norm_axis(begin_norm_axis);
@@ -183,6 +185,5 @@ float LayerNorm::get_epsilon() const {
   auto value_ptr = this->GetAttr(kEpsilon);
   return GetValue<float>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(LayerNorm, prim::kPrimLayerNorm, LayerNormInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

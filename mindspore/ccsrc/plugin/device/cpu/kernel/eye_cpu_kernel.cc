@@ -51,8 +51,7 @@ int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 template <typename S, typename T>
 bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  size_t data_num = outputs[0]->size;
-  size_t data_size = data_num * sizeof(T);
+  size_t data_size = outputs[0]->size;
   S tmp_n = static_cast<S *>(inputs[0]->addr)[0];
   S tmp_m = static_cast<S *>(inputs[1]->addr)[0];
   num_n_ = static_cast<int64_t>(tmp_n);
@@ -63,7 +62,7 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
 
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   auto ouput_ptr = outputs[0]->addr;
-  auto ret = memset_s(ouput_ptr, outputs[0]->size, 0, data_size);
+  auto ret = memset_s(ouput_ptr, data_size, 0, data_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }
@@ -75,8 +74,9 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   return true;
 }
 
-#define EYE_CPU_REG(MS_T, MS_S, S, T)                                                                         \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddInputAttr(kObjectTypeTensorType).AddOutputAttr(MS_S), \
+// In Kernel, the type of mstype is kNumberTypeInt64;
+#define EYE_CPU_REG(MS_T, MS_S, S, T)                                                                    \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(MS_S), \
     &EyeCpuKernelMod::LaunchKernel<S, T>
 
 const std::vector<std::pair<KernelAttr, EyeCpuKernelMod::KernelRunFunc>> &EyeCpuKernelMod::GetFuncList() const {

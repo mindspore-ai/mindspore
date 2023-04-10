@@ -17,7 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EYE_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EYE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
 template <typename T>
-CUDA_LIB_EXPORT void Eye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void BatchEye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CudaEye(const size_t out_size, const int64_t nums, const int64_t cols, T *out,
+                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EYE_IMPL_CUH_

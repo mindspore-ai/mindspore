@@ -38,10 +38,6 @@ class MIND_API CTCGreedyDecoder : public BaseOperator {
 
   bool get_merge_repeated() const;
 };
-
-MIND_API abstract::AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

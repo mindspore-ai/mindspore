@@ -32,7 +32,10 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kCSRMulOpName).set_input_attr_info(3);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCSRMVOpName).set_input_attr_info(3);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCSRReduceSumOpName).set_input_attr_info(3).set_input_attr_info(4);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kErfOpName).set_input_attr_info(1);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kEyeOpName).set_input_attr_info(0).set_input_attr_info(1).set_input_attr_info(2);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kEyeOpName)
+  .set_input_attr_info(0, "int")
+  .set_input_attr_info(1, "int")
+  .set_input_attr_info(2, "int");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kFlattenGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPullWeightOpName).set_input_attr_info(1).set_input_attr_info(2);

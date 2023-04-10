@@ -15,29 +15,36 @@
  */
 #include "ops/dropout.h"
 
-#include <vector>
 #include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "abstract/param_validator.h"
 #include "abstract/abstract_value.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 #include "abstract/dshape.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
+#include "ir/dtype.h"
+#include "ir/dtype/number.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindapi/base/shared_ptr.h"
-#include "mindapi/ir/value.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/shape_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Dropout, BaseOperator);
 void Dropout::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void Dropout::set_keep_prob(const float keep_prob) {
@@ -49,19 +56,30 @@ float Dropout::get_keep_prob() const {
   auto value_ptr = this->GetAttr(kKeepProb);
   return GetValue<float>(value_ptr);
 }
-AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<abstract::AbstractBasePtr> &args_spec_list) {
-  auto op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector shape = x->shape()->shape();
-  auto output_shape =
-    std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(shape));
-  AbstractBasePtrList ret = {output_shape, output_shape};
-  return std::make_shared<abstract::AbstractTuple>(ret);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(Dropout, prim::kPrimDropout, InferImplDropout, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(Dropout, BaseOperator);
+class MIND_API DropoutInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto shape_ptr = std::make_shared<abstract::Shape>(x_shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape_ptr, shape_ptr});
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    for (auto &input : input_args) {
+      MS_EXCEPTION_IF_NULL(input);
+    }
+    auto x_type = input_args[0]->BuildType();
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+    CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Dropout, prim::kPrimDropout, DropoutInfer, false);
 }  // namespace ops
 }  // namespace mindspore
