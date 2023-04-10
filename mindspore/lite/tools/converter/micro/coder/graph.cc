@@ -28,6 +28,7 @@
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
 #include "src/litert/lite_model.h"
+#include "base/float16.h"
 
 namespace mindspore::lite::micro {
 CoderGraph::~CoderGraph() {
@@ -41,7 +42,7 @@ CoderGraph::~CoderGraph() {
   }
 }
 
-int CoderGraph::ConvertTensors() {
+int CoderGraph::ConvertTensors(bool enableFp16) {
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "Graph model is nullptr";
     return RET_ERROR;
@@ -83,13 +84,26 @@ int CoderGraph::ConvertTensors() {
     if (origin_tensor->nodeType() == NodeType_ValueNode && origin_tensor->data() != nullptr &&
         origin_tensor->data()->size() > 0) {
       // copy data, this is weight && bias
-      MS_CHECK_TRUE_WITH_EXE(origin_tensor->data()->size() > 0, "invalid meta_tensor data size.", delete dstTensor);
-      auto data_size = static_cast<size_t>(origin_tensor->data()->size());
-      MS_CHECK_RET_CODE_WITH_EXE(dstTensor->MallocData(), "dst tensor malloc data failed!", delete dstTensor);
-      void *dst_data = dstTensor->data();
-      MS_CHECK_RET_CODE_WITH_EXE(memcpy_s(dst_data, dstTensor->Size(), origin_tensor->data()->data(), data_size),
-                                 "memcpy_s copy data failed!", delete dstTensor);
-      dstTensor->set_data(dst_data);
+      if (enableFp16 && origin_data_type == kNumberTypeFloat32) {
+        dstTensor->set_data_type(kNumberTypeFloat16);
+        auto data = dstTensor->MutableData();
+        MS_CHECK_RET_CODE_WITH_EXE(data != nullptr, "dst tensor malloc data failed!", delete dstTensor);
+        auto fp32_data = reinterpret_cast<const float *>(origin_tensor->data()->data());
+        auto fp16_data = reinterpret_cast<float16 *>(data);
+        CHECK_NULL_RETURN(fp32_data);
+        CHECK_NULL_RETURN(fp16_data);
+        for (int64_t j = 0; j < dstTensor->ElementsNum(); ++j) {
+          fp16_data[j] = float16(fp32_data[j]);
+        }
+      } else {
+        if (memcpy_s(dstTensor->MutableData(), dstTensor->Size(), origin_tensor->data()->data(),
+                     origin_tensor->data()->size()) != EOK) {
+          MS_LOG(ERROR) << "memcpy_s copy data failed!";
+          delete dstTensor;
+        }
+      }
+    } else if (enableFp16 && origin_data_type == kNumberTypeFloat32) {
+      dstTensor->set_data_type(kNumberTypeFloat16);
     }
     if (origin_tensor->name() != nullptr) {
       dstTensor->set_tensor_name(origin_tensor->name()->str());

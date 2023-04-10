@@ -118,7 +118,7 @@ int CoderSession::GenerateCode() {
   return ret;
 }
 
-int CoderSession::Init(const void *content, int size, const int model_index, bool end_flag) {
+int CoderSession::Init(const void *content, int size, const int model_index, bool end_flag, bool enableFp16) {
   MS_LOG(INFO) << "CoderSession::Init start";
   Model *model = lite::Model::Import(static_cast<const char *>(content), size);
   MS_CHECK_PTR(model);
@@ -127,6 +127,7 @@ int CoderSession::Init(const void *content, int size, const int model_index, boo
   InitThread(model_index);
   context_ = std::make_unique<CoderContext>(model_index);
   context_->set_end_flag(end_flag);
+  enableFP16_ = enableFp16;
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }
@@ -301,7 +302,7 @@ int CoderSession::CreateOpCoders() {
 }
 
 int CoderSession::InitCodeGraph() {
-  MS_CHECK_RET_CODE(coder_graph_->ConvertTensors(), "convert tensors failed");
+  MS_CHECK_RET_CODE(coder_graph_->ConvertTensors(enableFP16_), "convert tensors failed");
   MS_CHECK_RET_CODE(coder_graph_->InitGraphInOutTensors(), "init graph inputs and outputs failed");
   return RET_OK;
 }

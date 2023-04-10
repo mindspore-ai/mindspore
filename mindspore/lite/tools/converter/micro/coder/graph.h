@@ -35,7 +35,7 @@ class CoderGraph {
   explicit CoderGraph(Model *model) : model_(model) {}
   ~CoderGraph();
 
-  int ConvertTensors();
+  int ConvertTensors(bool enableFp16);
   int InitGraphInOutTensors();
 
   void SetAllTensors(const std::vector<Tensor *> &all_tensors);

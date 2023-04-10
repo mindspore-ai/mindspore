@@ -22,9 +22,10 @@
 
 namespace mindspore::lite::micro {
 namespace {
-const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat, sizeof(float)},   {kNumberTypeFloat32, sizeof(float)},
-                                           {kNumberTypeInt32, sizeof(int32_t)}, {kNumberTypeInt16, sizeof(int16_t)},
-                                           {kNumberTypeInt8, sizeof(int8_t)},   {kNumberTypeUInt8, sizeof(uint8_t)}};
+const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat, sizeof(float)},     {kNumberTypeFloat32, sizeof(float)},
+                                           {kNumberTypeInt32, sizeof(int32_t)},   {kNumberTypeInt16, sizeof(int16_t)},
+                                           {kNumberTypeInt8, sizeof(int8_t)},     {kNumberTypeUInt8, sizeof(uint8_t)},
+                                           {kNumberTypeFloat16, sizeof(uint16_t)}};
 }
 void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type,
                                           const std::string &tensor_name) {
