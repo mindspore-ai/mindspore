@@ -19,28 +19,31 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveAvgPool2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveAvgPool2DCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdaptiveAvgPool2DCpuKernelMod() = default;
   ~AdaptiveAvgPool2DCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   std::vector<int64_t> input_dim_sizes_;
   std::vector<int64_t> output_size_data_;
-  CNodeWeakPtr node_wpt_;
   TypeId dtype_{kTypeUnknown};
 
   template <typename SCALAR_T>
