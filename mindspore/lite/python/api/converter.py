@@ -498,20 +498,22 @@ class Converter:
         the initialization time of the model increases during inference execution. If this parameter is set to
         "general", general optimization will be performed, such as constant folding and operator fusion (the
         converted model only supports CPU/GPU hardware backend, not Ascend backend). If this parameter is set to
-        "ascend_oriented", the optimization for Ascend hardware will be performed (the converted model only supports
-        Ascend hardware backend).
+        "gpu_oriented", the optimization for GPU hardware will be performed (the converted model only supports GPU
+        hardware backend). If this parameter is set to "ascend_oriented", the optimization for Ascend hardware will be
+        performed (the converted model only supports Ascend hardware backend).
 
         For the MindSpore model, since it is already a `mindir` model, two approaches are suggested:
 
         1. Inference is performed directly without offline conversion.
 
-        2. Setting `optimize` to "general" in CPU/GPU hardware backend and setting `optimize` to "ascend_oriented" in
-        Ascend hardware when using offline conversion. The relevant optimization is done in the offline phase to reduce
-        the initialization time of inference execution.
+        2. Setting `optimize` to "general" in CPU/GPU hardware backend, setting `optimize` to "gpu_oriented" in GPU
+        hardware and setting `optimize` to "ascend_oriented" in Ascend hardware when using offline conversion.
+        The relevant optimization is done in the offline phase to reduce the initialization time of inference execution.
 
         Returns:
-            str, whether avoid fusion optimization. Options are "none" | "general" | "ascend_oriented". "none" means
-            fusion optimization is not allowed. "general" and "ascend_oriented" means fusion optimization is allowed.
+            str, whether avoid fusion optimization. Options are "none" | "general" | "gpu_oriented" | "ascend_oriented".
+            "none" means fusion optimization is not allowed. "general", "gpu_oriented" and "ascend_oriented" means
+            fusion optimization is allowed.
         """
         return self.optimize_user_defined
 
@@ -521,13 +523,13 @@ class Converter:
         Set whether avoid fusion optimization.
 
         Args:
-            optimize(str): Whether avoid fusion optimization. Options are "none" | "general" | "ascend_oriented".
-                "none" means fusion optimization is not allowed. "general" and "ascend_oriented" means fusion
-                optimization is allowed.
+            optimize(str): Whether avoid fusion optimization. Options are "none" | "general" | "gpu_oriented"
+                | "ascend_oriented". "none" means fusion optimization is not allowed. "general", "gpu_oriented" and
+                "ascend_oriented" means fusion optimization is allowed.
 
         Raises:
             TypeError: `optimize` is not a str.
-            ValueError: `optimize` is not in ["none", "general", "ascend_oriented"] when it is a str.
+            ValueError: `optimize` is not in ["none", "general", "gpu_oriented", "ascend_oriented"] when it is a str.
         """
         check_isinstance("optimize", optimize, str)
         if optimize == "none":
@@ -536,12 +538,16 @@ class Converter:
         elif optimize == "general":
             self._converter.set_no_fusion(False)
             self.optimize_user_defined = "general"
+        elif optimize == "gpu_oriented":
+            self._converter.set_no_fusion(False)
+            self.device = "GPU"
+            self.optimize_user_defined = "gpu_oriented"
         elif optimize == "ascend_oriented":
             self._converter.set_no_fusion(False)
             self.device = "Ascend"
             self.optimize_user_defined = "ascend_oriented"
         else:
-            raise ValueError(f"optimize must be 'none', 'general' or 'ascend_oriented'.")
+            raise ValueError(f"optimize must be 'none', 'general', 'gpu_oriented' or 'ascend_oriented'.")
 
     @property
     def output_data_type(self):

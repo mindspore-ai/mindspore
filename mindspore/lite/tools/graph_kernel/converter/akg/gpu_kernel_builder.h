@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_CPU_KERNEL_BUILDER_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_CPU_KERNEL_BUILDER_H_
-
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_GPU_KERNEL_BUILDER_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_GPU_KERNEL_BUILDER_H_
 #include <string>
-#include <vector>
+#include <map>
 #include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
 
 namespace mindspore::graphkernel {
-constexpr size_t PROCESS_LIMIT = 8;
-constexpr size_t TIME_OUT = 100;
-
-class CpuKernelBuilder : public AkgKernelBuilder {
+class GpuKernelBuilder : public AkgKernelBuilder {
  public:
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) override;
   AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) override;
-};
 
-bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list);
+ private:
+  std::string dir_path_;
+  std::map<AnfNodePtr, std::string> node_info_map_;
+};
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_CPU_KERNEL_BUILDER_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_GPU_KERNEL_BUILDER_H_

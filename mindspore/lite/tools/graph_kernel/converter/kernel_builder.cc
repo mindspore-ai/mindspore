@@ -24,6 +24,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/akg/ascend_kernel_builder.h"
 #include "tools/graph_kernel/converter/akg/cpu_kernel_builder.h"
+#include "tools/graph_kernel/converter/akg/gpu_kernel_builder.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 
@@ -31,6 +32,9 @@ namespace mindspore::graphkernel {
 AkgKernelBuilderPtr GetAkgBuilder(const std::string &target) {
   if (target == kCPUDevice) {
     return std::make_shared<CpuKernelBuilder>();
+  }
+  if (target == kGPUDevice) {
+    return std::make_shared<GpuKernelBuilder>();
   }
   if (target == kAscendDevice) {
     return std::make_shared<AscendKernelBuilder>();

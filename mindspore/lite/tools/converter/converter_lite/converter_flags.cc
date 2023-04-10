@@ -95,7 +95,8 @@ Flags::Flags() {
 #else
   AddFlag(&Flags::saveTypeStr, "saveType", "The type of saved model. MINDIR | MINDIR_LITE", "MINDIR_LITE");
 #endif
-  AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | ascend_oriented", "general");
+  AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | gpu_oriented | ascend_oriented",
+          "general");
   AddFlag(&Flags::optimizeTransformerStr, "optimizeTransformer", "Enable Fast-Transformer fusion true|false", "false");
 }
 
@@ -262,11 +263,14 @@ int Flags::InitOptimize() {
     this->disableFusion = true;
   } else if (this->optimizeStr == "general") {
     this->disableFusion = false;
+  } else if (this->optimizeStr == "gpu_oriented") {
+    this->disableFusion = false;
+    this->device = "GPU";
   } else if (this->optimizeStr == "ascend_oriented") {
     this->disableFusion = false;
     this->device = "Ascend";
   } else if (!this->optimizeStr.empty()) {
-    std::cerr << "INPUT ILLEGAL: optimize must be none|general|ascend_oriented " << std::endl;
+    std::cerr << "INPUT ILLEGAL: optimize must be none|general|gpu_oriented|ascend_oriented " << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

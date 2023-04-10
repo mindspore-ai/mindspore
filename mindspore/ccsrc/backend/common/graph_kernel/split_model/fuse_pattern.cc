@@ -63,6 +63,32 @@ bool FuseIsolateReshape::Match(const AreaPtr &dom) {
   return false;
 }
 
+bool FuseElemwiseFwd::Check(const AreaPtr &dom) {
+  if (dom->pattern() != NodePattern::ELEMWISE) {
+    return false;
+  }
+  return fuse_type_ == FuseType::kWidth || dom->input_num() == 1;
+}
+
+bool FuseElemwiseFwd::Match(const AreaPtr &dom) {
+  for (auto &[a, r] : dom->inputs_with_relation()) {
+    // depth match only support one to one pattern
+    if (fuse_type_ == FuseType::kDepth && a->user_num() != 1) {
+      continue;
+    }
+    if (a->pattern() <= NodePattern::ELEMWISE && r == EdgeRelation::INJECTIVE) {
+      // it's unnecessary to check circle for depth match
+      if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
+        continue;
+      }
+      if (a->compute_size() == dom->compute_size()) {
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+  }
+  return !fused_areas_.empty();
+}
+
 bool FuseElemwiseBroadcastFwd::Check(const AreaPtr &dom) {
   if (dom->pattern() != NodePattern::ELEMWISE && dom->pattern() != NodePattern::BROADCAST) {
     return false;

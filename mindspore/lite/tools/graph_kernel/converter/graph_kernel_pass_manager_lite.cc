@@ -463,9 +463,15 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 }  // namespace dumpir
 
 void GraphKernelPassManagerLite::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {
-  static bool dumpir = (common::GetEnv("MS_DEV_DUMP_GRAPH_KERNEL_IR") == "on");
-  if (dumpir) {
-    std::string filename = "verbose_ir_files/" + pass_fullname + ".ir";
+  static bool dump_ir = (common::GetEnv("MS_DEV_DUMP_GRAPH_KERNEL_IR") == "on");
+  if (dump_ir) {
+    static std::string rank_id = common::GetEnv("RANK_ID");
+    std::string filename;
+    if (rank_id.empty()) {
+      filename = "verbose_ir_files/" + pass_fullname + ".ir";
+    } else {
+      filename = "rank_" + rank_id + "/verbose_ir_files/" + pass_fullname + ".ir";
+    }
     dumpir::DumpIR(filename, func_graph, true);
   }
 }

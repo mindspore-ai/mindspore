@@ -95,6 +95,22 @@ class FuseIsolateReshape : public FusePattern {
   bool Match(const AreaPtr &dom) override;
 };
 
+class FuseElemwiseFwd : public FusePattern {
+ public:
+  explicit FuseElemwiseFwd(FuseType fuse_type) : FusePattern("elemwise_fwd"), fuse_type_(fuse_type) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseElemwiseFwd() = default;
+  static FusePatternPtr CreateDepthMatcher() { return std::make_shared<FuseElemwiseFwd>(FuseType::kDepth); }
+  static FusePatternPtr CreateWidthMatcher() { return std::make_shared<FuseElemwiseFwd>(FuseType::kWidth); }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+};
+
 class FuseElemwiseBroadcastFwd : public FusePattern {
  public:
   explicit FuseElemwiseBroadcastFwd(FuseType fuse_type) : FusePattern("elemwise_broadcast_fwd"), fuse_type_(fuse_type) {

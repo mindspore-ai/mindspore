@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "utils/anf_utils.h"
+#include "tools/graph_kernel/converter/akg/utils.h"
 
 namespace mindspore::graphkernel {
 bool AscendKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
