@@ -32,6 +32,7 @@
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
 #include "graph/tensor.h"
+#include "graph/types.h"
 
 namespace ge {
 class CustomOperator : public Operator {
@@ -74,20 +75,34 @@ struct AttrDesc {
   std::string name;
   AttrFunc set_attr;
   GetAttrFunc get_attr;
+  enum {
+    REQUIRED = 0,
+    OPTIONAL = 1,
+    DEFAULT = OPTIONAL,
+  } type = DEFAULT;
 };
 
 struct InputDesc {
   std::string name;
+  size_t index;
   InputOpFunc set_op;
   InputHandleFunc set_handle;
   UpdateOutputDescFunc update_input_desc;
+  enum {
+    REQUIRED = 0,
+    OPTIONAL = 1,
+    DEFAULT = REQUIRED,
+  } type = DEFAULT;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct DynInputDesc {
   std::string name;
+  size_t index;
   CreateDynInputOpFunc create_dyn_input;
   DynInputOpFunc set_op;
   DynInputHandleFunc set_handle;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct SubGraphDesc {
@@ -103,13 +118,17 @@ struct DynSubGraphDesc {
 
 struct OutputDesc {
   std::string name;
+  size_t index;
   UpdateOutputDescFunc update_out_desc;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct DynOutputDesc {
   std::string name;
+  size_t index;
   CreateDynOutputOpFunc create_dyn_output;
   UpdateDynOutputDescFunc update_dyn_output_desc;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 class BaseOpAdapter {

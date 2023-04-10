@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/hcom_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(HcomReduceScatter)
 DECLARE_OP_USE_OUTPUT(HcomReduceScatter)
 
@@ -39,5 +38,4 @@ DECLARE_OP_ADAPTER(HcomSend)
 
 DECLARE_OP_ADAPTER(HcomReceive)
 DECLARE_OP_USE_OUTPUT(HcomReceive)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_HCOM_OPS_DECLARE_H_

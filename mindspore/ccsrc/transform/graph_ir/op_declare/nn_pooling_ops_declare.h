@@ -23,7 +23,6 @@
 #include "ops/nn_ops.h"
 #include "ops/nn_pooling_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(MaxPoolWithArgmax)
 DECLARE_OP_USE_OUTPUT(MaxPoolWithArgmax)
 
@@ -95,5 +94,4 @@ DECLARE_OP_USE_OUTPUT(Dilation2DBackpropFilter)
 
 DECLARE_OP_ADAPTER(Dilation2DBackpropInput)
 DECLARE_OP_USE_OUTPUT(Dilation2DBackpropInput)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_POOLING_OPS_DECLARE_H_

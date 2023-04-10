@@ -21,7 +21,5 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/state_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Variable)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STATE_OPS_DECLARE_H_
