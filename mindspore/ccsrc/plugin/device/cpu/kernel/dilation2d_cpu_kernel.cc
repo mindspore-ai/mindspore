@@ -78,58 +78,51 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   T *filter = static_cast<T *>(inputs[kFilterIndex]->addr);
   T *output = static_cast<T *>(outputs[kOutputIndex]->addr);
 
-  size_t num_batch = LongToSize(input_shape_[kFormatNCHWIndexN]);
-  size_t input_height = LongToSize(input_shape_[kFormatNCHWIndexH]);
-  size_t input_width = LongToSize(input_shape_[kFormatNCHWIndexW]);
-  size_t channel = LongToSize(input_shape_[kFormatNCHWIndexC]);
-  size_t filter_height = LongToSize(filter_shape_[kFormatCHWIndexH]);
-  size_t filter_width = LongToSize(filter_shape_[kFormatCHWIndexW]);
-  size_t output_height = LongToSize(output_shape_[kFormatNCHWIndexH]);
-  size_t output_width = LongToSize(output_shape_[kFormatNCHWIndexW]);
-  size_t stride_height = LongToSize(stride_[kFormatNCHWIndexH]);
-  size_t stride_width = LongToSize(stride_[kFormatNCHWIndexW]);
-  size_t rate_height = LongToSize(dilation_[kFormatNCHWIndexH]);
-  size_t rate_width = LongToSize(dilation_[kFormatNCHWIndexW]);
-  int64_t pad_top;
-  int64_t pad_left;
+  int64_t num_batch = input_shape_[kFormatNCHWIndexN];
+  int64_t input_height = input_shape_[kFormatNCHWIndexH];
+  int64_t input_width = input_shape_[kFormatNCHWIndexW];
+  int64_t channel = input_shape_[kFormatNCHWIndexC];
+  int64_t filter_height = filter_shape_[kFormatCHWIndexH];
+  int64_t filter_width = filter_shape_[kFormatCHWIndexW];
+  int64_t output_height = output_shape_[kFormatNCHWIndexH];
+  int64_t output_width = output_shape_[kFormatNCHWIndexW];
+  int64_t stride_height = stride_[kFormatNCHWIndexH];
+  int64_t stride_width = stride_[kFormatNCHWIndexW];
+  int64_t rate_height = dilation_[kFormatNCHWIndexH];
+  int64_t rate_width = dilation_[kFormatNCHWIndexW];
+  // default value for VALID pad mode
+  int64_t pad_top = 0;
+  int64_t pad_left = 0;
 
-  if (pad_mode_.compare("VALID") == 0 || pad_mode_.compare("valid") == 0) {
-    pad_top = 0;
-    pad_left = 0;
-  }
   if (pad_mode_.compare("SAME") == 0 || pad_mode_.compare("same") == 0) {
-    int64_t pad_height =
-      SizeToLong((output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height) > 0
-        ? SizeToLong((output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height)
-        : 0;
-    int64_t pad_width =
-      SizeToLong((output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width) > 0
-        ? SizeToLong((output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width)
-        : 0;
+    int64_t pad_height = (output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height;
+    pad_height = pad_height >= 0 ? pad_height : 0;
+    int64_t pad_width = (output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width;
+    pad_width = pad_width >= 0 ? pad_width : 0;
     pad_top = pad_height / kValue2;
     pad_left = pad_width / kValue2;
   }
 
-  size_t output_plane_size = output_height * output_width;
+  int64_t output_plane_size = output_height * output_width;
 
-  for (size_t n = 0; n < num_batch; ++n) {
-    for (size_t c = 0; c < channel; ++c) {
-      for (size_t pos = 0; pos < output_plane_size; ++pos) {
-        size_t pos_h = pos / output_width % output_height;
-        size_t pos_w = pos % output_width;
-        size_t h_start = LongToSize(SizeToLong(pos_h * stride_height) - pad_top);
-        size_t w_start = LongToSize(SizeToLong(pos_w * stride_width) - pad_left);
+  for (int64_t n = 0; n < num_batch; ++n) {
+    for (int64_t c = 0; c < channel; ++c) {
+      for (int64_t pos = 0; pos < output_plane_size; ++pos) {
+        int64_t pos_h = pos / output_width % output_height;
+        int64_t pos_w = pos % output_width;
+        int64_t h_start = pos_h * stride_height - pad_top;
+        int64_t w_start = pos_w * stride_width - pad_left;
 
         T max_val = std::numeric_limits<T>::lowest();
 
-        for (size_t h = 0; h < filter_height; ++h) {
-          int64_t h_in = SizeToLong(h_start + h * rate_height);
-          if (h_in >= 0 && h_in < SizeToLong(input_height)) {
-            for (size_t w = 0; w < filter_width; ++w) {
-              int w_in = SizeToInt(w_start + w * rate_width);
-              if (w_in >= 0 && w_in < SizeToLong(input_width)) {
-                T val = input[LongToSize(w_in) + input_width * (LongToSize(h_in) + input_height * (c + channel * n))] +
-                        filter[w + filter_width * (h + filter_height * c)];
+        for (int64_t h = 0; h < filter_height; ++h) {
+          int64_t h_in = h_start + h * rate_height;
+          if (h_in >= 0 && h_in < input_height) {
+            for (int64_t w = 0; w < filter_width; ++w) {
+              int64_t w_in = w_start + w * rate_width;
+              if (w_in >= 0 && w_in < input_width) {
+                T val = input[LongToSize(w_in + input_width * (h_in + input_height * (c + channel * n)))] +
+                        filter[LongToSize(w + filter_width * (h + filter_height * c))];
                 if (val > max_val) {
                   max_val = val;
                 }
@@ -137,7 +130,7 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
             }
           }
         }
-        output[(n * channel + c) * output_plane_size + pos] = max_val;
+        output[LongToSize((n * channel + c) * output_plane_size + pos)] = max_val;
       }
     }
   }
