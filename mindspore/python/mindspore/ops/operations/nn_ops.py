@@ -10256,6 +10256,7 @@ class GLU(Primitive):
 
     Examples:
         >>> from mindspore import ops, Tensor
+        >>> from mindspore import dtype as mstype
         >>> import numpy as np
         >>> axis = 0
         >>> x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
