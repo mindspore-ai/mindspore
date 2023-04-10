@@ -43,6 +43,7 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
     }
   }
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
+  bool CompileGraph(const void *model_data, size_t data_size, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
 

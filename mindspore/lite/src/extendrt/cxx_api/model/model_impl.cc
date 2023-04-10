@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <set>
 #include <shared_mutex>
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
@@ -102,10 +103,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "The input model buffer size is 0.";
     return kLiteInputParamInvalid;
   }
-  if (model_type != kMindIR) {
-    MS_LOG(ERROR) << "Invalid model type";
-    return kLiteError;
-  }
+
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
     MS_LOG(ERROR) << "Model has been called Build";
@@ -152,7 +150,14 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
-
+  if (model_type == kMindIR_Lite) {
+    ret = session_->CompileGraph(model_buff, model_size);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "compile graph failed.";
+      return ret;
+    }
+    return kSuccess;
+  }
   // for model pool
   FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
   if (func_graph != nullptr) {
@@ -568,11 +573,11 @@ ModelImpl::~ModelImpl() {
 }
 
 bool ModelImpl::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
-  if (model_type != kMindIR) {
-    return false;
-  }
   if (device_type == kCPU) {
     return true;
+  }
+  if (model_type != kMindIR) {
+    return false;
   }
   if (device_type == kGPU) {
     return lite::TensorRTExecutorPlugin::GetInstance().TryRegister().IsOk();

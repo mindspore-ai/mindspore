@@ -233,7 +233,8 @@ void InitWorkerThread::Run() {
     if (model_worker_ == nullptr) {
       continue;
     }
-    model_worker_->InitModelWorker(model_buf_, size_, worker_config_, predict_task_queue_, create_success_);
+    model_worker_->InitModelWorker(model_buf_, size_, worker_config_, predict_task_queue_, create_success_,
+                                   model_type_);
     model_worker_->Run();
     model_worker_ = nullptr;
     is_idle_ = true;
@@ -249,7 +250,8 @@ InitWorkerThread::~InitWorkerThread() {
 
 void InitWorkerThread::Launch(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
                               const std::shared_ptr<WorkerConfig> &worker_config,
-                              const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success) {
+                              const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success,
+                              ModelType model_type) {
   std::unique_lock<std::mutex> l(mtx_init_);
   is_idle_ = false;
   model_worker_ = worker;
@@ -259,6 +261,7 @@ void InitWorkerThread::Launch(std::shared_ptr<ModelWorker> worker, const char *m
   predict_task_queue_ = predict_task_queue;
   create_success_ = create_success;
   is_launch_ = true;
+  model_type_ = model_type;
   init_cond_var_.notify_one();
 }
 
@@ -270,14 +273,14 @@ InitWorkerManager *InitWorkerManager::GetInstance() {
 void InitWorkerManager::InitModelWorker(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
                                         const std::shared_ptr<WorkerConfig> &worker_config,
                                         const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
-                                        bool *create_success) {
+                                        bool *create_success, ModelType model_type) {
   std::unique_lock<std::mutex> l(manager_mutex_);
   auto numa_id = worker_config->numa_id;
   if (all_init_worker_.find(numa_id) != all_init_worker_.end()) {
     for (auto &worker_thread : all_init_worker_[numa_id]) {
       if (worker_thread->IsIdle()) {
         MS_LOG(INFO) << "reuse init worker thread.";
-        worker_thread->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success);
+        worker_thread->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success, model_type);
         return;
       }
     }
@@ -289,7 +292,7 @@ void InitWorkerManager::InitModelWorker(std::shared_ptr<ModelWorker> worker, con
     return;
   }
   init_worker->CreateInitThread();
-  init_worker->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success);
+  init_worker->Launch(worker, model_buf, size, worker_config, predict_task_queue, create_success, model_type);
   if (all_init_worker_.find(numa_id) == all_init_worker_.end()) {
     all_init_worker_[numa_id] = {init_worker};
   } else {
