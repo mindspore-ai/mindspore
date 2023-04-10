@@ -7,9 +7,6 @@
 
     更多参考详见 :func:`mindspore.ops.div`。
 
-    .. math::
-        out_{i} = input_{i} / other_{i}
-
     输入：
         - **x** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或bool，或数据类型为数值型或bool的Tensor。
         - **y** (Union[Tensor, Number, bool]) - 第二个输入，当第一个输入是Tensor时，第二个输入必须是一个数值型或bool，或是数据类型为数值型或bool的Tensor。

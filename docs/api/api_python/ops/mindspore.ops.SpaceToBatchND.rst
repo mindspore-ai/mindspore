@@ -20,7 +20,8 @@ mindspore.ops.SpaceToBatchND
         - **input_x** (Tensor) - SpaceToBatchND 的输入，Ascend平台必须为四维。
 
     输出：
-        Tensor，经过划分排列之后的结果。假设输入的形状为 :math:`(n, c_1, ... c_k, w_1, ..., w_M)`，
+        Tensor，经过划分排列之后的结果。假设输入的shape为 :math:`(n, c_1, ... c_k, w_1, ..., w_M)` ，且算子的属性为
+        :math:`block\_shape` 和 :math:`paddings`，
         那么输出的形状为 :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`，
         其中
 

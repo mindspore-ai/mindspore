@@ -13,7 +13,7 @@ mindspore.ops.LuSolve
         的batch维度为 :math:`(3, 3)` ， `lu_pivots` 的batch维度为 :math:`(3, 3)` 。
 
         `lu_data` 的batch维度必须与 `x` 的batch维度匹配，batch维度可以具有不同的尺寸，从右到左，对应的维度必须相等。
-        例如， `lu_data` 为 :math:`(3, 3, 2, 2)` ， `x` 为 :math:`(2, 3, 3, 2, 2, 1)` ，
+        例如， `lu_data` 为 :math:`(3, 3, 2, 2)` ， `x` 为 :math:`(2, 3, 3, 2, 1)` ，
         `lu_data` 的batch维度为 :math:`(3, 3)` ， `x` 的batch维度为 :math:`(2, 3, 3)` 。
 
     输入：

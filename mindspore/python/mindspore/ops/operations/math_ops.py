@@ -5950,7 +5950,8 @@ class ComplexAbs(Primitive):
     r"""
     Returns a Tensor that contains the magnitudes of the input.
 
-    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+    The complex numbers in input must be of the form :math:`a + bj`,
+    where :math:`a` is the real part and :math:`b` is the imaginary part.
 
     .. math::
 
@@ -6473,7 +6474,7 @@ class LuSolve(Primitive):
 
     Inputs:
         - **x** (Tensor) - Column vector `b` in the above equation. It has shape :math:`(*, m, k)`,
-          where * is batch dimensions, with data type float32, float16.
+          where :math:`*` is batch dimensions, with data type float32, float16.
         - **lu_data** (Tensor) - LU decomposition. It has shape :math:`(*, m, m)`, where * is batch
           dimensions, that can be decomposed into an upper triangular matrix U and a lower triangular
           matrix L, with data type float32, float16.
@@ -7372,9 +7373,10 @@ class NextAfter(Primitive):
     """
     Returns the next representable floating-point value after `x1` towards `x2` element-wise.
 
-    Say there are two float32 numbers :math:`a`, :math:`b`, and let the
+    Say there are two float32 numbers :math:`a, b`, and let the
     representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
     then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
+    If :math:`a > b`,
     the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
 
     .. math::
@@ -7842,7 +7844,7 @@ class Qr(Primitive):
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
           types: float16, float32, float64, complex64, complex128.
-          Define the shape of x as (..., m, n), p as the minimum values of m and n.
+          Define the shape of x as :math:`(..., m, n)` p as the minimum values of m and n.
 
     Outputs:
         - **q** (Tensor) - The orthonormal matrices of x.
