@@ -3,13 +3,10 @@ mindspore.nn.Identity
 
 .. py:class:: mindspore.nn.Identity
 
-    返回与输入具有相同shape和值的Tensor。
+    网络占位符，返回与输入完全一致。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` 的Tensor。数据类型为Number。
+        - **x** (Any) - Identity的输入。
 
     输出：
-        Tensor，shape和数据类型与 `x` 相同。
-
-    异常：
-        - **TypeError** - `x` 不是Tensor。
+        与 `x` 完全相同。

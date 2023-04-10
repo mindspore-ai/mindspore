@@ -19,6 +19,7 @@ from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 
@@ -695,18 +696,16 @@ class Pull(PrimitiveWithInfer):
 
 class identity(Primitive):
     """
-    Makes a identify primitive, used for pynative mode.
+    The 'ops.identity' interface is deprecated, please use the :class: `mindspore.nn.Identity` instead.
 
-    Inputs:
-        - **x** (Any) - identity input value.
-
-    Outputs:
-        The same as input.
+    Supported Platforms:
+        Deprecated
     """
 
     # Side effect will propagated from the first argument to return value.
     side_effect_propagate = 1
 
+    @deprecated('2.0', 'nn.Identity', False)
     @prim_attr_register
     def __init__(self):
         """Initialize identity."""
