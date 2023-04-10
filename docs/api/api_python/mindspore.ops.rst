@@ -760,14 +760,3 @@ CSR函数
     mindspore.ops.csr_square
     mindspore.ops.csr_tan
     mindspore.ops.csr_tanh
-
-Other函数
-^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.depend
-    mindspore.ops.partial
