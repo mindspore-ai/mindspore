@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,8 @@ void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, 
   }
 }
 
-abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size,
-                                  const TypePtr &output_type, int64_t max_len, int64_t image_k_dep) {
+abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size, int64_t max_len,
+                                  int64_t image_k_dep) {
   // Infer max shape of output
   if (output_size->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
@@ -101,18 +101,17 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
         auto value = static_cast<int *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
-          if (value[i] > 0) {
-            if (value[i] > max_len) {
-              MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << max_len
-                                       << ", but got " << value[i]
-                                       << "! The value in output_size should be reduced or max_len should be increased";
-            }
-            output_size_value_vec[LongToSize(i)] = static_cast<int64_t>(value[LongToSize(i)]);
-          } else {
+          if (value[i] <= 0) {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
                                         "positive data, but got "
                                      << value[i];
           }
+          if (value[i] > max_len) {
+            MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << max_len
+                                     << ", but got " << value[i]
+                                     << "! The value in output_size should be reduced or max_len should be increased";
+          }
+          output_size_value_vec[LongToSize(i)] = static_cast<int64_t>(value[LongToSize(i)]);
         }
         return std::make_shared<abstract::Shape>(output_size_value_vec);
       }
@@ -150,7 +149,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto dtype_value = primitive->GetAttr("T");
   auto output_type = dtype_value->cast<TypePtr>();
   auto type_size = GetTypeByte(output_type);
-  if (type_size <= 0) {
+  if (type_size == 0) {
     MS_EXCEPTION(ValueError) << "the value of T is incorrect.";
   }
 
@@ -161,7 +160,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto output_size = input_args[ImagekImagesSize];
   MS_EXCEPTION_IF_NULL(output_size);
 
-  return GetReturnShape(prim_name, output_size, output_type, max_len, input_shape0[ImagekDepth]);
+  return GetReturnShape(prim_name, output_size, max_len, input_shape0[ImagekDepth]);
 }
 
 TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
