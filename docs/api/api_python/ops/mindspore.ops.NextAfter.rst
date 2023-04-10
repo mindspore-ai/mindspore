@@ -5,7 +5,7 @@ mindspore.ops.NextAfter
 
     逐元素返回 `x1` 指向 `x2` 的下一个可表示值符点值。
 
-    比如有两个数 :math:`a，b` ，数据类型为float32。并且设float32数据类型的可表示值增量为 :math:`eps` 。
+    比如有两个数 :math:`a, b` ，数据类型为float32。并且设float32数据类型的可表示值增量为 :math:`eps` 。
 
     - 如果 :math:`a < b` ，那么 :math:`a` 指向 :math:`b` 的下一个可表示值就是 :math:`a+eps` 。
     - 如果 :math:`a > b` ，那么 :math:`a` 指向 :math:`b` 的下一个可表示值就是 :math:`a-eps` 。

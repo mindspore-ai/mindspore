@@ -13,7 +13,7 @@
         L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
             - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
 
-    式中d代表高度与宽度上两个维度， :math:`dilation` 、 :math:`padding` 和 :math:`stride` 决定了滑窗如何滑动与检索元素。
+    式中 :math:`d` 代表高度与宽度上两个维度， `dilation` 、 `padding` 和 `stride` 决定了滑窗如何滑动与检索元素。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
