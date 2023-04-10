@@ -31,11 +31,11 @@ class MIND_API Cauchy : public BaseOperator {
   MIND_API_BASE_MEMBER(Cauchy);
   void Init() const {}
 
-  void set_sigma(float);
+  void set_sigma(const float);
   float get_sigma() const;
-  void set_median(float);
+  void set_median(const float);
   float get_median() const;
-  void set_size(std::vector<int64_t>);
+  void set_size(const std::vector<int64_t>);
   std::vector<int64_t> get_size() const;
 };
 using PrimCauchy = std::shared_ptr<Cauchy>;

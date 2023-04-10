@@ -59,21 +59,21 @@ abstract::ShapePtr CauchyInferShape(const PrimitivePtr &primitive, const std::ve
   return std::make_shared<abstract::Shape>(size);
 }
 
-void Cauchy::set_sigma(float sigma) { (void)this->AddAttr(kSigma, api::MakeValue(sigma)); }
+void Cauchy::set_sigma(const float sigma) { (void)this->AddAttr(kSigma, api::MakeValue(sigma)); }
 
 float Cauchy::get_sigma() const {
   auto value_ptr = this->GetAttr(kSigma);
   return GetValue<float>(value_ptr);
 }
 
-void Cauchy::set_median(float median) { (void)this->AddAttr(kMedian, api::MakeValue(median)); }
+void Cauchy::set_median(const float median) { (void)this->AddAttr(kMedian, api::MakeValue(median)); }
 
 float Cauchy::get_median() const {
   auto value_ptr = this->GetAttr(kMedian);
   return GetValue<float>(value_ptr);
 }
 
-void Cauchy::set_size(std::vector<int64_t> size) { (void)this->AddAttr(kAttrSize, api::MakeValue(size)); }
+void Cauchy::set_size(const std::vector<int64_t> size) { (void)this->AddAttr(kAttrSize, api::MakeValue(size)); }
 
 std::vector<int64_t> Cauchy::get_size() const {
   auto value_ptr = this->GetAttr(kAttrSize);
