@@ -168,10 +168,10 @@ bool AscendDeviceResManager::SyncStream(size_t stream_id) const {
 }
 
 bool AscendDeviceResManager::SyncAllStreams() const {
-  if (!BindDeviceToCurrentThread(false)) {
-    MS_LOG(ERROR) << "Bind context to current thread failed";
-    return false;
+  if (runtime_instance_ == nullptr) {
+    return true;
   }
+  runtime_instance_->SetContext();
   return AscendStreamMng::GetInstance().SyncAllStreams();
 }
 }  // namespace ascend
