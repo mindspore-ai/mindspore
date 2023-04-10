@@ -59,7 +59,7 @@ def eig(A):
 
     Examples:
         >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
-        >>> u, v = eig(input_x)
+        >>> u, v = ops.eig(input_x)
         >>> print(u)
         [1.+0.j 2.+0.j]
         >>> print(v)
@@ -80,8 +80,7 @@ def geqrf(input):
 
     This function returns two tensors (`y`, `tau`).
 
-
-     Args:
+    Args:
         input (Tensor): Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
             with dtype of float32, float64, complex64, complex128.
 
@@ -99,7 +98,7 @@ def geqrf(input):
 
     Examples:
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-        >>> y, tau = geqrf(input_x)
+        >>> y, tau = ops.geqrf(input_x)
         >>> print(y)
         [[ 2.236068   1.7888544]
          [-0.236068   1.3416407]]

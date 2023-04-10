@@ -817,9 +817,9 @@ class LSTM(_RNNBase):
     Outputs:
         Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
 
-        - **output** (Tensor) - Tensor of shape :math:`(seq_len, batch_size, num_directions * `hidden_size`)` .
+        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` .
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape
-          :math:`(num_directions * `num_layers`, batch_size, `hidden_size`)` .
+          :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` .
 
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
