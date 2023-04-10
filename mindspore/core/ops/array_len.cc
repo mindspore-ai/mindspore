@@ -60,7 +60,7 @@ AbstractBasePtr ArrayLenInferInner(const PrimitivePtr &primitive, const std::vec
   (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   auto seq_abs = input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
   if (seq_abs->shape().empty()) {
-    return std::make_shared<abstract::AbstractScalar>(1);
+    MS_EXCEPTION(TypeError) << "Not support len of a 0-D tensor.";
   }
   if (IsDynamicShape(in_shape)) {
     return std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
