@@ -21,8 +21,10 @@
 #include "src/litert/lite_kernel.h"
 #include "src/litert/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
-#include "src/extendrt/lite_kernel_mod.h"
+#include "src/extendrt/kernel/kernel_lib.h"
+#include "src/extendrt/kernel/default/default_kernel_lib.h"
 #include "src/extendrt/graph_compiler/cnode_infer_manager.h"
+#include "src/extendrt/kernel/primitive_type.h"
 
 namespace mindspore {
 namespace infer {
@@ -94,13 +96,15 @@ abstract::Kernel *SingleGraphScheduler::CreateKernel(const CompileNode *compile_
     }
   } else {
     // select core/ops kernel
-    kernel_exec = kernel::FindKernelMod(compile_node->GetCNode(), base_operator, compile_node->GetInputs(),
-                                        compile_node->GetOutputs(), context_);
+    auto *kernellib = kernel::KernelLibRegister::Instance().GetKernelLib(kernel::kDefaultKernelLibName);
+    kernel_exec = kernellib->CreateKernelExec({kernel::PrimitiveType(compile_node->GetType()),
+                                               compile_node->GetKernelAttr(), compile_option_.format, base_operator},
+                                              compile_node->GetInputs(), compile_node->GetOutputs(), context_);
     if (kernel_exec == nullptr) {
       MS_LOG(ERROR) << "Get kernel from KernelMod failed for op: " << compile_node->GetName();
       return nullptr;
     }
-    desc.format = NCHW;  // set format NCHW to insert transpose kernel
+    desc.format = NCHW;
     kernel_exec->set_desc(desc);
   }
   kernel_exec->set_name(compile_node->GetName());

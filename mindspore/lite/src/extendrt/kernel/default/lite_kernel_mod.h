@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_LITERT_LITE_KERNEL_MOD_H_
-#define MINDSPORE_LITE_SRC_LITERT_LITE_KERNEL_MOD_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 #include "src/litert/lite_kernel.h"
-#include "src/litert/kernel_exec.h"
 #include "kernel/kernel.h"
-#include "include/model.h"
+#include "ops/base_operator.h"
 
 namespace mindspore::kernel {
 class LiteKernelMod : public LiteKernel {
  public:
-  explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, const CNodePtr &cnode,
-                         const kernel::BaseOperatorPtr &base_operator, std::vector<lite::Tensor *> in_tensors,
-                         std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx)
-      : LiteKernel(nullptr, in_tensors, out_tensors, ctx),
-        kernel_mod_(kernel_mod),
-        cnode_(cnode),
-        base_operator_(base_operator) {}
+  explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
+                         std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+                         const lite::InnerContext *ctx)
+      : LiteKernel(nullptr, std::move(in_tensors), std::move(out_tensors), ctx),
+        kernel_mod_(std::move(kernel_mod)),
+        base_operator_(std::move(base_operator)) {}
   ~LiteKernelMod() override = default;
 
   int Prepare() override;
@@ -45,12 +44,7 @@ class LiteKernelMod : public LiteKernel {
 
  private:
   KernelModPtr kernel_mod_;
-  CNodePtr cnode_;
   BaseOperatorPtr base_operator_;
 };
-
-kernel::KernelExec *FindKernelMod(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
-                                  const std::vector<lite::Tensor *> &in_tensors,
-                                  const std::vector<lite::Tensor *> &out_tensors, const lite::InnerContext *ctx);
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_LITERT_LITE_KERNEL_MOD_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_

@@ -19,14 +19,29 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${MSLITE_KERNEL_PLUGIN}
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
+    set(MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_matmul.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_reshape.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/cxx_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/nnacl/nnacl_lib.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
+
+    set(MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
+
     set(MSLITE_EXTEND_RUNTIME_SRC
         ${MSLITE_KERNEL_PLUGIN}
+        ${MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC}
+        ${MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_infos.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_file.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
