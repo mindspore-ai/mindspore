@@ -63,6 +63,8 @@ ADD_CONVERTER_TBE_OP(CommonLSTM)
 ADD_CONVERTER_TBE_OP(BatchMatMulV2)
 ADD_CONVERTER_TBE_OP(MatMulV2)
 ADD_CONVERTER_TBE_OP(Swish)
+ADD_CONVERTER_TBE_OP(Where)
+ADD_CONVERTER_TBE_OP(SelectV2)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

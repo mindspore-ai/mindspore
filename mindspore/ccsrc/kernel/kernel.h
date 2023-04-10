@@ -22,6 +22,7 @@
 #include <set>
 #include <optional>
 #include <variant>
+#include <utility>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"
@@ -294,6 +295,8 @@ class BACKEND_EXPORT KernelTensor {
     meta_type_ = kObjectTypeList;
     meta_ = info;
   }
+  void SetDynOutput(std::unique_ptr<uint8_t[]> &&new_buffer) { dyn_output_data_ = std::move(new_buffer); }
+  uint8_t *GetDynOutput() { return dyn_output_data_.get(); }
   // deprecated field for dynamic shape
   const ShapeVector &GetDeviceShapeAdaptively() const;
   void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
@@ -302,8 +305,9 @@ class BACKEND_EXPORT KernelTensor {
   TypeId meta_type_{kObjectTypeTensorType};
   // meta is a type-safe union of TensorInfo, ScalarInfo, TupleInfo, ListInfo.
   std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> meta_{TensorInfo()};
-  AddressPtr data_{nullptr};       // Device data address.
-  AddressPtr host_data_{nullptr};  // Host data address.
+  AddressPtr data_{nullptr};                             // Device data address.
+  AddressPtr host_data_{nullptr};                        // Host data address.
+  std::unique_ptr<uint8_t[]> dyn_output_data_{nullptr};  // Create new output memory buffer for dynamic output
   string GetAbstractName() const;
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;

@@ -182,6 +182,37 @@ std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
   return result;
 }
 
+std::vector<int64_t> GetInt64ParameterData(const ParameterPtr &param_ptr) {
+  std::vector<int64_t> result;
+  MS_CHECK_TRUE_MSG(param_ptr != nullptr, result, "Param is nullptr.");
+
+  if (!param_ptr->has_default()) {
+    MS_LOG(DEBUG) << "Param has not default.";
+    return result;
+  }
+  auto default_param = param_ptr->default_param();
+  MS_CHECK_TRUE_MSG(default_param != nullptr, result, "default_param is nullptr.");
+  if (!utils::isa<tensor::TensorPtr>(default_param)) {
+    MS_LOG(DEBUG) << "Tensor info is not tensor::TensorPtr.";
+    return result;
+  }
+  auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
+  MS_CHECK_TRUE_MSG(default_param_ptr != nullptr, result, "default_param_ptr is nullptr.");
+  if (default_param_ptr->data_type() != kNumberTypeInt64) {
+    MS_LOG(DEBUG) << "Default param is not int64.";
+    return result;
+  }
+
+  auto ptr = reinterpret_cast<int64_t *>(default_param_ptr->data_c());
+  MS_CHECK_TRUE_MSG(ptr != nullptr, result, "ptr is nullptr.");
+  int shape_size =
+    std::accumulate(default_param_ptr->shape().begin(), default_param_ptr->shape().end(), 1, std::multiplies<int>());
+  for (int i = 0; i < shape_size; i++) {
+    result.emplace_back(ptr[i]);
+  }
+  return result;
+}
+
 std::vector<float> GetFloatParameterData(const ParameterPtr &param_ptr) {
   std::vector<float> result;
   MS_CHECK_TRUE_MSG(param_ptr != nullptr, result, "Param is nullptr.");

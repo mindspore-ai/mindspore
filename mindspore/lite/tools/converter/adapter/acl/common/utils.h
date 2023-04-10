@@ -36,6 +36,8 @@ TypeId GetTypeFromNode(const AnfNodePtr &node, const size_t tuple_idx = 0);
 
 std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
 
+std::vector<int64_t> GetInt64ParameterData(const ParameterPtr &param_ptr);
+
 std::vector<float> GetFloatParameterData(const ParameterPtr &param_ptr);
 
 std::string GetCNodeTargetFuncName(const CNodePtr &cnode);
