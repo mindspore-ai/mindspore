@@ -23,6 +23,7 @@ gather_nd_op_info = TBERegOp("GatherNd") \
     .compute_cost(10) \
     .kernel_name("gather_nd") \
     .partial_flag(True) \
+    .attr("negative_index_support", "optional", "bool", "all", "false") \
     .dynamic_compile_static(True) \
     .dynamic_shape(True) \
     .input(0, "x1", False, "required", "all") \
