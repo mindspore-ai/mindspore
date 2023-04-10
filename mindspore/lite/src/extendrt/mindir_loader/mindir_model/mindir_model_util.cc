@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::infer::mindir {
 static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{

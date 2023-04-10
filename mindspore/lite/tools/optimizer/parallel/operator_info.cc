@@ -26,6 +26,7 @@
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace opt {

@@ -21,6 +21,7 @@
 #else
 #include "src/common/log.h"
 #endif  // USE_GLOG
+#include "src/common/log_util.h"
 
 namespace mindspore {
 const char *const unsupport_string_tensor_log =

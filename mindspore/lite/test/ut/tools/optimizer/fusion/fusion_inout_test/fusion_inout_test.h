@@ -24,6 +24,7 @@
 #include "include/backend/optimizer/pass.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/pass_manager.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 class FusionInoutTest : public mindspore::CommonTest {
