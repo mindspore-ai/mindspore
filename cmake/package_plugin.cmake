@@ -85,7 +85,7 @@ if(ENABLE_GPU)
                 COMPONENT mindspore
         )
         if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND GPU_BACKEND_CUDA)
-            install(FILES ${nccl_LIBPATH}/libnccl.so.2.7.6 DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
+            install(FILES ${nccl_LIBPATH}/libnccl.so.2.16.5 DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
                     RENAME libnccl.so.2 COMPONENT mindspore)
         endif()
     endif()
