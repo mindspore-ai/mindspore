@@ -60,6 +60,8 @@ COMMON_EXPORT void GatherInputAndOutputInferType(std::ostringstream &buffer, con
 COMMON_EXPORT void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
                                 LocDumpMode dump_location = kOff);
 COMMON_EXPORT DumpConfig GetDumpConfig();
+std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
+                         const std::shared_ptr<SubGraphIRInfo> &gsub);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_
