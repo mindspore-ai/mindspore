@@ -3912,11 +3912,12 @@ def batch_to_space_nd(input_x, block_shape, crops):
     respectively.
 
     If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, the output shape is
-    :math:`(n, c_1, ... c_k, w_1, ..., w_M)`.
-
-    :math:`n' = n//(block\_shape[0]*...*block\_shape[M-1])`
-
-    :math:`w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]`
+    :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
+    .. math::
+            \begin{array}{ll} \\
+                n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
+                w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
+            \end{array}
 
     Args:
         input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
@@ -3929,17 +3930,10 @@ def batch_to_space_nd(input_x, block_shape, crops):
             Each contains 2 integer values. All values must be >= 0. crops[i] specifies the crops values for spatial
             dimension i, which corresponds to input dimension i + offset,where offset = N-M, and N is the number of
             input dimensions. It is required that
-
             :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
 
     Returns:
-        Tensor, the output tensor with the same type as input. Assume input shape is
-        :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with block_shape and crops. The output shape will be
-        :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
-
-        :math:`n' = n//(block\_shape[0]*...*block\_shape[M-1])`
-
-        :math:`w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]`
+        Tensor, the output tensor with the same type as input.
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.

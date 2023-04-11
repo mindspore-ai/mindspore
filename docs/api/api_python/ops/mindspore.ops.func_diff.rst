@@ -23,5 +23,6 @@ mindspore.ops.diff
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。
         - **TypeError** - 如果 `x` 的元素的数据类型是uint16、uint32 或 uint64。
-        - **TypeError** - 如果 `x` 的维度小于1。
+        - **ValueError** - 如果 `x` 是空Tensor。
+        - **ValueError** - 如果 `x` 是的维度小于1。
         - **RuntimeError** - 如果 `n` 不是1。

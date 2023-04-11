@@ -6,7 +6,7 @@
     布莱克曼窗口函数。
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        这是一个实验性API，后续可能修改或删除。
 
     更多参考详见 :func:`mindspore.ops.blackman_window`。
 
