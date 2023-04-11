@@ -43,6 +43,9 @@ int reshape_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReshapeStruct *reshape = (ReshapeStruct *)self;
   reshape->total_size_ = GetSize(self->in_[0]);
+  if (reshape->total_size_ == 0) {
+    return NNACL_OK;
+  }
 
   self->thread_nr_ = MSMIN(self->thread_nr_, UP_DIV(reshape->total_size_, kMinCostPerThread));
   if (self->thread_nr_ < 1) {
@@ -62,7 +65,7 @@ int reshape_compute(struct KernelBase *self) {
 
 KernelBase *CreateReshape(OpParameter *param, int data_type) {
   ReshapeStruct *reshape = (ReshapeStruct *)malloc(sizeof(ReshapeStruct));
-  NNACL_CHECK_NULL_RETURN_NULL(reshape);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
   reshape->base.release = reshape_release;
   reshape->base.prepare = reshape_prepare;
   reshape->base.resize = reshape_resize;
@@ -90,6 +93,7 @@ REG_KERNEL_CREATOR(PrimType_Squeeze, kNumberTypeInt32, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Squeeze, kNumberTypeBool, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeFloat16, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeFloat32, CreateReshape)
+REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeUInt8, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeInt32, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeInt64, CreateReshape)
 REG_KERNEL_CREATOR(PrimType_Unsqueeze, kNumberTypeBool, CreateReshape)
