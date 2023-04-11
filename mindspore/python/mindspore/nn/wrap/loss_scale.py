@@ -531,12 +531,12 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         scaling_sens = self.scale_sense
         init = self.alloc_status()
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        scaling_sens_filled = F.depend(scaling_sens_filled, self.clear_before_grad(init))
         grads = self.grad(self.network, self.weights)(*inputs, scaling_sens_filled)
         init = F.depend(init, grads)
         get_status = self.get_status(init)
         init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
-        loss = F.depend(loss, self.clear_before_grad(init))
         if self.opt_shard:
             grads = self.grad_reducer(grads)
             grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)

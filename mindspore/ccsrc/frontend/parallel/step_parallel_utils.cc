@@ -90,6 +90,16 @@ bool IsTraining(const FuncGraphManagerPtr &manager) {
   return false;
 }
 
+bool HasBackward(const FuncGraphPtr &root) {
+  auto nodes = root->nodes();
+  for (auto &node : nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
   auto user_cnode = param_info.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(user_cnode);
