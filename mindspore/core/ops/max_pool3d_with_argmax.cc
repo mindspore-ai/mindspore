@@ -163,6 +163,19 @@ TuplePtr MaxPool3DWithArgmaxInferType(const PrimitivePtr &prim, const std::vecto
   return std::make_shared<Tuple>(type_list);
 }
 
+void CheckKsizeAndPads(const std::vector<int64_t> &ksize, const std::vector<int64_t> &pads) {
+  const int64_t kTwo = 2;
+  const size_t kAttrD = 0;
+  const size_t kAttrH = 1;
+  const size_t kAttrW = 2;
+  if (ksize[kAttrD] / kTwo < pads[kAttrD] || ksize[kAttrH] / kTwo < pads[kAttrH] ||
+      ksize[kAttrW] / kTwo < pads[kAttrW]) {
+    MS_EXCEPTION(ValueError)
+      << "For Maxpool3DWithArgmax, pads should be less equal to the half of ksize, but got ksize is[" << ksize
+      << "], pads is[" << pads << "].";
+  }
+}
+
 abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   const size_t kAttrD = 0;
@@ -190,6 +203,7 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
                                            prim->name());
   auto pads = GetValue<std::vector<int64_t>>(prim->GetAttr("pads"));
   (void)CheckAndConvertUtils::CheckInteger("pads rank", SizeToLong(pads.size()), kEqual, kAttrsSize, prim->name());
+  CheckKsizeAndPads(ksize, pads);
   auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
   (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation.size()), kEqual, kAttrsSize,
                                            prim->name());

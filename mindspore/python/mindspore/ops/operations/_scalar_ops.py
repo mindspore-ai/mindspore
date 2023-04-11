@@ -14,6 +14,7 @@
 # ============================================================================
 """Operations for sequence"""
 
+from math import log
 from mindspore.ops.primitive import Primitive, prim_attr_register
 
 
@@ -117,6 +118,120 @@ class ScalarAdd(Primitive):
 
     def __call__(self, x, y):
         return x + y
+
+
+class ScalarPow(Primitive):
+    r"""
+    Pow two input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarPow"""
+
+    def __call__(self, x, y):
+        return pow(x, y)
+
+
+class ScalarLog(Primitive):
+    r"""
+    Log input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarAdd"""
+
+    def __call__(self, x):
+        return log(x)
+
+
+class ScalarUadd(Primitive):
+    r"""
+    UAdds input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarAdd"""
+
+    def __call__(self, x):
+        return x
+
+
+class ScalarUsub(Primitive):
+    r"""
+    usub input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarUsub"""
+
+    def __call__(self, x):
+        return -x
 
 
 class ScalarSub(Primitive):

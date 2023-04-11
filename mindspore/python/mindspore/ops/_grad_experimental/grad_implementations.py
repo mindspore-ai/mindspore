@@ -50,6 +50,12 @@ def bprop_scalar_usub(x, out, dout):
     return (-dout,)
 
 
+@bprops.register("ScalarLog")
+def bprop_scalar_log(x, out, dout):
+    """Backpropagator for primitive `scalar_usub`."""
+    return (dout * (1 / x),)
+
+
 @bprops.register("scalar_cast")
 def bprop_scalar_cast(x, t, out, dout):
     """Backpropagator for primitive `scalar_cast`."""
