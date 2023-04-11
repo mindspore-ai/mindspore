@@ -37,6 +37,7 @@ from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
+from mindspore.ops.operations._sequence_ops import TupleToTensor
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -3494,7 +3495,11 @@ def threshold(input, thr, value):
     _check_value_type("thr", thr, [float, int], "threshold")
     _check_value_type("value", value, [float, int], "threshold")
     cond = _get_cache_prim(P.Greater)()(input, thr)
-    value = _get_cache_prim(P.Fill)()(input.dtype, input.shape, value)
+    input_type = input.dtype
+    value = Tensor(value, input_type)
+    input_shape = input.shape
+    shape_tensor = _get_cache_prim(TupleToTensor)()(input_shape, mstype.int64)
+    value = _get_cache_prim(P.FillV2)()(shape_tensor, value)
     return _get_cache_prim(P.Select)()(cond, input, value)
 
 
@@ -4061,7 +4066,6 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         ValueError: If the rank of `targets` is not 2.
         ValueError: If the shape of `input_lengths` does not match N. N is batch size of `log_probs` .
         ValueError: If the shape of `target_lengths` does not match N. N is batch size of `log_probs` .
-        TypeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, num_labels|C). C is number of classes of `log_probs` .
         RuntimeError: If any value of `input_lengths` is larger than T. T is the length of `log_probs`.
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].

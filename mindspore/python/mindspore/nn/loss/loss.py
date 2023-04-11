@@ -2502,9 +2502,9 @@ class CTCLoss(LossBase):
         TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
         ValueError: If `reduction` is not "none", "mean" or "sum".
-        ValueError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
-        ValueError: If the dimension of `targets` is not one when the shape of `log_prob` is :math:`(T, C)`.
+        ValueError: If the shape of `log_probs` is :math:`(T, C)`, the dimension of `targets` is not 1 or 2.
+        ValueError: If the shape of `log_probs` is :math:`(T, C)`, the first dimension of 2-D `target` is not 1.
         RuntimeError: If any value of `input_lengths` is larger than T. T is length of `log_probs` .
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
@@ -2555,14 +2555,18 @@ class CTCLoss(LossBase):
         _check_is_tensor('log_probs', log_probs, self.cls_name)
         _check_is_tensor('targets', targets, self.cls_name)
         if log_probs.ndim == 2:
-            if targets.ndim > 1:
-                raise ValueError("For CTCLoss, when the shape of log_probs is (T, C), the dimension of targets should"
-                                 "be equal to one.")
+            if targets.ndim > 2:
+                raise ValueError(f"For CTCLoss, when the shape of log_probs is (T, C), the dimension of targets should"
+                                 f"be 1 or 2, but got {targets.ndim}.")
+            if targets.ndim == 2 and targets.shape[0] != 1:
+                raise ValueError(f"For CTCLoss, the first dimension of 2-D targets should be 1,"
+                                 f"but got {targets.shape[0]}.")
+            if targets.ndim == 1:
+                targets = targets.expand_dims(0)
             log_probs = log_probs.expand_dims(-2)
-            targets = targets.expand_dims(0)
             neg_log_hood, _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, self.blank, self.reduction,
                                          self.zero_infinity)
-            return neg_log_hood.squeeze()
+            return neg_log_hood.squeeze(axis=0)
         neg_log_hood, _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, self.blank, self.reduction,
                                      self.zero_infinity)
         return neg_log_hood
