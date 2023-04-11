@@ -268,15 +268,14 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFU
                       {"half_pixel_centers", MakeValue(false)}});
   return {dx, ib->ZerosLike(size)};
 });
+
 REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto shp = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->Emit("TensorShape", {x});
-  auto broadcast_shape = ib->Emit("TensorShape", {out});
-  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape, x_shape});
-  auto reduction_axes = ib->TupleGetItem(brod, 1);
+  auto broadcast_axes = ib->BroadcastGradientArgs(out, x);
+  auto reduction_axes = broadcast_axes[kIndex1];
   auto dout_dtype = dout->dtype();
   MS_EXCEPTION_IF_NULL(dout_dtype);
   auto dout_dtype_id = dout_dtype->type_id();
@@ -289,7 +288,7 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
   if (need_cast) {
     reduced_grad = ib->Cast(reduced_grad, dout_dtype_id);
   }
-  auto dx = ib->Reshape(reduced_grad, x_shape);
+  auto dx = ib->Reshape(reduced_grad, ib->Shape(x));
   return {dx, ib->ZerosLike(shp)};
 });
 

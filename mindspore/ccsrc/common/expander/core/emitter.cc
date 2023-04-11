@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,11 +235,11 @@ NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type)
 }
 
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
-                                                 bool keep_dim) const {
+                                                 bool keep_dim, bool skip_mode) const {
   if (IsDynamic(shape)) {
     return std::make_pair(true, shape);
   }
-  if (shape.empty()) {
+  if (shape.empty() || (skip_mode && axis.empty())) {
     return std::make_pair(false, shape);
   }
   auto rank = SizeToLong(shape.size());
@@ -279,11 +279,12 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
   return std::make_pair(need_reduce, out_shape);
 }
 
-std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim) const {
+std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
+                                                 bool skip_mode) const {
   auto [shape_success, shape_value] = GetIntList(shape);
   auto [axis_success, axis_value] = GetIntList(axis);
   if (shape_success && axis_success) {
-    return NeedReduce(shape_value, axis_value, keep_dim);
+    return NeedReduce(shape_value, axis_value, keep_dim, skip_mode);
   }
   ShapeVector v;
   return std::make_pair(true, v);
@@ -291,7 +292,7 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const Nod
 
 NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims, bool skip_mode) const {
   MS_EXCEPTION_IF_NULL(x);
-  auto need_reduce = NeedReduce(Shape(x), axis, keep_dims);
+  auto need_reduce = NeedReduce(Shape(x), axis, keep_dims, skip_mode);
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
