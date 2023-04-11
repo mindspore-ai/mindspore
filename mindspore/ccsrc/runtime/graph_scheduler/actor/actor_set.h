@@ -122,6 +122,8 @@ struct ActorSet {
   size_t execution_count_{0};
   double multi_thread_execution_time_{0};
   double single_thread_execution_time_{0};
+  // Record the execution state.
+  bool is_execution_failed_{false};
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 
