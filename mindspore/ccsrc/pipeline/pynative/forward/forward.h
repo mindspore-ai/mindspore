@@ -127,7 +127,6 @@ class ForwardExecutor {
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   bool enable_async_ = false;
-  mutable std::vector<PrimitivePtr> op_run_prim_py_list_;
   AsyncQueuePtr forward_queue_;
 };
 }  // namespace pynative

@@ -61,9 +61,6 @@ class BACKEND_EXPORT OpExecutor {
   // If the build queue is full, we can compile the kernels in parallel.
   bool BuildQueueFull();
 
-  // Clear the build tasks when batch build finished.
-  void ClearOpBuildTasks();
-
   std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> PopOpBuildTasks();
 
   // When an exception occurs, the state needs to be reset.

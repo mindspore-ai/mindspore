@@ -18,6 +18,17 @@
 
 namespace mindspore {
 namespace pynative {
+BackendOpBuildTask::~BackendOpBuildTask() {
+  if (!has_set_value_) {
+    promise_.set_value(false);
+  }
+}
+
+void BackendOpBuildTask::SetBuildReady(bool build_success) {
+  promise_.set_value(build_success);
+  has_set_value_ = true;
+}
+
 void BackendOpRunTask::Run() {
   MS_LOG(DEBUG) << "Wait for build";
   auto build_status = future_.get();

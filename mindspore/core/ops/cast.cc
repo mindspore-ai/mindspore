@@ -52,12 +52,14 @@ class CastInfer : public abstract::OpInferBase {
     auto x_type = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
 
-    ValuePtr dst_type = primitive->GetAttr(kDstType);
-    if (dst_type == nullptr) {
-      const int64_t kCastInputNumWithDtype = 2;
-      CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kCastInputNumWithDtype, prim_name);
+    constexpr int64_t kCastInputNumWithDtype = 2;
+    ValuePtr dst_type;
+    if (input_args.size() == kCastInputNumWithDtype) {
       dst_type = input_args[1]->BuildValue();
+    } else {
+      dst_type = primitive->GetAttr(kDstType);
     }
+
     if ((dst_type == nullptr) || (!dst_type->isa<Type>())) {
       MS_EXCEPTION(TypeError) << "Invalid dtype";
     }
