@@ -7994,7 +7994,7 @@ def _check_logits_tensor(logits):
 
 
 def _check_logits_shape(logits):
-    if logits.shape == ():
+    if not logits.shape:
         raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
 
 
