@@ -483,6 +483,11 @@ def power(x1, x2, dtype=None):
         [ 1. 16.]
         [ 1. 16.]]
     """
+    if '.' in str(x1) or '.' in str(x2):
+        return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
+    for i in x2:
+        if '-' in str(i):
+            _raise_value_error("Integers to negative integer powers are not allowed.")
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
 
