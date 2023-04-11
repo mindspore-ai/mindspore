@@ -21,11 +21,10 @@
 #include <cmath>
 #include <vector>
 #include <memory>
-#include <unordered_map>
 #include <utility>
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include <unordered_map>
 #include "plugin/factory/ms_factory.h"
-
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 namespace mindspore {
 namespace kernel {
 class MapUniformCpuKernelMod : public NativeCpuKernelMod {
@@ -50,7 +49,7 @@ class MapUniformCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   using MapUniformFunc =

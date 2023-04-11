@@ -62,9 +62,12 @@ int MaxUnpool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
 
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  constexpr size_t output_index = 0;
+  constexpr size_t input_index = 0;
+  constexpr size_t indices_index = 1;
+  output_shape_ = outputs[output_index]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[input_index]->GetDeviceShapeAdaptively();
+  indices_shape_ = inputs[indices_index]->GetDeviceShapeAdaptively();
   return KRET_OK;
 }
 

@@ -63,14 +63,14 @@ int MultiMarginLossGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 bool MultiMarginLossGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
+                                                   const std::vector<AddressPtr> &,
                                                    const std::vector<AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernelFP16<float16>(inputs, outputs);
+  if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernelFP32AndFP64<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernelFP32AndFP64<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernelFP32AndFP64<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernelFP16<float16>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
   }
@@ -124,6 +124,23 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossGradCPUKernelMod::KernelR
 }
 
 template <typename T>
+void MultiMarginLossGradCPUKernelMod::LaunchKernelFromYGrad(T *x_grad_addr, T *y_grad_addr) {
+  T y_grad_value = static_cast<T>(1);
+  auto y_grad_data = (y_grad_addr == nullptr) ? &y_grad_value : y_grad_addr;
+  if (reduction != NONE || y_grad_dims == 0) {
+    for (size_t i = 0; i < batch_size * dims; i++) {
+      *(x_grad_addr + i) *= *(y_grad_data);
+    }
+  } else {
+    for (size_t i = 0; i < batch_size; i++) {
+      for (size_t j = 0; j < dims; j++) {
+        *(x_grad_addr + i * dims + j) *= *(y_grad_data + i);
+      }
+    }
+  }
+}
+
+template <typename T>
 void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::AddressPtr> &inputs,
                                                               const std::vector<kernel::AddressPtr> &outputs) {
   auto y_grad_addr = static_cast<T *>(inputs[kZero]->addr);
@@ -174,19 +191,7 @@ void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<
     }
   };
   CPUKernelUtils::ParallelFor(task, batch_size);
-  T y_grad_value = static_cast<T>(1);
-  auto y_grad_data = (y_grad_addr == nullptr) ? &y_grad_value : y_grad_addr;
-  if (reduction != NONE || y_grad_dims == 0) {
-    for (size_t i = 0; i < batch_size * dims; i++) {
-      *(x_grad_addr + i) *= *(y_grad_data);
-    }
-  } else {
-    for (size_t i = 0; i < batch_size; i++) {
-      for (size_t j = 0; j < dims; j++) {
-        *(x_grad_addr + i * dims + j) *= *(y_grad_data + i);
-      }
-    }
-  }
+  LaunchKernelFromYGrad(x_grad_addr, y_grad_addr);
 }
 
 template <typename T>

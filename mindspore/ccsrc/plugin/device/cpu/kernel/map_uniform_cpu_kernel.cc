@@ -60,7 +60,7 @@ int MapUniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 
 template <typename T>
 bool MapUniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
+                                          const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   MS_LOG(INFO) << "Input size: " << batch_size_;
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
