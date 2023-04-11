@@ -47,10 +47,11 @@ message AttributeProto {
     TYPE_NULL = 36;
     MAP_TENSOR = 37;
     FUNCTOR = 38;
+    SCALAR = 39;
   }
   message SeqInfoProto{
-    optional bool is_dyn_len = 18;                 // store if tuple is dynamic length
-    optional AttributeProto tuple_elem_item = 19;  // store the element of tuple dynamic length
+    optional bool is_dyn_len = 1;                 // store if tuple is dynamic length
+    optional AttributeProto tuple_elem_item = 2;  // store the element of tuple dynamic length
   }
   optional string name = 1;
   optional float f = 2;
