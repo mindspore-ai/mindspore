@@ -188,6 +188,27 @@
 #define TC_ATYPE(activation_type) (activation_type)
 #define TC_TYPE(primitive_type, activation_type) (TC_PTYPE(primitive_type) + TC_ATYPE(activation_type))
 
+#define NNACL_MALLOC_CHECK_NULL_RETURN_ERR(ptr) \
+  do {                                          \
+    if ((ptr) == NULL) {                        \
+      return NNACL_NULL_PTR;                    \
+    }                                           \
+  } while (0)
+
+#define NNACL_MALLOC_CHECK_NULL_RETURN_VOID(ptr) \
+  do {                                           \
+    if ((ptr) == NULL) {                         \
+      return;                                    \
+    }                                            \
+  } while (0)
+
+#define NNACL_MALLOC_CHECK_NULL_RETURN_NULL(ptr) \
+  do {                                           \
+    if ((ptr) == NULL) {                         \
+      return NULL;                               \
+    }                                            \
+  } while (0)
+
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)
 #define MS_CHECK_TRUE_RET_VOID(value)
@@ -195,6 +216,12 @@
 
 #define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
 #define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
+
+#define NNACL_CHECK_TRUE_RET(value, errcode)
+#define NNACL_CHECK_TRUE_RET_VOID(value)
+#define NNACL_CHECK_FALSE(value, errcode)
+#define NNACL_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
+#define NNACL_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
 
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
@@ -229,6 +256,33 @@
   MS_CHECK_TRUE_RET(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
 #define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
   MS_CHECK_TRUE_RET(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
+
+#define NNACL_CHECK_TRUE_RET(value, errcode) \
+  do {                                       \
+    if (!(value)) {                          \
+      return errcode;                        \
+    }                                        \
+  } while (0)
+
+#define NNACL_CHECK_TRUE_RET_VOID(value) \
+  do {                                   \
+    if (!(value)) {                      \
+      return;                            \
+    }                                    \
+  } while (0)
+
+// Check whether value is false, if not return 'errcode'
+#define NNACL_CHECK_FALSE(value, errcode) \
+  do {                                    \
+    if ((value)) {                        \
+      return errcode;                     \
+    }                                     \
+  } while (0)
+
+#define NNACL_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \
+  NNACL_CHECK_TRUE_RET(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
+#define NNACL_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
+  NNACL_CHECK_TRUE_RET(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
 
 #define NNACL_CHECK_ZERO_RETURN_ERR(val) \
   do {                                   \
@@ -265,12 +319,6 @@
     }                                     \
   } while (0)
 #endif
-
-#define NNACL_CHECK_TRUE_RET(v, e) MS_CHECK_TRUE_RET(v, e)
-#define NNACL_CHECK_TRUE_RET_VOID(v) MS_CHECK_TRUE_RET_VOID(v)
-#define NNACL_CHECK_FALSE(v, e) MS_CHECK_FALSE(v, e)
-#define NNACL_CHECK_INT_MUL_NOT_OVERFLOW(v1, v2, e) MS_CHECK_INT_MUL_NOT_OVERFLOW(v1, v2, e)
-#define NNACL_CHECK_INT_ADD_NOT_OVERFLOW(v1, v2, e) MS_CHECK_INT_ADD_NOT_OVERFLOW(v1, v2, e)
 
 enum PrimType {
   PrimType_NONE = 0,

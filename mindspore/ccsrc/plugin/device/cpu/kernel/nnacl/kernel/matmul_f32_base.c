@@ -200,6 +200,7 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
       matmul->matrix_a_.pack_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_,
                                                                         matmul->matrix_a_.pack_size_ * sizeof(float)));
     }
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->matrix_a_.pack_ptr_);
   } else {
     bool is_packed = false;
     void *data = NULL;
@@ -210,8 +211,8 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
     } else {
       data = malloc(data_size);
     }
-    NNACL_CHECK_NULL_RETURN_ERR(data);
     matmul->matrix_a_.pack_ptr_ = (float *)data;
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->matrix_a_.pack_ptr_);
     if (is_packed) {
       return NNACL_OK;
     }
@@ -235,6 +236,7 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
       matmul->matrix_b_.pack_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_,
                                                                         matmul->matrix_b_.pack_size_ * sizeof(float)));
     }
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->matrix_b_.pack_ptr_);
   } else {
     if (!matmul->matrix_b_.need_pack_ && matmul->weight_is_packed_) {
       matmul->matrix_b_.pack_ptr_ = (float *)matmul->base_.in_[SECOND_INPUT]->data_;
@@ -249,7 +251,7 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
     } else {
       data = malloc(data_size);
     }
-    NNACL_CHECK_NULL_RETURN_ERR(data);
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(data);
     matmul->matrix_b_.pack_ptr_ = (float *)data;
     if (is_packed) {
       return NNACL_OK;
@@ -263,7 +265,7 @@ int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matri
   int backup_size = GetElementNum(matmul->base_.in_[index]) * sizeof(float);
   MS_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
   matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
-  NNACL_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
   void *src_ptr = matmul->base_.in_[index]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
   (void)memcpy(matrix_info->origin_ptr_, src_ptr, backup_size);
@@ -648,7 +650,7 @@ void InitMatrixInfo(MatrixInfo *info) {
 
 KernelBase *CreateMatmulFp32Base() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)malloc(sizeof(MatmulFp32Struct));
-  NNACL_CHECK_NULL_RETURN_NULL(matmul);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   memset(matmul, 0, sizeof(MatmulFp32Struct));
   matmul->base_.prepare = matmul_f32_prepare;
   matmul->base_.resize = matmul_f32_resize;

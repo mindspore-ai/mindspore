@@ -137,7 +137,7 @@ int biasadd_compute(struct KernelBase *self) {
 
 KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
   BiasAddStruct *bias_add = (BiasAddStruct *)malloc(sizeof(BiasAddStruct));
-  NNACL_CHECK_NULL_RETURN_NULL(bias_add);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(bias_add);
   bias_add->split_points_ = NULL;
   bias_add->base_.prepare = biasadd_prepare;
   bias_add->base_.resize = biasadd_resize;

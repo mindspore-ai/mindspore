@@ -116,7 +116,7 @@ static int groupnorm_compute(struct KernelBase *self) {
 
 KernelBase *CreateGroupNorm(OpParameter *param, int data_type) {
   GroupNormStru *groupnorm = (GroupNormStru *)malloc(sizeof(GroupNormStru));
-  NNACL_CHECK_NULL_RETURN_NULL(groupnorm);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(groupnorm);
 
   groupnorm->base.prepare = groupnorm_prepare;
   groupnorm->base.resize = groupnorm_resize;

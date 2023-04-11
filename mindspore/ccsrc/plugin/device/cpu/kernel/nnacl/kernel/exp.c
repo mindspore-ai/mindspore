@@ -68,7 +68,7 @@ int exp_compute(struct KernelBase *self) {
 
 KernelBase *CreateExp(OpParameter *param, int data_type) {
   ExpStruct *exp = (ExpStruct *)malloc(sizeof(ExpStruct));
-  NNACL_CHECK_NULL_RETURN_NULL(exp);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(exp);
   exp->base_.prepare = exp_prepare;
   exp->base_.resize = exp_resize;
   exp->base_.release = exp_release;
