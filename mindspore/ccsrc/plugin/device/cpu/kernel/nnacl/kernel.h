@@ -53,6 +53,7 @@ typedef struct KernelBase {
   __attribute__((constructor(102))) void Reg##op##data_type##Creator() { RegKernelCreator(op, data_type, func); }
 #endif
 
+#define REGIST_DT(DataType) (DataType - kNumberTypeBegin - 1)
 typedef KernelBase *(*KernelCreator)(OpParameter *param, int data_type);
 void RegKernelCreator(int opType, int dataType, KernelCreator func);
 

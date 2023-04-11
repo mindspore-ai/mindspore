@@ -17,17 +17,8 @@
 #include "nnacl/kernel.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
-#ifdef _MSC_VER
-#include "nnacl/kernel/exp.h"
-#include "nnacl/kernel/gather_d.h"
-#include "nnacl/kernel/group_norm.h"
-#include "nnacl/kernel/reshape.h"
-#include "nnacl/kernel/matmul.h"
-#include "nnacl/kernel/fullconnection.h"
-#endif
 
 static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
-#define REGIST_DT(DataType) (DataType - kNumberTypeBegin - 1)
 
 void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
   g_kernelCreatorRegistry[opType][REGIST_DT(dataType)] = creator;
@@ -39,37 +30,7 @@ void Init_MSC_VER_kernels(void) {
    * register here first time */
   static bool inited = false;
   if (inited == false) {
-    g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeFloat32)] = CreateGatherD;
-    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeInt32)] = CreateGatherD;
-    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
-    g_kernelCreatorRegistry[PrimType_GroupNormFusion][REGIST_DT(kNumberTypeFloat32)] = CreateGroupNorm;
-    g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeBool)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Flatten][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Flatten][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Flatten][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_ExpandDims][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_ExpandDims][REGIST_DT(kNumberTypeBool)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_ExpandDims][REGIST_DT(kNumberTypeInt8)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Squeeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Squeeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt64)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_Unsqueeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
-    g_kernelCreatorRegistry[PrimType_FullConnection][REGIST_DT(kNumberTypeFloat32)] = CreateFullconnection;
-    g_kernelCreatorRegistry[PrimType_MatMulFusion][REGIST_DT(kNumberTypeFloat32)] = CreateMatmul;
+    init_vs_kernels(g_kernelCreatorRegistry);
     inited = true;
   }
 #endif

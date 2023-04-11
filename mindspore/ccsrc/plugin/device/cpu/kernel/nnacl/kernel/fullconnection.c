@@ -43,6 +43,11 @@ int fullconnection_prepare(KernelBase *self) {
   param->a_transpose_ = false;
   param->b_transpose_ = true;
 
+  int ret = MatmulFP32Base_MallocBatchOffset(matmul);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
   return matmul_f32_prepare(self);
 }
 

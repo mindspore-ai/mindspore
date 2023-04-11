@@ -43,6 +43,32 @@ int MatmulFp32Run(void *cdata, int task_id, float l, float r) {
   return matmul->parallel_run_(matmul, task_id);
 }
 
+void MatmulFp32Base_FreeBatchOffset(MatmulFp32Struct *matmul) {
+  if (matmul->a_offset_ != NULL) {
+    free(matmul->a_offset_);
+    matmul->a_offset_ = NULL;
+  }
+  if (matmul->b_offset_ != NULL) {
+    free(matmul->b_offset_);
+    matmul->b_offset_ = NULL;
+  }
+}
+
+int MatmulFP32Base_MallocBatchOffset(MatmulFp32Struct *matmul) {
+  matmul->a_offset_ = malloc(matmul->batch_ * sizeof(int));
+  if (matmul->a_offset_ == NULL) {
+    return NNACL_MALLOC_BUFFER_FAILED;
+  }
+  memset(matmul->a_offset_, 0, matmul->batch_ * sizeof(int));
+
+  matmul->b_offset_ = malloc(matmul->batch_ * sizeof(int));
+  if (matmul->b_offset_ == NULL) {
+    return NNACL_MALLOC_BUFFER_FAILED;
+  }
+  memset(matmul->b_offset_, 0, matmul->batch_ * sizeof(int));
+  return NNACL_OK;
+}
+
 int MatmulFp32Base_PackMatrixBParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   int start = task_id * matmul->pack_b_stride_;
@@ -501,6 +527,7 @@ int matmul_f32_resize(KernelBase *self) {
 
 int matmul_f32_release(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
+  MatmulFp32Base_FreeBatchOffset(matmul);
 
   // packed const-matrix will be delete by framework.
   if (matmul->out_need_aligned_ && matmul->output_data_ != NULL) {
@@ -635,6 +662,8 @@ KernelBase *CreateMatmulFp32Base() {
   matmul->b_const_ = false;
   matmul->out_need_aligned_ = false;
   matmul->conv1x1_origin_bias_ = NULL;
+  matmul->a_offset_ = NULL;
+  matmul->b_offset_ = NULL;
   matmul->model_thread_nr_ = -1;
   matmul->support_mul_batch_cut_by_row_ = false;
   matmul->matmul_type_ = kMatmulFp32BaseCpu;
