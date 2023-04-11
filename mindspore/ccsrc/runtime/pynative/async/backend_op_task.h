@@ -86,13 +86,14 @@ class BackendOpRunTask : public BackendOpTask {
 class BackendOpBuildTask : public BackendOpTask {
  public:
   BackendOpBuildTask(std::shared_ptr<OpTaskContext> context, std::promise<bool> promise)
-      : BackendOpTask(std::move(context), kOpBuildTask), promise_(std::move(promise)) {}
-  ~BackendOpBuildTask() override = default;
+      : BackendOpTask(std::move(context), kOpBuildTask), promise_(std::move(promise)), has_set_value_(false) {}
+  ~BackendOpBuildTask() override;
   void Run() override {}
-  void SetBuildReady(bool build_success) { promise_.set_value(build_success); }
+  void SetBuildReady(bool build_success);
 
  private:
   std::promise<bool> promise_;
+  bool has_set_value_;
 };
 }  // namespace pynative
 }  // namespace mindspore

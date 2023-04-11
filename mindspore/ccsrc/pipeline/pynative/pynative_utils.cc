@@ -35,12 +35,13 @@ void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   py::gil_scoped_acquire acquire_gil;
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
+  auto prim_py = op_run_info->op_prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
   auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));
   op_run_info->op_prim = new_prim;
-  MS_EXCEPTION_IF_NULL(new_prim->adapter());
-  if (new_prim->adapter()->attached_primitive() == nullptr) {
-    new_prim->adapter()->set_attached_primitive(new_prim);
-  }
+  MS_EXCEPTION_IF_NULL(new_adapter);
+  new_adapter->set_attached_primitive(new_prim);
 }
 
 std::string GetObjIdFromPython(const py::handle &obj) {
