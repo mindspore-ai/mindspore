@@ -55,14 +55,14 @@ void MatmulFp32Avx512_BatchColThreadCut(MatmulFp32Struct *matmul) {
   int total_col_unit = UP_DIV(matmul->col_align_, matmul->col_min_unit_);
   int thread_num_tmp = MSMIN(matmul->base_.thread_nr_, total_col_unit);
   int block_col_unit = UP_DIV(total_col_unit, thread_num_tmp);
-  int count = 0;
   int split_point = 0;
+  matmul->col_split_points_size_ = 0;
   while (split_point < total_col_unit) {
-    matmul->col_split_points_[count++] = split_point * matmul->col_min_unit_;
+    matmul->col_split_points_[matmul->col_split_points_size_++] = split_point * matmul->col_min_unit_;
     split_point += block_col_unit;
   }
   if (matmul->batch_stride_ == 0) {
-    matmul->base_.thread_nr_ = count;
+    matmul->base_.thread_nr_ = matmul->col_split_points_size_;
   }
 }
 void MatmulFp32Avx512_BatchColRowSliceThreadCut(MatmulFp32Struct *matmul) {
@@ -77,8 +77,8 @@ void MatmulFp32Avx512_BatchColRowSliceThreadCut(MatmulFp32Struct *matmul) {
   // ColCut
   int total_col_unit = UP_DIV(matmul->col_align_, matmul->col_min_unit_);
   matmul->block_col_unit_ = DOWN_DIV(total_col_unit, matmul->base_.thread_nr_);
-  matmul->col_split_points_size_ = 1;
-  matmul->col_split_points_[0] = 0;
+  matmul->col_split_points_size_ = 0;
+  matmul->col_split_points_[matmul->col_split_points_size_++] = 0;
   if (matmul->block_col_unit_ > 0) {
     int col_split_point = 0;
     for (int i = 0; i < matmul->base_.thread_nr_; i++) {
