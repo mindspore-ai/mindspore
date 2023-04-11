@@ -950,15 +950,11 @@ bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
     return SetTensorProto(abs, tensor_proto);
   } else if (type->isa<Number>()) {
-    if (type->isa<Bool>()) {
-      attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
-    } else {
-      attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
-      mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
-      auto data_type = GetMindirDataType(type->type_id());
-      tensor_proto->set_data_type(data_type);
-      tensor_proto->add_dims(1);
-    }
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_SCALAR);
+    mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
+    auto data_type = GetMindirDataType(type->type_id());
+    tensor_proto->set_data_type(data_type);
+    tensor_proto->add_dims(0);
   } else if (type->isa<Function>()) {
     if (!SetAbstractFuncToAttributeProto(abs, attr_proto)) {
       return false;

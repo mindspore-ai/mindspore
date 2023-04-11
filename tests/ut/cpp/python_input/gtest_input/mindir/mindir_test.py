@@ -39,3 +39,14 @@ def export_test(tag):
         return relu(x)
 
     return fns[tag]
+
+
+def export_test_scalar(tag):
+    """ test_adam_apply_one_with_decay_rule """
+    fns = FnDict()
+
+    @fns
+    def node_scalar_out_test(x, y):
+        return x and y
+
+    return fns[tag]
