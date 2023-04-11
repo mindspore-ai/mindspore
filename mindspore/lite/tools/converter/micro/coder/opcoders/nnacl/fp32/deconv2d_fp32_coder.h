@@ -26,7 +26,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {
-class DeConvolutionFP32Coder final : public Conv2DBaseCoder {
+class DeConvolutionFP32Coder : public Conv2DBaseCoder {
  public:
   DeConvolutionFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const LiteGraph::Node *node, size_t node_index, Target target)
@@ -38,10 +38,11 @@ class DeConvolutionFP32Coder final : public Conv2DBaseCoder {
 
   ~DeConvolutionFP32Coder() override = default;
 
- private:
-  int InitWeightBias(CoderContext *const context);
+ protected:
+  virtual int InitWeightBias(CoderContext *const context);
+  virtual void CollectFilesForFunc(CoderContext *const context);
   int Resize();
-  int InitRunBuf();
+  virtual int InitRunBuf();
   int InitParam();
 
   MatMulParameter matmul_param_{};
@@ -53,13 +54,14 @@ class DeConvolutionFP32Coder final : public Conv2DBaseCoder {
   int input_plane_{0};
   int kernel_plane_{0};
   int output_plane_{0};
-  float *packed_bias_{nullptr};
-  float *packed_weight_{nullptr};
-  float *packed_input_{nullptr};
-  float *packed_output_{nullptr};
-  float *tmp_buffer_{nullptr};
+  void *packed_bias_{nullptr};
+  void *packed_weight_{nullptr};
+  void *packed_input_{nullptr};
+  void *packed_output_{nullptr};
+  void *tmp_buffer_{nullptr};
   std::string input_ptr_;
   std::string output_ptr_;
+  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_DECONV2D_FP32_CODER_H_
