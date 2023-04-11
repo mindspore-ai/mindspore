@@ -7851,6 +7851,10 @@ class Conv3D(Primitive):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         validator.check_value_type("group", group, (int,), self.name)
         validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
+        device_target = context.get_context("device_target")
+        if device_target == "Ascend" and group > 1 and out_channel != group:
+            raise ValueError("On Ascend platform, when group > 1, condition C_in = C_out = group must be satisfied.")
+
         self.group = group
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
