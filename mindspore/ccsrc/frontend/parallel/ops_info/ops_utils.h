@@ -185,6 +185,7 @@ constexpr char RANGE_MAX[] = "range_max";
 constexpr char REMOVE_ACCIDENTAL_HITS[] = "remove_accidental_hits";
 constexpr char UNIQUE_STRING[] = "unique";
 constexpr char AXIS[] = "axis";
+constexpr char CHANNEL_AXIS[] = "channel_axis";
 constexpr char BS[] = "bs";
 constexpr char HEADS[] = "heads";
 constexpr char AXES[] = "axes";
@@ -298,6 +299,8 @@ constexpr char REDUCTION[] = "reduction";
 constexpr char MEAN[] = "mean";
 constexpr char ATTR_NONE[] = "none";
 constexpr char BATCH_MEAN[] = "batchmean";
+constexpr char EMA[] = "ema";
+constexpr char EMA_DECAY[] = "ema_decay";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -380,6 +383,10 @@ constexpr char REDUCE_ALL[] = "ReduceAll";
 constexpr char REDUCE_ANY[] = "ReduceAny";
 constexpr char ARGMAXWITHVALUE[] = "ArgMaxWithValue";
 constexpr char ARGMINWITHVALUE[] = "ArgMinWithValue";
+constexpr char FAKE_QUANT_PER_LAYER[] = "FakeQuantPerLayer";
+constexpr char FAKE_QUANT_PER_CHANNEL[] = "FakeQuantPerChannel";
+constexpr char MIN_MAX_UPDATE_PER_LAYER[] = "MinMaxUpdatePerLayer";
+constexpr char MIN_MAX_UPDATE_PER_CHANNEL[] = "MinMaxUpdatePerChannel";
 constexpr char ARGMAX[] = "Argmax";
 constexpr char ARGMIN[] = "Argmin";
 constexpr char ARGMINV2[] = "ArgminV2";
@@ -599,6 +606,7 @@ constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
 
 // Parallel don't care
 constexpr char MAKE_TUPLE[] = "MakeTuple";
+constexpr char MAKE_TUPLE_OP[] = "make_tuple";
 constexpr char MAKE_LIST[] = "make_list";
 constexpr char MAKE_DICT[] = "make_dict";
 constexpr char MAKE_SLICE[] = "make_slice";
@@ -649,7 +657,6 @@ constexpr char TARGET_PARAM[] = "target_param";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
-constexpr char MIN_MAX_UPDATE_PER_LAYER[] = "MinMaxUpdatePerLayer";
 constexpr char STACK[] = "Stack";
 
 constexpr size_t LAST_INDEX(size_t s) {
