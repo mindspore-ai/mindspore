@@ -305,11 +305,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   transformer->ParameterColoring();
   // step4: Cut Graph
   transformer->CutGraph();
-  // step5: Handle Sens
-  if (parallel::IsTraining(manager)) {
-    transformer->CoverSensShape();
-  }
-  // step6: Elim Graph stages and no used parameter
+  // step5: Elim Graph stages and no used parameter
   transformer->ModifyParameterList();
   transformer->ElimGraphStage();
   return true;

@@ -58,7 +58,6 @@ class PipelineTransformer {
   void BroadCastColoring();
   void CutGraph();
   void ParameterColoring();
-  void CoverSensShape();
   void ElimGraphStage();
   void ModifyParameterList();
 
@@ -90,7 +89,6 @@ class PipelineTransformer {
   bool NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_cnode);
   CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
   bool IsPipelineCareNode(const CNodePtr &cnode) const;
-  std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter);
   void ElimParameter();
