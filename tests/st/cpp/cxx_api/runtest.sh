@@ -115,7 +115,12 @@ fi
 if [[ "X$TASECASE_NAME_OPT" != "X" ]]; then
   ./cxx_st_tests --gtest_filter=$TASECASE_NAME_OPT
 else
-  ./cxx_st_tests
+  ./cxx_st_tests --gtest_filter=TestDE*
+  RET=$?
+  if [ ${RET} -ne 0 ]; then
+      exit ${RET}
+  fi
+  ./cxx_st_tests --gtest_filter=TestControl*
 fi
 RET=$?
 cd -

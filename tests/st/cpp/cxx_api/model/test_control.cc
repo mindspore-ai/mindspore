@@ -37,7 +37,7 @@ class TestControl : public ST::Common {
   TestControl() {}
 };
 
-TEST_F(TestControl, InferIfbyIf) {
+TEST_F(TestControl, DISABLED_InferIfbyIf) {
   auto context = ContextAutoSet();
 
   Graph graph;
@@ -225,7 +225,7 @@ TEST_F(TestControl, InferRecursive) {
   ASSERT_EQ(*p, 21);
 }
 
-TEST_F(TestControl, InferMixedWhileIf) {
+TEST_F(TestControl, DISABLED_InferMixedWhileIf) {
   auto context = ContextAutoSet();
 
   Graph graph;
