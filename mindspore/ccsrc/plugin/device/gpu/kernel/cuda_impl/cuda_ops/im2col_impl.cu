@@ -29,25 +29,24 @@ __global__ void Im2ColKernel(const int64_t n, T *data_x, T *data_y, const int64_
                              const int64_t kernel_height, const int64_t kernel_width, const int64_t pad_height,
                              const int64_t pad_width, const int64_t stride_height, const int64_t stride_width,
                              const int64_t dilation_height, const int64_t dilation_width, const int64_t y_height,
-                             const int64_t y_width, const int64_t batches) {
+                             const int64_t y_width, const int64_t inner_size_c) {
   for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < n; index += blockDim.x * gridDim.x) {
-    int64_t w_out = index % y_width, idx = index / y_width;
-    int64_t h_out = idx % y_height, channel_in = idx / y_height;
+    int64_t batch = index / inner_size_c, idx = index % inner_size_c;
+    int64_t w_out = idx % y_width, id = idx / y_width;
+    int64_t h_out = id % y_height, channel_in = id / y_height;
     int64_t channel_out = channel_in * kernel_height * kernel_width;
     int64_t h_in = h_out * stride_height - pad_height;
     int64_t w_in = w_out * stride_width - pad_width;
-    for (int batch = 0; batch < batches; ++batch) {
-      T *out = data_y + batch * inner_size_y + (channel_out * y_height + h_out) * y_width + w_out;
-      T *in = data_x + batch * inner_size_x + (channel_in * x_height + h_in) * x_width + w_in;
-      for (int64_t i = 0; i < kernel_height; ++i) {
-        for (int64_t j = 0; j < kernel_width; ++j) {
-          int64_t h = h_in + i * dilation_height;
-          int64_t w = w_in + j * dilation_width;
-          *out = (h >= 0 && w >= 0 && h < x_height && w < x_width)
-                   ? in[i * dilation_height * x_width + j * dilation_width]
-                   : static_cast<T>(0);
-          out += y_height * y_width;
-        }
+    T *out = data_y + batch * inner_size_y + (channel_out * y_height + h_out) * y_width + w_out;
+    T *in = data_x + batch * inner_size_x + (channel_in * x_height + h_in) * x_width + w_in;
+    for (int64_t i = 0; i < kernel_height; ++i) {
+      for (int64_t j = 0; j < kernel_width; ++j) {
+        int64_t h = h_in + i * dilation_height;
+        int64_t w = w_in + j * dilation_width;
+        *out = (h >= 0 && w >= 0 && h < x_height && w < x_width)
+                 ? in[i * dilation_height * x_width + j * dilation_width]
+                 : static_cast<T>(0);
+        out += y_height * y_width;
       }
     }
   }
@@ -61,11 +60,12 @@ void CudaIm2Col(const int64_t batches, const int64_t x_channel, const int64_t x_
                 const int64_t pad_width, T *x, T *y, const uint32_t device_id, cudaStream_t stream) {
   const int64_t inner_size_y = y_out_plane * y_height * y_width;
   const int64_t inner_size_x = x_channel * x_height * x_width;
-  const int64_t num_kernels = x_channel * y_height * y_width;
-  const int64_t block_num = static_cast<int64_t>(CUDA_THREADS(device_id)) / 4;
+  const int64_t inner_size_c = x_channel * y_height * y_width;
+  const int64_t num_kernels = batches * inner_size_c;
+  const int64_t block_num = static_cast<int64_t>(CUDA_THREADS(device_id));
   Im2ColKernel<T><<<CUDA_BLOCKS_CAL(device_id, num_kernels, block_num), block_num, 0, stream>>>(
     num_kernels, x, y, inner_size_x, inner_size_y, x_height, x_width, kernel_height, kernel_width, pad_height,
-    pad_width, stride_height, stride_width, dilation_height, dilation_width, y_height, y_width, batches);
+    pad_width, stride_height, stride_width, dilation_height, dilation_width, y_height, y_width, inner_size_c);
 }
 
 template CUDA_LIB_EXPORT void CudaIm2Col(const int64_t batches, const int64_t x_channel, const int64_t x_height,
