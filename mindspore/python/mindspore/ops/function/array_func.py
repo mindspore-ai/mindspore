@@ -3904,9 +3904,11 @@ def batch_to_space_nd(input_x, block_shape, crops):
     If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, the output shape is
     :math:`(n, c_1, ... c_k, w_1, ..., w_M)`.
 
-    :math:`n' = n//(block\_shape[0]*...*block\_shape[M-1])`
-
-    :math:`w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]`
+    .. math::
+            \begin{array}{ll} \\
+                n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
+                w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
+            \end{array}
 
     Args:
         input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
@@ -3964,7 +3966,7 @@ def nonzero(input):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        input (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is int, float or bool.
+        input (Tensor): nonzero input, Tensor with any dimensions. The data type is int, float or bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
@@ -5516,7 +5518,7 @@ def tensor_split(input, indices_or_sections, axis=0):
               - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
                 :math:`input.shape(axis) / n` .
               - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
-                will have size :math:`x.shape(axis) // n + 1` , and the rest will have
+                will have size :math:`input.shape(axis) // n + 1` , and the rest will have
                 size :math:`input.shape(axis) // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`

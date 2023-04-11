@@ -19,7 +19,7 @@ mindspore.nn.FocalLoss
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor，其中 :math:`C` 是分类的数量，值大于1。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `labels` 的相同。
-        - **labels** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor， :math:`C` 的值为1，或者与 `logits` 的 :math:`C` 相同。如果 :math:`C` 不为1，则shape应与 `logits` 的shape相同，其中 :math:`C` 是分类的数量。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `logits` 相同。
+        - **labels** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor， :math:`C` 的值为1，或者与 `logits` 的 :math:`C` 相同。如果 :math:`C` 不为1，则shape应与 `logits` 的shape相同，其中 :math:`C` 是分类的数量。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `logits` 相同。 `labels` 的值应该在 [-:math:`C`, :math:`C`)范围内，其中 :math:`C` 是logits中类的数量。
 
     输出：
         Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `logits` 相同。否则，将返回Scalar。

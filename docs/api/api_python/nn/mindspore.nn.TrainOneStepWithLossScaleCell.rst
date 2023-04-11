@@ -25,7 +25,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     异常：
         - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。
-        - **ValueError** - `scale_sense` 的shape既不是(1,)也不是()。
+        - **ValueError** - `scale_sense` 的shape既不是 :math:`(1,)` 也不是 :math:`()` 。
 
     .. py:method:: get_overflow_status(status, compute_output)
 

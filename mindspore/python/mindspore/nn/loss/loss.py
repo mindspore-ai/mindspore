@@ -2685,7 +2685,8 @@ class HingeEmbeddingLoss(LossBase):
     Inputs:
         - **logits** (Tensor) - The predicted value, expressed as :math:`x` in the equation.
           Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
-        - **labels** (Tensor) - Same shape as the logits, contains -1 or 1.
+        - **labels** (Tensor) - Label value, represented as :math:`y` in the equation.
+          Same shape as the logits, contains -1 or 1.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
