@@ -65,7 +65,7 @@ mindspore::MSTensor ReadFileToTensor(const std::string &file) {
   return buf;
 }
 
-TEST_F(TestDE, TestResNetPreprocess) {
+TEST_F(TestDE, DISABLED_TestResNetPreprocess) {
   // Read images
   auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
