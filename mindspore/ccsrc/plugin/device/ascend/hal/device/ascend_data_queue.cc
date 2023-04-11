@@ -241,6 +241,10 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 }
 
 AscendTdtQueue::~AscendTdtQueue() {
+  auto context_ptr = MsContext::GetInstance();
+  if (context_ptr != nullptr && context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
+    return;
+  }
   if (acl_handle_ != nullptr) {
     if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue. The details refer to 'Ascend Error Message'.";
