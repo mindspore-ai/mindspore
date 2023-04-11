@@ -29,6 +29,7 @@
 #include "ops/scalar_div.h"
 #include "ops/scalar_floordiv.h"
 #include "ops/scalar_mod.h"
+#include "ops/scalar_pow.h"
 #include "ops/scalar_eq.h"
 #include "ops/scalar_lt.h"
 #include "ops/scalar_gt.h"
@@ -214,21 +215,24 @@ ValuePtr GeImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::str
   return MakeValue(x >= y);
 }
 
+template <typename T>
+ValuePtr PowImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(x_value);
+  MS_EXCEPTION_IF_NULL(y_value);
+  auto x = GetScalarValue<T>(op_name, x_value);
+  auto y = GetScalarValue<T>(op_name, y_value);
+  return MakeValue(static_cast<T>(std::pow(x, y)));
+}
+
 using MathImplFunc = std::function<ValuePtr(const ValuePtr &, const ValuePtr &, const std::string &)>;
 
 template <typename T>
 MathImplFunc ChooseFunc(const std::string &prim_name) {
-  std::map<std::string, MathImplFunc> infer_value_func_map = {{prim::kScalarAdd, AddImpl<T>},
-                                                              {prim::kScalarSub, SubImpl<T>},
-                                                              {prim::kScalarMul, MulImpl<T>},
-                                                              {prim::kScalarDiv, DivImpl<T>},
-                                                              {prim::kScalarMod, ModImpl<T>},
-                                                              {prim::kScalarEq, EqImpl<T>},
-                                                              {prim::kScalarGt, GtImpl<T>},
-                                                              {prim::kScalarLt, LtImpl<T>},
-                                                              {prim::kScalarGe, GeImpl<T>},
-                                                              {prim::kScalarLe, LeImpl<T>},
-                                                              {prim::kScalarFloordiv, FloorDivImpl<T>}};
+  std::map<std::string, MathImplFunc> infer_value_func_map = {
+    {prim::kScalarAdd, AddImpl<T>}, {prim::kScalarSub, SubImpl<T>}, {prim::kScalarMul, MulImpl<T>},
+    {prim::kScalarDiv, DivImpl<T>}, {prim::kScalarMod, ModImpl<T>}, {prim::kScalarEq, EqImpl<T>},
+    {prim::kScalarGt, GtImpl<T>},   {prim::kScalarLt, LtImpl<T>},   {prim::kScalarGe, GeImpl<T>},
+    {prim::kScalarLe, LeImpl<T>},   {prim::kScalarPow, PowImpl<T>}, {prim::kScalarFloordiv, FloorDivImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -341,6 +345,7 @@ MIND_API_OPERATOR_IMPL(ScalarMul, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarDiv, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarFloordiv, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarMod, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScalarPow, BaseOperator);
 MIND_API_OPERATOR_IMPL(scalar_eq, BaseOperator);
 MIND_API_OPERATOR_IMPL(scalar_gt, BaseOperator);
 MIND_API_OPERATOR_IMPL(scalar_ge, BaseOperator);
@@ -352,6 +357,7 @@ REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMul, prim::kPrimScalarMul, ScalarArithmet
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarDiv, prim::kPrimScalarDiv, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarFloordiv, prim::kPrimScalarFloorDiv, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMod, prim::kPrimScalarMod, ScalarArithmeticInfer, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarPow, prim::kPrimScalarPow, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_eq, prim::kPrimScalarEq, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_gt, prim::kPrimScalarGt, ScalarArithmeticInfer, true);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_ge, prim::kPrimScalarGe, ScalarArithmeticInfer, true);

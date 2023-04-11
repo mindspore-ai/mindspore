@@ -24,7 +24,7 @@ namespace prim {
 PrimToFunction::PrimToFunction()
     : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},        {"scalar_cos", kPrimTypeNumOneArg},
                            {"scalar_exp", kPrimTypeNumOneArg},      {kScalarFloor, kPrimTypeNumOneArg},
-                           {"scalar_log", kPrimTypeNumOneArg},      {"scalar_sin", kPrimTypeNumOneArg},
+                           {kScalarLog, kPrimTypeNumOneArg},        {"scalar_sin", kPrimTypeNumOneArg},
                            {"scalar_tan", kPrimTypeNumOneArg},      {kScalarTrunc, kPrimTypeNumOneArg},
                            {"typeof", kPrimTypeNumOneArg},          {kScalarUadd, kPrimTypeNumOneArg},
                            {kScalarUsub, kPrimTypeNumOneArg},       {kScalarAdd, kPrimTypeNumTwoArgs},
