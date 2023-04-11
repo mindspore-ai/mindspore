@@ -110,6 +110,14 @@ class PrimitivePyAdapter {
   PrimitivePyPtr attached_primitive() const { return attached_primitive_.lock(); }
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
+
+  struct PrimitiveUserData {
+    py::object obj;
+  };
+
+  void SetUserData(const py::str &key, const py::object &value);
+  py::object UserData(const py::str &key) const;
+
   const bool parse_info_ = true;
 
  private:

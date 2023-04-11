@@ -30,7 +30,6 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "base/base.h"
-#include "base/user_data.h"
 #include "base/effect_info.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
@@ -267,59 +266,6 @@ class MS_CORE_API AnfNode : public Base {
     return os;
   }
 
-  /// \brief Set user data.
-  ///
-  /// \param[in] key The key of user data.
-  /// \param[in] value The value of user data.
-  template <typename T>
-  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
-    user_data_.set<T>(key, value);
-  }
-
-  /// \brief Set user data.
-  ///
-  /// \param[in] value The value of user data.
-  template <typename T>
-  void set_user_data(const std::shared_ptr<T> &value) {
-    user_data_.set<T>(T::key, value);
-  }
-
-  /// \brief Get user data.
-  ///
-  /// \param[in] key The key of user data.
-  /// \return Pointer to user data.
-  template <typename T>
-  std::shared_ptr<T> user_data(const std::string &key) const {
-    return user_data_.get<T>(key);
-  }
-
-  /// \brief Set user data.
-  ///
-  /// \return Pointer to user data.
-  template <typename T>
-  std::shared_ptr<T> user_data() const {
-    return user_data_.get<T>(T::key);
-  }
-
-  /// \brief Check whether there is corresponding user data by the given key.
-  ///
-  /// \param[in] key The key of user data.
-  /// \return True if it exists, otherwise false.
-  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
-
-  /// \brief Check if there is user data.
-  ///
-  /// \return True if it exists, otherwise false.
-  template <typename T>
-  bool has_user_data() const {
-    return user_data_.has(T::key);
-  }
-
-  /// \brief Clone user data.
-  ///
-  /// \param[in] node Node used to copy user data.
-  void CloneUserData(const AnfNodePtr &node) { user_data_ = node->user_data_; }
-
   /// \brief Check if there is an interpret node.
   ///
   /// \return True if there is an interpret node, otherwise false.
@@ -360,7 +306,6 @@ class MS_CORE_API AnfNode : public Base {
   static constexpr auto kKernelInfoKey = "kernel_info";
 
   ScopePtr scope_;
-  UserData user_data_;
   std::bitset<kNumInterpretFlags> interpret_flags_;
 };
 

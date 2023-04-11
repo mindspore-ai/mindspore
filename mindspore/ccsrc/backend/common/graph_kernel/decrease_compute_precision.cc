@@ -121,6 +121,7 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
   CNodePtr new_node = nullptr;
   new_node = std::make_shared<CNode>(*cnode);
   MS_EXCEPTION_IF_NULL(new_node);
+  new_node->CloneUserData(cnode);
   UpdateOutputInfo(new_node);
   return new_node;
 }

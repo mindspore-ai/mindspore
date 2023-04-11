@@ -72,6 +72,7 @@ const AnfNodePtr InsertPlaceholderForDynamicRNN::Process(const FuncGraphPtr &fun
   CNodePtr new_node = nullptr;
   if (kernel_graph == nullptr) {
     new_node = std::make_shared<CNode>(*cnode);
+    new_node->CloneUserData(cnode);
   } else {
     new_node = NewCNode(cnode, kernel_graph);
   }

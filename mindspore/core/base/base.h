@@ -26,11 +26,13 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include "utils/hashing.h"
+
+#include "base/user_data.h"
 #include "mindapi/base/macros.h"
+#include "utils/hashing.h"
 #include "utils/log_adapter.h"
-#include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
+#include "utils/ordered_set.h"
 
 namespace mindspore {
 template <typename T>
@@ -163,6 +165,59 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
     return nullptr;
   }
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \param[in] value The value of user data.
+  template <typename T>
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+
+  /// \brief Set user data.
+  ///
+  /// \param[in] value The value of user data.
+  template <typename T>
+  void set_user_data(const std::shared_ptr<T> &value) {
+    user_data_.set<T>(T::key, value);
+  }
+
+  /// \brief Get user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return Pointer to user data.
+  template <typename T>
+  std::shared_ptr<T> user_data(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
+  /// \brief Set user data.
+  ///
+  /// \return Pointer to user data.
+  template <typename T>
+  std::shared_ptr<T> user_data() const {
+    return user_data_.get<T>(T::key);
+  }
+
+  /// \brief Check whether there is corresponding user data by the given key.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return True if it exists, otherwise false.
+  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
+
+  /// \brief Check if there is user data.
+  ///
+  /// \return True if it exists, otherwise false.
+  template <typename T>
+  bool has_user_data() const {
+    return user_data_.has(T::key);
+  }
+
+  /// \brief Clone user data.
+  ///
+  /// \param[in] other used to copy user data.
+  void CloneUserData(const std::shared_ptr<Base> &other) { user_data_ = other->user_data_; }
+
  protected:
   /// \brief Get the shared_ptr of Base.
   ///
@@ -171,6 +226,8 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   std::shared_ptr<Derived> shared_from_base() {
     return std::static_pointer_cast<Derived>(shared_from_this());
   }
+
+  UserData user_data_;
 };
 
 using BasePtr = std::shared_ptr<Base>;

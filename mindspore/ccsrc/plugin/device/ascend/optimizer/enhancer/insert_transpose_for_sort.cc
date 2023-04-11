@@ -75,6 +75,7 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   if (kernel_graph == nullptr) {
     new_cnode = std::make_shared<CNode>(*node);
+    new_cnode->CloneUserData(node);
   } else {
     new_cnode = kernel_graph->NewCNode(node);
   }
