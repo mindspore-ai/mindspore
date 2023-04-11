@@ -16,7 +16,6 @@
 #include "coder/opcoders/nnacl/fp16/layernorm_fp16_coder.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
-#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_LayerNormFusion;
 

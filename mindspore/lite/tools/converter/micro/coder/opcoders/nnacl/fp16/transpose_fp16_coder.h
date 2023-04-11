@@ -34,13 +34,7 @@ class TransposeFp16Coder final : public TransposeFp32Coder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  void GetNHNCTransposeFunc();
-
-  TransposeParameter *param_{nullptr};
-  int *out_shape_{nullptr};
-  std::string NHNCTransposeFunc_;
-  int nhnc_param_[3];
-  int dims_{0};
+  int ResetStatus() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_TRANSPOSE_FP16_CODER_H_

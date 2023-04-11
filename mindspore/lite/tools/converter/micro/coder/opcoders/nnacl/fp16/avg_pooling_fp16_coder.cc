@@ -82,5 +82,6 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
   return lite::RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

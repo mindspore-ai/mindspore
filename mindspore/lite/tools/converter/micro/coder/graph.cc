@@ -42,7 +42,7 @@ CoderGraph::~CoderGraph() {
   }
 }
 
-int CoderGraph::ConvertTensors(bool enableFp16) {
+int CoderGraph::ConvertTensors(bool enable_fp16) {
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "Graph model is nullptr";
     return RET_ERROR;
@@ -84,7 +84,7 @@ int CoderGraph::ConvertTensors(bool enableFp16) {
     if (origin_tensor->nodeType() == NodeType_ValueNode && origin_tensor->data() != nullptr &&
         origin_tensor->data()->size() > 0) {
       // copy data, this is weight && bias
-      if (enableFp16 && origin_data_type == kNumberTypeFloat32) {
+      if (enable_fp16 && origin_data_type == kNumberTypeFloat32) {
         dstTensor->set_data_type(kNumberTypeFloat16);
         auto data = dstTensor->MutableData();
         MS_CHECK_RET_CODE_WITH_EXE(data != nullptr, "dst tensor malloc data failed!", delete dstTensor);
@@ -100,9 +100,10 @@ int CoderGraph::ConvertTensors(bool enableFp16) {
                      origin_tensor->data()->size()) != EOK) {
           MS_LOG(ERROR) << "memcpy_s copy data failed!";
           delete dstTensor;
+          return RET_ERROR;
         }
       }
-    } else if (enableFp16 && origin_data_type == kNumberTypeFloat32) {
+    } else if (enable_fp16 && origin_data_type == kNumberTypeFloat32) {
       dstTensor->set_data_type(kNumberTypeFloat16);
     }
     if (origin_tensor->name() != nullptr) {

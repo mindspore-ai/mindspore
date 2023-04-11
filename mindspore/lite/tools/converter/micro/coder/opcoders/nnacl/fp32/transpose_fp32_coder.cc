@@ -24,13 +24,29 @@
 using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
 int TransposeFp32Coder::Resize() {
-  if (input_tensors_.size() == DIMENSION_2D) {
-    param_->num_axes_ = input_tensors_.at(1)->ElementsNum();
+  param_->num_axes_ = 0;
+  if (input_tensors_.size() == C2NUM) {
+    param_->num_axes_ = input_tensors_[SECOND_INPUT]->ElementsNum();
   }
   if (input_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param_->num_axes_)) {
     return RET_OK;
   }
   // get perm data
+  auto ret = ResetStatus();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Do transpose reset failed.";
+    return ret;
+  }
+
+  ret = ComputeOfflineInfo();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Do compute transpose offline info failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int TransposeFp32Coder::ResetStatus() {
   MS_CHECK_TRUE_RET(input_tensors_.size() == DIMENSION_2D, RET_ERROR);
   auto perm_tensor = input_tensors_.at(1);
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
@@ -38,6 +54,10 @@ int TransposeFp32Coder::Resize() {
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
   }
+  return RET_OK;
+}
+
+int TransposeFp32Coder::ComputeOfflineInfo() {
   auto in_shape = input_tensor_->shape();
   auto out_shape = output_tensor_->shape();
   param_->strides_[param_->num_axes_ - 1] = 1;
@@ -47,7 +67,6 @@ int TransposeFp32Coder::Resize() {
     param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
-
   return RET_OK;
 }
 

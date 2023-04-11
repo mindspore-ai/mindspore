@@ -15,8 +15,9 @@
  */
 #include "coder/opcoders/nnacl/fp16/arithmetic_fp16_coder.h"
 #include "coder/opcoders/file_collector.h"
-#include "coder/opcoders/parallel.h"
 #include "coder/log.h"
+#include "nnacl/broadcast_to_parameter.h"
+#include "base/float16.h"
 
 namespace mindspore::lite::micro::nnacl {
 void ArithmeticFP16Coder::InitFunTable() {
@@ -58,9 +59,9 @@ int ArithmeticFP16Coder::Prepare(CoderContext *const context) {
 
 int ArithmeticFP16Coder::ReSize(CoderContext *const context) {
   CalcMultiplesAndStrides(arithmetic_parameter_);
-  if (arithmetic_parameter_->in_shape0_ != arithmetic_parameter_->in_shape1_) {
-    MS_LOG(ERROR) << "The shape of input0 and input1 are not equal, and broadCast is not support.";
-    return RET_NOT_SUPPORT;
+  if (input_tensor_->shape() != output_tensor_->shape() && filter_tensor_->shape() != output_tensor_->shape()) {
+    broadcast_temp_ = allocator_->Malloc(kNumberTypeFloat16, output_tensor_->Size(), kWorkspace);
+    MS_CHECK_TRUE_MSG(broadcast_temp_ != nullptr, RET_NULL_PTR, "malloc broadcast temp data failed");
   }
   return RET_OK;
 }
@@ -90,35 +91,86 @@ int ArithmeticFP16Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp16/arithmetic_fp16.h",
+            "nnacl/base/broadcast_to.h",
           },
           {
             "arithmetic_fp16.c",
             "arithmetic_base.c",
+            "broadcast_to.c",
           });
-
   // all elements eltwise calculation
   ChooseArithmeticFunc(false);
+  auto in0_shape = input_tensor_->shape();
+  auto in1_shape = filter_tensor_->shape();
+  auto out_shape = output_tensor_->shape();
+  BroadcastShapeInfo broadcast_info;
+  auto ret = memset_s(&broadcast_info, sizeof(BroadcastShapeInfo), 0, sizeof(BroadcastShapeInfo));
+  MS_CHECK_TRUE_MSG(ret == EOK, RET_ERROR, "memset failed");
+  ret = memcpy_s(broadcast_info.output_shape_, MAX_SHAPE_SIZE * sizeof(int), out_shape.data(),
+                 out_shape.size() * sizeof(int));
+  MS_CHECK_TRUE_MSG(ret == EOK, RET_ERROR, "memcpy output-info failed");
+  broadcast_info.output_shape_size_ = static_cast<int>(out_shape.size());
+  if (in0_shape != out_shape) {
+    ret = memcpy_s(broadcast_info.input_shape_, MAX_SHAPE_SIZE * sizeof(int), in0_shape.data(),
+                   in0_shape.size() * sizeof(int));
+    MS_CHECK_TRUE_MSG(ret == EOK, RET_ERROR, "memcpy in0-info failed");
+    broadcast_info.input_shape_size_ = static_cast<int>(in0_shape.size());
+    code.CodeStruct("in0_broadcast_info", broadcast_info);
+    code.CodeFunction("BroadcastToSize16", input0_ptr_str_, "&in0_broadcast_info", output_ptr_str_);
+    input0_ptr_str_ = output_ptr_str_;
+  }
+  if (in1_shape != out_shape) {
+    ret = memcpy_s(broadcast_info.input_shape_, MAX_SHAPE_SIZE * sizeof(int), in1_shape.data(),
+                   in1_shape.size() * sizeof(int));
+    MS_CHECK_TRUE_MSG(ret == EOK, RET_ERROR, "memcpy in0-info failed");
+    broadcast_info.input_shape_size_ = static_cast<int>(in1_shape.size());
+    code.CodeStruct("in1_broadcast_info", broadcast_info);
+    auto temp = output_ptr_str_;
+    if (input0_ptr_str_ == output_ptr_str_) {
+      temp = allocator_->GetRuntimeAddr(static_cast<float16 *>(broadcast_temp_));
+    }
+    code.CodeFunction("BroadcastToSize16", input1_ptr_str_, "&in1_broadcast_info", temp);
+    input1_ptr_str_ = temp;
+  }
   return ExecuteCode(input0_ptr_str_, input1_ptr_str_, output_ptr_str_, element_num, context, &code);
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_AddFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_MulFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_SubFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_DivFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_RealDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_LogicalAnd, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_LogicalOr, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Maximum, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Minimum, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_FloorDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_FloorMod, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_SquaredDifference,
-                   CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Equal, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_NotEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Less, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_LessEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Greater, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_GreaterEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_AddFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_MulFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_SubFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_DivFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_RealDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_LogicalAnd, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_LogicalOr, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Maximum, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Minimum, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_FloorDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_FloorMod, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_SquaredDifference, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Equal, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_NotEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Less, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_LessEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Greater, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_GreaterEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM32, kNumberTypeFloat16, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_AddFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_MulFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_SubFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_DivFusion, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_RealDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_LogicalAnd, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_LogicalOr, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Maximum, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Minimum, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_FloorDiv, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_FloorMod, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_SquaredDifference, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Equal, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_NotEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Less, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_LessEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Greater, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_GreaterEqual, CPUOpCoderCreator<ArithmeticFP16Coder>)
+REG_OPERATOR_CODER(kARM64, kNumberTypeFloat16, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP16Coder>)
 }  // namespace mindspore::lite::micro::nnacl

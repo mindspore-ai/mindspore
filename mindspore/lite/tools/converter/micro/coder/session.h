@@ -34,7 +34,7 @@ class CoderSession {
 
   ~CoderSession();
 
-  int Init(const void *content, int size, const int model_index, bool end_flag, bool enableFp16);
+  int Init(const void *content, int size, const int model_index, bool end_flag, bool enable_fp16);
 
   virtual int Build();
 
@@ -64,7 +64,7 @@ class CoderSession {
 
  private:
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
-  bool enableFP16_{false};
+  bool enable_fp16_{false};
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_
