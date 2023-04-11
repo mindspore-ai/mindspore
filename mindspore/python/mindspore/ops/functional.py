@@ -21,6 +21,7 @@ from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops import operations as P
+from mindspore.ops.operations import array_ops
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops
 from mindspore.ops.operations.math_ops import Median
@@ -281,6 +282,8 @@ tensor_operator_registry.register('igamma', igamma)
 tensor_operator_registry.register('igammac', igammac)
 tensor_operator_registry.register('nextafter', nextafter)
 tensor_operator_registry.register('qr', qr)
+tensor_operator_registry.register('masked_scatter', array_ops.MaskedScatter)
+tensor_operator_registry.register('index_put', array_ops.IndexPut)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
