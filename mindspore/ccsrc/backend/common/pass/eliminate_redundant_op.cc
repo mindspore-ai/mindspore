@@ -126,6 +126,9 @@ const AnfNodePtr EliminateRedundantOp::ProcessMatchedNodes(const FuncGraphPtr &f
       } else {
         new_node->set_input((*pass_vector)[idx].second, (*pass_vector)[idx + 1].first);
       }
+      if (IsPrimitiveCNode(new_node, prim::kPrimDepend)) {
+        new_node->set_abstract(new_node->input(1)->abstract());
+      }
       (*pass_vector)[idx].first = new_node;
     }
     return (*pass_vector)[1].first;
