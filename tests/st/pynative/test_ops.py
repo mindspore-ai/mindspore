@@ -98,7 +98,7 @@ def test_primitive_user_data():
     tensor = Tensor(np.ndarray([1, 2, 3]), dtype=dtype.float64)
     cast = ops.Cast()
     type_dst = ms.float32
-    cast(tensor, type_dst)  # Run in PyNative.
     cast.set_user_data("__user_data__", tensor)
     user_data = cast.get_user_data("__user_data__")
+    cast(tensor, type_dst)  # Run in PyNative.
     np.testing.assert_almost_equal(user_data.asnumpy(), tensor.asnumpy())

@@ -64,6 +64,7 @@ COMMON_EXPORT bool IsPythonEnv();
 COMMON_EXPORT void SetPythonPath(const std::string &path);
 COMMON_EXPORT void set_python_env_flag(bool python_env) noexcept;
 COMMON_EXPORT py::object GetPyFn(const std::string &module, const std::string &name);
+
 // Call the python function
 template <class... T>
 py::object CallPyFn(const std::string &module, const std::string &name, T... args) {
@@ -74,6 +75,28 @@ py::object CallPyFn(const std::string &module, const std::string &name, T... arg
     return fn;
   }
   return py::none();
+}
+
+// Cast shared_ptr to py::object.
+template <typename T>
+py::object CastToPyObj(const std::shared_ptr<T> &ptr) {
+  // Use a pybind11 typecaster to create a PyObject from a shared_ptr<T> pointer.
+  py::detail::type_caster<std::shared_ptr<T>> shared_ptr_caster;
+  py::handle cast_handle = shared_ptr_caster.cast(ptr, py::return_value_policy::take_ownership, py::handle());
+  py::object obj = py::cast<py::object>(cast_handle);
+  MS_LOG(DEBUG) << ptr << ", obj: " << obj << ", handle ptr: " << cast_handle.ptr();
+  return obj;
+}
+
+// Cast pointer to py::object.
+template <typename T>
+py::object CastToPyObj(const T *ptr) {
+  // Use a pybind11 typecaster to create a PyObject from a T* pointer.
+  py::detail::type_caster<T *> ptr_caster;
+  py::handle cast_handle = ptr_caster.cast(ptr, py::return_value_policy::take_ownership, py::handle());
+  py::object obj = py::cast<py::object>(cast_handle);
+  MS_LOG(DEBUG) << ptr << ", obj: " << obj << ", handle ptr: " << cast_handle.ptr();
+  return obj;
 }
 
 class COMMON_EXPORT PyAdapterCallback {
