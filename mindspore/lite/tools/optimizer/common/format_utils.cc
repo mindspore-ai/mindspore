@@ -353,11 +353,14 @@ STATUS GetFormatSensitiveOpInsertIndex(const CNodePtr &cnode, std::vector<size_t
 
 int ConvertAbstractFormatShape(const AbstractBasePtr &abstract, FormatTransNodeType perm) {
   ShapeVector shape;
+  if (perm == kNONE) {
+    return lite::RET_OK;
+  }
   if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
     MS_LOG(ERROR) << "fetch shape failed.";
     return lite::RET_ERROR;
   }
-  if (shape.size() != kInputSizeFour) {
+  if (shape.size() < kInputSizeThree) {
     MS_LOG(DEBUG) << "shape don't need to modify.";
     return lite::RET_OK;
   }
@@ -369,16 +372,20 @@ int ConvertAbstractFormatShape(const AbstractBasePtr &abstract, FormatTransNodeT
   auto input_tensor = shape_value->cast<tensor::TensorPtr>();
   MS_CHECK_FALSE(input_tensor == nullptr, RET_ERROR);
   if (perm == kNHWC2NCHW) {
-    if (input_tensor->data().const_data() != nullptr) {
-      (void)TransFilterFormat(input_tensor, schema::Format_KHWC, schema::Format_KCHW);
+    ShapeVector transfer_shape = shape;
+    size_t shape_size = shape.size();
+    transfer_shape[1] = shape[shape_size - 1];
+    for (size_t i = kDim2; i < shape_size; i++) {
+      transfer_shape[i] = shape[i - 1];
     }
-    ShapeVector transfer_shape = {shape[0], shape[kInputIndexThree], shape[1], shape[kInputIndexTwo]};
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
   } else if (perm == kNCHW2NHWC) {
-    if (input_tensor->data().const_data() != nullptr) {
-      (void)TransFilterFormat(input_tensor, schema::Format_KCHW, schema::Format_KHWC);
+    ShapeVector transfer_shape = shape;
+    size_t shape_size = shape.size();
+    transfer_shape[shape_size - 1] = shape[1];
+    for (size_t i = kDim1; i < shape_size - 1; i++) {
+      transfer_shape[i] = shape[i + 1];
     }
-    ShapeVector transfer_shape = {shape[0], shape[kInputIndexTwo], shape[kInputIndexThree], shape[1]};
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
   }
 

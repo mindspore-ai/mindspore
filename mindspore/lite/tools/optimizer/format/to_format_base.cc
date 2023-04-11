@@ -99,15 +99,25 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
       MS_LOG(ERROR) << "fetch shape failed, " << cnode->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    if (shape.size() != kInputSizeFour) {
+    if (shape.size() < kInputSizeThree) {
       MS_LOG(DEBUG) << "shape don't need to modify.";
       continue;
     }
     if (format_ == mindspore::NCHW) {
-      ShapeVector transfer_shape = {shape[0], shape[kInputIndexThree], shape[1], shape[kInputIndexTwo]};
+      ShapeVector transfer_shape = shape;
+      size_t shape_size = shape.size();
+      transfer_shape[1] = shape[shape_size - 1];
+      for (size_t i = kDim2; i < shape_size; i++) {
+        transfer_shape[i] = shape[i - 1];
+      }
       abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
     } else {
-      ShapeVector transfer_shape = {shape[0], shape[kInputIndexTwo], shape[kInputIndexThree], shape[1]};
+      ShapeVector transfer_shape = shape;
+      size_t shape_size = shape.size();
+      transfer_shape[shape_size - 1] = shape[1];
+      for (size_t i = kDim1; i < shape_size - 1; i++) {
+        transfer_shape[i] = shape[i + 1];
+      }
       abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
     }
   }

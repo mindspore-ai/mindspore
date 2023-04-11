@@ -338,7 +338,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     MS_LOG(ERROR) << "ConvertAbstractToNCOrNH failed.";
     return RET_ERROR;
   }
-
+  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int>(Format::NCHW)));
   AbstractBasePtr result;
   try {
     infer_ret = OpsInferShape(anf_prim, abs_list, &result, invalid);
@@ -355,6 +355,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
       infer_ret = lite::RET_INFER_INVALID;
     }
   }
+  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int>(Format::NHWC)));
   if (infer_ret == lite::RET_OK) {
     (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
   }
@@ -363,9 +364,6 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "SetCNodeAbstractByConvert failed: " << cnode->fullname_with_scope();
       return set_status;
-    }
-    if (anf_prim->GetAttr(mindspore::ops::kFormat) == nullptr) {
-      (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int>(Format::NHWC)));
     }
   } else {
     MS_LOG(WARNING) << "OpsInferShape failed.";
