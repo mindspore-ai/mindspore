@@ -1,7 +1,7 @@
 mindspore.ops.Median
 ====================
 
-.. py:class:: mindspore.ops.Median(global_median=False, axis=0, keep_dims=False)
+.. py:class:: mindspore.ops.Median(global_median=False, axis=0, keep_dims=False, ignore_nan=False)
 
     输出Tensor指定维度 `axis` 上的中值与其对应的索引。如果 `global_median` 为True，则计算Tensor中所有元素的中值。
 
@@ -12,6 +12,7 @@ mindspore.ops.Median
         - **global_median** (bool, 可选) - 是否计算Tensor中所有元素的中值。默认值：False。
         - **axis** (int, 可选) - 进行中值计算的轴。默认值：0。
         - **keep_dims** (bool, 可选) - 是否保留 `axis` 指定的维度。默认值：False。
+        - **ignore_nan** (bool, 可选) - 是否忽略输入Tensor中的NaN值。默认值：False。
 
     输入：
         - **x** (Tensor) - 要计算中值的Tensor。支持的数据类型：int16、int32、int64、float32或float64。
@@ -28,7 +29,7 @@ mindspore.ops.Median
     异常：
         - **TypeError** - `x` 的数据类型不是: int16、int32、int64、float32、float64。
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `global_median` 或 `keep_dims` 被指定了一个非bool值。
+        - **TypeError** - `global_median` 、 `keep_dims` 或 `ignore_nan` 被指定了一个非bool值。
         - **TypeError** - `axis` 不是int。
         - **ValueError** - `axis` 不在 [-x.dim, x.dim-1] 范围内。
 

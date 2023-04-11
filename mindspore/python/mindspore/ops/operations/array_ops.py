@@ -479,8 +479,7 @@ class Im2Col(Primitive):
 class Col2Im(Primitive):
     r"""
     Combines an array of sliding local blocks into a large containing tensor. It is
-    usually used to reconstruct an image from a set of image patches(or sliding local blocks)
-    that were generated using the :class:`mindspore.ops.Im2Col` operation.
+    usually used to reconstruct an image from a set of image patches(or sliding local blocks).
 
     Consider a batched :attr:`input` tensor containing sliding local blocks,
     e.g., patches of images, of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,

@@ -7604,9 +7604,9 @@ class Conv3D(Primitive):
     r"""
     Applies a 3D convolution over an input tensor. The input tensor is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
-    the formula is defined as:
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H, W` is feature height and width respectively.
+    the output value of a layer is calculated as:
 
     .. math::
         \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
@@ -7616,15 +7616,15 @@ class Conv3D(Primitive):
     where :math:`k` is kernel,
     :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
     :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
     where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
     the depth, height and width of the convolution kernel respectively. :math:`\text{bias}` is the bias parameter
     and :math:`\text{X}` is the input tensor.
     The shape of full convolution kernel is
-    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where `group` is the number of groups to split the input `x` in the channel dimension.
+    :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where `groups` is the number of groups to split `input` in the channel dimension.
 
     For more details, please refer to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
@@ -7635,14 +7635,14 @@ class Conv3D(Primitive):
 
     Args:
         out_channel (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and width
-            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
-            width of the kernel.
+        kernel_size (Union[int, tuple[int]]): Specifies the depth, height
+            and width of the 3D convolution window. It can be a single int or a tuple of 3 integers.
+            Single int means the value is for the depth, height and width
+            of the kernel. A tuple of 3 ints corresponds to the depth, height and width of the kernel respectively.
         mode (int): Modes for different convolutions. It is currently not used. Default: 1.
-        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, it can be an int number
+            that represents the depth, height and width of movement or a tuple of three int numbers that
+            represent depth, height and width movement respectively. Default: 1.
         pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
@@ -7667,9 +7667,10 @@ class Conv3D(Primitive):
             :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
-            Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
-        group (int, optional):Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: 1.
+            The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
+            respectively. Default: 1.
+        group (int, optional):The number of groups into which the filter is divided. `in_channels`
+            and `out_channels` must be divisible by `group`. Default: 1.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
