@@ -75,14 +75,23 @@ void InsertReorderDepend(const FuncGraphPtr &graph, const CNodePtr &input_comm_c
     manager->SetEdge(input_comm_user_cnode, input_comm_user_pair.second, depend_node);
   }
 }
+
+bool is_step_in() {
+  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
+      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
+    return false;
+  }
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 1) {
+    return false;
+  }
+  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
+  return !graph_reuse;
+}
 }  // namespace
 
 void ReorderSendRecvBetweenFpBp(const FuncGraphPtr &graph) {
-  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
-      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
-    return;
-  }
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 1) {
+  if (!is_step_in()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);

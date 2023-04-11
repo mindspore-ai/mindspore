@@ -46,6 +46,7 @@ using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeI
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &),
                                       const std::vector<AnfNodePtr> &all_nodes, bool isFast);
+AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node);
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes);
 void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 void HandleNoUsedParameter(const FuncGraphPtr &root);
