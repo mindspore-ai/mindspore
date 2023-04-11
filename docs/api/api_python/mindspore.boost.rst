@@ -226,7 +226,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值为1.0。
 
     输入：
-        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，其shape为 :math:`(N, \ldots)`。
 
     输出：
         Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
@@ -274,17 +274,17 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - **inputs** (tuple(Tensor)) - 网络训练的输入。
 
         返回：
-            Tensor，网络训练过程中得到的loss值。
+            Tensor，网络训练过程中得到的loss值，其shape为 :math:`()`。
 
     .. py:method:: gradient_freeze_process(*inputs)
 
         使用梯度冻结算法训练。
 
         参数：
-            - **inputs** (tuple(Tensor)) - 网络训练的输入。
+            - **inputs** (tuple(Tensor)) - 网络训练的输入，其shape为 :math:`(N, \ldots)`。
 
         返回：
-            Tensor，网络训练过程中得到的loss值。
+            Tensor，网络训练过程中得到的loss值，其shape为 :math:`()`。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepWithLossScaleCell(network, optimizer, scale_sense)
 
