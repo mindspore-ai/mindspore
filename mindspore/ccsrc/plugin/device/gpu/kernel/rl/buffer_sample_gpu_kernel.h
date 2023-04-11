@@ -35,7 +35,6 @@ class BufferSampleKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
-  void ReleaseResource() override;
 
  protected:
   void InitSizeLists() override;

@@ -1347,13 +1347,6 @@ bool KernelGraph::IsChildGraphResult(const AnfNodePtr &node) {
 
 KernelGraph::~KernelGraph() {
   try {
-    // Release the kernel resource.
-    for (const auto &kernel : execution_order_) {
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-      if (kernel_mod != nullptr) {
-        kernel_mod->ReleaseResource();
-      }
-    }
     device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "KernelGraph call destructor failed: " << e.what();

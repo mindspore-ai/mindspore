@@ -30,8 +30,6 @@ BufferAppendKernelMod::BufferAppendKernelMod() : element_nums_(0), exp_batch_(0)
 
 BufferAppendKernelMod::~BufferAppendKernelMod() {}
 
-void BufferAppendKernelMod::ReleaseResource() {}
-
 bool BufferAppendKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");

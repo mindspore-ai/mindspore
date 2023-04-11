@@ -29,8 +29,6 @@ BufferGetKernelMod::BufferGetKernelMod() : element_nums_(0), capacity_(0) {}
 
 BufferGetKernelMod::~BufferGetKernelMod() {}
 
-void BufferGetKernelMod::ReleaseResource() {}
-
 bool BufferGetKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
