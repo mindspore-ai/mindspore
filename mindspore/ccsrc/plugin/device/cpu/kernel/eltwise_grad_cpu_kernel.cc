@@ -670,6 +670,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
        .AddInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>}}},
+  {kGeLUGrad,
+   {{KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &SpecializeEltWiseGradFunc<double>}}},
   {kAsinGrad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},

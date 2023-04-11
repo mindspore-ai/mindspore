@@ -116,7 +116,7 @@ def test_gelu_functional_api():
     Expectation: output should be equal to expected value.
     """
     input_x = Tensor([1.0, 2.0, 3.0], mstype.float32)
-    output = F.gelu(input_x)
+    output = F.gelu(input_x, approximate='tanh')
     expected = np.array([0.841192, 1.9545976, 2.9963627], np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
