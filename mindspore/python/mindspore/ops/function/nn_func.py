@@ -105,7 +105,7 @@ def adaptive_avg_pool2d(input, output_size):
         ValueError: If the dimension of `input` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)

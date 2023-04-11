@@ -1312,7 +1312,7 @@ class AdaptiveAvgPool2d(Cell):
         ValueError: If the dimension of `input` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> pool = nn.AdaptiveAvgPool2d(2)
