@@ -6861,7 +6861,10 @@ class Median(Primitive):
     median of all elements of tensor.
 
     .. warning::
-        When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+          unless it is unique. The specific implementation of this API is device-specific.
+          The results may be different on CPU and GPU.
+        - When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
 
     Args:
         global_median (bool): Whether the output tensor is the median of all input tensor elements or not.

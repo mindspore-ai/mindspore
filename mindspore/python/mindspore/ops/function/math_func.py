@@ -4367,6 +4367,11 @@ def median(input, axis=-1, keepdims=False):
     r"""
     Computes the median and indices of input tensor.
 
+    .. warning::
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+          unless it is unique. The specific implementation of this API is device-specific.
+          The results may be different on CPU and GPU.
+
     Args:
         input (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         axis (int, optional): The dimension need to reduce. Default: -1.
