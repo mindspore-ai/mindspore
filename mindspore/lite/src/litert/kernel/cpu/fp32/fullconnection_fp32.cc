@@ -42,6 +42,4 @@ int FullconnectionCPUKernel::Run() {
   matmul_base_->set_workspace(workspace());
   return matmul_base_->Run();
 }
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FullConnection, LiteKernelCreator<FullconnectionCPUKernel>)
 }  // namespace mindspore::kernel
