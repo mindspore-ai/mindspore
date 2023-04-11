@@ -200,7 +200,7 @@ class AdaptiveAvgPool2D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
