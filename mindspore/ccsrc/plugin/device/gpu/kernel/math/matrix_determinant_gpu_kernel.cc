@@ -143,10 +143,12 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&host_info, info, sizeof(int), cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                     "For MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
+  // Sync host info
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                     "cudaStreamSynchronized failed");
   if (host_info > 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's " << host_info
-                  << "-th parameter is wrong, please check your input data info.";
-    return false;
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', it's " << host_info
+                    << "-th parameter is wrong, please check your input data info.";
   }
   // Compute the determinant (-1)^s * prod(diag(U)), s is the order of the permutation in pivots and U is the result of
   // LU factorization.
