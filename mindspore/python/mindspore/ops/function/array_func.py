@@ -3968,7 +3968,7 @@ def nonzero(input):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        input (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is int, float or bool.
+        input (Tensor): nonzero input, Tensor with any dimensions. The data type is int, float or bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
@@ -5520,7 +5520,7 @@ def tensor_split(input, indices_or_sections, axis=0):
               - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
                 :math:`input.shape(axis) / n` .
               - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
-                will have size :math:`x.shape(axis) // n + 1` , and the rest will have
+                will have size :math:`input.shape(axis) // n + 1` , and the rest will have
                 size :math:`input.shape(axis) // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`

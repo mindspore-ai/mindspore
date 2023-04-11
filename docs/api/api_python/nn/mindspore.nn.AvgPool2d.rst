@@ -5,7 +5,7 @@ mindspore.nn.AvgPool2d
 
     在输入Tensor上应用2D平均池化运算，可视为二维输入平面的组合。
 
-    通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (h_{ker}, w_{ker})` 和 `stride` :math:`s = (s_0, s_1)`，公式定义如下：
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，AvgPool2d的输出为 :math:`(H_{in}, W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (h_{ker}, w_{ker})` 和 `stride` :math:`s = (s_0, s_1)`，公式定义如下：
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
