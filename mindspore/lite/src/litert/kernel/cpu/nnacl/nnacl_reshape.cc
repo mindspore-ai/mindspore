@@ -50,6 +50,7 @@ int ReshapeKernel::Run() {
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
       op_parameter_->is_train_session_ || out_tensor->IsGraphOutput()) {
+    UpdateTensorC();
     auto ret = kernel_->compute(kernel_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Reshape compute failed.";
