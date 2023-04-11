@@ -186,7 +186,7 @@ nvinfer1::DataType ConvertDataType(DataType type_id) {
     data_type = iter->second;
   } else {
     data_type = nvinfer1::DataType::kFLOAT;
-    MS_LOG(WARNING) << "invalid data_type for TensorRT, need check: " << static_cast<int>(type_id);
+    MS_LOG(INFO) << "invalid data_type for TensorRT, need check: " << static_cast<int>(type_id);
   }
   return data_type;
 }
