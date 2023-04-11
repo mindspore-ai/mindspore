@@ -30,6 +30,7 @@
 #include "tools/converter/legacy_optimizer/graph/convert_fp32_to_fp16_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
+#include "tools/converter/legacy_optimizer/graph/const_node_reorder_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -123,6 +124,7 @@ int GraphDefTransform::Transform(const std::shared_ptr<ConverterPara> &param) {
     nested_loop_optimizer.AddPass(new (std::nothrow) SubgraphTensorPass());
     nested_loop_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     nested_loop_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+    nested_loop_optimizer.AddPass(new (std::nothrow) ConstNodeReorderPass());
     status = nested_loop_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run nested_loop_optimizer graphPasses Failed";
