@@ -69,6 +69,12 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();
+
+  bool is_data_flow_graph_ = false;
+  ge::Status RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
+                                   std::vector<::ge::Tensor> *outputs);
+  std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
+  std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_GRAPH_EXECUTOR_H_

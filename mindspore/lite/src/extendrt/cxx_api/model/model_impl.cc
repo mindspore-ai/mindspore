@@ -32,10 +32,15 @@
 #include "src/common/common.h"
 #include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+#include "utils/ms_utils_secure.h"
+#include "ops/custom.h"
+#include "ops/return.h"
 
 namespace mindspore {
 namespace {
 const char *const kExecutionPlan = "execution_plan";
+const char *const kDataFlowGraphType = "data_flow";
+const char *const kDataFlowGraphName = "data_flow_graph";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 std::shared_mutex g_model_converter_lock;
@@ -56,6 +61,58 @@ std::map<std::string, tensor::TensorPtr> GetParams(const FuncGraphPtr &anf_graph
     }
   }
   return res;
+}
+
+FuncGraphPtr CreateFuncGraphFromDataFlow(const void *model_data, size_t data_size) {
+  auto func_graph = std::make_shared<FuncGraph>();
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "The func_graph is nullptr.";
+    return nullptr;
+  }
+  func_graph->set_attr(kAttrFuncType, MakeValue(kDataFlowGraphType));
+
+  // Create custom node with the dataFlow graph.
+  auto param = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param != nullptr, nullptr);
+  param->set_name(kDataFlowGraphName);
+  auto type_ptr = TypeIdToType(kNumberTypeUInt8);
+  MS_CHECK_TRUE_RET(type_ptr != nullptr, nullptr);
+  ShapeVector shape = {static_cast<int64_t>(data_size)};
+  auto param_tensor = std::make_shared<tensor::Tensor>(kNumberTypeUInt8, shape);
+  MS_CHECK_TRUE_RET(param_tensor != nullptr, nullptr);
+  if (param_tensor->Size() != data_size) {
+    MS_LOG(ERROR) << "The data size of param value is not equal to the data size: " << data_size;
+    return nullptr;
+  }
+  auto tensor_data = param_tensor->data_c();
+  MS_CHECK_TRUE_RET(tensor_data != nullptr, nullptr);
+  if (common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor_data), param_tensor->Size(),
+                          reinterpret_cast<uint8_t *>(const_cast<void *>(model_data)), data_size) != EOK) {
+    MS_LOG(ERROR) << "Memcpy dataflow graph data failed.";
+    return nullptr;
+  }
+  param->set_default_param(param_tensor);
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+  MS_CHECK_TRUE_RET(abstract_tensor != nullptr, nullptr);
+  param->set_abstract(abstract_tensor);
+
+  auto custom_prim = std::make_shared<ops::Custom>();
+  MS_CHECK_TRUE_RET(custom_prim != nullptr, nullptr);
+  custom_prim->set_type(kDataFlowGraphType);
+  auto custom_prim_c = custom_prim->GetPrim();
+  MS_CHECK_TRUE_RET(custom_prim_c != nullptr, nullptr);
+  CNodePtr custom_cnode = func_graph->NewCNode(custom_prim_c, {param});
+  MS_CHECK_TRUE_RET(custom_cnode != nullptr, nullptr);
+  custom_cnode->set_fullname_with_scope("Custom_" + std::string(kDataFlowGraphName));
+  auto return_prim = std::make_shared<ops::Return>();
+  MS_CHECK_TRUE_RET(custom_prim != nullptr, nullptr);
+  auto return_prim_c = return_prim->GetPrim();
+  MS_CHECK_TRUE_RET(return_prim_c != nullptr, nullptr);
+  auto return_cnode = func_graph->NewCNode(return_prim_c, {custom_cnode});
+  MS_CHECK_TRUE_RET(return_cnode != nullptr, nullptr);
+  return_cnode->set_fullname_with_scope("Return");
+  func_graph->set_return(return_cnode);
+  return func_graph;
 }
 }  // namespace
 
@@ -189,16 +246,26 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(INFO) << "the model buffer is the same as the last time. we can directly use the cached function graph.";
     return session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   }
-  func_graph = LoadGraphByBufferImpl(model_buff, model_size, model_type, model_context, model_path);
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << model_path;
-    return kLiteError;
-  }
-  // convert and optimize func graph to infer
-  ret = ConvertGraphOnline(func_graph, model_context);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "convert graph failed.";
-    return ret;
+
+  if (model_type != ModelType::kDataFlow) {
+    func_graph = LoadGraphByBufferImpl(model_buff, model_size, model_type, model_context, model_path);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << model_path;
+      return kLiteError;
+    }
+    // convert and optimize func graph to infer
+    ret = ConvertGraphOnline(func_graph, model_context);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "convert graph failed.";
+      return ret;
+    }
+  } else {
+    // new a func graph contains a custom node, which is the data-flow graph.
+    func_graph = CreateFuncGraphFromDataFlow(model_buff, model_size);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "Create func graph failed from data flow graph.";
+      return kLiteError;
+    }
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   if (ret != kSuccess) {
