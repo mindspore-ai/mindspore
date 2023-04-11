@@ -91,11 +91,8 @@ void SoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, int batch, int ch
 }
 
 // output = exp(input) / reduce_sum(exp(input), axis)
-void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data,
-                 const SoftmaxParameter *parameter) {
-  int axis = parameter->axis_;
-  int n_dim = parameter->n_dim_;
-  const int *input_shape = parameter->input_shape_;
+void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data, int axis, int n_dim,
+                 const int *input_shape) {
   int inner_size = 1;
   int outter_size = 1;
 

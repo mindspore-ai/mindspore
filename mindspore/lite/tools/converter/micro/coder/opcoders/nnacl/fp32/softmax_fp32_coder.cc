@@ -68,7 +68,8 @@ int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
     code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
   }
   if (primitive_type == schema::PrimitiveType_Softmax) {
-    code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
+    code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "softmax_parameter.axis_",
+                      "softmax_parameter.n_dim_", "softmax_parameter.input_shape_");
   } else {
     code.CodeFunction("LogSoftmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
   }
