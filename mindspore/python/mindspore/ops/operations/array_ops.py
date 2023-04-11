@@ -1358,10 +1358,11 @@ class MatrixSetDiagV3(Primitive):
         ValueError: If `k[1]` is not greater equal to `k[0]` in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
-        ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
+        ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by
+            :math:`num\_diags = k[1] - k[0] + 1` .
         ValueError: If the value of `k` is not in :math:`(-x.shape[-2], x.shape[-1])`.
         ValueError: If the diagonal :math:`shape[-1]` is not equal to the max_diag_len calculated by
-            :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
+            :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
