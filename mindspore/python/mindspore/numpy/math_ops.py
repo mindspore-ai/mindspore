@@ -746,6 +746,10 @@ def dot(a, b):
         [[[105. 105. 105. 105.]
         [105. 105. 105. 105.]]]
     """
+    def _check(dim_a, dim_b):
+        if dim_a != dim_b:
+            raise ValueError('shapes are not aligned')
+
     ndim_a, ndim_b = F.rank(a), F.rank(b)
     if ndim_a == 0 or ndim_b == 0:
         return F.tensor_mul(a, b)
@@ -754,8 +758,7 @@ def dot(a, b):
         perm = perm[:-2] + (perm[-1],) + (perm[-2],)
         b = F.transpose(b, perm)
 
-    if F.shape(a)[-1] != F.shape(b)[-1]:
-        _raise_value_error('shapes are not aligned')
+    _check(F.shape(a)[-1], F.shape(b)[-1])
     a_aligned = F.reshape(a, (-1, F.shape(a)[-1]))
     b_aligned = F.reshape(b, (-1, F.shape(b)[-1]))
 
