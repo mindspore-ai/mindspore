@@ -26,8 +26,8 @@ from mindspore.ops.operations import math_ops as math
 from mindspore.ops.operations import linalg_ops as linalg
 from mindspore.ops.operations import array_ops as arrays
 from mindspore.ops.primitive import constexpr
-from mindspore.ops._grad.grad_base import bprop_getters
-from mindspore.ops._grad.grad_base import dyn_rank
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import dyn_rank
 
 _shape = arrays.Shape()
 _dyn_shape = arrays.TensorShape()

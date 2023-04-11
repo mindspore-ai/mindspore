@@ -29,7 +29,7 @@ from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common.api import jit, _cell_graph_executor
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.functional import tensor_add
 from ...ut_filter import non_graph_engine

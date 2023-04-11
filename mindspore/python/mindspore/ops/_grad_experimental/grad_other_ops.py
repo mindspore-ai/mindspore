@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 
 # Unused parameters are placeholders.
 
@@ -45,7 +45,8 @@ def get_bprop_sync_batch_norm(self):
         dx = out[0]
         dscale = out[1]
         dbias = out[2]
-        return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
+        res = (dx, dscale, dbias, zeros_like(mean), zeros_like(variance))
+        return res
     return bprop
 
 

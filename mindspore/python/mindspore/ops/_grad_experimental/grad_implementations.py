@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad.grad_base import bprops
+from mindspore.ops._grad_experimental.grad_base import bprops
 from mindspore.common import dtype as mstype
 
 get_dtype = P.DType()

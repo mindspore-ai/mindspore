@@ -59,7 +59,7 @@
 "mindspore/model_zoo/official/nlp/bert_thor/src/bert_model.py"                                          "redefined-outer-name"
 "mindspore/mindspore/python/mindspore/_extends/parallel_compile/akg_compiler/akg_process.py"                             "Catching too general exception BaseException"
 "mindspore/mindspore/python/mindspore/_extends/graph_kernel/model/model.py"                                              "super-on-old-class"
-"mindspore/mindspore/python/mindspore/ops/_grad/grad_math_ops.py"                                                        "invalid-unary-operand-type"
+"mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py"                                           "invalid-unary-operand-type"
 "mindspore/mindspore/python/mindspore/ops/__init__.py"                                                                   "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/__init__.py"                                                          "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "redefined-builtin"

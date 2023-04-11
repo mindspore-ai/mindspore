@@ -45,14 +45,19 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import _primexpr
-from mindspore.ops._grad.grad_base import bprop_getters, dyn_rank
-from mindspore.ops._grad.grad_base import sum_grad_reduce_axis
+from mindspore.ops._grad_experimental.grad_base import bprop_getters, dyn_rank
+from mindspore.ops._grad_experimental.grad_base import sum_grad_reduce_axis
 from mindspore.ops.operations.array_ops import MatrixBandPart
 from mindspore.ops.operations.array_ops import ConjugateTranspose
+from mindspore.ops.functional import broadcast_gradient_args
+
 
 transpose = P.Transpose()
 dyn_shape_op = P.TensorShape()
 _conj = P.Conj()
+shape_op = P.Shape()
+reduce_sum = P.ReduceSum()
+reshape = P.Reshape()
 
 
 def _adjoint(a):
@@ -621,7 +626,6 @@ def get_bprop_cholesky_solve(self):
     batchmatmul_op = P.BatchMatMul()
     matmul_op = P.MatMul()
     neg_op = P.Neg()
-    shape_op = P.Shape()
     upper = self.upper
     cholesky_solve = CholeskySolve(upper=self.upper)
 
@@ -875,7 +879,6 @@ def get_bprop_fft_with_size(self):
                            onesided=onesided)
 
     complex_op = P.Complex()
-    shape_op = P.Shape()
     to_tensor_op = P.ScalarToTensor()
     type_op = P.DType()
     concat_op = P.Concat()
@@ -991,5 +994,215 @@ def get_bprop_fft_with_size(self):
                 else:
                     dx = dx * complex_op(offset_size, zeros_op(1, output_type))
         return (dx,)
+
+    return bprop
+
+
+def dyn_binop_grad_common(x, y, dx, dy):
+    """
+    Common grad definition for binary operations when the input is dynamic shape.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = dyn_shape_op(x)
+    shape_of_y = dyn_shape_op(y)
+    rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
+    dx_origin_dtype = dx.dtype
+    if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dx = F.cast(dx, mstype.float32)
+        dx = sum_grad_reduce_axis(dx, rx)
+        dx = F.cast(dx, dx_origin_dtype)
+    else:
+        dx = sum_grad_reduce_axis(dx, rx)
+    dy_origin_dtype = dy.dtype
+    if dy_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dy = F.cast(dy, mstype.float32)
+        dy = sum_grad_reduce_axis(dy, ry)
+        dy = F.cast(dy, dy_origin_dtype)
+    else:
+        dy = sum_grad_reduce_axis(dy, ry)
+    reduce_dx = reshape(dx, shape_of_x)
+    reduce_dy = reshape(dy, shape_of_y)
+    return reduce_dx, reduce_dy
+
+
+def dyn_binop_grad_common_with_shift(x, y, dx, dy, shift):
+    """
+    Common grad definition for binary operations with shift when the input is dynamic shape.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = dyn_shape_op(x)
+    shape_of_y = dyn_shape_op(y)
+    broadcast_shape_of_x = shape_of_x[:-shift]
+    broadcast_shape_of_y = shape_of_y[:-shift]
+    rx, ry = DynamicBroadcastGradientArgs()(broadcast_shape_of_x, broadcast_shape_of_y)
+    dx = sum_grad_reduce_axis(dx, rx)
+    dy = sum_grad_reduce_axis(dy, ry)
+    reduce_dx = reshape(dx, shape_of_x)
+    reduce_dy = reshape(dy, shape_of_y)
+    return reduce_dx, reduce_dy
+
+
+def _reduce_sum_with_cast(dx, axis):
+    dx_origin_dtype = dx.dtype
+    # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
+    if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dx = F.cast(dx, mstype.float32)
+        dx = reduce_sum(dx, axis)
+        return F.cast(dx, dx_origin_dtype)
+    return reduce_sum(dx, axis)
+
+
+def binop_grad_common(x, y, dx, dy):
+    """
+    Common grad definition for binary operations.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = shape_op(x)
+    shape_of_y = shape_op(y)
+    # if input shape is the same as dout shape, do not need to reduce
+    reduce_dx = dx
+    reduce_dy = dy
+    if not (F.is_sequence_value_unknown(shape_of_x) or F.is_sequence_value_unknown(shape_of_y)):
+        rx = broadcast_gradient_args(shape_of_x, shape_of_y)
+        if rx[0]:
+            # if dx is scalar whose shape is (), do not need reduce
+            if shape_op(dx):
+                dx = _reduce_sum_with_cast(dx, rx[0])
+            reduce_dx = reshape(dx, shape_of_x)
+        if rx[1]:
+            # if dy is scalar whose shape is (), do not need reduce
+            if shape_op(dy):
+                dy = _reduce_sum_with_cast(dy, rx[1])
+            reduce_dy = reshape(dy, shape_of_y)
+        return reduce_dx, reduce_dy
+
+    if not isinstance(shape_of_x, tuple) or not isinstance(shape_of_y, tuple):
+        # x or y is scalar
+        if not isinstance(shape_of_x, tuple):
+            reduce_dx = _reduce_sum_with_cast(dx, ())
+        if not isinstance(shape_of_y, tuple):
+            reduce_dy = _reduce_sum_with_cast(dy, ())
+        return reduce_dx, reduce_dy
+
+    return dyn_binop_grad_common(x, y, dx, dy)
+
+
+def binop_grad_common_with_shift(x, y, dx, dy, shift):
+    """
+    Common grad definition for binary operations with shift.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = shape_op(x)
+    shape_of_y = shape_op(y)
+    broadcast_shape_of_x = shape_of_x[:-shift]
+    broadcast_shape_of_y = shape_of_y[:-shift]
+    # if input shape is the same as dout shape, do not need to reduce
+    reduce_dx = dx
+    reduce_dy = dy
+    if not (F.is_sequence_value_unknown(broadcast_shape_of_x) or F.is_sequence_value_unknown(broadcast_shape_of_y)):
+        rx = broadcast_gradient_args(broadcast_shape_of_x, broadcast_shape_of_y)
+        if rx[0]:
+            # if dx is scalar whose shape is (), do not need reduce
+            if shape_op(dx):
+                dx = _reduce_sum_with_cast(dx, rx[0])
+            reduce_dx = reshape(dx, shape_of_x)
+        if rx[1]:
+            # if dy is scalar whose shape is (), do not need reduce
+            if shape_op(dy):
+                dy = _reduce_sum_with_cast(dy, rx[1])
+            reduce_dy = reshape(dy, shape_of_y)
+        return reduce_dx, reduce_dy
+
+    if not isinstance(shape_of_x, tuple) or not isinstance(shape_of_y, tuple):
+        # x or y is scalar
+        if not isinstance(shape_of_x, tuple):
+            reduce_dx = _reduce_sum_with_cast(dx, ())
+        if not isinstance(shape_of_y, tuple):
+            reduce_dy = _reduce_sum_with_cast(dy, ())
+        return reduce_dx, reduce_dy
+
+    return dyn_binop_grad_common_with_shift(x, y, dx, dy, shift)
+
+
+@bprop_getters.register(P.TensorAdd)
+def get_bprop_tensor_add(self):
+    """Grad definition for `Add` operation."""
+
+    def bprop(x, y, out, dout):
+        return binop_grad_common(x, y, dout, dout)
+
+    return bprop
+
+
+@bprop_getters.register(P.BitwiseAnd)
+def get_bprop_bitwiseand(self):
+    """Grad definition for `BitwiseAnd` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.BitwiseOr)
+def get_bprop_bitwiseor(self):
+    """Grad definition for `BitwiseOr` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.BitwiseXor)
+def get_bprop_bitwisexor(self):
+    """Grad definition for `BitwiseXor` operation."""
+
+    def bprop(x, y, out, dout):
+        return zeros_like(x), zeros_like(y)
+
+    return bprop
+
+
+@bprop_getters.register(P.InplaceUpdate)
+def get_bprop_inplace_update(self):
+    """Grad definition for `InplaceUpdate` operation."""
+
+    def bprop(x, v, out, dout):
+        return zeros_like(x), zeros_like(v)
+
+    return bprop
+
+
+@bprop_getters.register(P.InplaceUpdateV2)
+def get_bprop_inplace_update_v2(self):
+    """Grad definition for `InplaceUpdateV2` operation."""
+
+    def bprop(x, indices, v, out, dout):
+        return zeros_like(x), zeros_like(indices), zeros_like(v)
+
+    return bprop
+
+
+@bprop_getters.register(P.InplaceSub)
+def get_bprop_inplace_sub(self):
+    """Grad definition for `InplaceSub` operation."""
+
+    def bprop(x, input_v, out, dout):
+        return zeros_like(x), zeros_like(input_v)
+
+    return bprop
+
+
+@bprop_getters.register(P.InplaceAdd)
+def get_bprop_inplace_add(self):
+    """Grad definition for `InplaceAdd` operation."""
+
+    def bprop(x, input_v, out, dout):
+        return zeros_like(x), zeros_like(input_v)
 
     return bprop

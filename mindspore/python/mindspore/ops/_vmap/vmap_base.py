@@ -28,7 +28,7 @@ from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.function import _VmapGeneralPreprocess
 from mindspore.ops.primitive import Primitive, _PrimitiveC
 from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
-from mindspore.ops._grad.grad_base import BpropRegistry as VmapRuleRegistry
+from mindspore.ops._grad_experimental.grad_base import BpropRegistry as VmapRuleRegistry
 
 
 vmap_rules_getters = VmapRuleRegistry()

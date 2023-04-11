@@ -24,9 +24,9 @@ from mindspore.ops import operations as P
 import mindspore.ops as ops
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
-import mindspore.ops._grad as g
+import mindspore.ops._grad_experimental as g
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops._grad.grad_base import bprop_getters, bprops
+from mindspore.ops._grad_experimental.grad_base import bprop_getters, bprops
 from mindspore._c_expression import _check_bprop_mindir
 from mindspore import mutable
 from mindspore import context
