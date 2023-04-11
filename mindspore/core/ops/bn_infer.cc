@@ -30,7 +30,20 @@ class ABNInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    if (!(IsDynamic(x_shape) || IsDynamic(scale_shape))) {
+      auto scale_channel = scale_shape.size() == kInputIndex1 ? scale_shape[kInputIndex0] : scale_shape[kInputIndex1];
+      auto x_channel = x_shape[kInputIndex1];
+      if (scale_channel != x_channel) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', 'scale_dim0' and input channel should be equal, but got " << scale_channel
+                                 << " and " << x_channel << ".";
+      }
+    }
     return x_shape_ptr;
   }
 

@@ -370,12 +370,7 @@ def get_bprop_im2col(self):
     kernel_size = self.ksizes
     dilation = self.dilations
     stride = self.strides
-    padding = (self.pads[0], self.pads[2])
-    mode = self.padding_mode
-    if mode != "CALCULATED":
-        _raise_value_error(
-            "Currently, the bprop function of `Im2Col` only supports the `CALCULATED` mode."
-        )
+    padding = (self.pads[0], self.pads[-1])
     shape_op = P.TensorShape()
     col2im = Col2Im(kernel_size=kernel_size,
                     dilation=dilation,

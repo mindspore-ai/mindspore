@@ -23,11 +23,13 @@ bn_infer_grad_op_info = TBERegOp("BNInferGrad") \
     .compute_cost(10) \
     .kernel_name("bn_infer_grad") \
     .partial_flag(True) \
+    .dynamic_shape(True)\
+    .dynamic_compile_static(True)\
     .attr("epsilon", "optional", "float", "all", "0.0001") \
-    .input(0, "grads", False, "required", "all", reshape_type="NC") \
+    .input(0, "grads", False, "required", "all", reshape_type="NCH") \
     .input(1, "scale", False, "required", "all") \
     .input(2, "batch_variance", False, "required", "all") \
-    .output(0, "x_backprop", False, "required", "all", reshape_type="NC") \
+    .output(0, "x_backprop", False, "required", "all", reshape_type="NCH") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()

@@ -29,6 +29,7 @@ from mindspore.ops.primitive import _primexpr
 import mindspore.ops.function as ops
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
+from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 
 from mindspore.ops.operations.array_ops import (
@@ -59,9 +60,11 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 
+tuple_to_tensor_ = TupleToTensor()
 eye_ = P.Eye()
 fills_ = Fills()
 fill_ = P.Fill()
+fillv2_ = P.FillV2()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 tile_ = P.Tile()
@@ -4950,7 +4953,11 @@ def tuple_to_array(input_x):
         >>> print(output)
         [1 2 3]
     """
-    return tuple_to_array_(input_x)
+    if isinstance(input_x[0], int):
+        dtype = mstype.int32
+    else:
+        dtype = mstype.float32
+    return tuple_to_tensor_(input_x, dtype)
 
 
 def masked_select(input, mask):
