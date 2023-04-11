@@ -100,7 +100,9 @@ bool SetDefaultFormatForSpecialAclOp(const KernelGraphPtr &graph) {
 }
 
 AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope) {
+                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope, const uint32_t &target_graph_id,
+                    const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
+                    const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   Cloner cloner({}, false);
@@ -129,7 +131,7 @@ AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_f
       auto builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(new_node));
       new_kernel_info->set_select_kernel_build_info(builder->Build());
-      new_kernel_info->set_graph_id(kernel_info->graph_id());
+      new_kernel_info->set_graph_id(target_graph_id);
       new_kernel_info->set_feature_map_flag(kernel_info->is_feature_map());
       new_kernel_info->set_ref_map(false, kernel_info->out_in_ref_map());
       new_node->set_kernel_info(new_kernel_info);
@@ -145,6 +147,14 @@ AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_f
       common::AnfAlgo::SetNodeAttr(kAttrNeedInline, MakeValue(ori_node->fullname_with_scope()), new_node);
       common::AnfAlgo::SetNodeAttr(kAttrPreKernelGraph, MakeValue(func_graph), new_node);
     }
+  }
+  for (const auto &kv : ref_map) {
+    auto final_pair = kv.first;
+    auto origin_pair = kv.second;
+    final_pair.first = cloner[final_pair.first];
+    origin_pair.first = cloner[origin_pair.first];
+    auto new_origin_pair = common::AnfAlgo::VisitKernel(origin_pair.first, origin_pair.second);
+    graph->AddRefCorrespondPairs(final_pair, new_origin_pair);
   }
   return cloner[func_graph->output()];
 }
@@ -174,8 +184,12 @@ void AscendGraphOptimization::InlineSubGraph(const KernelGraphPtr &graph) {
                    << ", need inline: " << sub_graph->need_inline();
       auto main_graph = kernel_cnode->func_graph();
       auto mng = main_graph->manager();
+      auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_cnode->kernel_info());
+      MS_EXCEPTION_IF_NULL(kernel_info);
       AnfNodePtrList inp(kernel_cnode->inputs().begin() + 1, kernel_cnode->inputs().end());
-      auto out = DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope());
+      const auto &ref_map = sub_graph->GetRefMap();
+      auto out =
+        DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope(), kernel_info->graph_id(), ref_map, graph);
       (void)mng->Replace(kernel_cnode, out);
     }
   }

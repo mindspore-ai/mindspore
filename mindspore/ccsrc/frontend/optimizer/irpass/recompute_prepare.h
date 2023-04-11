@@ -32,9 +32,6 @@ class SetCellOutputNoRecompute : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
     static const auto cell_reuse = (cell_reuse_env == "1" || cell_reuse_env == "2");
-    if (cell_reuse) {
-      return nullptr;
-    }
     if (!IsValueNode<FuncGraph>(node)) {
       return nullptr;
     }
@@ -58,7 +55,10 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       }
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
-        real_output->AddAttr(kAttrRecompute, MakeValue(false));
+        if (!cell_reuse) {
+          real_output->AddAttr(kAttrRecompute, MakeValue(false));
+        }
+
         if (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
             parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel) {
           auto prim = GetCNodePrimitive(real_output);
@@ -68,7 +68,9 @@ class SetCellOutputNoRecompute : public AnfVisitor {
         }
       }
     }
-    fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+    if (!cell_reuse) {
+      fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+    }
     return nullptr;
   }
 

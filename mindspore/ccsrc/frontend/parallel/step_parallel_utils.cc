@@ -77,7 +77,9 @@ bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_li
 
 std::string GetPrimName(const CNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(prim);
+  if (!prim) {
+    return node->DebugString();
+  }
   return prim->name();
 }
 
@@ -312,6 +314,39 @@ static bool IsNoNeedRedistribution(const CNodePtr &use_cnode, int use_index) {
          IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch);
 }
 
+std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNodePtr, int> &node_pair) {
+  std::vector<std::pair<AnfNodePtr, int>> func_users_vector;
+  if (!node_pair.first->isa<CNode>()) {
+    return func_users_vector;
+  }
+  auto use_cnode = node_pair.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(use_cnode);
+  if (IsValueNode<FuncGraph>(use_cnode->input(0))) {
+    auto fg = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
+    auto fg_parameters = fg->parameters();
+    auto param = fg_parameters[IntToSize(node_pair.second - 1)];
+    auto manager = fg->manager();
+    auto param_node_users = manager->node_users()[param];
+    std::copy(param_node_users.begin(), param_node_users.end(), std::back_inserter(func_users_vector));
+  }
+  return func_users_vector;
+}
+
+void RedistributionNextNodeInMakeTuple(const CNodePtr &use_cnode,
+                                       const std::pair<std::shared_ptr<AnfNode>, int> &node_pair,
+                                       int64_t get_item_index, int64_t *make_tuple_index,
+                                       std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
+  if (*make_tuple_index != -1) {
+    auto real_node = GetRealKernelNode(use_cnode->input(1), -1, nullptr);
+    if (IsPrimitiveCNode(real_node.first, prim::kPrimMakeTuple)) {
+      next_nodes->push_back(std::make_pair(std::make_pair(real_node.first, (*make_tuple_index) + 1), get_item_index));
+      *make_tuple_index = -1;
+      return;
+    }
+  }
+  next_nodes->push_back(std::make_pair(node_pair, get_item_index));
+}
+
 void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
                             const NodeUsersMap &node_users_map, int64_t get_item_index, int64_t make_tuple_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
@@ -332,8 +367,15 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       }
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
+      if (param->has_user_data<OperatorInfo>()) {
+        next_nodes->push_back(std::make_pair(node_pair, get_item_index));
+        continue;
+      }
       MS_EXCEPTION_IF_NULL(param);
       RedistributionNextNode(param, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+      for (const auto &next_node : *next_nodes) {
+        next_node.first.first->set_user_data<AnfNode>(FUNC_PARAM, param);
+      }
       continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimMakeTuple)) {
@@ -365,15 +407,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       continue;
     }
     if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
-      if (make_tuple_index != -1) {
-        auto real_node = GetRealKernelNode(use_cnode->input(1), -1, nullptr);
-        if (IsPrimitiveCNode(real_node.first, prim::kPrimMakeTuple)) {
-          next_nodes->push_back(std::make_pair(std::make_pair(real_node.first, make_tuple_index + 1), get_item_index));
-          make_tuple_index = -1;
-          continue;
-        }
-      }
-      next_nodes->push_back(std::make_pair(node_pair, get_item_index));
+      RedistributionNextNodeInMakeTuple(use_cnode, node_pair, get_item_index, &make_tuple_index, next_nodes);
       continue;
     }
     // search recursively
@@ -753,7 +787,7 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
     }
     auto cnode = node->cast<CNodePtr>();
     auto cast_input = RealInputNode(cnode, 1);
-    if (cast_input->isa<Parameter>()) {
+    if (cast_input->isa<Parameter>() && cast_input->cast<ParameterPtr>()->has_default()) {
       MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
       PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0)->cast<ValueNodePtr>());
       (void)prim->AddAttr("recompute", MakeValue(false));
@@ -960,6 +994,26 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   return shape_all;
 }
 
+AnfNodePtr GetInputNodeWithFilter(const AnfNodePtr &node,
+                                  std::function<std::pair<bool, size_t>(const CNodePtr &)> filter) {
+  std::queue<AnfNodePtr> anf_queue;
+  anf_queue.push(node);
+  while (!anf_queue.empty()) {
+    auto queue_end = anf_queue.front();
+    anf_queue.pop();
+    if (!queue_end->isa<CNode>()) {
+      return queue_end;
+    }
+    auto cnode_queue_end = queue_end->cast<CNodePtr>();
+    auto filter_res = filter(cnode_queue_end);
+    if (!filter_res.first) {
+      return queue_end;
+    }
+    anf_queue.push(cnode_queue_end->input(filter_res.second));
+  }
+  return node;
+}
+
 std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePtr &node,
                                                                  std::function<bool(const AnfNodePtr &)> filter) {
   auto func_graph = node->func_graph();
@@ -970,7 +1024,7 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
   std::queue<AnfNodePtr> anf_queue;
   anf_queue.push(node);
   while (!anf_queue.empty()) {
-    auto queue_end = anf_queue.back();
+    auto queue_end = anf_queue.front();
     anf_queue.pop();
     auto user_set = manager->node_users()[queue_end];
     for (auto &pair : user_set) {
@@ -982,6 +1036,27 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
     }
   }
   return res;
+}
+
+AnfNodePtr NewMicroMirrorPrimByMicroMirror(const CNodePtr &micro_mirror, const AnfNodePtr &micro_mirror_new_input) {
+  auto prim_origin = GetCNodePrimitive(micro_mirror);
+  Attr attr0 = std::make_pair(GROUP, prim_origin->GetAttr(GROUP));
+  Attr attr1 = std::make_pair(DEV_NUM, prim_origin->GetAttr(DEV_NUM));
+  Attr attr2 = std::make_pair(MEAN_FLAG, prim_origin->GetAttr(MEAN_FLAG));
+  OperatorAttrs operator_attrs;
+  operator_attrs.push_back(attr0);
+  operator_attrs.push_back(attr1);
+  operator_attrs.push_back(attr2);
+  ValuePtr pyop_instance = CreateOpInstance(operator_attrs, MIRROR_MICRO_STEP_OPERATOR, prim_origin->instance_name());
+  MS_EXCEPTION_IF_NULL(pyop_instance);
+  std::vector<AnfNodePtr> mirror_inputs{NewValueNode(pyop_instance), micro_mirror_new_input,
+                                        micro_mirror->input(kIndex2)};
+  auto new_mirror_node = micro_mirror_new_input->func_graph()->NewCNode(mirror_inputs);
+  auto prim = GetCNodePrimitive(new_mirror_node);
+  prim->SetAttrs(prim_origin->attrs());
+  new_mirror_node->set_attrs(micro_mirror->attrs());
+  new_mirror_node->set_primal_attrs(micro_mirror->primal_attrs());
+  return new_mirror_node;
 }
 
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
