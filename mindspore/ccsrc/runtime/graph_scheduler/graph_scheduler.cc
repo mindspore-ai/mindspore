@@ -595,6 +595,12 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   SignalGuard sg(IntHandler);
 #endif
 
+  // Check the actor set state.
+  if (actor_set->is_execution_failed_) {
+    MS_LOG(EXCEPTION) << "#umsg#Model execution error:#umsg#An error occurred in the previous step of this model "
+                         "execution, and the current step cannot be executed.";
+  }
+
   // Create recorder actor in the running to support the profiler in callback scene.
 #ifndef ENABLE_SECURITY
   if (profiler::ProfilerManager::GetInstance()->GetProfilingEnableFlag() && (recorder_aid_ == nullptr)) {
@@ -641,6 +647,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   result_future.Wait();
   thread_pool->SetSpinCountMinValue();
   if (!result_future.IsOK()) {
+    actor_set->is_execution_failed_ = true;
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
