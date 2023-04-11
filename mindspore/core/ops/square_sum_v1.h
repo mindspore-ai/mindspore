@@ -62,9 +62,6 @@ class MIND_API SquareSumV1 : public BaseOperator {
   /// \return keep dims attributes.
   bool get_keep_dims() const;
 };
-
-MIND_API abstract::AbstractBasePtr SquareSumV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

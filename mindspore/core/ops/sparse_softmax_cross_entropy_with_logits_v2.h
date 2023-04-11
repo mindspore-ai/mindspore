@@ -36,9 +36,6 @@ class MIND_API SparseSoftmaxCrossEntropyWithLogitsV2 : public BaseOperator {
     InitIOName({"features", "labels"}, {"loss", "backprop"});
   }
 };
-MIND_API abstract::AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsV2Infer(
-  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

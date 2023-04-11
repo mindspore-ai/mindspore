@@ -37,9 +37,6 @@ class MIND_API ScatterElements : public BaseOperator {
 
   int64_t get_axis() const;
 };
-MIND_API abstract::AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

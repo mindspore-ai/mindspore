@@ -40,9 +40,6 @@ class MIND_API SparseMatrixMul : public BaseOperator {
   /// mindspore.ops._csr_ops.SparseMatrixMul for the inputs.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr SparseMatrixMulInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

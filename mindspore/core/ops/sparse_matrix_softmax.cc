@@ -32,6 +32,8 @@
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_name.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -46,58 +48,73 @@ inline void CheckSparseMartrixShape(const size_t sparse_shape_size, const size_t
                                         << "-dimensional tensor.";
   }
 }
-}  // namespace
 
-AbstractBasePtr SparseMatrixSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseMatrixSoftmaxInferShape(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  auto dense_shape_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto batch_pointers_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto row_pointers_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto col_indices_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+
+  // 1-D indptr
+  CheckSparseMartrixShape(row_pointers_shape.size(), 1, " indptr");
+  // 1-D indices
+  CheckSparseMartrixShape(col_indices_shape.size(), 1, "A indices");
+  // 1-D values
+  CheckSparseMartrixShape(values_shape.size(), 1, "A values");
+
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    std::make_shared<abstract::Shape>(dense_shape_shape), std::make_shared<abstract::Shape>(batch_pointers_shape),
+    std::make_shared<abstract::Shape>(row_pointers_shape), std::make_shared<abstract::Shape>(col_indices_shape),
+    std::make_shared<abstract::Shape>(values_shape)});
+}
+
+TuplePtr SparseMatrixSoftmaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   constexpr size_t kInputNum = 5;
-  constexpr size_t _dense_shape = 0;
-  constexpr size_t _batch_pointers = 1;
-  constexpr size_t _row_pointers = 2;
-  constexpr size_t _col_indices = 3;
-  constexpr size_t _values = 4;
   mindspore::abstract::CheckArgsSize(op_name, input_args, kInputNum);
-  auto in_dense_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, _dense_shape);
-  auto in_batch_pointers = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, _batch_pointers);
-  auto in_row_pointers = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, _row_pointers);
-  auto in_col_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, _col_indices);
-  auto in_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, _values);
-  MS_EXCEPTION_IF_NULL(in_dense_shape);
-  MS_EXCEPTION_IF_NULL(in_batch_pointers);
-  MS_EXCEPTION_IF_NULL(in_row_pointers);
-  MS_EXCEPTION_IF_NULL(in_col_indices);
-  MS_EXCEPTION_IF_NULL(in_values);
+  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
+  auto batch_pointers_type = input_args[kInputIndex1]->BuildType();
+  auto row_pointers_type = input_args[kInputIndex2]->BuildType();
+  auto col_indices_type = input_args[kInputIndex3]->BuildType();
+  auto values_type = input_args[kInputIndex4]->BuildType();
 
-  // 1-D indptr
-  CheckSparseMartrixShape(in_row_pointers->shape()->shape().size(), 1, " indptr");
-
-  auto in_col_indices_shape = in_col_indices->shape()->shape();
-  // 1-D indices
-  CheckSparseMartrixShape(in_col_indices_shape.size(), 1, "A indices");
-
-  auto in_values_shape = in_values->shape()->shape();
-
-  // 1-D values
-  CheckSparseMartrixShape(in_values_shape.size(), 1, "A values");
-
-  ShapeVector out_shape{in_col_indices_shape[0]};
-  auto out_dense_shape =
-    std::make_shared<AbstractTensor>(in_dense_shape->element()->BuildType(), in_dense_shape->shape()->shape());
-  auto out_batch_pointers =
-    std::make_shared<AbstractTensor>(in_batch_pointers->element()->BuildType(), in_batch_pointers->shape()->shape());
-  auto out_col_indices =
-    std::make_shared<AbstractTensor>(in_col_indices->element()->BuildType(), in_col_indices->shape()->shape());
-  auto out_values = std::make_shared<AbstractTensor>(in_values->element()->BuildType(), in_values->shape()->shape());
-  auto out_row_pointers =
-    std::make_shared<AbstractTensor>(in_row_pointers->element()->BuildType(), in_row_pointers->shape()->shape());
-
-  AbstractBasePtrList ret = {out_dense_shape, out_batch_pointers, out_row_pointers, out_col_indices, out_values};
-  return std::make_shared<AbstractTuple>(ret);
+  return std::make_shared<Tuple>(
+    std::vector<TypePtr>{dense_shape_type, batch_pointers_type, row_pointers_type, col_indices_type, values_type});
 }
+
+AbstractBasePtr SparseMatrixSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  return abstract::MakeAbstract(SparseMatrixSoftmaxInferShape(primitive, input_args),
+                                SparseMatrixSoftmaxInferType(primitive, input_args));
+}
+}  // namespace
+
 MIND_API_OPERATOR_IMPL(SparseMatrixSoftmax, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixSoftmax, prim::kPrimSparseMatrixSoftmax, SparseMatrixSoftmaxInfer, nullptr,
-                             true);
+class MIND_API AGSparseMatrixSoftmaxInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixSoftmaxInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixSoftmaxInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixSoftmaxInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseMatrixSoftmax, prim::kPrimSparseMatrixSoftmax, AGSparseMatrixSoftmaxInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

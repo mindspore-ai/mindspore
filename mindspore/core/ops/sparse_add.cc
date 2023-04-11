@@ -33,6 +33,7 @@
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
 #include "ops/core_ops.h"
+#include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -71,32 +72,69 @@ inline void CheckSparseAddSameDtype(const mindspore::TypePtr a_dtype, const mind
                                        << b_dtype->ToString();
   }
 }
-}  // namespace
 
-AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<abstract::AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseAddInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
 
-  constexpr size_t kAIndicesIdx = 0;
-  constexpr size_t kAValuesIdx = 1;
-  constexpr size_t kAShapeIdx = 2;
-  constexpr size_t kBIndicesIdx = 3;
-  constexpr size_t kBValuesIdx = 4;
-  constexpr size_t kBShapeIdx = 5;
-  constexpr size_t kThreshIdx = 6;
+  auto a_indices_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto a_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto a_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto b_indices_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto b_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto b_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto thresh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
 
-  constexpr size_t kNumOfInputs = 7;
+  // Check indices of a and b
+  // 2-D indices
   constexpr size_t kIndicesShape = 2;
+  auto a_indices_shape_dyn_rank = IsDynamicRank(a_indices_shape);
+  auto b_indices_shape_dyn_rank = IsDynamicRank(b_indices_shape);
+  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name, a_indices_shape_dyn_rank);
+  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name, b_indices_shape_dyn_rank);
+  // 1-D values
+  auto a_values_shape_dyn_rank = IsDynamicRank(a_values_shape);
+  auto b_values_shape_dyn_rank = IsDynamicRank(b_values_shape);
+  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name, a_values_shape_dyn_rank);
+  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name, b_values_shape_dyn_rank);
+  // 1-D shape
+  auto a_shape_shape_dyn_rank = IsDynamicRank(a_shape_shape);
+  auto b_shape_shape_dyn_rank = IsDynamicRank(b_shape_shape);
+  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name, a_shape_shape_dyn_rank);
+  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name, b_shape_shape_dyn_rank);
+  // 0-D shape
+  auto thresh_shape_dyn_rank = IsDynamicRank(thresh_shape);
+  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name, thresh_shape_dyn_rank);
+  // Check same nnz
+  if (!a_indices_shape_dyn_rank && !a_values_shape_dyn_rank && a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {
+    CheckSparseAddNNZ(a_indices_shape[0], a_values_shape[0], "x1_indices", "x1_values", op_name);
+  }
+  if (!b_indices_shape_dyn_rank && !b_values_shape_dyn_rank && b_indices_shape[0] >= 0 && b_values_shape[0] >= 0) {
+    CheckSparseAddNNZ(b_indices_shape[0], b_values_shape[0], "x2_indices", "x2_values", op_name);
+  }
 
+  ShapeVector out_indices_shape{-1, 2};
+  ShapeVector out_value_shape{-1};
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    std::make_shared<abstract::Shape>(out_indices_shape), std::make_shared<abstract::Shape>(out_value_shape),
+    std::make_shared<abstract::Shape>(a_shape_shape)});
+}
+
+TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string op_name = primitive->name();
+  constexpr size_t kNumOfInputs = 7;
   mindspore::abstract::CheckArgsSize(op_name, input_args, kNumOfInputs);
-  auto a_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAIndicesIdx);
-  auto a_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAValuesIdx);
-  auto a_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAShapeIdx);
-  auto b_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kBIndicesIdx);
-  auto b_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kBValuesIdx);
-  auto b_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kBShapeIdx);
-  auto thresh = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kThreshIdx);
+  auto a_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex0);
+  auto a_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex1);
+  auto a_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex2);
+  auto b_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex3);
+  auto b_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex4);
+  auto b_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex5);
+  auto thresh = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kInputIndex6);
 
   MS_EXCEPTION_IF_NULL(a_indices);
   MS_EXCEPTION_IF_NULL(a_values);
@@ -105,33 +143,6 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(b_values);
   MS_EXCEPTION_IF_NULL(b_shape);
   MS_EXCEPTION_IF_NULL(thresh);
-
-  // Check indices of a and b
-  // 2-D indices
-  auto a_indices_shape = a_indices->shape()->shape();
-  auto b_indices_shape = b_indices->shape()->shape();
-  auto a_indices_shape_dyn_rank = IsDynamicRank(a_indices_shape);
-  auto b_indices_shape_dyn_rank = IsDynamicRank(b_indices_shape);
-  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name, a_indices_shape_dyn_rank);
-  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name, b_indices_shape_dyn_rank);
-  // 1-D values
-  auto a_values_shape = a_values->shape()->shape();
-  auto b_values_shape = b_values->shape()->shape();
-  auto a_values_shape_dyn_rank = IsDynamicRank(a_values_shape);
-  auto b_values_shape_dyn_rank = IsDynamicRank(b_values_shape);
-  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name, a_values_shape_dyn_rank);
-  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name, b_values_shape_dyn_rank);
-  // 1-D shape
-  auto a_shape_shape = a_shape->shape()->shape();
-  auto b_shape_shape = b_shape->shape()->shape();
-  auto a_shape_shape_dyn_rank = IsDynamicRank(a_shape_shape);
-  auto b_shape_shape_dyn_rank = IsDynamicRank(b_shape_shape);
-  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name, a_shape_shape_dyn_rank);
-  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name, b_shape_shape_dyn_rank);
-  // 0-D shape
-  auto thresh_shape = thresh->shape()->shape();
-  auto thresh_shape_dyn_rank = IsDynamicRank(thresh_shape);
-  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name, thresh_shape_dyn_rank);
 
   // Check dtype
   // a_indices and b_indices should be int64
@@ -157,13 +168,6 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
 
-  // Check same nnz
-  if (!a_indices_shape_dyn_rank && !a_values_shape_dyn_rank && a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {
-    CheckSparseAddNNZ(a_indices_shape[0], a_values_shape[0], "x1_indices", "x1_values", op_name);
-  }
-  if (!b_indices_shape_dyn_rank && !b_values_shape_dyn_rank && b_indices_shape[0] >= 0 && b_values_shape[0] >= 0) {
-    CheckSparseAddNNZ(b_indices_shape[0], b_values_shape[0], "x2_indices", "x2_values", op_name);
-  }
   // Check same type
   // value
   CheckSparseAddSameDtype(a_value_type, b_value_type, "x1_values", "x2_values", op_name);
@@ -177,20 +181,33 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
     CheckSparseAddSameDtype(a_value_type, thresh_type, "x1_values", "thresh", op_name);
   }
 
-  ShapeVector out_indices_shape{-1, 2};
-  ShapeVector out_value_shape{-1};
-
-  auto out_indices = std::make_shared<AbstractTensor>(a_indices->element()->BuildType(),
-                                                      std::make_shared<mindspore::abstract::Shape>(out_indices_shape));
-  auto out_values =
-    std::make_shared<AbstractTensor>(a_value_type, std::make_shared<mindspore::abstract::Shape>(out_value_shape));
-  auto out_shape =
-    std::make_shared<AbstractTensor>(a_shape_type, std::make_shared<mindspore::abstract::Shape>(a_shape_shape));
-
-  AbstractBasePtrList ret = {out_indices, out_values, out_shape};
-  return std::make_shared<AbstractTuple>(ret);
+  return std::make_shared<Tuple>(std::vector<TypePtr>{a_indices->element()->BuildType(), a_value_type, a_shape_type});
 }
+
+AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<abstract::AbstractBasePtr> &input_args) {
+  return abstract::MakeAbstract(SparseAddInferShape(primitive, input_args), SparseAddInferType(primitive, input_args));
+}
+}  // namespace
+
 MIND_API_OPERATOR_IMPL(SparseAdd, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseAdd, prim::kPrimSparseAdd, SparseAddInfer, nullptr, true);
+class MIND_API AGSparseAddInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseAddInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseAddInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseAddInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseAdd, prim::kPrimSparseAdd, AGSparseAddInfer, false);
 }  // namespace ops
 }  // namespace mindspore

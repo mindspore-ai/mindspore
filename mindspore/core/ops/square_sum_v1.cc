@@ -36,6 +36,27 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+BaseShapePtr SquareSumV1InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  return ReduceBaseInferShape(primitive, input_args, "square_sum_v1");
+}
+
+TypePtr SquareSumV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim->name());
+  return x_type;
+}
+
+AbstractBasePtr SquareSumV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto types = SquareSumV1InferType(primitive, input_args);
+  auto shapes = ReduceBaseInferShape(primitive, input_args, "square_sum_v1");
+  return abstract::MakeAbstract(shapes, types);
+}
+}  // namespace
+
 void SquareSumV1::Init(int axis, bool keep_dims) {
   this->set_axis(axis);
   this->set_keep_dims(keep_dims);
@@ -49,23 +70,24 @@ void SquareSumV1::set_axis(int64_t axis) { (void)this->AddAttr(kNameAxis, api::M
 
 int64_t SquareSumV1::get_axis() const { return GetValue<int64_t>(GetAttr(kNameAxis)); }
 
-namespace {
-TypePtr SquareSumV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim->name());
-  return x_type;
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(SquareSumV1, BaseOperator);
-AbstractBasePtr SquareSumV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto types = SquareSumV1InferType(primitive, input_args);
-  auto shapes = ReduceBaseInferShape(primitive, input_args, "square_sum_v1");
-  return abstract::MakeAbstract(shapes, types);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(SquareSumV1, prim::kSquareSumV1, SquareSumV1Infer, nullptr, true);
+class MIND_API AGSquareSumV1Infer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumV1InferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumV1InferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SquareSumV1Infer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SquareSumV1, prim::kSquareSumV1, AGSquareSumV1Infer, false);
 }  // namespace ops
 }  // namespace mindspore
