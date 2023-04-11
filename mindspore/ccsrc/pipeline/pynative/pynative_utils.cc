@@ -101,22 +101,30 @@ AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
 }
 
 AnfNodePtr Common::ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, const FuncGraphPtr &func_graph) {
-  auto node_abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(node_abs);
-  if (!node_abs->isa<abstract::AbstractSequence>()) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &v = node->value();
+  if (!v->isa<ValueSequence>()) {
     return node;
   }
-  auto value_sequence = GetValueNode<ValueSequencePtr>(node);
+  auto value_sequence = v->cast<ValueSequencePtr>();
+  if (!node->abstract()->isa<abstract::AbstractSequence>() &&
+      (node->abstract()->cast<abstract::AbstractSequencePtr>()->size() != value_sequence->size())) {
+    MS_LOG(EXCEPTION) << "Get wrong matched abs " << node->abstract()->ToString() << " and value "
+                      << value_sequence->ToString();
+  }
+
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
-  for (auto value : value_sequence->value()) {
+  for (const auto &value : value_sequence->value()) {
+    MS_EXCEPTION_IF_NULL(value);
     auto value_node = NewValueNode(value);
     auto abs = Common::SetAbstractValueToAnyValue(value->ToAbstract());
     value_node->set_abstract(abs);
     auto tuple_node = ConvertValueSequenceToMakeTuple(value_node, func_graph);
     (void)inputs.emplace_back(tuple_node);
   }
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto make_tuple_node = func_graph->NewCNode(inputs);
-  make_tuple_node->set_abstract(node_abs);
+  make_tuple_node->set_abstract(node->abstract());
   return make_tuple_node;
 }
 
@@ -311,15 +319,19 @@ ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePt
 
 void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
   MS_EXCEPTION_IF_NULL(bprop_graph);
+  if (bprop_graph->used_forward_nodes().empty()) {
+    return;
+  }
   auto mng = MakeManager({bprop_graph}, false);
   auto tr = mng->Transact();
   for (const auto &forward_node : bprop_graph->used_forward_nodes()) {
     auto cnode = forward_node->cast<CNodePtr>();
     auto v_node = cnode->forward().first;
+    MS_EXCEPTION_IF_NULL(v_node);
     bprop_graph->AddValueNode(v_node);
-    MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node;
+    MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node->DebugString();
     auto converted_node = ConvertValueSequenceToMakeTuple(v_node, bprop_graph);
-    tr.Replace(forward_node, converted_node);
+    (void)tr.Replace(forward_node, converted_node);
   }
   tr.Commit();
   bprop_graph->ClearUsedForwardNodes();

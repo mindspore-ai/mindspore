@@ -20,7 +20,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/parallel/step_parallel_utils.h"
 #include "runtime/pynative/async/async_queue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/jit/pass.h"
@@ -46,25 +45,35 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kPyInterpretOpName,
 };
 
+const mindspore::HashSet<std::string> kExpanderWhiteList{
+  kVmapStackAssignOpName,
+  kVmapUnstackAssignOpName,
+  kPyExecuteOpName,
+  kPrintOpName,
+};
+
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
-                                  ValuePtr *added_out_v) {
-  // Get actual output value and added output value.
-  if (!py::isinstance<py::tuple>(out)) {
-    MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
-  }
-  auto tuple_out = py::cast<py::tuple>(out);
-  constexpr size_t tuple_out_size = 2;
-  if (tuple_out.size() != tuple_out_size) {
-    MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
-  }
-  MS_EXCEPTION_IF_NULL(added_out_v);
-  // Forward output of op in ms_function graph
-  *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
+                                  bool modify_output, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   op_run_info->base_op_run_info.op_name = graph_phase;
-  // Output of ms_function
-  op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
+  if (modify_output) {
+    if (!py::isinstance<py::tuple>(out)) {
+      MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
+    }
+    auto tuple_out = py::cast<py::tuple>(out);
+    constexpr size_t tuple_out_size = 2;
+    if (tuple_out.size() != tuple_out_size) {
+      MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
+    }
+    MS_EXCEPTION_IF_NULL(added_out_v);
+    // Forward output of op in ms_function graph
+    *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
+    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
+  } else {
+    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out);
+  }
+
   op_run_info->base_op_run_info.abstract =
     PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract());
   op_run_info->grad_flag = true;
@@ -101,35 +110,25 @@ size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
 // Modify the output node of func_graph to add forward nodes used in bprop graph.
 void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  const auto &used_forward_nodes = func_graph->used_forward_nodes();
-
-  // Get original output node and abstract
-  auto original_output_node = func_graph->output();
-  MS_EXCEPTION_IF_NULL(original_output_node);
-  auto original_output_abs = original_output_node->abstract();
-  MS_EXCEPTION_IF_NULL(original_output_abs);
 
   // Create a new make tuple node to hold all forward used nodes.
   abstract::AbstractBasePtrList added_abs_list;
   std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
-  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
-                [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
-                  MS_EXCEPTION_IF_NULL(node);
-                  added_node_list.push_back(node);
-                  added_abs_list.push_back(node->abstract());
-                });
-  AnfNodePtr added_output_node;
-  AbstractBasePtr added_output_abs;
-  if (added_abs_list.empty()) {
-    added_output_node = NewValueNode(MakeValue<int32_t>(1));
-    added_output_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
-  } else {
-    added_output_node = func_graph->NewCNode(std::move(added_node_list));
-    added_output_abs = std::make_shared<abstract::AbstractTuple>(added_abs_list);
+  const auto &used_forward_nodes = func_graph->used_forward_nodes();
+  for (const auto &node : used_forward_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    (void)added_node_list.emplace_back(node);
+    (void)added_abs_list.emplace_back(node->abstract());
   }
+  AnfNodePtr added_output_node = func_graph->NewCNode(std::move(added_node_list));
+  AbstractBasePtr added_output_abs = std::make_shared<abstract::AbstractTuple>(added_abs_list);
   added_output_node->set_abstract(added_output_abs);
 
-  // Merge original output node and used forward nodes to return node.
+  // Get original output node and abstract, and merge original output node and used forward nodes to return node.
+  auto original_output_node = func_graph->output();
+  MS_EXCEPTION_IF_NULL(original_output_node);
+  auto original_output_abs = original_output_node->abstract();
+  MS_EXCEPTION_IF_NULL(original_output_abs);
   std::vector<AnfNodePtr> new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
   auto merge_node = func_graph->NewCNode(std::move(new_output_nodes));
   abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
@@ -150,10 +149,10 @@ bool IsRealOp(const AnfNodePtr &node) {
   return kNotRealOP.find(prim->name()) == kNotRealOP.end();
 }
 
-void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, AnfNodePtrList *node_list) {
+void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const std::vector<size_t> &unused_inputs,
+                              AnfNodePtrList *node_list) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(node_list);
-  const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
   // Check input used in single op bprop graph. For example,
   // A = a * b;
   // B = A * c;
@@ -186,6 +185,9 @@ void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, AnfNodePtrList *node_list) 
 
 AnfNodePtr GetAddedNode(const FuncGraphPtr &ms_func_graph) {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  if (!ms_func_graph->modify_output()) {
+    return nullptr;
+  }
   // Get added forward nodes.
   auto merge_node = ms_func_graph->output();
   MS_EXCEPTION_IF_NULL(merge_node);
@@ -220,7 +222,11 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
       grad_graph->AddValueNode(output_vnode);
     }
     MS_LOG(DEBUG) << "Old output value node: " << output_vnode->ToString();
+    bool is_tuple_out = output_vnode->abstract()->isa<abstract::AbstractSequence>();
     size_t output_num = GetOutputTensorNumForTuple(cnode);
+    if (output_num == 0) {
+      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty";
+    }
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
                         << ", but the current index: " << index << ", output num: " << output_num;
@@ -232,22 +238,21 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
     }
     index = index + output_num;
     // Replace new tensors.
-    if (output_num == 1) {
-      output_vnode->set_value(new_values[0]);
-    } else if (output_num > 1) {
+    // Can not use output_num > 1, because output can be (a), tuple just have only one element
+    if (is_tuple_out) {
       output_vnode->set_value(std::make_shared<ValueTuple>(new_values));
     } else {
-      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty, forward cnode info: " << cnode->ToString();
+      output_vnode->set_value(new_values[0]);
     }
     if (is_dynamic_shape) {
-      if (output_num == 1) {
-        output_vnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[0]->ToAbstract()));
-      } else {
+      if (is_tuple_out) {
         AbstractBasePtrList abs_list;
         for (size_t j = 0; j < output_num; ++j) {
           (void)abs_list.emplace_back(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[j]->ToAbstract()));
         }
         output_vnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+      } else {
+        output_vnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[0]->ToAbstract()));
       }
     }
     MS_LOG(DEBUG) << "New output value node: " << output_vnode->ToString();
@@ -415,7 +420,9 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   // Step 1: Replace added cnode forward with actual output
-  ReplaceAddedCnodeActualOutput(grad_executor, grad_graph, added_node, added_out_v);
+  if (added_out_v != nullptr) {
+    ReplaceAddedCnodeActualOutput(grad_executor, grad_graph, added_node, added_out_v);
+  }
 
   // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
@@ -423,7 +430,9 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
-  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
+  if (added_out_v != nullptr) {
+    grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
+  }
 
   auto clone_grad_graph = grad_graph;
   if (is_not_support_by_expander_) {
@@ -443,6 +452,10 @@ void MsFunction::Reset() {
 
 FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  if (PyNativeAlgo::Common::IsControlFlowGraph(ms_func_graph)) {
+    MS_LOG(DEBUG) << "Get control flow";
+    return nullptr;
+  }
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};
   const auto &order = TopoSort(ms_func_graph->output());
@@ -456,7 +469,19 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
-    GetUsedCNodeInBpropGraph(cnode, &node_list);
+    const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
+    if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX) {
+      if (auto prim = GetCNodePrimitive(cnode);
+          prim == nullptr || kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
+        MS_LOG(DEBUG) << "Prim is not support by expander";
+        return nullptr;
+      }
+    }
+    GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);
+  }
+  if (node_list.empty()) {
+    MS_LOG(DEBUG) << "No need do replace";
+    return ms_func_graph;
   }
   for (const auto &cn : node_list) {
     auto out = pynative::PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cn->abstract());
@@ -498,8 +523,8 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
     graph_phase_.clear();
     return ret;
   }
-  ValuePtr added_out_v;
-  const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, &added_out_v);
+  ValuePtr added_out_v = nullptr;
+  const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, ms_func_graph->modify_output(), &added_out_v);
   FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
   is_not_support_by_expander_ = !grad_graph->has_flag(kFlagGraphGradByExpander);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);

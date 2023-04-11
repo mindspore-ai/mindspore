@@ -54,8 +54,8 @@ const std::vector<size_t> &BpropExpander::GetUnusedInputs(const CNodePtr &cnode)
   auto handle = GetBpropHandle(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
-    static std::vector<size_t> empty{};
-    return empty;
+    static const std::vector<size_t> no_handle{INT_MAX};
+    return no_handle;
   }
   return handle->unused_inputs;
 }
