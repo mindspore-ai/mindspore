@@ -118,19 +118,12 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
   (void)std::copy(opt_shard_allgather_list.begin(), opt_shard_allgather_list.end(),
                   std::back_inserter(make_tuple_inputs));
-  for (auto &user_set : recv_users) {
-    if (!IsPrimitiveCNode(user_set.first)) {
-      continue;
-    }
-    auto recv_user = user_set.first->cast<CNodePtr>();
-    auto recv_user_index = user_set.second;
-    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_receive_cnode,
-                                          graph->NewCNode(make_tuple_inputs)};
-    auto depend_node = graph->NewCNode(depend_inputs);
-    depend_node->set_abstract(first_receive_cnode->abstract()->Clone());
-    depend_node->AddAttr("RecAllGatherDepend", MakeValue(True));
-    manager->SetEdge(recv_user, recv_user_index, depend_node);
-  }
+  std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_receive_cnode,
+                                        graph->NewCNode(make_tuple_inputs)};
+  auto depend_node = graph->NewCNode(depend_inputs);
+  depend_node->set_abstract(first_receive_cnode->abstract()->Clone());
+  depend_node->AddAttr("RecAllGatherDepend", MakeValue(True));
+  manager->Replace(first_receive_cnode, depend_node);
 }
 }  // namespace parallel
 }  // namespace mindspore

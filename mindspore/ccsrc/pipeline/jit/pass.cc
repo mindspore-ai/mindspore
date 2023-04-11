@@ -45,6 +45,7 @@
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
+#include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -694,6 +695,12 @@ bool GroupedPairwiseExchangeAllToAllPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool SliceReuseRecomputedActivationPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::SliceReuseRecomputedActivationNodes(resource->func_graph());
+  return true;
+}
+
 bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::LabelMicroInterleavedIndex(resource->func_graph());
@@ -948,6 +955,7 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
 std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
                                    {"rewriter_before_opt_a", RewriterBeforeOptAPass},
                                    {"opt_a", OptPassAGroup},
+                                   {"slice_cell_reuse_recomputed_activation", SliceReuseRecomputedActivationPass},
                                    {"rewriter_after_opt_a", RewriterAfterOptAPass},
                                    {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
                                    {"opt_b", OptPassBGroup},

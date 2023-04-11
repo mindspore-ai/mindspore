@@ -41,7 +41,7 @@ bool DropoutGenMaskFusion::DoFusion(const std::vector<CNodePtr> &genmasks, const
       auto node_users = node_users_map[temp[i]];
       for (auto user_pair : node_users) {
         auto user_node = user_pair.first->cast<CNodePtr>();
-        manager->SetEdge(user_node, kIndex2, mask_first);
+        manager->SetEdge(user_node, user_pair.second, mask_first);
       }
     }
   }

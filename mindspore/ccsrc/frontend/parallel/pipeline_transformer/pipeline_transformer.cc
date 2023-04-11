@@ -891,6 +891,13 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
     abstract_clone->set_shape(parallel_shape);
     node->set_abstract(abstract_clone);
     node->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
+    auto actual_param = RefParameterToActualParameter(node);
+    if (actual_param) {
+      actual_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
+      auto actual_param_abstract = actual_param->abstract()->Clone();
+      actual_param_abstract->set_shape(parallel_shape);
+      actual_param->set_abstract(actual_param_abstract);
+    }
   }
   recv->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
   recv->set_user_data<OperatorInfo>(op_info_pair.first);
@@ -1588,7 +1595,8 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
   }
 }
 
-bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
+bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter,
+                                                const std::vector<AnfNodePtr> &non_cloned_parameters) {
   // RedundancyParameter: other stage's parameters included corresponding cloned parameters.
   auto param_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(param_ptr);
@@ -1602,15 +1610,13 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
     auto parameters = root_->parameters();
     auto param_name = param_ptr->name();
     auto non_clone_name = param_name.substr(param_name.find_first_of('.') + 1);
-    for (auto &param : parameters) {
-      if (ParameterIsCloned(param)) {
-        continue;
-      }
+    for (auto &param : non_cloned_parameters) {
       auto non_cloned_param = param->cast<ParameterPtr>();
       if (non_clone_name != non_cloned_param->name()) {
         continue;
       }
       stage_set = parameter_color_map_.at(param);
+      break;
     }
   }
   if (stage_set.empty()) {
@@ -1622,8 +1628,15 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
 void PipelineTransformer::ElimParameter() {
   auto parameters = root_->parameters();
   mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> make_tuple_map;
+  std::vector<AnfNodePtr> non_cloned_parameters;
   for (auto &parameter : parameters) {
-    if (!IsRedundancyParameter(parameter)) {
+    if (ParameterIsCloned(parameter)) {
+      continue;
+    }
+    non_cloned_parameters.push_back(parameter);
+  }
+  for (auto &parameter : parameters) {
+    if (!IsRedundancyParameter(parameter, non_cloned_parameters)) {
       continue;
     }
     MS_LOG(INFO) << "Parameter:" << parameter->DebugString() << " is Redundancy.";
