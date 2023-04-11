@@ -24,7 +24,6 @@
 #include <map>
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
-#include "runtime/device/auto_mem_offload.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
@@ -82,7 +81,6 @@ class AscendDeviceResManager : public DeviceResManager {
   // Kernel Runtime  --- only for task sink
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
-  std::shared_ptr<MindRTAutoOffloadAdapter> auto_mem_offload_{nullptr};
 };
 }  // namespace ascend
 }  // namespace device

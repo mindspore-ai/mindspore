@@ -168,6 +168,9 @@ def test_1024_batch_size_resnet():
     num_classes = 10
     epoch = 6
     batch_size = 1024
+    default_offload_path = './offload'
+    if not os.path.isdir(default_offload_path):
+        os.mkdir(default_offload_path)
     context.set_context(memory_offload='ON')
     net = resnet50(batch_size, num_classes)
     lr = 0.1
