@@ -77,13 +77,15 @@ std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t
 
 std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePtr &node,
                                                                  std::function<bool(const AnfNodePtr &)> filter);
-
+AnfNodePtr GetInputNodeWithFilter(const AnfNodePtr &node,
+                                  std::function<std::pair<bool, size_t>(const CNodePtr &)> filter);
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
 void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
                             const NodeUsersMap &node_users_map, int64_t get_item_index, int64_t make_tuple_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes);
-
+AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
+                                           const AnfNodePtr &micro_mirror_new_input);
 // for specific scenarios
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
 bool HasBackward(const FuncGraphPtr &root);
@@ -112,6 +114,7 @@ std::string MirrorOpName();
 // Extract strategy from attr
 StrategyPtr ExtractStrategy(const ValuePtr &stra);
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
+std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNodePtr, int> &node_pair);
 Status ParallelInit();
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
                                     size_t max_depth);

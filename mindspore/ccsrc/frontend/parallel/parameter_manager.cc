@@ -856,14 +856,62 @@ static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &no
   return std::make_pair(nullptr, false);
 }
 
+AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node) {
+  if (!node->isa<Parameter>()) {
+    return nullptr;
+  }
+  auto node_param_ptr = node->cast<ParameterPtr>();
+  if (node_param_ptr->has_default()) {
+    return node;
+  }
+  auto sub_func_graph = node_param_ptr->func_graph();
+  auto call_cnodes_map = sub_func_graph->func_graph_cnodes_index();
+  auto sub_graph_parameters = sub_func_graph->parameters();
+  auto curr_param_iter = std::find(sub_graph_parameters.begin(), sub_graph_parameters.end(), node);
+  if (curr_param_iter == sub_graph_parameters.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find param " << node_param_ptr->DebugString() << " in current sub_graph";
+  }
+  size_t curr_param_index = curr_param_iter - sub_graph_parameters.begin();
+  for (const auto &node_pair : call_cnodes_map) {
+    if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
+      continue;
+    }
+    auto cnode = node_pair.first->first->cast<CNodePtr>();
+    auto cnode_input = cnode->input(curr_param_index + 1);
+    auto new_cnode = GetInputNodeWithFilter(cnode_input, [&](const CNodePtr &cnode) {
+      bool filter = IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) ||
+                    IsPrimitiveCNode(cnode, prim::kPrimLoad) || IsPrimitiveCNode(cnode, prim::kPrimDepend);
+      return std::make_pair(filter, 1);
+    });
+    return RefParameterToActualParameter(new_cnode);
+  }
+  return nullptr;
+}
+
 static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node,
                                                             const std::string &name = ALL_REDUCE) {
-  auto param_ptr = node->user_data<parallel::TensorLayout>();
-  if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty() &&
-      name == ALL_REDUCE) {
+  if (!node->isa<Parameter>()) {
+    MS_LOG(EXCEPTION) << "The node is not a parameter, node:" << node->DebugString();
+  }
+  auto node_param_ptr = node->cast<ParameterPtr>();
+  if (node_param_ptr->has_default()) {
+    auto param_ptr = node->user_data<parallel::TensorLayout>();
+    if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty() &&
+        name == ALL_REDUCE) {
+      return std::make_pair(nullptr, false);
+    }
+    return std::make_pair(node, false);
+  }
+  AnfNodePtr ref_param = RefParameterToActualParameter(node);
+  if (!ref_param) {
     return std::make_pair(nullptr, false);
   }
-  return std::make_pair(node, false);
+  auto ref_param_layout = ref_param->user_data<parallel::TensorLayout>();
+  if (ref_param_layout && !ref_param_layout->opt_shard_group().empty() &&
+      ref_param_layout->opt_shard_mirror_group().empty() && name == ALL_REDUCE) {
+    return std::make_pair(nullptr, false);
+  }
+  return std::make_pair(ref_param, false);
 }
 
 static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &node) {
@@ -877,14 +925,6 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
   auto pre_cnode = pre_node->cast<CNodePtr>();
   for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
     auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
-    if (!res.first) {
-      continue;
-    }
-    return res;
-  }
-  // If nothing found in the sub graphs, we search from the inputs of the graph.
-  for (size_t index = 1; index < fg_parameters.size(); ++index) {
-    auto res = FindParameter(cnode->input(index), fg);
     if (!res.first) {
       continue;
     }
@@ -906,9 +946,11 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   if (node->isa<ValueNode>()) {
     return FindParameterByValueNode(node, func_graph);
   }
-
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    return FindParameterByFuncGraph(node);
+  }
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     for (size_t index = 0; index < cnode->inputs().size(); ++index) {
       auto res = FindParameter(cnode->input(index), func_graph);
@@ -923,9 +965,6 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   // Skip allgather here and find parameter recursively.
   if (IsParallelCareNode(cnode) && !IsInAllGatherNodeList(cnode)) {
     return std::make_pair(nullptr, false);
-  }
-  if (IsValueNode<FuncGraph>(cnode->input(0))) {
-    return FindParameterByFuncGraph(node);
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(prim_anf_node);
