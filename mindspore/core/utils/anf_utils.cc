@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,10 +143,10 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
 #ifndef ENABLE_SECURITY
   static const PrimitiveSet virtual_prims = {
-    prim::kPrimImageSummary,    prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
-    prim::kPrimMakeTuple,       prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimReturn,
-    prim::kPrimPartial,         prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimLoad,
-    prim::kPrimDynamicLossScale};
+    prim::kPrimImageSummary,     prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
+    prim::kPrimMakeTuple,        prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimReturn,
+    prim::kPrimPartial,          prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimLoad,
+    prim::kPrimDynamicLossScale, prim::kPrimMakeList};
 #else
   static const PrimitiveSet virtual_prims = {
     prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,

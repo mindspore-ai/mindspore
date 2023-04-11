@@ -291,63 +291,6 @@ AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
   return node;
 }
 
-bool ContainPyExecuteOutputData(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->has_user_data<kernel::PyExecuteOutputUserData>()) {
-    return true;
-  }
-  auto abs = node->abstract();
-  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
-    return false;
-  }
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  auto inputs = cnode->inputs();
-  if (std::any_of(inputs.begin(), inputs.end(),
-                  [](const AnfNodePtr &input) { return ContainPyExecuteOutputData(input); })) {
-    return true;
-  }
-  return false;
-}
-
-py::object GetVectorRefOutputDataWithPyExecuteObject(const AnfNodePtr &node, const BaseRef &value) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto real_node = GetRealOutput(node);
-  MS_EXCEPTION_IF_NULL(real_node);
-  auto abs = real_node->abstract();
-  if (!abs->isa<abstract::AbstractSequence>() || !real_node->isa<CNode>()) {
-    if (real_node->has_user_data<kernel::PyExecuteOutputUserData>()) {
-      // None case will consider later.
-      const auto &output_data = real_node->user_data<kernel::PyExecuteOutputUserData>();
-      return output_data->obj;
-    }
-    return BaseRefToPyData(value, abs);
-  }
-  auto abs_seq = utils::cast<abstract::AbstractSequencePtr>(abs);
-  auto value_seq = utils::cast<VectorRef>(value);
-  if (abs_seq->size() != value_seq.size()) {
-    MS_LOG(EXCEPTION) << "abs size and value size not match. abs size: " << abs_seq->size()
-                      << ", value size: " << value_seq.size();
-  }
-
-  size_t seq_size = abs_seq->size();
-  auto real_cnode = real_node->cast<CNodePtr>();
-  if (abs->isa<abstract::AbstractList>()) {
-    py::list ret = py::list(seq_size);
-    for (size_t i = 0; i < seq_size; ++i) {
-      ret[i] = GetVectorRefOutputDataWithPyExecuteObject(real_cnode->input(i + 1), value_seq[i]);
-    }
-    return ret;
-  }
-  py::tuple ret = py::tuple(seq_size);
-  for (size_t i = 0; i < seq_size; ++i) {
-    ret[i] = GetVectorRefOutputDataWithPyExecuteObject(real_cnode->input(i + 1), value_seq[i]);
-  }
-  return ret;
-}
-
 std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
   static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
   if (support_fallback_runtime) {
@@ -362,16 +305,6 @@ std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const B
       MS_LOG(INFO) << "Has \'PyExecuteOutputUserData\', just return it. res_obj: " << res_obj;
       // Need support real none.
       return {res_obj, true};
-    }
-    // Handle multiple input case.
-    auto real_output_abs = real_output->abstract();
-    MS_EXCEPTION_IF_NULL(real_output_abs);
-    if (real_output_abs->isa<abstract::AbstractSequence>() && ContainPyExecuteOutputData(real_output)) {
-      MS_LOG(DEBUG) << "Contains PyExecute output data.";
-      if (!utils::isa<VectorRef>(value)) {
-        MS_LOG(EXCEPTION) << "When the output is tuple, value should be vector ref.";
-      }
-      return {GetVectorRefOutputDataWithPyExecuteObject(real_output, value), true};
     }
   }
   return {py::none(), false};
@@ -1352,7 +1285,7 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
     if (res_tensor->device_address() != nullptr) {
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
       MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
-      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first);
+      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
       if (real_node != nullptr) {
         MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
         const auto &[py_res, has_real_output] = GetPyExecuteOutput(real_node, value);
@@ -1364,6 +1297,48 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
     }
   }
   return {py::none(), false};
+}
+
+std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddress(const py::object &obj,
+                                                                                   const BaseRef &value) const {
+  bool has_real_node_address = false;
+  py::object output = py::none();
+  if (py::isinstance<py::tuple>(obj)) {
+    const auto &[py_res, has_real_output] = GetPyExecuteData<py::tuple>(obj, value);
+    if (has_real_output) {
+      output = py_res;
+      has_real_node_address = true;
+    }
+  } else if (py::isinstance<py::list>(obj)) {
+    const auto &[py_res, has_real_output] = GetPyExecuteData<py::list>(obj, value);
+    if (has_real_output) {
+      output = py_res;
+      has_real_node_address = true;
+    }
+  }
+  const auto &[py_res, has_real_output] = GetPyExecuteOutputFromAddress(obj, value);
+  if (has_real_output) {
+    output = py_res;
+    has_real_node_address = true;
+  }
+  return {output, has_real_node_address};
+}
+
+template <typename T>
+std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &res, const BaseRef &value) const {
+  const auto &res_seq = res.cast<T>();
+  T output_seq = T(res_seq.size());
+  bool has_real_node_address = false;
+  for (size_t i = 0; i < res_seq.size(); ++i) {
+    auto iter = res_seq[i];
+    output_seq[i] = res_seq[i];
+    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(output_seq[i], value);
+    if (has_real_output) {
+      output_seq[i] = py_res;
+      has_real_node_address = true;
+    }
+  }
+  return {output_seq, has_real_node_address};
 }
 
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) {
@@ -1467,15 +1442,15 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     res = BaseRefToPyData(value, output_abs);
     // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
     // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
-    const auto &[py_res, has_real_node_address] = GetPyExecuteOutputFromAddress(res, value);
+    const auto &[py_res, has_real_node_address] = GetPyExecuteSequenceOutputFromAddress(res, value);
     if (has_real_node_address) {
       return py_res;
     }
   }
   // Replace the output if it's not Tensor, but Python data.
-  const auto &[py_res, has_real_output] = GetPyExecuteOutput(output, value);
+  const auto &[res_obj, has_real_output] = GetPyExecuteOutput(output, value);
   if (has_real_output) {
-    return py_res;
+    return res_obj;
   }
 
   MS_LOG(DEBUG) << "Run end";
