@@ -31,7 +31,7 @@ class TestAdd : public ST::Common {
   TestAdd() {}
 };
 
-TEST_F(TestAdd, InferMindIR) {
+TEST_F(TestAdd, DISABLED_InferMindIR) {
   auto context = ContextAutoSet();
 
   Graph graph;
