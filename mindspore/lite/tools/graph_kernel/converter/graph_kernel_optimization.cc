@@ -24,6 +24,7 @@
 
 #include "backend/common/graph_kernel/core/arithmetic_simplify.h"
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/core/shape_ops_splitter.h"
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/core/transform_op_optimizer.h"
@@ -141,6 +142,7 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
     mng = Manage(func_graph, true);
     func_graph->set_manager(mng);
   }
+  GkUtils::UpdateFuncGraphManager(mng, func_graph);
   (void)optimizer->Optimize(func_graph);
 }
 }  // namespace graphkernel
