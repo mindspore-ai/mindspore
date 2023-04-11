@@ -1461,11 +1461,11 @@ def fast_gelu(x):
 
 
 @constexpr
-def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
+def _check_float_range_inc_neither(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     """
-    Method for checking whether input value is in float range inc right.
+    Method for checking whether input value is in float range inc neither.
     """
-    return validator.check_float_range(arg_value, lower_limit, upper_limit, validator.INC_RIGHT, arg_name, prim_name)
+    return validator.check_float_range(arg_value, lower_limit, upper_limit, validator.INC_NEITHER, arg_name, prim_name)
 
 
 def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
@@ -1551,18 +1551,24 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
     if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
         raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
                          f"at the same time, but got {output_ratio} and {output_size} .")
-    if len(input.shape) == 3:
+    _check_value_type("return_indices", return_indices, [bool], "fractional_max_pool2d")
+    dim_flag = False
+    if input.ndim == 3:
         input = input.expand_dims(axis=0)
+        dim_flag = True
     if _random_samples is None:
-        _random_samples = Tensor([[[0, 0]]], mstype.float32)
+        _random_samples = ops.rand(input.shape[0], input.shape[1], 2, dtype=input.dtype)
     if output_ratio is not None:
-        if isinstance(output_ratio, float):
+        if isinstance(output_ratio, (float, int)):
+            _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool2d")
             output_ratio = (output_ratio, output_ratio)
-        _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
-        _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
+        _check_float_range_inc_neither(output_ratio[0], 0.0, 1.0, "output_ratio[0]", "fractional_max_pool2d")
+        _check_float_range_inc_neither(output_ratio[1], 0.0, 1.0, "output_ratio[1]", "fractional_max_pool2d")
         output_size = (int(input.shape[-2] * output_ratio[0]), int(input.shape[-1] * output_ratio[1]))
     fractional_max_pool = FractionalMaxPoolWithFixedKsize(kernel_size, output_size)
     output = fractional_max_pool(input, _random_samples)
+    if dim_flag:
+        output = output[0].squeeze(axis=0), output[1].squeeze(axis=0)
     if return_indices:
         return output
     return output[0]
@@ -1633,13 +1639,13 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...            .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_size=(1, 1, 3),
+        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1, 1, 1), output_size=(1, 1, 3),
         ...                                            _random_samples=_random_samples, return_indices=True)
         >>> print(output)
         [[[[[13. 14. 16.]]]]]
         >>> print(argmax)
         [[[[[12 13 15]]]]]
-        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+        >>> output, argmax = ops.fractional_max_pool3d(x, kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
         ...                                            _random_samples=_random_samples, return_indices=True)
         >>> print(output)
         [[[[[13. 16.]]]]]
@@ -1649,14 +1655,17 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
         raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
                          f"at the same time, but got {output_ratio} and {output_size} .")
+    _check_value_type("return_indices", return_indices, [bool], "fractional_max_pool3d")
     if _random_samples is None:
-        _random_samples = Tensor([[[0, 0, 0]]], mstype.float32)
+        n = 1 if input.ndim == 4 else input.shape[0]
+        _random_samples = ops.rand(n, input.shape[-4], 3, dtype=input.dtype)
     if output_ratio is not None:
-        if isinstance(output_ratio, float):
+        if isinstance(output_ratio, (float, int)):
+            _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool3d")
             output_ratio = (output_ratio, output_ratio, output_ratio)
-        _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
-        _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
-        _check_float_range_inc_right(output_ratio[2], 0.0, 1.0)
+        _check_float_range_inc_neither(output_ratio[0], 0.0, 1.0, "output_ratio[0]", "fractional_max_pool3d")
+        _check_float_range_inc_neither(output_ratio[1], 0.0, 1.0, "output_ratio[1]", "fractional_max_pool3d")
+        _check_float_range_inc_neither(output_ratio[2], 0.0, 1.0, "output_ratio[2]", "fractional_max_pool3d")
         output_size = (int(input.shape[-3] * output_ratio[0]), int(input.shape[-2] * output_ratio[1]),
                        int(input.shape[-1] * output_ratio[2]))
     fractional_max_pool = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
