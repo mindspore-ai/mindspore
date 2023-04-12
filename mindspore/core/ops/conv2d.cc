@@ -210,15 +210,17 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
 
+  const int64_t shape_size = 4;
   ShapeVector output_shape;
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
-    std::vector<ValuePtr> pad_list_val = {MakeValue(0), MakeValue(0), MakeValue(0), MakeValue(0)};
+    std::vector<int64_t> pad_list(shape_size, 0);
+    std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[kIndex0]), MakeValue(pad_list[kIndex1]),
+                                          MakeValue(pad_list[kIndex2]), MakeValue(pad_list[kIndex3])};
     primitive->set_attr("pad_list", MakeValue(pad_list_val));
     output_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
-  const int64_t shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
   CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
