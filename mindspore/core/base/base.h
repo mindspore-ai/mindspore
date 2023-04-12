@@ -218,6 +218,16 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \param[in] other used to copy user data.
   void CloneUserData(const std::shared_ptr<Base> &other) { user_data_ = other->user_data_; }
 
+  /// \brief Clone user data.
+  ///
+  /// \param[in] other used to copy.
+  void CloneUserData(const UserData &other) { user_data_ = other; }
+
+  /// \brief Get user data.
+  ///
+  /// \return User data.
+  const UserData &GetUserData() const { return user_data_; }
+
  protected:
   /// \brief Get the shared_ptr of Base.
   ///
