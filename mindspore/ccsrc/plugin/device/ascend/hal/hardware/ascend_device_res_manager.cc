@@ -66,8 +66,9 @@ void AscendDeviceResManager::Destroy() {
 }
 
 bool AscendDeviceResManager::BindDeviceToCurrentThread(bool /* force_bind */) const {
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->SetContext();
+  if (runtime_instance_ != nullptr) {
+    runtime_instance_->SetContext();
+  }
   return true;
 }
 
