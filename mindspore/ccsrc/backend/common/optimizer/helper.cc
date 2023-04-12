@@ -1239,13 +1239,8 @@ void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
-  if (input_names_vec.size() >= attr_names_vec.size()) {
-    size_t offset = input_names_vec.size() - attr_names_vec.size();
-    for (size_t i = offset; i < input_names_vec.size(); ++i) {
-      if (input_names_vec[i] != attr_names_vec[i - offset]) {
-        MS_LOG(EXCEPTION) << primitive->name() << " found mismatching attr name " << input_names_vec[i]
-                          << "in input_names and " << attr_names_vec[i - offset] << " in attr_names";
-      }
+  for (size_t i = 0; i < input_names_vec.size(); ++i) {
+    if (std::find(attr_names_vec.begin(), attr_names_vec.end(), input_names_vec[i]) != attr_names_vec.end()) {
       (void)indexes->insert(i);
     }
   }
