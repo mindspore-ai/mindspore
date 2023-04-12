@@ -1546,6 +1546,11 @@ REG_BPROP_BUILDER("DType").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return {ib->ZerosLike(x)};
 });
 
+REG_BPROP_BUILDER("Size").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  return {ib->ZerosLike(x)};
+});
+
 REG_BPROP_BUILDER("StridedSliceV2").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto begin = ib->GetInput(kIndex1);

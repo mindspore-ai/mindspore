@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -32,6 +33,16 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.ops(x)
+
+
+class NetGrad(nn.Cell):
+    def __init__(self, forward):
+        super().__init__()
+        self.forward = forward
+        self.grad = C.GradOperation(get_all=True)
+
+    def construct(self, x):
+        return self.grad(self.forward)(x)
 
 
 @pytest.mark.level0
@@ -51,6 +62,11 @@ def test_size_1_dimension(mode):
     out = net(input_x)
     assert out == expect
 
+    size_grad = NetGrad(net)
+    actual_grad = size_grad(input_x)
+    expect_grad = np.zeros(3).astype(np.int32)
+    assert (actual_grad[0].asnumpy() == expect_grad).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -69,6 +85,11 @@ def test_size_2_dimension(mode):
     out = net(input_x)
     assert out == expect
 
+    size_grad = NetGrad(net)
+    actual_grad = size_grad(input_x)
+    expect_grad = np.zeros((3, 2)).astype(np.int32)
+    assert (actual_grad[0].asnumpy() == expect_grad).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -86,6 +107,11 @@ def test_size_3_dimension(mode):
     net = Net()
     out = net(input_x)
     assert out == expect
+
+    size_grad = NetGrad(net)
+    actual_grad = size_grad(input_x)
+    expect_grad = np.zeros((3, 2, 2)).astype(np.int32)
+    assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
 @pytest.mark.level0
@@ -106,3 +132,8 @@ def test_size_dynamic(mode):
     output = net(input_x)
     expect = 12
     assert output == expect
+
+    size_grad = NetGrad(net)
+    actual_grad = size_grad(input_x)
+    expect_grad = np.zeros((3, 4)).astype(np.int32)
+    assert (actual_grad[0].asnumpy() == expect_grad).all()
