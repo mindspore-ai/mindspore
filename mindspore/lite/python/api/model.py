@@ -374,10 +374,9 @@ class Model:
                 raise TypeError(f"inputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
             _inputs.append(element._tensor)
-        outputs = self._model.get_outputs()
-        ret = self._model.predict(_inputs, outputs, None, None)
-        if not ret.IsOk():
-            raise RuntimeError(f"predict failed! Error is {ret.ToString()}")
+        outputs = self._model.predict(_inputs)
+        if not outputs:
+            raise RuntimeError(f"predict failed!")
         predict_outputs = []
         for output in outputs:
             predict_outputs.append(Tensor(output))

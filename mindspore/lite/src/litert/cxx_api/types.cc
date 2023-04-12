@@ -273,7 +273,7 @@ int64_t MSTensor::ElementNum() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return -1;
   }
-  return std::static_pointer_cast<LiteTensorImpl>(impl_)->ElementNum();
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->ElementNum();
 }
 
 enum DataType MSTensor::DataType() const {

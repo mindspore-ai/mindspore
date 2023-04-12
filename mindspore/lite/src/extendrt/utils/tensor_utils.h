@@ -36,8 +36,9 @@
 namespace mindspore {
 class TensorRefData : public tensor::TensorData {
  public:
-  TensorRefData(void *data, size_t elem_count, size_t data_size, size_t ndim);
-  ~TensorRefData() = default;
+  TensorRefData(void *data, size_t elem_count, size_t data_size, size_t ndim,
+                const std::function<void(uint8_t *)> &deleter = nullptr);
+  ~TensorRefData();
 
   ssize_t size() const override;
   ssize_t itemsize() const override;
@@ -54,6 +55,7 @@ class TensorRefData : public tensor::TensorData {
   size_t elem_count_ = 0;
   size_t data_size_ = 0;
   size_t ndim_ = 0;
+  std::function<void(uint8_t *)> deleter_ = nullptr;
 };
 
 constexpr auto kLiteDeviceName = "LiteDevice";
@@ -159,10 +161,6 @@ class TensorTensorImpl : public MutableTensorImpl {
     tensor_->set_user_data("quant_param", std::make_shared<std::vector<QuantParam>>(quant_param));
   }
 
-  int64_t ElementNum() const {
-    auto &shape = Shape();
-    return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
-  }
   size_t DataSize() const override { return ElementNum() * lite::DataTypeSize(static_cast<enum TypeId>(DataType())); }
 
   std::shared_ptr<Impl> Clone() const override { return std::make_shared<TensorTensorImpl>(tensor_); }

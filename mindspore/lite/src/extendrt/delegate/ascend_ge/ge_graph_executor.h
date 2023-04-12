@@ -66,6 +66,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool AddGraph(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &options,
                 uint32_t *graph_id);
   bool RunGeInitGraph(uint32_t init_graph_id);
+  tensor::TensorPtr ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();

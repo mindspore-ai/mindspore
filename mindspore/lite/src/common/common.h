@@ -95,6 +95,9 @@ static const char *const kGeVariableMemoryMaxSize = "ge_variable_memory_max_size
 static const char *const kGeGraphMemoryMaxSize = "ge_graph_memory_max_size";
 static const char *const kGraphCompilerCacheDirKey = "model_cache_dir";
 static const char *const kModifyMixList = "mixprecision_list_path";
+// ge options
+static const char *const kGeSessionOptionsSection = "ge_session_options";
+static const char *const kGeGraphOptionsSection = "ge_graph_options";
 // transformer
 static const char *const kTransformerSection = "transformer_context";
 static const char *const kEncoderInputKey = "encoder_input";

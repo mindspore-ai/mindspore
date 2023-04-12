@@ -24,8 +24,15 @@
 #include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
-TensorRefData::TensorRefData(void *data, size_t bytes_size, size_t data_size, size_t ndim)
-    : data_(data), elem_count_(bytes_size), data_size_(data_size), ndim_(ndim) {}
+TensorRefData::TensorRefData(void *data, size_t bytes_size, size_t data_size, size_t ndim,
+                             const std::function<void(uint8_t *)> &deleter)
+    : data_(data), elem_count_(bytes_size), data_size_(data_size), ndim_(ndim), deleter_(deleter) {}
+
+TensorRefData::~TensorRefData() {
+  if (deleter_ && data_) {
+    deleter_(reinterpret_cast<uint8_t *>(data_));
+  }
+}
 
 ssize_t TensorRefData::size() const { return static_cast<ssize_t>(elem_count_); }
 
@@ -104,7 +111,7 @@ std::vector<mindspore::tensor::Tensor> TensorUtils::MSTensorToTensor(const std::
     auto data_type = ms_tensor.DataType();
     auto type_id = static_cast<mindspore::TypeId>(data_type);
     auto shape = ms_tensor.Shape();
-    auto data = ms_tensor.MutableData();
+    auto data = const_cast<void *>(ms_tensor.Data().get());
     auto data_size = ms_tensor.DataSize();
     auto ref_tensor_data = std::make_shared<TensorRefData>(data, ms_tensor.ElementNum(), data_size, shape.size());
     mindspore::tensor::Tensor tensor(type_id, shape, ref_tensor_data);
