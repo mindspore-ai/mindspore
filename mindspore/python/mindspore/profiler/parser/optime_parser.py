@@ -225,25 +225,25 @@ class OPComputeTimeParser:
         """
         tmp_result_data = []
         op_map_list = self._get_op_task_id_map()
+        tmp_op_dict = dict()
 
         cur_index = 0
         length = len(op_map_list)
         min_cycle_counter = float("inf")
         while cur_index < length:
-            if cur_index + 1 == length:
-                break
+            op_time = op_map_list[cur_index]
+            if op_time.status == "Start":
+                tmp_op_dict[op_time.op_name] = op_time
+            elif op_time.status == "End" and op_time.op_name in tmp_op_dict:
+                op_start = tmp_op_dict.get(op_time.op_name, None)
+                if op_start:
+                    op_start.duration = op_time.cycle_counter - op_start.cycle_counter
+                    tmp_result_data.append(op_start)
+                    del tmp_op_dict[op_time.op_name]
+            if not op_time.op_name.startswith("assign"):
+                min_cycle_counter = min(min_cycle_counter, op_time.cycle_counter)
 
-            op_start = op_map_list[cur_index]
-            op_end = op_map_list[cur_index + 1]
-            if op_start.status == "Start" and op_end.status == "End" \
-                    and op_start.op_name == op_end.op_name:
-                op_start.duration = op_end.cycle_counter - op_start.cycle_counter
-                tmp_result_data.append(op_start)
-                cur_index += 2
-                if not op_start.op_name.startswith("assign"):
-                    min_cycle_counter = min(min_cycle_counter, op_start.cycle_counter)
-            else:
-                cur_index += 1
+            cur_index += 1
 
         # Update the value of minimum cycle counter.
         self._min_cycle_counter = min_cycle_counter / 1e5  # Convert the time unit from 10ns to 1ms
