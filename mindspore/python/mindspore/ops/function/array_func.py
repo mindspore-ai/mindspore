@@ -5688,7 +5688,9 @@ def _init_and_select_elem(input, initial, where, cmp_fn):    # pylint: disable=r
         initial = ops.fill(input.dtype, input.shape, initial)
         input = cmp_fn(input, initial)
 
-    if isinstance(where, Tensor):
+    if where is not None and not where:
+        if not isinstance(where, Tensor):
+            where = Tensor(where)
         if initial is None:
             raise ValueError('initial value must be provided for where masks')
         where = where.broadcast_to(input.shape)
@@ -6813,7 +6815,7 @@ def _cal_repeat_dims(x_rank, rep, expand_axis):
     return tuple(rep_dims)
 
 
-@constexpr
+@_primexpr
 def _cal_reshape(x_shape, rep, axis):
     x_reshape = list(x_shape)
     x_reshape[axis] *= rep
