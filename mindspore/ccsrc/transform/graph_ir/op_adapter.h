@@ -245,7 +245,22 @@ class OpAdapter : public BaseOpAdapter {
   }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
-  bool IsMultipleOutputOp() override { return output_map_.size() > 1; }
+  bool IsMultipleOutputOp(const AnfNodePtr &anf) override {
+    if (IsCustomCNode(anf)) {
+      // Custom op
+      auto node = anf->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
+      auto prim = GetValueNode<PrimitivePtr>(node->inputs().at(0));
+      MS_EXCEPTION_IF_NULL(prim);
+      auto op_type = impl_->GetCustomOpType(prim);
+      if (cus_output_map_.find(op_type) != cus_output_map_.end()) {
+        return cus_output_map_[op_type].size() > 1;
+      }
+      return false;
+    }
+    // Normal op
+    return output_map_.size() > 1;
+  }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) {
     return impl_->SetOpSubgraphFunc(op, subgraphs);
