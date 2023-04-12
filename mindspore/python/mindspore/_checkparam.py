@@ -70,13 +70,13 @@ def _check_binary_rel(val1, val2, rel):
 def _check_inc_rel(val, lower, upper, rel):
     """check include relation"""
     if rel == INC_NEITHER:
-        return lower < val < upper
+        return not (val <= lower or val >= upper)
     if rel == INC_LEFT:
-        return lower <= val < upper
+        return not (val < lower or val >= upper)
     if rel == INC_RIGHT:
-        return lower < val <= upper
+        return not (val <= lower or val > upper)
     if rel == INC_BOTH:
-        return lower <= val <= upper
+        return not (val < lower or val > upper)
 
     return False
 

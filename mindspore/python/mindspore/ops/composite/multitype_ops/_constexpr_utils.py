@@ -524,10 +524,6 @@ def generate_broadcast_shape(shapes, op_name):
 @_primexpr
 def check_two_shapes_need_broadcast(shape_x, shape_y):
     """Check shape_y needs to be broadcast to shape_x."""
-    def _check():
-        if any(j not in (i, 1) for i, j in zip(reversed(shape_x), reversed(shape_y))):
-            raise ValueError(f"{shape_y} could not broadcast with {shape_x}.")
-    _check()
     return shape_y != shape_x
 
 
