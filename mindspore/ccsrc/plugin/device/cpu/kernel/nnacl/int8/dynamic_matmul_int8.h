@@ -27,26 +27,44 @@ extern "C" {
 void PackInput2Col4x4(const int8_t *src_input, int8_t *packed_input, int row, int col, int row_stride);
 void PackInput4x4(const int8_t *src_input, int8_t *packed_input, size_t input_channel, size_t plane_size);
 void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
-                             int deep, int deep16, size_t stride, int input_zp, float input_scale,
-                             const float *filter_scale, const int filter_zp, bool filter_per_channel, int64_t act_type);
+                             int deep, int deep16, size_t stride, int input_zp, const float *input_scale,
+                             const float *filter_scale, int filter_zp, bool input_per_channel, bool filter_per_channel,
+                             int64_t act_type);
 void CalcWeightSums(const int8_t *weight, int row, int col, int32_t *dst, DataOrder order);
 void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int32_t *dst, DataOrder order);
 #if defined(ENABLE_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
-void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
-                                 float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                                 const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+/*
+ * mode is used to distinguish different quantization scenarios, whose value is 0-3.
+ * 0: TensorByTensor, 1: TensorByChannel, 2: ChannelByTensor, 3: ChannelByChannel.
+ */
+void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, const float *multi_scales,
+                                 const float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                                 const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type, int64_t mode);
 #endif
-void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
-                             float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+/*
+ * mode is used to distinguish different quantization scenarios, whose value is 0-3.
+ * 0: TensorByTensor, 1: TensorByChannel, 2: ChannelByTensor, 3: ChannelByChannel.
+ */
+void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, const float *multi_scales,
+                             const float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type, int64_t mode);
 #ifdef ENABLE_FP16
-void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4, float *multi_scales,
-                                    float16_t *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                                    const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+/*
+ * mode is used to distinguish different quantization scenarios, whose value is 0-3.
+ * 0: TensorByTensor, 1: TensorByChannel, 2: ChannelByTensor, 3: ChannelByChannel.
+ */
+void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4,
+                                    const float *multi_scales, const float16_t *bias, size_t row, size_t col,
+                                    size_t stride, const int32_t *a_sums, const int32_t *b_sums, int64_t a_zp,
+                                    int64_t b_zp_sum, int64_t act_type, int64_t mode);
+/*
+ * mode is used to distinguish different quantization scenarios, whose value is 0-3.
+ * 0: TensorByTensor, 1: TensorByChannel, 2: ChannelByTensor, 3: ChannelByChannel.
+ */
 void DynamicMatmulSdot4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4,
-                                        float *multi_scales, float16_t *bias, size_t row, size_t col, size_t stride,
-                                        const int32_t *a_sums, const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum,
-                                        int64_t act_type);
+                                        const float *multi_scales, const float16_t *bias, size_t row, size_t col,
+                                        size_t stride, const int32_t *a_sums, const int32_t *b_sums, int64_t a_zp,
+                                        int64_t b_zp_sum, int64_t act_type, int64_t mode);
 #endif
 
 #ifdef __cplusplus

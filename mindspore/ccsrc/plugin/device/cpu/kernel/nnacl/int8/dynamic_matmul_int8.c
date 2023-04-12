@@ -17,9 +17,9 @@
 #include "nnacl/int8/dynamic_matmul_int8.h"
 #include "nnacl/int8/fixed_point.h"
 
-void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
-                             float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type) {
+void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, const float *multi_scales,
+                             const float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type, int64_t mode) {
   /* *
    * row4x4-major * row4x16-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
@@ -39,7 +39,8 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
       int64_t s3 = b_sums[c] * a_zp;
       int64_t s4 = a_zp * b_zp_sum;
       size_t ci = r * stride / sizeof(float) + c;
-      out[ci] = multi_scales[c] * (s1 - s2 - s3 + s4);
+      int scale_offset = mode == 0 ? 0 : (mode == 1 ? c : (mode == C2NUM ? r : r * C16NUM + c));
+      out[ci] = multi_scales[scale_offset] * (s1 - s2 - s3 + s4);
       if (bias != NULL) {
         out[ci] += bias[c];
       }
@@ -55,9 +56,10 @@ void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_
 }
 
 #ifdef ENABLE_FP16
-void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4, float *multi_scales,
-                                    float16_t *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
-                                    const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type) {
+void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t *out, size_t deep4,
+                                    const float *multi_scales, const float16_t *bias, size_t row, size_t col,
+                                    size_t stride, const int32_t *a_sums, const int32_t *b_sums, int64_t a_zp,
+                                    int64_t b_zp_sum, int64_t act_type, int64_t mode) {
   /* *
    * row4x4-major * row4x16-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
@@ -77,7 +79,8 @@ void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t 
       int64_t s3 = b_sums[c] * a_zp;
       int64_t s4 = a_zp * b_zp_sum;
       size_t ci = r * stride / sizeof(float16_t) + c;
-      out[ci] = multi_scales[c] * (s1 - s2 - s3 + s4);
+      int scale_offset = mode == 0 ? 0 : (mode == 1 ? c : (mode == C2NUM ? r : r * C16NUM + c));
+      out[ci] = multi_scales[scale_offset] * (s1 - s2 - s3 + s4);
       if (bias != NULL) {
         out[ci] += bias[c];
       }
@@ -94,8 +97,8 @@ void DynamicMatmul4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float16_t 
 #endif
 
 void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
-                             int deep, int deep16, size_t stride, int input_zp, float input_scale,
-                             const float *filter_scale, const int filter_zp, bool filter_per_channel,
+                             int deep, int deep16, size_t stride, int input_zp, const float *input_scale,
+                             const float *filter_scale, int filter_zp, bool input_per_channel, bool filter_per_channel,
                              int64_t act_type) {
   /* *
    * row4x16-major * row16x4-major => (int8)row-major
@@ -120,8 +123,9 @@ void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias
         s3 += input_zp * filter_zp;
       }
       value = s0 - s1 - s2 + s3;
+      int input_quant_index = input_per_channel ? r : 0;
       int filter_quant_index = filter_per_channel ? c : 0;
-      float multi_scale = input_scale * filter_scale[filter_quant_index];
+      float multi_scale = input_scale[input_quant_index] * filter_scale[filter_quant_index];
       size_t ci = r * stride + c;
       dst[ci] = multi_scale * value;
       if (bias != NULL) {

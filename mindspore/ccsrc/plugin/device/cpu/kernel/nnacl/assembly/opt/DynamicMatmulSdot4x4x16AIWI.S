@@ -20,7 +20,7 @@
 
 // void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
 //                                  float *bias, size_t row, size_t col, size_t stride, const int *a_sums,
-//                                  const int *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);
+//                                  const int *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type, int64_t mode);
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
 // x2: out ptr
@@ -49,6 +49,7 @@ asm_function DynamicMatmulSdot4x4x16AIWI
     ldr x19, [sp, #24]
     ldr x20, [sp, #32]
     ldr x21, [sp, #40]
+    ldr x22, [sp, #48]
 
     dup v16.4s, wzr // dup:Duplicate general-purpose register to vector.
     dup v17.4s, wzr
@@ -228,28 +229,108 @@ Convert2Float:
 
 MultiplyScale:
     // multi_scale * input_matrix
-    ld1 {v1.4s, v2.4s, v3.4s, v4.4s}, [x4]
+    cbz x22, TensorXTensor
+    cmp x22, #1
+    beq TensorXChannel
+    cmp x22, #2
+    beq ChannelXTensor
+    ChannelXChannel:
+        ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x4], #64
+        ld1 {v4.4s, v5.4s, v6.4s, v7.4s}, [x4], #64
 
-    fmul v16.4s,v16.4s,v1.4s
-    fmul v17.4s,v17.4s,v2.4s
-    fmul v18.4s,v18.4s,v3.4s
-    fmul v19.4s,v19.4s,v4.4s
+        fmul v16.4s,v16.4s,v0.4s
+        fmul v17.4s,v17.4s,v1.4s
+        fmul v18.4s,v18.4s,v2.4s
+        fmul v19.4s,v19.4s,v3.4s
 
-    fmul v20.4s,v20.4s,v1.4s
-    fmul v21.4s,v21.4s,v2.4s
-    fmul v22.4s,v22.4s,v3.4s
-    fmul v23.4s,v23.4s,v4.4s
+        ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [x4], #64
+        ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [x4]
 
-    fmul v24.4s,v24.4s,v1.4s
-    fmul v25.4s,v25.4s,v2.4s
-    fmul v26.4s,v26.4s,v3.4s
-    fmul v27.4s,v27.4s,v4.4s
+        fmul v20.4s,v20.4s,v4.4s
+        fmul v21.4s,v21.4s,v5.4s
+        fmul v22.4s,v22.4s,v6.4s
+        fmul v23.4s,v23.4s,v7.4s
 
-    fmul v28.4s,v28.4s,v1.4s
-    fmul v29.4s,v29.4s,v2.4s
-    fmul v30.4s,v30.4s,v3.4s
-    fmul v31.4s,v31.4s,v4.4s
+        fmul v24.4s,v24.4s,v8.4s
+        fmul v25.4s,v25.4s,v9.4s
+        fmul v26.4s,v26.4s,v10.4s
+        fmul v27.4s,v27.4s,v11.4s
 
+        fmul v28.4s,v28.4s,v12.4s
+        fmul v29.4s,v29.4s,v13.4s
+        fmul v30.4s,v30.4s,v14.4s
+        fmul v31.4s,v31.4s,v15.4s
+        b AddBias
+
+    TensorXTensor:
+        ld1 {v0.s}[0], [x4]
+
+        fmul v16.4s,v16.4s,v0.s[0]
+        fmul v17.4s,v17.4s,v0.s[0]
+        fmul v18.4s,v18.4s,v0.s[0]
+        fmul v19.4s,v19.4s,v0.s[0]
+
+        fmul v20.4s,v20.4s,v0.s[0]
+        fmul v21.4s,v21.4s,v0.s[0]
+        fmul v22.4s,v22.4s,v0.s[0]
+        fmul v23.4s,v23.4s,v0.s[0]
+
+        fmul v24.4s,v24.4s,v0.s[0]
+        fmul v25.4s,v25.4s,v0.s[0]
+        fmul v26.4s,v26.4s,v0.s[0]
+        fmul v27.4s,v27.4s,v0.s[0]
+
+        fmul v28.4s,v28.4s,v0.s[0]
+        fmul v29.4s,v29.4s,v0.s[0]
+        fmul v30.4s,v30.4s,v0.s[0]
+        fmul v31.4s,v31.4s,v0.s[0]
+        b AddBias
+
+    TensorXChannel:
+        ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x4]
+
+        fmul v16.4s,v16.4s,v0.4s
+        fmul v17.4s,v17.4s,v1.4s
+        fmul v18.4s,v18.4s,v2.4s
+        fmul v19.4s,v19.4s,v3.4s
+
+        fmul v20.4s,v20.4s,v0.4s
+        fmul v21.4s,v21.4s,v1.4s
+        fmul v22.4s,v22.4s,v2.4s
+        fmul v23.4s,v23.4s,v3.4s
+
+        fmul v24.4s,v24.4s,v0.4s
+        fmul v25.4s,v25.4s,v1.4s
+        fmul v26.4s,v26.4s,v2.4s
+        fmul v27.4s,v27.4s,v3.4s
+
+        fmul v28.4s,v28.4s,v0.4s
+        fmul v29.4s,v29.4s,v1.4s
+        fmul v30.4s,v30.4s,v2.4s
+        fmul v31.4s,v31.4s,v3.4s
+        b AddBias
+
+    ChannelXTensor:
+        ld1 {v0.4s}, [x4]
+        fmul v16.4s,v16.4s,v0.s[0]
+        fmul v17.4s,v17.4s,v0.s[0]
+        fmul v18.4s,v18.4s,v0.s[0]
+        fmul v19.4s,v19.4s,v0.s[0]
+
+        fmul v20.4s,v20.4s,v0.s[1]
+        fmul v21.4s,v21.4s,v0.s[1]
+        fmul v22.4s,v22.4s,v0.s[1]
+        fmul v23.4s,v23.4s,v0.s[1]
+
+        fmul v24.4s,v24.4s,v0.s[2]
+        fmul v25.4s,v25.4s,v0.s[2]
+        fmul v26.4s,v26.4s,v0.s[2]
+        fmul v27.4s,v27.4s,v0.s[2]
+
+        fmul v28.4s,v28.4s,v0.s[3]
+        fmul v29.4s,v29.4s,v0.s[3]
+        fmul v30.4s,v30.4s,v0.s[3]
+        fmul v31.4s,v31.4s,v0.s[3]
 AddBias:
     // +bias
     cbz x5, StoreData
