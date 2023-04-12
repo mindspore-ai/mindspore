@@ -27,6 +27,7 @@
 namespace mindspore::graphkernel {
 class ConvertOpUtils {
  public:
+  static bool CanConvertInputToAttr(const AnfNodePtr &node);
   static bool ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
   static void ConvertAttrToInput(const AnfNodePtr &node);
   static std::map<std::string, HashSet<size_t>> &GetOpIndexInfo() { return op_idx_info_; }
