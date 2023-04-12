@@ -103,6 +103,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
 SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context) {
   if (context != nullptr) {
     auto &device_contexts = context->MutableDeviceInfo();
+    constexpr auto mindrt_cpu_provider = "mindrt";
     for (auto device_context : device_contexts) {
       MS_EXCEPTION_IF_NULL(device_context);
       if (device_context->GetDeviceType() == kAscend) {
@@ -111,13 +112,24 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
         }
         return kSingleOpSession;
       }
-      if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {
+      if (device_context->GetDeviceType() == kGPU) {
         return kDelegateSession;
+      }
+      if (device_context->GetDeviceType() == kCPU) {
+        auto cpu_device = device_context->Cast<CPUDeviceInfo>();
+        if (!cpu_device) {
+          return kDelegateSession;
+        }
+        auto provider = cpu_device->GetProvider();
+        if (provider == mindrt_cpu_provider) {
+          return kDefaultSession;
+        }
       }
       if (device_context->GetDeviceType() == kAllDevice) {
         // Default Session support auto device context
         return kDefaultSession;
       }
+      return kDelegateSession;
     }
   }
   return kDefaultSession;

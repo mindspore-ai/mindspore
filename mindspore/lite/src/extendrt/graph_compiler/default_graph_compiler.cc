@@ -25,6 +25,12 @@
 #include "backend/graph_compiler/graph_partition.h"
 #include "ops/core_ops.h"
 #include "include/common/utils/utils.h"
+#include "extendrt/utils/func_graph_utils.h"
+#include "ir/manager.h"
+#include "base/base_ref.h"
+#include "abstract/abstract_value.h"
+#include "extendrt/graph_compiler/single_graph_compiler.h"
+#include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
 
 namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -36,19 +42,23 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
 
   inner_context_ = ContextUtils::Convert(context_.get());
-
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Partition Partition FunctionGraph Begin";
-  auto graph_segments = Partition(graph);
-  if (graph_segments.empty()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Partition partition graph failed";
+  if (inner_context_->Init() != RET_OK) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile init inner context failed";
     return nullptr;
   }
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Partition Partition FunctionGraph End";
+
+  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
+  auto graph_segments = Partition(graph);
+  if (graph_segments.empty()) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile partition graph failed";
+    return nullptr;
+  }
+  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph End";
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Schedule Graph Execute Plan Begin";
   auto execution_plan = Schedule(graph_segments, graph);
   if (execution_plan == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Partition partition graph failed";
+    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile Schedule graph segments failed";
     return nullptr;
   }
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Schedule Graph Execute Plan End";
@@ -63,6 +73,12 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
   }
 
   // if the context target is cpu, graph should convert to NHWC, call related pass
+  // convert the graph to NHWC format, this is because current nnacl ops only support NHWC
+  auto status = FuncGraphUtils::UnifyGraphToNHWCFormat(graph);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "DefaultGraphCompiler::Partition unify graph to NHWC failed";
+    return std::vector<GraphSegmentPtr>();
+  }
 
   // multi_target set false
   bool is_multi_target;
@@ -74,47 +90,60 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
   auto execution_plan = std::make_shared<infer::ExecutionPlan>();
   anf_tensor_map_.clear();
 
-  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *input_isolate_map =
-    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
-  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *output_isolate_map =
-    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
+  // set func graph manager
+  auto func_manager = func_graph->manager();
+  if (func_manager == nullptr) {
+    func_manager = Manage(func_graph, true);
+    func_graph->set_manager(func_manager);
+  }
 
   // Convert FuncGraph Input and Output AnfNode to Tensor and save in Execution Plan
   auto graph_inputs = func_graph->get_inputs();
   if (graph_inputs.empty()) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule get graph inputs node failed";
-    delete input_isolate_map;
-    delete output_isolate_map;
     return nullptr;
   }
   std::vector<AnfNodePtr> graph_outputs;
   auto graph_output = func_graph->output();
   if (graph_output == nullptr) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule get graph output node failed";
-    delete input_isolate_map;
-    delete output_isolate_map;
     return nullptr;
   }
   graph_outputs.emplace_back(graph_output);
-  auto graph_input_tensors = CreateTensors(graph_inputs);
-  if (graph_input_tensors.size() != graph_inputs.size()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule create graph input tensors failed";
-    delete input_isolate_map;
-    delete output_isolate_map;
-    return nullptr;
-  }
-  execution_plan->SetInputs(graph_input_tensors);
+  std::vector<infer::abstract::Tensor *> graph_input_tensors;
   auto graph_output_tensors = CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule create graph output tensor failed";
-    delete input_isolate_map;
-    delete output_isolate_map;
     return nullptr;
+  }
+  for (size_t i = 0; i < graph_outputs.size(); i++) {
+    auto output_node = graph_outputs[i];
+    auto output_tensor = graph_output_tensors[i];
+    auto it = anf_tensor_map_.find(output_node);
+    if (it == anf_tensor_map_.end()) {
+      anf_tensor_map_[output_node] = output_tensor;
+    }
   }
   execution_plan->SetOutputs(graph_output_tensors);
   execution_plan->SetContext(inner_context_);
-
+  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *input_isolate_map =
+    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
+  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *output_isolate_map =
+    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
   for (auto graph_segment : graph_segments) {
+    if (graph_segment->nodes_.size() == 1) {
+      auto node = graph_segment->nodes_[0];
+      if (node->isa<CNode>()) {
+        auto cnode = node->cast<CNodePtr>();
+        auto inps = cnode->inputs();
+        if (!inps.empty()) {
+          auto primitive = inps[0];
+          if (IsPrimitive(primitive, prim::kPrimReturn)) {
+            continue;
+          }
+        }
+      }
+    }
     FuncGraphPtr fg = nullptr;
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
@@ -127,19 +156,16 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
       return nullptr;
     }
     execution_flow->SetContext(inner_context_);
-
     for (size_t i = 0; i < execution_flow->GetInputs().size(); i++) {
       auto input_tensor = execution_flow->GetInputs()[i];
       auto input_node = inputs[i];
-      auto it = anf_tensor_map_.find(input_node);
-      if (it != anf_tensor_map_.end()) {
-        auto outter_tensor = it->second;
-        (*input_isolate_map)[input_tensor] = outter_tensor;
-      } else {
-        anf_tensor_map_[input_node] = input_tensor;
+      auto it = std::find_if(graph_inputs.begin(), graph_inputs.end(),
+                             [&input_node](const AnfNodePtr &node) { return node == input_node; });
+      if (it != graph_inputs.end()) {
+        input_tensor->set_category(lite::GRAPH_INPUT);
+        graph_input_tensors.emplace_back(input_tensor);
       }
     }
-
     for (size_t i = 0; i < execution_flow->GetOutputs().size(); i++) {
       auto output_tensor = execution_flow->GetOutputs()[i];
       auto output_node = outputs[i];
@@ -151,9 +177,9 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
         anf_tensor_map_[output_node] = output_tensor;
       }
     }
-
     execution_plan->AddExecutionFlow(execution_flow);
   }
+  execution_plan->SetInputs(graph_input_tensors);
   execution_plan->SetInputsMap(input_isolate_map);
   execution_plan->SetOutputsMap(output_isolate_map);
 
@@ -162,21 +188,39 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
 
 infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
   if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor cnode is nullptr";
+      return nullptr;
+    }
+    auto abstract = cnode->abstract();
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor abstract is nullptr";
+      return nullptr;
+    }
+    if (utils::isa<abstract::AbstractTensorPtr>(abstract)) {
+      auto tensor = infer::TensorAdapter::Convert2Tensor(abstract);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
+        return nullptr;
+      }
+      return tensor;
+    }
   } else if (node->isa<Parameter>()) {
     auto parameter_node = node->cast<ParameterPtr>();
     if (parameter_node == nullptr) {
-      MS_LOG(ERROR) << "parameter node is nullptr";
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor parameter node is nullptr";
       return nullptr;
     }
     ShapeVector shape_vector;
     TypeId data_type = kTypeUnknown;
     auto status = GetDTAndShapeFromParameter(parameter_node, &data_type, &shape_vector);
     if (status != kSuccess) {
-      MS_LOG(ERROR) << "get data_type and shape failed";
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor get data_type and shape failed";
       return nullptr;
     }
     if (data_type == kObjectTypeString) {
-      MS_LOG(ERROR) << "Not support String type";
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor not support String type";
       return nullptr;
     }
     std::vector<int> lite_shape;
@@ -184,7 +228,7 @@ infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
                    [](int64_t dim) { return static_cast<int>(dim); });
     auto lite_tensor = new lite::Tensor(data_type, lite_shape);
     if (lite_tensor == nullptr) {
-      MS_LOG(ERROR) << "New tensor failed, may be memory is not enough";
+      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor new tensor failed, may be memory is not enough";
       return nullptr;
     }
     anf_tensor_map_[node] = lite_tensor;
@@ -352,7 +396,11 @@ AnfNodePtr DefaultGraphCompiler::RefSubGraphNode(const FuncGraphPtr &fg, const A
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
     eqv[node] = node;
   } else if (eqv.find(node) == eqv.end()) {
-    inputs.push_back(node);
+    auto parameter = dyn_cast<Parameter>(node);
+    MS_EXCEPTION_IF_NULL(parameter);
+    if (!parameter->has_default()) {
+      inputs.push_back(node);
+    }
     eqv[node] = fg->add_parameter();
     eqv[node]->set_abstract(node->abstract());
     eqv[node]->set_kernel_info(node->kernel_info_ptr());
@@ -364,7 +412,9 @@ std::shared_ptr<infer::abstract::ExecutionFlow> DefaultGraphCompiler::Schedule(c
                                                                                const std::vector<AnfNodePtr> &inputs,
                                                                                const std::vector<AnfNodePtr> &outputs) {
   // implementation by hangangqiang
-  return nullptr;
+  auto compiler = std::make_shared<mindspore::infer::SingleGraphCompiler>(inner_context_);
+  infer::abstract::CompileOption option;
+  return compiler->Compile(graph_segment, inputs, outputs, option);
 }
 
 static std::shared_ptr<infer::abstract::GraphCompiler> DefaultGraphCompilerCreator(

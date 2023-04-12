@@ -41,6 +41,9 @@ class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
              const std::vector<std::vector<int64_t>> &dims) override;
 
  private:
+  bool Init();
+
+ private:
   std::string name_;
   std::shared_ptr<mindspore::lite::Executor> mindrt_executor_;
   std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_;

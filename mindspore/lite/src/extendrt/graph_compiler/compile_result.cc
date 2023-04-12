@@ -264,10 +264,10 @@ StatusCode CompileResult::AppendInputTensor(Tensor *tensor, bool is_borrow) {
     MS_LOG(ERROR) << "Input tensor has no name";
     return kLiteError;
   }
+  inputs_.emplace_back(tensor);
   if (!is_borrow) {
     return AppendTensor(tensor);
   }
-  inputs_.emplace_back(tensor);
   return kSuccess;
 }
 

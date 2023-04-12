@@ -77,6 +77,11 @@ class ExecutionPlan : public abstract::ExecutionPlan {
 
   std::vector<abstract::Kernel *> ToKernelList() override;
 
+  bool BuildKernels();
+
+ private:
+  bool MallocTensorData(abstract::Kernel *kernel);
+
  private:
   std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows_;
   FuncGraphPtr func_graph_;
@@ -87,6 +92,7 @@ class ExecutionPlan : public abstract::ExecutionPlan {
   abstract::KernelCallBack after_;
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map_ = nullptr;
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map_ = nullptr;
+  std::vector<abstract::Kernel *> kernel_list_;
 };
 }  // namespace mindspore::infer
 

@@ -25,6 +25,10 @@
 #include "include/common/utils/convert_utils.h"
 #include "mindspore/ccsrc/include/backend/optimizer/helper.h"
 
+#include "ops/op_name.h"
+#include "tools/optimizer/format/to_nhwc_format.h"
+#include "tools/optimizer/graph/decrease_transpose_algo.h"
+
 namespace mindspore {
 const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 ValuePtr FuncGraphUtils::GetNodeValuePtr(AnfNodePtr input_node) {
@@ -229,6 +233,25 @@ ShapeVector FuncGraphUtils::GetTensorShape(const AnfWithOutIndex &tensor) {
     shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
   }
   return shape;
+}
+
+Status FuncGraphUtils::UnifyGraphToNHWCFormat(const FuncGraphPtr &graph) {
+  auto value = graph->get_attr(ops::kFormat);
+  if (value != nullptr && GetValue<int64_t>(value) != mindspore::NHWC) {
+    auto format_pass = std::make_shared<opt::ToNHWCFormat>();
+    MS_CHECK_TRUE_RET(format_pass != nullptr, kLiteNullptr);
+    if (!format_pass->Run(graph)) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::Partition Run ToNHWCFormat pass failed";
+      return kLiteNullptr;
+    }
+    auto transpose_pass = std::make_shared<opt::DecreaseTransposeAlgo>();
+    MS_CHECK_TRUE_RET(transpose_pass != nullptr, kLiteNullptr);
+    if (!transpose_pass->Run(graph)) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::Partition Run DecreaseTransposeAlgo pass failed";
+      return kLiteNullptr;
+    }
+  }
+  return kSuccess;
 }
 
 std::string FuncGraphUtils::GetTensorName(const AnfWithOutIndex &tensor) {

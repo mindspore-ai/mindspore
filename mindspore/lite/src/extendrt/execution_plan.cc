@@ -45,20 +45,62 @@ ExecutionPlan::~ExecutionPlan() {
   }
 }
 
-std::vector<abstract::Kernel *> ExecutionPlan::ToKernelList() {
-  std::vector<abstract::Kernel *> kernels;
+std::vector<abstract::Kernel *> ExecutionPlan::ToKernelList() { return kernel_list_; }
+
+bool ExecutionPlan::BuildKernels() {
   for (auto flow : execution_flows_) {
     if (flow == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::ToKernelList get nullptr execution flow.";
-      return std::vector<abstract::Kernel *>{};
+      MS_LOG(ERROR) << "ExecutionPlan::BuildKernels get nullptr execution flow.";
+      return false;
     }
     auto kernel = flow->ConstructFusionKernel();
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::ToKernelList construct execution flow to Sub Graph Kernel failed.";
-      return std::vector<abstract::Kernel *>{};
+      MS_LOG(ERROR) << "ExecutionPlan::BuildKernels construct execution flow to Sub Graph Kernel failed.";
+      return false;
     }
-    kernels.emplace_back(kernel);
+    auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+    for (auto &node : subgraph_kernel->nodes()) {
+      auto ret = node->Prepare();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "ExecutionPlan::ToKernelList node: " << node->name() << " prepare failed.";
+        return false;
+      }
+    }
+    if (!MallocTensorData(subgraph_kernel)) {
+      MS_LOG(ERROR) << "ExecutionPlan::ToKernelList malloc memory for kernel: " << subgraph_kernel->name()
+                    << " failed.";
+      return false;
+    }
+    kernel_list_.emplace_back(kernel);
   }
-  return kernels;
+  return true;
+}
+
+bool ExecutionPlan::MallocTensorData(abstract::Kernel *kernel) {
+  auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+  if (subgraph_kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
+    MS_LOG(ERROR)
+      << "ExecutionPlan::MallocTensorData subgraph target is not GPU, cannot malloc data with default allocator";
+    return false;
+  }
+  auto kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph_kernel)->nodes();
+  for (auto kernel : kernel_list) {
+    for (auto tensor : kernel->out_tensors()) {
+      if (tensor->data() == nullptr) {
+        tensor->MallocData();
+      }
+    }
+    for (auto tensor : kernel->in_tensors()) {
+      if (tensor->data() == nullptr) {
+        tensor->MallocData();
+      } else {
+        if (tensor->category() == lite::VAR) {
+          auto ref_count = tensor->init_ref_count();
+          tensor->set_init_ref_count(ref_count + 1);
+        }
+      }
+    }
+  }
+  return true;
 }
 }  // namespace mindspore::infer

@@ -103,11 +103,11 @@ Status DefaultInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor>
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to input tensors failed";
     return status;
   }
-  status = CopyDataToInnerTensors(*outputs, inner_outputs);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to output tensors failed";
-    return status;
-  }
+  // status = CopyDataToInnerTensors(*outputs, inner_outputs);
+  // if (status != kSuccess) {
+  //   MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to output tensors failed";
+  //   return status;
+  // }
   status = runtime->Execute(inner_inputs, inner_outputs);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Execute Execution Plan Failed";
@@ -129,6 +129,26 @@ Status DefaultInferSession::RunGraph(uint32_t graph_id, const std::vector<tensor
 
 Status DefaultInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
+  MS_LOG(DEBUG) << "DefaultInferSession::Resize Execute ExecutionPlan Begin";
+  auto runtime = this->GetGraphRuntime();
+  if (runtime_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultInferSession::Resize Runtime in Infer Session is null";
+    return kLiteNullptr;
+  }
+  // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
+  // std::vector<infer::abstract::Tensor *> input_tensors;
+  // std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_tensors), [](const tensor::Tensor &tensor) {
+
+  //   auto input_tensor = new infer::abstract::Tensor();
+  // });
+  auto inner_inputs = runtime->GetInputs();
+  auto status = runtime->Resize(inner_inputs, dims);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "DefaultInferSession::Resize Execute Execution Plan Failed";
+    return status;
+  }
+
+  MS_LOG(DEBUG) << "DefaultInferSession::Resize Execute ExecutionPlan End";
   return kSuccess;
 }
 
@@ -154,16 +174,43 @@ std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs(uint32_t) {
   return AbstractTensorsToTensorImpls(lite_inputs);
 }
 
-std::vector<std::string> DefaultInferSession::GetOutputNames(uint32_t) { return std::vector<std::string>(); }
-std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t) { return std::vector<std::string>(); }
-MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t, const std::string &tensorName) {
+std::vector<std::string> DefaultInferSession::GetOutputNames(uint32_t graph_id) {
+  auto runtime = this->GetGraphRuntime();
+  if (runtime_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultInferSession::GetOutputNames Runtime in Infer Session is null";
+    return std::vector<std::string>{};
+  }
+  std::vector<std::string> output_names;
+  auto lite_outputs = runtime->GetOutputs();
+  MS_LOG(DEBUG) << "DefaultInferSession::GetOutputNames get runtime output tensor";
+  std::transform(lite_outputs.begin(), lite_outputs.end(), std::back_inserter(output_names),
+                 [](infer::abstract::Tensor *tensor) { return tensor->tensor_name(); });
+  return output_names;
+}
+
+std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t graph_id) {
+  auto runtime = this->GetGraphRuntime();
+  if (runtime_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultInferSession::GetInputNames Runtime in Infer Session is null";
+    return std::vector<std::string>{};
+  }
+  std::vector<std::string> input_names;
+  auto lite_inputs = runtime->GetInputs();
+  MS_LOG(DEBUG) << "DefaultInferSession::GetInputNames get runtime output tensor";
+  std::transform(lite_inputs.begin(), lite_inputs.end(), std::back_inserter(input_names),
+                 [](infer::abstract::Tensor *tensor) { return tensor->tensor_name(); });
+  return input_names;
+}
+MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
   return nullptr;
 }
-MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t, const std::string &name) { return nullptr; }
+MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t graph_id, const std::string &name) {
+  return nullptr;
+}
 
 Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
                                                    std::vector<infer::abstract::Tensor *> inner_tensors) {
-  if (tensors.size() == inner_tensors.size()) {
+  if (tensors.size() != inner_tensors.size()) {
     MS_LOG(EXCEPTION) << "user input size " << tensors.size() << " is not equal to graphp input size "
                       << inner_tensors.size();
   }
