@@ -160,6 +160,7 @@ def test_tdt_consume_beyond_produce():
     Expectation: Returns fail and raises excrption.
     """
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(op_timeout=30)
 
     batch_size = 64
     repeat_num = 1
