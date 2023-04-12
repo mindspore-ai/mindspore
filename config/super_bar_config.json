@@ -461,7 +461,8 @@
     "SparseReshape": "not support tbe, loss transpose and input is not const, use AI CPU instead",
     "PadV3": "Accuracy issues in AiCore, use AiCPU instead",
     "BNInferGrad": "Currently, the input whose format is NCH is not supported in AiCore.",
-    "AvgPool": "not support strides > 63."
+    "AvgPool": "not support strides > 63.",
+    "GatherNd": "Can't call check_supported function."
   },
   "SkipNodes": [
     "Im2col",
@@ -499,7 +500,8 @@
     "SparseReshape",
     "PadV3",
     "BNInferGrad",
-    "AvgPool"
+    "AvgPool",
+    "GatherNd"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
