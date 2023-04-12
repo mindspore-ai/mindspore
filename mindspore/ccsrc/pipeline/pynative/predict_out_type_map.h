@@ -75,6 +75,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"BasicLSTMCellInputGrad", kTupleTensor2},
                                                        {"BasicLSTMCellWeightGrad", kTupleTensor2},
                                                        {"BatchNorm", kTupleTensor5},
+                                                       {"SyncBatchNorm", kTupleTensor5},
                                                        {"BatchNormFold2GradD", kTupleTensor4},
                                                        {"BatchNormFold2GradReduce", kTupleTensor2},
                                                        {"BatchNormFoldD", kTupleTensor7},
