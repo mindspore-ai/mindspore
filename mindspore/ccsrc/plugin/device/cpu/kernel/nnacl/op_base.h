@@ -121,6 +121,10 @@
 #define FIFTH_INPUT 4
 #define SIXTH_INPUT 5
 
+#define ONE_TENSOR 1
+#define TWO_TENSOR 2
+#define THREE_TENSOR 3
+
 #define DIMENSION_0D 0
 #define DIMENSION_1D 1
 #define DIMENSION_2D 2
