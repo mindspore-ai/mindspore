@@ -17,12 +17,22 @@
 #ifdef USE_OPENCL_WRAPPER
 
 #include "src/litert/kernel/gpu/opencl/opencl_wrapper.h"
-#include <dlfcn.h>
 #include <memory>
 #include <string>
 #include <vector>
 #include <iostream>
 #include "src/common/log_adapter.h"
+
+#ifdef _WIN32
+// Override dlopen with LoadLibrary on Windows.
+#include <libloaderapi.h>
+#define dlopen(path, flag) LoadLibraryEx(path, NULL, 0)
+#define dlclose(args) FreeLibrary((HMODULE)(args))
+#define dlsym(handle, func) GetProcAddress((HMODULE)(handle), func)
+#define dlerror() GetLastError()
+#else
+#include <dlfcn.h>
+#endif
 
 namespace mindspore::lite::opencl {
 // default opencl library path
@@ -60,6 +70,8 @@ static const std::vector<std::string> g_opencl_library_paths = {
   "libOpenCL.so",
   // intel
   "/opt/intel/system_studio_2020/opencl/SDK/lib64/libOpenCL.so",
+#elif defined(_WIN32)
+  "C:\\Windows\\System32\\OpenCL.dll"
 #endif
 };
 

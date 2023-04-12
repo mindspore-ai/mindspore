@@ -15,7 +15,6 @@
  */
 
 #include "include/registry/opencl_runtime_wrapper.h"
-#include <dlfcn.h>
 #include <vector>
 #include <numeric>
 #include <utility>
@@ -56,7 +55,7 @@ Status OpenCLRuntimeWrapper::BuildKernel(cl::Kernel *kernel, const std::vector<c
 Status OpenCLRuntimeWrapper::SetKernelArg(const cl::Kernel &kernel, uint32_t index, void *const value) {
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap;
   lite::opencl::OpenCLRuntime *ocl_runtime = ocl_runtime_wrap.GetInstance();
-  if (ocl_runtime->SetKernelArg(kernel, index, value) != CL_SUCCESS) {
+  if (ocl_runtime->SetKernelArg(const_cast<cl::Kernel &>(kernel), index, value) != CL_SUCCESS) {
     return kLiteError;
   } else {
     return kSuccess;

@@ -15,10 +15,14 @@
  */
 
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
-#include <dlfcn.h>
 #include <vector>
 #include <numeric>
 #include <utility>
+
+#ifdef __ANDROID__
+#include <dlfcn.h>
+#endif
+
 #include "include/errorcode.h"
 #include "src/litert/kernel/opencl/utils.h"
 #include "src/litert/kernel/gpu/opencl/opencl_allocator.h"
@@ -286,6 +290,7 @@ int OpenCLRuntime::Init() {
     return ms_ret;
   }
 
+#ifdef __ANDROID__
   // only support mali device.
   if (gpu_info_.type == MALI || gpu_info_.type == MALI_T || gpu_info_.type == MALI_G || gpu_info_.type == MALI_G78) {
     clImportMemoryARM = reinterpret_cast<clImportMemoryARMFunc>(dlsym(handle_, "clImportMemoryARM"));
@@ -305,6 +310,7 @@ int OpenCLRuntime::Init() {
       return false;
     }
   }
+#endif
 
   ms_ret = InitQueue(&platforms);
   if (ms_ret != RET_OK) {
