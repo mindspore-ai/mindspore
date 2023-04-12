@@ -68,6 +68,7 @@ struct FrontendOpRunInfo {
   bool grad_flag = false;
   bool output_get_by_infer_value = false;
   bool should_be_cache = false;
+  bool is_ms_function_input = false;
   int mix_type{0};
   size_t input_size = 0;
   PrimitivePtr op_prim{nullptr};
@@ -77,6 +78,9 @@ struct FrontendOpRunInfo {
   std::string cell_obj_id;
   std::vector<AbstractBasePtr> input_abs;
   std::vector<ValuePtr> input_value;
+  std::vector<bool> input_unused_in_bprop;
+  // Hold tensorGradType
+  std::vector<TensorGradType> input_value_grad_type;
   std::vector<std::string> input_value_id;
   stub::StubNodePtr stub_output;
   std::vector<Signature> signatures;

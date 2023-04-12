@@ -44,7 +44,6 @@ struct Common {
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
   static ValuePtr FilterSensValues(const ValuePtr &value);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
-  static void SetForwardOutputFlag(const ValuePtr &v);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   static TypeId GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
   static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
@@ -52,9 +51,17 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
-  static ValuePtr InitGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell = nullptr,
-                               const TensorGradType &grad_type = TensorGradType::kConstant, size_t op_index = 0);
   static void GetConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info);
+  static ValueNodePtr CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs = nullptr);
+  static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value);
+  static tensor::TensorPtr CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor);
+  static inline bool IsParamTensor(TensorGradType grad_type) {
+    return grad_type == TensorGradType::kParameter || grad_type == TensorGradType::kInput;
+  }
+  static inline bool IsConstantTensor(TensorGradType grad_type) { return grad_type == TensorGradType::kConstant; }
+  static TensorGradType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell,
+                                         TensorGradType grad_type);
+  static TensorGradType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
 };
 
 // Parser python
@@ -63,26 +70,31 @@ struct PyParser {
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
                                       bool stub = false);
+  static void PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info);
 };
 
 // Data convert
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
-  static ValuePtr BaseRefToValue(const BaseRef &value);
-  static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
+  static ValuePtr BaseRefToValue(const BaseRef &value, bool grad_flag);
+  static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool grad_flag);
   static void FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
-  static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
+  static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
+                             const TopCellInfoPtr &top_cell);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
-                                           const tensor::CSRTensorPtr &csr_tensor);
-  static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor);
+                                           const tensor::CSRTensorPtr &csr_tensor, const TopCellInfoPtr &top_cell,
+                                           size_t index);
+  static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
+                               const TopCellInfoPtr &top_cell, size_t index);
   static void ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                       size_t index);
+                                       size_t index, const TopCellInfoPtr &top_cell);
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                        size_t index);
-  static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index);
+                                        size_t index, const TopCellInfoPtr &top_cell);
+  static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
+                                   const TopCellInfoPtr &top_cell);
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                            size_t input_index);
 };

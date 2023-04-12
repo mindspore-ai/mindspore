@@ -765,7 +765,7 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   /// @brief Get Pynative auto_grad meta data.
   /// @return Auto grad meta data
-  const AutoGradMetaDataPtr auto_grad_meta_data() const { return auto_grad_meta_data_; }
+  const AutoGradMetaDataPtr &auto_grad_meta_data() const { return auto_grad_meta_data_; }
 
   /// @brief Set Pynative auto_grad meta data.
   /// @param auto_grad_meta_data

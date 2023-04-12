@@ -375,13 +375,21 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   op_run_info->run_in_vm = true;
+  if (op_run_info->grad_flag) {
+    for (size_t i = 0; i < op_run_info->input_size; i++) {
+      op_run_info->input_value_grad_type[i] =
+        PyNativeAlgo::Common::SetValueGradInfo(op_run_info->input_value[i], nullptr, TensorGradType::kConstant);
+      (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
+        op_run_info->input_value[i]->cast<tensor::TensorPtr>());
+    }
+  }
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       bool input_is_tensor = op_run_info->input_value[i]->isa<tensor::Tensor>();
       if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
           op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
-        auto tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
+        const auto &tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
         // Just get new tensor id
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         new_tensor->set_device_address(tensor->device_address());
@@ -393,6 +401,9 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       }
     }
     auto result_v = std::make_shared<ValueTuple>(result);
+    if (op_run_info->grad_flag) {
+      (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
+    }
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
   }
@@ -410,11 +421,14 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
   ValuePtr result_v = PyNativeAlgo::DataConvert::PyObjToValue(result);
-  MS_LOG(DEBUG) << "RunOpInVM end";
-  if (result_v->isa<ValueSequence>()) {
-    return result_v;
+  if (!result_v->isa<ValueSequence>()) {
+    result_v = std::make_shared<ValueTuple>(std::vector{result_v});
   }
-  return std::make_shared<ValueTuple>(std::vector{result_v});
+  if (op_run_info->grad_flag) {
+    (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
+  }
+  MS_LOG(DEBUG) << "RunOpInVM end";
+  return result_v;
 }
 
 void ForwardExecutor::CheckIfNeedSyncForHeterogeneous(const std::string &cur_target) {
@@ -541,7 +555,8 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
-  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target);
+  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target,
+                                            op_run_info->grad_flag ? grad()->top_cell() : nullptr);
   // get graph info for checking it whether existing in the cache
   op_run_info->base_op_run_info.graph_info =
     pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
@@ -566,7 +581,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   if (op_run_info->base_op_run_info.has_dynamic_output) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
-  const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs);
+  const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->grad_flag);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;

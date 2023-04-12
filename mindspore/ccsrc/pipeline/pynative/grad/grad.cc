@@ -39,46 +39,6 @@ const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHo
 const char kGrad[] = "grad";
 const size_t kMaxCacheDynamicShapeCellNum = 2;
 
-void ClearDeviceAddress(const ValuePtr &value) {
-  std::vector<tensor::TensorPtr> tensors;
-  TensorValueToTensor(value, &tensors);
-  for (auto tensor : tensors) {
-    tensor->set_device_address(nullptr);
-  }
-}
-
-void ClearDeviceAddress(const ValuePtr &value, const std::vector<size_t> &tuple_indices) {
-  std::vector<tensor::TensorPtr> tensors;
-  TensorValueToTensor(value, &tensors);
-  for (auto i : tuple_indices) {
-    if (i < tensors.size()) {
-      tensors[i]->set_device_address(nullptr);
-      tensors[i]->set_is_forward_output(false);
-    }
-  }
-}
-
-void SetGradType(const ValuePtr &value, const TensorGradType &grad_type) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor_value = value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor_value);
-    auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    auto_grad_meta_data->set_grad_type(grad_type);
-  } else if (value->isa<ValueSequence>()) {
-    const auto &value_seq = value->cast<ValueSequencePtr>();
-    MS_EXCEPTION_IF_NULL(value_seq);
-    for (const auto &val : value_seq->value()) {
-      SetGradType(val, grad_type);
-    }
-  } else if (value->isa<stub::StubNode>()) {
-    auto stub_node = value->cast<stub::StubNodePtr>();
-    MS_EXCEPTION_IF_NULL(stub_node);
-    return SetGradType(stub_node->WaitValue(), grad_type);
-  }
-}
-
 std::string GetCellId(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info) {
   auto cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
   auto fn = [&cell_id](const abstract::AbstractBasePtr &abs) {
@@ -147,10 +107,9 @@ AnfNodePtr GetNonTensorInput(const ValuePtr &v, const std::string &obj_id) {
                                [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); });
   }
   if (is_single_non_tensor || !mixed_tensor) {
-    auto node = NewValueNode(v);
-    MS_LOG(DEBUG) << "Get input value node " << node->ToString() << ", id " << obj_id;
-    node->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract()));
-    return node;
+    auto v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v);
+    MS_LOG(DEBUG) << "Get input value node " << v_node->ToString() << ", id " << obj_id;
+    return v_node;
   }
   return nullptr;
 }
@@ -309,7 +268,7 @@ void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<st
     if (auto_meta_data == nullptr) {
       node_info.value = input;
       node_info.grad_type = TensorGradType::kConstant;
-      (void)node_inputs->emplace_back(std::move(std::make_pair(value_idx, node_info)));
+      (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
       return;
     }
     node_info.grad_type = auto_meta_data->grad_type();
@@ -317,7 +276,7 @@ void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<st
     if (node_info.grad_type == TensorGradType::kConstant || node_info.grad_type == TensorGradType::kParameter) {
       node_info.value = input;
     }
-    (void)node_inputs->emplace_back(std::move(std::make_pair(value_idx, node_info)));
+    (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
   } else if (input->isa<ValueSequence>()) {
     auto value_sequence = input->cast<ValueSequencePtr>();
     for (size_t i = 0; i < value_sequence->value().size(); ++i) {
@@ -332,7 +291,7 @@ void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<st
     NodeInfo node_info;
     node_info.grad_type = TensorGradType::kConstant;
     node_info.value = input;
-    (void)node_inputs->emplace_back(std::move(std::make_pair(value_idx, node_info)));
+    (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
   }
 }
 
@@ -366,18 +325,6 @@ bool IsDynamicDetectInputChange(const std::vector<std::pair<std::string, NodeInf
                     << " value is: " << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
                     << " new_node op index is: " << new_node_info.op_index
                     << " value is: " << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "");
-      return true;
-    }
-  }
-  return false;
-}
-
-bool IsNeedGrad(const ValuePtr &value) {
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
-    auto auto_grad_meta_data = tensor->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    if (auto_grad_meta_data->grad_type() != TensorGradType::kConstant) {
       return true;
     }
   }
@@ -449,7 +396,7 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   if (input_args_info->input_arg_value_vec.size() == args.size()) {
     input_args_info->input_arg_value_vec.pop_back();
   }
-  (void)input_args_info->input_arg_value_vec.emplace_back(ShallowCopyTensorValue(sens_tensor));
+  (void)input_args_info->input_arg_value_vec.emplace_back(sens_tensor);
   input_args_info->has_sens = true;
 }
 
@@ -506,6 +453,73 @@ tensor::TensorPtr GetTensorFromOutValue(size_t index, const ValuePtr &v) {
   }
   return v_seq->value()[index - kIndex1]->cast<tensor::TensorPtr>();
 }
+
+void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &op_run_info, ValuePtr *const output) {
+  // Special cases, manually free more inputs.
+  static mindspore::HashSet<std::string> kMulOp{
+    kMulOpName,
+    kMatMulOpName,
+    kConv2DOpName,
+  };
+  static mindspore::HashSet<std::string> kDivOp{
+    kDivOpName,
+    kRealDivOpName,
+  };
+  if (op_name == kBatchNormOpName) {
+    // 1. BatchNorm is a multi-output node, it's out[0] and out[1] are not used.
+    auto seq_v = (*output)->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_v);
+    ValuePtrList new_v_list{seq_v->value()};
+    new_v_list[kIndex0] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(new_v_list[kIndex0]);
+    new_v_list[kIndex1] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(new_v_list[kIndex1]);
+    *output = std::make_shared<ValueTuple>(new_v_list);
+    MS_LOG(DEBUG) << "Clear device address for output[0, 1] of " << op_name;
+  } else if (kMulOp.find(op_name) != kMulOp.end()) {
+    // 2. For operators like Mul, the dx ONLY rely on y, and dy ONLY rely on x.
+    //    so if y is a valuenode, the dy is useless, we can free x in ahead.
+    bool x_is_const_value = PyNativeAlgo::Common::IsConstantTensor(op_run_info->input_value_grad_type[kIndex0]);
+    bool y_is_const_value = PyNativeAlgo::Common::IsConstantTensor(op_run_info->input_value_grad_type[kIndex1]);
+    if (x_is_const_value) {
+      op_run_info->input_value[kIndex1] =
+        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex1]);
+      MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << op_name;
+    }
+    if (y_is_const_value) {
+      op_run_info->input_value[kIndex0] =
+        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex0]);
+      MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << op_name;
+    }
+  } else if (kDivOp.find(op_name) != kDivOp.end()) {
+    // 3. For operators like Div, the dy does not rely on output node, so if y is a valuenode, we can free output.
+    if (PyNativeAlgo::Common::IsConstantTensor(op_run_info->input_value_grad_type[kIndex1])) {
+      *output = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(*output);
+      MS_LOG(DEBUG) << "Clear device address for the output of " << op_name;
+    }
+  }
+}
+
+autograd::GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  bool out_used_in_bporp_graph = true;
+  // Out_value will be passed to python, so can not change here
+  auto out_v = op_run_info->out_value;
+  // Free bprop not used output
+  if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
+    // Process output
+    out_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(out_v);
+    out_used_in_bporp_graph = false;
+  }
+  // Free special op memory
+  FreeSpecialOpValue(op_run_info->op_prim->name(), op_run_info, &out_v);
+
+  auto grad_param =
+    std::make_shared<autograd::GradParam>(op_run_info->op_prim, op_run_info->input_value, op_run_info->input_abs, out_v,
+                                          op_run_info->base_op_run_info.abstract, nullptr, nullptr,
+                                          !top_cell->is_high_order_top_cell(), top_cell->use_dynamic_shape_process());
+  grad_param->op_args_grad_type = op_run_info->input_value_grad_type;
+  grad_param->out_used_in_bporp_graph = out_used_in_bporp_graph;
+  return grad_param;
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -524,8 +538,7 @@ void GradExecutor::Init() {
   MS_LOG(DEBUG) << "Do windows bprop expander register";
 #endif
   init_ = true;
-  MS_EXCEPTION_IF_NULL(async_executor_);
-  async_executor_->Init();
+  save_graphs_ = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
 }
 
 TopCellInfoPtr GradExecutor::PopHighOrderGraphStack() {
@@ -582,15 +595,15 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   AbstractBasePtrList abs_list;
   for (size_t i = 0; i < input_args_info->input_size; ++i) {
     const auto &v = input_value[i];
-    auto cloned_v = PyNativeAlgo::Common::InitGradInfo(v, top_cell(), TensorGradType::kInput);
-    ClearDeviceAddress(cloned_v);
-    (void)input_param_values.emplace_back(cloned_v);
+    (void)PyNativeAlgo::Common::SetValueGradInfo(v, top_cell(), TensorGradType::kInput);
+    auto new_param = curr_g()->add_parameter();
+    (void)input_param_values.emplace_back(v);
     auto param_i_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract());
     (void)abs_list.emplace_back(param_i_abs);
-    RecordForwardGraphForInput(cloned_v, input_args_info->input_arg_id_vec[i], param_i_abs);
+    RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
   top_cell()->set_auto_grad_cell_ptr(
-    autograd::GradPynativeCellBegin(input_param_values, abs_list, op_num_in_bprop_graph_));
+    std::make_shared<autograd::AutoGradCellImpl>(input_param_values, abs_list, op_num_in_bprop_graph_));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -755,15 +768,16 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &
     auto coo_tensorptr = v->cast<tensor::COOTensorPtr>();
     value = coo_tensorptr->GetValues();
   }
+  (void)PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, TensorGradType::kConstant);
   // Set last output abstract and will be used for sens
-  auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  auto cloned_value = PyNativeAlgo::Common::InitGradInfo(value, top_cell());
-  ClearDeviceAddress(cloned_value);
   if (forward()->enable_async()) {
-    AsyncUpdateOutputNodeOfTopCell(cloned_value);
+    auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
+    auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
+    auto fn = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
+    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
   } else {
-    auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(cloned_value);
+    top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value));
   }
 }
 
@@ -869,8 +883,8 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
                        std::back_inserter(op_run_info->input_abs), [](auto &value) {
                          return PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
                        });
-
-  DoOpGrad(op_run_info, input_args_info->out_value);
+  PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
+  DoOpGrad(op_run_info);
   auto inputs = op_run_info->input_value;
   auto node_info = std::make_shared<DynamicDetectNodeInfo>();
   node_info->prim = op_run_info->op_prim;
@@ -1008,7 +1022,7 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
-  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->WaitForwardTask();
+  forward()->WaitForwardTask();
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
@@ -1237,8 +1251,7 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
 FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, const vector<tensor::TensorPtr> &w_args,
                                          const vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-  auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  FuncGraphPtr bprop_graph = autograd::GradPynativeCellEnd(auto_grad_cell_ptr, w_args, p_args, grad_attr);
+  FuncGraphPtr bprop_graph = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr);
 
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
   std::ostringstream ss;
@@ -1374,7 +1387,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   auto inner_graph_info = top_cell()->graph_info_map().at(curr_g());
   SwitchTopCell();
 
-  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out);
+  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true);
   // Get output values
   if (has_custom_bprop && !out_value->isa<ValueSequence>()) {
     std::vector<ValuePtr> out_v{out_value};
@@ -1396,21 +1409,17 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     grad_fg = ad::Grad(first_grad_fg, opt);
     set_eliminate_forward(true);
   }
-  std::vector<ValuePtr> inputs;
-  (void)std::transform(input_args.begin(), input_args.end(), std::back_inserter(inputs),
-                       [this](const ValuePtr &value) { return PyNativeAlgo::Common::InitGradInfo(value, top_cell()); });
-  ValuePtr cloned_out =
-    PyNativeAlgo::Common::InitGradInfo(out_value, top_cell(), TensorGradType::kOpOutput, top_cell()->op_index());
   std::vector<abstract::AbstractBasePtr> input_abs;
-  (void)std::transform(input_args.begin(), input_args.end(), std::back_inserter(input_abs), [](auto &value) {
-    return PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
-  });
+  for (const auto &in : input_args) {
+    (void)input_abs.emplace_back(PyNativeAlgo::Common::SetAbstractValueToAnyValue(in->ToAbstract()));
+  }
   auto out_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(out_value->ToAbstract());
   auto grad_param =
-    std::make_shared<autograd::GradParam>(nullptr, inputs, input_abs, cloned_out, out_abs, grad_fg, first_grad_fg,
+    std::make_shared<autograd::GradParam>(nullptr, input_args, input_abs, out_value, out_abs, grad_fg, first_grad_fg,
                                           !top_cell()->is_high_order_top_cell(), use_dynamic_shape_process);
   grad_param->is_not_support_by_expander = is_not_support_by_expander;
   grad_param->graph_cache_key = cur_top_cell_id;
+  grad_param->op_args_grad_type = std::vector<TensorGradType>(input_args.size(), TensorGradType::kParameter);
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph ";
   }
@@ -1522,6 +1531,7 @@ void GradExecutor::ClearGradRes() {
       top_cell_ = nullptr;
     }
   }
+  top_input_args_info_ = nullptr;
   DecreaseGradOrder();
   ClearGlobalRes();
   grad_operation_.clear();
@@ -1583,10 +1593,9 @@ AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const
   if (node != nullptr) {
     return node;
   }
-  node = NewValueNode(v);
-  node->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract()));
-  MS_LOG(DEBUG) << "Get input value node " << node->ToString() << ", id " << obj_id;
-  return node;
+  auto v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v);
+  MS_LOG(DEBUG) << "Get input value node " << v_node->ToString() << ", id " << obj_id;
+  return v_node;
 }
 
 AnfNodePtr GradExecutor::GetParamInput(const ValuePtr &v, const std::string &id) const {
@@ -1764,7 +1773,7 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
 void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   RecordForwardGraph(op_run_info);
-  DoOpGrad(op_run_info, op_run_info->out_value);
+  DoOpGrad(op_run_info);
   if (op_run_info->stub_output != nullptr) {
     op_run_info->stub_output->SetValue(op_run_info->out_value);
   }
@@ -1792,102 +1801,21 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOp
   top_cell()->SetNodeMapInGraphInfoMap(obj_id, cnode);
 }
 
-bool GradExecutor::FreeUselessTensors(const PrimitivePtr &prim, const ValuePtrList &inputs,
-                                      const ValuePtr &output) const {
-  bool out_is_used = true;
-  const auto &unused_inputs = BpropExpander().GetUnusedInputs(prim);
-  auto is_unused_index = [&unused_inputs](size_t i) {
-    return std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end();
-  };
-  for (size_t i = 0; i < inputs.size(); i++) {
-    if (is_unused_index(i)) {
-      ClearDeviceAddress(inputs[i]);
-      MS_LOG(DEBUG) << "Clear device address for inputs[" << i << "] of " << prim->name();
-    }
-  }
-  if (is_unused_index(inputs.size())) {
-    ClearDeviceAddress(output);
-    out_is_used = false;
-    MS_LOG(DEBUG) << "Clear device address for the output of " << prim->name();
-  }
-
-  // special cases, manually free more inputs.
-  if (prim->name() == prim::kPrimBatchNorm->name()) {
-    // 1. BatchNorm is a multi-output node, it's out[0] and out[1] are not used.
-    ClearDeviceAddress(output, {kIndex0, kIndex1});
-    MS_LOG(DEBUG) << "Clear device address for output[0, 1] of " << prim->name();
-  } else if (prim->name() == prim::kPrimConv2D->name() || prim->name() == prim::kPrimMul->name() ||
-             prim->name() == prim::kPrimMatMul->name()) {
-    // 2. For operators like Mul, the dx ONLY rely on y, and dy ONLY rely on x.
-    //    so if y is a valuenode, the dy is useless, we can free x in ahead.
-    if (!IsNeedGrad(inputs[kIndex0])) {
-      ClearDeviceAddress(inputs[kIndex1]);
-      MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << prim->name();
-    }
-    if (!IsNeedGrad(inputs[kIndex1])) {
-      ClearDeviceAddress(inputs[kIndex0]);
-      MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << prim->name();
-    }
-  } else if (prim->name() == prim::kPrimDiv->name() || prim->name() == prim::kPrimRealDiv->name()) {
-    // 3. For operators like Div, the dy does not rely on output node, so if y is a valuenode, we can free output.
-    if (!IsNeedGrad(inputs[kIndex1])) {
-      ClearDeviceAddress(output);
-      out_is_used = false;
-      MS_LOG(DEBUG) << "Clear device address for the output of " << prim->name();
-    }
-  }
-
-  return out_is_used;
-}
-
 // Run ad grad for curr op and connect grad graph with previous op
-void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &op_out) const {
+void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (grad_is_running_ && !bprop_grad_stack_.top().second) {
     MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
     return;
   }
-
-  ValuePtrList cloned_op_args;
-  (void)std::transform(op_run_info->input_value.begin(), op_run_info->input_value.end(),
-                       std::back_inserter(cloned_op_args),
-                       [this](const ValuePtr &value) { return PyNativeAlgo::Common::InitGradInfo(value, top_cell()); });
-  ValuePtr cloned_out =
-    PyNativeAlgo::Common::InitGradInfo(op_out, top_cell(), TensorGradType::kOpOutput, top_cell()->op_index());
-  // to avoid out exist in tape bprop, avoid out be modified.
-  bool out_is_used = true;
-  if (!top_cell()->is_high_order_top_cell()) {
-    out_is_used = FreeUselessTensors(op_run_info->op_prim, cloned_op_args, cloned_out);
-  }
-  auto grad_param = std::make_shared<autograd::GradParam>(
-    op_run_info->op_prim, cloned_op_args, op_run_info->input_abs, cloned_out, op_run_info->base_op_run_info.abstract,
-    nullptr, nullptr, !top_cell()->is_high_order_top_cell(), top_cell()->use_dynamic_shape_process());
-  grad_param->out_used_in_bporp_graph = out_is_used;
-  auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
+  auto &&grad_param = CreateOpGradParam(op_run_info, top_cell());
   if (forward()->enable_async()) {
-    AsyncGradPynativeOp(auto_grad_cell_ptr, grad_param);
+    auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
+    auto fn = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
+    async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
   } else {
-    GradPynativeOp(auto_grad_cell_ptr, grad_param);
+    top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }
-}
-
-void GradExecutor::GradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                  const autograd::GradParamPtr &grad_param) const {
-  if (!autograd::GradPynativeOp(auto_grad_cell_ptr, grad_param)) {
-    MS_LOG(EXCEPTION) << "Failed to run ad grad for op ";
-  }
-}
-
-void GradExecutor::AsyncGradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                       const autograd::GradParamPtr &grad_param) const {
-  auto fn = [this, auto_grad_cell_ptr, grad_param]() { this->GradPynativeOp(auto_grad_cell_ptr, grad_param); };
-  async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
-}
-
-void GradExecutor::AsyncUpdateOutputNodeOfTopCell(const ValuePtr &cloned_value) const {
-  auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  auto fn = [auto_grad_cell_ptr, cloned_value]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(cloned_value); };
-  async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
 }
 
 void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {
@@ -1927,12 +1855,15 @@ void GradExecutor::UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, cons
   (void)old_tensor->set_shape(new_tensor->shape());
   (void)old_tensor->set_data_type(new_tensor->data_type());
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
-  MS_EXCEPTION_IF_NULL(device_address);
+  // Like cell CellBackwardHook is first op, its input is input param have but no device address
+  if (device_address == nullptr) {
+    return;
+  }
   if (forward()->device_target() != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
     old_tensor->set_device_address(new_tensor->device_address());
     return;
   }
-  for (const auto &item : PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->mindrt_backend()) {
+  for (const auto &item : forward()->mindrt_backend()) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->WaitTaskFinish();
   }
@@ -2073,8 +2004,7 @@ CNodePtr GradExecutor::ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_
 }
 
 void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const {
-  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs || grad_is_running_) {
+  if (save_graphs_ || grad_is_running_) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
@@ -2085,8 +2015,7 @@ void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) c
 
 void GradExecutor::RecordForwardGraphForInput(const ValuePtr &value, const string &input_id,
                                               const abstract::AbstractBasePtr &param_abs) const {
-  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  if (save_graphs_) {
     auto new_param = curr_g()->add_parameter();
     new_param->set_abstract(param_abs);
     if (value->isa<ValueSequence>()) {
@@ -2098,8 +2027,7 @@ void GradExecutor::RecordForwardGraphForInput(const ValuePtr &value, const strin
 
 void GradExecutor::RecordNestedGraph(const FuncGraphPtr &first_grad_fg, const GraphInfoPtr &inner_graph_info,
                                      const std::vector<ValuePtr> &forward_args, const ValuePtr &out) {
-  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
+  if (save_graphs_) {
     std::vector<AnfNodePtr> inputs{NewValueNode(first_grad_fg)};
     DoParameterReplace(first_grad_fg, inner_graph_info, forward_args, &inputs);
     auto cnode = curr_g()->NewCNode(inputs);

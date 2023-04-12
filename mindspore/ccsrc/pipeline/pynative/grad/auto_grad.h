@@ -60,9 +60,10 @@ struct GradParam {
   // primitive
   const PrimitivePtr prim;
   // Input value for cnode
-  const ValuePtrList op_args;
+  const ValuePtrList op_args{};
+  std::vector<TensorGradType> op_args_grad_type{};
   // Abs of input
-  const std::vector<AbstractBasePtr> input_abs;
+  const std::vector<AbstractBasePtr> input_abs{};
   // Output of op
   const ValuePtr out;
   // Abs of out;
@@ -191,8 +192,6 @@ class AutoGradCellImpl {
   bool KPynativeWithFProp(const GradParamPtr &grad_param);
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out);
-  // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
-  // can be grad again.
   FuncGraphPtr Finish(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
                       const GradAttr &grad_attr);
 
@@ -227,8 +226,8 @@ class AutoGradCellImpl {
   AnfNodePtr MapParameter(const ValuePtr &value);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor);
   AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg);
-  AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const ValuePtr &input_arg,
-                        const AnfNodePtr &din);
+  AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
+                        const ValuePtr &input_arg, const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const;
@@ -264,7 +263,6 @@ class AutoGradCellImpl {
   AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);
 
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
-  ValuePtr sens_value_{nullptr};
   AdParamPtr ad_param_{nullptr};
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
@@ -278,34 +276,6 @@ class AutoGradCellImpl {
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 
-// Start building back propagate funcgraph for this cell.
-// cell_inputs: the input parameter list of this cell except the weights;
-AutoGradCellImplPtr GradPynativeCellBegin(const std::vector<ValuePtr> &input_param_values,
-                                          const AbstractBasePtrList &abs_list, size_t op_num_in_bprop_graph);
-
-// Return the back propagate funcgraph for this cell.
-// weights: weights parameters used in this cell.
-// grad_inputs: return sensitivity for input parameters;
-// grad_weights: return sensitivity for weights;
-// has_sens_arg: caller will pass sens args;
-// return: the returned funcgraph will have prototype:
-// if has_sens_arg is true
-// (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...,
-// sens_out)
-// else:
-// (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...)
-// if build_formal_param is true
-// each cnode in primal funcgraph is replaced by formal cnode
-// else:
-// each cnode in primal funcgraph is replaced by value node
-FuncGraphPtr GradPynativeCellEnd(const AutoGradCellImplPtr &k_cell, const tensor::TensorPtrList &weights,
-                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
-
-// Grad for each operation.
-// c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.
-// op_args: the arguments list of each input parameters.
-// out: the op result.
-bool GradPynativeOp(const AutoGradCellImplPtr &k_cell, const GradParamPtr &grad_param);
 void ClearPyNativeAutoGradStaticRes();
 }  // namespace autograd
 }  // namespace pynative
