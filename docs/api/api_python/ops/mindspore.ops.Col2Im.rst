@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Col2Im(kernel_size, dilation=1, padding=0, stride=1)
 
-    将一组通过滑窗获得的数组组合成一个大的Tensor。通常用于从一组图像补丁（或滑动局部块）中重建图像，这些图像补丁是使用 :class:`mindspore.ops.Im2Col` 操作生成的。
+    将一组通过滑窗获得的数组组合成一个大的Tensor。通常用于从一组图像补丁（或滑动局部块）中重建图像。
 
     假设输入为一个包含多个滑窗的Tensor，例如，图像的补丁，其shape为 :math:`(N, C, \prod(\text{kernel_size}), L)` ，:math:`N` 代表Batch数量，:math:`C` 代表Channel数量，:math:`\prod(\text{kernel_size})` 代表滑窗大小，:math:`L` 代表滑窗总数。Col2Im通过对这些滑窗重叠的部分进行加和来将输入组合成shape为 :math:`(N, C, \text{output_size}[0], \text{output_size}[1], \dots)` 的Tensor作为输出。
 

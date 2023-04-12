@@ -81,7 +81,7 @@ class Randperm(Primitive):
         ValueError: If `n` is larger than `max_length`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> # The result of every execution is different because this operator will generate n random samples.
