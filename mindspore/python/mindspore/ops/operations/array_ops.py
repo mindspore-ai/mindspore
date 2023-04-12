@@ -2464,6 +2464,20 @@ class Concat(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.concat` for more details.
 
+    Args:
+        axis (int, optional): The specified axis. Default: 0.
+
+    Inputs:
+        - **input_x** (Union[tuple, list]) - A tuple or a list of input tensors.
+          Suppose there are two tensors in this tuple or list, namely x1 and x2.
+          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
+          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]`,
+          where the :math:`R` indicates the last axis.
+
+    Outputs:
+        - Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
+          The data type is the same with `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3568,6 +3582,12 @@ class Diag(PrimitiveWithCheck):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.diag` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same dtype as the `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5505,6 +5525,16 @@ class BroadcastTo(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.broadcast_to` for more details.
 
+    Args:
+        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
+            where it will be substituted by the input tensor's shape in that position, see example.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor of any dimension.
+
+    Outputs:
+        Tensor, with the given `shape` and the same data type as `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -7157,6 +7187,16 @@ class Cummax(Primitive):
     Returns the cumulative maximum of elements and the index.
 
     Refer to :func:`mindspore.ops.cummax` for more details.
+
+    Args:
+        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
+
+    Inputs:
+        - **input** (Tensor) - The input tensor.
+
+    Outputs:
+        A tuple of 2 Tensors(values, indices), containing the cumulative maximum of elements and the index,
+        The shape of each output tensor is the same as input `input`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

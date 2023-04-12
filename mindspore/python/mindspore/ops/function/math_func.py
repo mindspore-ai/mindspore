@@ -3920,7 +3920,7 @@ def equal(input, other):
             The data type is the same as the first input.
 
     Returns:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
         TypeError: If neither `input` nor `other` is a Tensor.

@@ -4415,7 +4415,7 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
     input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
     Args:
-        input (Tensor): The input Tensor. Supported types are: float16, float32, int32, int8, uint8, bool.
+        input (Tensor): The input Tensor.
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
                        where it will be substituted by the input tensor's shape in that position, see example.
 
