@@ -430,15 +430,29 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
 
 py::object DataConvert::ValueToPyObj(const ValuePtr &v) { return ValueToPyData(v); }
 
-ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
-  // In PyNative mode, AdapterTensor is treated as ms.Tensor.
-  if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR) && py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>()) {
+void SetAdapterTensorAttr(const py::object &obj) {
+  if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR)) {
+    // In PyNative mode, AdapterTensor is treated as ms.Tensor.
     py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
+  } else if (py::isinstance<py::tuple>(obj)) {
+    auto obj_tuple = obj.cast<py::tuple>();
+    for (size_t i = 0; i < obj_tuple.size(); ++i) {
+      SetAdapterTensorAttr(obj_tuple[i]);
+    }
+  } else if (py::isinstance<py::list>(obj)) {
+    auto obj_list = obj.cast<py::list>();
+    for (size_t i = 0; i < obj_list.size(); ++i) {
+      SetAdapterTensorAttr(obj_list[i]);
+    }
   }
+}
+
+ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   ValuePtr converted_ret;
   if (stub) {
     converted_ret = parse::data_converter::PyDataToStubNode(obj);
   } else {
+    SetAdapterTensorAttr(obj);
     converted_ret = parse::data_converter::PyDataToValue(obj);
   }
   if (converted_ret == nullptr) {
