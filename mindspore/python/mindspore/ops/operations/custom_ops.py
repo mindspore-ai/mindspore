@@ -627,7 +627,7 @@ class Custom(ops.PrimitiveWithInfer):
                                "The kernel will be executed as a native python function, which might lead to "
                                "low efficiency. To accelerate the kernel, set the 'func_type' to be \"hybrid\""
                                .format(self.log_prefix))
-        else:
+        elif self.func_type == "tbe":
             if not callable(self.func):
                 raise TypeError("{}, 'func' must be of type function, but got {}"
                                 .format(self.log_prefix, type(self.func)))
@@ -753,6 +753,10 @@ class Custom(ops.PrimitiveWithInfer):
         if isinstance(reg_info.get("op_name"), str):
             self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
 
+        if self.func_type == "aicpu":
+            self.uniq_name = reg_info["op_name"]
+            self.add_prim_attr("uniq_name", self.uniq_name)
+
         if self.func_type == "aot":
             if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
                 for item in reg_info["attr"]:
@@ -840,12 +844,6 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 Custom.registered_func[func_name] = [target]
 
-    def _get_op_name(self, reg_info):
-        if self.func_type == "aicpu":
-            self.uniq_name = reg_info["op_name"]
-            self.add_prim_attr("uniq_name", self.uniq_name)
-        return self.uniq_name
-
     def _reformat_reg_info(self, reg_info, target):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
@@ -853,7 +851,7 @@ class Custom(ops.PrimitiveWithInfer):
                             "'CustomRegOp' to generate the registration information, then pass it to 'reg_info' or "
                             "use 'custom_info_register' to bind it to 'func' if 'func' is a function."
                             .format(self.log_prefix, reg_info, type(reg_info)))
-        reg_info["op_name"] = self._get_op_name(reg_info)
+        reg_info["op_name"] = self.uniq_name
         reg_info["imply_type"] = self._get_imply_type(reg_info, target)
         if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
             reg_info["fusion_type"] = "OPAQUE"
