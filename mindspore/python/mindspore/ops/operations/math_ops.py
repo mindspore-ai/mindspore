@@ -6861,6 +6861,7 @@ class Median(Primitive):
             input tensor elements or not. Default: Fasle.
         axis (int, optional): The specified dimension to compute median. Default: 0.
         keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+        ignore_nan (bool, optional): Whether to ignore the NaN values in input Tensor. Default: False.
 
     Inputs:
         - **x** (Tensor) - A Tensor to calculate median with. Supported dtype:int16, int32, int64, float32 or float64.
@@ -6878,7 +6879,7 @@ class Median(Primitive):
     Raises:
         TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `x` is not a Tensor.
-        TypeError: If `global_median` or `keep_dims` is assigned a nonboolean value.
+        TypeError: If `global_median` , `keep_dims` or `ignore_nan` is assigned a nonboolean value.
         TypeError: If `axis` is not int.
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 

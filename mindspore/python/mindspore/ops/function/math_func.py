@@ -6504,7 +6504,8 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     Raises:
         TypeError: If the data type of the elementes in `x` is uint16, uint32 or uint64.
         TypeError: If `x` is not a tensor.
-        TypeError: If the dimension 'x' is less than 1.
+        ValueError: If `x` is an empty Tensor.
+        ValueError: If the dim of `x` is less than 1.
         RuntimeError: If `n` is not 1.
 
     Supported Platforms:

@@ -5101,9 +5101,9 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     r"""
     Applies a 3D convolution over an input tensor. The input tensor is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
-    the formula is defined as:
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H, W` is feature height and width respectively.
+    the output value of a layer is calculated as:
 
     .. math::
         \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
@@ -5138,9 +5138,10 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             \text{kernel_size[1]}, \text{kernel_size[1]})`.
         bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default:
             None.
-        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving,
+            it can be an int number that represents
+            the depth, height and width of movement or a tuple of three int numbers that
+            represent depth, height and width movement respectively. Default: 1.
         pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
@@ -5164,9 +5165,11 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
             :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than or
-            equal to 1 and bounded by the height and width of the input. Default: 1.
-        groups (int, optional): Splits `input` into groups. Default: 1.
+            there will be :math:`k - 1` pixels skipped for each sampling location.
+            The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
+            respectively. Default: 1.
+        groups (int, optional):The number of groups into which the filter is divided. `in_channels`
+            and `out_channels` must be divisible by `group`. Default: 1.
 
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
