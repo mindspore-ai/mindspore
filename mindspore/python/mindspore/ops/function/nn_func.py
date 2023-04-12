@@ -4707,7 +4707,7 @@ def hardsigmoid(input):
 
     .. math::
 
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6}))
+        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6}))
 
     where :math:`x_i` is an element of the input Tensor.
 

@@ -8,9 +8,9 @@ mindspore.nn.MultiMarginLoss
     对于每个小批量样本，1D输入 :math:`x` 和标量 :math:`y` 的损失为：
 
     .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
 
-    其中 :math:`i\in \{0,⋯,x.size(0)−1\}` 并且 :math:`i \ne y`。
+    其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}` 并且 :math:`i \ne y`。
 
     参数：
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值：1。

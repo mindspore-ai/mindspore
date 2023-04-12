@@ -7378,7 +7378,7 @@ class NextAfter(Primitive):
     representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
     then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
     If :math:`a > b`,
-    the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
+    the next representable of :math:`a` towards :math:`b` is :math:`a-eps`.
 
     .. math::
 

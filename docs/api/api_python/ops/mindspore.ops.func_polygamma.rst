@@ -3,7 +3,7 @@ mindspore.ops.polygamma
 
 .. py:function:: mindspore.ops.polygamma(n, input)
 
-    计算关于 `input` 的多伽马函数的 `n` 阶导数。
+    计算关于 `input` 的多伽马函数的 :math:`n` 阶导数。
 
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
@@ -12,7 +12,7 @@ mindspore.ops.polygamma
 
     参数：
         - **n** (Tensor) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `n` 的shape为 :math:`()` 。
-        - **input** (Tensor) - 用于计算多伽马函数的Tensor。
+        - **input** (Tensor) - 用于计算多伽马函数的 :math:`n` 阶导数。
 
     返回：
         Tensor。数据类型与 `input` 一致。
