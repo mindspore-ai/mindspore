@@ -325,13 +325,6 @@ ShapeVector GatherReshapeInferFunc(const ShapeArray &inputs, const std::unordere
 
 NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
                        int64_t axis, int64_t batch_dims) {
-  auto x_shape = ib->Shape(x, true);
-  auto batch_size = ib->Tensor(1, kInt64);
-  for (int64_t i = 0; i < batch_dims; i++) {
-    batch_size = ib->Mul(batch_size, ib->TensorGetItem(x_shape, i));
-  }
-  auto axis_dim = ib->TensorGetItem(x_shape, axis);
-
   auto reshape_shape = ib->ShapeCalc({values, indices, x, ib->Tensor(axis), ib->Tensor(batch_dims)},
                                      GatherReshapeShapeFunc, GatherReshapeInferFunc, {3, 4});
   constexpr size_t reshape_size = 4;
@@ -343,10 +336,21 @@ NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const No
 
   auto values_rshp = ib->Reshape(values, values_reshape);
   auto indices_rshp = ib->Reshape(indices, indices_reshape);
-  auto limit = ib->Cast(ib->Mul(batch_size, axis_dim), kInt64);
-  constexpr int64_t range_max_len = 1000000;
-  auto delta = ib->Emit("Range", {ib->Tensor(0, kInt64), limit, ib->Cast(axis_dim, kInt64)},
-                        {{"maxlen", MakeValue(range_max_len)}});
+  auto shape_func = [axis, batch_dims](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shp = inputs.at(0);
+    int64_t batch_size = 1;
+    for (int64_t i = 0; i < batch_dims; i++) {
+      batch_size *= x_shp[i];
+    }
+    ShapeVector aixs_dim = {x_shp[axis]};
+    ShapeVector limit = {batch_size * x_shp[axis]};
+    return {aixs_dim, limit};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {1, 1}; };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func);
+  auto axis_dim = ib->TupleToTensor(res[0]);
+  auto limit = ib->TupleToTensor(res[1]);
+  auto delta = ib->Range(ib->Tensor(0, kInt64), limit, axis_dim);
   delta = ib->Reshape(delta, delta_reshape);
   indices_rshp = ib->Add(indices_rshp, delta);
   auto params_grad = ib->Emit("UnsortedSegmentSum", {values_rshp, indices_rshp, limit});
