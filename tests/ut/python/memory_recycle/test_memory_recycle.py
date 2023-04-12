@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ import pytest
 import psutil
 import numpy as np
 import mindspore as ms
-from mindspore import ms_memory_recycle, context, nn, Tensor, Parameter
-from mindspore.common.api import cells_compile_cache
+from mindspore import ms_memory_recycle, context, nn, Tensor, Parameter, jit
+from mindspore.common.api import cells_compile_cache, jit_compile_cache
 from mindspore.ops import composite as C
 
 
@@ -30,6 +30,30 @@ def test_api_ms_memory_recycle():
     """
     context.set_context(mode=context.GRAPH_MODE)
     ms_memory_recycle()
+
+
+def test_local_jit_recycle():
+    """
+    Feature: Memory recycle.
+    Description: Test api use.
+    Expectation: No exception.
+    """
+    start_size = len(jit_compile_cache)
+
+    def run():
+        @jit
+        def fun(x, y):
+            return x + y
+
+        fun(1, 2)
+        assert len(jit_compile_cache) == start_size + 1, "jit_compile_cache's size should increase 1"
+
+    run()
+    # Leave run(), fun should be recycled
+    assert len(jit_compile_cache) == start_size, "jit_compile_cache's size should increase 0"
+    run()
+    # Leave run(), fun should be recycled
+    assert len(jit_compile_cache) == start_size, "jit_compile_cache's size should increase 0"
 
 
 def test_single_cell_memory_auto_recycle():

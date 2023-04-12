@@ -48,9 +48,9 @@ from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 
-# store ms_function class compiled pipeline cache
-ms_compile_cache = set()
-# store cell compiled pipeline cache,
+# store jit compiled cache
+jit_compile_cache = {}
+# store cell compiled cache,
 cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
@@ -237,8 +237,10 @@ def _restore_mutable_attr(args_list, compile_args):
 def _get_parameter_layout():
     graph_executor = GraphExecutor_.get_instance()
     layout = dict()
-    for phase in ms_compile_cache:
-        layout.update(graph_executor.get_parameter_layout(phase))
+
+    for phases in jit_compile_cache:
+        for phase in phases:
+            layout.update(graph_executor.get_parameter_layout(phase))
     return layout
 
 
@@ -298,24 +300,30 @@ class _MindsporeFunctionExecutor:
         The result of pipeline running in graph mode.
     """
 
-    def __init__(self, fn, ms_create_time, input_signature=None, obj=None, jit_config=None):
-        init_pipeline()
+    def __init__(self, fn, ms_create_time, input_signature=None, hash_args=None, jit_config=None):
         if not isinstance(fn, (types.FunctionType, types.MethodType)):
             raise RuntimeError('fn {} is not function or method'.format(fn))
 
         self.fn = fn
         self.input_signature = input_signature
+        self.hash_args = hash_args
         self.obj = None
-        if obj and hasattr(obj, fn.__name__):
-            self.obj = obj
-        self.shard_parent_obj = obj
+        self.shard_parent_obj = None
         self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
+        self.compile_cache = set()
+        jit_compile_cache[id(self)] = self.compile_cache
 
     @_wrap_func
     def __call__(self, *args, **kwargs):
+        init_pipeline()
+        if os.getenv("MS_JIT") == '0':
+            return self.fn(*args, **kwargs)
+
+        args, kwargs = _handle_func_args(self.fn, *args, **kwargs)
+        self._init_obj(args)
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
@@ -350,6 +358,12 @@ class _MindsporeFunctionExecutor:
 
         return output
 
+    def __del__(self):
+        jit_compile_cache.pop(id(self), None)
+        if hasattr(self, "compile_cache") and self.compile_cache:
+            logger.info(f"Recycle for Function <{self.fn.__name__}>, compile_cache = {self.compile_cache}")
+            _cell_graph_executor.del_net_res(self.fn, self.compile_cache)
+
     def compile(self, method_name, *args, **kwargs):
         """Returns pipeline for the given args."""
         # Check whether hook function registered on Cell object.
@@ -364,7 +378,7 @@ class _MindsporeFunctionExecutor:
         compile_args = _restore_mutable_attr(args, compile_args)
 
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+                        str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
@@ -392,7 +406,7 @@ class _MindsporeFunctionExecutor:
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(self.fn, compile_args, kwargs, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
-        if phase in ms_compile_cache:
+        if phase in self.compile_cache:
             return phase
 
         # If enable compile cache, get the dependency files list and set to graph executor.
@@ -409,7 +423,7 @@ class _MindsporeFunctionExecutor:
 
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
-        ms_compile_cache.add(phase)
+        self.compile_cache.add(phase)
         return phase
 
     @staticmethod
@@ -480,6 +494,18 @@ class _MindsporeFunctionExecutor:
             new_inputs, new input args, which are required for running.
         """
         return _get_args_for_run(self, args_list, kwargs)
+
+    def _init_obj(self, args):
+        """set obj and shard_parent_obj"""
+        process_obj = None
+        if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], self.fn.__name__):
+            process_obj = args[0]
+        # only the function or cell instance wrapped by shard will fall into this branch
+        if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
+            process_obj = self.hash_args
+        if process_obj and hasattr(process_obj, self.fn.__name__):
+            self.obj = process_obj
+        self.shard_parent_obj = process_obj
 
 
 # The attributes used to identify a given object.
@@ -592,21 +618,11 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None):
         else:
             hash_obj = int(time.time() * 1e9)
 
+        executor = _MindsporeFunctionExecutor(func, hash_obj, input_signature, hash_args, jit_config)
+
         @wraps(func)
         def staging_specialize(*args, **kwargs):
-            if os.getenv("MS_JIT") == '0':
-                return func(*args, **kwargs)
-
-            args, kwargs = _handle_func_args(func, *args, **kwargs)
-
-            process_obj = None
-            if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
-                process_obj = args[0]
-            # only the function or cell instance wrapped by shard will fall into this branch
-            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
-                process_obj = hash_args
-            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args, **kwargs)
-            return out
+            return executor(*args, **kwargs)
 
         return staging_specialize
 
@@ -1227,7 +1243,6 @@ class _PyNativeExecutor:
         """
         self._executor.set_hook_changed(cell)
 
-
     def get_top_cell(self):
         """
         Get the top cell object.
@@ -1236,7 +1251,6 @@ class _PyNativeExecutor:
             The top cell object.
         """
         return self._top_cell
-
 
     def constant_folding(self, *args):
         """
@@ -1531,9 +1545,10 @@ def ms_memory_recycle():
     this is because MindSpore cached runtime memory for every model.
     To recycle these cached memory, users can call this function after training of one model.
     """
-    if ms_compile_cache:
-        _cell_graph_executor.del_net_res(None, ms_compile_cache)
-        ms_compile_cache.clear()
+    for jit_cache in jit_compile_cache.values():
+        if jit_cache:
+            _cell_graph_executor.del_net_res(None, jit_cache)
+            jit_cache.clear()
     for cell_cache in cells_compile_cache.values():
         if cell_cache:
             _cell_graph_executor.del_net_res(None, cell_cache)
