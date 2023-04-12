@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace dataset {
 // constructor
-AddSkipPass::InjectionFinder::InjectionFinder(const std::shared_ptr<DatasetNode> &node) : injection_point_(nullptr) {}
+AddSkipPass::InjectionFinder::InjectionFinder(const std::shared_ptr<DatasetNode> &node)
+    : injection_point_(nullptr), has_shuffle_node_(false) {}
 
 // Performs finder work for BuildVocabOp that has special rules about skip injection
 Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
@@ -60,6 +61,14 @@ Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNod
 }
 #endif
 
+// Detect shuffle node
+Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(modified);
+  has_shuffle_node_ = true;
+  return Status::OK();
+}
+
 Status AddSkipPass::InjectionFinder::VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(modified);
@@ -81,7 +90,11 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   // The finder can make updates to the AddSkipPass object.
   AddSkipPass::InjectionFinder finder(root_ir);
   RETURN_IF_NOT_OK(finder.Run(root_ir, modified));
-
+  // If we detect a shuffle node in the pipeline, we disable fast-recovery
+  if (GlobalContext::config_manager()->fast_recovery() && finder.HasShuffleNode()) {
+    GlobalContext::config_manager()->set_fast_recovery(false);
+    MS_LOG(WARNING) << "Disabling fast recovery of Dataset pipeline since shuffle node is detected.";
+  }
   // The first injection logic is to check if we should inject the skip op as the root node.
   std::shared_ptr<DatasetNode> node = finder.injection_point();
   CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Failed to inject SkipOp.");
