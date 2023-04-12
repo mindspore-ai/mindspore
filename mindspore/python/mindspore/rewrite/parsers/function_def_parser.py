@@ -14,10 +14,11 @@
 # ============================================================================
 """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
 import ast
-
+from mindspore import log as logger
 from ..parser_register import ParserRegister, reg_parser
 from ..parser import Parser
 from ..symbol_tree import SymbolTree
+from ..api.node_type import NodeType
 
 
 class FunctionDefParser(Parser):
@@ -26,6 +27,24 @@ class FunctionDefParser(Parser):
     def target(self):
         """Parse target type"""
         return ast.FunctionDef
+
+    def remove_dead_code(self, stree: SymbolTree):
+        """Remove dead codes"""
+        # Find out return node position
+        return_idx = -1
+        for idx, node in enumerate(stree.nodes()):
+            if node.get_node_type() == NodeType.Output:
+                return_idx = idx
+                break
+        if return_idx == -1:
+            return
+        # Remove nodes after return node.
+        # Reverse traversal to ensure that nodes are orphaned and can be deleted.
+        for idx, node in reversed(list(enumerate(stree.nodes()))):
+            if idx <= return_idx:
+                break
+            logger.info(f"Remove dead code node:{node.get_name()}")
+            stree.erase_node(node)
 
     def process(self, stree: SymbolTree, node: ast.FunctionDef):
         """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
@@ -48,6 +67,7 @@ class FunctionDefParser(Parser):
             stree.try_append_python_node(node, node.decorator_list)
         if hasattr(node, "returns"):
             stree.try_append_python_node(node, node.returns)
+        self.remove_dead_code(stree)
 
 
 g_functiondef_parser = reg_parser(FunctionDefParser())

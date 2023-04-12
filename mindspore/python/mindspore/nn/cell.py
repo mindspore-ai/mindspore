@@ -167,6 +167,7 @@ class Cell(Cell_):
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
         self.grad_ops_label = False
+        self.to_float_fp16 = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -1501,9 +1502,8 @@ class Cell(Cell_):
         return self
 
     def _add_init_args(self, **args):
-        if not hasattr(self, '_cell_init_args'):
-            self._cell_init_args = ""
-        self._cell_init_args += str({**args})
+        if hasattr(self, '_cell_init_args'):
+            self._cell_init_args += str({**args})
 
     def get_flags(self):
         """
@@ -1556,8 +1556,10 @@ class Cell(Cell_):
                              "but got {}.".format(dst_type))
         if dst_type == mstype.float16:
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
+            self.to_float_fp16 = True
         else:
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
+            self.to_float_fp16 = False
         flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32}
         self._add_init_args(**flags)
         return self
