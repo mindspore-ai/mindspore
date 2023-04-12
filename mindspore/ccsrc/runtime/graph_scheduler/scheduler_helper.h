@@ -43,6 +43,9 @@ class SchedulerHelper {
   static void AddMonadDeviceTensorStore(AbstractActor *const to_actor, const CNodePtr &kernel,
                                         const KernelGraphPtr &graph);
 
+  // Judge whether need ignore the input address that is not used in the kernel launch.
+  static bool IsIgnoredInputAddress(AbstractActor *const to_actor, size_t to_input_index);
+
   // Add the arrow between from actor and to actor.
   static void AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_output_index,
                            size_t to_input_index, const AnfNodePtr &from_kernel = nullptr);

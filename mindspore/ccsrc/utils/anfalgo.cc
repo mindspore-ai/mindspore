@@ -516,13 +516,8 @@ void AnfAlgo::EraseNodeAttr(const std::string &key, const AnfNodePtr &node) {
 
 bool AnfAlgo::HasNodeAttr(const std::string &key, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(WARNING) << "Only cnode has attr, but this anf is " << node->DebugString();
-    return false;
-  }
   // call node's input0 is not a primitive.
-  if (!IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0)) &&
-      !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
+  if (!IsValueNode<FuncGraph>(node->input(0)) && !IsValueNode<Primitive>(node->input(0))) {
     return false;
   }
   // single op cnode.

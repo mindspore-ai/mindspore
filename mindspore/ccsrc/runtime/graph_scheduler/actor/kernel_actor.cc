@@ -621,7 +621,10 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   MS_EXCEPTION_IF_NULL(kernel_mod_);
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
+    // May be the ignored input address that is not used in the kernel launch.
+    if (input_device_tensors_[i] == nullptr) {
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);
     launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();

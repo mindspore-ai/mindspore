@@ -182,6 +182,29 @@ void SchedulerHelper::AddMonadDeviceTensorStore(AbstractActor *const to_actor, c
   }
 }
 
+bool SchedulerHelper::IsIgnoredInputAddress(AbstractActor *const to_actor, size_t to_input_index) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  if (to_actor->type() != KernelTransformType::kKernelActor) {
+    return false;
+  }
+
+  auto kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+  auto &to_kernel = kernel_actor->kernel();
+  MS_EXCEPTION_IF_NULL(to_kernel);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(to_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  if (kernel_info->ignored_input_addresses().empty()) {
+    return false;
+  }
+  if (kernel_info->IsIgnoredInputAddress(to_input_index)) {
+    MS_LOG(INFO) << "Ignore the input address for kernel: " << to_kernel->fullname_with_scope()
+                 << " with input index: " << to_input_index;
+    return true;
+  }
+
+  return false;
+}
+
 void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                    size_t from_output_index, size_t to_input_index, const AnfNodePtr &from_kernel) {
   MS_EXCEPTION_IF_NULL(from_actor);
@@ -204,13 +227,18 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
     }
   }
 
+  AddMemorySign(from_actor, to_actor);
+
+  // Ignore the input address that is not used in the kernel launch.
+  if (IsIgnoredInputAddress(to_actor, to_input_index)) {
+    return;
+  }
+
   auto data_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), to_input_index);
   (void)from_actor->output_data_arrows_.emplace_back(data_arrow);
   (void)from_actor->output_data_nodes_.emplace_back(from_kernel);
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
-
-  AddMemorySign(from_actor, to_actor);
 
   if (from_kernel == nullptr) {
     return;
@@ -874,7 +902,12 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
       if (actor->type_ == KernelTransformType::kKernelActor) {
         auto kernel_actor = dynamic_cast<KernelActor *>(actor.get());
         MS_EXCEPTION_IF_NULL(kernel_actor);
-        expect_toal_input_num = common::AnfAlgo::GetInputTensorNum(kernel_actor->kernel());
+        auto &kernel = kernel_actor->kernel();
+        MS_EXCEPTION_IF_NULL(kernel);
+        size_t toal_input_num = common::AnfAlgo::GetInputTensorNum(kernel_actor->kernel());
+        auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
+        MS_EXCEPTION_IF_NULL(kernel_info);
+        expect_toal_input_num = toal_input_num - kernel_info->ignored_input_addresses().size();
       }
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();

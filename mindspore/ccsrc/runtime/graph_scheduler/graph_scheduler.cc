@@ -706,10 +706,10 @@ bool GraphScheduler::CheckSingleThreadRunningCondition(ActorSet *const actor_set
 void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
                                                double execution_time) const {
   MS_EXCEPTION_IF_NULL(actor_set);
-  MS_EXCEPTION_IF_NULL(actor_set->loop_count_actor_);
   ++actor_set->execution_count_;
-  MS_LOG(DEBUG) << "Execution count: " << actor_set->execution_count_ << ", execution time cost: " << execution_time
-                << " ms in multi thread or not: " << actor_set->is_multi_thread_execution_ << ".";
+  MS_LOG(INFO) << actor_set->name_ << " execution count: " << actor_set->execution_count_
+               << ", execution time: " << execution_time
+               << " ms in multi thread or not: " << actor_set->is_multi_thread_execution_ << ".";
 
   if (!CheckSingleThreadRunningCondition(actor_set, strategy)) {
     return;
@@ -1552,6 +1552,10 @@ void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, Abs
                                                        const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
+  // Ignore the input address that is not used in the kernel launch.
+  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_kernel_with_input_idx.second)) {
+    return;
+  }
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
@@ -1643,6 +1647,10 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   MS_EXCEPTION_IF_NULL(from_kernel);
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
+  // Ignore the input address that is not used in the kernel launch.
+  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) {
+    return;
+  }
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchNodePosition({from_kernel, 0});
