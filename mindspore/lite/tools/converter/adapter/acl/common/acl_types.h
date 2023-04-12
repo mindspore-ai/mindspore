@@ -45,6 +45,8 @@ struct AclModelOptionCfg {
   std::string dump_path;
   std::string dump_model_name;
   std::string custom_opp_path;
+  std::map<std::string, std::string> init_options_map;
+  std::map<std::string, std::string> build_options_map;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";
