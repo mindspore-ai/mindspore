@@ -908,34 +908,6 @@ def test_generate_inverse_index():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_split_shape_index():
-    """
-    Feature: ms_len_with_iterable_check func
-    Description: Verify the result of ms_len_with_iterable_check
-    Expectation: success
-    """
-    from mindspore.ops._grad.grad_math_ops import _split_shape_index
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.func = _split_shape_index
-
-        def construct(self, input_shape, axis):
-            return self.func(input_shape, axis)
-    input_shape = (2, 3, 4, 4)
-    axis = 3
-    net = Net()
-    out1, out2 = net(input_shape, axis)
-    assert  out1 == (4, 24)
-    assert  out2 == (3, 0, 1, 2)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_fft_rank_offset():
     """
     Feature: ms_len_with_iterable_check func

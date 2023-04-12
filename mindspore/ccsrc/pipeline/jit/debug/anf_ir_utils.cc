@@ -32,7 +32,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/map.h"
-#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "include/common/utils/utils.h"

@@ -30,7 +30,7 @@
 #include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/composite/composite.h"
-#include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "frontend/expander/bprop/bprop.h"
 #include "include/common/utils/utils.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
@@ -38,7 +38,7 @@
 #include "pipeline/jit/debug/trace.h"
 #include "utils/anf_utils.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
-#include "frontend/optimizer/expander.h"
+#include "frontend/expander/utils.h"
 
 namespace mindspore {
 namespace ad {

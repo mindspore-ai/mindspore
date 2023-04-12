@@ -34,7 +34,7 @@
 #include "include/common/utils/offload_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
-#include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "include/backend/distributed/ps/util.h"
 #endif
@@ -52,7 +52,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #endif
-#include "frontend/expander/packfunc/pack_expander.h"
+#include "frontend/expander/pack/pack_expander.h"
 
 namespace py = pybind11;
 
@@ -120,7 +120,7 @@ void RegModule(py::module *m) {
   RegSecurity(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::prim::RegCompositeOpsGroup(m);
-  mindspore::graph_bprop::RegBpropMetaFuncGraph();
+  mindspore::graph_bprop::RegBpropExpanderOps();
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
