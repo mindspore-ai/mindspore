@@ -17,6 +17,7 @@
 #include "nnacl/infer/tile_infer.h"
 #include <limits.h>
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tile_parameter.h"
 
 void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
   if (param->dims_size_ != 0) {
@@ -26,7 +27,7 @@ void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
       multiples_size_tmp[i] = 1;
     }
     for (size_t i = 0; i < param->dims_size_; i++) {
-      if (i >= MAX_TILE_DIM_SIZE) {
+      if (i >= MAX_SHAPE_SIZE) {
         return;
       }
       multiples_size_tmp[param->dims_[i]] = param->multiples_[i];
@@ -61,7 +62,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (input1_shape_size > (int)(input->shape_size_) || input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
-  MS_CHECK_TRUE_RET(input1_shape_size <= MAX_TILE_DIM_SIZE, NNACL_ERR);
+  MS_CHECK_TRUE_RET(input1_shape_size <= MAX_SHAPE_SIZE, NNACL_ERR);
   int data_num = GetElementNum(inputs[1]);
   multiples_size = (size_t)(data_num);
   if (inputs[1]->data_type_ != kNumberTypeInt && inputs[1]->data_type_ != kNumberTypeInt32) {
@@ -71,7 +72,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (input1_data == NULL) {
     return NNACL_INFER_INVALID;
   }
-  MS_CHECK_TRUE_RET(data_num <= MAX_TILE_DIM_SIZE, NNACL_ERR);
+  MS_CHECK_TRUE_RET(data_num <= MAX_SHAPE_SIZE, NNACL_ERR);
   for (int i = 0; i < data_num; i++) {
     param->multiples_[i] = input1_data[i];
   }

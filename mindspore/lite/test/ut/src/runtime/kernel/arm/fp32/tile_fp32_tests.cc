@@ -16,8 +16,9 @@
 
 #include <memory>
 #include "common/common_test.h"
-#include "nnacl/base/tile_base.h"
+#include "nnacl/tile_parameter.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class TestTileFp32 : public mindspore::CommonTest {
@@ -36,24 +37,21 @@ TEST_F(TestTileFp32, Tile) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   TileParameter parameter = {0};
-  parameter.in_dim_ = 2;
-  parameter.in_shape_[0] = 2;
-  parameter.in_shape_[1] = 2;
+  parameter.op_parameter_.type_ = 160;
+  parameter.op_parameter_.thread_num_ = 2;
+  parameter.dims_size_ = 2;
+  parameter.dims_[0] = 2;
+  parameter.dims_[1] = 3;
   parameter.multiples_[0] = 2;
   parameter.multiples_[1] = 3;
-  parameter.in_strides_[0] = 2;
-  parameter.in_strides_[1] = 1;
-  parameter.out_strides_[0] = 6;
-  parameter.out_strides_[1] = 1;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  EXPECT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
+
+  OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
+  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -66,6 +64,7 @@ TEST_F(TestTileFp32, Tile) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
+  kernel->set_parameter(nullptr);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
   delete kernel;
@@ -82,26 +81,21 @@ TEST_F(TestTileFp32, SimpleTile1) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   TileParameter parameter = {0};
-  parameter.in_dim_ = 2;
-  parameter.in_shape_[0] = 2;
-  parameter.in_shape_[1] = 2;
+  parameter.op_parameter_.type_ = 160;
+  parameter.op_parameter_.thread_num_ = 2;
+  parameter.dims_size_ = 2;
+  parameter.dims_[0] = 2;
+  parameter.dims_[1] = 1;
   parameter.multiples_[0] = 2;
   parameter.multiples_[1] = 1;
-  parameter.in_strides_[0] = 2;
-  parameter.in_strides_[1] = 1;
-  parameter.out_strides_[0] = 2;
-  parameter.out_strides_[1] = 1;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  EXPECT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto context = ctx.get();
-  context->thread_num_ = 2;
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
+
+  OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
+  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -114,6 +108,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
+  kernel->set_parameter(nullptr);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
   delete kernel;
@@ -130,26 +125,21 @@ TEST_F(TestTileFp32, SimpleTile2) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   TileParameter parameter = {0};
-  parameter.in_dim_ = 2;
-  parameter.in_shape_[0] = 2;
-  parameter.in_shape_[1] = 2;
+  parameter.op_parameter_.type_ = 160;
+  parameter.op_parameter_.thread_num_ = 2;
+  parameter.dims_size_ = 2;
+  parameter.dims_[0] = 1;
+  parameter.dims_[1] = 2;
   parameter.multiples_[0] = 1;
   parameter.multiples_[1] = 2;
-  parameter.in_strides_[0] = 2;
-  parameter.in_strides_[1] = 1;
-  parameter.out_strides_[0] = 4;
-  parameter.out_strides_[1] = 1;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  EXPECT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto context = ctx.get();
-  context->thread_num_ = 2;
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
+
+  OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
+  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -162,6 +152,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
+  kernel->set_parameter(nullptr);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
   delete kernel;

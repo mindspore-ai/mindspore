@@ -18,7 +18,7 @@
 
 int kMinCostPerThread = 16384;
 typedef struct ReshapeStruct {
-  KernelBase base;
+  KernelBase base_;
   int block_size_;
   int total_size_;
 } ReshapeStruct;
@@ -29,10 +29,10 @@ int reshape_do_compute(void *param, int task_id, float lhs_scale, float rhs_scal
   NNACL_CHECK_NULL_RETURN_ERR(param);
   ReshapeStruct *reshape = (ReshapeStruct *)param;
 
-  uint8_t *in_start = (uint8_t *)(reshape->base.in_[0]->data_) + task_id * reshape->block_size_;
-  uint8_t *out_start = (uint8_t *)(reshape->base.out_[0]->data_) + task_id * reshape->block_size_;
+  uint8_t *in_start = (uint8_t *)(reshape->base_.in_[0]->data_) + task_id * reshape->block_size_;
+  uint8_t *out_start = (uint8_t *)(reshape->base_.out_[0]->data_) + task_id * reshape->block_size_;
   int copy_size = reshape->block_size_;
-  if (task_id == (reshape->base.thread_nr_ - 1)) {
+  if (task_id == (reshape->base_.thread_nr_ - 1)) {
     copy_size = reshape->total_size_ - task_id * reshape->block_size_;
   }
   (void)memcpy(out_start, in_start, copy_size);
@@ -66,10 +66,10 @@ int reshape_compute(struct KernelBase *self) {
 KernelBase *CreateReshape(OpParameter *param, int data_type) {
   ReshapeStruct *reshape = (ReshapeStruct *)malloc(sizeof(ReshapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
-  reshape->base.release = reshape_release;
-  reshape->base.prepare = reshape_prepare;
-  reshape->base.resize = reshape_resize;
-  reshape->base.compute = reshape_compute;
+  reshape->base_.release = reshape_release;
+  reshape->base_.prepare = reshape_prepare;
+  reshape->base_.resize = reshape_resize;
+  reshape->base_.compute = reshape_compute;
   return (KernelBase *)reshape;
 }
 

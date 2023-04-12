@@ -37,24 +37,24 @@ void TileCpuKernelMod::TileMultipleCompute() {
       x_shape_.insert(x_shape_.begin(), 1);
     }
   }
-  if (x_shape_.size() > MAX_TILE_DIM_SIZE || x_shape_.size() > y_shape_.size()) {
+  if (x_shape_.size() > MAX_SHAPE_SIZE || x_shape_.size() > y_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', input shape can not be greater than default max size: " << MAX_TILE_DIM_SIZE
+                      << "', input shape can not be greater than default max size: " << MAX_SHAPE_SIZE
                       << " and output shape: " << y_shape_.size() << ", but got input shape " << x_shape_.size();
   }
   input_size_ = 1;
-  tile_parameter_.in_dim_ = x_shape_.size();
-  for (int i = 0; i < tile_parameter_.in_dim_; i++) {
+  tile_struct_.in_dim_ = x_shape_.size();
+  for (int i = 0; i < tile_struct_.in_dim_; i++) {
     input_size_ *= x_shape_[i];
-    tile_parameter_.in_shape_[i] = x_shape_[i];
-    tile_parameter_.out_shape_[i] = y_shape_[i];
+    tile_struct_.in_shape_[i] = x_shape_[i];
+    tile_struct_.out_shape_[i] = y_shape_[i];
   }
 
   int stridex = 1;
   int stridey = 1;
-  for (int i = tile_parameter_.in_dim_ - 1; i >= 0; i--) {
-    tile_parameter_.in_strides_[i] = stridex;
-    tile_parameter_.out_strides_[i] = stridey;
+  for (int i = tile_struct_.in_dim_ - 1; i >= 0; i--) {
+    tile_struct_.in_strides_[i] = stridex;
+    tile_struct_.out_strides_[i] = stridey;
     stridex *= x_shape_[i];
     stridey *= y_shape_[i];
   }
@@ -63,22 +63,22 @@ void TileCpuKernelMod::TileMultipleCompute() {
   int multiple = 0;
   size_t mul_index = 0;
   for (size_t i = 0; i < multiples_.size(); i++) {
-    tile_parameter_.multiples_[i] = multiples_[i];
-    if (tile_parameter_.multiples_[i] > 1) {
+    tile_struct_.multiples_[i] = multiples_[i];
+    if (tile_struct_.multiples_[i] > 1) {
       large_one_multiple_count_++;
-      multiple = tile_parameter_.multiples_[i];
+      multiple = tile_struct_.multiples_[i];
       mul_index = i;
     }
   }
 
   one_dim_tile_ = large_one_multiple_count_ == 1;
   if (one_dim_tile_) {
-    tile_parameter_.fast_multiple_ = static_cast<size_t>(multiple);
-    tile_parameter_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_parameter_.in_strides_[mul_index]);
-    if (tile_parameter_.fast_stride_ == 0) {
+    tile_struct_.fast_multiple_ = static_cast<size_t>(multiple);
+    tile_struct_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_struct_.in_strides_[mul_index]);
+    if (tile_struct_.fast_stride_ == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fast stride can not be equal to 0";
     }
-    tile_parameter_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_parameter_.fast_stride_);
+    tile_struct_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_struct_.fast_stride_);
   }
 }
 
@@ -165,16 +165,16 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   }
   TileMultipleCompute();
 
-  tile_parameter_.data_size_ = sizeof(T);
+  tile_struct_.data_size_ = sizeof(T);
   if (one_dim_tile_) {
     auto task = [&x_addr, &y_addr, this](size_t start, size_t end) {
-      TileSimple(x_addr, y_addr, start, end, &tile_parameter_);
+      TileSimple(x_addr, y_addr, start, end, &tile_struct_);
     };
-    ParallelLaunchAutoSearch(task, tile_parameter_.fast_outer_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, tile_struct_.fast_outer_size_, this, &parallel_search_info_);
     return;
   }
 
-  Tile(x_addr, y_addr, &tile_parameter_);
+  Tile(x_addr, y_addr, &tile_struct_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Tile, TileCpuKernelMod);

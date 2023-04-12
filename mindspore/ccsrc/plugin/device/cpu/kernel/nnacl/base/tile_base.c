@@ -26,35 +26,35 @@ void DoCopyData(const uint8_t *input_data, uint8_t *output_data, size_t size, si
   }
 }
 
-int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, const TileParameter *parameter) {
-  int src_dim_size = parameter->in_shape_[dim];
-  if (dim == parameter->in_dim_ - 1) {
-    DoCopyData(input_data, output_data, src_dim_size, parameter->data_size_, parameter->multiples_[dim]);
+int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, const TileStruct *tile) {
+  int src_dim_size = tile->in_shape_[dim];
+  if (dim == tile->in_dim_ - 1) {
+    DoCopyData(input_data, output_data, src_dim_size, tile->data_size_, tile->multiples_[dim]);
     return NNACL_OK;
   }
   for (int i = 0; i < src_dim_size; ++i) {
-    for (int j = 0; j < parameter->multiples_[dim]; ++j) {
-      int in_pos = parameter->in_strides_[dim] * i;
-      int out_pos = parameter->out_strides_[dim] * (i + j * src_dim_size);
-      DoTileOneDimension(input_data + in_pos * parameter->data_size_, output_data + out_pos * parameter->data_size_,
-                         dim + 1, parameter);
+    for (int j = 0; j < tile->multiples_[dim]; ++j) {
+      int in_pos = tile->in_strides_[dim] * i;
+      int out_pos = tile->out_strides_[dim] * (i + j * src_dim_size);
+      DoTileOneDimension(input_data + in_pos * tile->data_size_, output_data + out_pos * tile->data_size_, dim + 1,
+                         tile);
     }
   }
   return NNACL_OK;
 }
 
-void Tile(void *input_data, void *output_data, const TileParameter *parameter) {
-  DoTileOneDimension((uint8_t *)input_data, (uint8_t *)output_data, 0, parameter);
+void Tile(void *input_data, void *output_data, const TileStruct *tile) {
+  DoTileOneDimension((uint8_t *)input_data, (uint8_t *)output_data, 0, tile);
 }
 
-void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileParameter *parameter) {
+void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileStruct *tile) {
   uint8_t *out_data = output_data;
   uint8_t *in_data = input_data;
-  size_t dst_one_row_size = parameter->fast_stride_ * parameter->fast_multiple_ * parameter->data_size_;
+  size_t dst_one_row_size = tile->fast_stride_ * tile->fast_multiple_ * tile->data_size_;
   for (size_t i = begin; i < end; ++i) {
-    uint8_t *src = in_data + i * parameter->fast_stride_ * parameter->data_size_;
-    uint8_t *dst = out_data + i * parameter->fast_stride_ * parameter->fast_multiple_ * parameter->data_size_;
-    size_t offset = parameter->fast_stride_ * parameter->data_size_;
+    uint8_t *src = in_data + i * tile->fast_stride_ * tile->data_size_;
+    uint8_t *dst = out_data + i * tile->fast_stride_ * tile->fast_multiple_ * tile->data_size_;
+    size_t offset = tile->fast_stride_ * tile->data_size_;
     (void)memcpy(dst, src, offset);
     // copy size double each time
     while (2 * offset <= dst_one_row_size) {

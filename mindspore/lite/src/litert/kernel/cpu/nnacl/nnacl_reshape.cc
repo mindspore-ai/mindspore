@@ -92,4 +92,5 @@ NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeFloat32, NnaclOpt<ReshapeKernel
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeInt32, NnaclOpt<ReshapeKernel>)
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeInt64, NnaclOpt<ReshapeKernel>)
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeBool, NnaclOpt<ReshapeKernel>)
+NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeUInt8, NnaclOpt<ReshapeKernel>)
 }  // namespace mindspore::nnacl
