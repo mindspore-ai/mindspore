@@ -236,6 +236,74 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   return new_abs;
 }
 
+void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                        const AbstractBasePtrList &args_spec_list) {
+  std::map<AnfNodePtr, AbstractBasePtr> node_abs_spec_map;
+  if (args_spec_list.size() != func_graph->parameters().size()) {
+    MS_LOG(EXCEPTION)
+      << "The args_spec_list size should be the same as that of func_graph parameters, but get args_spec_list: "
+      << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
+  }
+  for (size_t i = 0; i < args_spec_list.size(); i++) {
+    node_abs_spec_map.emplace(func_graph->parameters()[i], args_spec_list[i]);
+  }
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
+  for (auto &node : nodes) {
+    if (!node->isa<CNode>() || !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
+      continue;
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimReturn)) {
+      auto cnode_primitive = GetCNodePrimitive(node);
+      MS_EXCEPTION_IF_NULL(cnode_primitive);
+      auto prim_cnode = node->cast<CNodePtr>();
+
+      AbstractBasePtrList cnode_args_spec_list;
+
+      for (size_t i = 1; i < prim_cnode->size(); i++) {
+        auto input_node = prim_cnode->input(i);
+        auto para_spec = node_abs_spec_map.find(input_node);
+        if (para_spec != node_abs_spec_map.end()) {
+          cnode_args_spec_list.emplace_back(para_spec->second);
+        } else {
+          cnode_args_spec_list.emplace_back(input_node->abstract());
+        }
+      }
+      opt::CppInferShape(cnode_primitive, cnode_args_spec_list, cnode);
+      node_abs_spec_map.emplace(node, cnode->abstract());
+    } else {
+      auto return_cnode = node->cast<CNodePtr>();
+      auto return_spec = node_abs_spec_map.find(return_cnode->input(1));
+      if (return_spec == node_abs_spec_map.end()) {
+        MS_LOG(EXCEPTION) << "There is no inferred result for the return value of the node: "
+                          << return_cnode->DebugString();
+      }
+      cnode->set_abstract(return_spec->second);
+    }
+  }
+  return;
+}
+
+void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive,
+                            const AbstractBasePtrList &args_spec_list, bool has_py_execute_data) {
+  if (!has_py_execute_data && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+    // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
+    // abstract instead.
+    opt::CppInferShape(primitive, args_spec_list, cnode);
+  } else {
+    if (cpp_infer_py_handler_ == nullptr) {
+      // If run without Python.
+      MS_LOG(WARNING) << "\'cpp_infer_py_handler_\' should not be null.";
+      const auto &abs = opt::CppInferShapeAndType(primitive, args_spec_list);
+      MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
+                    << " to " << abs;
+      cnode->set_abstract(abs);
+      return;
+    }
+    const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
+    cnode->set_abstract(abs);
+  }
+}
+
 void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map, void *args) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
@@ -250,7 +318,6 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   bool has_py_execute_data = false;
@@ -290,35 +357,28 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     }
   }
 
-  if (!has_py_execute_data && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
-    // Pynative mode is rely on the origin abstract of cnode, so cannot modify the abstract inplace, clone from old
-    // abstract instead.
-    opt::CppInferShape(primitive, args_spec_list, cnode);
+  if (auto primitive = GetValueNode<PrimitivePtr>(inputs[0])) {
+    InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
+  } else if (auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0])) {
+    InferShapeForGraph(cnode, func_graph, args_spec_list);
   } else {
-    if (cpp_infer_py_handler_ == nullptr) {
-      // If run without Python.
-      MS_LOG(WARNING) << "\'cpp_infer_py_handler_\' should not be null.";
-      const auto &abs = opt::CppInferShapeAndType(primitive, args_spec_list);
-      MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
-                    << " to " << abs;
-      cnode->set_abstract(abs);
-      return;
-    }
-    const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
-    cnode->set_abstract(abs);
+    MS_LOG(EXCEPTION) << "The first input of the cnode should be either a primitive or a function graph, but get: "
+                      << inputs[0]->fullname_with_scope();
   }
 }
 
-inline bool IsDeprecatedCpuOrGpuKernelMod(kernel::KernelModType kernel_mod_type) {
+inline bool IsKernelModWithoutOperator(kernel::KernelModType kernel_mod_type) {
   return kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
-         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::BiShengCpuKernelMod;
 }
 
 inline bool IsCpuGpuKernelMod(kernel::KernelModType kernel_mod_type) {
   return kernel_mod_type == kernel::KernelModType::NativeGpuKernelMod ||
          kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod ||
          kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
-         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod;
+         kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod ||
+         kernel_mod_type == kernel::KernelModType::BiShengCpuKernelMod;
 }
 
 inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {
@@ -375,7 +435,7 @@ void InferOp(const CNodePtr &cnode, void *args) {
   InferShape(cnode, &kernel_args.depend_tensor_map, args);
 
   if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
-    auto update = kernel::AbstractArgsFromCNode(cnode, IsDeprecatedCpuOrGpuKernelMod(kernel_mod_type));
+    auto update = kernel::AbstractArgsFromCNode(cnode, IsKernelModWithoutOperator(kernel_mod_type));
     update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
     kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
     kernel::SetArgsToCNode(cnode, update);

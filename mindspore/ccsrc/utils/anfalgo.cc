@@ -451,9 +451,10 @@ void AnfAlgo::SetNodeAttrSafely(const std::string &key, const ValuePtr &value, c
     return;
   }
   auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  auto new_prim = prim->isa<PrimitivePy>() ? prim : prim->Clone();
-  cnode->set_input(0, NewValueNode(new_prim));
+  if (prim != nullptr) {
+    auto new_prim = prim->isa<PrimitivePy>() ? prim : prim->Clone();
+    cnode->set_input(0, NewValueNode(new_prim));
+  }
 
   // Set attr secondly.
   common::AnfAlgo::SetNodeAttr(key, value, node);

@@ -25,6 +25,7 @@
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/model/graph_builder.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore::graphkernel {
@@ -145,15 +146,17 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   if (prim->HasAttr("primitive_target") && GetValue<std::string>(prim->GetAttr("primitive_target")) != target) {
     return true;
   }
-  // dynamic shape nodes is not supported yet.
-  // the "skip" is used by inplace node.
-  // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
-  const std::vector<std::string> exclude_bool_attrs = {kAttrInputIsDynamicShape, kAttrOutputIsDynamicShape, "skip",
-                                                       kAttrIsInternalOutputNopNode};
-  if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
-        return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
-      })) {
-    return true;
+  if (GraphKernelFlags::GetInstance().kernel_generator != "Bisheng") {
+    // dynamic shape nodes is not supported yet in AKG.
+    // the "skip" is used by inplace node.
+    // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
+    const std::vector<std::string> exclude_bool_attrs = {kAttrInputIsDynamicShape, kAttrOutputIsDynamicShape, "skip",
+                                                         kAttrIsInternalOutputNopNode};
+    if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
+          return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
+        })) {
+      return true;
+    }
   }
 
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
