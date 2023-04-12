@@ -20,9 +20,8 @@ namespace mindspore {
 namespace ps {
 namespace core {
 std::string Node::node_id() const { return node_info_.node_id_; }
-#ifdef WITH_BACKEND
+
 uint32_t Node::rank_id() const { return node_info_.rank_id_; }
-#endif
 
 NodeRole Node::role() const { return node_info_.node_role_; }
 

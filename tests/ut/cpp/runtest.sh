@@ -14,12 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-CheckTestcasesRunResult() {
-  if [ $1 != 0 ]; then
-    exit $1
-  fi
-}
-
+set -e
 BASEPATH=$(
   cd "$(dirname "$0")"
   pwd
@@ -33,12 +28,8 @@ else
 fi
 cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 
-export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore/python/mindspore:\
-${PROJECT_PATH}/mindspore/python/mindspore/lib:${PROJECT_PATH}/graphengine/910/third_party/prebuild/x86_64:\
-${PROJECT_PATH}/graphengine/910/third_party/prebuild/aarch64:${LD_LIBRARY_PATH}
-export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}/mindspore/python:\
-${PROJECT_PATH}/tests/ut/python:${PROJECT_PATH}
-
+export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore/python/mindspore:${PROJECT_PATH}/mindspore/python/mindspore/lib:${PROJECT_PATH}/graphengine/910/third_party/prebuild/x86_64:${PROJECT_PATH}/graphengine/910/third_party/prebuild/aarch64:${LD_LIBRARY_PATH}
+export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}/mindspore/python:${PROJECT_PATH}/tests/ut/python:${PROJECT_PATH}
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
 ## set op info config path
@@ -50,49 +41,11 @@ cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/
 python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_json.py
 
 if [ $# -gt 0 ]; then
-  echo "-------- Run ut_api_operators_tests --gtest_filter=$1 start --------"
-  ./ut_api_operators_tests --gtest_filter=$1
-  RET=$?
-  echo "-------- Run ut_api_operators_tests --gtest_filter=$1 completed, ret=${RET} --------"
-  CheckTestcasesRunResult $RET
-
-  echo "-------- Run ut_tests --gtest_filter=$1 start --------"
   ./ut_tests --gtest_filter=$1
-  RET=$?
-  echo "-------- Run ut_tests --gtest_filter=$1 completed, ret=${RET} --------"
-  CheckTestcasesRunResult $RET
-
-  if [ -x "ut_minddata_tests" ]; then
-    echo "-------- Run ut_minddata_tests --gtest_filter=$1 start --------"
-    ./ut_minddata_tests --gtest_filter=$1
-    RET=$?
-    echo "-------- Run ut_minddata_tests --gtest_filter=$1 completed, ret=${RET} --------"
-    CheckTestcasesRunResult $RET
-  else
-    echo "-------- ut_minddata_tests was not compiled --------"
-  fi
 else
-  echo "-------- Run ut_api_operators_tests start --------"
-  ./ut_api_operators_tests
-  RET=$?
-  echo "-------- Run ut_api_operators_tests completed, ret=${RET} --------"
-  CheckTestcasesRunResult $RET
-
-  echo "-------- Run ut_tests start --------"
   ./ut_tests
-  RET=$?
-  echo "-------- Run ut_tests completed, ret=${RET} --------"
-  CheckTestcasesRunResult $RET
-
-  if [ -x "ut_minddata_tests" ]; then
-    echo "-------- Run ut_minddata_tests start --------"
-    ./ut_minddata_tests
-    RET=$?
-    echo "-------- Run ut_minddata_tests completed, ret=${RET} --------"
-    CheckTestcasesRunResult $RET
-  else
-    echo "-------- ut_minddata_tests was not compiled --------"
-  fi
 fi
+RET=$?
 cd -
-exit 0
+
+exit ${RET}

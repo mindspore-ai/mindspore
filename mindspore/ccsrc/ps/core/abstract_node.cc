@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-#ifdef WITH_BACKEND
 AbstractNode::~AbstractNode() {
   try {
     if (client_to_scheduler_ != nullptr) {
@@ -48,9 +47,7 @@ AbstractNode::~AbstractNode() {
     MS_LOG(ERROR) << "AbstractNode destructor run failed, unknown error occurred.";
   }
 }
-#endif
 
-#ifdef WITH_BACKEND
 void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -77,7 +74,6 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
                  << " the node id:" << node_info_.node_id_ << " send register success!";
   }
 }
-#endif
 
 void AbstractNode::SendFailMessageToScheduler(const std::string &node_role, const std::string &event_info) {
   auto message_meta = std::make_shared<MessageMeta>();
@@ -1082,7 +1078,6 @@ void AbstractNode::InitClientToServer() {
   MS_LOG(INFO) << "The node start a tcp client to this node!";
 }
 
-#ifdef WITH_BACKEND
 bool AbstractNode::InitClientToScheduler() {
   if (config_ == nullptr) {
     MS_LOG(WARNING) << "The config is empty.";
@@ -1117,8 +1112,6 @@ bool AbstractNode::InitClientToScheduler() {
   }
   return wait_res;
 }
-#endif
-
 void AbstractNode::ConnectToScheduler() {
   client_to_scheduler_->Init();
   if (TcpClient::is_started()) {
@@ -1176,7 +1169,6 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
   }
 }
 
-#ifdef WITH_BACKEND
 bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                                    const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client);
@@ -1187,9 +1179,7 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
 }
-#endif
 
-#ifdef WITH_BACKEND
 bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                                    const Protos &protos, const void *data, size_t size, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client);
@@ -1202,7 +1192,6 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
 }
-#endif
 
 uint64_t AbstractNode::SendCollectiveMeta(const std::shared_ptr<TcpClient> &client,
                                           const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
@@ -1244,7 +1233,6 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   request_handler_(conn, meta, data, size);
 }
 
-#ifdef WITH_BACKEND
 void AbstractNode::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
   MS_EXCEPTION_IF_NULL(meta);
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
@@ -1256,7 +1244,6 @@ void AbstractNode::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta
   }
   message_tracker_cond_.notify_all();
 }
-#endif
 
 void AbstractNode::RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                       size_t size) {
@@ -1337,7 +1324,6 @@ void AbstractNode::RegisterActorRouteTableRspHandler() {
   handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &AbstractNode::ProcessReceiveSchedulerResp;
 }
 
-#ifdef WITH_BACKEND
 void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SEND_METADATA] = &AbstractNode::ProcessSendMetadata;
   server_handler_[NodeCommand::FINISH] = &AbstractNode::ProcessFinish;
@@ -1352,9 +1338,7 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::PREPARE_BUILDING_NETWORK] = &AbstractNode::ProcessPrepareBuildingNetwork;
   server_handler_[NodeCommand::SCALE_OUT_ROLLBACK] = &AbstractNode::ProcessScaleOutRollback;
 }
-#endif
 
-#ifdef WITH_BACKEND
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
   MS_EXCEPTION_IF_NULL(config_);
   MS_EXCEPTION_IF_NULL(server_);
@@ -1375,9 +1359,7 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
                << " is generate uuid is:" << node_info_.node_id_ << ", the ip:" << server_->BoundIp()
                << ", the port:" << server_->BoundPort();
 }
-#endif
 
-#ifdef WITH_BACKEND
 void AbstractNode::InitNodeNum() {
   worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
   server_num_ = PSContext::instance()->cluster_config().initial_server_num;
@@ -1386,7 +1368,6 @@ void AbstractNode::InitNodeNum() {
   MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
                << ", the scheduler ip:" << scheduler_ip_ << ", the scheduler port:" << scheduler_port_;
 }
-#endif
 
 bool AbstractNode::Recover() {
   MS_EXCEPTION_IF_NULL(config_);
@@ -1437,7 +1418,6 @@ bool AbstractNode::IsWorkerOrServer0(const std::unordered_map<std::string, NodeI
   return false;
 }
 
-#ifdef WITH_BACKEND
 void AbstractNode::CreateTcpServer() {
   MS_EXCEPTION_IF_NULL(config_);
   std::string interface;
@@ -1465,7 +1445,6 @@ void AbstractNode::CreateTcpServer() {
   });
   MS_EXCEPTION_IF_NULL(server_thread_);
 }
-#endif
 
 void AbstractNode::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lock(cluster_state_mutex_);
