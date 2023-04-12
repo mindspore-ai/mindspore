@@ -595,7 +595,6 @@ class AssignParser(Parser):
             elif isinstance(value, ast.Subscript):
                 logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                             f"ignored as a python node now")
-                stree.update_scope_for_unique(value)
                 stree.try_append_python_node(node, node)
             elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant,
                                     ast.Bytes, ast.Str)):
