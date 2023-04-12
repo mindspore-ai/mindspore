@@ -77,7 +77,8 @@ def get_jit_forbidden_method():
 
 def get_obj_module_and_name_info(obj):
     """Return the description of the object whose type is class, function or method."""
-    if not hasattr(obj, "__module__"):
+    if not hasattr(obj, "__module__") or not hasattr(obj, "__qualname__") \
+        or not hasattr(obj, "__name__"):
         return None
     if isinstance(obj, (types.FunctionType, types.MethodType)):
         return obj.__module__, obj.__qualname__, "method or function"
@@ -94,8 +95,10 @@ def is_jit_forbidden_module(obj_module):
 def is_invalid_or_jit_forbidden_method(obj, obj_type, attr):
     """Check obj has attribute or method."""
     if not hasattr(obj, attr):
-        raise AttributeError(f"{obj_type} object has no attribute: {attr}")
+        raise AttributeError(f"'{obj_type}' object has no attribute '{attr}'")
     method = getattr(obj, attr)
+    if not hasattr(method, "__module__") or not hasattr(method, "__qualname__"):
+        return False
     method_info = method.__module__ + '.' + method.__qualname__
     return method_info in _jit_forbidden_method
 

@@ -171,6 +171,12 @@ TypeId NormalizeTypeId(const TypeId type_id) {
   } else if ((type_id == kNumberTypeFloat) || (type_id == kNumberTypeFloat16) || (type_id == kNumberTypeFloat32) ||
              (type_id == kNumberTypeFloat64)) {
     return kNumberTypeFloat;
+  } else if ((type_id == kNumberTypeUInt) || (type_id == kNumberTypeUInt8) || (type_id == kNumberTypeUInt16) ||
+             (type_id == kNumberTypeUInt32) || (type_id == kNumberTypeUInt64)) {
+    return kNumberTypeUInt;
+  } else if ((type_id == kNumberTypeComplex) || (type_id == kNumberTypeComplex64) ||
+             (type_id == kNumberTypeComplex128)) {
+    return kNumberTypeComplex;
   } else {
     return type_id;
   }

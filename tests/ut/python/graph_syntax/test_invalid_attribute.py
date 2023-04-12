@@ -25,11 +25,11 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_tensor_wrong_attr():
+def test_tensor_invalid_attr():
     """
-    Feature: Syntax invalid attr
+    Feature: Tensor.abcd.
     Description: Graph syntax object's invalid attribute and method.
-    Expectation: No Expectation
+    Expectation: AttributeError exception raise.
     """
     class Net(nn.Cell):
         def construct(self, x):
@@ -40,5 +40,23 @@ def test_tensor_wrong_attr():
     net = Net()
     with pytest.raises(AttributeError) as ex:
         net(x)
-    assert "'Tensor' object has no attribute 'abcd'" or\
-           "Tensor object has no attribute abcd" in str(ex.value)
+    assert "'Tensor' object has no attribute 'abcd'" in str(ex.value)
+
+
+def test_int_invalid_attr():
+    """
+    Feature: Int.shape.
+    Description: Get shape attr from int object, expect raise exception.
+    Expectation: AttributeError exception raise.
+    """
+
+    class ShapeNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, x):
+            return x.shape
+
+    with pytest.raises(AttributeError) as err_info:
+        ShapeNet()(1)
+    assert "'Int' object has no attribute 'shape'" in str(err_info.value)
