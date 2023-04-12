@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_SHAPE_H_
-#define NNACL_KERNEL_SHAPE_H_
-
+#ifndef NNACL_KERNEL_STACK_F16_H_
+#define NNACL_KERNEL_STACK_F16_H_
+#ifdef ENABLE_FP16
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
+#include "nnacl/kernel/stack.h"
 
-typedef struct ShapeStruct {
-  KernelBase base_;
-} ShapeStruct;
+typedef struct StackF16Struct {
+  StackStruct stack_;
+  bool *init_;
+} StackF16Struct;
 
-KernelBase *CreateShape(OpParameter *param, int data_type);
-
-#endif  // NNACL_KERNEL_SHAPE_H_
+KernelBase *CreateStackF16(OpParameter *param, int data_type);
+#endif
+#endif  // NNACL_KERNEL_STACK_F16_H_

@@ -14,17 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_SHAPE_H_
-#define NNACL_KERNEL_SHAPE_H_
+#ifndef NNACL_KERNEL_STACK_H_
+#define NNACL_KERNEL_STACK_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-typedef struct ShapeStruct {
+#define NNACL_STACK_STEP 64
+
+typedef struct StackStruct {
   KernelBase base_;
-} ShapeStruct;
+  TypeIdC data_type_;
+  int axis_;
+  int outer_size_;
+  size_t copy_size_;
+  void **buffers_;
+} StackStruct;
 
-KernelBase *CreateShape(OpParameter *param, int data_type);
+KernelBase *CreateStack(OpParameter *param, int data_type);
+int StackRun(void *cdata, int task_id, float l, float r);
+int stack_release(KernelBase *self);
+int stack_prepare(KernelBase *self);
+int stack_resize(KernelBase *self);
 
-#endif  // NNACL_KERNEL_SHAPE_H_
+#endif  // NNACL_KERNEL_STACK_H_

@@ -199,13 +199,6 @@
     }                                           \
   } while (0)
 
-#define NNACL_MALLOC_CHECK_NULL_RETURN_VOID(ptr) \
-  do {                                           \
-    if ((ptr) == NULL) {                         \
-      return;                                    \
-    }                                            \
-  } while (0)
-
 #define NNACL_MALLOC_CHECK_NULL_RETURN_NULL(ptr) \
   do {                                           \
     if ((ptr) == NULL) {                         \
