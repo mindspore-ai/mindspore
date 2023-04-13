@@ -26,7 +26,7 @@ from mindspore.log import _LogActionOnce
 from mindspore._c_expression import ParamInfo
 from mindspore.common import dtype as mstype
 from mindspore import context
-from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.parallel._utils import _get_parallel_mode, _get_global_rank
 from mindspore.common._utils import get_slice_num, get_slice_shape
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
@@ -86,6 +86,32 @@ def _get_unique_parameter_key():
     global _GLOBAL_PARAMETER_KEY
     _GLOBAL_PARAMETER_KEY += 1
     return _GLOBAL_PARAMETER_KEY
+
+
+def _offload_if_config(data):
+    """
+    Offload parameter(data size > 512) to file when enable memory offload and offload parameter to disk.
+    Args:
+        data: The parameter data to offload.
+    """
+    if not context.get_context("memory_offload") or data is None:
+        return
+
+    offload_context = context.get_offload_context()
+    if offload_context.get("offload_param", None) != "disk":
+        return
+
+    data_size_threshold = 512
+    if data.nbytes < data_size_threshold:
+        return
+
+    offload_file_path = data.offload_file_path()
+    if offload_file_path is None or offload_file_path == "":
+        import time
+        offload_dir = offload_context.get("offload_path", "./offload")
+        offload_file_path = offload_dir + "/" + str(_get_global_rank()) + "_" + str(
+            _get_unique_parameter_key()) + "_" + str(time.time()) + ".data"
+    data.offload(offload_file_path)
 
 
 class Parameter(Tensor_):
@@ -187,6 +213,8 @@ class Parameter(Tensor_):
         obj.is_default_input_init = init_data_flag
         if obj.has_init:
             obj.init_mode = default_input
+        else:
+            _offload_if_config(obj)
         return obj
 
     def __reduce_ex__(self, _):
@@ -713,6 +741,7 @@ class Parameter(Tensor_):
             init_data_args += (slice_index, layout[2], layout[5])
         return init_data_args
 
+
     def init_data(self, layout=None, set_sliced=False):
         """
         Initialize the parameter's data.
@@ -766,6 +795,7 @@ class Parameter(Tensor_):
             self._inited_param = obj
         obj.init_mode = None
         obj.sliced = set_sliced
+        _offload_if_config(obj)
         return obj
 
 

@@ -17,6 +17,7 @@
 #include "ir/tensor.h"
 
 #include <cstdint>
+#include <exception>
 #include <iomanip>
 #include <functional>
 #include <memory>
@@ -34,6 +35,7 @@
 #include "utils/ms_utils_secure.h"
 #include "utils/shape_utils.h"
 #include "utils/ordered_set.h"
+#include "utils/system/env.h"
 
 namespace mindspore {
 namespace tensor {
@@ -396,7 +398,13 @@ template <typename T>
 class TensorDataImpl : public TensorData {
  public:
   explicit TensorDataImpl(const ShapeVector &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
-  ~TensorDataImpl() override = default;
+  ~TensorDataImpl() override {
+    try {
+      RemoveOffloadFile();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Exception when cleaning tensor. Error info " << e.what();
+    }
+  }
 
   TensorDataImpl(const ShapeVector &shape, void *data, size_t data_len)
       : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
@@ -425,15 +433,38 @@ class TensorDataImpl : public TensorData {
   bool has_sub_data() const override { return false; }
 
   void *data() override {
-    if (data_ == nullptr) {
-      if (data_size_ > INT32_MAX) {
-        MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
+    if (data_ != nullptr) {
+      return data_.get();
+    }
+
+    if (data_size_ > INT32_MAX) {
+      MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
+    }
+    // Lazy allocation.
+    data_ = std::make_unique<T[]>(data_size_);
+
+    // Load data from file
+    if (!file_path_.empty()) {
+      auto fs = mindspore::system::Env::GetFileSystem();
+      MS_EXCEPTION_IF_NULL(fs);
+      if (fs->FileExist(file_path_)) {
+        auto file = fs->CreateWriteFile(file_path_, "r+");
+        MS_EXCEPTION_IF_NULL(file);
+        bool success = file->PRead(data_.get(), nbytes(), 0);
+        if (!success) {
+          MS_LOG(WARNING) << "Tensor load data from file: " << file_path_ << " failed!";
+        }
+        file->Close();
+      } else {
+        MS_LOG(WARNING) << "Invalid tensor file path: " << file_path_;
       }
-      // Lazy allocation.
-      data_ = std::make_unique<T[]>(data_size_);
     }
     return data_.get();
   }
+
+  void set_file_path(const std::string &file_path) override { file_path_ = file_path; }
+
+  const std::string file_path() const { return file_path_; }
 
   const void *const_data() const override {
     // May return nullptr if data not initialized.
@@ -463,9 +494,23 @@ class TensorDataImpl : public TensorData {
   }
 
  private:
+  void RemoveOffloadFile() {
+    if (!file_path_.empty()) {
+      auto fs = mindspore::system::Env::GetFileSystem();
+      MS_EXCEPTION_IF_NULL(fs);
+      if (fs->FileExist(file_path_)) {
+        fs->DeleteFile(file_path_);
+      } else {
+        MS_LOG(WARNING) << "Invalid tensor file path: " << file_path_;
+      }
+      file_path_ = "";
+    }
+  }
+
   size_t ndim_{0};
   size_t data_size_{0};
   std::unique_ptr<T[]> data_;
+  std::string file_path_{""};
 };
 
 // Tensor chunk data.
@@ -886,6 +931,9 @@ void Tensor::data_sync(bool need_wait) const {
   if (size != 0 && !address->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
     MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
   }
+  if (!data_->file_path().empty()) {
+    device_sync_ = nullptr;
+  }
   sync_status_ = kNeedSyncHostToDevice;
 }
 
@@ -924,6 +972,41 @@ size_t Tensor::set_shape(const ShapeVector &shape) {
     data_ = MakeTensorData(data_type_, shape);
   }
   return MetaTensor::set_shape(shape);
+}
+
+bool Tensor::Offload(const std::string &file_path) {
+  if (file_path.empty()) {
+    return false;
+  }
+
+  auto fs = mindspore::system::Env::GetFileSystem();
+  MS_EXCEPTION_IF_NULL(fs);
+  MS_EXCEPTION_IF_NULL(data_);
+  auto data_ptr = data_->data();
+  auto file = fs->CreateWriteFile(file_path);
+  MS_EXCEPTION_IF_NULL(file);
+  bool success = file->PWrite(data_ptr, data_->nbytes(), 0);
+  file->Close();
+  if (!success) {
+    MS_LOG(WARNING) << "Tensor write data to file: " << file_path << " failed!";
+    return false;
+  }
+
+  if (file_path == GetOffloadFilePath()) {
+    data_->set_file_path("");
+  }
+
+  data_ = MakeTensorData(data_type_, shape_);
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->set_file_path(file_path);
+  return true;
+}
+
+const std::string Tensor::GetOffloadFilePath() const {
+  if (data_ == nullptr) {
+    return "";
+  }
+  return data_->file_path();
 }
 
 std::pair<void *, size_t> Tensor::GetChunkOffset() const {

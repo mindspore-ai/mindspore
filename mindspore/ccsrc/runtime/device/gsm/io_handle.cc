@@ -28,7 +28,6 @@ namespace mindspore {
 namespace device {
 constexpr size_t kFileHeadOffset = 0;
 constexpr char kReadFileMode[] = "r+";
-constexpr char kSwapFileSuffix[] = ".data";
 
 void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string &instance_func_name) {
 #ifdef _MSC_VER
@@ -67,33 +66,33 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
 
 bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
   if (aio_ != nullptr) {
-    return aio_->Read(GetSwapFileWholeName(file_name), data, byte_num);
+    return aio_->Read(file_name, data, byte_num);
   }
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name), kReadFileMode);
+  auto file = fs->CreateWriteFile(file_name, kReadFileMode);
   MS_EXCEPTION_IF_NULL(file);
   return file->PRead(data, byte_num, kFileHeadOffset);
 }
 
 bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte_num) {
   if (aio_ != nullptr) {
-    return aio_->Write(GetSwapFileWholeName(file_name), data, byte_num);
+    return aio_->Write(file_name, data, byte_num);
   }
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name));
+  auto file = fs->CreateWriteFile(file_name);
   MS_EXCEPTION_IF_NULL(file);
   return file->PWrite(data, byte_num, kFileHeadOffset);
 }
 
 bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token) {
   if (aio_ != nullptr) {
-    return aio_->ReadAsync(GetSwapFileWholeName(file_name), data, byte_num, token);
+    return aio_->ReadAsync(file_name, data, byte_num, token);
   }
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name));
+  auto file = fs->CreateWriteFile(file_name, kReadFileMode);
   MS_EXCEPTION_IF_NULL(file);
   *token = kInvalidAsyncIOToken;
   return file->PRead(data, byte_num, kFileHeadOffset);
@@ -101,11 +100,11 @@ bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_n
 
 bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token) {
   if (aio_ != nullptr) {
-    return aio_->WriteAsync(GetSwapFileWholeName(file_name), data, byte_num, token);
+    return aio_->WriteAsync(file_name, data, byte_num, token);
   }
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name));
+  auto file = fs->CreateWriteFile(file_name);
   MS_EXCEPTION_IF_NULL(file);
   *token = kInvalidAsyncIOToken;
   return file->PWrite(data, byte_num, kFileHeadOffset);
@@ -116,19 +115,15 @@ bool IOHandle::Wait(AsyncIOToken token) { return aio_ == nullptr || aio_->Wait(t
 bool IOHandle::DeleteSwapFile(const std::string &file_name) const {
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  return fs->DeleteFile(GetSwapFileWholeName(file_name));
+  return fs->DeleteFile(file_name);
 }
 
 bool IOHandle::CreateSwapFile(const std::string &file_name) const {
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name));
+  auto file = fs->CreateWriteFile(file_name);
   MS_EXCEPTION_IF_NULL(file);
   return true;
-}
-
-std::string IOHandle::GetSwapFileWholeName(const std::string &file_name) const {
-  return swap_path_ + file_name + kSwapFileSuffix;
 }
 }  // namespace device
 }  // namespace mindspore

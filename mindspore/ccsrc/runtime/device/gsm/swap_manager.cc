@@ -32,14 +32,8 @@ SwapManager::SwapManager(size_t stream_id, mindspore::device::DynamicMemPoolBest
                          PinMemPool *pin_mem_pool)
     : stream_id_(stream_id), device_memory_pool_(device_memory_pool), pin_mem_pool_(pin_mem_pool) {
   const auto &offload_context = OffloadContext::GetInstance();
+  io_handle_ = std::make_shared<IOHandle>();
   if (offload_context != nullptr) {
-    const auto real_path = FileUtils::GetRealPath(offload_context->offload_path().c_str());
-    if (!real_path.has_value()) {
-      MS_LOG(EXCEPTION) << "Invalid offload path[" << offload_context->offload_path()
-                        << "]. Please check offload_path configuration.";
-    }
-    io_handle_ = std::make_shared<IOHandle>();
-    io_handle_->set_swap_path(real_path.value() + '/');
     if (offload_context->enable_aio()) {
       io_handle_->LoadAio(kLinuxAioLibName, kLinuxAioInstanceFuncName);
     }

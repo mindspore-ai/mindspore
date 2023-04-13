@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_SWAP_STRATEGY_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_SWAP_STRATEGY_H_
 #include <vector>
+#include <string>
 #include <map>
 #include <memory>
 #include "ir/anf.h"
@@ -81,6 +82,58 @@ struct SwapStrategy {
   std::vector<std::shared_ptr<SwapLink>> links_;
   std::vector<std::shared_ptr<MemUsageTensorInfo>> tensor_infos_;
   std::vector<std::shared_ptr<MemUsageKernelInfo>> kernel_infos_;
+  std::string GetStatisticInfo() {
+    std::ostringstream buffer;
+    buffer << "Swap strategy statistic: \n"
+           << "Kernel num: " << kernel_num_ << "\n"
+           << "Virtual num: " << virtual_node_num_ << "\n"
+           << "Tensor num: " << tensor_infos_.size() << "\n";
+
+    std::map<SwapActionType, size_t> swap_mem_sizes;
+    size_t action_num = 0;
+    for (auto const &action : actions_) {
+      if (action.second == nullptr) {
+        continue;
+      }
+      action_num += action.second->actions_.size();
+      for (auto const &item : action.second->actions_) {
+        if (item->tensor_id_ >= tensor_infos_.size()) {
+          continue;
+        }
+        auto tensor_info = tensor_infos_[item->tensor_id_];
+        if (tensor_info == nullptr) {
+          continue;
+        }
+        auto iter = swap_mem_sizes.find(item->action_);
+        if (iter != swap_mem_sizes.end()) {
+          iter->second += tensor_info->tensor_size_;
+        } else {
+          swap_mem_sizes[item->action_] = tensor_info->tensor_size_;
+        }
+      }
+    }
+
+    buffer << "Action-actor num: " << actions_.size() << "\n"
+           << "Action num: " << action_num << "\n";
+
+    static const std::map<SwapActionType, std::string> kActionTips = {
+      {SwapActionType::kHBM2DDR, "HBM2DDR"},   {SwapActionType::kHBM2DISK, "HBM2DISK"},
+      {SwapActionType::kDDR2HBM, "DDR2HBM"},   {SwapActionType::kDISK2HBM, "DISK2HBM"},
+      {SwapActionType::kDDR2DISK, "DDR2DISK"}, {SwapActionType::kDISK2DDR, "DISK2DDR"},
+      {SwapActionType::kAllocHBM, "AllocHBM"},
+    };
+    static const size_t kBytesPerGB = 1 << 30;
+    for (auto const &swap_mem : swap_mem_sizes) {
+      auto iter = kActionTips.find(swap_mem.first);
+      if (iter == kActionTips.end()) {
+        continue;
+      }
+      buffer << "Swap " << iter->second << " size:" << swap_mem.second << "(" << swap_mem.second * 1.0f / kBytesPerGB
+             << "GB)\n";
+    }
+
+    return buffer.str();
+  }
 };
 
 class SwapContext {
