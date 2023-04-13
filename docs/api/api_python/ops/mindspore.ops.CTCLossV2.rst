@@ -36,5 +36,5 @@ mindspore.ops.CTCLossV2
         - **ValueError** - 如果 `targets` 的shape与批大小 :math:`N` 不匹配。
         - **TypeError** - 如果 `targets`、 `input_lengths` 或 `target_lengths` 的类型不同。
         - **ValueError** - 如果 `blank` 的数值不是介于0和 :math:`C` 之间。
-        - **RuntimeError** - `labels_indices` 的数据类型不是int64。
+        - **RuntimeError** - 如果 `input_lengths` 中任意一个元素值大于(num_labels|C)。
         - **RuntimeError** - 如果任何 `target_lengths[i]` 不在范围 [0, `input_length[i]`] 范围内。

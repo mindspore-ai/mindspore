@@ -1429,24 +1429,10 @@ class MatrixBandPart(Primitive):
 
 class Fill(PrimitiveWithCheck):
     """
-    Create a Tensor of the specified shape and fill it with the specified value.
-
-    Refer to :func:`mindspore.ops.fill` for more details.
+    The Fill interface is deprecated, please use the :class:`mindspore.ops.FillV2` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> fill = ops.Fill()
-        >>> output = fill(mindspore.float32, (2, 2), 1)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-        >>> output = fill(mindspore.float32, (3, 3), 0)
-        >>> print(output)
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
+        Deprecated
     """
 
     @prim_attr_register
