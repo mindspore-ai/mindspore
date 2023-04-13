@@ -632,11 +632,13 @@ void FindReturnUser(const CNodePtr &cnode, const std::vector<AnfNodePtr> &all_no
 
 void AddVisitedNode(std::queue<std::pair<std::shared_ptr<AnfNode>, int>> *visited, const NodeUsersMap &node_users_map,
                     const AnfNodePtr &key_node) {
+  if (IsPrimitiveCNode(key_node, prim::kPrimReturn)) {
+    return;
+  }
   auto node_users = node_users_map.at(key_node);
   for (auto &node_user : node_users) {
     auto cnode = node_user.first->cast<CNodePtr>();
-    if (!cnode || !cnode->in_forward_flag() ||
-        IsSomePrimitiveList(cnode->cast<CNodePtr>(), {MAKE_TUPLE, UPDATESTATE})) {
+    if (!cnode || IsSomePrimitiveList(cnode, {MAKE_TUPLE, UPDATESTATE})) {
       continue;
     }
     if (node_user.first) {
@@ -654,7 +656,6 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
   if (!node_ptr) {
     return std::make_pair(nullptr, 0);
   }
-  auto users_map = node_users_map;
   AddVisitedNode(&visited, node_users_map, node_ptr);
   while (!visited.empty()) {
     auto queue_node = visited.front();
@@ -665,9 +666,8 @@ std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &n
     } else if (IsValueNode<FuncGraph>(cnode->input(0))) {
       auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
       auto params = graph->parameters();
-      users_map = graph->manager()->node_users();
       auto target_param = params[queue_node.second - 1];
-      auto node_set = users_map[target_param];
+      auto node_set = node_users_map.at(target_param);
       for (auto &node_user : node_set) {
         cnode = node_user.first->cast<CNodePtr>();
         if (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode)) {
@@ -901,7 +901,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
       // Do not care CASTs from optimizer
       return false;
     }
-    return true;
+    return cnode->in_forward_flag();
   }
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
 }

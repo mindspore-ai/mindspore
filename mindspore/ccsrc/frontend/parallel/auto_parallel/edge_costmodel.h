@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <set>
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
@@ -91,7 +92,8 @@ class Edge {
   int64_t GetReshapeSWCIndexByPrevOpStrategy(const StrategyPtr &prev_op_stra);
   StrategyPtr GetPrevOpStrategyByReshapeSWCIndex(int64_t swc_index);
   StrategyPtr GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index);
-  bool CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra);
+  bool CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra,
+                                std::set<OperatorInfoPtr> *_diff_stra_params);
 
   void SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &cost_map);
   // For two operators u--->v, given the output tensor layout of u,

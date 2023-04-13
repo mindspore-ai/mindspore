@@ -160,12 +160,12 @@ static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, const s
       if (candidate.second != 1) {
         continue;
       }
-      auto node_user_map = node->func_graph()->manager()->node_users();
+      auto &node_user_map = node->func_graph()->manager()->node_users();
       auto load_node_users = node_user_map[candidate_node];
       for (auto &node_user : load_node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
         std::pair<AnfNodePtr, int> child_parallel_care_node;
-        if (IsSomePrimitive(cnode, UPDATESTATE)) {
+        if (IsSomePrimitive(cnode, UPDATESTATE) || !cnode->in_forward_flag()) {
           continue;
         }
         if (!IsSomePrimitive(cnode, MAKE_TUPLE) && (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode))) {
