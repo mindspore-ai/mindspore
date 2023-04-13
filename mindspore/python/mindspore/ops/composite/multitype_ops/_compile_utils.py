@@ -1505,7 +1505,8 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
             initial = F.fill(dtype, shape, initial)
         a = cmp_fn(a, initial)
 
-    if isinstance(where, Tensor):
+    if where is not None and not where:
+        where = Tensor(where)
         if initial is None:
             const_utils.raise_value_error('initial value must be provided for where masks')
         ndim_orig = F.rank(a)
