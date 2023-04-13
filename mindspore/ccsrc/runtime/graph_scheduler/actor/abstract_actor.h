@@ -110,6 +110,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Erase input data and input controls when finish actor running.
   virtual void EraseInput(const OpContext<DeviceTensor> *context);
 
+  // Fetch input data from the device tensor store.
+  void FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                               OpContext<DeviceTensor> *const context) const;
+
   // Init the member output_data_ and batch_output_data_ by output data arrows.
   void InitOutputData();
   // Update the output data before send output data.

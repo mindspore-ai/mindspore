@@ -532,6 +532,7 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
                                                   "Invalid device context for kernel actor:" + GetAID().Name());
   }
 
+  // Collect the inputs from input data.
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
@@ -549,25 +550,8 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
     }
   }
 
-  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance()
-                           .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
-                           .get();
-    if (device_tensor == nullptr) {
-      std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
-
-    if (device_tensor_store_key.first >= input_device_tensors_.size()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
-    }
-    if (input_device_tensors_[device_tensor_store_key.first] != device_tensor) {
-      input_device_tensors_[device_tensor_store_key.first] = device_tensor;
-      memory_free_list_[device_tensor_store_key.first] = device_tensor;
-    }
-  }
+  // Collect the inputs from device tensor store.
+  FetchInputByTensorStore(&input_device_tensors_, context);
 }
 
 void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context) {

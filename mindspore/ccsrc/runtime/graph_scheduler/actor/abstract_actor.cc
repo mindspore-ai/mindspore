@@ -125,6 +125,30 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
+void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                                            OpContext<DeviceTensor> *const context) const {
+  MS_EXCEPTION_IF_NULL(input_device_tensors);
+  MS_EXCEPTION_IF_NULL(context);
+  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto device_tensor = DeviceTensorStore::GetInstance()
+                           .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                           .get();
+    if (device_tensor == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
+        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+
+    if (device_tensor_store_key.first >= input_device_tensors->size()) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
+    }
+    if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
+      (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
+    }
+  }
+}
+
 void AbstractActor::InitOutputData() {
   mindspore::HashMap<std::string, size_t> batch_op_count;
   for (auto &data_arrow : output_data_arrows_) {

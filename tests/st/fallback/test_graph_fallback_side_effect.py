@@ -96,7 +96,6 @@ def test_fallback_side_effect_dict():
     assert out[1] == 44
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

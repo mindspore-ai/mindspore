@@ -147,7 +147,9 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     }
   }
 
-  // Second use the device address of node.
+  MS_LOG(WARNING) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
+                  << node->fullname_with_scope();
+  // Second use the device address of node as fault-tolerant.
   auto output_addr =
     AnfAlgo::GetMutableOutputAddr(input_node_with_index.first, input_node_with_index.second, skip_nop_node);
   if (output_addr != nullptr && output_addr->IsPtrValid()) {
@@ -158,12 +160,6 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     return depended_value;
   }
 
-  // Remove when heteroid tensor address bug fixed
-  if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-    MS_LOG(INFO) << "There is no valid address for " << i << " input of " << node->DebugString() << ", "
-                 << node->fullname_with_scope();
-    return depended_value;
-  }
   MS_LOG(EXCEPTION) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
                     << node->fullname_with_scope();
 }
