@@ -38,6 +38,7 @@ class COMMON_EXPORT Emitter {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(infer);
   }
+  virtual ~Emitter() = default;
 
   /// \brief Emit a primitive CNode
   NodePtr Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs = {}) const;

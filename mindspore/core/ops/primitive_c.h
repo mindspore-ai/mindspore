@@ -62,7 +62,7 @@ class MS_CORE_API OpPrimCRegister {
   /// \brief Get PrimCMap of the OpPrimCRegister singleton.
   ///
   /// \return The PrimCMap of the OpPrimCRegister singleton.
-  const HashMap<std::string, OpPrimCDefineFunc> &GetPrimCMap();
+  const HashMap<std::string, OpPrimCDefineFunc> &GetPrimCMap() const;
 
   /// \brief Add an element into the PrimCMap of the OpPrimCRegister singleton.
   ///

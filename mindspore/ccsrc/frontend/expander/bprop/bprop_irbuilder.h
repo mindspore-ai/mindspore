@@ -82,7 +82,7 @@ class BpropIRBuilder : public Emitter {
       }
       return {{size}};
     };
-    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {1}; };
+    auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {1}; };
     return ShapeCalc({node}, shape_func, infer_func, {})[0];
   }
   NodePtr Range(const NodePtr &limit) const { return Range(Tensor(0, kInt64), limit, Tensor(1, kInt64)); }
@@ -120,19 +120,19 @@ class BpropIRBuilderFactory {
     return instance;
   }
 
-  const BpropHandle *GetBuilder(const std::string &name) {
+  const BpropHandle *GetBuilder(const std::string &name) const {
     auto iter = registry().find(name);
     return (iter == registry().end()) ? nullptr : &(iter->second);
   }
 
-  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { registry()[name].func = func; }
-  void RegUnusedInputs(const std::string &name, const std::vector<size_t> &unused) {
+  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) const { registry()[name].func = func; }
+  void RegUnusedInputs(const std::string &name, const std::vector<size_t> &unused) const {
     registry()[name].unused_inputs = unused;
   }
 
  private:
   HashMap<std::string, BpropHandle> &registry() const {
-    static HashMap<std::string, BpropHandle> reg;
+    static HashMap<std::string, BpropHandle> reg{};
     return reg;
   }
 };

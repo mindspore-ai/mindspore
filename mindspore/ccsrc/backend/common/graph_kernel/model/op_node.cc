@@ -77,7 +77,8 @@ tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const Abstrac
 }
 
 void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
-                                    AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) {
+                                    AbstractBasePtrList *inputs_abstract,
+                                    std::vector<std::string> input_names_vec) const {
   for (size_t index = 0; index < input_names_vec.size(); ++index) {
     // if convert input list find the index it means the input has been converted to the attr
     if (convert_input_list.find(index) != convert_input_list.end()) {

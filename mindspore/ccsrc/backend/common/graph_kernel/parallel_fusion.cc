@@ -42,7 +42,7 @@ void ProcessThroughPassCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
           node, {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimSqueeze, prim::kPrimTupleGetItem})) {
       continue;
     }
-    to_be_erased.insert(node);
+    (void)to_be_erased.insert(node);
     for (const auto &pre : node_rel.pres) {
       auto &pre_nexts = (*node_rels)[pre].nexts;
       (void)pre_nexts.erase(node);
