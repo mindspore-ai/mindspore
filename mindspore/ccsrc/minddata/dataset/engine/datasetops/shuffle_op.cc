@@ -37,8 +37,7 @@ constexpr int32_t ShuffleOp::kShuffleStateActive;
 constexpr int32_t ShuffleOp::kShuffleStateDrain;
 
 // Constructor of the ShuffleOp
-ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch,
-                     int64_t num_rows)
+ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch)
     : PipelineOp(op_connector_size),
       shuffle_size_(shuffle_size),
       shuffle_seed_(shuffle_seed),
@@ -46,20 +45,7 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
       rng_(shuffle_seed),
       shuffle_buffer_(std::make_unique<TensorTable>()),
       shuffle_last_row_idx_(0),
-      shuffle_buffer_state_(kShuffleStateInit),
-      num_rows_(num_rows) {}
-
-Status ShuffleOp::PrepareOperator() {
-  // Run any common code from super class first before adding our own
-  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
-
-  // in reset mode, we need to move forward the random generator seed.
-  if (GlobalContext::config_manager()->fast_recovery() && op_current_repeats_ > 0) {
-    CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "[Internal Error] num_rows_ is not set properly!");
-    rng_.discard(num_rows_ * op_current_repeats_);
-  }
-  return Status::OK();
-}
+      shuffle_buffer_state_(kShuffleStateInit) {}
 
 // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
 // itself rather than waiting for the reset driven from operators above it in the pipeline.

@@ -70,7 +70,7 @@ Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, in
   RETURN_IF_NOT_OK(ComputeShuffleSize(num_files, num_devices, num_rows, total_rows, &shuffle_size));
   MS_LOG(INFO) << "Dataset::AddShuffleOp - num_rows: " << num_rows << ", shuffle_size: " << shuffle_size;
   // Add the shuffle op
-  *shuffle_op = std::make_shared<ShuffleOp>(shuffle_size, GetSeed(), connector_que_size, true, num_rows);
+  *shuffle_op = std::make_shared<ShuffleOp>(shuffle_size, GetSeed(), connector_que_size, true);
   return Status::OK();
 }
 
