@@ -5,6 +5,9 @@ mindspore.ops.median
 
     输出Tensor指定维度上的中值与索引。
 
+    .. warning::
+        - 如果 `input` 的中值不唯一，则 `indices` 不一定包含第一个出现的中值。该接口的具体实现方式和后端类型相关，CPU和GPU的返回值可能不相同。
+
     参数：
         - **input** (Tensor) - median的输入，任意维度的Tensor。数据类型支持int16、int32、int64、float32或float64。
         - **axis** (int，可选) - 指定计算维度。默认值：-1。取值范围为[-dims, dims - 1]，`dims` 表示 `input` 的维度长度。
