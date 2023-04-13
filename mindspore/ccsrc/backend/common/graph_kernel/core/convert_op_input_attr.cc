@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #include "mindspore/ccsrc/backend/common/graph_kernel/core/convert_op_input_attr.h"
-#include "mindspore/ccsrc/backend/common/graph_kernel/core/graph_kernel_callback.h"
 
+#include <vector>
+#include <memory>
+#include "mindspore/ccsrc/backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
@@ -40,6 +42,33 @@ std::map<std::string, HashSet<size_t>> ConvertOpUtils::op_idx_info_ = {{prim::kP
                                                                        {prim::kPrimTupleGetItem->name(), {1}},
                                                                        {prim::kPrimUnsortedSegmentSum->name(), {2}},
                                                                        {prim::kPrimCumSum->name(), {1}}};
+bool ConvertOpUtils::CanConvertInputToAttr(const AnfNodePtr &node) {
+  auto prim = GetCNodePrimitive(node);
+  if (prim != nullptr) {
+    auto iter = op_idx_info_.find(prim->name());
+    if (iter != op_idx_info_.end()) {
+      auto inputs = node->cast<CNodePtr>()->inputs();
+      for (const auto &i : iter->second) {
+        if (i + 1 < inputs.size() && inputs[i + 1] != nullptr) {
+          auto input_node = inputs[i + 1];
+          ValuePtr value = nullptr;
+          if (input_node->isa<ValueNode>()) {
+            auto value_node = input_node->cast<ValueNodePtr>();
+            value = value_node->value();
+          } else if (input_node->isa<Parameter>()) {
+            auto parameter_node = input_node->cast<ParameterPtr>();
+            value = parameter_node->abstract()->BuildValue();
+          }
+          if (value == nullptr) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx) {
   AnfNodePtrList new_inputs;
   auto primitive = GetCNodePrimitive(cnode);
@@ -96,7 +125,8 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
           primitive->set_attr(input_names_vec[i], MakeValue(value_vector));
         }
       } else {
-        MS_LOG(ERROR) << input_names_vec[i] << "'s Value is null!";
+        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is null!";
+        return false;
       }
     } else {
       new_inputs.push_back(inputs[i + 1]);

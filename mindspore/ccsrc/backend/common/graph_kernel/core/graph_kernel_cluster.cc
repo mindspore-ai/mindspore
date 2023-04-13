@@ -155,6 +155,9 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
       return false;
     }
   }
+  if (!ConvertOpUtils::CanConvertInputToAttr(node)) {
+    return false;
+  }
   return true;
 }
 
