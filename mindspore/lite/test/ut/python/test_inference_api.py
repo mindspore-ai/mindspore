@@ -15,9 +15,9 @@
 """
 Test lite inference python API.
 """
-import mindspore_lite as mslite
 import numpy as np
 import pytest
+import mindspore_lite as mslite
 
 
 # ============================ Context ============================
@@ -225,6 +225,20 @@ def test_context_ascend_device_id():
     context = mslite.Context()
     context.ascend.device_id = 1
     assert "device_id: 1" in str(context.ascend)
+
+
+def test_context_ascend_provider_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        context = mslite.Context()
+        context.ascend.provider = 1
+    assert "ascend_provider must be str" in str(raise_info.value)
+
+
+def test_context_ascend_provider():
+    context = mslite.Context()
+    context.ascend.provider = "ge"
+    assert context.ascend.provider == "ge"
+    assert "provider: ge" in str(context.ascend)
 
 
 # ============================ Model ============================
