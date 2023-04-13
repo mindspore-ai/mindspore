@@ -43,8 +43,15 @@ enum DumpLevel : int {
   kFully,
 };
 
+enum JitSyntaxLevel : int {
+  kStrict,      // JIT Fallback disabled.
+  kCompatible,  // JIT Fallback partial enabled for Python basic type only, such as scalar, dict.
+  kLax,         // JIT Fallback fully enabled.
+};
+
 const int kGraphMode = 0;
 const int kPynativeMode = 1;
+
 const char kDeviceUnDefined[] = "DeviceUnDefined";
 const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
@@ -103,6 +110,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_EXECUTION_MODE = MS_CTX_TYPE_INT_BEGIN,
   MS_CTX_MEMORY_OPTIMIZE_LEVEL,
   MS_CTX_SAVE_GRAPHS_FLAG,
+  MS_CTX_JIT_SYNTAX_LEVEL,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32
@@ -165,6 +173,7 @@ class MS_CORE_API MsContext {
 
   void Refresh();
 
+  int GetJitSyntaxLevel() const;
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
   bool CanDump(const DumpLevel &level) const;

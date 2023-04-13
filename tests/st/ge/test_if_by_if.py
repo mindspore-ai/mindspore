@@ -26,7 +26,9 @@ def test_if_by_if():
     Description: test if_by_if with ge backend
     Expectation: success
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_if_by_if.sh")
     os.system(f"grep -E 'ERROR|error' {sh_path}/if/test_if_by_if*log -C 3")
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert ret == 0

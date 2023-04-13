@@ -239,7 +239,7 @@ bool IrExportBuilder::BuildPrimitives() {
   for (auto it = primitive_name_map_.begin(); it != primitive_name_map_.end(); ++it) {
     auto prim = it->first;
     if (prim->name() == prim::kPrimPyExecute->name()) {
-      MS_LOG(EXCEPTION) << "Cannot export a interpret node in MindIR.";
+      MS_LOG(EXCEPTION) << "Cannot export a PyExecute CNode in MindIR.";
     }
     auto prim_proto = model_->add_primitives();
 

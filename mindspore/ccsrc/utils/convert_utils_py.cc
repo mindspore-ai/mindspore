@@ -554,13 +554,13 @@ py::object AbstractSequenceToPyData(const VectorRef &value_list, const AbstractB
     }
     return ret;
   }
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
   // If FALLBACK_RUNTIME is not enable
   // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
   size_t ref_idx = 0;
   for (size_t i = 0; i < seq_abs->size(); i++) {
     auto elem_abs = seq_abs->elements()[i];
-    if (elem_abs->isa<abstract::AbstractNone>() && !support_fallback_runtime) {
+    if (elem_abs->isa<abstract::AbstractNone>() && !allow_fallback_runtime) {
       continue;
     }
     ret[ref_idx] = BaseRefToPyData(value_list[ref_idx], elem_abs);

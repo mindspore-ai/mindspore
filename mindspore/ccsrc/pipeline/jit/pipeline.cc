@@ -292,8 +292,8 @@ AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
 }
 
 std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-  if (support_fallback_runtime) {
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  if (allow_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
     MS_LOG(INFO) << "Real output: " << real_output << ", " << real_output->DebugString()
                  << ", has \'PyExecuteOutputUserData\': "
@@ -867,7 +867,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   source_ = py::cast<std::string>(py::str(source));
   phase_ = py::cast<std::string>(phase);
   if (phase_.find("export") != std::string::npos) {
-    (void)common::SetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME", "0");
+    (void)common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");  // Set level kCompatible later.
   }
   PhaseManager::GetInstance().set_phase(phase_);
   auto obj_desc = GetObjDesc(source);

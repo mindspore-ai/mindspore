@@ -122,6 +122,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
   set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
+  set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
 
   uint32_t kDefaultInterOpParallelThreads = 0;
   uint32_t kDefaultRuntimeNumThreads = 30;
@@ -363,6 +364,21 @@ void MsContext::CheckEnv(const std::string &device) {
   }
 
   check_env_(device, "");
+}
+
+int MsContext::GetJitSyntaxLevel() const {
+  std::string env_level_str = common::GetEnv("MS_DEV_JIT_SYNTAX_LEVEL");
+  if (env_level_str.size() == 1) {
+    int env_level = std::stoi(env_level_str);
+    if (env_level >= kStrict && env_level <= kLax) {
+      return env_level;
+    }
+  }
+  if (!env_level_str.empty()) {
+    MS_LOG(EXCEPTION) << "JIT syntax level should be a number and from 0 to 2, but got " << env_level_str;
+  }
+
+  return MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_SYNTAX_LEVEL);
 }
 
 std::string MsContext::GetSaveGraphsPath() const {

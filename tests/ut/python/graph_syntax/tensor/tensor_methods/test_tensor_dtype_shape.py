@@ -72,12 +72,12 @@ def test_type_not_have_the_attr():
             shape = x.shapes
             return shape
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(AttributeError):
         net(x)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 # When enable JIT Fallback, the error not happens during compiling, but throw in runtime.
@@ -93,9 +93,9 @@ def test_type_not_have_the_method():
             shape = x.dtypes()
             return shape
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     with pytest.raises(AttributeError):
         net(x)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

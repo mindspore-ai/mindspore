@@ -33,6 +33,7 @@ def test_ge_resnet50_boost_imagenet2012_ascend():
     Description: test_ge_resnet50_imagenet2012_ascend
     Expectation: Success
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     os.environ['MS_ENABLE_GE'] = '1'
     os.environ['MS_GE_TRAIN'] = '1'
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +59,7 @@ def test_ge_resnet50_boost_imagenet2012_ascend():
     os.system(exec_network_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     result = utils.process_check(120, cmd)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert result
     log_file = os.path.join(cur_model_path, "scripts/train/log")
     loss_list = utils.get_loss_data_list(log_file)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import pytest
 import tests.st.ge.ge_test_utils as utils
 
@@ -61,7 +62,9 @@ def test_reduce_axis_update():
     Description: test axis of reduce operator is empty
     Expectation: success
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('pass_reduce_axis_update')
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level0
@@ -73,7 +76,9 @@ def test_convert_attr_to_input():
     Description: test convert attr to input
     Expectation: success
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('pass_convert_attr_to_input')
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
