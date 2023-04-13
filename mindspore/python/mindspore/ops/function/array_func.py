@@ -3915,11 +3915,12 @@ def batch_to_space_nd(input_x, block_shape, crops):
 
     If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, the output shape is
     :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
+
     .. math::
-            \begin{array}{ll} \\
-                n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
-                w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
-            \end{array}
+        \begin{array}{ll} \\
+            n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
+            w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
+        \end{array}
 
     Args:
         input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
