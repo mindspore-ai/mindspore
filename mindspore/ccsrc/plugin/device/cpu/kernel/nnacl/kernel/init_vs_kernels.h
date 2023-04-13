@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_INIT_VS_KERNELS_H_
-#define MINDSPORE_NNACL_KERNEL_INIT_VS_KERNELS_H_
+#ifndef NNACL_KERNEL_INIT_VS_KERNELS_H_
+#define NNACL_KERNEL_INIT_VS_KERNELS_H_
 #include "nnacl/kernel.h"
 void init_vs_kernels(KernelCreator **creators);
-#endif  // MINDSPORE_NNACL_KERNEL_INIT_VS_KERNELS_H_
+#endif  // NNACL_KERNEL_INIT_VS_KERNELS_H_

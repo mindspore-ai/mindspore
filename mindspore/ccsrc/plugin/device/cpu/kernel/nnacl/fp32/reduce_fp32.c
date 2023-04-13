@@ -37,9 +37,9 @@
 #define RegReduceOp(op_name, op_type)                                                                             \
   int op_name(int outer_size, int inner_size, int axis_size, const op_type *src_data, op_type *dst_data, int tid, \
               int thread_num) {                                                                                   \
-    MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);                                      \
-    MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);                                                       \
-    MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);                                                                  \
+    NNACL_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);                                   \
+    NNACL_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);                                                    \
+    NNACL_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);                                                               \
     for (int j = tid; j < outer_size; j += thread_num) {                                                          \
       const op_type *outer_src = src_data + j * axis_size * inner_size;                                           \
       op_type *outer_dst = dst_data + j * inner_size;                                                             \
@@ -59,9 +59,9 @@ RegReduceOp(ReduceSum, float);
 
 int ReduceSumByLastAxis(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
                         int thread_num) {
-  MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
-  MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
-  MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
+  NNACL_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
+  NNACL_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
 
   for (int j = tid; j < outer_size; j += thread_num) {
     const float *src_tmp = src_data + j * axis_size;
@@ -98,9 +98,9 @@ RegReduceOp(ReduceMax, float);
 
 int ReduceMaxByLastAxis(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
                         int thread_num) {
-  MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
-  MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
-  MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
+  NNACL_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
+  NNACL_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
 
   for (int j = tid; j < outer_size; j += thread_num) {
     const float *src_tmp = src_data + j * axis_size;
@@ -222,11 +222,11 @@ int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_f
   int num_axes = reduce_parameter->num_axes_;
   int *in_shape0 = in_shape[0];
   int rank = dim_size[0];
-  MS_CHECK_TRUE_RET(rank > 0 && rank <= REDUCE_MAX_AXES_NUM, NNACL_PARAM_INVALID);
+  NNACL_CHECK_TRUE_RET(rank > 0 && rank <= REDUCE_MAX_AXES_NUM, NNACL_PARAM_INVALID);
   int axes[REDUCE_MAX_AXES_NUM];
   int actual_axes_num = num_axes;
   for (int i = 0; i < num_axes; ++i) {
-    MS_CHECK_TRUE_RET(reduce_parameter->axes_[i] >= -rank && reduce_parameter->axes_[i] < rank, NNACL_PARAM_INVALID);
+    NNACL_CHECK_TRUE_RET(reduce_parameter->axes_[i] >= -rank && reduce_parameter->axes_[i] < rank, NNACL_PARAM_INVALID);
     if (reduce_parameter->axes_[i] < 0) {
       axes[i] = reduce_parameter->axes_[i] + rank;
     } else {
@@ -234,7 +234,7 @@ int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_f
     }
   }
   if (reduce_parameter->reduce_to_end_) {
-    MS_CHECK_TRUE_RET(num_axes == 1, NNACL_PARAM_INVALID);
+    NNACL_CHECK_TRUE_RET(num_axes == 1, NNACL_PARAM_INVALID);
     int begin_axis = axes[0];
     num_axes = rank - begin_axis;
     for (int i = begin_axis + 1; i < rank; ++i) {

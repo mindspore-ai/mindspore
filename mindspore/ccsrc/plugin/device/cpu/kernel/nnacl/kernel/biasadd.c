@@ -97,8 +97,8 @@ int BiasRun(void *cdata, int task_id, float l, float r) {
 }
 
 int biasadd_prepare(struct KernelBase *self) {
-  MS_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
-  MS_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
   return NNACL_OK;
 }
 
@@ -108,25 +108,25 @@ int biasadd_resize(struct KernelBase *self) {
 
   TensorC *in_tensor = self->in_[FIRST_INPUT];
   TensorC *add_tensor = self->in_[SECOND_INPUT];
-  MS_CHECK_FALSE(in_tensor->shape_size_ == 0, NNACL_ERR);
-  MS_CHECK_FALSE(add_tensor->shape_size_ == 0, NNACL_ERR);
-  MS_CHECK_FALSE(in_tensor->shape_size_ < add_tensor->shape_size_, NNACL_ERR);
+  NNACL_CHECK_FALSE(in_tensor->shape_size_ == 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(add_tensor->shape_size_ == 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(in_tensor->shape_size_ < add_tensor->shape_size_, NNACL_ERR);
 
   size_t dim_offset = in_tensor->shape_size_ - add_tensor->shape_size_;
   bias_add->inner_num_ = 1;
   for (size_t i = 0; i < add_tensor->shape_size_; ++i) {
-    MS_CHECK_FALSE(in_tensor->shape_[i + dim_offset] != add_tensor->shape_[i], NNACL_BIAS_ADD_SHAPE_NOT_MATCH);
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(in_tensor->shape_[i], bias_add->inner_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
+    NNACL_CHECK_FALSE(in_tensor->shape_[i + dim_offset] != add_tensor->shape_[i], NNACL_BIAS_ADD_SHAPE_NOT_MATCH);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(in_tensor->shape_[i], bias_add->inner_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
     bias_add->inner_num_ *= add_tensor->shape_[i];
   }
 
   bias_add->outer_num_ = 1;
   for (size_t i = 0; i < dim_offset; ++i) {
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(in_tensor->shape_[i], bias_add->outer_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(in_tensor->shape_[i], bias_add->outer_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
     bias_add->outer_num_ *= in_tensor->shape_[i];
   }
 
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(bias_add->inner_num_, bias_add->outer_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(bias_add->inner_num_, bias_add->outer_num_), NNACL_BIAS_ADD_SHAPE_OVERFLOW);
   bias_add->total_num_ = bias_add->inner_num_ * bias_add->outer_num_;
   return ChooseBiasThreadCuttingStrategy(self);
 }

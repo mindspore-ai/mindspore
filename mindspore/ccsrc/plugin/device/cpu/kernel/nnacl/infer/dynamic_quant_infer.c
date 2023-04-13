@@ -30,7 +30,7 @@ int DynamicQuantInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
 
   DynamicQuantParameter *param = (DynamicQuantParameter *)parameter;
   output->data_type_ = param->dst_type_;
-  MS_CHECK_TRUE_RET(output->data_type_ > kNumberTypeBegin && output->data_type_ < kNumberTypeEnd, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(output->data_type_ > kNumberTypeBegin && output->data_type_ < kNumberTypeEnd, NNACL_ERR);
   output->format_ = input->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;

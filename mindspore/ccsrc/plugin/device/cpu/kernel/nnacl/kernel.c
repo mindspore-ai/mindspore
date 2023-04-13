@@ -47,10 +47,17 @@ bool SupportKernelC(int opType, int dataType) {
   return creator != NULL;
 }
 
+int DefaultThreadUpdate(int32_t type, int64_t load, int64_t store, int64_t unit, int thread) {
+  return thread > 0 ? thread : 1;
+}
+
 int NnaclKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
 
 KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, TensorC **outs, size_t out_size,
                          int data_type, ExecEnv *env) {
+  if (env == NULL) {
+    return NULL;
+  }
   Init_MSC_VER_kernels();
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][REGIST_DT(data_type)];
   if (creator == NULL) {
@@ -66,5 +73,6 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
   kernel_base->in_size_ = in_size;
   kernel_base->out_ = outs;
   kernel_base->out_size_ = out_size;
+  kernel_base->update_thread_ = DefaultThreadUpdate;
   return kernel_base;
 }

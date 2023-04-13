@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_KERNEL_GROUP_NORM_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_KERNEL_GROUP_NORM_H_
+#ifndef NNACL_KERNEL_GROUP_NORM_H_
+#define NNACL_KERNEL_GROUP_NORM_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -24,4 +24,4 @@
 
 KernelBase *CreateGroupNorm(OpParameter *param, int data_type);
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_KERNEL_GROUP_NORM_H_
+#endif  // NNACL_KERNEL_GROUP_NORM_H_

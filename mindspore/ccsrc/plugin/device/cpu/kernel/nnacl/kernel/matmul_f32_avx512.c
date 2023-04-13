@@ -287,10 +287,10 @@ int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
   }
   matmul->row_align_ = UP_ROUND(matmul->row_, matmul->row_tile_);
   matmul->col_align_ = UP_ROUND(matmul->col_, matmul->col_tile_);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_, matmul->row_align_, NNACL_ERR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * matmul->row_align_, matmul->deep_, NNACL_ERR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_, matmul->col_align_, NNACL_ERR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * matmul->col_align_, matmul->deep_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_, matmul->row_align_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * matmul->row_align_, matmul->deep_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_, matmul->col_align_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * matmul->col_align_, matmul->deep_, NNACL_ERR);
   int a_pack_size = matmul->a_batch_ * matmul->row_align_ * matmul->deep_;
   int b_pack_size = matmul->b_batch_ * matmul->col_align_ * matmul->deep_;
   if ((matmul->matrix_a_.has_packed_ && matmul->matrix_a_.pack_size_ != a_pack_size) ||
@@ -302,14 +302,14 @@ int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
   matmul->row_align_ = UP_ROUND(matmul->row_, matmul->row_tile_);
   matmul->out_need_aligned_ = (matmul->out_need_aligned_ && ((matmul->col_ % matmul->col_tile_) != 0));
   matmul->col_step_ = matmul->out_need_aligned_ ? matmul->col_align_ : matmul->col_;
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(matmul->a_batch_, matmul->row_), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(matmul->a_batch_, matmul->row_), NNACL_ERR);
   matmul->row_num_ = matmul->a_batch_ * matmul->row_;
   return NNACL_OK;
 }
 
 int MatmulFp32Avx512_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_row = matmul->split_points_[task_id];
   int end_row = matmul->row_num_;
@@ -342,7 +342,7 @@ int MatmulFp32Avx512_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
 }
 int MatmulFp32Avx512_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_oc = matmul->split_points_[task_id];
   int end_oc = matmul->col_step_;
@@ -420,7 +420,7 @@ int MatmulFp32Avx512_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
 
 int MatmulFp32Avx512_ParallelRunByGEPM(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int a_plane_size = matmul->row_align_ * matmul->deep_;
   int b_plane_size = matmul->deep_ * matmul->col_align_;
@@ -467,7 +467,7 @@ int MatmulFp32Avx512_ParallelRunByGEPM(MatmulFp32Struct *matmul, int task_id) {
 }
 int MatmulFp32Avx512_ParallelRunByGEMM(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int a_plane_size = matmul->row_align_ * matmul->deep_;
   int b_plane_size = matmul->deep_ * matmul->col_align_;
@@ -536,7 +536,7 @@ int MatmulFp32Avx512_ParallelRunByGEMM(MatmulFp32Struct *matmul, int task_id) {
 }
 int MatmulFp32Avx512_ParallelRunByGEPDOT(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   // by BatchCut
   int start_batch = task_id * matmul->batch_stride_;
@@ -575,7 +575,7 @@ int MatmulFp32Avx512_ParallelRunByGEPDOT(MatmulFp32Struct *matmul, int task_id) 
 }
 int MatmulFp32Avx512_ParallelRunByRow1Deep1GEPDOT(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int a_plane_size = matmul->row_align_ * matmul->deep_;
   int b_plane_size = matmul->deep_ * matmul->col_align_;
@@ -620,7 +620,7 @@ int MatmulFp32Avx512_ParallelRunByRow1Deep1GEPDOT(MatmulFp32Struct *matmul, int 
 }
 int MatmulFp32Avx512_ParallelRunByBatchColRowGEMM(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int a_plane_size = matmul->row_align_ * matmul->deep_;
   int b_plane_size = matmul->deep_ * matmul->col_align_;

@@ -21,7 +21,7 @@ void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
   int *a_shape = matmul->base_.in_[kInputIndex]->shape_;
   int a_shape_size = matmul->base_.in_[kInputIndex]->shape_size_;
   int batch = 1;
-  MS_CHECK_TRUE_RET_VOID(a_shape_size >= C2NUM);
+  NNACL_CHECK_TRUE_RET_VOID(a_shape_size >= C2NUM);
   for (size_t i = 0; i < a_shape_size - C2NUM; ++i) {
     batch *= a_shape[i];
   }
@@ -35,7 +35,7 @@ void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
   int *b_shape = matmul->base_.in_[kWeightIndex]->shape_;
   int b_shape_size = matmul->base_.in_[kWeightIndex]->shape_size_;
   int batch = 1;
-  MS_CHECK_TRUE_RET_VOID(b_shape_size >= C2NUM);
+  NNACL_CHECK_TRUE_RET_VOID(b_shape_size >= C2NUM);
   for (size_t i = 0; i < b_shape_size - C2NUM; ++i) {
     batch *= b_shape[i];
   }
@@ -128,8 +128,8 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
 }
 
 int matmul_prepare(KernelBase *self) {
-  MS_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
-  MS_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
 
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
   if (matmul->a_const_ || matmul->infer_shape_) {
@@ -149,7 +149,7 @@ int matmul_resize(KernelBase *self) {
   Matmul_InitShapeB(matmul);
 
   int ret = Matmul_InitBroadcastParams(matmul);
-  MS_CHECK_FALSE(ret != NNACL_OK, ret);
+  NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
   return matmul_f32_resize(self);
 }
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX512_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX512_H_
+#ifndef NNACL_KERNEL_MATMUL_F32_AVX512_H_
+#define NNACL_KERNEL_MATMUL_F32_AVX512_H_
 #ifdef ENABLE_AVX512
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -24,4 +24,4 @@
 KernelBase *CreateMatmulFp32Avx512();
 
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_F32_AVX512_H_
+#endif  // NNACL_KERNEL_MATMUL_F32_AVX512_H_

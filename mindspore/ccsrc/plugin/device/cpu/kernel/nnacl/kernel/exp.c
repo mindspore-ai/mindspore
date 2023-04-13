@@ -37,7 +37,7 @@ int exp_prepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base_.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  MS_CHECK_FALSE(self->in_size_ < 1 || self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
+  NNACL_CHECK_FALSE(self->in_size_ < 1 || self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
 
   float log_base = (param->base_ == -1) ? 1 : logf(param->base_);
   exp->in_scale_ = param->scale_ * log_base;

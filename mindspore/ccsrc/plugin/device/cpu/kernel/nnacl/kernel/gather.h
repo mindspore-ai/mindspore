@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_GATHER_H_
-#define MINDSPORE_NNACL_KERNEL_GATHER_H_
+#ifndef NNACL_KERNEL_GATHER_H_
+#define NNACL_KERNEL_GATHER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -41,4 +41,4 @@ typedef struct GatherStruct {
 
 KernelBase *CreateGather(OpParameter *param, int data_type);
 
-#endif  // MINDSPORE_NNACL_KERNEL_GATHER_H_
+#endif  // NNACL_KERNEL_GATHER_H_

@@ -61,7 +61,7 @@ int SetSplitOutputShape(const TensorC *input, TensorC **outputs, SplitParameter 
     } else {
       split_dim_i = param->split_sizes_[i];
     }
-    MS_CHECK_TRUE_RET(split_dim_i >= 0 && split_dim_i <= input->shape_[param->split_dim_], NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(split_dim_i >= 0 && split_dim_i <= input->shape_[param->split_dim_], NNACL_ERR);
     output_shape[param->split_dim_] = split_dim_i;
     SetShapeArray(outputs[i], output_shape, output_shape_size);
     SetDataTypeFormat(outputs[i], input);

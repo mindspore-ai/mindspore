@@ -110,7 +110,7 @@ int CommonGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  MS_CHECK_TRUE_RET(inputs[0]->shape_size_ == inputs[1]->shape_size_, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(inputs[0]->shape_size_ == inputs[1]->shape_size_, NNACL_ERR);
   for (int i = 0; i < inputs[0]->shape_size_; i++) {
     if (inputs[0]->shape_[i] != inputs[1]->shape_[i]) {
       return NNACL_ERR;

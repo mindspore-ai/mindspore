@@ -54,8 +54,8 @@ int MatmulFp32Arm64_PackMatrixAImplOpt(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   float *src_ptr =
     matmul->matrix_a_.has_origin_ ? matmul->matrix_a_.origin_ptr_ : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
-  MS_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
-  MS_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
 
   MatrixAPack pack;
   pack.src_ptr_ = src_ptr;
@@ -115,7 +115,7 @@ void MatmulFp32Arm64_InitGlobalVariable(MatmulFp32Struct *matmul) {
 
 int MatmulFp32Arm64_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_batch = task_id * matmul->batch_stride_;
   int end_batch = MSMIN(matmul->batch_, start_batch + matmul->batch_stride_);
@@ -144,7 +144,7 @@ int MatmulFp32Arm64_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
 
 int MatmulFp32Arm64_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_row = matmul->split_points_[task_id];
   int end_row = matmul->row_num_;
@@ -162,7 +162,7 @@ int MatmulFp32Arm64_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
 
 int MatmulFp32Arm64_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_oc = matmul->split_points_[task_id];
   int end_oc = matmul->col_step_;

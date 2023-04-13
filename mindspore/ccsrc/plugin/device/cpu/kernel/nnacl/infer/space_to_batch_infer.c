@@ -51,8 +51,8 @@ int SpaceToBatchInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
 
   NNACL_CHECK_ZERO_RETURN_ERR(block_shape[0]);
   NNACL_CHECK_ZERO_RETURN_ERR(block_w);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(block_shape[0], block_w, NNACL_ERR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(input->shape_[kNHWC_N], block_shape[0] * block_w, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(block_shape[0], block_w, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input->shape_[kNHWC_N], block_shape[0] * block_w, NNACL_ERR);
   outputs[0]->shape_[kNHWC_N] = input->shape_[kNHWC_N] * (block_shape[0] * block_w);
   outputs[0]->shape_[kNHWC_H] = (input->shape_[kNHWC_H] + paddings[0] + paddings[1]) / block_shape[0];
   outputs[0]->shape_[kNHWC_W] = (input->shape_[kNHWC_W] + padding_left + padding_right) / block_w;

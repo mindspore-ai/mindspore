@@ -127,7 +127,7 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
   const TensorC *stride_tensor = inputs[4];
   int stride_data_num = GetElementNum(stride_tensor);
   if (stride_data_num != 0) {
-    MS_CHECK_TRUE_RET(stride_data_num == begin_ndim, NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(stride_data_num == begin_ndim, NNACL_ERR);
     stride_data = (int *)(stride_tensor->data_);
   }
 

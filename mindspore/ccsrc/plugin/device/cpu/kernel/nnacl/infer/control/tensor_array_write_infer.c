@@ -25,7 +25,7 @@ int TensorArrayWriteInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  MS_CHECK_TRUE_RET(inputs_size >= 3, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(inputs_size >= 3, NNACL_ERR);
   TensorC *handle = (TensorC *)inputs[0];
   TensorC *value = (TensorC *)inputs[2];
 

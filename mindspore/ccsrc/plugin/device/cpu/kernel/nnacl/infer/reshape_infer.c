@@ -90,7 +90,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
   if (shape_size == 0) {
     return NNACL_ERR;
   }
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW((sizeof(int)), shape_size), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW((sizeof(int)), shape_size), NNACL_ERR);
   int *data_int = (int *)malloc(sizeof(int) * shape_size);
   if (data_int == NULL) {
     return NNACL_ERR;

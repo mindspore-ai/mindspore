@@ -397,7 +397,7 @@ int GetElementNum(const TensorC *tensor) {
   }
   int res = 1;
   for (size_t i = 0; i < tensor->shape_size_; i++) {
-    MS_CHECK_INT_MUL_NOT_OVERFLOW(res, tensor->shape_[i], NNACL_ERRCODE_MUL_OVERFLOW);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(res, tensor->shape_[i], NNACL_ERRCODE_MUL_OVERFLOW);
     res = res * tensor->shape_[i];
   }
 

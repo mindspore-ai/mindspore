@@ -49,8 +49,8 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
       int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
       int ci = 0;
 
-      MS_CHECK_TRUE_RET(real_win_h_end > real_win_h_start, NNACL_ERR);
-      MS_CHECK_TRUE_RET(real_win_w_end > real_win_w_start, NNACL_ERR);
+      NNACL_CHECK_TRUE_RET(real_win_h_end > real_win_h_start, NNACL_ERR);
+      NNACL_CHECK_TRUE_RET(real_win_w_end > real_win_w_start, NNACL_ERR);
       SIMD_RUN_NO_SCALAR(AvgPoolingBatch, ci, src_plane_ptr, channel, dst_plane_ptr, real_win_h_start, real_win_h_end,
                          real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, minf, maxf);
 
@@ -66,7 +66,7 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
             ++real_count;
           }  // win_w loop
         }    // win_h loop
-        MS_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
+        NNACL_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
         tmp_avg = tmp_avg / (float)real_count;
         tmp_avg = fmaxf(tmp_avg, minf);
         tmp_avg = fminf(tmp_avg, maxf);
@@ -152,14 +152,14 @@ int AvgPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
       int cur_index_in_h_end = MSMIN(cur_index_in_h_start + win_h, in_h);
 
       for (; w < output_w; w++) {
-        MS_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
+        NNACL_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
         float tmp_avg = 0.0;
 
         int cur_index_in_w_start = MSMAX(w * pooling_param->stride_w_ - pooling_param->pad_l_, 0);
         int cur_index_in_w_end = MSMIN(cur_index_in_w_start + win_w, in_w);
 
         int real_count = (cur_index_in_w_end - cur_index_in_w_start) * (cur_index_in_h_end - cur_index_in_h_start);
-        MS_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
+        NNACL_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
 
         for (int cur_index_in_h = cur_index_in_h_start; cur_index_in_h < cur_index_in_h_end; cur_index_in_h++) {
           const float *src_c_ptr_h_line = src_c_ptr + cur_index_in_h * in_w_cx_line;
@@ -236,7 +236,7 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
       int cur_index_in_h_end = MSMIN(cur_index_in_h_start + win_h, in_h);
 
       for (; w < output_w; w++) {
-        MS_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
+        NNACL_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
 
 #ifdef ENABLE_AVX
         MS_FLOAT32X8 tmp_avg = MS_MOV256_F32(0);
@@ -251,7 +251,7 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
         int cur_index_in_w_end = MSMIN(cur_index_in_w_start + win_w, in_w);
 
         int real_count = (cur_index_in_w_end - cur_index_in_w_start) * (cur_index_in_h_end - cur_index_in_h_start);
-        MS_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
+        NNACL_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
 
         for (int cur_index_in_h = cur_index_in_h_start; cur_index_in_h < cur_index_in_h_end; cur_index_in_h++) {
           const float *src_c_ptr_h_line = src_c_ptr + cur_index_in_h * in_w_cx_line;
@@ -460,7 +460,7 @@ int MaxPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
       int cur_index_in_h_end = MSMIN(cur_index_in_h_start + win_h, in_h);
 
       for (; w < output_w; w++) {
-        MS_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
+        NNACL_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
         float tmp_max = -FLT_MAX;
 
         int cur_index_in_w_start = MSMAX(w * pooling_param->stride_w_ - pooling_param->pad_l_, 0);
@@ -541,7 +541,7 @@ int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
       int cur_index_in_h_end = MSMIN(cur_index_in_h_start + win_h, in_h);
 
       for (; w < output_w; w++) {
-        MS_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
+        NNACL_CHECK_TRUE_RET((c < c_end || h < h_end || w < w_end), NNACL_OK);
 
 #ifdef ENABLE_AVX
         MS_FLOAT32X8 tmp_max = MS_MOV256_F32(-FLT_MAX);
