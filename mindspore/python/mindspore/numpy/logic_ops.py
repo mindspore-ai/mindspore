@@ -450,7 +450,7 @@ def isscalar(element):
     return not isinstance(obj_type, Tensor) and _isscalar(obj_type)
 
 
-def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=True):
+def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
     Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
 
