@@ -27,6 +27,7 @@
 #include "ir/dtype/type.h"
 #include "ir/func_graph.h"
 #include "include/api/data_type.h"
+#include "include/api/status.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -54,6 +55,7 @@ class FuncGraphUtils {
                                      std::vector<std::string> *inputs_name);
   static void GetFuncGraphOutputsInfo(const FuncGraphPtr &graph, std::vector<tensor::TensorPtr> *outputs,
                                       std::vector<std::string> *output_names);
+  static Status UnifyGraphToNHWCFormat(const FuncGraphPtr &graph);
 
  private:
   static ValuePtr GetNodeValuePtr(AnfNodePtr input_node);

@@ -31,28 +31,44 @@ MindRTGraphExecutor::MindRTGraphExecutor(const std::string &name,
                                          std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan) {
   name_ = name;
   execution_plan_ = execution_plan;
+}
+
+bool MindRTGraphExecutor::Init() {
   auto infer_execution_plan = std::dynamic_pointer_cast<infer::ExecutionPlan>(execution_plan_);
   if (infer_execution_plan == nullptr) {
     MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Not Supported execution plan is passed";
+    return false;
   } else {
-    mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetInputsMap(),
-                                                                         infer_execution_plan->GetOutputsMap());
+    mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetOutputsMap(),
+                                                                         infer_execution_plan->GetInputsMap());
+    if (!infer_execution_plan->BuildKernels()) {
+      MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Build kernels failed";
+      return false;
+    }
   }
+  return true;
 }
 
 Status MindRTGraphExecutor::Prepare() {
+  if (!Init()) {
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare init executor failed";
+    return kLiteError;
+  }
+
   if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "FlowExecutor::Prepare executor is nullptr";
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare executor is nullptr";
     return kLiteError;
   }
+
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "FlowExecutor::Prepare execution plan is nullptr";
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare execution plan is nullptr";
     return kLiteError;
   }
+
   auto ret = mindrt_executor_->Prepare(execution_plan_->ToKernelList(), execution_plan_->GetInputs(),
                                        execution_plan_->GetOutputs(), execution_plan_->GetContext().get());
   if (ret != 0) {
-    MS_LOG(ERROR) << "FlowExecutor::Prepare prepare execution plan failed with code " << ret;
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare prepare execution plan failed with code " << ret;
     return kLiteError;
   }
   return kSuccess;
@@ -60,18 +76,18 @@ Status MindRTGraphExecutor::Prepare() {
 
 Status MindRTGraphExecutor::Execute() {
   if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "FlowExecutor::Execute executor is nullptr";
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute executor is nullptr";
     return kLiteError;
   }
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "FlowExecutor::Execute execution plan is nullptr";
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute execution plan is nullptr";
     return kLiteError;
   }
   auto ret =
     mindrt_executor_->Run(execution_plan_->GetInputs(), execution_plan_->GetOutputs(), execution_plan_->ToKernelList(),
                           execution_plan_->GetKernelBeforeCallBack(), execution_plan_->GetKernelAfterCallBack());
   if (ret != 0) {
-    MS_LOG(ERROR) << "FlowExecutor::Execute run execution plan failed with code " << ret;
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute run execution plan failed with code " << ret;
     return kLiteError;
   }
   return kSuccess;
@@ -80,7 +96,7 @@ Status MindRTGraphExecutor::Execute() {
 int MindRTGraphExecutor::Resize(const std::vector<infer::abstract::Tensor *> &inputs,
                                 const std::vector<std::vector<int64_t>> &dims) {
   if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "FlowExecutor::Resize executor is nullptr";
+    MS_LOG(ERROR) << "MindRTGraphExecutor::Resize executor is nullptr";
     return kLiteError;
   }
   std::vector<std::vector<int>> dims32;

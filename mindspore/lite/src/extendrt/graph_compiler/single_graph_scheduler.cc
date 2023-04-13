@@ -86,6 +86,7 @@ abstract::Kernel *SingleGraphScheduler::CreateKernel(const CompileNode *compile_
     // select lite kernel
     auto op_parameter = op_parameters_[compile_node->GetName()];
     MSLITE_CHECK_PTR_RETURN(op_parameter, nullptr);
+    op_parameter->thread_num_ = context_->thread_num_;
     desc.type = op_parameter->type_;
     desc.format = NHWC;
     auto ret = lite::KernelRegistry::GetInstance()->GetKernelExec(compile_node->GetInputs(), compile_node->GetOutputs(),
