@@ -382,8 +382,6 @@ int LiteOpActor::InitInputData() {
     auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
     ret = subgraph_kernel->ReSize();
     MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel Resize failed.");
-    ret = subgraph_kernel->MallocNodesOutputSpace();
-    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel MallocSubgraphInputs failed.");
   }
   return RET_OK;
 }

@@ -100,8 +100,6 @@ class SubGraphKernel : public KernelExec {
 
   int ReSize() override;
 
-  virtual int MallocNodesOutputSpace();
-
   virtual int MallocSubgraphInputs();
 
   void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) override;
