@@ -115,6 +115,13 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/*.cc
         )
 
+if(MSLITE_ENABLE_CLOUD_INFERENCE)
+    add_compile_definitions(MSLITE_ENABLE_CLOUD_INFERENCE)
+    set(CONVERTER_SRC ${CONVERTER_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/parser/primitivepy_to_c.cc
+            )
+endif()
+
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_subdirectory(adapter/dpico)
 endif()
