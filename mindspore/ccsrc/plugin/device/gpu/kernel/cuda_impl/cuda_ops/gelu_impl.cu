@@ -138,6 +138,8 @@ template CUDA_LIB_EXPORT void Gelu(size_t size, const float *input_addr, float *
                                    const uint32_t device_id);
 template CUDA_LIB_EXPORT void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream,
                                    const uint32_t device_id);
+template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, double *dy_addr, double *x_addr, double *dx_addr,
+                                             cudaStream_t cuda_stream, const uint32_t device_id);
 template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
                                              cudaStream_t cuda_stream, const uint32_t device_id);
 template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,

@@ -5742,14 +5742,17 @@ def gelu(input_x, approximate='none'):
     if approximate not in ['none', 'tanh']:
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
 
-    output = _get_cache_prim(P.GeLU)()(input_x)
-
+    x_dtype = _get_cache_prim(P.DType)()(input_x)
+    if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
+        raise TypeError("For gelu, the input dtype must be float16, float32 or float64, "
+                        "but got {}.".format(x_dtype))
     if approximate == 'tanh':
-        output = _get_cache_prim(P.Pow)()(input_x, Tensor([3]))
-        output = output * Tensor([0.044715]) + input_x
-        output = output * _get_cache_prim(P.Sqrt)()(Tensor(2.0 / pi))
-        output = _get_cache_prim(P.Tanh)()(output) + Tensor([1.0])
-        output = output * input_x * Tensor([0.5])
+        output = _get_cache_prim(P.GeLU)()(input_x)
+    else:
+        output = _get_cache_prim(P.Sqrt)()(Tensor(2.0))
+        output = _get_cache_prim(P.Div)()(input_x, output)
+        output = _get_cache_prim(P.Erf)()(output) + Tensor(1.0)
+        output = input_x * output * Tensor(0.5)
 
     return output
 

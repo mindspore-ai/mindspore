@@ -52,7 +52,7 @@ TypePtr GeLUGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(dy_type);
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
-  std::set<TypePtr> check_list = {kFloat16, kFloat32};
+  std::set<TypePtr> check_list = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_type, check_list, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, check_list, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y", y_type, check_list, primitive->name());
