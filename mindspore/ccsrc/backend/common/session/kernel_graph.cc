@@ -1117,6 +1117,13 @@ kernel::KernelObjectType GetTupleGetItemOutputKernelObjectType(const AnfNodePtr 
       return output_elements_kernel_obj_types[output_idx];
     }
   }
+  if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
+    const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_abs);
+    if (sequence_abs->dynamic_len()) {
+      return kernel::KernelObjectType::TUPLE;
+    }
+  }
   return kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAbstractObjectType(node->abstract()));
 }
 

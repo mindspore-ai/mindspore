@@ -177,8 +177,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
 void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const values) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(values);
-  if (value->isa<ValueTuple>()) {
-    auto value_tuple = value->cast<ValueTuplePtr>();
+  if (value->isa<ValueSequence>()) {
+    auto value_tuple = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
     if (value_tuple->size() == 0) {
       (void)values->emplace_back(std::make_shared<tensor::Tensor>());
@@ -188,7 +188,7 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
       ValuePtr element = value_tuple->value()[i];
       MS_EXCEPTION_IF_NULL(element);
 
-      if (element->isa<ValueTuple>()) {
+      if (element->isa<ValueSequence>()) {
         ValueTupleToValue(element, values);
       } else {
         (void)values->emplace_back(element);
@@ -709,7 +709,13 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   const auto &node = node_with_index.first->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
   size_t index = node_with_index.second;
-  const auto &node_value = node->value();
+  auto node_value = node->value();
+  if (common::AnfAlgo::IsDynamicSequence(node)) {
+    node_value = AnfAlgo::SequenceToTensor(node_value);
+    AnfAlgo::UpdateValueNodeShape(node);
+    MS_LOG(INFO) << "Create new tensor:" << node_value->ToString()
+                 << " for dynamic sequence value node:" << node->DebugString();
+  }
   MS_EXCEPTION_IF_NULL(node_value);
   std::vector<ValuePtr> values;
   ValueTupleToValue(node_value, &values);
@@ -771,7 +777,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
   auto &node_value = node->value();
   MS_EXCEPTION_IF_NULL(node_value);
 
-  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>() || node_value->isa<Scalar>()) {
+  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueSequence>() || node_value->isa<Scalar>()) {
     PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);
