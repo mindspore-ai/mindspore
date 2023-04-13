@@ -128,22 +128,6 @@ int SubGraphKernel::ReSize() {
   return RET_OK;
 }
 
-int SubGraphKernel::MallocNodesOutputSpace() {
-  for (auto node : nodes_) {
-    MS_CHECK_FALSE_MSG(node == nullptr, RET_ERROR, "input kernel is nullptr.");
-    MS_CHECK_FALSE_MSG(node->subgraph_type() != kernel::kNotSubGraph, RET_ERROR,
-                       "all nodes in should be kernel in subgraph kernels");
-    std::vector<lite::Tensor *> outputs = node->out_tensors();
-    for (auto &output : outputs) {
-      auto ret = lite::MallocTensorData(output);
-      if (ret != RET_OK) {
-        return ret;
-      }
-    }
-  }
-  return RET_OK;
-}
-
 int SubGraphKernel::MallocSubgraphInputs() {
   for (auto input : in_tensors()) {
     auto ret = lite::MallocTensorData(input);
