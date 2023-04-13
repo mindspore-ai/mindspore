@@ -24,7 +24,7 @@ mindspore.ops.broadcast_to
     - 如果额外的 :math:`*` 维中含有-1，说明此时该-1对应一个不存在的维度，不支持广播。比如说目标shape为 :math:`(3, -1, 4, 1, 5, 9)` ，输入shape为 :math:`(1, 5, 9)` ，此时不进行增维处理，而是直接报错。
 
     参数：
-        - **input** (Tensor) - 第一个输入，任意维度的Tensor，数据类型为float16、float32、int32、int8、uint8、bool。
+        - **input** (Tensor) - 第一个输入，任意维度的Tensor。
         - **shape** (tuple) - 第二个输入，指定广播到目标 `shape`。
 
     返回：

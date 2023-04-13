@@ -456,6 +456,13 @@ class Print(Primitive):
 
     Refer to :func:`mindspore.ops.print_` for more detail.
 
+    Inputs:
+        - **input_x** (Union[Tensor, bool, int, float, str]) - The graph node to attach to.
+          Supports multiple inputs which are separated by ','.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

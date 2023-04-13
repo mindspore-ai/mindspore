@@ -924,6 +924,27 @@ class UniformCandidateSampler(Primitive):
 
     Refer to :func:`mindspore.ops.uniform_candidate_sampler` for more details.
 
+    Args:
+        num_true (int): The number of target classes in each training example.
+        num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
+            of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
+        unique (bool): Whether all sampled classes in a batch are unique.
+        range_max (int): The number of possible classes, must be non-negative.
+        seed (int, optional): Used for random number generation, must be non-negative. If seed has a value of 0,
+            the seed will be replaced with a randomly generated value. Default: 0.
+        remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: False.
+
+    Inputs:
+        - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of (batch_size, num_true).
+
+    Outputs:
+        - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
+          Shape: (num_sampled, ).
+        - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
+          of true_classes. Shape: (batch_size, num_true).
+        - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
+          each of sampled_candidates. Shape: (num_sampled, ).
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -972,6 +993,27 @@ class LogUniformCandidateSampler(Primitive):
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
 
     Refer to :func:`mindspore.ops.log_uniform_candidate_sampler` for more details.
+
+    Args:
+        num_true (int, optional): The number of target classes per training example. Default: 1.
+        num_sampled (int, optional): The number of classes to randomly sample. Default: 5.
+        unique (bool, optional): Determines whether sample with rejection. If `unique` is True,
+          all sampled classes in a batch are unique. Default: True.
+        range_max (int, optional): The number of possible classes. When `unique` is True,
+          `range_max` must be greater than or equal to `num_sampled`. Default: 5.
+        seed (int, optional): Random seed, must be non-negative. Default: 0.
+
+    Inputs:
+        - **true_classes** (Tensor) - The target classes. With data type of int64 and
+          shape :math:`(batch\_size, num\_true)` .
+
+    Outputs:
+        Tuple of 3 Tensors.
+
+        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
+          and the same type as `true_classes`.
+        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
+        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

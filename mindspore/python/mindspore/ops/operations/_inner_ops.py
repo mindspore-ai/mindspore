@@ -1496,6 +1496,16 @@ class Cummin(Primitive):
 
     Refer to :func:`mindspore.ops.cummin` for more detail.
 
+    Args:
+        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
+
+    Inputs:
+        - **input** (Tensor) - The input tensor.
+
+    Outputs:
+        A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
+        The shape of each output tensor is the same as input `input`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
