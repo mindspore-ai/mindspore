@@ -574,7 +574,8 @@ class _Ascend(_Target):
     def __str__(self):
         res = f"device_type: {self._device_info.get_device_type()},\n" \
               f"precision_mode: {self.precision_mode},\n" \
-              f"device_id: {self.device_id}."
+              f"device_id: {self.device_id}." \
+              f"provider: {self.provider}."
         return res
 
     @property
@@ -633,22 +634,21 @@ class _Ascend(_Target):
 
     @property
     def provider(self):
-        """Get the device id."""
+        """Get the provider that supports the inference capability of target device."""
         return self._device_info.get_provider()
 
     @provider.setter
     def provider(self, ascend_provider):
         """
-        Set the device id.
+        Set the provider that supports the inference capability of target device.
 
         Args:
-            ascend_provider(str): The ascend provider.
+            ascend_provider(str): The ascend provider, which can be "" or "ge", default "".
 
         Raises:
-            TypeError: `ascend_device_id` is not an int.
-            ValueError: `ascend_device_id` is less than 0.
+            TypeError: `ascend_provider` is not a str.
         """
-        check_isinstance("ascend_device_id", ascend_provider, str)
+        check_isinstance("ascend_provider", ascend_provider, str)
         self._device_info.set_provider(ascend_provider)
 
 

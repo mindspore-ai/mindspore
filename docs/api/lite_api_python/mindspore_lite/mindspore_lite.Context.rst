@@ -80,5 +80,7 @@ mindspore_lite.Context
               - **enforce_origin** - 对应ACL选项为must_keep_origin_dtype，强制使用原始类型。
               - **preferred_optimal** - 对应ACL选项为allow_mix_precision，优先使用fp16+精度权衡。
 
+            - **provider** (str) - 支持目标设备推理能力的provider，可以是""或"ge"，默认""。
+
         返回：
             int，Context的目标设备信息。

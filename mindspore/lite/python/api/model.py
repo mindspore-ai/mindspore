@@ -95,7 +95,37 @@ class Model:
 
     @staticmethod
     def init_distributed(rank_table_file, rank_id, device_id, provider="ge"):
-        """Init distributed env"""
+        """
+        Used to declare the distributed information of a large model. Beta interface, which may be removed in the
+        future.
+
+        Args:
+            rank_table_file (str): file path of the rank table.
+            rank_id (int): rank id of the models.
+            device_id (int): target device id.
+            provider (str): provider that supports the inference capability of target device,
+                only "ge" is supported currently.
+
+        Raises:
+            TypeError: `rank_table_file` or `provider` is not a str.
+            TypeError: `rank_id` or `device_id` is not a ModelType.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> mslite.Model.init_distributed(rank_table_file="hccl_8p.json", rank_id=0, device_id=0)
+            >>> context = mslite.Context()
+            >>> context.ascend.device_id = 0
+            >>> context.ascend.rank_id = 0
+            >>> context.ascend.provider = "ge"
+            >>> context.target = ["Ascend"]
+            >>> model0, model1 = mslite.Model.build_from_file("seq_1024.mindir", "seq_1.mindir",
+            ...                                               mslite.ModelType.MINDIR, context, "config.ini")
+        """
+        check_isinstance("rank_table_file", rank_table_file, str)
+        check_isinstance("rank_id", rank_id, int)
+        check_isinstance("device_id", device_id, int)
+        check_isinstance("provider", provider, str)
+
         os.environ["RANK_ID"] = str(rank_id)
         os.environ["DEVICE_ID"] = str(device_id)
         os.environ["ASCEND_DEVICE_ID"] = str(device_id)
@@ -104,28 +134,56 @@ class Model:
         os.environ["RANK_TABLE_FILE"] = rank_table_file
 
     @staticmethod
-    def build_multi_models(model_path0, model_path1, model_type, context, config_path=""):
-        """Load models share weights"""
-        check_isinstance("model_path", model_path0, str)
-        check_isinstance("model_path", model_path1, str)
+    def build_multi_models(model_path0, model_path1, model_type, context, config_path):
+        """
+        Used to load two models that share weights. Beta interface, which may be removed in the future.
+
+        Args:
+            model_path0 (str): file path of the first model.
+            model_path0 (str): file path of the second model.
+            model_type (ModelType): Define The type of input model file. only ModelType.MINDIR is supported currently.
+            context (Context, optional): Define the context used to transfer options during execution.
+            config_path (str, optional): Define the config file path. the config file is used to transfer user defined
+                options during build model.
+
+        Returns:
+            list[Tensor], two Model object that share weights.
+
+        Raises:
+            TypeError: `model_path0`, `model_path1` or `config_path` is not a str.
+            TypeError: `model_type` is not a ModelType.
+            TypeError: `context` is not a Context.
+            RuntimeError: `model_path0`, `model_path1` or `config_path` does not exist.
+            RuntimeError: load configuration by `config_path` failed.
+            RuntimeError: build from file failed.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> mslite.Model.init_distributed(rank_table_file="hccl_8p.json", rank_id=0, device_id=0)
+            >>> context = mslite.Context()
+            >>> context.ascend.device_id = 0
+            >>> context.ascend.rank_id = 0
+            >>> context.ascend.provider = "ge"
+            >>> context.target = ["Ascend"]
+            >>> model0, model1 = mslite.Model.build_from_file("seq_1024.mindir", "seq_1.mindir",
+            ...                                               mslite.ModelType.MINDIR, context, "config.ini")
+        """
+        check_isinstance("model_path0", model_path0, str)
+        check_isinstance("model_path1", model_path1, str)
         check_isinstance("model_type", model_type, ModelType)
-        if context is None:
-            context = Context()
         check_isinstance("context", context, Context)
         check_isinstance("config_path", config_path, str)
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
             model_type_ = _c_lite_wrapper.ModelType.kMindIR
 
-        if config_path:
-            if not os.path.exists(config_path):
-                raise RuntimeError(f"build_from_file failed, config_path does not exist!")
-        else:
-            config_path = ""
+        if not os.path.exists(config_path):
+            raise RuntimeError(f"build_multi_models failed, config_path does not exist")
+
         models_ = _c_lite_wrapper.ModelBind.build_multi_models(model_path0, model_path1, model_type_,
                                                                context._context._inner_context, config_path)
         if not models_:
-            raise RuntimeError(f"build_from_file failed! model_path0: {model_path0}, model_path1: {model_path1}, "
+            raise RuntimeError(f"build_multi_models failed! model_path0: {model_path0}, model_path1: {model_path1}, "
                                f"config_file: {config_path}")
         model0 = Model()
         model0._model = models_[0]
