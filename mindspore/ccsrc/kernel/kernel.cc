@@ -257,11 +257,14 @@ void KernelTensor::SetDtype(const TypePtr &dtype) {
 }
 
 void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) {
-  TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
+  auto base_shape_ptr = GetBaseShape();
+  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
     return;
   }
-  info.base_->set_shape(std::make_shared<abstract::Shape>(shape));
+  auto shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
+  if (shape_ptr) {
+    shape_ptr->set_shape(shape);
+  }
 }
 
 abstract::BaseShapePtr KernelTensor::GetBaseShape() const {
@@ -293,16 +296,26 @@ void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_s
   info.device_shape_adaptively = device_shape_adaptively;
 }
 
+int KernelMod::Resize(const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  return Resize(this->op_, this->inputs_, this->outputs_, inputsOnHost);
+}
+
+int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  inputs_ = inputs;
+  outputs_ = outputs;
+  return Resize(this->op_, inputs, outputs, inputsOnHost);
+}
+
 int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                       const std::vector<KernelTensorPtr> &outputs,
                       const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
   auto ret = KRET_OK;
-  this->inputs_ = inputs;
-  this->outputs_ = outputs;
   workspace_size_list_.clear();
   input_size_list_.clear();
-  input_shapes_.clear();
-  for (auto &input : inputs) {
+  output_size_list_.clear();
+  for (size_t idx = 0; idx < inputs.size(); idx++) {
+    auto &input = inputs[idx];
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(input);
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
@@ -316,20 +329,10 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       tensor_size = std::max(tensor_size, type_size);
     }
     (void)input_size_list_.emplace_back(tensor_size);
-    input_shapes_.emplace_back(shape);
-  }
-  output_shapes_.clear();
-  output_size_list_.clear();
-  std::string prim_name;
-  if (base_operator != nullptr) {
-    auto primitive = base_operator->GetPrim();
-    MS_ERROR_IF_NULL(primitive);
-    prim_name = primitive->name();
-  } else {
-    prim_name = "Graph Kernel Fused Op";
   }
 
-  for (auto &output : outputs) {
+  for (size_t idx = 0; idx < outputs.size(); idx++) {
+    auto &output = outputs[idx];
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(output);
     size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
@@ -340,7 +343,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       // and the output_size_list_ can be set by max_shape
       auto max_shape = output->GetMaxShape();
       if (max_shape.empty()) {
-        MS_LOG(DEBUG) << "For " << prim_name << ", the max_shape should not be empty when input shape is known.";
+        MS_LOG(DEBUG) << "For " << kernel_name_ << ", the max_shape should not be empty when input shape is known.";
         ret = KRET_UNKNOWN_OUT_SHAPE;
       } else {
         tensor_size = SizeOf(max_shape) * type_size;
@@ -353,7 +356,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
         auto cur_out_shape_num = SizeOf(shape);
         tensor_size = cur_out_shape_num * type_size;
         if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
-          MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape of outputs[" << output_size_list_.size()
+          MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the shape of outputs[" << output_size_list_.size()
                                    << "]: " << shape
                                    << " is too big, mindspore cannot apply for such a large amount of memory.";
         }
@@ -361,33 +364,8 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       tensor_size = std::max(tensor_size, type_size);
     }
     (void)output_size_list_.emplace_back(tensor_size);
-    output_shapes_.emplace_back(shape);
   }
   return static_cast<int>(ret);
-}
-
-bool KernelMod::Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                       const std::vector<AddressPtr> &workspace, void *stream_ptr) {
-  return false;
-}
-// deprecated
-bool KernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  MS_EXCEPTION_IF_CHECK_FAIL(this->inputs_.size() == inputs.size(), "inputs size check failed");
-  MS_EXCEPTION_IF_CHECK_FAIL(this->outputs_.size() == outputs.size(), "inputs size check failed");
-  auto it1 = this->inputs_.begin();
-  auto it2 = inputs.begin();
-  for (; it1 != this->inputs_.end() && it2 != inputs.end(); it1++, it2++) {
-    (*it1)->SetData((*it2));
-  }
-
-  it1 = this->outputs_.begin();
-  it2 = outputs.begin();
-  for (; it1 != this->outputs_.end() && it2 != outputs.end(); it1++, it2++) {
-    (*it1)->SetData((*it2));
-  }
-
-  return Launch(this->inputs_, this->outputs_, workspace, stream_ptr);
 }
 
 std::vector<int64_t> GetIntValueFromData(void *const data_c, const TypeId &type_id, size_t data_size,
@@ -453,6 +431,14 @@ bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index, std::
   }
   *attr_value = res.value();
   return true;
+}
+
+std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors) {
+  std::vector<std::vector<int64_t>> shapes(tensors.size());
+  for (size_t idx = 0; idx < shapes.size(); idx++) {
+    shapes[idx] = tensors[idx]->GetShapeVector();
+  }
+  return shapes;
 }
 }  // namespace kernel
 }  // namespace mindspore

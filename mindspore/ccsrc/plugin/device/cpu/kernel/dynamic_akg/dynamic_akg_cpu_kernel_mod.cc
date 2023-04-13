@@ -132,8 +132,6 @@ DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const std::string &kernel_name) {
 bool DynamicAkgCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */,
                                   const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
-  this->inputs_ = inputs;
-  this->outputs_ = outputs;
   MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
   return true;
 }

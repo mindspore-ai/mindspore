@@ -70,7 +70,6 @@ class StridedSliceV2GradCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool CalStridedSliceV2Grad(T *input, T *output);
 
-  BaseOperatorPtr base_operator_;
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;

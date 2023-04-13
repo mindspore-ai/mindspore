@@ -47,8 +47,7 @@ class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-  void SyncData() override;
+  void SyncOutputShape() override;
 
  private:
   template <typename T>
@@ -66,7 +65,6 @@ class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
   std::vector<TypeId> dtypes_ = {};
   size_t miss_count_{0};
   size_t outputs_size_{0};
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

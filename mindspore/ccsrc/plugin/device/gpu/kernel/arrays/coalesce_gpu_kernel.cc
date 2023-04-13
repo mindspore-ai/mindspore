@@ -114,11 +114,10 @@ int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
-  outputs_ = outputs;
   return KRET_OK;
 }
 
-void CoalesceGpuKernelMod::SyncData() {
+void CoalesceGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   size_t output_num = outputs_.size();

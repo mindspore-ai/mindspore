@@ -85,11 +85,11 @@ int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != 0) {
     return ret;
   }
-  CHECK_KERNEL_INPUTS_NUM(input_shapes_.size(), kInputsNum, kernel_name_);
-  auto input_0_shape = input_shapes_[0];
-  auto input_1_shape = input_shapes_[1];
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  auto input_0_shape = inputs[0]->GetShapeVector();
+  auto input_1_shape = inputs[1]->GetShapeVector();
   if (input_0_shape.empty() || input_1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << input_shapes_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << GetShapes(inputs);
   }
   x_size_ = LongToSize(input_0_shape[0]);
   y_size_ = LongToSize(input_1_shape[0]);

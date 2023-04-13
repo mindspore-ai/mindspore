@@ -95,7 +95,6 @@ bool AdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   kernel_func_ = func_list_[index].second;
   InOutputResize(base_operator, inputs, outputs);
-  outputs_ = outputs;
   return true;
 }
 
@@ -104,7 +103,6 @@ int AdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
   kernel_ptr_ = base_operator;
   InOutputResize(base_operator, inputs, outputs);
-  outputs_ = outputs;
   return KRET_OK;
 }
 

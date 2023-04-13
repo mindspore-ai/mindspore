@@ -22,13 +22,13 @@
 namespace mindspore {
 namespace lite {
 namespace acl {
-#define ADD_CONVERTER_TBE_OP(name)       \
-  constexpr auto kName##name = #name;    \
-  class name : public ops::PrimitiveC {  \
-   public:                               \
-    name() : PrimitiveC(kName##name) {}  \
-    ~name() = default;                   \
-    MS_DECLARE_PARENT(name, PrimitiveC); \
+#define ADD_CONVERTER_TBE_OP(name)            \
+  constexpr auto kName##name = #name;         \
+  class name : public ops::PrimitiveC {       \
+   public:                                    \
+    name() : ops::PrimitiveC(kName##name) {}  \
+    ~name() = default;                        \
+    MS_DECLARE_PARENT(name, ops::PrimitiveC); \
   };
 
 ADD_CONVERTER_TBE_OP(Pooling)

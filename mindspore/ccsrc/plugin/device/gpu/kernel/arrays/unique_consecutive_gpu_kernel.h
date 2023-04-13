@@ -45,8 +45,7 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
   void ResetResource() noexcept {
     is_null_input_ = false;
@@ -74,9 +73,6 @@ class UniqueConsecutiveGpuKernelMod : public NativeGpuKernelMod {
   bool is_flattend_{false};
   int64_t axis_;
   std::unique_ptr<cukernel::UniqueConsecutiveHelperBase> helper_ptr_ = nullptr;
-  BaseOperatorPtr base_operator_ = nullptr;
-  std::vector<KernelTensorPtr> inputs_ = {};
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

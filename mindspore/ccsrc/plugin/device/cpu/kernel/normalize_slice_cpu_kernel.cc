@@ -47,11 +47,15 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-template <typename T>
-bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::vector<AddressPtr> &) const {
-  (void)std::for_each(input_shapes_.begin() + kIndex2, input_shapes_.end(), [](const ShapeVector &slice_shape) {
+int NormalizeSliceInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &others) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shapes = GetShapes(inputs);
+  (void)std::for_each(input_shapes.begin() + kIndex2, input_shapes.end(), [](const ShapeVector &slice_shape) {
     if (slice_shape.size() == 1 && slice_shape[0] != 1) {
       MS_LOG(EXCEPTION) << "Number of elements in slice index be 1, but the shape of it is " << slice_shape;
     }
@@ -59,20 +63,27 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
       MS_LOG(EXCEPTION) << "Number of elements in slice index be 1, but the shape of it is " << slice_shape;
     }
   });
-  if (input_shapes_[0].empty()) {
+  if (input_shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Cannot iterate over a scalar tensor.";
   }
-  const auto data_shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->GetData()->addr);
-  const auto init_by_none_addr = reinterpret_cast<T *>(inputs[kIndex1]->GetData()->addr);
-  const auto start_addr = reinterpret_cast<T *>(inputs[kIndex2]->GetData()->addr);
-  const auto stop_addr = reinterpret_cast<T *>(inputs[kIndex3]->GetData()->addr);
-  const auto step_addr = reinterpret_cast<T *>(inputs[kIndex4]->GetData()->addr);
+  return 0;
+}
 
-  auto output_start_attr = reinterpret_cast<T *>(outputs[kIndex0]->GetData()->addr);
-  auto output_stop_attr = reinterpret_cast<T *>(outputs[kIndex1]->GetData()->addr);
-  auto output_step_attr = reinterpret_cast<T *>(outputs[kIndex2]->GetData()->addr);
+template <typename T>
+bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &workspace,
+                                                  const std::vector<AddressPtr> &outputs) const {
+  const auto data_shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  const auto init_by_none_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  const auto start_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  const auto stop_addr = reinterpret_cast<T *>(inputs[kIndex3]->addr);
+  const auto step_addr = reinterpret_cast<T *>(inputs[kIndex4]->addr);
 
-  auto output_arg_size = outputs[kIndex0]->GetData()->size;
+  auto output_start_attr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output_stop_attr = reinterpret_cast<T *>(outputs[kIndex1]->addr);
+  auto output_step_attr = reinterpret_cast<T *>(outputs[kIndex2]->addr);
+
+  auto output_arg_size = outputs[kIndex0]->size;
   T dim_size = data_shape_addr[0];
   bool start_by_none_init = init_by_none_addr[0] == 1;
   bool stop_by_none_init = init_by_none_addr[1] == 1;
@@ -105,10 +116,10 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   return true;
 }
 
-bool NormalizeSliceInfoCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::vector<AddressPtr> &workspace) {
-  return kernel_func_(this, inputs, outputs, workspace);
+bool NormalizeSliceInfoCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> &outputs) {
+  return kernel_func_(this, inputs, workspace, outputs);
 }
 
 std::vector<std::pair<KernelAttr, NormalizeSliceInfoCpuKernelMod::NormalizeSliceFunc>>

@@ -122,7 +122,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();
     dtype_ = inputs[0]->GetDtype();
-    outputs_ = outputs;
     is_need_retrieve_output_shape_ = true;
     auto batch_rank = base_operator->get_batch_rank();
     if (batch_rank < 0) {
@@ -138,7 +137,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
       return ret;
     }
-    outputs_ = outputs;
     if (inputs.size() < 1) {
       MS_LOG(EXCEPTION) << kernel_name_ << " requires not less than 1 inputs, but got " << inputs.size() << ".";
     }
@@ -190,7 +188,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 
-  void SyncData() override {
+  void SyncOutputShape() override {
     ShapeVector out_shape;
     if (output_sizes_.empty()) {
       (void)out_shape.emplace_back(SizeToLong(0));
@@ -199,7 +197,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     }
     outputs_[0]->SetShapeVector(out_shape);
   }
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  protected:
   template <typename DataType, typename IndexType>
@@ -211,7 +208,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   size_t batch_rank_{0};
   std::vector<size_t> output_sizes_;
   bool sorted_{false};
-  std::vector<KernelTensorPtr> outputs_{};
 
   template <typename DataType, typename IndexType>
   static void CalculateEachBucketSize(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,

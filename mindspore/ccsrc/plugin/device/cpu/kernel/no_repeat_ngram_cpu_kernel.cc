@@ -53,7 +53,6 @@ bool NoRepeatNGramCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(ERROR) << "NoRepeatNGram does not support this kernel data type: " << kernel_attr;
   }
 
-  base_operator_ = base_operator;
   kernel_func_ = func_list_[index].second;
   return true;
 }

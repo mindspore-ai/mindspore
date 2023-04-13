@@ -71,7 +71,6 @@ int ChannelShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();
-  outputs_ = outputs;
   return KRET_OK;
 }
 

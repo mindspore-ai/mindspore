@@ -69,7 +69,6 @@ class StridedSliceV2CpuKernelMod : public NativeCpuKernelMod {
   int outer_{1};
   int cal_num_per_thread_{1};
   bool parallel_{false};
-  BaseOperatorPtr base_operator_;
   size_t inputs_num_;
   size_t shape_dim_input;
   size_t slice_len;

@@ -24,20 +24,6 @@
 
 namespace mindspore {
 namespace ops {
-void PrimitiveC::InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name) {
-  (void)this->AddAttr("input_names", MakeValue(inputs_name));
-  (void)this->AddAttr("output_names", MakeValue(outputs_name));
-}
-
-AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
-  auto infer_map = abstract::GetPrimitiveInferMap();
-  auto iter = infer_map.find(std::make_shared<Primitive>(this->name()));
-  if (iter == infer_map.end()) {
-    MS_EXCEPTION(NotExistsError) << "Can not find the " << this->name() << "infer function in the infer map!";
-  }
-  return iter->second.InferShapeAndType(nullptr, shared_from_base<Primitive>(), abstract_list);
-}
-
 OpPrimCRegister &OpPrimCRegister::GetInstance() {
   static OpPrimCRegister instance;
   return instance;

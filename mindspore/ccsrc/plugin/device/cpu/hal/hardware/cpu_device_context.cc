@@ -402,12 +402,13 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
-      auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
+      auto op = kernel::CreateOperatorByCNode(node);
+      auto ret = cpu_kernel->Init_(op, args.inputs, args.outputs);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
       if (!kernel::IfNeedSkipResize(node)) {
-        if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+        if (cpu_kernel->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
           MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
                             << "] Resize failed.";
         }

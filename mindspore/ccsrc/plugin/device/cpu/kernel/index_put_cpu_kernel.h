@@ -57,7 +57,6 @@ class IndexPutCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   void ComputeNospecial(T *x2, size_t x2_nums, std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate);
   template <typename T>
   void ComputeSpecial(T *x2, size_t x2_nums, std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate);
-  BaseOperatorPtr base_operator_;
   std::vector<int64_t> x1_shape_;
   std::vector<int64_t> x2_shape_;
   std::vector<std::vector<int64_t>> indices_shape_;

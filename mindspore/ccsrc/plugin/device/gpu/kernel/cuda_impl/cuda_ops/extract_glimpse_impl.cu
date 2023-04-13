@@ -80,19 +80,19 @@ __global__ void CalExtractGlimpseKernel(const size_t output_size, const size_t b
 }
 
 template <typename T>
-void CalExtractGlimpse(const size_t output_size, const size_t batch_cnt, const size_t channels,
-                       const size_t image_height, const size_t image_width, const ExtractGlimpsenoiseMode noise,
-                       const bool centered, const bool normalized, const bool uniform_noise, const T *inputs,
-                       const int *size, const T *offsets, T *output, cudaStream_t cuda_stream) {
-  CalExtractGlimpseKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, cuda_stream>>>(
+cudaError_t CalExtractGlimpse(const size_t output_size, const size_t batch_cnt, const size_t channels,
+                              const size_t image_height, const size_t image_width, const ExtractGlimpsenoiseMode noise,
+                              const bool centered, const bool normalized, const bool uniform_noise, const T *inputs,
+                              const int *size, const T *offsets, T *output, cudaStream_t cuda_stream) {
+  size_t thread_num = output_size > 1024 ? 1024 : output_size;
+  CalExtractGlimpseKernel<<<CUDA_BLOCKS_CAL(0, output_size, thread_num), thread_num, 0, cuda_stream>>>(
     output_size, batch_cnt, channels, image_height, image_width, noise, centered, normalized, uniform_noise, inputs,
     size, offsets, output);
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalExtractGlimpse<float>(const size_t output_size, const size_t batch_cnt,
-                                                       const size_t channels, const size_t image_height,
-                                                       const size_t image_width, const ExtractGlimpsenoiseMode noise,
-                                                       const bool centered, const bool normalized,
-                                                       const bool uniform_noise, const float *inputs, const int *size,
-                                                       const float *offsets, float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalExtractGlimpse<float>(const size_t output_size, const size_t batch_cnt, const size_t channels,
+                         const size_t image_height, const size_t image_width, const ExtractGlimpsenoiseMode noise,
+                         const bool centered, const bool normalized, const bool uniform_noise, const float *inputs,
+                         const int *size, const float *offsets, float *output, cudaStream_t cuda_stream);

@@ -39,7 +39,6 @@ bool StridedSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  base_operator_ = base_operator;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -258,7 +257,7 @@ bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   for (int64_t i = 0; i < stride_shape_[0]; i++) {
     stride.push_back(static_cast<int64_t>(strides_ptr[i]));
   }
-  InitSliceParam(base_operator_, &begin, &end, &stride);
+  InitSliceParam(op_, &begin, &end, &stride);
 
   int thread_num = slice_struct_.base_.thread_nr_;
   if (parallel_ && thread_num >= 2) {

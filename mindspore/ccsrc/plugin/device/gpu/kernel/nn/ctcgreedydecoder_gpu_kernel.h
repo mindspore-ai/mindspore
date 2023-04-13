@@ -52,8 +52,6 @@ class CTCGreedyDecoderGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -61,13 +59,12 @@ class CTCGreedyDecoderGpuKernelMod : public NativeGpuKernelMod {
     std::function<bool(CTCGreedyDecoderGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, CTCGreedyDecoderFunc>> func_list_;
-  void SyncData() override;
+  void SyncOutputShape() override;
   CTCGreedyDecoderFunc kernel_func_;
 
  private:
   std::vector<int64_t> inputs_x_shape_;
   std::vector<int64_t> sequence_shape_;
-  std::vector<KernelTensorPtr> outputs_ = {};
   size_t data_unit_size_;
   size_t batch_size_;
   size_t max_time_;

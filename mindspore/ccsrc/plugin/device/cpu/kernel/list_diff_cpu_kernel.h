@@ -44,18 +44,13 @@ class ListDiffCPUKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void SyncData() override;
-
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void ResetResource() noexcept;
   template <typename T, typename Tidx>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
-  std::vector<KernelTensorPtr> outputs_ = {};
   size_t data_size_{0};
   size_t index_size_{0};
   int64_t x_size_{0};

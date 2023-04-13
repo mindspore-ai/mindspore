@@ -1019,7 +1019,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
       opt::InferOp(kernel);
       auto args = kernel->user_data<kernel::KernelArgs>();
       MS_EXCEPTION_IF_NULL(args);
-      (void)kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map);
+      (void)kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map);
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);

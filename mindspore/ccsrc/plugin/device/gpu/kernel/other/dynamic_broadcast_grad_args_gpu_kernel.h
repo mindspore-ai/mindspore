@@ -52,14 +52,14 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod,
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  std::vector<KernelTensorPtr> GetOutputs() override {
+  void SyncOutputShape() override {
     ShapeVector r0_shape{SizeToLong(r0_size_)};
     ShapeVector r1_shape{SizeToLong(r1_size_)};
 
     outputs_[0]->SetShapeVector(r0_shape);
     outputs_[1]->SetShapeVector(r1_shape);
 
-    return outputs_;
+    return;
   }
 
  private:

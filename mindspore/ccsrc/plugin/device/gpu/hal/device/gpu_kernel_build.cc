@@ -133,13 +133,13 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_EXCEPTION_IF_NULL(ms_context);
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
-        if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
+        auto op = kernel::CreateOperatorByCNode(kernel);
+        if (!gpu_kernel_mod->Init_(op, args.inputs, args.outputs)) {
           MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
                             << kernel->fullname_with_scope() << "] failed.";
         }
         if (!kernel::IfNeedSkipResize(kernel)) {
-          if (gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) ==
-              kernel::KRET_RESIZE_FAILED) {
+          if (gpu_kernel_mod->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
             MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
                               << "] Resize failed.";
           }

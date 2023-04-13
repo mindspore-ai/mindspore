@@ -56,7 +56,7 @@ int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &bas
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
     return ret;
   }
-  outputs_ = outputs;
+
   auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
   num_boxes_ = LongToInt(overlaps_shape[0]);
   return KRET_OK;
@@ -123,7 +123,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   return true;
 }
 
-void NonMaxSuppressionWithOverlapsCpuKernelMod::SyncData() {
+void NonMaxSuppressionWithOverlapsCpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> new_output_shape = {real_output_size_};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);
 }

@@ -41,15 +41,13 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   ShapeCalcFunctorPtr functor_{nullptr};
   std::vector<int64_t> inputs_size_;
   std::vector<TypeId> inputs_type_;
   ShapeArray outs_shape_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

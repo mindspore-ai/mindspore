@@ -40,7 +40,6 @@ class SparseMatrixMulCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -56,7 +55,6 @@ class SparseMatrixMulCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   size_t col_ = 0;
   size_t dense_size_ = 0;
   std::vector<TypeId> types_;
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

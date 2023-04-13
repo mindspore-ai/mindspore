@@ -30,14 +30,14 @@ int LiteKernelMod::Prepare() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(out_tensors_);
 
-  bool ret = kernel_mod_->Init(this->base_operator_, inputs, outputs);
+  bool ret = kernel_mod_->Init_(this->base_operator_, inputs, outputs);
   return ret ? ReSize() : RET_ERROR;
 }
 
 int LiteKernelMod::ReSize() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(out_tensors_);
-  return kernel_mod_->Resize(base_operator_, inputs, outputs);
+  return kernel_mod_->Resize(inputs, outputs);
 }
 
 int LiteKernelMod::Run() {

@@ -63,9 +63,6 @@ class BatchNormCpuKernelMod : public MKLCpuKernelMod {
   int64_t channel_{0};
   int64_t hw_size_{0};
   int64_t nhw_size_{0};
-  BaseOperatorPtr base_operator_{nullptr};
-  std::vector<KernelTensorPtr> inputs_{};
-  std::vector<KernelTensorPtr> outputs_{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 };
 }  // namespace kernel

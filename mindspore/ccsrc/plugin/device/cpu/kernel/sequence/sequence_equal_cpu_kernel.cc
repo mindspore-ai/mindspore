@@ -44,12 +44,12 @@ int SequenceEqualCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (ret != 0) {
     return ret;
   }
-  CHECK_KERNEL_INPUTS_NUM(input_shapes_.size(), kInputsNum, kernel_name_);
-  if (input_shapes_[0].empty() || input_shapes_[1].empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << input_shapes_;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  if (inputs[0]->GetShapeVector().empty() || inputs[1]->GetShapeVector().empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << GetShapes(inputs);
   }
-  x_size_ = input_shapes_[0][0];
-  y_size_ = input_shapes_[1][0];
+  x_size_ = inputs[0]->GetShapeVector()[0];
+  y_size_ = inputs[1]->GetShapeVector()[0];
   if (inputs[0]->GetDtype() != inputs[1]->GetDtype()) {
     is_inputs_type_diff_ = true;
   }

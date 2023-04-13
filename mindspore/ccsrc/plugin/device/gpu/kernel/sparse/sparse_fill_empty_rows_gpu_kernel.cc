@@ -96,7 +96,6 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (inputs[kIndex0]->GetShapeVector()[0] != inputs[kIndex1]->GetShapeVector()[0]) {
     MS_EXCEPTION(ValueError) << "The element number of indices should be equal to values element number.";
   }
-  outputs_ = outputs;
   input_default_values_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype());
   input_indice_size_ =
     abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * input_indices_shapes_[kIndex0] * input_indices_shapes_[kIndex1];
@@ -206,7 +205,7 @@ bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-void SparseFillEmptyRowsGpuKernelMod::SyncData() {
+void SparseFillEmptyRowsGpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> new_output_indice_shape = {SizeToLong(real_output_size_), 2};
   outputs_[kIndex0]->SetShapeVector(new_output_indice_shape);
   std::vector<int64_t> new_output_values_shape = {SizeToLong(real_output_size_)};

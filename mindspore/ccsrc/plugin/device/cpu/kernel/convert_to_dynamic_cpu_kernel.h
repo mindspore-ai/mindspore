@@ -42,11 +42,7 @@ class ConvertToDynamicCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
  private:
-  std::vector<KernelTensorPtr> outputs_;
   int64_t input_size_;
 };
 }  // namespace kernel

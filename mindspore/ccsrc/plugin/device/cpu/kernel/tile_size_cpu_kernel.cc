@@ -49,18 +49,17 @@ int TileSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
+bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                         const std::vector<AddressPtr> &) const {
-  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->GetData()->addr);
-  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->GetData()->addr);
-  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->GetData()->addr);
-  auto output_size = outputs[kIndex0]->GetData()->size;
+  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output_size = outputs[kIndex0]->size;
 
   std::vector<T> out(*ndim_addr, 1);
-  auto shape_size = SizeOf(input_shapes_[kIndex0]);
-  auto out_shape_size = SizeOf(input_shapes_[kIndex1]);
+  auto shape_size = SizeOf(inputs_[kIndex0]->GetShapeVector());
+  auto out_shape_size = SizeOf(inputs_[kIndex1]->GetShapeVector());
   auto it_num = std::min(shape_size, out_shape_size);
 
   for (size_t i = 0; i < it_num; i++) {
@@ -76,9 +75,8 @@ bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inpu
   return true;
 }
 
-bool TileSizeCpuKernelMod::Launch(const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::vector<AddressPtr> &workspace) {
+bool TileSizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                  const std::vector<AddressPtr> &outputs) {
   return kernel_func_(this, inputs, outputs, workspace);
 }
 

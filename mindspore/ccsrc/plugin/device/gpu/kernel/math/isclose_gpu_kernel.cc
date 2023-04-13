@@ -61,9 +61,6 @@ bool IsCloseGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
 bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -104,7 +101,7 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  is_need_retrieve_output_shape_ = true;
+  // is_need_retrieve_output_shape_ = true;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (size_t i = 0; i < inputs.size(); i++) {

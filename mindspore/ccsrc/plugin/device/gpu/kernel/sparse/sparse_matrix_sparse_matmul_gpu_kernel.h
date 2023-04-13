@@ -49,9 +49,6 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
  protected:
   void ResetResource() noexcept {
     x1_num_rows = 0;
@@ -70,8 +67,7 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T>
@@ -115,7 +111,6 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
   cusparseHandle_t handle_{nullptr};
   cusparseMatDescr_t desc;
   csrgemm2Info_t info = NULL;
-  std::vector<KernelTensorPtr> outputs_{};
   SparseMatrixSparseMatMulFunc kernel_func_{};
   cusparseIndexBase_t idxBase = CUSPARSE_INDEX_BASE_ZERO;
 

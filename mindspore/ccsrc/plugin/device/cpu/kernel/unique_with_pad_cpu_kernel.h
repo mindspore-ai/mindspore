@@ -41,7 +41,6 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
             const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();
     dtype_ = inputs[0]->GetDtype();
-    outputs_ = outputs;
     auto batch_rank = base_operator->get_batch_rank();
     if (batch_rank < 0) {
       return false;

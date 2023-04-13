@@ -63,9 +63,8 @@ class SparseSparseGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   template <typename T, typename S>
@@ -83,7 +82,6 @@ class SparseSparseGpuKernelMod : public NativeGpuKernelMod {
   size_t indices_size_ = 0;
   size_t values_size_ = 0;
   int64_t real_output_size_ = 0;
-  std::vector<KernelTensorPtr> outputs_{};
   int64_t rank_ = 0;
   int64_t a_indices_num_ = 0;
   int64_t b_indices_num_ = 0;

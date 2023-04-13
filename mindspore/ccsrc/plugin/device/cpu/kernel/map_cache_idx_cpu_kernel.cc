@@ -65,8 +65,6 @@ bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
-
-  outputs_ = outputs;
   is_need_retrieve_output_shape_ = true;
   outputs_size_ = outputs.size();
   for (size_t i = 0; i < outputs_size_; i++) {
@@ -203,7 +201,7 @@ bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return true;
 }
 
-void MapCacheIdxCpuKernelMod::SyncData() {
+void MapCacheIdxCpuKernelMod::SyncOutputShape() {
   ShapeVector out_shape = {SizeToLong(miss_count_)};
   for (size_t i = 1; i < outputs_size_; i++) {
     outputs_[i]->SetShapeVector(out_shape);

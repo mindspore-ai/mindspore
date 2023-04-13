@@ -48,8 +48,7 @@ class CoalesceCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T>
@@ -57,7 +56,6 @@ class CoalesceCpuKernelMod : public NativeCpuKernelMod {
 
   void Check(const std::vector<AddressPtr> &inputs) const;
 
-  std::vector<KernelTensorPtr> outputs_ = {};
   TypeId dtype_{kTypeUnknown};
   size_t values_size_{0};
   size_t shape_size_{0};

@@ -129,41 +129,6 @@ void AdditionalAttrProcess(const ops::PrimitiveCPtr &primc, const CNodePtr &cnod
   (void)primc->SetAttrs(additional_attrs);
 }
 
-inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(prim);
-  auto kernel_name = prim->name();
-  auto ori_kernel_name = kernel_name;
-  if (prim->HasAttr(kAttrMeOpName)) {
-    ori_kernel_name = GetValue<std::string>(prim->GetAttr(kAttrMeOpName));
-  }
-  // Create PrimtiveC from map and create BaseOperator.
-  ops::PrimitiveCPtr primc_ptr = nullptr;
-  static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  if (primc_fns.find(ori_kernel_name) != primc_fns.end()) {
-    primc_ptr = primc_fns[ori_kernel_name]();
-    (void)primc_ptr->SetAttrs(prim->attrs());
-    AdditionalAttrProcess(primc_ptr, cnode);
-  }
-
-  if (!primc_ptr) {
-    MS_LOG(ERROR) << "Get primtive c failed, node name: " << cnode->DebugString() << ", ori name: " << ori_kernel_name
-                  << ", key name: " << kernel_name;
-  }
-  MS_EXCEPTION_IF_NULL(primc_ptr);
-
-  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(ori_kernel_name) == operator_fns.end()) {
-    MS_LOG(EXCEPTION) << "Cannot create BaseOperator for " << ori_kernel_name;
-  }
-  auto base_operator = operator_fns[ori_kernel_name](primc_ptr);
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (ori_kernel_name != kernel_name) {
-    base_operator->GetPrim()->set_name(kernel_name);
-  }
-  return base_operator;
-}
-
 bool CheckRealTupleFromCNode(const std::vector<mindspore::kernel::KernelObjectType> &input_obj_types,
                              const size_t input_idx) {
   // if input_obj_types is empty, regard it as a Tensor by default.
@@ -1922,10 +1887,32 @@ std::string GetFormatFromEnumToStr(Format format) {
 
 KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_without_operator) {
   MS_EXCEPTION_IF_NULL(cnode);
-  BaseOperatorPtr base_operator = is_without_operator ? nullptr : CreateOperatorByCNode(cnode);
   auto [input_tensors, output_tensors] = AbstractInOutFromCNode(cnode);
-  KernelArgs args = {base_operator, input_tensors, output_tensors};
+  KernelArgs args = {input_tensors, output_tensors};
   return args;
+}
+
+BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim == nullptr) {
+    return nullptr;
+  }
+  auto kernel_name = prim->name();
+  MS_LOG(INFO) << "Create operator " << kernel_name;
+  auto ori_kernel_name = kernel_name;
+  if (prim->HasAttr(kAttrMeOpName)) {
+    ori_kernel_name = GetValue<std::string>(prim->GetAttr(kAttrMeOpName));
+  }
+  AdditionalAttrProcess(prim, cnode);
+
+  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
+  auto it = operator_fns.find(ori_kernel_name);
+  if (it == operator_fns.end()) {
+    MS_LOG(INFO) << "Cannot create BaseOperator for " << ori_kernel_name;
+    return nullptr;
+  }
+  auto base_operator = it->second(prim);
+  return base_operator;
 }
 
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
@@ -2054,7 +2041,6 @@ void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args) {
   }
   dst->inputs = args.inputs;
   dst->outputs = args.outputs;
-  dst->op = args.op;
   dst->depend_tensor_map = args.depend_tensor_map;
 }
 
@@ -2076,6 +2062,10 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   for (size_t i = 0; i < output_num; ++i) {
     MS_EXCEPTION_IF_NULL(output_tensor[i]);
     auto out_shape = output_tensor[i]->GetShapeVector();
+    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t dim) { return dim < 0; })) {
+      MS_LOG(ERROR) << "Retrieve invalid output shape " << out_shape;
+      return;
+    }
     (void)shapes.emplace_back(std::move(out_shape));
     (void)type_ids.emplace_back(output_tensor[i]->GetDtype());
   }

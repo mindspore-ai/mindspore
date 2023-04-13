@@ -56,14 +56,11 @@ const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
 
 bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  base_operator_ = base_operator;
   auto batch_rank = base_operator->get_batch_rank();
   if (batch_rank < 0) {
     return false;
   }
   batch_rank_ = static_cast<size_t>(batch_rank);
-  inputs_ = inputs;
-  outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -99,13 +96,10 @@ int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   return KRET_OK;
 }
 
-void UniqueGpuKernelMod::SyncData() {
+void UniqueGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();

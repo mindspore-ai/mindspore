@@ -43,8 +43,6 @@ class UniqueConsecutiveCpuKernelMod : public NativeCpuKernelMod,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
@@ -67,7 +65,6 @@ class UniqueConsecutiveCpuKernelMod : public NativeCpuKernelMod,
   std::vector<int64_t> output_shape_;
   std::vector<int64_t> idx_shape_;
   std::vector<int64_t> count_shape_;
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

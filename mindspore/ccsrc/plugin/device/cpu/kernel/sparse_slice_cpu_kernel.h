@@ -47,8 +47,7 @@ class SparseSliceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); };
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-  void SyncData();
+  void SyncOutputShape();
 
  private:
   template <typename T>
@@ -58,7 +57,6 @@ class SparseSliceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
   void SliceCompute(int64_t *input_indices, T *input_values, int64_t *input_shape, int64_t *start, int64_t *size,
                     int64_t *output_indices, T *output_values, int64_t *output_shape);
 
-  std::vector<KernelTensorPtr> outputs_{};
   int64_t nnz_{0};
   int64_t slice_nnz_{0};
   int64_t rank_{0};

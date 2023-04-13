@@ -47,9 +47,8 @@ class FractionalAvgPoolGradCpuKernelMod : public NativeCpuKernelMod {
   }
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   template <typename T>
@@ -68,7 +67,6 @@ class FractionalAvgPoolGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> orig_input_shape_;
   std::vector<int64_t> out_backprop_shape_;
   bool overlapping_{false};
-  std::vector<KernelTensorPtr> outputs_{};
   ShapeVector out_shape_{};
 };
 }  // namespace kernel

@@ -103,12 +103,13 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(INFO) << "Om has been loaded in custom kernel.";
     return true;
   }
+  // last input is as specific usage
+  inputs_.resize(inputs.size() - 1);
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Custom kernel has empty inputs or outputs, which is invalid.";
     return false;
   }
-  inputs_.assign(inputs.begin(), inputs.end() - 1);
-  outputs_.assign(outputs.begin(), outputs.end());
   acl_options_ = GenAclOptions(base_operator);
   if (acl_options_ == nullptr) {
     MS_LOG(ERROR) << "Generate acl options failed.";
@@ -134,8 +135,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   UpdateInputKernelTensorInfo();
-  (void)RetrieveOutputShape();
-
+  UpdateOutputKernelTensorInfo();
   MS_LOG(INFO) << "Load om data success.";
   load_model_ = true;
   return true;
@@ -145,12 +145,15 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (!load_model_) {
-    MS_LOG(WARNING) << "Model has not been loaded, start to load when resize.";
-    if (!Init(base_operator, inputs, outputs)) {
-      MS_LOG(ERROR) << "Load model failed when resize.";
-      return lite::RET_ERROR;
-    }
+    MS_LOG(ERROR) << "Load model failed when resize.";
+    return lite::RET_ERROR;
   }
+
+  if (KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+    MS_LOG(ERROR) << "Invalid inputs or output shapes.";
+    return lite::RET_ERROR;
+  }
+
   if (inputs.size() < 1) {
     MS_LOG(ERROR) << "inputs size is less than one.";
     return lite::RET_ERROR;
@@ -190,57 +193,6 @@ static bool CheckOutputNums(const std::vector<T> &update_info, const std::vector
   return true;
 }
 
-// In DVPP, model input shape and data type get modified
-void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
-  if (model_infer_ == nullptr) {
-    MS_LOG(ERROR) << "update input shape fail because model_infer_ is nullptr";
-    return;
-  }
-  const std::vector<ShapeVector> shapes = model_infer_->GetInputShape();
-  const std::vector<TypeId> types = model_infer_->GetInputDataType();
-  const std::vector<Format> formats = model_infer_->GetInputFormat();
-  MS_LOG(INFO) << "check input kernel tensor info nums";
-  if (!CheckInputNums(shapes, inputs_) || !CheckInputNums(types, inputs_) || !CheckInputNums(formats, inputs_)) {
-    return;
-  }
-
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    auto &input = inputs_[i];
-    input->SetShapeVector(shapes[i]);
-    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract, input->GetDeviceShapeAdaptively()};
-    input->SetTensorInfo(tensor_info);
-  }
-}
-
-// In DVPP, model input data size gets modified, get updated inputs
-std::vector<KernelTensorPtr> CustomAscendKernelMod::GetInputKernelTensor() {
-  UpdateInputKernelTensorInfo();
-  return inputs_;
-}
-
-bool CustomAscendKernelMod::ResetInputOutputShapes() {
-  auto input_shapes = model_infer_->GetInputShape();
-  if (input_shapes.size() != inputs_.size()) {
-    MS_LOG(ERROR) << "The number of input shapes size " << input_shapes.size() << " != the number of inputs "
-                  << inputs_.size();
-    return false;
-  }
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    inputs_[i]->SetShapeVector(input_shapes[i]);
-  }
-  auto output_shapes = model_infer_->GetOutputShape();
-  if (output_shapes.size() != outputs_.size()) {
-    MS_LOG(ERROR) << "The number of output shapes size " << output_shapes.size() << " != the number of outputs "
-                  << outputs_.size();
-    return false;
-  }
-  for (size_t i = 0; i < outputs_.size(); ++i) {
-    outputs_[i]->SetShapeVector(output_shapes[i]);
-  }
-  return true;
-}
-
 bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensorPtr> &new_inputs) {
   auto input_shapes = model_infer_->GetInputShape();
   if (input_shapes.size() != new_inputs.size()) {
@@ -264,7 +216,9 @@ bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensorPtr> 
     MS_LOG(ERROR) << "Failed to Resize";
     return false;
   }
-  return ResetInputOutputShapes();
+  UpdateInputKernelTensorInfo();
+  UpdateOutputKernelTensorInfo();
+  return true;
 }
 
 bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
@@ -280,17 +234,17 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::v
   return true;
 }
 
-std::vector<KernelTensorPtr> CustomAscendKernelMod::RetrieveOutputShape() {
+void CustomAscendKernelMod::UpdateOutputKernelTensorInfo() {
   if (model_infer_ == nullptr) {
     MS_LOG(ERROR) << "update input shape fail because model_infer_ is nullptr";
-    return outputs_;
+    return;
   }
   const std::vector<ShapeVector> shapes = model_infer_->GetOutputShape();
   const std::vector<TypeId> types = model_infer_->GetOutputDataType();
   const std::vector<Format> formats = model_infer_->GetOutputFormat();
   MS_LOG(INFO) << "check output kernel tensor info nums";
   if (!CheckOutputNums(shapes, outputs_) || !CheckOutputNums(types, outputs_) || !CheckOutputNums(formats, outputs_)) {
-    return outputs_;
+    return;
   }
   for (size_t i = 0; i < outputs_.size(); ++i) {
     auto &output = outputs_[i];
@@ -299,7 +253,29 @@ std::vector<KernelTensorPtr> CustomAscendKernelMod::RetrieveOutputShape() {
     TensorInfo tensor_info{formats[i], new_abstract, output->GetDeviceShapeAdaptively()};
     output->SetTensorInfo(tensor_info);
   }
-  return outputs_;
+  return;
+}
+// In DVPP, model input shape and data type get modified
+void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
+  if (model_infer_ == nullptr) {
+    MS_LOG(ERROR) << "update input shape fail because model_infer_ is nullptr";
+    return;
+  }
+  const std::vector<ShapeVector> shapes = model_infer_->GetInputShape();
+  const std::vector<TypeId> types = model_infer_->GetInputDataType();
+  const std::vector<Format> formats = model_infer_->GetInputFormat();
+  MS_LOG(INFO) << "check input kernel tensor info nums";
+  if (!CheckInputNums(shapes, inputs_) || !CheckInputNums(types, inputs_) || !CheckInputNums(formats, inputs_)) {
+    return;
+  }
+
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    auto &input = inputs_[i];
+    input->SetShapeVector(shapes[i]);
+    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
+    TensorInfo tensor_info{formats[i], new_abstract, input->GetDeviceShapeAdaptively()};
+    input->SetTensorInfo(tensor_info);
+  }
 }
 }  // namespace acl
 }  // namespace mindspore::kernel

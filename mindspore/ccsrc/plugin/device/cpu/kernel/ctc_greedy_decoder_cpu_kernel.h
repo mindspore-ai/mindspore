@@ -44,8 +44,6 @@ class CTCGreedyDecoderCpuKernelMod : public NativeCpuKernelMod, public MatchKern
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
@@ -53,7 +51,6 @@ class CTCGreedyDecoderCpuKernelMod : public NativeCpuKernelMod, public MatchKern
  private:
   bool merge_repeated_{true};
   std::vector<TypeId> types_;
-  std::vector<KernelTensorPtr> outputs_ = {};
   int64_t max_time_;
   int64_t batch_size_;
   int64_t num_classes_raw_;

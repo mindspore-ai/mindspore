@@ -29,7 +29,11 @@
 #include "ops/tuple_get_item.h"
 #include "ops/transpose.h"
 #include "common/check_base.h"
-
+namespace mindspore {
+namespace ops {
+class PrimitiveC;
+}
+}  // namespace mindspore
 namespace mindspore {
 namespace dpico {
 namespace {

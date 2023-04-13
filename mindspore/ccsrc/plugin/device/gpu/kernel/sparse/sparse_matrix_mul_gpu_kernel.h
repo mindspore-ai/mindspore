@@ -51,7 +51,6 @@ class SparseMatrixMulGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   template <typename T, typename S>
@@ -70,7 +69,6 @@ class SparseMatrixMulGpuKernelMod : public NativeGpuKernelMod {
   int dense_size_ = 0;
   int batch_size_ = 0;
   std::vector<TypeId> types_;
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

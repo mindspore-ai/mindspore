@@ -46,23 +46,16 @@ class CustomAscendKernelMod : public kernel::KernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-
-  std::vector<KernelTensorPtr> RetrieveOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
-  std::vector<KernelTensorPtr> GetInputKernelTensor() override;
 
  private:
   void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
   AclModelOptionsPtr GenAclOptions(const BaseOperatorPtr &base_operator);
-  void UpdateOutputAddr(const std::vector<AddressPtr> &outputs);
   void UpdateInputKernelTensorInfo();
-
-  bool ResetInputOutputShapes();
+  void UpdateOutputKernelTensorInfo();
   bool OnNewInputShapes(const std::vector<KernelTensorPtr> &new_shapes);
 
   bool load_model_;
-  std::vector<KernelTensorPtr> inputs_;
-  std::vector<KernelTensorPtr> outputs_;
   AclModelOptionsPtr acl_options_;
   ModelInferPtr model_infer_;
   size_t input_data_idx_;

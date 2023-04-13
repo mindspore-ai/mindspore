@@ -60,7 +60,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   void CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::string args_;
   std::string ext_info_;
   std::string node_name_;

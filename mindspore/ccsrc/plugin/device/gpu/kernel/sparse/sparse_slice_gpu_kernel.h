@@ -51,8 +51,7 @@ class SparseSliceGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T, typename S>
@@ -64,7 +63,6 @@ class SparseSliceGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, SparseSliceLaunchFunc>> func_list_;
   SparseSliceLaunchFunc kernel_func_;
-  std::vector<KernelTensorPtr> outputs_{};
   cudaStream_t cuda_stream;
   int64_t real_output_size = 0;
   size_t input_nnz_{0};

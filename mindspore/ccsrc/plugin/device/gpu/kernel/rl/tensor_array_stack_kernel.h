@@ -37,7 +37,7 @@ class TensorArrayStackKernelMod : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override;
-  void SyncData() override;
+  void SyncOutputShape() override;
 
  private:
   int64_t handle_;

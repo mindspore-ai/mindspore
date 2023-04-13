@@ -54,8 +54,7 @@ class ListDiffGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
   void ResetResource() noexcept {
     stream_ptr_ = nullptr;
@@ -76,7 +75,6 @@ class ListDiffGpuKernelMod : public NativeGpuKernelMod {
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   void *stream_ptr_;
   std::optional<bool> is_input_dynamic_shape_ = {};
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

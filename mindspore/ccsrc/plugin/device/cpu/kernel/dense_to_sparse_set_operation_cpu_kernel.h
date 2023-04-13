@@ -45,8 +45,7 @@ class DenseToSparseSetOperationCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T>
@@ -65,7 +64,6 @@ class DenseToSparseSetOperationCpuKernelMod : public NativeCpuKernelMod {
   int64_t set2_nums_;
   int64_t set2_dim_;
   std::vector<ShapeVector> infer_shape_ = {};
-  std::vector<KernelTensorPtr> outputs_ = {};
   TypeId data_type_;
 };
 }  // namespace kernel

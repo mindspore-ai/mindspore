@@ -433,7 +433,7 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return 0;
 }
 
-void AicpuOpKernelMod::SyncData() {
+void AicpuOpKernelMod::SyncOutputShape() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();

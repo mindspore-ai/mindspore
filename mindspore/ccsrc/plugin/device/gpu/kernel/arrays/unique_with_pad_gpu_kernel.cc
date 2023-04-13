@@ -64,7 +64,6 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
 bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  base_operator_ = base_operator;
   kernel_name_ = base_operator->name();
   auto batch_rank = base_operator->get_batch_rank();
   if (batch_rank < 0) {
@@ -86,8 +85,6 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
 
-  inputs_ = inputs;
-  outputs_ = outputs;
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   constexpr size_t kUniqueWithPadInputNum = 2;

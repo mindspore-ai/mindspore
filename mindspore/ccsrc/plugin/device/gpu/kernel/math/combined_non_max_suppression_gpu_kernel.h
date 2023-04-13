@@ -41,9 +41,8 @@ class CombinedNonMaxSuppressionGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void ResetResource() noexcept;
@@ -65,7 +64,6 @@ class CombinedNonMaxSuppressionGpuKernelMod : public NativeGpuKernelMod {
   int per_detections_;
   bool pad_per_class_;
   bool clip_boxes_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

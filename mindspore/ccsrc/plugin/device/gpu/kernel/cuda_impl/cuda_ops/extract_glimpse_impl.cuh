@@ -32,10 +32,10 @@ static std::map<std::string, ExtractGlimpsenoiseMode> kExtractGlimpsenoiseMap{
   {"uniform", ExtractGlimpsenoiseMode::UNIFORM}};
 
 template <typename T>
-CUDA_LIB_EXPORT void CalExtractGlimpse(const size_t output_size, const size_t batch_cnt_, const size_t channels_,
-                                       const size_t image_height_, const size_t image_width_,
-                                       const ExtractGlimpsenoiseMode noise, const bool centered, const bool normalized,
-                                       const bool uniform_noise, const T *inputs, const int *size, const T *offsets,
-                                       T *output, cudaStream_t cuda_stream_);
+CUDA_LIB_EXPORT cudaError_t CalExtractGlimpse(const size_t output_size, const size_t batch_cnt_, const size_t channels_,
+                                              const size_t image_height_, const size_t image_width_,
+                                              const ExtractGlimpsenoiseMode noise, const bool centered,
+                                              const bool normalized, const bool uniform_noise, const T *inputs,
+                                              const int *size, const T *offsets, T *output, cudaStream_t cuda_stream_);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EXTRACT_GLIMPSE_IMPL_CUH_

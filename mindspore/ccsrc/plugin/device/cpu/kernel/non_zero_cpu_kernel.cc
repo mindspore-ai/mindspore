@@ -56,7 +56,6 @@ int NonZeroCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   ResetResource();
-  outputs_ = outputs;
   auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
@@ -92,7 +91,7 @@ bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   return true;
 }
 
-void NonZeroCpuKernelMod::SyncData() {
+void NonZeroCpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);
 }

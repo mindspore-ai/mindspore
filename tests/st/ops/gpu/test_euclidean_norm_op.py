@@ -30,11 +30,14 @@ class Net(nn.Cell):
         return self.euclideannorm(x, axes)
 
 
-@pytest.mark.level0
+#euclideannorm op will be deleted soon since ops.norm has same functionality.
+#@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type1", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32,
-                                        np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize("data_type1", [
+    np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32,
+    np.float64, np.complex64, np.complex128
+])
 @pytest.mark.parametrize("data_type2", [np.int32, np.int64])
 def test_euclideannorm_graph(data_type1, data_type2):
     """
@@ -44,18 +47,10 @@ def test_euclideannorm_graph(data_type1, data_type2):
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = 1e-6
-    input_x = Tensor(np.array([[[4, 0, 9, 5, 5],
-                                [9, 9, 5, 6, 5],
-                                [8, 6, 9, 3, 8],
-                                [7, 0, 3, 5, 9]],
-                               [[4, 1, 0, 0, 3],
-                                [4, 9, 5, 2, 5],
-                                [6, 4, 3, 3, 6],
-                                [8, 4, 8, 2, 5]],
-                               [[0, 5, 6, 6, 7],
-                                [8, 4, 9, 6, 9],
-                                [4, 6, 9, 1, 0],
-                                [1, 4, 8, 2, 7]]]).astype(data_type1))
+    input_x = Tensor(
+        np.array([[[4, 0, 9, 5, 5], [9, 9, 5, 6, 5], [8, 6, 9, 3, 8], [7, 0, 3, 5, 9]],
+                  [[4, 1, 0, 0, 3], [4, 9, 5, 2, 5], [6, 4, 3, 3, 6], [8, 4, 8, 2, 5]],
+                  [[0, 5, 6, 6, 7], [8, 4, 9, 6, 9], [4, 6, 9, 1, 0], [1, 4, 8, 2, 7]]]).astype(data_type1))
     axes = Tensor(np.array([0]).astype(data_type2))
     net = Net()
     output = net(input_x, axes).asnumpy()
@@ -66,11 +61,13 @@ def test_euclideannorm_graph(data_type1, data_type2):
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+#@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type1", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32,
-                                        np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+@pytest.mark.parametrize("data_type1", [
+    np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32,
+    np.float64, np.complex64, np.complex128
+])
 @pytest.mark.parametrize("data_type2", [np.int32, np.int64])
 def test_euclideannorm_pynative(data_type1, data_type2):
     """
@@ -80,18 +77,10 @@ def test_euclideannorm_pynative(data_type1, data_type2):
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = 1e-6
-    input_x = Tensor(np.array([[[4, 0, 9, 5, 5],
-                                [9, 9, 5, 6, 5],
-                                [8, 6, 9, 3, 8],
-                                [7, 0, 3, 5, 9]],
-                               [[4, 1, 0, 0, 3],
-                                [4, 9, 5, 2, 5],
-                                [6, 4, 3, 3, 6],
-                                [8, 4, 8, 2, 5]],
-                               [[0, 5, 6, 6, 7],
-                                [8, 4, 9, 6, 9],
-                                [4, 6, 9, 1, 0],
-                                [1, 4, 8, 2, 7]]]).astype(data_type1))
+    input_x = Tensor(
+        np.array([[[4, 0, 9, 5, 5], [9, 9, 5, 6, 5], [8, 6, 9, 3, 8], [7, 0, 3, 5, 9]],
+                  [[4, 1, 0, 0, 3], [4, 9, 5, 2, 5], [6, 4, 3, 3, 6], [8, 4, 8, 2, 5]],
+                  [[0, 5, 6, 6, 7], [8, 4, 9, 6, 9], [4, 6, 9, 1, 0], [1, 4, 8, 2, 7]]]).astype(data_type1))
     axes = Tensor(np.array([1, 2]).astype(data_type2))
     net = Net()
     output = net(input_x, axes).asnumpy()
@@ -99,7 +88,7 @@ def test_euclideannorm_pynative(data_type1, data_type2):
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+#@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type1", [np.complex64, np.complex128])
@@ -112,18 +101,19 @@ def test_euclideannorm_complex_keep_dims(data_type1, data_type2):
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     loss = 1e-6
-    input_x = Tensor(np.array([[[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]],
-                               [[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]]).astype(data_type1))
+    input_x = Tensor(
+        np.array([[[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]],
+                  [[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]]).astype(data_type1))
     axes = Tensor(np.array([0, 2]).astype(data_type2))
     keep_dims = True
     net = Net(keep_dims)
     output = net(input_x, axes).asnumpy()
-    expect = np.array([[[[11.7686023 + 0.j, 8.74642784 + 0.j]],
-                        [[5.52268051 + 0.j, 12.74754878 + 0.j]]]]).astype(data_type1)
+    expect = np.array([[[[11.7686023 + 0.j, 8.74642784 + 0.j]], [[5.52268051 + 0.j,
+                                                                  12.74754878 + 0.j]]]]).astype(data_type1)
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+#@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_euclideannorm_no_axes():
@@ -134,31 +124,18 @@ def test_euclideannorm_no_axes():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = 1e-6
-    input_x = Tensor(np.array([[[2, 0, 4],
-                                [2, 5, 2],
-                                [9, 8, 6]],
-                               [[2, 7, 7],
-                                [3, 6, 8],
-                                [7, 7, 2]],
-                               [[6, 0, 7],
-                                [1, 1, 7],
-                                [8, 5, 3]]]).astype(np.float32))
+    input_x = Tensor(
+        np.array([[[2, 0, 4], [2, 5, 2], [9, 8, 6]], [[2, 7, 7], [3, 6, 8], [7, 7, 2]],
+                  [[6, 0, 7], [1, 1, 7], [8, 5, 3]]]).astype(np.float32))
     axes = Tensor(np.array([]).astype(np.int32))
     net = Net()
     output = net(input_x, axes).asnumpy()
-    expect = np.array([[[2, 0, 4],
-                        [2, 5, 2],
-                        [9, 8, 6]],
-                       [[2, 7, 7],
-                        [3, 6, 8],
-                        [7, 7, 2]],
-                       [[6, 0, 7],
-                        [1, 1, 7],
-                        [8, 5, 3]]]).astype(np.float32)
+    expect = np.array([[[2, 0, 4], [2, 5, 2], [9, 8, 6]], [[2, 7, 7], [3, 6, 8], [7, 7, 2]],
+                       [[6, 0, 7], [1, 1, 7], [8, 5, 3]]]).astype(np.float32)
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+#@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_euclideannorm_same_axes_with_input():
@@ -169,15 +146,9 @@ def test_euclideannorm_same_axes_with_input():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = 1e-6
-    input_x = Tensor(np.array([[[2, 0, 4],
-                                [2, 5, 2],
-                                [9, 8, 6]],
-                               [[2, 7, 7],
-                                [3, 6, 8],
-                                [7, 7, 2]],
-                               [[6, 0, 7],
-                                [1, 1, 7],
-                                [8, 5, 3]]]).astype(np.float32))
+    input_x = Tensor(
+        np.array([[[2, 0, 4], [2, 5, 2], [9, 8, 6]], [[2, 7, 7], [3, 6, 8], [7, 7, 2]],
+                  [[6, 0, 7], [1, 1, 7], [8, 5, 3]]]).astype(np.float32))
     axes = Tensor(np.array([0, 1, 2]).astype(np.int64))
     net = Net()
     output = net(input_x, axes).asnumpy()

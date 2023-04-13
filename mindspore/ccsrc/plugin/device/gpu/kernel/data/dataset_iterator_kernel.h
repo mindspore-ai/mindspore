@@ -42,7 +42,7 @@ class DatasetIteratorKernelMod : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override;
-  void SyncData() override;
+  void SyncOutputShape() override;
 
  private:
   bool ReadDevice(std::vector<DataQueueItem> *data);

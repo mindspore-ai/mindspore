@@ -64,13 +64,14 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DynamicStitchKernelMod::SyncData() {
+void DynamicStitchKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "DynamicStitch cudaStreamSynchronized failed");
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
   output_shape[0] = max_index_ + 1;
-  auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
-  common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+  // auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
+  // common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+  outputs_[0]->SetShapeVector(output_shape);
   MS_LOG(DEBUG) << "Run PostExecute for dynamicstitch, real output shape is " << output_shape;
 }
 

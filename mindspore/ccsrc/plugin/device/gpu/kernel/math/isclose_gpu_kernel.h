@@ -66,9 +66,6 @@ class IsCloseGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   std::optional<bool> is_input_dynamic_shape_ = {};
-  BaseOperatorPtr base_operator_ = nullptr;
-  std::vector<KernelTensorPtr> inputs_ = {};
-  std::vector<KernelTensorPtr> outputs_ = {};
   std::shared_ptr<cukernel::IsCloseAttr> attr_ptr_{nullptr};
 };
 }  // namespace kernel

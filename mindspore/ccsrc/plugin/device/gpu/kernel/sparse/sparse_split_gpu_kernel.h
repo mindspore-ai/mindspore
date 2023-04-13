@@ -50,8 +50,7 @@ class SparseSplitGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T, typename S>
@@ -63,7 +62,6 @@ class SparseSplitGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, SparseSplitLaunchFunc>> func_list_;
   SparseSplitLaunchFunc kernel_func_;
-  std::vector<KernelTensorPtr> outputs_{};
   cudaStream_t cuda_stream;
   int64_t real_output_size = 0;
   std::vector<int64_t> h_block;

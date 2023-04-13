@@ -104,12 +104,10 @@ int MapTensorGetGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = keys_shape.size(); i < dout_shape.size(); i++) {
     value_dims_.push_back(dout_shape[i]);
   }
-
-  outputs_ = outputs;
   return KRET_OK;
 }
 
-void MapTensorGetGradGpuKernelMod::SyncData() {
+void MapTensorGetGradGpuKernelMod::SyncOutputShape() {
   MS_EXCEPTION_IF_CHECK_FAIL(outputs_.size() == 1, "The outputs number of kernel MapTensorGetGrad should be 1");
   outputs_[0]->SetShapeVector(value_dims_);
 }

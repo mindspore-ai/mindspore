@@ -42,7 +42,6 @@ constexpr size_t kSumShapeIdx = 2;
 
 bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
-  outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAdd>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
@@ -68,7 +67,6 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  outputs_ = outputs;
   dense_shape_ = inputs.at(kAShapeIdx)->GetShapeVector();
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {

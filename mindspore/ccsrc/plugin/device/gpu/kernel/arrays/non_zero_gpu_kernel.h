@@ -43,9 +43,8 @@ class NonZeroGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void ResetResource() noexcept;
@@ -64,7 +63,6 @@ class NonZeroGpuKernelMod : public NativeGpuKernelMod {
   size_t index_size_;        // That is, sizeof(IndexType)
   size_t real_output_size_;  // Dynamic shape related.
   std::vector<size_t> input_shape_{};
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

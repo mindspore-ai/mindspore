@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/eigen/sparse_sparse_maximum_cpu_kernel.h"
-
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
+#include <utility>
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -143,7 +142,6 @@ int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  outputs_ = outputs;
   input_size_list_.clear();
   output_size_list_.clear();
   auto a_indice_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -303,7 +301,7 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   return true;
 }
 
-void SparseSparseMaximumCpuKernelMod::SyncData() {
+void SparseSparseMaximumCpuKernelMod::SyncOutputShape() {
   ShapeVector out_indcie_shape, out_values_shape;
   out_indcie_shape.push_back(sum_nnz_);
   out_indcie_shape.push_back(num_dims_);

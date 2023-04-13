@@ -44,8 +44,7 @@ class AdaptiveMaxPool3DCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) const;
@@ -77,7 +76,6 @@ class AdaptiveMaxPool3DCpuKernelMod : public NativeCpuKernelMod {
   int64_t output_size_W_ = 0;
   size_t input_num_dims_ = 0;
   TypeId dtype_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

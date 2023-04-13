@@ -52,7 +52,6 @@ class ScatterGpuKernelMod : public NativeGpuKernelMod {
   void *stream_ptr_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::shared_ptr<cukernel::ScatterAttr> attr_ptr_{nullptr};
-  BaseOperatorPtr base_operator_ = nullptr;
 };
 }  // namespace kernel
 }  // namespace mindspore

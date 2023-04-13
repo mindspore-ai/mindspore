@@ -46,7 +46,6 @@ int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  outputs_ = outputs;
   auto input_x_shape = inputs.at(kIndex0)->GetShapeVector();
   batch_size_ = SizeOf(input_x_shape);
   MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
@@ -97,7 +96,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   out_size_ = count;
 }
 
-void SubAndFilterCpuKernelMod::SyncData() {
+void SubAndFilterCpuKernelMod::SyncOutputShape() {
   ShapeVector out_shape = {out_size_};
   outputs_[0]->SetShapeVector(out_shape);
   outputs_[0]->SetDtype(TypeIdToType(x_dtype_));

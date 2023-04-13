@@ -58,7 +58,6 @@ class RenormCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, RenormFunc>> func_list_;
   RenormFunc kernel_func_{nullptr};
-  BaseOperatorPtr base_operator_;
   // input shape
   std::vector<int64_t> x_shape_;
   // axis attribute of the primitive

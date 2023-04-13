@@ -58,8 +58,6 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   dtype_ = inputs[kIndex0]->GetDtype();
   input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
   input_num_dims_ = input_shape_.size();
-  outputs_ = outputs;
-
   if (!(input_num_dims_ == kInputNumDims5 || input_num_dims_ == kInputShapeDims4)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input data dimensions should be equal to 4 or 5, but got "
                   << input_num_dims_ << ".";
@@ -80,7 +78,7 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-void AdaptiveMaxPool3DCpuKernelMod::SyncData() {
+void AdaptiveMaxPool3DCpuKernelMod::SyncOutputShape() {
   outputs_[kIndex0]->SetShapeVector(output_shape_);
   outputs_[kIndex1]->SetShapeVector(output_shape_);
 }

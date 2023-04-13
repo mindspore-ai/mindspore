@@ -25,30 +25,10 @@
 #include "utils/hash_map.h"
 namespace mindspore {
 namespace ops {
-/// \brief PrimitiveC defines the base class for end side operators.
-class MS_CORE_API PrimitiveC : public Primitive {
- public:
-  /// \brief Constructor for PrimitiveC.
-  ///
-  /// \param[in] name The name of the end side operator.
-  explicit PrimitiveC(const std::string &name) : Primitive(name) {}
-  MS_DECLARE_PARENT(PrimitiveC, Primitive);
-
-  /// \brief Destructor of PrimitiveC.
-  ~PrimitiveC() = default;
-
-  /// \brief Derive the abstract of the PrimitiveC object.
-  ///
-  /// \param[in] abstract_list The abstract of the inputs of the PrimitiveC object.
-  /// \return The abstract of the PrimitiveC object.
-  AbstractBasePtr Infer(const AbstractBasePtrList &abstract_list);
-
- protected:
-  void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);
-};
-
+/// \brief PrimitiveC defines the base class for c++ operators.
+using PrimitiveC = Primitive;
 using OpPrimCDefineFunc = std::function<std::shared_ptr<PrimitiveC>()>;
-/// \brief OpPrimCRegister defines the singleton to save the end side operators.
+/// \brief OpPrimCRegister defines the singleton to save c++ operators.
 class MS_CORE_API OpPrimCRegister {
  public:
   /// \brief Destructor of OpPrimCRegister.

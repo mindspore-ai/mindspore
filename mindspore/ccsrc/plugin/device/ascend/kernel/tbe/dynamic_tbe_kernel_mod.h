@@ -43,7 +43,7 @@ class DynamicTbeKernelMod : public TbeKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
 
   // Called only by atomic clean ops
   void InitAtomicOps(const optiling::utils::OpRunInfo &op_info);

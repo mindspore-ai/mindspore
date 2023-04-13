@@ -25,8 +25,8 @@ int InnerKernel::Prepare() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
-  return this->kernel_mod_->Init(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
-                                                                        : mindspore::lite::RET_ERROR;
+  return this->kernel_mod_->Init_(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
+                                                                         : mindspore::lite::RET_ERROR;
 }
 
 int InnerKernel::Execute() {
@@ -44,7 +44,7 @@ int InnerKernel::ReSize() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
-  return this->kernel_mod_->Init(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
-                                                                        : mindspore::lite::RET_ERROR;
+  return this->kernel_mod_->Init_(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
+                                                                         : mindspore::lite::RET_ERROR;
 }
 }  // namespace mindspore::kernel

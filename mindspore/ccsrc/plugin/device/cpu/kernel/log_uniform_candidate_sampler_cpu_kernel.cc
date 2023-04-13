@@ -76,21 +76,21 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
-  auto true_classes_shape = input_shapes_.at(0);
+  auto true_classes_shape = inputs[0]->GetShapeVector();
   if (true_classes_shape[1] != num_true_) {
     MS_LOG(ERROR) << "input true_classes dim[1] should equal to num_true, true_classes.dim[1] = "
                   << true_classes_shape[1] << ", num_true = " << num_true_;
     return KRET_RESIZE_FAILED;
   }
 
-  auto sampled_candidates_shape = output_shapes_.at(0);
+  auto sampled_candidates_shape = outputs[0]->GetShapeVector();
   if (sampled_candidates_shape.size() != 1 || sampled_candidates_shape[0] != static_cast<int64_t>(num_sampled_)) {
     MS_LOG(ERROR) << "output sampled_candidates shape should equal to (num_sampled, ), sampled_candidates shape = "
                   << VectorToString(sampled_candidates_shape) << ", num_sampled_ = " << num_sampled_;
     return KRET_RESIZE_FAILED;
   }
 
-  auto true_expected_count_shape = output_shapes_.at(1);
+  auto true_expected_count_shape = outputs[1]->GetShapeVector();
   if (true_expected_count_shape != true_classes_shape) {
     MS_LOG(ERROR)
       << "output true_expected_count shape should be same with true_classes shape, true_expected_count shape = "
@@ -98,7 +98,7 @@ int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_oper
     return KRET_RESIZE_FAILED;
   }
 
-  auto sampled_expected_count_shape = output_shapes_.at(2);
+  auto sampled_expected_count_shape = outputs[2]->GetShapeVector();
   if (sampled_expected_count_shape.size() != 1 ||
       sampled_expected_count_shape[0] != static_cast<int64_t>(num_sampled_)) {
     MS_LOG(ERROR)

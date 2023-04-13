@@ -30,7 +30,6 @@ bool ShapeCalcCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   kernel_name_ = kernel_ptr->name();
   functor_ = kernel_ptr->get_functor();
-  outputs_ = outputs;
   return true;
 }
 
@@ -41,7 +40,6 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  outputs_ = outputs;
   is_need_retrieve_output_shape_ = (ret == KRET_UNKNOWN_OUT_SHAPE);
   inputs_size_.clear();
   inputs_type_.clear();
@@ -114,7 +112,7 @@ std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void ShapeCalcCpuKernelMod::SyncData() {
+void ShapeCalcCpuKernelMod::SyncOutputShape() {
   for (size_t i = 0; i < outs_shape_.size(); ++i) {
     ShapeVector shape{static_cast<int64_t>(outs_shape_[i].size())};
     outputs_[i]->SetShapeVector(shape);

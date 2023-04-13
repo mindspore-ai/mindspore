@@ -60,7 +60,6 @@ int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  outputs_ = outputs;
   auto shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(input_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
@@ -100,7 +99,7 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   return true;
 }
 
-void NonZeroGpuKernelMod::SyncData() {
+void NonZeroGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "NonZero cudaStreamSynchronized failed");
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);
