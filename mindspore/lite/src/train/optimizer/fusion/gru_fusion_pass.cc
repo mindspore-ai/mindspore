@@ -666,6 +666,9 @@ class GruCellFusion {
 };
 
 STATUS GruFusionPass::Run(schema::MetaGraphT *graph) {
+#ifndef ENABLE_ARM64
+  return RET_OK;
+#endif
   if (graph == nullptr) {
     MS_LOG(ERROR) << "graph is a nullptr.";
     return RET_NULL_PTR;

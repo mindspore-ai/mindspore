@@ -18,6 +18,7 @@
 #include "src/tensor.h"
 #include "nnacl/custom_parameter.h"
 #include "nnacl/split_parameter.h"
+#include "nnacl/custom_gru_parameter.h"
 using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
@@ -44,6 +45,17 @@ OpParameter *CreateParam(PrimType param_type) {
   }
   memset(param, 0, sizeof(OpParameter));
   param->type_ = param_type;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+OpParameter *CreateCustomGruParameter() {
+  auto *param = static_cast<CustomGruParameter *>(malloc(sizeof(CustomGruParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc CustomGruParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(CustomGruParameter));
+  param->op_parameter_.type_ = PrimType_Inner_CustomGru;
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -123,6 +135,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     memset(param, 0, sizeof(OpParameter));
     param->type_ = PrimType_Inner_FseDecode;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "CustomGRU") {
+    return CreateCustomGruParameter();
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

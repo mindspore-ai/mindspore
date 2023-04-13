@@ -26,6 +26,8 @@ namespace lite {
 class LinkInfoManager;
 class GruFusionPass : public GraphPass {
  public:
+  GruFusionPass() = default;
+  ~GruFusionPass() override = default;
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
@@ -36,7 +38,7 @@ class GruFusionPass : public GraphPass {
   bool CheckGruCellConnection(schema::MetaGraphT *graph, const std::vector<uint32_t> &gru_cells);
   STATUS CreateGru(schema::MetaGraphT *graph, uint32_t stack_index, const std::vector<uint32_t> &strided_slices,
                    const std::vector<uint32_t> &squeezes, const std::vector<uint32_t> &gru_cells);
-  std::shared_ptr<LinkInfoManager> link_info_manager_;
+  std::shared_ptr<LinkInfoManager> link_info_manager_{nullptr};
 };
 }  // namespace lite
 }  // namespace mindspore

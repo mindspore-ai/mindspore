@@ -23,6 +23,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -86,9 +87,9 @@ std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, size_t tensor
 
 // only support op_type from current schema
 bool IsPackedOp(int op_type) {
-  static const std::vector<int> packed_ops = {schema::PrimitiveType_Conv2DFusion,
-                                              schema::PrimitiveType_Conv2dTransposeFusion,
-                                              schema::PrimitiveType_FullConnection, schema::PrimitiveType_MatMulFusion};
+  static const std::vector<int> packed_ops = {
+    schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
+    schema::PrimitiveType_FullConnection, schema::PrimitiveType_MatMulFusion, PrimType::PrimType_Inner_CustomGru};
   return IsContain(packed_ops, op_type);
 }
 

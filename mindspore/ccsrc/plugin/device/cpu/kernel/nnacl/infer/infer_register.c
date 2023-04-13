@@ -162,6 +162,7 @@
 #include "nnacl/infer/where_infer.h"
 #include "nnacl/infer/isfinite_infer.h"
 #include "nnacl/infer/fse_decoder_infer.h"
+#include "nnacl/infer/custom_gru_infer.h"
 
 InferShape g_infer_func[PrimType_MAX] = {0};
 InferShape g_inner_op_infer_func[PrimType_InnerOpMax - PrimType_InnerOpMin] = {0};
@@ -412,6 +413,7 @@ void RegAllInferFunc5() {
   g_inner_op_infer_func[PrimType_Inner_DecoderLayer - PrimType_InnerOpMin] = DecoderLayerInferShape;
   g_inner_op_infer_func[PrimType_Inner_FseDecode - PrimType_InnerOpMin] = FseDecoderInferShape;
 #endif
+  g_inner_op_infer_func[PrimType_Inner_CustomGru - PrimType_InnerOpMin] = CustomGruInferShape;
   g_inner_op_infer_func[PrimType_Inner_ToFormat - PrimType_InnerOpMin] = NULL;
 }
 
