@@ -51,10 +51,7 @@ class ShuffleOp : public PipelineOp {
   // @param shuffle_size - The size for the shuffle buffer
   // @param shuffle_seed - The seed to use for random number generation
   // @param op_connector_size - The output connector queue size
-  // @param reset_every_epoch - Whether to reset the random generator every epoch
-  // @param num_rows - Number of rows in dataset (used to move internal state of rng_ forward in failover reset)
-  ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch,
-            int64_t num_rows);
+  ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch);
 
   // Destructor
   ~ShuffleOp() = default;
@@ -89,13 +86,6 @@ class ShuffleOp : public PipelineOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kShuffleOp; }
-
-  // \brief During tree prepare phase, operators may have specific post-operations to perform depending on
-  //     their role.
-  // \notes Derived versions of this function should always call their superclass version first
-  //     before providing their own implementations.
-  // @return Status The status code returned
-  Status PrepareOperator() override;
 
   /// \brief Gets the next row
   /// \param row[out] - Fetched TensorRow
@@ -147,7 +137,6 @@ class ShuffleOp : public PipelineOp {
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
   bool eof_received_{false};                       // flag to indicate if eof is reached in pull mode.
-  int64_t num_rows_;                               // Number of rows in dataset
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -60,6 +60,12 @@ class AddSkipPass : public IRTreePass {
     Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) override;
 #endif
 
+    /// \brief Performs finder work for ShuffleNode that has special rules about skip injection.
+    /// \param[in] node The node being visited
+    /// \param[in, out] modified Indicator if the node was changed at all
+    /// \return Status The status code returned
+    Status Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) override;
+
     /// \brief Register the DataQueueNode for further action.
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all
@@ -73,10 +79,13 @@ class AddSkipPass : public IRTreePass {
 
     int32_t GetNumEpochs() const { return num_epochs_; }
 
+    bool HasShuffleNode() const { return has_shuffle_node_; }
+
    private:
     std::shared_ptr<DatasetNode> injection_point_;
     int64_t step_{};
     int32_t num_epochs_{};
+    bool has_shuffle_node_;
   };
 
  public:

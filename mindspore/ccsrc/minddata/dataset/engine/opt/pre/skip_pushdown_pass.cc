@@ -159,6 +159,12 @@ SkipPushdownPass::SkipPushdownPass() {}
 
 // Walk the tree to push down the skip node inserted when Reset is called.
 Status SkipPushdownPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
+  // Since previous pass may have disabled fast_recovery (due to shuffle node in pipeline),
+  // we need to double check here if it is enabled.
+  if (GlobalContext::config_manager()->fast_recovery() == false) {
+    MS_LOG(INFO) << "Pre pass: ignoring skip node pushdown pass (shuffle node was detected).";
+    return Status::OK();
+  }
   MS_LOG(INFO) << "Pre pass: skip node pushdown pass started.";
   // Assumption: The total skip counts in the first_epoch_only skip node is less than the size of the dataset. This
   // assumption is not validated here.
