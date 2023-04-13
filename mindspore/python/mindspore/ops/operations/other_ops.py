@@ -29,6 +29,14 @@ class Assign(Primitive):
 
     Refer to :func:`mindspore.ops.assign` for more details.
 
+    Inputs:
+        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions, its rank should be less than 8.
+        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `variable`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

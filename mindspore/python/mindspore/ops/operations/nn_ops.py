@@ -101,6 +101,15 @@ class CeLU(Primitive):
 
     Refer to :func:`mindspore.ops.celu` for more details.
 
+    Args:
+        alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+
+    Inputs:
+        - **input_x** (Tensor) - Input Tensor.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -152,6 +161,16 @@ class AdaptiveAvgPool3D(Primitive):
 
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
+    Args:
+        - output_size (Union[int, tuple]) - Specify the size of output tensor. It
+          can be a single int or a tuple of three ints.
+
+    Inputs:
+        - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
+
+    Outputs:
+        Tensor, with the same type as the `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -198,6 +217,18 @@ class AdaptiveAvgPool2D(Primitive):
     AdaptiveAvgPool2D operation.
 
     Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
+
+    Args:
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
+            If it is None, it means the output size is the same as the input size.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
+          with float16 ,float32 or float64 data type.
+
+    Outputs:
+        Tensor, with the same type as the `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6837,6 +6868,19 @@ class Dropout(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.dropout` for more details.
 
+    Args:
+        keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
+            means dropping out 10% of input units. Default: 0.5.
+        Seed0 (int, optional): Seed0 value for random generating. Default: 0.
+        Seed1 (int, optional): Seed1 value for random generating. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - The input of Dropout, a Tensor of any shape with data type of float16 or float32.
+
+    Outputs:
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -7054,6 +7098,27 @@ class CTCGreedyDecoder(Primitive):
     Performs greedy decoding on the logits given in inputs.
 
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
+
+    Args:
+        merge_repeated (bool, optional): If true, merge repeated classes in output. Default: True.
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor must be a 3-D tensor whose shape is
+          :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes,
+          `num_labels` indicates the number of actual labels. Blank labels are reserved.
+          Default blank label is `num_classes - 1`. Data type must be float32 or float64.
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
+          The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
+
+    Outputs:
+        - **decoded_indices** (Tensor) - A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
+          Data type is int64.
+        - **decoded_values** (Tensor) - A tensor with shape of :math:`(total\_decoded\_outputs, )`,
+          it stores the decoded classes. Data type is int64.
+        - **decoded_shape** (Tensor) - A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
+          Data type is int64.
+        - **log_probability** (Tensor) - A tensor with shape of :math:`(batch\_size, 1)`,
+          containing sequence log-probability, has the same type as `inputs`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
