@@ -108,24 +108,24 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
             If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
             If None, none derivative of any input will be figured out, and in this case, `weights` is required.
-            Default: 0.
+            Default: ``0`` .
         weights (Union[ParameterTuple, Parameter, list[Parameter]]): The parameters of the training network that need to
             calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
-            Default: None.
-        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+            Default: ``None`` .
+        has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
+            outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: ``False`` .
         return_ids(bool): Whether return the tuple made by gradients and the index to specify which inputs
             to be differentiated or the name of parameters of the training network that need to calculate the gradient.
-            If True, the output gradients will be replaced by the tuples made by gradients and the index to specify
+            If ``True`` , the output gradients will be replaced by the tuples made by gradients and the index to specify
             which inputs to be differentiated or the name of parameters of the training network.
-            Default: False.
+            Default: ``False`` .
 
     Returns:
         Function, the gradient function to calculate gradient for the input function or cell.
-        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
-        like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
-        When return_ids is set to True, The format of the output will be the same with the output of grad when
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set ``True`` , gradient function will return
+        outputs like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
+        When return_ids is set to ``True`` , The format of the output will be the same with the output of grad when
         return_ids is set to false, but every gradient in the output will be replaced by a tuple of position id or
         parameter name and its gradient.
 
@@ -661,16 +661,17 @@ def jvp(fn, inputs, v, has_aux=False):
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
         v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of `v`
             should be the same as `inputs` .
-        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+        has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
+            outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: ``False`` .
 
     Returns:
         - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)` . Specially, when `has_aux` is set
-          True, `netout` is the first output of `fn(inputs)` .
+          ``True`` , `netout` is the first output of `fn(inputs)` .
         - **jvp** (Union[Tensor, tuple[Tensor]]) - The result of jacobian-vector-product.
-        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
-          It means the second to last outputs of `fn(inputs)` . Specially, `aux_value` does not contribute to gradient.
+        - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is ``True`` , `aux_value` will be
+          returned. It means the second to last outputs of `fn(inputs)` . Specially, `aux_value` does not contribute to
+          gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
@@ -1048,15 +1049,15 @@ def jacfwd(fn, grad_position=0, has_aux=False):
     Args:
         fn (Union[Cell, Function]): Function to do GradOperation.
         grad_position (Union[int, tuple[int]], optional): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: ``0`` .
+        has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes the gradient of `fn`,
             while the other outputs will be returned straightly. It means the `fn` must return more than one
-            outputs in this case. Default: False.
+            outputs in this case. Default: ``False`` .
 
     Returns:
         Function, returns the Jacobian function for the input function or cell.
-        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
-        like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set ``True`` , gradient function will return
+        outputs like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
 
     Raises:
         TypeError: `grad_position` or `has_aux` does not belong to required types.
@@ -1218,15 +1219,15 @@ def jacrev(fn, grad_position=0, has_aux=False):
     Args:
         fn (Union[Cell, Function]): Function to do GradOperation.
         grad_position (Union[int, tuple[int]], optional): If int, get the gradient with respect to single input.
-            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: ``0`` .
+        has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes the gradient of `fn`,
             while the other outputs will be returned straightly. It means the `fn` must return more than
-            one outputs in this case. Default: False.
+            one outputs in this case. Default: ``False`` .
 
     Returns:
         Function, returns the Jacobian function for the input function or cell.
-        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set True, gradient function will return outputs
-        like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
+        For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set ``True`` , gradient function will return
+        outputs like `(Jacobian, out2)` and `out2` does not contribute to the differentiation, otherwise `Jacobian` .
 
     Raises:
         TypeError: `grad_position` or `has_aux` does not belong to required types.

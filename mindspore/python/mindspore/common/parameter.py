@@ -107,7 +107,7 @@ class Parameter(Tensor_):
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
             to initialize the parameter data.
-        name (str): Name of the parameter. Default: None.
+        name (str): Name of the parameter. Default: ``None`` .
 
             1) If the parameter is not given a name, the default name is its variable name. For example, the name of
             param_a below is name_a, and the name of param_b is the variable name param_b.
@@ -142,12 +142,12 @@ class Parameter(Tensor_):
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (self.param_a, self.param_a)
 
-        requires_grad (bool): True if the parameter requires gradient. Default: True.
+        requires_grad (bool): True if the parameter requires gradient. Default: ``True`` .
         layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
-            broadcast and gradients communication would not be applied to parameters. Default: False.
+            broadcast and gradients communication would not be applied to parameters. Default: ``False`` .
         parallel_optimizer (bool): It is used to filter the weight shard operation in semi auto or auto parallel
             mode. It works only when enable parallel optimizer in `mindspore.set_auto_parallel_context()`.
-            Default: True.
+            Default: ``True`` .
 
     Examples:
         >>> import numpy as np

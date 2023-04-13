@@ -13,14 +13,14 @@ mindspore.grad
 
     参数：
         - **fn** (Union[Cell, Function]) - 待求导的函数或网络。
-        - **grad_position** (Union[NoneType, int, tuple[int]]) - 指定求导输入位置的索引。若为int类型，表示对单个输入求导；若为tuple类型，表示对tuple内索引的位置求导，其中索引从0开始；若是None，表示不对输入求导，这种场景下， `weights` 非None。默认值：0。
-        - **weights** (Union[ParameterTuple, Parameter, list[Parameter]]) - 训练网络中需要返回梯度的网络变量。一般可通过 `weights = net.trainable_params()` 获取。默认值：None。
-        - **has_aux** (bool) - 是否返回辅助参数的标志。若为True， `fn` 输出数量必须超过一个，其中只有 `fn` 第一个输出参与求导，其他输出值将直接返回。默认值：False。
-        - **return_ids** (bool) - 是否返回由返回的梯度和指定求导输入位置的索引或网络变量组成的tuple。 若为True，其输出中所有的梯度值将被替换为：由该梯度和其输入的位置索引，或者用于计算该梯度的网络变量组成的tuple。默认值：False。
+        - **grad_position** (Union[NoneType, int, tuple[int]]) - 指定求导输入位置的索引。若为int类型，表示对单个输入求导；若为tuple类型，表示对tuple内索引的位置求导，其中索引从0开始；若是None，表示不对输入求导，这种场景下， `weights` 非None。默认值： ``0`` 。
+        - **weights** (Union[ParameterTuple, Parameter, list[Parameter]]) - 训练网络中需要返回梯度的网络变量。一般可通过 `weights = net.trainable_params()` 获取。默认值： ``None`` 。
+        - **has_aux** (bool) - 是否返回辅助参数的标志。若为 ``True`` ， `fn` 输出数量必须超过一个，其中只有 `fn` 第一个输出参与求导，其他输出值将直接返回。默认值： ``False`` 。
+        - **return_ids** (bool) - 是否返回由返回的梯度和指定求导输入位置的索引或网络变量组成的tuple。 若为 ``True`` ，其输出中所有的梯度值将被替换为：由该梯度和其输入的位置索引，或者用于计算该梯度的网络变量组成的tuple。默认值： ``False`` 。
 
     返回：
-        Function，用于计算给定函数的梯度的求导函数。例如 `out1, out2 = fn(*args)` ，若 `has_aux` 为True，梯度函数将返回 `(gradient, out2)` 形式的结果，其中 `out2` 不参与求导，若为False，将直接返回 `gradient` 。
-        若return_ids为True，梯度函数返回的梯度将被替代为由返回的梯度和指定求导输入位置的索引或网络变量组成的tuple。
+        Function，用于计算给定函数的梯度的求导函数。例如 `out1, out2 = fn(*args)` ，若 `has_aux` 为 ``True`` ，梯度函数将返回 `(gradient, out2)` 形式的结果，其中 `out2` 不参与求导，若为 ``False`` ，将直接返回 `gradient` 。
+        若return_ids为 ``True`` ，梯度函数返回的梯度将被替代为由返回的梯度和指定求导输入位置的索引或网络变量组成的tuple。
 
     异常：
         - **ValueError** - 入参 `grad_position` 和 `weights` 同时为None。
