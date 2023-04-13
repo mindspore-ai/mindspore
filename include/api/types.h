@@ -33,6 +33,7 @@ enum ModelType : uint32_t {
   kOM = 2,                   ///< Model type is OM
   kONNX = 3,                 ///< Model type is ONNX
   kMindIR_Lite = 4,          ///< Model type is MindIR_LITE
+  kDataFlow = 5,             ///< Model type is DataFlow
   kUnknownType = 0xFFFFFFFF  ///< Unknown model type
 };
 

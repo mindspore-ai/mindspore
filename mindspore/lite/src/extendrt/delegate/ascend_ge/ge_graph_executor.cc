@@ -29,6 +29,10 @@
 #include "src/common/file_utils.h"
 #include "cxx_api/acl_utils.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "src/extendrt/utils/func_graph_utils.h"
+#include "transform/graph_ir/transform_util.h"
+#include "flow_graph/data_flow.h"
 
 namespace mindspore {
 namespace {
@@ -36,6 +40,8 @@ constexpr auto kProviderGe = "ge";
 constexpr auto kDump = "dump";
 constexpr auto kDumpMode = "dump_mode";
 constexpr auto kProfiling = "profiler";
+constexpr auto kDataFlowGraphType = "data_flow";
+constexpr auto kCustomInputSize = 2;
 
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
@@ -58,6 +64,34 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
 
 std::atomic_uint32_t GeGraphExecutor::global_graph_idx_ = 0;
 uint32_t GeGraphExecutor::GetNextGraphIdx() { return global_graph_idx_++; }
+transform::DfGraphPtr GetDataFlowGraph(const FuncGraphPtr &anf_graph,
+                                       const std::map<std::string, std::string> &ge_options) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  auto return_node = anf_graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  auto nodes = anf_graph->TopoSort(return_node);
+  auto itr = std::find_if(nodes.begin(), nodes.end(), [&](const AnfNodePtr &node) {
+    return node->isa<CNode>() && opt::CheckPrimitiveType(node, prim::kPrimCustom);
+  });
+  if (itr == nodes.end()) {
+    MS_LOG(ERROR) << "The dataflow graph is invalid.";
+    return nullptr;
+  }
+  auto custom_cnode = (*itr)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(custom_cnode);
+  if (custom_cnode->size() != kCustomInputSize) {
+    MS_LOG(ERROR) << "The input of dataflow custom node is not 2.";
+    return nullptr;
+  }
+  auto tensor = FuncGraphUtils::GetConstNodeValue(custom_cnode->input(1));
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto data = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data);
+  auto flow_graph = reinterpret_cast<ge::dflow::FlowGraph *>(data);
+  MS_EXCEPTION_IF_NULL(flow_graph);
+  auto df_graph = std::make_shared<transform::DfGraph>(flow_graph->ToGeGraph());
+  return df_graph;
+}
 
 GeGraphExecutor::~GeGraphExecutor() {
   if (ge_session_) {
@@ -213,35 +247,47 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   }
   std::map<std::string, std::string> ge_options;
   GetGeGraphOptions(anf_graph, &ge_options);
-  auto converter = transform::NewConverter(anf_graph, converter_context);
-  transform::BuildGraph(anf_graph->ToString(), converter, GetParams(anf_graph));
-  auto err_code = transform::ErrCode(converter);
-  if (err_code != 0) {
-    transform::ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
+
+  transform::DfGraphPtr df_graph = nullptr;
+  auto func_type = anf_graph->get_attr(kAttrFuncType);
+  is_data_flow_graph_ = func_type != nullptr && GetValue<std::string>(func_type) == kDataFlowGraphType;
+  if (!is_data_flow_graph_) {
+    auto converter = transform::NewConverter(anf_graph, converter_context);
+    transform::BuildGraph(anf_graph->ToString(), converter, GetParams(anf_graph));
+    auto err_code = transform::ErrCode(converter);
+    if (err_code != 0) {
+      transform::ClearGraph();
+      MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
+      return false;
+    }
+    auto init_graph = transform::GetInitGraph(converter);
+    if (init_graph != nullptr) {
+      uint32_t init_graph_id = 0;
+      if (!AddGraph(init_graph, {}, &init_graph_id)) {
+        MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
+        return false;
+      }
+      init_graph_id_list_.push_back(init_graph_id);
+      // copy init weight to device
+      RunGeInitGraph(init_graph_id);
+    } else {
+      MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
+    }
+    df_graph = transform::GetComputeGraph(converter);
+  } else {
+    df_graph = GetDataFlowGraph(anf_graph, ge_options);
+  }
+  if (df_graph == nullptr) {
+    MS_LOG(ERROR) << "Get df graph failed.";
     return false;
   }
   uint32_t compute_graph_id = 0;
-  if (!AddGraph(transform::GetComputeGraph(converter), ge_options, &compute_graph_id)) {
+  if (!AddGraph(df_graph, ge_options, &compute_graph_id)) {
     MS_LOG(ERROR) << "Failed to add compute graph, graph name " << anf_graph->ToString();
     return false;
   }
   compute_graph_id_list_.push_back(compute_graph_id);
   *graph_id = compute_graph_id;
-
-  auto init_graph = transform::GetInitGraph(converter);
-  if (init_graph != nullptr) {
-    uint32_t init_graph_id = 0;
-    if (!AddGraph(init_graph, {}, &init_graph_id)) {
-      MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
-      return false;
-    }
-    init_graph_id_list_.push_back(init_graph_id);
-    // copy init weight to device
-    RunGeInitGraph(init_graph_id);
-  } else {
-    MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
-  }
   return true;
 }
 
@@ -276,6 +322,23 @@ bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id) {
   return true;
 }
 
+ge::Status GeGraphExecutor::RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
+                                                  std::vector<::ge::Tensor> *outputs) {
+  ge::DataFlowInfo data_flow_info;
+  int time_out = 3000;  // set the timeout to 3000s.
+  auto ret = ge_session_->FeedDataFlowGraph(graph_id, inputs, data_flow_info, time_out);
+  if (ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "Feed input data failed.";
+    return ret;
+  }
+  ret = ge_session_->FetchDataFlowGraph(graph_id, *outputs, data_flow_info, time_out);
+  if (ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "Fetch output data failed.";
+    return ret;
+  }
+  return ge::GRAPH_SUCCESS;
+}
+
 bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                                std::vector<tensor::Tensor> *outputs,
                                const std::map<string, string> & /* compile_options */) {
@@ -296,9 +359,9 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
     ge_inputs.emplace_back(*ge_tensor);
   }
   std::vector<::ge::Tensor> ge_outputs;
-
   auto time_start = std::chrono::system_clock::now();
-  auto ge_status = ge_session_->RunGraph(graph_id, ge_inputs, ge_outputs);
+  auto ge_status = !is_data_flow_graph_ ? ge_session_->RunGraph(graph_id, ge_inputs, ge_outputs)
+                                        : RunDataFlowGraphAsync(graph_id, ge_inputs, &ge_outputs);
   auto time_cost =
     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start).count();
   MS_LOG(INFO) << "Call GE RunGraph Success in " << time_cost << " us, graph id " << graph_id
@@ -347,13 +410,21 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
       outputs->push_back(*ms_tensor);
     }
   }
+  graph_inputs_[graph_id] = inputs;
+  graph_outputs_[graph_id] = *outputs;
   MS_LOG(INFO) << "GE run graph " << graph_id << " end.";
   return true;
 }
 
-std::vector<tensor::Tensor> GeGraphExecutor::GetInputInfos(uint32_t graph_id) { return std::vector<tensor::Tensor>(); }
+std::vector<tensor::Tensor> GeGraphExecutor::GetInputInfos(uint32_t graph_id) {
+  return graph_inputs_.find(graph_id) != graph_inputs_.end() ? graph_inputs_.at(graph_id)
+                                                             : std::vector<tensor::Tensor>();
+}
 
-std::vector<tensor::Tensor> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) { return std::vector<tensor::Tensor>(); }
+std::vector<tensor::Tensor> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) {
+  return graph_outputs_.find(graph_id) != graph_outputs_.end() ? graph_outputs_.at(graph_id)
+                                                               : std::vector<tensor::Tensor>();
+}
 
 static std::shared_ptr<device::GraphExecutor> GeGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
                                                                      const ConfigInfos &config_infos) {

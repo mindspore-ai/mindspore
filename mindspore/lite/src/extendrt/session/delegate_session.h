@@ -65,13 +65,17 @@ class GraphSinkSession : public InferSession {
 
  private:
   Status GeDeviceContextInit();
+  Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
+  Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);
+  void UpdateDataFlowGraphInputsOutputs(DelegateGraphInfo *graph_info_ptr, const std::vector<tensor::Tensor> &inputs,
+                                        const std::vector<tensor::Tensor> &outputs);
+
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   std::map<uint32_t, DelegateGraphInfo> graph_infos_;
   bool is_use_ascend_ge_ = false;
+  bool is_data_flow_graph_ = false;
   std::shared_ptr<Context> context_;
-  Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
-  Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);
   ConfigInfos config_infos_;
 };
 }  // namespace mindspore
