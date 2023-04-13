@@ -238,7 +238,7 @@ def test_compress_with_mutable_input():
     @jit
     def foo(x):
         cond = [1, 0, 1, 1]
-        a = [x, x+1, x+2, x+3]
+        a = [x, x + 1, x + 2, x + 3]
         z = np.compress(cond, a)
         return z
 
@@ -334,7 +334,7 @@ def test_starred_to_unpack_input():
 
     @jit
     def foo(x):
-        return f"output is {*a, }"
+        return f"output is {*a,}"
 
     ret = foo([1, 2, 3, 4])
     assert ret == "output is (1, 2, 3, 4)"
@@ -478,8 +478,254 @@ def test_for_with_interpret_object_2():
     def foo(x, y):
         a = []
         for i, j in list(zip(reversed(x), reversed(y))):
-            a.append(i+j)
+            a.append(i + j)
         return a
 
     ret = foo(mutable([1, 2, 3]), mutable([4, 5, 6]))
     assert ret == [9, 7, 5]
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_import_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support import in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_import():
+        import numpy as inner_np  # pylint: disable=W0404
+        x = inner_np.array(10, inner_np.float64)
+        return x
+
+    test_import_out = test_import()
+    print("out:", test_import_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_from_import_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support from and import in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_from_import(x):
+        from mindspore.scipy.ops import Eig
+        s, u = Eig()(x)
+        return s, u
+
+    context.set_context(device_target='CPU')
+    x = Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32))
+    test_from_import_out = test_from_import(x)
+    print("out:", test_from_import_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_delete_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support delete in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_delete(x):
+        y = x + 1
+        z = y * 2
+        del y
+        return x, z
+
+    test_delete_out = test_delete(2)
+    print("out:", test_delete_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_annassign_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support annassign in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_annassign(x):
+        (y): int = x
+        return y
+
+    test_annassign_out = test_annassign(2)
+    print("out:", test_annassign_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_try_except_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support try except in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_try_except(x, y):
+        global_out = 1
+        try:
+            global_out = x / y
+        except ZeroDivisionError:
+            print("division by zero, y is zero.")
+        return global_out
+
+    test_try_except_out = test_try_except(1, 0)
+    print("out:", test_try_except_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_import_and_match_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support import match in graph mode.
+    Expectation: No exception.
+    """
+    import re
+    @jit
+    def test_import_match():
+        line = "Cats are smarter than dogs"
+        search_obj = re.search(r'(.*) are (.*?) .*', line, re.M | re.I)
+
+        if search_obj:
+            print("search_obj.group() : ", search_obj.group())
+            print("search_obj.group(1) : ", search_obj.group(1))
+            print("search_obj.group(2) : ", search_obj.group(2))
+        else:
+            print("Nothing found!!")
+
+    test_import_match_out = test_import_match()
+    print("out:", test_import_match_out)
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_set_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support set in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_set():
+        x = {1, 2, 3}
+        return x
+
+    test_set_out = test_set()
+    assert test_set_out == {1, 2, 3}
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_set_comprehension_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support set comprehension in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_set_comprehension():
+        x = {1, 2, 3}
+        y = {i * i for i in x}
+        return y
+
+    test_set_comprehension_out = test_set_comprehension()
+    assert test_set_comprehension_out == {1, 4, 9}
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_dict_comprehension_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support dict comprehension in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def test_dict_comprehension():
+        x = (1, 2, 3)
+        y = {i: i * i for i in x}
+        return y
+
+    test_dict_comprehension_out = test_dict_comprehension()
+    assert test_dict_comprehension_out == {1: 1, 2: 4, 3: 9}
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_yield_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support yield in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def test_yield():
+        def fab(max_num):
+            n, a, b = 0, 0, 1
+            while n < max_num:
+                yield b
+                a, b = b, a + b
+                n = n + 1
+
+        for n in fab(5):
+            print(n)
+
+    test_yield()
+
+
+@pytest.mark.skip(reason="not support now")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.env_onecard
+def test_yield_from_in_graph():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support yield from in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def chain(*iterables):
+        for i in iterables:
+            yield from i
+
+    s = "ABC"
+    t = tuple(range(3))
+    chain_out = list(chain(s, t))
+    print("out:", chain_out)
+    assert chain_out == ['A', 'B', 'C', 0, 1, 2]
