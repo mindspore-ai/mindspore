@@ -120,13 +120,6 @@ int InitGatherDynamicStatus(GatherStruct *gather) {
   gather->indices_size_ = GetElementNum(gather->base_.in_[SECOND_INPUT]);
   return NNACL_OK;
 }
-void FreeBlockInfos(GatherStruct *gather) {
-  if (gather->block_infos_ != NULL) {
-    gather->base_.env_->free(gather->base_.env_->allocator_, gather->block_infos_);
-    gather->block_infos_ = NULL;
-  }
-  gather->block_infos_size_ = 0;
-}
 
 void GatherUpdateThreadNumProcess(GatherStruct *gather) {
   int all_bytes = GetSize(gather->base_.out_[OUTPUT_INDEX]);
@@ -141,13 +134,24 @@ void GatherUpdateThreadNumProcess(GatherStruct *gather) {
   return;
 }
 
+int gather_release(struct KernelBase *self) {
+  GatherStruct *gather = (GatherStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(gather);
+  gather->block_infos_size_ = 0;
+  if (gather->block_infos_ != NULL) {
+    gather->base_.env_->free(gather->base_.env_->allocator_, gather->block_infos_);
+    gather->block_infos_ = NULL;
+  }
+  return NNACL_OK;
+}
+
 int ChooseGatherThreadCuttingStrategy(GatherStruct *gather) {
   if (gather->outer_size_ == 0 || gather->indices_size_ == 0 || gather->byte_inner_size_ == 0) {
     return NNACL_OK;
   }
   GatherUpdateThreadNumProcess(gather);
 
-  FreeBlockInfos(gather);
+  gather_release((KernelBase *)gather);
   GatherBlockBoundaryInfo tmp_info[MAX_SPLIT_NUM];
   if (gather->base_.thread_nr_ == 1) {
     tmp_info[gather->block_infos_size_].begin_batch_ = 0;
@@ -209,12 +213,6 @@ int gather_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int gather_release(struct KernelBase *self) {
-  GatherStruct *gather = (GatherStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(gather);
-  return NNACL_OK;
-}
-
 int gather_compute(struct KernelBase *self) {
   GatherStruct *gather = (GatherStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather);
@@ -242,6 +240,8 @@ KernelBase *CreateGather(OpParameter *param, int data_type) {
   GatherStruct *gather = (GatherStruct *)malloc(sizeof(GatherStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(gather);
   gather->indices_data_ = NULL;
+  gather->block_infos_ = NULL;
+  gather->block_infos_size_ = 0;
   gather->base_.prepare = gather_prepare;
   gather->base_.resize = gather_resize;
   gather->base_.release = gather_release;
