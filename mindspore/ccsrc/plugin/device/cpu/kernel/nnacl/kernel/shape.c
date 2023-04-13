@@ -16,10 +16,6 @@
 
 #include "nnacl/kernel/shape.h"
 
-typedef struct ShapeStruct {
-  KernelBase base;
-} ShapeStruct;
-
 int shape_release(struct KernelBase *self) { return NNACL_OK; }
 int shape_resize(struct KernelBase *self) { return NNACL_OK; }
 
@@ -46,10 +42,10 @@ int shape_compute(struct KernelBase *self) {
 KernelBase *CreateShape(OpParameter *param, int data_type) {
   ShapeStruct *shape = (ShapeStruct *)malloc(sizeof(ShapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(shape);
-  shape->base.release = shape_release;
-  shape->base.prepare = shape_prepare;
-  shape->base.resize = shape_resize;
-  shape->base.compute = shape_compute;
+  shape->base_.release = shape_release;
+  shape->base_.prepare = shape_prepare;
+  shape->base_.resize = shape_resize;
+  shape->base_.compute = shape_compute;
   return (KernelBase *)shape;
 }
 
