@@ -83,15 +83,20 @@ bool IsSkipAutoParallel(const FuncGraphPtr &root, const std::string &strategy_se
     return true;
   }
 
-  if ((is_pre_action && strategy_search_mode != kRecursiveProgramming) ||
-      (!is_pre_action && strategy_search_mode == kRecursiveProgramming)) {
+  // For pynative parallel, run auto parallel after it.
+  if (IsPynativeParallel() && root->has_flag(kPynativeShard)) {
+    return false;
+  }
+
+  if ((is_pre_action && strategy_search_mode == kDynamicProgramming) ||
+      (!is_pre_action && strategy_search_mode != kDynamicProgramming)) {
     return true;
   }
   return false;
 }
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
-  // Mode 'recursive programming' will run before pipeline_split, others don't.
+  // Mode 'dynamic programming' will run after pipeline_split, others don't.
   bool is_pre_action = !root->has_flag(AUTO_PARALLEL_FINISH_PRE_ACTION);
   bool changes;
   if (is_pre_action) {
@@ -661,19 +666,21 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   } else {
     edge_ptr = std::make_shared<Edge>(edge_name, prev_op_info, node_op_info, output_index, input_index - 1, false);
   }
-
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
   // Init costs for this edge
-  if (edge_ptr->InitEdgeCost() != SUCCESS) {
+  if (!use_sp && edge_ptr->InitEdgeCost() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Edge cost initialization failed";
   }
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
-  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
-                (ParallelContext::GetInstance()->sharding_propagation());
   if (use_sp && (prev_prim->name() == CAST) &&
       (configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
     const auto next_op_stra = configured_stra_ops_[node_op_info];
+    if (edge_ptr->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge cost initialization failed";
+    }
     const auto cast_stra = edge_ptr->GetPrevOpStrategyByNextOpStrategyWithMiniComm(next_op_stra);
     if (cast_stra == nullptr) {
       MS_LOG(EXCEPTION) << "No available strategy for: " << prev_op_info->name();
@@ -826,6 +833,67 @@ void ApplyApproximationForParaNode(const OperatorInfoPtr &target_op_info) {
   }
 }
 
+std::pair<OperatorInfoPtr, bool> CreateIdentityOp(const std::string &parameter_name,
+                                                  const AnfNodePtr &target_parameter) {
+  // Here, it is sure that this Parameter (RefKey) is being used by multiple Operators.
+  OperatorInfoPtr tmp_identity_ptr;
+  bool new_identity = false;
+  auto returned_identity = entire_costgraph->FindTmpIdentityByParameterName(parameter_name);
+  if (returned_identity != nullptr) {
+    // In this case, the TmpIdentityInfo instance has already been created
+    new_identity = false;
+    tmp_identity_ptr = returned_identity;
+  } else {
+    // In the case, the TmpIdentityInfo instance has NOT been created. Thus, a new one is created.
+    new_identity = true;
+    // 1) extract input shape from this Parameter
+    MS_EXCEPTION_IF_NULL(target_parameter);
+    AbstractBasePtr abstract = target_parameter->abstract();
+    if (abstract == nullptr) {
+      MS_LOG(EXCEPTION) << "Failure: abstract is nullptr";
+    }
+    auto input_shape = dyn_cast<abstract::Shape>(abstract->GetShapeTrack());
+    if (input_shape == nullptr) {
+      MS_LOG(EXCEPTION) << "Failure: input_shape is nullptr";
+    }
+    Shape shape = input_shape->shape();
+    Shapes inputs_shape = {shape};
+    Shapes outputs_shape = {shape};
+    // 2) init the attr
+    mindspore::HashMap<std::string, ValuePtr> attr = {};
+
+    // Create the TmpIdentity instance
+    tmp_identity_ptr = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
+    tmp_identity_ptr->set_name(tmp_identity_ptr->name() + std::to_string(TOTAL_OPS));
+    TOTAL_OPS++;
+    tmp_identity_ptr->set_refkey_parameter_name(parameter_name);
+    // Set the parameter and type lengths for inputs and outputs
+    std::vector<bool> is_parameter;
+    auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(casted_target_parameter);
+    is_parameter.push_back(ParameterRequireGrad(casted_target_parameter));
+    if (tmp_identity_ptr->set_is_parameter(is_parameter) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Setting parameter for TmpIdentityInfo failed";
+    }
+    auto node_type = target_parameter->Type();
+    if (node_type->isa<mindspore::TensorType>()) {
+      auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
+      std::vector<size_t> type_length = {GetLengthOfDataType(input_element_type)};
+      if (tmp_identity_ptr->SetInputAndOutputTypeLength(type_length, type_length) != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Setting input and output type length for TmpIdentityInfo failed";
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Unknown type: " << node_type->type_name();
+    }
+
+    // Generate strategies for this TmpIdentityInfo instance;
+    if (tmp_identity_ptr->GenerateStrategies(0) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Strategy search for Operator failed : " << tmp_identity_ptr->name();
+    }
+  }
+  return std::make_pair(tmp_identity_ptr, new_identity);
+}
+
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
   // Step 3
   for (auto &node : all_nodes) {
@@ -849,66 +917,13 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       (void)target_without_duplicate.insert(std::to_string(input_index) +
                                             target_cnode->user_data<OperatorInfo>()->name());
     }
-    if (target_without_duplicate.size() <= 1) {
+    if (target_without_duplicate.size() <= 1 || parameter_name.empty()) {
       continue;
     }
 
-    // Here, it is sure that this Parameter (RefKey) is being used by multiple Operators.
-    OperatorInfoPtr tmp_identity_ptr;
-    bool new_identity = false;
-    auto returned_identity = entire_costgraph->FindTmpIdentityByParameterName(parameter_name);
-    if (returned_identity != nullptr) {
-      // In this case, the TmpIdentityInfo instance has already been created
-      new_identity = false;
-      tmp_identity_ptr = returned_identity;
-    } else {
-      // In the case, the TmpIdentityInfo instance has NOT been created. Thus, a new one is created.
-      new_identity = true;
-      // 1) extract input shape from this Parameter
-      MS_EXCEPTION_IF_NULL(target_parameter);
-      AbstractBasePtr abstract = target_parameter->abstract();
-      if (abstract == nullptr) {
-        MS_LOG(EXCEPTION) << "Failure: abstract is nullptr";
-      }
-      auto input_shape = dyn_cast<abstract::Shape>(abstract->GetShapeTrack());
-      if (input_shape == nullptr) {
-        MS_LOG(EXCEPTION) << "Failure: input_shape is nullptr";
-      }
-      Shape shape = input_shape->shape();
-      Shapes inputs_shape = {shape};
-      Shapes outputs_shape = {shape};
-      // 2) init the attr
-      mindspore::HashMap<std::string, ValuePtr> attr = {};
-
-      // Create the TmpIdentity instance
-      tmp_identity_ptr = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
-      tmp_identity_ptr->set_name(tmp_identity_ptr->name() + std::to_string(TOTAL_OPS));
-      TOTAL_OPS++;
-      tmp_identity_ptr->set_refkey_parameter_name(parameter_name);
-      // Set the parameter and type lengths for inputs and outputs
-      std::vector<bool> is_parameter;
-      auto casted_target_parameter = target_parameter->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(casted_target_parameter);
-      is_parameter.push_back(ParameterRequireGrad(casted_target_parameter));
-      if (tmp_identity_ptr->set_is_parameter(is_parameter) != SUCCESS) {
-        MS_LOG(EXCEPTION) << "Setting parameter for TmpIdentityInfo failed";
-      }
-      auto node_type = target_parameter->Type();
-      if (node_type->isa<mindspore::TensorType>()) {
-        auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
-        std::vector<size_t> type_length = {GetLengthOfDataType(input_element_type)};
-        if (tmp_identity_ptr->SetInputAndOutputTypeLength(type_length, type_length) != SUCCESS) {
-          MS_LOG(EXCEPTION) << "Setting input and output type length for TmpIdentityInfo failed";
-        }
-      } else {
-        MS_LOG(EXCEPTION) << "Unknown type: " << node_type->type_name();
-      }
-
-      // Generate strategies for this TmpIdentityInfo instance;
-      if (tmp_identity_ptr->GenerateStrategies(0) != SUCCESS) {
-        MS_LOG(EXCEPTION) << "Strategy search for Operator failed : " << tmp_identity_ptr->name();
-      }
-    }
+    auto pair = CreateIdentityOp(parameter_name, target_parameter);
+    OperatorInfoPtr tmp_identity_ptr = pair.first;
+    bool new_identity = pair.second;
     // A flag recording whether new edges have been created or not
     bool add_identity_edge = false;
 
@@ -927,7 +942,9 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
         std::make_shared<Edge>(edge_name, tmp_identity_ptr, target_op_info, 0, input_index - 1, false, true);
       ApplyApproximationForParaNode(target_op_info);
 
-      if (edge_ptr->InitEdgeCost() != SUCCESS) {
+      bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                    (ParallelContext::GetInstance()->sharding_propagation());
+      if (!use_sp && edge_ptr->InitEdgeCost() != SUCCESS) {
         MS_LOG(EXCEPTION) << "Edge cost initialization failed";
       }
       target_op_info->AddPrevEdge(edge_ptr);
@@ -961,15 +978,16 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     OperatorInfoPtr pre_operator_info;
     std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;
     auto operator_info = cnode->user_data<OperatorInfo>();
-    if (pre_node->isa<Parameter>()) {
+    bool is_prev_param = false;
+    if (!FindReshapePreNodeStraCosts(pre_node, &pre_operator_info, &is_prev_param, &out_index, 0)) {
+      MS_LOG(EXCEPTION) << "FindReshapePreNodeStraCosts for reshape failed";
+    }
+    if (is_prev_param) {
       auto reshape_info1 = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info1->SetCostForReshapeWithParameter();
       pre_operator_info = reshape_info1;
       pre_stra_costs = reshape_info1->strategy_cost();
     } else {
-      if (!FindReshapePreNodeStraCosts(pre_node, &pre_operator_info, &out_index, 0)) {
-        MS_LOG(EXCEPTION) << "FindReshapePreNodeStraCosts for reshape failed";
-      }
       pre_stra_costs = pre_operator_info->strategy_cost();
     }
     // get next node's strategy_cost_
@@ -993,7 +1011,6 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       reshape_info->set_next_operator_name(next_ops_index[0].first->name());
       reshape_info->set_next_operator_index(next_ops_index[0].second);
     }
-    bool is_prev_param = pre_node->isa<Parameter>();
     if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_costs_index, out_index, is_prev_param,
                                             is_next_reshape) != SUCCESS) {
       MS_LOG(EXCEPTION) << "reshape generate strategy_costs failed!";
@@ -1038,8 +1055,10 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   // OUTPUT: the determined strategy for each operator.
 
   InitCostGraph();
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
   // Step 1
-  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
+  if (CostModelContext::GetInstance()->is_multi_subgraphs() || use_sp) {
     if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
       MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
                    << entire_costgraph->GetOperators().size() << " operators.";
@@ -1070,13 +1089,11 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
                << " edges.";
 
   // Step 3.1: Calculate the memory usage
-  if (entire_costgraph->CalculateMemoryCost() != SUCCESS) {
+  if (!use_sp && entire_costgraph->CalculateMemoryCost() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Calculating memory cost failed.";
   }
 
   // Step 4: run the strategy searching algorithm
-  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
-                (ParallelContext::GetInstance()->sharding_propagation());
   if (use_sp) {
     entire_costgraph->StrategyPropagate(configured_stra_ops_);
   } else if (GetStrategy(entire_costgraph) != SUCCESS) {

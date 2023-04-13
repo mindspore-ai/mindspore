@@ -124,19 +124,14 @@ def test_dmnet_train_step():
     _cell_graph_executor.compile(net, input_)
 
 
-def test_pipeline_with_micro_interleaved_and_slice_activation():
-    """
-    Feature: pipeline parallel with recursive_programming
-    Description: pipeline + recursive_programming
-    Expectation: success
-    """
+def run_auto_pipeline_transformer(search_mode):
     bs = 32
     pp = 2
     encoder_layers = 4
     context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=pp,
                                       full_batch=True, parallel_mode="auto_parallel",
-                                      enable_parallel_optimizer=True, search_mode='recursive_programming')
+                                      enable_parallel_optimizer=True, search_mode=search_mode)
     cf = TransformerOpParallelConfig(data_parallel=2, model_parallel=2, pipeline_stage=pp,
                                      vocab_emb_dp=False, optimizer_shard=True)
     pipeline_net = TransformerEncoderNet(batch_size=bs // pp,
@@ -154,3 +149,21 @@ def test_pipeline_with_micro_interleaved_and_slice_activation():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(pipeline_cell_net, optimizer=optimizer)
     model.train_network.compile(encoder_input_value, encoder_input_mask, label, mask)
+
+
+def test_pipeline_with_recursive_programming():
+    """
+    Feature: pipeline parallel with recursive_programming
+    Description: pipeline + recursive_programming
+    Expectation: success
+    """
+    run_auto_pipeline_transformer('recursive_programming')
+
+
+def test_pipeline_with_sharding_propagation():
+    """
+    Feature: pipeline parallel with sharding_propagation
+    Description: pipeline + sharding_propagation
+    Expectation: success
+    """
+    run_auto_pipeline_transformer('sharding_propagation')

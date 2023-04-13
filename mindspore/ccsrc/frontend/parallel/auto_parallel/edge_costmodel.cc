@@ -96,20 +96,21 @@ Status Edge::InitEdgeCost() {
     const auto fully_use = CostModelContext::GetInstance()->fully_use_device();
     const auto stra_follow = CostModelContext::GetInstance()->elementwise_stra_follow();
     if (fully_use) {
-      MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
-                        << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
-                           "'fully_use_devices' false.";
+      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
+                   << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
+                      "'fully_use_devices' false.";
     } else if (stra_follow) {
-      MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
-                        << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
-                           "Try to set 'elementwise_op_strategy_follow' false.";
+      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
+                   << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
+                      "Try to set 'elementwise_op_strategy_follow' false.";
     }
     if (edge_name_.find(RESHAPE) != std::string::npos) {
-      MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
-                        << " failed, it may be caused by setting different strategies for operators following Reshape. "
-                           "Try to fix that.";
+      MS_LOG(INFO) << "Generating cost for edge: " << edge_name_
+                   << " failed, it may be caused by setting different strategies for operators following Reshape. "
+                      "Try to fix that.";
     }
-    MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_ << " failed.";
+    MS_LOG(INFO) << "Generating cost for edge: " << edge_name_ << " failed.";
+    return Status::FAILED;
   }
   return Status::SUCCESS;
 }
@@ -535,7 +536,8 @@ StrategyPtr Edge::GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index) {
   return stra;
 }
 
-bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra) {
+bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra,
+                                    std::set<OperatorInfoPtr> *_diff_stra_params) {
   if (prev_stra == nullptr) {
     MS_LOG(EXCEPTION) << prev_op_->name() << "'s selected strategy is null!";
   }
@@ -547,18 +549,21 @@ bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra
     MS_LOG(INFO) << "The edge " << edge_name_ << "'s strategy: prev_stra is " << prev_stra->ToString()
                  << ", next_stra is " << next_stra->ToString();
     if (prev_op_->IsTmpIdentity()) {
-      MS_LOG(ERROR) << "The parameter: " << prev_op_->refkey_parameter_name()
-                    << " has been used by operators with "
-                       "different sharding strategies. These operators are: ";
+      if (_diff_stra_params->count(prev_op_) == 0) {
+        _diff_stra_params->insert(prev_op_);
+      }
+      MS_LOG(INFO) << "The parameter: " << prev_op_->refkey_parameter_name()
+                   << " has been used by operators with "
+                      "different sharding strategies. These operators are: ";
       auto const &succ_edges = prev_op_->succ_edges();
       for (auto const &succ_edge : succ_edges) {
         if (succ_edge->next_operator()->cnodes().empty()) {
-          MS_LOG(EXCEPTION) << "No CNODE info has been set in operator: " << succ_edge->next_operator()->name();
+          MS_LOG(INFO) << "No CNODE info has been set in operator: " << succ_edge->next_operator()->name();
         }
-        MS_LOG(ERROR) << succ_edge->next_operator()->name() << ", the corresponding fullname is: "
-                      << succ_edge->next_operator()->cnodes()[0]->fullname_with_scope();
+        MS_LOG(INFO) << succ_edge->next_operator()->name() << ", the corresponding fullname is: "
+                     << succ_edge->next_operator()->cnodes()[0]->fullname_with_scope();
       }
-      MS_LOG(EXCEPTION) << "Configure these operators with consistent sharding strategies.";
+      MS_LOG(INFO) << "Configure these operators with consistent sharding strategies.";
     }
     MS_LOG(WARNING) << "There are redistribution cost occurs at edge: " << edge_name() << ".";
     return false;
