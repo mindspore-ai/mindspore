@@ -34,6 +34,8 @@ constexpr auto kMixedBitWeightQuantParam = "mixed_bit_weight_quant_param";
 constexpr auto kDataPreprocessParam = "data_preprocess_param";
 constexpr auto kRegistry = "registry";
 constexpr auto kAclOptionParam = "acl_option_cfg_param";
+constexpr auto kAclInitOptionParam = "acl_init_options";
+constexpr auto kAclBuildOptionParam = "acl_build_options";
 constexpr auto kMicroParam = "micro_param";
 constexpr auto kCpuOptionParam = "cpu_option_cfg_param";
 constexpr auto kCustomOppPath = "custom_opp_path";
@@ -464,7 +466,23 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size},
       {"aoe_mode", acl_option_cfg_string_.aoe_mode},
       {"custom_opp_path", acl_option_cfg_string_.custom_opp_path}};
-    return SetMapData(map, parse_map, kAclOptionParam);
+    auto ret = SetMapData(map, parse_map, kAclOptionParam);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "set map data failed.";
+      return ret;
+    }
+  }
+  if (maps.find(kAclInitOptionParam) != maps.end()) {
+    const auto &map = maps.at(kAclInitOptionParam);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.init_options_map.emplace(item.first, item.second);
+    }
+  }
+  if (maps.find(kAclBuildOptionParam) != maps.end()) {
+    const auto &map = maps.at(kAclBuildOptionParam);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.build_options_map.emplace(item.first, item.second);
+    }
   }
   return RET_OK;
 }

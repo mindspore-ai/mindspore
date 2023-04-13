@@ -91,6 +91,8 @@ struct AclOptionCfgString {
   std::string dynamic_image_size;
   std::string aoe_mode;
   std::string custom_opp_path;
+  std::map<std::string, std::string> init_options_map;
+  std::map<std::string, std::string> build_options_map;
 };
 
 struct MicroParamString {

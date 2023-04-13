@@ -84,6 +84,8 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
   acl_option_cfg->dynamic_image_size = acl_option_string.dynamic_image_size;
   acl_option_cfg->aoe_mode = acl_option_string.aoe_mode;
   acl_option_cfg->custom_opp_path = acl_option_string.custom_opp_path;
+  acl_option_cfg->init_options_map = acl_option_string.init_options_map;
+  acl_option_cfg->build_options_map = acl_option_string.build_options_map;
   return RET_OK;
 }
 
