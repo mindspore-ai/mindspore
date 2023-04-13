@@ -185,6 +185,7 @@ constexpr auto kExpandDims = "ExpandDims";
 constexpr auto kReshape = "Reshape";
 constexpr auto kFlatten = "Flatten";
 constexpr auto kSqueeze = "Squeeze";
+constexpr auto kMatrixBandPart = "MatrixBandPart";
 constexpr auto kMatrixDiagPartV3 = "MatrixDiagPartV3";
 constexpr auto kMatrixDiagV3 = "MatrixDiagV3";
 constexpr auto kBetainc = "Betainc";
@@ -263,6 +264,10 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kConjugateTranspose,
                                           kCheckNumerics,
                                           kCumSum,
+                                          kUpsampleNearest3D,
+                                          kUpsampleNearest3DGrad,
+                                          kUpsampleTrilinear3D,
+                                          kUpsampleNearest3DGrad,
                                           kLog1p,
                                           kRsqrt,
                                           kSquare,
@@ -281,6 +286,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kAddcmul,
                                           kTriu,
                                           kExpand,
+                                          kMatrixBandPart,
                                           kMatrixDiagPartV3,
                                           kMatrixDiagV3,
                                           kBetainc,

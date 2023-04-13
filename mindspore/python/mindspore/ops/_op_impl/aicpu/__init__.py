@@ -21,6 +21,7 @@ from .adaptive_max_pool_3d import _adaptive_max_pool_3d_aicpu
 from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
 from .less import _less_aicpu
+from .lstsq import _lstsq_aicpu
 from .add import _add_aicpu
 from .sparse_matrix_transpose import _sparse_matrix_transpose_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
@@ -47,6 +48,7 @@ from .arg_min import _arg_min_aicpu
 from .argmin_with_value import _argmin_with_value_aicpu
 from .avgpool_v1 import _avgpool_v1_aicpu
 from .avgpool_grad_v1 import _avgpool_grad_v1_aicpu
+from .matrix_logarithm import _matrix_logarithm_aicpu
 from .matrix_solve import _matrix_solve_aicpu
 from .betainc import _betainc_aicpu
 from .bartlett_window import _bartlett_window_aicpu
@@ -133,6 +135,10 @@ from .sub import _sub_aicpu
 from .not_equal import _not_equal_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
+from .upsample_nearest_3d import _upsample_nearest_3d_aicpu
+from .upsample_nearest_3d_grad import _upsample_nearest_3d_grad_aicpu
+from .upsample_trilinear_3d import _upsample_trilinear_3d_aicpu
+from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .upper_bound import _upper_bound_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
 from .uniform_int import _uniform_int_aicpu
@@ -168,6 +174,8 @@ from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
 from .asinh import _asinh_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
+from .matrix_band_part import _matrix_band_part_aicpu
+from .matrix_exp import _matrix_exp_aicpu
 from .matrix_diag_v3 import _matrix_diag_v3_aicpu
 from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .tan import _tan_aicpu
@@ -274,6 +282,7 @@ from .one_hot import _one_hot_aicpu
 from .orgqr import _orgqr_aicpu
 from .parameterized_truncated_normal import _parameterized_truncated_normal_aicpu
 from .polar import _polar_aicpu
+from .polygamma import _polygamma_aicpu
 from .pdist_grad import _pdist_grad_aicpu
 from .ragged_range import _raggedrange_aicpu
 from .ragged_tensor_to_sparse import _ragged_tensor_to_sparse_aicpu
@@ -299,12 +308,14 @@ from .cumulative_logsumexp import _cumulative_logsumexp_aicpu
 from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
 from .scale_and_translate import _scale_and_translate_aicpu
 from .quant_dtype_cast import _quant_dtype_cast_aicpu
+from .quantile import _quantile_aicpu
 from .fse_decode import _fse_decode_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .dense_to_sparse_set_operation import _dense_to_sparse_set_operation_aicpu
 from .diag import _diag_aicpu
 from .diagonal import _diagonal_aicpu
 from .diag_part import _diag_part_aicpu
+from .digamma import _digamma_aicpu
 from .bias_add import _bias_add_aicpu
 from .bias_add_grad import _bias_add_grad_aicpu
 from .eig import _eig_aicpu
@@ -367,6 +378,7 @@ from .layer_norm_grad_grad import _layernorm_grad_grad_aicpu
 from .list_diff import _list_diff_aicpu
 from .log import _log_aicpu
 from .logspace import _logspace_aicpu
+from .lgamma import _lgamma_aicpu
 from .matrix_inverse import _matrix_inverse_aicpu
 from .matrix_power import _matrix_power_aicpu
 from .max_pool3d_grad_with_argmax import _max_pool3d_grad_with_argmax_aicpu
