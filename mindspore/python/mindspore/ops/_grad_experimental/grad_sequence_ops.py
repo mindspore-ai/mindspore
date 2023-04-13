@@ -16,6 +16,8 @@
 """grad_sequence_ops"""
 
 from mindspore.ops.operations import _sequence_ops as seq
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.primitive import Primitive
@@ -117,7 +119,7 @@ def get_bprop_tuple_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""
 
     def bprop(x, idx, value, out, dout):
-        d_x = tuple_setitem(dout, idx, 0)
+        d_x = tuple_setitem(dout, idx, zeros_like(value))
         d_value = dout[idx]
         d_idx = 0
         return (d_x, zeros_like(d_idx), d_value)
@@ -130,7 +132,7 @@ def get_bprop_lsit_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""
 
     def bprop(x, idx, value, out, dout):
-        d_x = list_setitem(dout, idx, 0)
+        d_x = list_setitem(dout, idx, zeros_like(value))
         d_value = dout[idx]
         d_idx = 0
         return (d_x, zeros_like(d_idx), d_value)
@@ -156,6 +158,81 @@ def get_bprop_list_insert(self):
     def bprop(x, idx, value, out, dout):
         d_x = seq.ListAppendAndInsertGrad()(dout, idx)
         return (d_x, zeros_like(idx), zeros_like(value))
+
+    return bprop
+
+
+@bprop_getters.register(seq.TupleToTensor)
+def get_bprop_tuple_to_tensor(self):
+    """Generate bprop for TupleToTensor"""
+
+    def bprop(x, dtype, out, dout):
+        tuple_type = F.typeof(x)
+        dout = P.Cast()(dout, tuple_type)
+        d_x = seq.TensorToTuple()(dout)
+        return (d_x, zeros_like(dtype))
+
+    return bprop
+
+
+@bprop_getters.register(seq.ListToTensor)
+def get_bprop_list_to_tensor(self):
+    """Generate bprop for ListToTensor"""
+
+    def bprop(x, dtype, out, dout):
+        tuple_type = F.typeof(x)
+        dout = P.Cast()(dout, tuple_type)
+        d_x = seq.TensorToList()(dout)
+        return (d_x, zeros_like(dtype))
+
+    return bprop
+
+
+@bprop_getters.register(P.ScalarToTensor)
+def get_bprop_scalar_to_tensor(self):
+    """Generate bprop for ScalarToTensor"""
+
+    def bprop(x, dtype, out, dout):
+        scalar_type = F.typeof(x)
+        dout = P.Cast()(dout, scalar_type)
+        d_x = seq.TensorToScalar()(dout)
+        return (d_x, zeros_like(dtype))
+
+    return bprop
+
+
+@bprop_getters.register(seq.TensorToTuple)
+def get_bprop_tensor_to_tuple(self):
+    """Generate bprop for TensorToTuple"""
+
+    def bprop(x, out, dout):
+        dtype = F.typeof(x)
+        d_x = seq.TupleToTensor()(dout, dtype)
+        return (d_x,)
+
+    return bprop
+
+
+@bprop_getters.register(seq.TensorToList)
+def get_bprop_tensor_to_list(self):
+    """Generate bprop for TensorToList"""
+
+    def bprop(x, out, dout):
+        dtype = F.typeof(x)
+        d_x = seq.ListToTensor()(dout, dtype)
+        return (d_x,)
+
+    return bprop
+
+
+@bprop_getters.register(seq.TensorToScalar)
+def get_bprop_tensor_to_scalar(self):
+    """Generate bprop for TensorToScalar"""
+
+    def bprop(x, out, dout):
+        dtype = F.typeof(x)
+        d_x = P.ScalarToTensor()(dout, dtype)
+        return (d_x,)
 
     return bprop
 

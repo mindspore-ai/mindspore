@@ -16,9 +16,10 @@
 """inner_ops"""
 
 import numbers
+import numpy as np
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
-from mindspore.common.dtype import tensor, dtype_to_pytype
+from mindspore.common.dtype import tensor
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from mindspore.ops import signature as sig
 
@@ -47,8 +48,9 @@ class ScalarCast(Primitive):
         validator.check_value_type("x", x, [bool, numbers.Number], self.name)
         if isinstance(dtype, type(tensor)):
             dtype = dtype.element_type()
-        np_type = dtype_to_pytype(dtype)
-        value = np_type(x)
+        np_dtype = str(dtype)
+        value = np.cast[np_dtype.lower()](x)
+        value = value.item()
         return value
 
 

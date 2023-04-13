@@ -1474,6 +1474,12 @@ def format_index(idx, data_shape, cur_dim):
     return idx
 
 
+@_primexpr
+def _check_shape_mul(shape):
+    if F.shape_mul(shape) == 0:
+        raise ValueError('zero-size tensors are not supported.')
+
+
 def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, where=True, dtype=None):
     """
     Applies comparison based on cmp_fn and reduction based on reduce_fn.
@@ -1490,8 +1496,7 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
                 not isinstance(initial, (int, float, bool, Tensor))):
             const_utils.raise_type_error('initial must be scalar')
 
-    if F.shape_mul(shape) == 0:
-        const_utils.raise_value_error('zero-size tensors are not supported.')
+    _check_shape_mul(shape)
 
     if initial is not None:
         if isinstance(initial, Tensor):

@@ -22,15 +22,15 @@
 
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
-#include "ir/anf.h"
-#include "ir/primitive.h"
 #include "ops/core_ops.h"
 #include "ops/primitive_c.h"
-#include "utils/convert_utils_base.h"
+#include "ir/anf.h"
+#include "ir/primitive.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -38,7 +38,7 @@ namespace ops {
 AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_len = 3;
+  const int64_t input_len = 3;
   constexpr size_t data_index = 0;
   constexpr size_t index_index = 1;
   constexpr size_t target_index = 2;
@@ -104,7 +104,7 @@ AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::v
     index = static_cast<int64_t>(elements.size());
   }
   index = index < 0 ? index + static_cast<int64_t>(elements.size()) : index;
-  abs.insert(abs.begin() + index, target_abs);
+  (void)abs.insert(abs.begin() + index, target_abs);
   return std::make_shared<abstract::AbstractList>(abs);
 }
 

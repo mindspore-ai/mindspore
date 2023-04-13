@@ -659,7 +659,7 @@ template <typename T>
 AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_len = 1;
+  const int64_t input_len = 1;
   constexpr size_t input_0_index = 0;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
 
@@ -758,7 +758,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
   }
   int64_t index_positive_value = index_int64_value >= 0 ? index_int64_value : index_int64_value + SizeToLong(nelems);
   if (index_positive_value < 0 || index_positive_value >= SizeToLong(nelems)) {
-    MS_EXCEPTION(ValueError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
+    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
                              << nelems << "," << (nelems - 1) << "].";
   }
   size_t index_unsigned_value = LongToSize(index_positive_value);

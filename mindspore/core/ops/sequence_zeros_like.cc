@@ -44,7 +44,7 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
   const auto &seq_elements = seq_abs->elements();
   for (const auto &seq_element : seq_elements) {
     if (seq_element->isa<abstract::AbstractTensor>()) {
-      (void)abs.emplace_back(TensorConstructUtils::CreateOnesTensor(
+      (void)abs.emplace_back(TensorConstructUtils::CreateZerosTensor(
                                seq_element->BuildType(), seq_element->BuildShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
