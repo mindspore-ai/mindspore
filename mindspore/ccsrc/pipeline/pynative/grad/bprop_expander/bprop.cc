@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,18 +86,31 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
   }
-  PostProcess();
+  PostProcess(ir_builder.get());
   DumpResult(name);
   input_nodes_.clear();
   return true;
 }
 
-void BpropExpander::PostProcess() {
+void BpropExpander::PostProcess(const BpropIRBuilder *ir_builder) const {
   outputs_->reserve(output_nodes_.size());
   (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(*outputs_),
-                       [](const NodePtr &node) {
-                         auto cnode = node->get<CNodePtr>();
-                         return cnode;
+                       [ir_builder](const NodePtr &node) {
+                         if (!node->isa<ValueNode>()) {
+                           return node->get<CNodePtr>();
+                         }
+
+                         // A Value node gradient will loss the trace context in pynative, so emit a node.
+                         NodePtr new_node = nullptr;
+                         auto abs = node->abstract();
+                         MS_EXCEPTION_IF_NULL(abs);
+                         if (abs->isa<abstract::AbstractScalar>()) {
+                           new_node = ir_builder->Emit(prim::kZerosLike, {ir_builder->Tensor(0, abs->BuildType())});
+                         } else {
+                           new_node = ir_builder->Emit(prim::kZerosLike, {node});
+                         }
+
+                         return new_node->get<CNodePtr>();
                        });
   std::set<AnfNodePtr> visited;
   // do not visit the inputs again.
