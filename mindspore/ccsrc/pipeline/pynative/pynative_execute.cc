@@ -90,7 +90,7 @@ bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_in
 #else
   const auto &op_prim = op_run_info->op_prim;
   return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) || op_prim->name() == "Custom" ||
-         ScopedFallbackRunning::on() || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+         ScopedFallbackRunning::on() || !forward_executor()->enable_async();
 #endif
 }
 

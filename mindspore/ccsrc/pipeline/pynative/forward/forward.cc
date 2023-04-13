@@ -160,12 +160,6 @@ void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
 }
 }  // namespace
 
-std::string ForwardExecutor::device_target() const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-}
-
 void ForwardExecutor::WaitForwardTask() {
   GilReleaseWithCheck gil_release;
   if (forward_queue_ != nullptr) {
@@ -191,14 +185,23 @@ GradExecutorPtr ForwardExecutor::grad() const {
   return grad_executor;
 }
 
+void ForwardExecutor::ReInit() {
+  device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  enable_async_ = !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+}
+
 void ForwardExecutor::Init() {
+  // Single op run with out cell or function packed
+  if (MS_UNLIKELY(infer_operation()->only_single_op_run())) {
+    ReInit();
+  }
   if (init_) {
     return;
   }
+  init_ = true;
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  init_ = true;
   runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { forward_queue_->Wait(); });
 }
 
@@ -353,23 +356,23 @@ void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const std::string &device_target) {
-  auto iter = mindrt_backends_.find(device_target);
-  if (iter == mindrt_backends_.end()) {
-    std::lock_guard<std::mutex> guard(pipeline::Resource::GetBackendInitMutex());
-    auto backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id_);
-    MS_EXCEPTION_IF_NULL(backend);
-    mindrt_backends_[device_target] = backend;
-    return backend;
-  } else {
+compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_device_target) {
+  const auto iter = mindrt_backends_.find(cur_device_target);
+  if (iter != mindrt_backends_.end()) {
     return iter->second;
+  } else {
+    std::lock_guard<std::mutex> guard(pipeline::Resource::GetBackendInitMutex());
+    auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id_);
+    MS_EXCEPTION_IF_NULL(backend);
+    mindrt_backends_[cur_device_target] = backend;
+    return backend;
   }
 }
 
 ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   ValuePtr result;
-  auto backend_policy = GetBackendPolicy(device_target());
+  auto backend_policy = GetBackendPolicy(device_target_);
   if (backend_policy == kMsBackendVmOnly) {
 #ifndef ENABLE_TEST
     if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
@@ -464,6 +467,9 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
 }
 
 void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) {
+  if (IsFirstCell()) {
+    ReInit();
+  }
   bool is_cell = py::isinstance<Cell>(obj);
   if (is_cell) {
     PushForwardCell(obj);
@@ -524,7 +530,7 @@ std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim)
   if (iter != attr_map.end()) {
     return GetValue<std::string>(iter->second);
   }
-  return device_target();
+  return device_target_;
 }
 
 void ForwardExecutor::Sync() {

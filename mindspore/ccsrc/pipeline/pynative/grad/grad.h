@@ -108,8 +108,7 @@ class GradExecutor {
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
   void UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
-  void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor,
-                           const std::vector<tensor::TensorPtr> &pre_tensors) const;
+  void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::TensorPtr &old_tensor) const;
   void ClearRes();
   void WorkerJoin() { async_executor_->WorkerJoin(); }
   void CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_function_node = false,
@@ -206,6 +205,7 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &ir_abs) const;
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
+  void SaveForwardTensorForReplace(const ValuePtr &value) const;
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   // Manage resource for construct forward graph.
   AnfNodePtr GetOutputNodeAsInput(const std::string &obj_id) const;

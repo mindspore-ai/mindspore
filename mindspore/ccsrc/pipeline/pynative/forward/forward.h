@@ -42,7 +42,6 @@ class ForwardExecutor {
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
-        enable_async_(std::getenv("ENABLE_ASYNC")),
         forward_queue_(std::make_shared<AsyncQueue>()) {}
   ~ForwardExecutor() = default;
 
@@ -68,6 +67,8 @@ class ForwardExecutor {
   AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
+  inline bool enable_async() const { return enable_async_; }
+  inline const std::string &device_target() const { return device_target_; }
   const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }
   inline bool IsFirstCell() const { return forward_cell_stack_.empty(); }
   void PushForwardCell(const py::object &cell) { forward_cell_stack_.push(cell.cast<CellPtr>()); }
@@ -88,7 +89,6 @@ class ForwardExecutor {
     is_ms_function_compiling_ = is_ms_function_compiling;
   }
   bool is_ms_function_compiling() const { return is_ms_function_compiling_; }
-  std::string device_target() const;
 
   void WorkerJoin() { forward_queue_->WorkerJoin(); }
   void WaitForwardTask();
@@ -96,9 +96,10 @@ class ForwardExecutor {
   std::string GetCurrentCellObjId() const;
 
  private:
+  void ReInit();
   GradExecutorPtr grad() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
-  compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target);
+  compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
     return cast_operation_;
@@ -118,15 +119,16 @@ class ForwardExecutor {
  private:
   bool init_{false};
   bool lazy_build_{true};
+  bool enable_async_{true};
   bool is_ms_function_compiling_{false};
   uint32_t device_id_{0};
+  std::string device_target_;
   std::string last_target_{"Unknown"};
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
-  bool enable_async_ = false;
   AsyncQueuePtr forward_queue_;
 };
 }  // namespace pynative
