@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,7 @@ class BpropIRBuilder : public Emitter {
 
   // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
-  NodePtr DynamicBroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1) const {
-    return Emit("DynamicBroadcastGradientArgs", {s0, s1});
-  }
+  NodePtrList BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift = 0) const;
 
   // For node that has multiple outputs
   std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }

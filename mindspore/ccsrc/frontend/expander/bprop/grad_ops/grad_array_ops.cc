@@ -1210,37 +1210,21 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
     return {dout};
   }
 
+  auto x_shape_node = ib->Shape(x, true);
+  auto broadcast_shape_node = ib->Shape(dout, true);
+  auto broadcast_axes = ib->BroadcastGradientArgs(dout, x);
+  MS_EXCEPTION_IF_CHECK_FAIL(!broadcast_axes.empty(), "BroadcastGradientArgs out should not be empty!");
+  auto reduction_axes = broadcast_axes[kIndex1];
+  NodePtr reduced_grad = nullptr;
   auto dout_dtype = ib->GetDtype(dout)->type_id();
-
-  NodePtr dx;
-  if (!input_dynamic && !IsDynamic(broadcast_shape)) {
-    auto tuple_out = BroadcastGradientArgs(broadcast_shape, x_shape);
-    MS_EXCEPTION_IF_CHECK_FAIL(!tuple_out.empty(), "BroadcastGradientArgs out should not be empty!");
-    auto reduction_axes = tuple_out[kIndex1];
-    NodePtr reduced_grad;
-    if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
-      auto dout_cast = ib->Cast(dout, kFloat32);
-      reduced_grad = ib->ReduceSum(dout_cast, reduction_axes, true);
-      reduced_grad = ib->Cast(reduced_grad, ib->GetDtype(dout));
-    } else {
-      reduced_grad = ib->ReduceSum(dout, reduction_axes, true);
-    }
-    dx = ib->Reshape(reduced_grad, x_shape);
+  if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
+    auto dout_cast = ib->Cast(dout, kFloat32);
+    reduced_grad = ib->ReduceSum(dout_cast, reduction_axes, true, true);
+    reduced_grad = ib->Cast(reduced_grad, ib->GetDtype(dout));
   } else {
-    auto x_shape_node = ib->Shape(x, true);
-    auto broadcast_shape_node = ib->Shape(dout, true);
-    auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape_node, x_shape_node});
-    auto reduction_axes = ib->TupleGetItem(brod, 1);
-    NodePtr reduced_grad;
-    if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
-      auto dout_cast = ib->Cast(dout, kFloat32);
-      reduced_grad = ib->ReduceSum(dout_cast, reduction_axes, true, true);
-      reduced_grad = ib->Cast(reduced_grad, ib->GetDtype(dout));
-    } else {
-      reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
-    }
-    dx = ib->Reshape(reduced_grad, x_shape_node);
+    reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
   }
+  auto dx = ib->Reshape(reduced_grad, x_shape_node);
 
   return {dx};
 });

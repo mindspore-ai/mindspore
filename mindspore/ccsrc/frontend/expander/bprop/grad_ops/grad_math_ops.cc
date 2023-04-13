@@ -49,9 +49,9 @@ NodePtrList IgammaBpropExpanderDyn(const BpropIRBuilder *ib) {
   auto dout = ib->GetInput(kIndex3);
   auto sa = ib->Shape(a);
   auto sx = ib->Shape(x);
-  auto rax = ib->DynamicBroadcastGradientArgs(sa, sx);
-  auto ra = ib->TupleGetItem(rax, 0);
-  auto rx = ib->TupleGetItem(rax, 1);
+  auto rax = ib->BroadcastGradientArgs(sa, sx);
+  auto ra = rax[0];
+  auto rx = rax[1];
   auto partial_a = ib->Emit("IgammaGradA", {a, x});
   auto lgamma = LGamma(ib, a);
   auto partial_x = ib->Exp(
@@ -547,9 +547,9 @@ REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y_shape = ib->Shape(y);
   auto dx = ib->MulNoNan(dout, y);
   auto dy = ib->MulNoNan(x, dout);
-  auto bc_axis = ib->DynamicBroadcastGradientArgs(x_shape, y_shape);
-  auto broadcast_x = ib->TupleGetItem(bc_axis, 0);
-  auto broadcast_y = ib->TupleGetItem(bc_axis, 1);
+  auto bc_axis = ib->BroadcastGradientArgs(x, y);
+  auto broadcast_x = bc_axis[kIndex0];
+  auto broadcast_y = bc_axis[kIndex1];
   dx = ib->Reshape(ib->ReduceSum(dx, broadcast_x, false, true), x_shape);
   dy = ib->Reshape(ib->ReduceSum(dy, broadcast_y, false, true), y_shape);
   return {dx, dy};

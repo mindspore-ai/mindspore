@@ -57,32 +57,25 @@ static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, co
 
 NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                const NodePtr &dy) {
-  auto shape_of_x = ib->Emit("TensorShape", {x});
-  auto shape_of_y = ib->Emit("TensorShape", {y});
-  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {shape_of_x, shape_of_y});
-  auto rx = ib->TupleGetItem(brod, 0);
-  auto ry = ib->TupleGetItem(brod, 1);
+  auto broadcast_axes = ib->BroadcastGradientArgs(x, y);
+  auto rx = broadcast_axes[kIndex0];
+  auto ry = broadcast_axes[kIndex1];
   auto reduce_dx = SumGradReduceAxisWithCast(ib, dx, rx);
   auto reduce_dy = SumGradReduceAxisWithCast(ib, dy, ry);
-  reduce_dx = ib->Reshape(reduce_dx, shape_of_x);
-  reduce_dy = ib->Reshape(reduce_dy, shape_of_y);
+  reduce_dx = ib->Reshape(reduce_dx, ib->Shape(x));
+  reduce_dy = ib->Reshape(reduce_dy, ib->Shape(y));
   return {reduce_dx, reduce_dy};
 }
 
 NodePtrList DynBinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                         const NodePtr &dy, size_t shift) {
-  auto shape_of_x = ib->Emit("TensorShape", {x});
-  auto shape_of_y = ib->Emit("TensorShape", {y});
-  auto neg_shift = SizeToLong(shift);
-  auto broadcast_shape_of_x = ib->StridedSlice(shape_of_x, {{0, {0, -neg_shift}}});
-  auto broadcast_shape_of_y = ib->StridedSlice(shape_of_y, {{0, {0, -neg_shift}}});
-  auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape_of_x, broadcast_shape_of_y});
-  auto rx = ib->TupleGetItem(brod, 0);
-  auto ry = ib->TupleGetItem(brod, 1);
+  auto broadcast_axes = ib->BroadcastGradientArgs(x, y, shift);
+  auto rx = broadcast_axes[kIndex0];
+  auto ry = broadcast_axes[kIndex1];
   auto reduce_dx = ib->ReduceSum(dx, rx, false, true);
   auto reduce_dy = ib->ReduceSum(dy, ry, false, true);
-  reduce_dx = ib->Reshape(reduce_dx, shape_of_x);
-  reduce_dy = ib->Reshape(reduce_dy, shape_of_y);
+  reduce_dx = ib->Reshape(reduce_dx, ib->Shape(x));
+  reduce_dy = ib->Reshape(reduce_dy, ib->Shape(y));
   return {reduce_dx, reduce_dy};
 }
 
