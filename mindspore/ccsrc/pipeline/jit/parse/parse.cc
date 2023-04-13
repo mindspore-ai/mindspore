@@ -2871,7 +2871,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   auto [keys, values] = block->local_py_params();
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
-  const py::set &ids = data_converter::GetPythonScriptIds(py::str(script_text));
+  const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(script_text));
   for (const auto &id : ids) {
     const auto &id_str = py::str(id);
     const auto &iter = values.find(id_str);

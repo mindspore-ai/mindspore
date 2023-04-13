@@ -942,10 +942,10 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertNoneAndDictInSequence(const AnfNodePtr &input, const FuncGraphPtr &func) {
     MS_EXCEPTION_IF_NULL(func);
     auto sequence_value = GetValuePtr<ValueSequence>(input);
+    MS_EXCEPTION_IF_NULL(input->abstract());
     auto abs_seq = input->abstract()->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
     std::vector<AnfNodePtr> new_inputs;
-    MS_EXCEPTION_IF_NULL(input->abstract());
     bool changed = false;
     if (input->abstract()->isa<abstract::AbstractTuple>()) {
       new_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
