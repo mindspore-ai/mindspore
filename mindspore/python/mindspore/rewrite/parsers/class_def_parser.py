@@ -151,35 +151,28 @@ class ClassDefParser(Parser):
 
     def _process_init_func_ast(self, stree: SymbolTree, cls_ast: ast.ClassDef, init_ast: ast.FunctionDef):
         """Process init func"""
-        super_index = ClassDefParser._find_super_expr_of_init_func(init_ast)
         ClassDefParser._modify_arguments_of_init_func(init_ast)
-        self._replace_ori_field_of_init_func(stree, cls_ast, init_ast.body, super_index)
+        new_bodies = self._replace_ori_field_of_init_func(stree, cls_ast, init_ast.body)
+        init_ast.body = new_bodies
 
     @staticmethod
-    def _find_super_expr_of_init_func(ast_init_fn: ast.FunctionDef) -> int:
-        """Find index of super(XXnet).__init__() in body of init ast.FunctionDef"""
-        if not ast_init_fn.body:
-            return -1
-        super_index = -1
-        while True:
-            super_index += 1
-            expr = ast_init_fn.body[super_index]
-            if not isinstance(expr, ast.Expr):
-                continue
-            expr_value = expr.value
-            if not isinstance(expr_value, ast.Call):
-                continue
-            expr_value_func = expr_value.func
-            if not isinstance(expr_value_func, ast.Attribute):
-                continue
-            expr_value_func_value = expr_value_func.value
-            if expr_value_func.attr != "__init__" or not isinstance(expr_value_func_value, ast.Call):
-                continue
-            expr_value_func_value_func = expr_value_func_value.func
-            if not isinstance(expr_value_func_value_func, ast.Name) or expr_value_func_value_func.id != "super":
-                continue
-            break
-        return super_index
+    def _is_super_expr(expr: ast.AST) -> bool:
+        """Check whether ast node is super().__init__()"""
+        if not isinstance(expr, ast.Expr):
+            return False
+        expr_value = expr.value
+        if not isinstance(expr_value, ast.Call):
+            return False
+        expr_value_func = expr_value.func
+        if not isinstance(expr_value_func, ast.Attribute):
+            return False
+        expr_value_func_value = expr_value_func.value
+        if expr_value_func.attr != "__init__" or not isinstance(expr_value_func_value, ast.Call):
+            return False
+        expr_value_func_value_func = expr_value_func_value.func
+        if not isinstance(expr_value_func_value_func, ast.Name) or expr_value_func_value_func.id != "super":
+            return False
+        return True
 
     @staticmethod
     def _modify_arguments_of_init_func(ast_init_fn: ast.FunctionDef):
@@ -216,66 +209,71 @@ class ClassDefParser(Parser):
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
 
-    def _handle_bodies_for_replace_ori_field(self, cls_ast, body_index, body, super_index, scope_checker, stree,
-                                             body_index_to_be_deleted, new_node_to_be_inserted):
-        """ handle_bodies_for_replace_ori_field. """
+    def _handle_tuple_for_replace_ori_field(self, ast_tuple: ast.Tuple, new_bodies):
+        """ Handle ast.Assign node with target of ast.Tuple in init func to new ast nodes. """
+        for e in ast_tuple.elts:
+            if isinstance(e, ast.Attribute):
+                field_name = e.attr
+                value = ast.Call(ast.Name('getattr', ast.Load()),
+                                 [ast.Name('obj', ast.Load()),
+                                  ast.Constant(value=field_name, kind=None)], [])
+                new_assign = ast_creator_registry.get("Assign")(targets=[e], value=value)
+                new_bodies.append(new_assign)
 
-        def _handle_tuple(t: ast.Tuple):
-            for e in t.elts:
-                if isinstance(e, ast.Attribute):
-                    field_name = e.attr
-                    value = ast.Call(ast.Name('getattr', ast.Load()),
-                                     [ast.Name('obj', ast.Load()),
-                                      ast.Constant(value=field_name, kind=None)], [])
-                    new_assign = ast_creator_registry.get("Assign")(targets=[e], value=value)
-                    new_node_to_be_inserted.append(new_assign)
+    def _handle_express_for_replace_ori_field(self, cls_ast, ast_expr: ast.Expr, stree, new_bodies):
+        """ Handle ast.Expr node in init func to new ast nodes. """
+        ast_call = ast_expr.value
+        if not isinstance(ast_call.func, ast.Attribute) or not isinstance(ast_call.func.value, ast.Name)\
+            or ast_call.func.value.id != 'self':
+            return
+        for func_def in cls_ast.body:
+            if isinstance(func_def, ast.FunctionDef) and func_def.name == ast_call.func.attr:
+                for func_def_body in func_def.body:
+                    self._handle_bodies_for_replace_ori_field(cls_ast, func_def_body, stree, new_bodies)
+                return
 
-        if body_index == super_index:
-            return  # ignoring super.__init__()
-        if isinstance(body, ast.If):
-            if scope_checker.check(body.test):
-                self._replace_ori_field_of_init_func(stree, cls_ast, body.body, -1)
-                self._replace_ori_field_of_init_func(stree, cls_ast, body.orelse, -1)
-            else:
-                logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
-            return
-        if isinstance(body, ast.Expr) and isinstance(body.value, ast.Call):
-            ast_call = body.value
-            func = ast_call.func
-            if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name) and func.value.id == 'self':
-                for cls_func_def in cls_ast.body:
-                    if isinstance(cls_func_def, ast.FunctionDef) and cls_func_def.name == func.attr:
-                        ClassDefParser._modify_arguments_of_init_func(cls_func_def)
-                        self._replace_ori_field_of_init_func(stree, cls_ast, cls_func_def.body, -1)
-                        ast_call.args = [ast.Name(id='obj', ctx=ast.Load())]
-                        ast_call.keywords = []
-                        ast_call.starargs = None
-                        ast_call.kwargs = None
-                        return
-        if not isinstance(body, ast.Assign):  # if not assign node, delete
-            body_index_to_be_deleted.append(body_index)
-            return
-        if len(body.targets) != 1:
-            raise RuntimeError("not support multi-targets in assign now!", father_node=body)
-        target = body.targets[0]
+    def _handle_assign_for_replace_ori_field(self, ast_assign: ast.Assign, stree, new_bodies):
+        """ Handle ast.Assign node in init func to new ast nodes. """
+        if len(ast_assign.targets) != 1:
+            raise RuntimeError("not support multi-targets in assign now!", father_node=ast_assign)
+        target = ast_assign.targets[0]
         if isinstance(target, ast.Tuple):
-            _handle_tuple(target)
-            body_index_to_be_deleted.append(body_index)
-        if not isinstance(target, ast.Attribute):  # only keep class member
-            body_index_to_be_deleted.append(body_index)
+            self._handle_tuple_for_replace_ori_field(target, new_bodies)
             return
-        if not isinstance(target.value, ast.Name):
+        if not isinstance(target, ast.Attribute) or not isinstance(target.value, ast.Name)\
+            or target.value.id != 'self':
             logger.info(f"Ignoring {astunparse.unparse(target)} in __init__ function.")
-            body_index_to_be_deleted.append(body_index)
-            return
-        target_value: ast.Name = target.value
-        if target_value.id != "self":
-            body_index_to_be_deleted.append(body_index)
             return
         field_name = target.attr
-        body.value = ast.Call(ast.Name('getattr', ast.Load()),
-                              [ast.Name('obj', ast.Load()),
-                               ast.Constant(value=field_name, kind=None)], [], lineno=0, col_offset=0)
+        # Ensure that the instance has corresponding attribute
+        if not hasattr(stree.get_origin_network(), field_name):
+            return
+        # Check to avoid repeat code
+        for new_ast in new_bodies:
+            if isinstance(new_ast, ast.Assign) and isinstance(new_ast.targets[0], ast.Attribute)\
+                and new_ast.targets[0].attr == field_name:
+                return
+        value = ast.Call(ast.Name('getattr', ast.Load()),
+                         [ast.Name('obj', ast.Load()),
+                          ast.Constant(value=field_name, kind=None)], [])
+        new_assign = ast_creator_registry.get("Assign")(targets=[target], value=value)
+        new_bodies.append(new_assign)
+
+    def _handle_bodies_for_replace_ori_field(self, cls_ast, body, stree, new_bodies):
+        """ handle_bodies_for_replace_ori_field. """
+        if self._is_super_expr(body):
+            new_bodies.append(body)
+            return
+        if isinstance(body, ast.If):
+            for if_body in body.body + body.orelse:
+                self._handle_bodies_for_replace_ori_field(cls_ast, if_body, stree, new_bodies)
+            return
+        if isinstance(body, ast.Expr) and isinstance(body.value, ast.Call):
+            self._handle_express_for_replace_ori_field(cls_ast, body, stree, new_bodies)
+            return
+        if isinstance(body, ast.Assign):  # if not assign node, delete
+            self._handle_assign_for_replace_ori_field(body, stree, new_bodies)
+            return
 
     def _need_add_init_func(self, cls_ast: ast.ClassDef) -> bool:
         """If class has base nn.Cell but not have init func, then we need to add init func"""
@@ -320,7 +318,7 @@ class ClassDefParser(Parser):
         cls_ast.body.insert(0, init_func_ast)
         ast.fix_missing_locations(cls_ast)
 
-    def _replace_ori_field_of_init_func(self, stree: SymbolTree, cls_ast: ast.ClassDef, bodies: [], super_index: int):
+    def _replace_ori_field_of_init_func(self, stree: SymbolTree, cls_ast: ast.ClassDef, bodies: []):
         """
         Replace original field in init func to self.XX = getattr(self._handler, "XX").
         Only keep following two kinds of ast nodes in bodies right now:
@@ -329,24 +327,16 @@ class ClassDefParser(Parser):
 
         Args:
             bodies ([]): bodied of init ast.FunctionDef.
-            super_index (int): index of super().__init__() in bodies.
 
         Raises:
             RuntimeError: Not support multi-targets in assign.
             RuntimeError: Only support target.value in [ast.Name] in assign node.
         """
 
-        body_index_to_be_deleted = []
-        new_node_to_be_inserted = []
-        scope_checker = AstScopeChecker("self")
-        for body_index, body in enumerate(bodies):
-            self._handle_bodies_for_replace_ori_field(cls_ast, body_index, body, super_index, scope_checker, stree,
-                                                      body_index_to_be_deleted, new_node_to_be_inserted)
-        for counter, index in enumerate(body_index_to_be_deleted):
-            bodies.pop(index - counter)
-        for n in new_node_to_be_inserted:
-            bodies.append(n)
-        ClassDefParser._remove_empty_ast_in_init_func(bodies)
+        new_bodies = []
+        for body in bodies:
+            self._handle_bodies_for_replace_ori_field(cls_ast, body, stree, new_bodies)
+        return new_bodies
 
 
 g_classdef_parser = reg_parser(ClassDefParser())
