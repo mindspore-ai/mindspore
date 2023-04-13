@@ -3206,6 +3206,72 @@ class JoinedStrEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+class CondEvaluator : public TransitionPrimEvaluator {
+ public:
+  CondEvaluator() : TransitionPrimEvaluator("CondEvaluator") {}
+  ~CondEvaluator() override = default;
+  MS_DECLARE_PARENT(CondEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    auto node = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cur_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+    constexpr size_t input_size = 1;
+    if (args_abs_list.size() != input_size) {
+      MS_LOG(EXCEPTION) << "The input size to cond node should be " << std::to_string(input_size) << ", but got "
+                        << std::to_string(args_abs_list.size());
+    }
+
+    AnfNodePtr new_node = nullptr;
+    auto cond_abs = args_abs_list[0];
+    auto cond_node = node->input(1);
+    if (cond_abs->isa<AbstractAny>()) {
+      // If the input to cond node is AbstractAny, genenrate pyexecute node 'bool(input)';
+      const auto script_str = std::make_shared<StringImm>("bool(__input__)");
+
+      const auto input_str = std::make_shared<StringImm>("__input__");
+      std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+      (void)key_value_names_list.emplace_back(NewValueNode(input_str));
+      const auto key_value_name_tuple = cur_graph->NewCNode(key_value_names_list);
+
+      std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple), cond_node};
+      const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
+      new_node = cur_graph->NewCNodeInOrder(
+        {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    } else {
+      // The logic of truth value testing:
+      //   1. If the object has __bool__ attribute, call __bool__()
+      //   2. Else if the object has __len__ attribute, call __len__()
+      //   3. Else return true.
+      auto cond_type = cond_abs->BuildType();
+      MS_EXCEPTION_IF_NULL(cond_type);
+      auto cond_type_id = cond_type->type_id();
+      constexpr auto bool_attr_str = "__bool__";
+      constexpr auto len_attr_str = "__len__";
+      constexpr auto standard_method_module = "mindspore._extends.parse.standard_method";
+      py::function prim_func;
+      if (!pipeline::Resource::GetMethodPtr(cond_type_id, bool_attr_str).empty()) {
+        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_BOOL);
+      } else if (!pipeline::Resource::GetMethodPtr(cond_type_id, len_attr_str).empty()) {
+        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_CHECK_LEN);
+      } else {
+        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_REAL_BOOL);
+      }
+      auto prim_fg = parse::ParsePythonCode(prim_func);
+      auto mng = cur_graph->manager();
+      MS_EXCEPTION_IF_NULL(mng);
+      prim_fg->set_manager(mng);
+      new_node = cur_graph->NewCNodeInOrder({NewValueNode(prim_fg), cond_node});
+    }
+    cur_graph->ReplaceInOrder(node, new_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+};
+
 struct PrimitiveImplInferValue {
   PrimitiveImpl impl_;        // implement function of primitive
   bool eval_value_;           // whether evaluate value
@@ -3268,6 +3334,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimWithEnter] = std::make_shared<WithEnterEvaluator>();
   constructor[prim::kPrimWithExit] = std::make_shared<WithExitEvaluator>();
   constructor[prim::kPrimJoinedStr] = std::make_shared<JoinedStrEvaluator>();
+  constructor[prim::kPrimCond] = std::make_shared<CondEvaluator>();
 }
 }  // namespace
 
