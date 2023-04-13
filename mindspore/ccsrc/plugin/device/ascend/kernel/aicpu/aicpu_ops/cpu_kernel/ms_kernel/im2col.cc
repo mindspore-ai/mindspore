@@ -16,7 +16,7 @@
 #include "im2col.h"
 
 #include <algorithm>
-
+#include <complex>
 #include "cpu_types.h"
 #include "kernel_log.h"
 #include "securec.h"
@@ -181,30 +181,6 @@ uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (data_type) {
-    case DT_UINT8:
-      ret = Im2colCompute<uint8_t>(ctx);
-      break;
-    case DT_INT8:
-      ret = Im2colCompute<int8_t>(ctx);
-      break;
-    case DT_UINT16:
-      ret = Im2colCompute<uint16_t>(ctx);
-      break;
-    case DT_INT16:
-      ret = Im2colCompute<int16_t>(ctx);
-      break;
-    case DT_UINT32:
-      ret = Im2colCompute<uint32_t>(ctx);
-      break;
-    case DT_INT32:
-      ret = Im2colCompute<int32_t>(ctx);
-      break;
-    case DT_UINT64:
-      ret = Im2colCompute<uint64_t>(ctx);
-      break;
-    case DT_INT64:
-      ret = Im2colCompute<int64_t>(ctx);
-      break;
     case DT_FLOAT16:
       ret = Im2colCompute<Eigen::half>(ctx);
       break;
@@ -213,6 +189,12 @@ uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
       break;
     case DT_DOUBLE:
       ret = Im2colCompute<double>(ctx);
+      break;
+    case DT_COMPLEX64:
+      ret = Im2colCompute<std::complex<float>>(ctx);
+      break;
+    case DT_COMPLEX128:
+      ret = Im2colCompute<std::complex<double>>(ctx);
       break;
     default:
       KERNEL_LOG_ERROR("Im2col kernel data type [%s] not support.", DTypeStr(data_type).c_str());
