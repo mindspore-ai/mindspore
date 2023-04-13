@@ -38,7 +38,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
         ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
         ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
-        ${SRC_DIR}/extendrt/lite_kernel_mod.cc
         ${SRC_DIR}/extendrt/utils/tensor_utils.cc
         )
 endif()
