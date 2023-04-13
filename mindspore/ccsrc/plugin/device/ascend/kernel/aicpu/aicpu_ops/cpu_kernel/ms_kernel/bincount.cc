@@ -93,9 +93,8 @@ uint32_t BincountCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_size = ctx.Input(kSecondInputIndex);
   Tensor *input_weights = ctx.Input(kThirdInputIndex);
 
-  if (input_weights->GetDataSize() == 0) {
-    input_weights = nullptr;
-  } else {
+  bool has_weight = (input_weights->GetDataSize() != 0);
+  if (has_weight) {
     auto input_arr_sizes = input_arr->GetTensorShape()->NumElements();
     auto input_weights_sizes = input_weights->GetTensorShape()->NumElements();
     KERNEL_CHECK_FALSE((input_arr_sizes == input_weights_sizes), KERNEL_STATUS_PARAM_INVALID,
@@ -156,6 +155,10 @@ uint32_t BincountCpuKernel::Compute(CpuKernelContext &ctx) {
                      DTypeStr(dt_weights).c_str(), DTypeStr(dt_output).c_str());
 
   SetMap();
+  if (!has_weight) {
+    input_weights = nullptr;
+  }
+
   calls_[dt_arr][dt_weights](input_arr, *num_bins, input_weights, output, ctx);
   calls_.clear();
 
