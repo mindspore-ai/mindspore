@@ -994,6 +994,27 @@ class LogUniformCandidateSampler(Primitive):
 
     Refer to :func:`mindspore.ops.log_uniform_candidate_sampler` for more details.
 
+    Args:
+        num_true (int, optional): The number of target classes per training example. Default: 1.
+        num_sampled (int, optional): The number of classes to randomly sample. Default: 5.
+        unique (bool, optional): Determines whether sample with rejection. If `unique` is True,
+          all sampled classes in a batch are unique. Default: True.
+        range_max (int, optional): The number of possible classes. When `unique` is True,
+          `range_max` must be greater than or equal to `num_sampled`. Default: 5.
+        seed (int, optional): Random seed, must be non-negative. Default: 0.
+
+    Inputs:
+        - **true_classes** (Tensor) - The target classes. With data type of int64 and
+          shape :math:`(batch\_size, num\_true)` .
+
+    Outputs:
+        Tuple of 3 Tensors.
+
+        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
+          and the same type as `true_classes`.
+        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
+        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 

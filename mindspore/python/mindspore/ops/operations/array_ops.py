@@ -181,6 +181,13 @@ class Expand(Primitive):
 
     Refer to :func:`mindspore.ops.expand` for more details.
 
+    Inputs:
+         - **x** (Tensor) - The input tensor.
+         - **shape** (Tensor) - The new shape of x.
+
+    Outputs:
+         - **y** (Tensor) - Tensor after expansion.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -207,6 +214,16 @@ class ExpandDims(PrimitiveWithCheck):
     Adds an additional dimension to `input_x` at the given axis.
 
     Refer to :func:`mindspore.ops.expand_dims` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **axis** (int) - Specifies the dimension index at which to expand
+          the shape of `input_x`. The value of axis must be in the range
+          `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
+        value of `axis` is 0. It has the same data type as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -978,13 +995,17 @@ class Gather(Primitive):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
 
-    The following figure shows the calculation process of Gather commonly:
-
-    .. image:: Gather.png
-
-    where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
-
     Refer to :func:`mindspore.ops.gather` for more details.
+
+    Inputs:
+        - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
+        - **axis** (int) - Specifies the dimension index to gather indices.
+
+    Outputs:
+        Tensor, the shape of tensor is
+        :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1306,6 +1327,51 @@ class MatrixDiagV3(Primitive):
 
     Refer to :func:`mindspore.ops.matrix_diag` for more details.
 
+    Args:
+        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
+            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
+            Default: "RIGHT_LEFT".
+
+            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
+              (padding the row on the left), while subdiagonals will be towards the left side
+              (padding the row on the right)
+            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
+              (padding the row on the right), while subdiagonals will be towards the right side
+              (padding the row on the left)
+            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+              the left side(padding the row on the right).
+            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
+              the right side(padding the row on the left).
+
+    Inputs:
+        - **x** (Tensor) - The diagonal Tensor.
+        - **k** (Union[int, Tensor], optional) - Diagonal offsets.
+          A Tensor of type int32. Positive value means superdiagonal,
+          0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
+          (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band.
+          k[0] must not be larger than k[1]. The value must be in the range of given or derivated `num_rows`
+          and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: 0.
+        - **num_rows** (Union[int, Tensor], optional) - The number of rows of the output Tensor.
+          A Tensor of type int32 with only one value. If `num_rows` is -1, indicating that the innermost
+          matrix of the output Tensor is a square
+          matrix, and the real number of rows will be derivated by other inputs. That is
+          num_rows = :math:`x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
+          :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
+        - **num_cols** (Union[int, Tensor], optional) - The number of columns of
+          the output Tensor. A Tensor of type int32 with only one value.
+          If `num_cols` is -1, indicating that the innermost matrix of the output
+          Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
+          That is num_cols = :math:`x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
+          greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
+        - **padding_value** (Union[int, float, Tensor], optional) - The number to fill the area outside the specified
+          diagonal band. A Tensor with only one value. Have the same dtype as x. Default: 0.
+
+    Outputs:
+        A Tensor. Has the same type as `x`.
+        Suppose `x` has r dimensions with shape :math:`(I, J, ..., M, N)` . The output Tensor has rank r + 1 with shape
+        :math:`(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
+        Otherwise, it has rank r with shape :math:`(I, J, ..., num_rows, num_cols)` .
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1343,6 +1409,29 @@ class MatrixDiagPartV3(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
+
+    Args:
+        align (string, optional): An optional string from: "RIGHT_LEFT"(default),
+            "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
+            It specifies how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
+            aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+
+    Inputs:
+        - **x** (Tensor) - Rank r, where r >= 2.
+        - **k** (Tensor) - A Tensor of type int32. Diagonal offset(s). Positive value means superdiagonal, 0 refers to
+          the main diagonal, and negative value means subdiagonals. k can be a single integer (for a single diagonal) or
+          a pair of integers specifying the low and high ends of a matrix band. k[0] must not be larger than k[1]. The
+          value of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
+        - **padding_value** (Tensor) - A Tensor. Have the same dtype as x. The number to fill the area outside the
+          specified diagonal band with. There must be only one value.
+
+    Outputs:
+        A Tensor. Has the same type as `x`.
+        Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
+        diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
+        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
+        Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3889,6 +3978,18 @@ class Mvlgamma(Primitive):
 
     Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
+    Args:
+        p(int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+    Inputs:
+        - **x** (Tensor) - The tensor to compute the multivariate log-gamma function,
+          which must be one of the following types: float32, float64.
+          The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+          And the value of any element in `x` must be greater than (p - 1) / 2.
+
+    Outputs:
+        Tensor, has the same shape and type as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4162,6 +4263,13 @@ class GatherNd(Primitive):
     Gathers slices from a tensor by indices.
 
     Refer to :func:`mindspore.ops.gather_nd` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor to gather values.
+        - **indices** (Tensor) - The index tensor, with int32 or int64 data type.
+
+    Outputs:
+        Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6297,6 +6405,15 @@ class GatherD(Primitive):
 
     Refer to :func:`mindspore.ops.gather_elements` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+        - **dim** (int) - The axis along which to index. It must be int32 or int64.
+        - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
+          int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
+
+    Outputs:
+        Tensor, has the same data type with `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -6500,6 +6617,14 @@ class MaskedFill(Primitive):
         it is recommended that 'value' should use a Tensor with the same dtype as `input_x`.
 
     Refer to :func:`mindspore.ops.masked_fill` for more details.
+
+    Inputs:
+        - **input** (Tensor) - The source tensor whose data type is one of float16, float32, int8, int32.
+        - **mask** (Tensor[bool]) - The boolean mask.
+        - **value** (Union[float, Tensor]) – The value to fill in with, which dtype is the same as `input`.
+
+    Outputs:
+        Tensor, has the same type and shape as `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7841,6 +7966,16 @@ class IndexFill(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor.
+        - **dim** (Union[int, Tensor]) - Dimension along which to fill the input tensor. Only supports
+          a 0-dimensional tensor or an int number.
+        - **index** (Tensor) - Indices of the input tensor to fill in.
+        - **value** (Union[bool, int, float, Tensor]) - Value to fill the input tensor.
+
+    Outputs:
+        Tensor, has the same type and shape as input tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
