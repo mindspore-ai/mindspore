@@ -69,7 +69,7 @@ FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &v
 }
 
 FuncGraphPtr KPrim::GetFprop(const PrimitivePtr &prim) const {
-  static const std::string ad_module = "mindspore.ops._grad.grad_implementations";
+  static const std::string ad_module = "mindspore.ops._grad_experimental.grad_implementations";
   std::string func_name = "_fprop_" + prim->name();
   py::function fn = python_adapter::GetPyFn(ad_module, func_name);
   auto func_graph = parse::ParsePythonCode(fn);

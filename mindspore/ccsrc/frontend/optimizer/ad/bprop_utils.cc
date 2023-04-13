@@ -45,7 +45,7 @@ constexpr char kBpropMindIRSuffix[] = "_bprop.mindir";
 std::string GetBpropDir() {
   static std::string bprop_dir;
   if (bprop_dir.empty()) {
-    py::module mod = py::module::import("mindspore.ops._grad");
+    py::module mod = py::module::import("mindspore.ops._grad_experimental");
     auto grad_file_path = mod.attr("__file__").cast<std::string>();
     bprop_dir = grad_file_path.substr(0, grad_file_path.find_last_of('/'));
   }

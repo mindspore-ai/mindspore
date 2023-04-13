@@ -17,7 +17,7 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _quant_ops as Q
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore import context
 
@@ -84,7 +84,8 @@ def get_bprop_batchnorm_fold(self):
 
     def bprop(x, mean, variance, global_step, out, dout):
         dx = op(dout[0], dout[1], x, out[0], out[1], global_step)
-        return dx, zeros_like(mean), zeros_like(variance), zeros_like(global_step)
+        res = (dx, zeros_like(mean), zeros_like(variance), zeros_like(global_step))
+        return res
 
     return bprop
 
@@ -118,8 +119,9 @@ def get_bprop_batchnorm_fold2(self):
     def bprop(x, beta, gamma, batch_std, batch_mean, running_std, running_mean, global_step, out, dout):
         d_batch_std, d_batch_mean, d_beta, d_gamma, d_x = op_f(dout, x, gamma, batch_std, batch_mean, running_std,
                                                                running_mean, global_step)
-        return d_x, d_beta, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std), zeros_like(running_mean), \
-            zeros_like(global_step)
+        res = (d_x, d_beta, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std), zeros_like(running_mean), \
+            zeros_like(global_step))
+        return res
 
     return bprop
 
@@ -131,7 +133,8 @@ def get_bprop_batchnormfold(self):
 
     def bprop(x, x_sum, x_square_sum, mean, variance, out, dout):
         dx = op(dout[1], dout[2], x, out[1], out[2])
-        return dx, zeros_like(x_sum), zeros_like(x_square_sum), zeros_like(mean), zeros_like(variance)
+        res = (dx, zeros_like(x_sum), zeros_like(x_square_sum), zeros_like(mean), zeros_like(variance))
+        return res
 
     return bprop
 
@@ -156,7 +159,8 @@ def get_bprop_batchnorm_fold2_(self):
         dout_reduce, dout_x_reduce = op_reduce(dout, x)
         d_batch_std, d_batch_mean, d_gamma, d_x = op_f(dout, dout_reduce, dout_x_reduce, gamma, batch_std,
                                                        batch_mean, running_std)
-        return d_x, dout_reduce, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std)
+        res = (d_x, dout_reduce, d_gamma, d_batch_std, d_batch_mean, zeros_like(running_std))
+        return res
 
     return bprop
 

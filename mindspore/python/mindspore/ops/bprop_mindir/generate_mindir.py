@@ -19,9 +19,9 @@ import shutil
 import argparse
 import logging
 
-import mindspore.ops._grad as g
+import mindspore.ops._grad_experimental as g
 from mindspore._c_expression import _export_bprop_mindir
-from mindspore.ops._grad.grad_base import bprop_getters, bprops
+from mindspore.ops._grad_experimental.grad_base import bprop_getters, bprops
 
 logging.getLogger().setLevel(logging.INFO)
 os.environ['MS_DEV_EXPORT_BPROP_MINDIR'] = '1'
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                         changed. Default: False.")
 
     args_opt = parser.parse_args()
-    # mindspore/ops/_grad/__init__.py
+    # mindspore/ops/_grad_experimental/__init__.py
     BPROP_PATH = g.__file__
     bprop_installed_dir = BPROP_PATH[: BPROP_PATH.rindex('/')]
     bprop_mindir_export_dir = os.path.join(bprop_installed_dir, "..", "bprop_mindir")
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     if mindspore_path is not None:
         mindspore_path = mindspore_path.rstrip('/')
         python_ops_dir = os.path.join(mindspore_path, "mindspore", "python", "mindspore", "ops")
-        bprop_src_dir = os.path.join(python_ops_dir, "_grad")
+        bprop_src_dir = os.path.join(python_ops_dir, "_grad_experimental")
         bprop_mindir_src_dir = os.path.join(python_ops_dir, "bprop_mindir")
 
     copy_flag = bprop_src_dir is not None and bprop_src_dir != bprop_installed_dir

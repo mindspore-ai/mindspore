@@ -17,7 +17,7 @@
 
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G

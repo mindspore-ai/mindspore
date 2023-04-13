@@ -22,7 +22,7 @@ import mindspore.ops as ops
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad.grad_base import taylor_fprop_getters
+from mindspore.ops._grad_experimental.grad_base import taylor_fprop_getters
 
 
 def _factorial(order):

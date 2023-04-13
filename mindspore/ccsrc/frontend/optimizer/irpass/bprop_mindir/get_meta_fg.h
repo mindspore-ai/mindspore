@@ -31,7 +31,7 @@ class GetMetaFg : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     static mindspore::HashMap<std::string, std::pair<std::string, std::string>> multitype_ops{
-      {"zeros_like_leaf", {"zeros_like", ""}},
+      {"zeros_like", {"zeros_like", ""}},
       {"getitem", {"getitem", "mindspore.ops.composite.multitype_ops.getitem_impl"}},
       {"negative", {"negative", "mindspore.ops.composite.multitype_ops.negative_impl"}},
       {"mul", {"mul", "mindspore.ops.composite.multitype_ops.mul_impl"}},
@@ -42,7 +42,6 @@ class GetMetaFg : public AnfVisitor {
       {"greater", {"greater", "mindspore.ops.composite.multitype_ops.greater_impl"}},
       {"add", {"add", "mindspore.ops.composite.multitype_ops.add_impl"}},
       {"sub", {"sub", "mindspore.ops.composite.multitype_ops.sub_impl"}},
-      {"dout_cast", {"dout_cast", "mindspore.ops._grad.grad_array_ops"}},
       {"equal", {"equal", "mindspore.ops.composite.multitype_ops.equal_impl"}},
       {"floordiv", {"floordiv", "mindspore.ops.composite.multitype_ops.floordiv_impl"}},
       {"div", {"div", "mindspore.ops.composite.multitype_ops.div_impl"}},

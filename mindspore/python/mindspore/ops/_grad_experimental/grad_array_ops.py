@@ -19,9 +19,9 @@ from __future__ import absolute_import
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
-from mindspore.ops._grad.grad_math_ops import binop_grad_common
-from mindspore.ops._grad.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones, create_tensor_by_element
-from mindspore.ops._grad.grad_base import convert_to_tensor
+from mindspore.ops._grad_experimental.grad_math_ops import binop_grad_common
+from mindspore.ops._grad_experimental.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones
+from mindspore.ops._grad_experimental.grad_base import convert_to_tensor, create_tensor_by_element
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
@@ -47,6 +47,19 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore import context
+from mindspore.ops.primitive import _primexpr
+from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.ops._utils.utils import generate_shape_index
+
+reduce_sum = P.ReduceSum()
+unsorted_segment_sum = P.UnsortedSegmentSum()
+transpose = P.Transpose()
+shape_op = P.Shape()
+dyn_shape_op = P.TensorShape()
+reshape = P.Reshape()
+size_op = P.Size()
+invert_permutation = P.InvertPermutation()
+logical_and = P.LogicalAnd()
 
 
 @constexpr
@@ -100,7 +113,6 @@ def get_bprop_masked_scatter(self):
     size = P.Size()
     zeros = P.Zeros()
     concat = P.Concat(axis=0)
-    reshape = P.Reshape()
     shape = P.Shape()
 
     def bprop(x, mask, updates, out, dout):
@@ -264,7 +276,6 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     scatter_nd = P.ScatterNd()
     equal = P.Equal()
     shape = P.Shape()
-    dyn_shape_op = P.TensorShape()
 
     x_indicators = F.cast(equal(x, out), mstype.int32)
     possibly_updated = gather_nd(out, indices)
@@ -371,14 +382,13 @@ def get_bprop_im2col(self):
     dilation = self.dilations
     stride = self.strides
     padding = (self.pads[0], self.pads[-1])
-    shape_op = P.TensorShape()
     col2im = Col2Im(kernel_size=kernel_size,
                     dilation=dilation,
                     stride=stride,
                     padding=padding)
 
     def bprop(x, out, dout):
-        x_shape = shape_op(x)[2:]
+        x_shape = dyn_shape_op(x)[2:]
         dx = col2im(dout, x_shape)
         return (dx,)
 
@@ -400,7 +410,6 @@ def get_bprop_extract_volume_patches(self):
     matmul = P.MatMul()
     _, _, ksize_d, ksize_h, ksize_w = self.kernel_size
     range_ = P.Range()
-    dyn_shape_op = P.TensorShape()
     ones_like = P.OnesLike()
 
     def _dyn_extract_volume_patches(x, out, dout):
@@ -505,16 +514,13 @@ def get_bprop_affinegrid(self):
     align_corners = self.align_corners
     input_grad = G.AffineGridGrad(align_corners)
     ones = P.Ones()
-    transpose = P.Transpose()
     concat = P.Concat(1)
     concat0 = P.Concat(0)
     tile = P.Tile()
     div = P.Div()
-    reshape = P.Reshape()
     linspace = P.LinSpace()
     batmatmul = P.BatchMatMul()
     expend_dims = P.ExpandDims()
-    dyn_shape = P.TensorShape()
     reducesum = P.ReduceSum(keep_dims=False)
 
     def get_linspace(num):
@@ -613,7 +619,7 @@ def get_bprop_affinegrid(self):
         return transpose(dtheta, perm2), tre
 
     def dyn_bprop(theta, output_size, out, dout):
-        len_output_size = reducesum(dyn_shape(output_size))
+        len_output_size = reducesum(dyn_shape_op(output_size))
         dtheta = dyn_ones(Tensor([1, 3, 2], mstype.int32), mstype.float32)
         ret = dyn_ones(Tensor([1, 6], mstype.int32), mstype.float32)
         if len_output_size == 5:
@@ -795,7 +801,6 @@ def get_bprop_segment_mean(self):
     """Generate bprop for SegmentMean"""
     rank = P.Rank()
     shape = P.Shape()
-    dyn_shape = P.TensorShape()
     fill = P.Fill()
     divide = P.Div()
     segment_sum = SegmentSum()
@@ -812,7 +817,7 @@ def get_bprop_segment_mean(self):
 
         ones_shape = shape(segment_ids)
         if F.is_sequence_value_unknown(ones_shape):
-            ones_shape = dyn_shape(segment_ids)
+            ones_shape = dyn_shape_op(segment_ids)
 
         ones = ()
         inputx_shape = shape(input_x)
@@ -828,5 +833,176 @@ def get_bprop_segment_mean(self):
 
         scaled_grad = divide(dout, segment_sum(ones, segment_ids))
         return cast(gather(scaled_grad, segment_ids, 0), input_x_type), zeros_like(segment_ids)
+
+    return bprop
+
+
+@bprop_getters.register(P.Ones)
+def get_bprop_ones(self):
+    """Generate bprop for Ones"""
+
+    def bprop(dims, dtype, out, dout):
+        return zeros_like(dims)
+
+    return bprop
+
+
+@bprop_getters.register(P.Zeros)
+def get_bprop_zeros(self):
+    """Generate bprop for Zeros"""
+
+    def bprop(dims, dtype, out, dout):
+        return zeros_like(dims)
+
+    return bprop
+
+
+@bprop_getters.register(P.EmbeddingLookup)
+def get_bprop_embedding_lookup(self):
+    """Generate bprop for EmbeddingLookup"""
+    sub_op = P.Sub()
+    reshape_op = P.Reshape()
+
+    def bprop_sparse(x, indices, offset, out, dout):
+        x_shp = shape_op(x)
+        if F.is_sequence_value_unknown(x_shp):
+            raise RuntimeError("Now, EmbeddingLookup op's grad don't support Dynamic Sense!")
+        new_indices = sub_op(indices, offset)
+        indices_size = size_op(new_indices)
+        if indices_size > 0:
+            # Reshape the 'new_indices'
+            new_indices_shape_changed = (indices_size,)
+            new_indices = reshape_op(new_indices, new_indices_shape_changed)
+        else:
+            new_indices_shape_changed = ()
+        x_shp_tail = x_shp[1:]
+        actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
+        # Reshape the 'actual_dout' on device
+        actual_dout = reshape_op(dout, actual_dout_shape_changed)
+        return RowTensorInner(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+
+    return bprop_sparse
+
+
+@_primexpr
+def _generate_inverse_index(x_shape, axis, batch_dims=0):
+    x_rank = len(x_shape)
+    index = tuple(range(x_rank))
+    if axis < 0:
+        axis += x_rank
+    perm = index[:batch_dims] + index[batch_dims + 1:1 + axis] + (index[batch_dims],) + index[1 + axis:]
+    return perm
+
+
+@bprop_getters.register(P.SparseGatherV2)
+def get_bprop_sparse_gather_v2(self):
+    """Generate bprop for SparseGatherV2"""
+
+    def bprop(x, indices, axis, out, dout):
+        x_shp = shape_op(x)
+        if axis == 0:
+            indices_size = (size_op(indices),)
+            if len(x_shp) <= 1:
+                x_tail_shp = ()
+            else:
+                x_tail_shp = x_shp[1:]
+            values_shape = indices_size + x_tail_shp
+            values = reshape(dout, values_shape)
+            indices_new = reshape(indices, indices_size)
+            return RowTensorInner(indices_new, values, x_shp), zeros_like(indices), zeros_like(axis)
+        if F.rank(dout) == 0:
+            dout = P.ExpandDims()(dout, -1)
+        if F.rank(indices) == 0:
+            indices = P.ExpandDims()(indices, -1)
+        out_shp = shape_op(dout)
+        ind_shp = shape_op(indices)
+        # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
+        perm_1 = generate_shape_index(out_shp, ind_shp, axis)
+        values_transpose = transpose(dout, perm_1)
+        params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
+        # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
+        perm_2 = _generate_inverse_index(x_shp, axis)
+        params_grad = transpose(params_grad, perm_2)
+        return params_grad, zeros_like(indices), zeros_like(axis)
+
+    return bprop
+
+
+@bprop_getters.register(P.Unstack)
+def get_bprop_unstack(self):
+    """Generate bprop for Unstack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        unstack_grad = P.Stack(axis)
+        out = unstack_grad(dout)
+        return (out,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Eye)
+def get_bprop_eye(self):
+    """Generate bprop for Eye"""
+
+    def bprop(n, m, t, out, dout):
+        return zeros_like(n), zeros_like(m), zeros_like(t)
+
+    return bprop
+
+
+@bprop_getters.register(P.ScatterNdUpdate)
+def get_bprop_scatter_nd_update(self):
+    """Generate bprop for ScatterNdUpdate"""
+    op = P.GatherNd()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), op(dout, indices)
+
+    return bprop
+
+
+@bprop_getters.register(P.ScatterNonAliasingAdd)
+def get_bprop_scatter_non_aliasing_add_update(self):
+    """Generate bprop for ScatterNonAliasingAdd"""
+    op = P.GatherNd()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), op(dout, indices)
+
+    return bprop
+
+
+@bprop_getters.register(P.ScatterUpdate)
+def get_bprop_scatter_update(self):
+    """Generate bprop for ScatterUpdate"""
+    gather = P.Gather()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), gather(dout, indices, 0)
+
+    return bprop
+
+
+@bprop_getters.register(P.TransShape)
+def get_bprop_trans_shape(self):
+    """Generate bprop for TransShape"""
+    op = P.TransShape()
+
+    def bprop(x, shape, out, dout):
+        dx = op(dout, shape_op(x))
+        return (dx, zeros_like(shape))
+
+    return bprop
+
+
+@bprop_getters.register(P.Unique)
+def get_bprop_unique(self):
+    """Generate bprop for Unique"""
+    op = G.UniqueGrad()
+
+    def bprop(x, out, dout):
+        dx = op(dout, out)
+        return (dx,)
 
     return bprop

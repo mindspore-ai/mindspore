@@ -16,7 +16,7 @@
 """Generate bprop for quantization aware ops"""
 
 from mindspore.ops.operations import _scalar_ops
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 

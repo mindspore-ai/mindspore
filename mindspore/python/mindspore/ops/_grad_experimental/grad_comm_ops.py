@@ -31,7 +31,7 @@ from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _H
                                                ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, _AllSwap,
                                                _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator,
                                                _MicroStepAllGather)
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -317,7 +317,6 @@ def get_bprop_micro_step_all_gather(self):
     out_tensor = Tensor(1.0, mstype.float16)
     with_mirror_operator = self.get_attr_dict()["with_mirror_operator"]
 
-    # z: accu_grad
     def bprop(x, z, out, dout):
         if with_mirror_operator:
             if not do_mirror:

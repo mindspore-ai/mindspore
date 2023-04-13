@@ -888,7 +888,7 @@ def test_generate_inverse_index():
     Description: Verify the result of ms_len_with_iterable_check
     Expectation: success
     """
-    from mindspore.ops._grad.grad_array_ops import _generate_inverse_index
+    from mindspore.ops._grad_experimental.grad_array_ops import _generate_inverse_index
 
     class Net(nn.Cell):
         def __init__(self):

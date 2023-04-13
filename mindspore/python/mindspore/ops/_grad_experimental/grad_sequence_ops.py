@@ -17,7 +17,7 @@
 
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.primitive import Primitive
 
 
@@ -63,7 +63,8 @@ def get_bprop_slice(self):
 
     def bprop(x, start, stop, step, out, dout):
         dx = seq.SequenceSliceGrad()(dout, x, start, stop, step)
-        return (dx, zeros_like(start), zeros_like(stop), zeros_like(step))
+        res = (dx, zeros_like(start), zeros_like(stop), zeros_like(step))
+        return res
 
     return bprop
 
@@ -73,7 +74,8 @@ def get_bprop_index(self):
     """Generate bprop for SequenceIndex"""
 
     def bprop(x, y, start, end, out, dout):
-        return (zeros_like(x), zeros_like(y), zeros_like(start), zeros_like(end))
+        res = (zeros_like(x), zeros_like(y), zeros_like(start), zeros_like(end))
+        return res
 
     return bprop
 
