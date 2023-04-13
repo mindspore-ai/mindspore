@@ -72,7 +72,12 @@ class Converter:
 
     1. Convert the third-party model into MindSpore model or MindSpore Lite model.
 
-    2. Convert MindSpore model into MindSpore Lite model.
+    2. Convert MindSpore model into MindSpore model or MindSpore Lite model.
+
+    Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite model is supported,
+    but it will be deprecated in the future. If you want to convert to MindSpore Lite model, please use
+    `converter_tool <https://www.mindspore.cn/lite/docs/en/master/use/cloud_infer/converter_tool.html>`_  instead of
+    The Python interface. The Model api and ModelParallelRunner api only support MindSpore model.
 
     Note:
         Please construct the `Converter` class first, and then generate the model by executing the Converter.convert()
@@ -96,7 +101,7 @@ class Converter:
         >>> converter.input_format = mslite.Format.NHWC
         >>> converter.input_data_type = mslite.DataType.FLOAT32
         >>> converter.output_data_type = mslite.DataType.FLOAT32
-        >>> converter.save_type = mslite.ModelType.MINDIR_LITE
+        >>> converter.save_type = mslite.ModelType.MINDIR
         >>> converter.decrypt_key = "30313233343637383939414243444546"
         >>> converter.decrypt_mode = "AES-GCM"
         >>> converter.enable_encryption = True
@@ -116,7 +121,7 @@ class Converter:
         input_format: Format.NHWC,
         input_data_type: DataType.FLOAT32,
         output_data_type: DataType.FLOAT32,
-        save_type: ModelType.MINDIR_LITE,
+        save_type: ModelType.MINDIR,
         decrypt_key: 30313233343637383939414243444546,
         decrypt_mode: AES-GCM,
         enable_encryption: True,
@@ -593,7 +598,8 @@ class Converter:
 
         Returns:
             ModelType, the model type needs to be export. Options are ModelType.MINDIR |  ModelType.MINDIR_LITE.
-            For details, see
+            Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite model is supported,
+            but it will be deprecated in the future. For details, see
             `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         """
         return model_type_cxx_py_map.get(self._converter.get_save_type())
@@ -605,7 +611,8 @@ class Converter:
 
         Args:
             save_type (ModelType): Set the model type needs to be export. Options are ModelType.MINDIR |
-                ModelType.MINDIR_LITE. For details, see
+                ModelType.MINDIR_LITE. Convert to MindSpore model is recommended. Currently, Convert to MindSpore Lite
+                model is supported, but it will be deprecated in the future. For details, see
                 `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
 
         Raises:
@@ -684,7 +691,7 @@ class Converter:
 
     def convert(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
         """
-        Perform conversion, and convert the third-party model to the MindSpore model.
+        Perform conversion, and convert the third-party model to the MindSpore model or MindSpore Lite model.
 
         Args:
             fmk_type (FmkType): Input model framework type. Options are FmkType.TF | FmkType.CAFFE |
@@ -696,8 +703,8 @@ class Converter:
             output_file (str): Set the path of the output model. The suffix .ms or .mindir can be automatically
                 generated. If set `save_type` to ModelType.MINDIR, then MindSpore's model will be generated, which uses
                 .mindir as suffix. If set `save_type` to ModelType.MINDIR_LITE, then MindSpore Lite's model will be
-                generated, which uses .ms as suffix. For example, the input model is "/home/user/model.prototxt", it
-                will generate the model named model.prototxt.ms in /home/user/.
+                generated, which uses .ms as suffix. For example, the input model is "/home/user/model.prototxt", set
+                `save_type` to ModelType.MINDIR, it will generate the model named model.prototxt.mindir in /home/user/.
             weight_file (str, optional): Set the path of input model weight file. Required only when fmk_type is
                 FmkType.CAFFE. The Caffe model is generally divided into two files: 'model.prototxt' is model structure,
                 corresponding to `model_file` parameter; 'model.Caffemodel' is model weight value file, corresponding to
@@ -726,10 +733,11 @@ class Converter:
         Examples:
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter()
+            >>> converter.save_type = mslite.ModelType.MINDIR
             >>> converter.convert(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                     "mobilenet_v2_1.0_224.tflite")
             CONVERT RESULT SUCCESS:0
-            >>> # mobilenet_v2_1.0_224.tflite.ms model will be generated.
+            >>> # mobilenet_v2_1.0_224.tflite.mindir model will be generated.
         """
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)

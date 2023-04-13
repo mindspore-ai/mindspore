@@ -38,10 +38,10 @@ class Context:
           are the units that actually perform parallel inferring. Setting `workers_num` to 0 represents
           `workers_num` will be automatically adjusted based on computer performance and core numbers.
         - **config_info** (dict{str, dict{str, str}}) - Nested map for passing model weight paths.
-          For example, {"weight": {"weight_path": "/home/user/weight.cfg"}}.
-          key currently supports ["weight"];
-          value is in dict format, key of it currently supports ["weight_path"],
-          value of it is the path of weight, For example, "/home/user/weight.cfg".
+          For example, {"model_file": {"mindir_path": "/home/user/model.mindir"}}.
+          key currently supports ["model_file"];
+          value is in dict format, key of it currently supports ["mindir_path"],
+          value of it is the path of weight, For example, "/home/user/model.mindir".
         - **config_path** (str) - Set the config file path. The config file is used to transfer user-defined
           options during building `ModelParallelRunner` . In the following scenarios, users may need to set the
           parameter. For example, "/home/user/config.txt".
@@ -79,11 +79,11 @@ class Context:
         >>> context = mslite.Context()
         >>> context.target = ["cpu"]
         >>> context.parallel.workers_num = 4
-        >>> context.parallel.config_info = {"weight": {"weight_path": "/home/user/weight.cfg"}}
+        >>> context.parallel.config_info = {"model_file": {"mindir_path": "/home/user/model.mindir"}}
         >>> context.parallel.config_path = "/home/user/config.txt"
         >>> print(context.parallel)
         workers num: 4,
-        config info: weight: weight_path /home/user/weight.cfg,
+        config info: model_file: mindir_path /home/user/model.mindir,
         config path: /home/user/config.txt.
     """
 
@@ -126,7 +126,7 @@ class Context:
               "enforce_fp32".
 
               - "preferred_fp16": prefer to use fp16.
-              - "enforce_fp32": force to use fp32.
+              - "enforce_fp32": force use fp32.
 
             - **thread_num** (int) - Set the number of threads at runtime. `thread_num` cannot be less than
               `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
@@ -147,7 +147,7 @@ class Context:
             - **precision_mode** (str) - Set the mix precision mode. Options are "preferred_fp16" | "enforce_fp32".
 
               - "preferred_fp16": prefer to use fp16.
-              - "enforce_fp32": force to use fp32.
+              - "enforce_fp32": force use fp32.
 
             - **rank_id** (int) - the ID of the current device in the cluster, which starts from 0. Get only,
               not settable.
@@ -157,10 +157,10 @@ class Context:
             - **precision_mode** (str) - Set the mix precision mode. Options are "enforce_fp32" | "preferred_fp32" |
               "enforce_fp16" | "enforce_origin" | "preferred_optimal".
 
-              - "enforce_fp32": ACL option is force_fp32, force to use fp32.
-              - "preferred_fp32": ACL option is force_fp32, prefer to use fp32.
-              - "enforce_fp16": ACL option is force_fp16, force to use fp16.
-              - "enforce_origin": ACL option is must_keep_origin_dtype, force to use original type.
+              - "enforce_fp32": ACL option is force_fp32, force use fp32.
+              - "preferred_fp32": ACL option is allow_fp32_to_fp16, prefer to use fp32.
+              - "enforce_fp16": ACL option is force_fp16, force use fp16.
+              - "enforce_origin": ACL option is must_keep_origin_dtype, force use original type.
               - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
         Returns:
@@ -179,6 +179,13 @@ class Context:
             >>> context.cpu.inter_op_parallel_num = 2
             >>> context.cpu.thread_affinity_mode = 1
             >>> context.cpu.thread_affinity_core_list = [0,1]
+            >>> print(context.cpu)
+            device_type: DeviceType.kCPU,
+            precision_mode: preferred_fp16,
+            thread_num: 2,
+            inter_op_parallel_num: 2,
+            thread_affinity_mode: 1,
+            thread_affinity_core_list: [0, 1].
             >>> # set context with gpu target.
             >>> context.target = ["gpu"]
             >>> print(context.target)
@@ -190,7 +197,7 @@ class Context:
             >>> print(context.gpu.group_size)
             1
             >>> print(context.gpu)
-            device_type: DeviceType:kGPU,
+            device_type: DeviceType.kGPU,
             precision_mode: preferred_fp16,
             device_id: 2,
             rank_id: 0,
@@ -202,7 +209,7 @@ class Context:
             >>> context.ascend.precision_mode = "enforce_fp32"
             >>> context.ascend.device_id = 2
             >>> print(context.ascend)
-            device_type: DeviceType:kAscend,
+            device_type: DeviceType.kAscend,
             precision_mode: enforce_fp32,
             device_id: 2.
         """
@@ -335,12 +342,12 @@ class _CPU(_Target):
         self._device_info = _c_lite_wrapper.CPUDeviceInfoBind()
 
     def __str__(self):
-        res = f"cpu_device_type: {self._device_info.get_device_type()},\n" \
-              f"cpu_precision_mode: {self.precision_mode},\n" \
-              f"cpu_thread_num: {self.thread_num},\n" \
-              f"cpu_inter_op_parallel_num: {self.inter_op_parallel_num},\n" \
-              f"cpu_thread_affinity_mode: {self.thread_affinity_mode},\n" \
-              f"cpu_thread_affinity_core_list: {self.thread_affinity_core_list}."
+        res = f"device_type: {self._device_info.get_device_type()},\n" \
+              f"precision_mode: {self.precision_mode},\n" \
+              f"thread_num: {self.thread_num},\n" \
+              f"inter_op_parallel_num: {self.inter_op_parallel_num},\n" \
+              f"thread_affinity_mode: {self.thread_affinity_mode},\n" \
+              f"thread_affinity_core_list: {self.thread_affinity_core_list}."
         return res
 
     @property
@@ -358,8 +365,8 @@ class _CPU(_Target):
         Args:
             cpu_precision_mode (str): Set mixed precision mode. CPU options are "preferred_fp16" | "enforce_fp32".
 
-                - "preferred_fp16": Force the fp16 precision mode.
-                - "enforce_fp32": keep the origin precision data type.
+                - "preferred_fp16": prefer to use fp16.
+                - "enforce_fp32": force use fp32.
 
         Raises:
             TypeError: `cpu_precision_mode` is not a str.
@@ -502,8 +509,8 @@ class _GPU(_Target):
         Args:
             gpu_precision_mode (str): Set mixed precision mode. GPU options are "preferred_fp16" | "enforce_fp32".
 
-                - "preferred_fp16": Force the fp16 precision mode.
-                - "enforce_fp32": keep the origin precision data type.
+                - "preferred_fp16": prefer to use fp16.
+                - "enforce_fp32": force use fp32.
 
         Raises:
             TypeError: `gpu_precision_mode` is not a str.
@@ -591,10 +598,10 @@ class _Ascend(_Target):
             ascend_precision_mode (str): Set mixed precision mode. Ascend options are "enforce_fp32" |
                 "preferred_fp32" | "enforce_fp16" | "enforce_origin" | "preferred_optimal".
 
-              - "enforce_fp32": ACL option is force_fp32, force to use fp32.
-              - "preferred_fp32": ACL option is force_fp32, prefer to use fp32.
-              - "enforce_fp16": ACL option is force_fp16, force to use fp16.
-              - "enforce_origin": ACL option is must_keep_origin_dtype, force to use original type.
+              - "enforce_fp32": ACL option is force_fp32, force use fp32.
+              - "preferred_fp32": ACL option is allow_fp32_to_fp16, prefer to use fp32.
+              - "enforce_fp16": ACL option is force_fp16, force use fp16.
+              - "enforce_origin": ACL option is must_keep_origin_dtype, force use original type.
               - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
         Raises:
@@ -715,10 +722,10 @@ class _Parallel:
 
         Args:
             config_info (dict{str, dict{str, str}}): Nested map for passing model weight paths.
-                For example, {"weight": {"weight_path": "/home/user/weight.cfg"}}.
-                key currently supports ["weight"];
-                value is in dict format, key of it currently supports ["weight_path"],
-                value of it is the path of weight, For example, "/home/user/weight.cfg".
+                For example, {"model_file": {"mindir_path": "/home/user/model.mindir"}}.
+                key currently supports ["model_file"];
+                value is in dict format, key of it currently supports ["mindir_path"],
+                value of it is the path of weight, For example, "/home/user/model.mindir".
 
         Raises:
             TypeError: `config_info` is not a dict.
