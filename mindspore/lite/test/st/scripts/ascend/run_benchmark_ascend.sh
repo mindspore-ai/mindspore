@@ -63,9 +63,12 @@ function Run_Benchmark() {
         # model_info detail
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+
+        extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+
         input_shapes=""
         # Without a configuration file, there is no need to set the inputshape
-        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" || ${extra_info} =~ "parallel_predict" ]]; then
           input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
         fi
         mode=`echo ${model_info} | awk -F ';' '{print $3}'`
@@ -117,7 +120,10 @@ function Run_Benchmark() {
           fi
           output_file=${data_path}'output/'${model_name}'.out'
         fi
-
+        use_parallel_predict="false"
+        if [[ ${extra_info} =~ "parallel_predict" ]]; then
+          use_parallel_predict="true"
+        fi
         # set accuracy limitation
         acc_limit="0.5"
         if [[ ${spec_acc_limit} != "" ]]; then
@@ -132,13 +138,21 @@ function Run_Benchmark() {
         fi
 
         # different tensorrt run mode use different cuda command
-        echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
-        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
+        echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
+        ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
 
         if [ $? = 0 ]; then
+          if [[ ${extra_info} =~ "parallel_predict" ]]; then
+            run_result=${backend}': '${model_name}' parallel_pass'; echo ${run_result} >> ${run_benchmark_result_file}
+          else
             run_result=${backend}': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+          fi
         else
+          if [[ ${extra_info} =~ "parallel_predict" ]]; then
+            run_result=${backend}': '${model_name}' parallel_failed'; echo ${run_result} >> ${run_benchmark_result_file}
+          else
             run_result=${backend}': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+          fi
             if [[ ${ascend_fail_not_return} != "ON" ]]; then
                 return 1
             fi
