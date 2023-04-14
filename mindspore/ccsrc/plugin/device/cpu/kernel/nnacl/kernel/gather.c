@@ -20,17 +20,19 @@
 
 #define kGatherMinCostPerThread 16384
 
-void GatherHandleCopy(GatherStruct *gather, int8_t *int8_in, int8_t *int8_out, int begin, int end) {
+void GatherHandleCopy(GatherStruct *gather, int8_t **int8_in, int8_t **int8_out, int begin, int end,
+                      int byte_in_stride) {
   for (; begin < end; ++begin) {
     int index = gather->indices_data_[begin];
     index = (index < 0 ? index + gather->limit_ : index);
     if (index < 0 || index >= gather->limit_) {
-      memset(int8_out, 0, gather->byte_inner_size_);
+      memset(*int8_out, 0, gather->byte_inner_size_);
     } else {
-      memcpy(int8_out, int8_in + index * gather->byte_inner_size_, gather->byte_inner_size_);
+      memcpy(*int8_out, *int8_in + index * gather->byte_inner_size_, gather->byte_inner_size_);
     }
-    int8_out += gather->byte_inner_size_;
+    *int8_out += gather->byte_inner_size_;
   }
+  *int8_in += byte_in_stride;
 }
 
 int GatherRun(void *cdata, int task_id, float l, float r) {
@@ -51,19 +53,15 @@ int GatherRun(void *cdata, int task_id, float l, float r) {
   int8_in += begin_batch * byte_in_stride;
   int8_out += begin_batch * gather->indices_size_ * gather->byte_inner_size_ + begin_index * gather->byte_inner_size_;
   if (begin_batch == end_batch) {
-    GatherHandleCopy(gather, int8_in, int8_out, begin_index, end_index);
-    int8_in += byte_in_stride;
+    GatherHandleCopy(gather, &int8_in, &int8_out, begin_index, end_index, byte_in_stride);
     return NNACL_OK;
   }
-  GatherHandleCopy(gather, int8_in, int8_out, begin_index, gather->indices_size_);
-  int8_in += byte_in_stride;
+  GatherHandleCopy(gather, &int8_in, &int8_out, begin_index, gather->indices_size_, byte_in_stride);
   ++begin_batch;
   for (; begin_batch < end_batch; ++begin_batch) {
-    GatherHandleCopy(gather, int8_in, int8_out, 0, gather->indices_size_);
-    int8_in += byte_in_stride;
+    GatherHandleCopy(gather, &int8_in, &int8_out, 0, gather->indices_size_, byte_in_stride);
   }
-  GatherHandleCopy(gather, int8_in, int8_out, 0, end_index);
-  int8_in += byte_in_stride;
+  GatherHandleCopy(gather, &int8_in, &int8_out, 0, end_index, byte_in_stride);
   return NNACL_OK;
 }
 
