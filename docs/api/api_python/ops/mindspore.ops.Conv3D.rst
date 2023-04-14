@@ -20,7 +20,7 @@ mindspore.ops.Conv3D
     详细内容请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
 
     .. note::
-        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `C_{in}` = `C_{out}` = `group` 的约束条件。
+        在Ascend平台上，目前只支持 :math:`group=1` 。
 
     参数：
         - **out_channel** (int) - 输出的通道数 :math:`C_{out}` 。

@@ -21,7 +21,7 @@ mindspore.ops.conv3d
 
     .. note::
 
-        1. 在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `groups>1` 的场景下，必须要满足 :math:`C_{in} = C_{out} = groups` 的约束条件。
+        1. 在Ascend平台上，目前只支持 :math:`groups=1` 。
         2. 在Ascend平台上，目前只支持 :math:`dialtion=1` 。
 
     参数：
