@@ -130,11 +130,3 @@ mindspore
     :toctree: mindspore
 
     mindspore.set_dump
-
-内存回收
-----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.ms_memory_recycle
