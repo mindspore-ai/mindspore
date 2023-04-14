@@ -34,14 +34,14 @@ static int groupnorm_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  MS_CHECK_FALSE(self->in_size_ < kInputSize2, NNACL_TENSOR_SIZE_INVALID);
-  MS_CHECK_FALSE(self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
+  NNACL_CHECK_FALSE(self->in_size_ < kInputSize2, NNACL_TENSOR_SIZE_INVALID);
+  NNACL_CHECK_FALSE(self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
 
   groupnorm_release(self);
 
   TensorC *in0 = self->in_[0];
-  MS_CHECK_FALSE(in0->shape_size_ < C1NUM, NNACL_GROUP_NORM_SHAPE_SIZE_INVALID);
-  MS_CHECK_FALSE(in0->format_ != NCHW, NNACL_GROUP_NORM_FORMAT_INVALID);
+  NNACL_CHECK_FALSE(in0->shape_size_ < C1NUM, NNACL_GROUP_NORM_SHAPE_SIZE_INVALID);
+  NNACL_CHECK_FALSE(in0->format_ != NCHW, NNACL_GROUP_NORM_FORMAT_INVALID);
 
   param->unit_ = GetHeight(in0) * GetWidth(in0);
   param->batch_ = GetBatch(in0);
@@ -54,9 +54,9 @@ static int groupnorm_prepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  MS_CHECK_FALSE(param->num_groups_ < 0, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
-  MS_CHECK_FALSE(param->channel_ % param->num_groups_, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
-  MS_CHECK_FALSE(param->num_groups_ == 0, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
+  NNACL_CHECK_FALSE(param->num_groups_ < 0, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
+  NNACL_CHECK_FALSE(param->channel_ % param->num_groups_, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
+  NNACL_CHECK_FALSE(param->num_groups_ == 0, NNACL_GROUP_NORM_NUM_GROUPS_INVALID);
 
   size_t mean_var_elem_num = param->num_groups_;
   param->mean_ = malloc(mean_var_elem_num * sizeof(float));

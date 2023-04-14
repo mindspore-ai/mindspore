@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_
+#ifndef NNACL_KERNEL_MATMUL_F32_ARM32_H_
+#define NNACL_KERNEL_MATMUL_F32_ARM32_H_
 
 #ifdef ENABLE_ARM32
 #include "nnacl/op_base.h"
@@ -25,4 +25,4 @@
 KernelBase *CreateMatmulFp32Arm32();
 
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_
+#endif  // NNACL_KERNEL_MATMUL_F32_ARM32_H_

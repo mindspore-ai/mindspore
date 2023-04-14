@@ -29,7 +29,7 @@ int SplitReduceConcatFusionInferShape(const TensorC *const *inputs, size_t input
     return NNACL_INFER_INVALID;
   }
 
-  MS_CHECK_TRUE_RET(inputs_size == outputs_size, NNACL_INPUT_TENSOR_ERROR);
+  NNACL_CHECK_TRUE_RET(inputs_size == outputs_size, NNACL_INPUT_TENSOR_ERROR);
   const TensorC *in_tensor = inputs[0];
   TensorC *out_tensor = outputs[0];
   out_tensor->format_ = in_tensor->format_;

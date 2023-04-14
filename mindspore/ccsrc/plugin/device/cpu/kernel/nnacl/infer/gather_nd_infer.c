@@ -38,7 +38,7 @@ int GatherNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   int in_rank = (int)(input->shape_size_);
   int indices_rank = (int)(indices->shape_size_);
   for (int i = 0; i < indices_rank; i++) {
-    MS_CHECK_FALSE(indices->shape_[i] == 0, NNACL_ERR);
+    NNACL_CHECK_FALSE(indices->shape_[i] == 0, NNACL_ERR);
   }
   if (indices->shape_[indices_rank - 1] > in_rank) {
     return NNACL_OK;

@@ -34,17 +34,17 @@ int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *para
     return NNACL_ERR;
   }
   int bidirection = bidirectional ? C2NUM : C1NUM;
-  MS_CHECK_TRUE_RET(weight_i->shape_[kNHWC_N] == bidirection && weight_i->shape_[kNHWC_H] == hidden_size * C4NUM &&
-                      weight_i->shape_[kNHWC_W] == input_size,
-                    NNACL_ERR);
-  MS_CHECK_TRUE_RET(weight_g->shape_[kNHWC_N] == bidirection && weight_g->shape_[kNHWC_H] == hidden_size * C4NUM &&
-                      weight_g->shape_[kNHWC_W] == hidden_size,
-                    NNACL_ERR);
-  MS_CHECK_TRUE_RET(bias->shape_[kNHWC_N] == bidirection && bias->shape_[kNHWC_H] == hidden_size * C8NUM, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(weight_i->shape_[kNHWC_N] == bidirection && weight_i->shape_[kNHWC_H] == hidden_size * C4NUM &&
+                         weight_i->shape_[kNHWC_W] == input_size,
+                       NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(weight_g->shape_[kNHWC_N] == bidirection && weight_g->shape_[kNHWC_H] == hidden_size * C4NUM &&
+                         weight_g->shape_[kNHWC_W] == hidden_size,
+                       NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(bias->shape_[kNHWC_N] == bidirection && bias->shape_[kNHWC_H] == hidden_size * C8NUM, NNACL_ERR);
   if (!bidirectional && cell->shape_size_ == DIMENSION_2D) {
-    MS_CHECK_TRUE_RET(cell->shape_[kNHWC_N] == batch && cell->shape_[kNHWC_H] == hidden_size, NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(cell->shape_[kNHWC_N] == batch && cell->shape_[kNHWC_H] == hidden_size, NNACL_ERR);
   } else {
-    MS_CHECK_TRUE_RET(
+    NNACL_CHECK_TRUE_RET(
       cell->shape_[kNHWC_N] == bidirection && cell->shape_[kNHWC_H] == batch && cell->shape_[kNHWC_W] == hidden_size,
       NNACL_ERR);
   }

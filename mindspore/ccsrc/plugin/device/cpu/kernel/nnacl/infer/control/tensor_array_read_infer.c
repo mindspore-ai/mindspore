@@ -25,8 +25,8 @@ int TensorArrayReadInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  MS_CHECK_TRUE_RET(inputs_size >= 1, NNACL_ERR);
-  MS_CHECK_TRUE_RET(outputs_size >= 1, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(inputs_size >= 1, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(outputs_size >= 1, NNACL_ERR);
   TensorC *handle = (TensorC *)inputs[0];
   TensorC *output = outputs[0];
 

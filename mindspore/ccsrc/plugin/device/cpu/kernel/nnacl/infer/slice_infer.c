@@ -96,10 +96,10 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   int size[MAX_SHAPE_SIZE];
   for (int32_t i = 0; i < param->param_length_; ++i) {
     if (param->axis_[i] < 0) {
-      MS_CHECK_INT_ADD_NOT_OVERFLOW(param->axis_[i], (int)input->shape_size_, NNACL_PARAM_INVALID);
+      NNACL_CHECK_INT_ADD_NOT_OVERFLOW(param->axis_[i], (int)input->shape_size_, NNACL_PARAM_INVALID);
       param->axis_[i] += (int)input->shape_size_;
     }
-    MS_CHECK_TRUE_RET(param->axis_[i] >= 0 && param->axis_[i] < param->param_length_, NNACL_PARAM_INVALID);
+    NNACL_CHECK_TRUE_RET(param->axis_[i] >= 0 && param->axis_[i] < param->param_length_, NNACL_PARAM_INVALID);
     begin[param->axis_[i]] = param->begin_[i];
     size[param->axis_[i]] = param->size_[i];
   }

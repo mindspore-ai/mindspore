@@ -207,13 +207,6 @@
   } while (0)
 
 #if ENABLE_HIGH_PERFORMANCE
-#define MS_CHECK_TRUE_RET(value, errcode)
-#define MS_CHECK_TRUE_RET_VOID(value)
-#define MS_CHECK_FALSE(value, errcode)
-
-#define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode)
-#define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode)
-
 #define NNACL_CHECK_TRUE_RET(value, errcode)
 #define NNACL_CHECK_TRUE_RET_VOID(value)
 #define NNACL_CHECK_FALSE(value, errcode)
@@ -226,34 +219,6 @@
 #define NNACL_CHECK_NULL_RETURN_VOID(ptr)
 #define NNACL_CHECK_NULL_RETURN_NULL(ptr)
 #else
-// Check whether value is true, if not return 'errcode'
-#define MS_CHECK_TRUE_RET(value, errcode) \
-  do {                                    \
-    if (!(value)) {                       \
-      return errcode;                     \
-    }                                     \
-  } while (0)
-
-#define MS_CHECK_TRUE_RET_VOID(value) \
-  do {                                \
-    if (!(value)) {                   \
-      return;                         \
-    }                                 \
-  } while (0)
-
-// Check whether value is false, if not return 'errcode'
-#define MS_CHECK_FALSE(value, errcode) \
-  do {                                 \
-    if ((value)) {                     \
-      return errcode;                  \
-    }                                  \
-  } while (0)
-
-#define MS_CHECK_INT_MUL_NOT_OVERFLOW(value1, value2, errcode) \
-  MS_CHECK_TRUE_RET(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
-#define MS_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
-  MS_CHECK_TRUE_RET(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
-
 #define NNACL_CHECK_TRUE_RET(value, errcode) \
   do {                                       \
     if (!(value)) {                          \

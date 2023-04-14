@@ -72,7 +72,7 @@ int CheckConvAttr(const int input_c, const TensorC *weight_tensor, const ConvPar
   // common conv: input_c == weight_tensor->shape_[3]
   // conv depthwise: input_c == 1
   // group conv: input_c / group == weight_tensor->shape_[3]
-  MS_CHECK_FALSE(param->group_ == 0, NNACL_PARAM_INVALID);
+  NNACL_CHECK_FALSE(param->group_ == 0, NNACL_PARAM_INVALID);
   if (input_c != weight_tensor->shape_[3] && input_c != 1 && (input_c / param->group_) != weight_tensor->shape_[3]) {
     return NNACL_PARAM_INVALID;
   }
@@ -80,7 +80,7 @@ int CheckConvAttr(const int input_c, const TensorC *weight_tensor, const ConvPar
   // common conv: group == 1
   // conv depthwise: group == input_c == output_c
   // group conv: group == input_c / weight_tensor->shape_[3]
-  MS_CHECK_FALSE(weight_tensor->shape_[3] == 0, NNACL_PARAM_INVALID);
+  NNACL_CHECK_FALSE(weight_tensor->shape_[3] == 0, NNACL_PARAM_INVALID);
   if (param->group_ != 1 && param->group_ != input_c && param->group_ != (input_c / weight_tensor->shape_[3])) {
     return NNACL_PARAM_INVALID;
   }
@@ -92,8 +92,8 @@ int CheckConvAttr(const int input_c, const TensorC *weight_tensor, const ConvPar
     return NNACL_PARAM_INVALID;
   }
 
-  MS_CHECK_TRUE_RET(param->kernel_h_ == weight_tensor->shape_[1], NNACL_PARAM_INVALID);
-  MS_CHECK_TRUE_RET(param->kernel_w_ == weight_tensor->shape_[2], NNACL_PARAM_INVALID);
+  NNACL_CHECK_TRUE_RET(param->kernel_h_ == weight_tensor->shape_[1], NNACL_PARAM_INVALID);
+  NNACL_CHECK_TRUE_RET(param->kernel_w_ == weight_tensor->shape_[2], NNACL_PARAM_INVALID);
   return NNACL_OK;
 }
 

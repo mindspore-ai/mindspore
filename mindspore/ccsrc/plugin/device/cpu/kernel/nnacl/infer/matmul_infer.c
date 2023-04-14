@@ -81,7 +81,7 @@ int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs
   if (inputs_size == kInputSize2) {
     TensorC *bias = (TensorC *)inputs[2];
     ShapeSet(bias_shape, &bias_shape_size, bias->shape_, bias->shape_size_);
-    MS_CHECK_TRUE_RET(CheckMatMulBias(bias_shape, bias_shape_size) == NNACL_OK, NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(CheckMatMulBias(bias_shape, bias_shape_size) == NNACL_OK, NNACL_ERR);
   }
 
   bool del_start = false;

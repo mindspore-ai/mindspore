@@ -64,7 +64,7 @@ int ShapeFusionInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  MS_CHECK_TRUE_RET(inputs_size == outputs_size + 1, NNACL_INPUT_TENSOR_ERROR);
+  NNACL_CHECK_TRUE_RET(inputs_size == outputs_size + 1, NNACL_INPUT_TENSOR_ERROR);
   const TensorC *in_tensor = inputs[0];
   size_t input_len = in_tensor->shape_size_ + 1;
   for (size_t out_idx = 0; out_idx < outputs_size; out_idx++) {

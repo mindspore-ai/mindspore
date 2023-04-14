@@ -68,7 +68,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     return NNACL_INFER_INVALID;
   }
   const int32_t *perm_data = (int32_t *)perm_tensor->data_;
-  MS_CHECK_TRUE_RET(perm_tensor->shape_size_ == 1, NNACL_INFER_INVALID);
+  NNACL_CHECK_TRUE_RET(perm_tensor->shape_size_ == 1, NNACL_INFER_INVALID);
   const int perms_num = perm_tensor->shape_[0];
   if (perms_num != 0 && perm_data == NULL) {
     return NNACL_INFER_INVALID;
@@ -76,7 +76,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
   for (int i = 0; i < perms_num; i++) {
-    MS_CHECK_TRUE_RET(perm_data[i] < perms_num, NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(perm_data[i] < perms_num, NNACL_ERR);
     ShapePush(perm, &perm_size, perm_data[i]);
   }
   if (perms_num == PERM_NUM_FOUR) {

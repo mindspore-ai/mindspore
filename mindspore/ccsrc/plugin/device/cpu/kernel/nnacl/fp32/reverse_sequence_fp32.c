@@ -27,7 +27,7 @@ void ReverseSequence(const float *input0, const void *input1, float *output, Rev
       const float *in_batch = in + batch * para->input_stride_[para->batch_axis_];
       float *out_batch = out + batch * para->output_stride_[para->batch_axis_];
       int32_t seq_length = para->is_seq_length_int32_ ? *((int32_t *)input1 + batch) : *((int64_t *)input1 + batch);
-      MS_CHECK_TRUE_RET_VOID(seq_length <= para->input_shape0_[para->seq_axis_]);
+      NNACL_CHECK_TRUE_RET_VOID(seq_length <= para->input_shape0_[para->seq_axis_]);
       for (int n = 0; n < seq_length; ++n) {
         const float *in_seq = in_batch + (seq_length - 1 - n) * para->input_stride_[para->seq_axis_];
         float *out_seq = out_batch + n * para->output_stride_[para->seq_axis_];

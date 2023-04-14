@@ -20,8 +20,8 @@
 int fullconnection_prepare(KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
-  MS_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
-  MS_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
 
   if (matmul->a_const_ || matmul->infer_shape_) {
     int *a_shape = self->in_[FIRST_INPUT]->shape_;
@@ -53,7 +53,7 @@ int fullconnection_prepare(KernelBase *self) {
 
 int fullconnection_resize(KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
-  MS_CHECK_TRUE_RET(self->out_[0]->shape_size_ > 0, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(self->out_[0]->shape_size_ > 0, NNACL_ERR);
 
   int row = 1;
   for (size_t i = 0; i < self->out_[0]->shape_size_ - 1; ++i) {

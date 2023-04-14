@@ -29,13 +29,13 @@ int TileDoubleInputScenes(TileStruct *tile) {
     return NNACL_OK;
   }
 
-  MS_CHECK_FALSE(GetElementNum(t) > tile->base_.in_[FIRST_INPUT]->shape_size_, NNACL_TILE_SECOND_INPUT_NUM_INVALID);
-  MS_CHECK_FALSE(t->data_type_ != kNumberTypeInt && t->data_type_ != kNumberTypeInt32,
-                 NNACL_TILE_SECOND_INPUT_DATA_TYPE_INVALID);
+  NNACL_CHECK_FALSE(GetElementNum(t) > tile->base_.in_[FIRST_INPUT]->shape_size_, NNACL_TILE_SECOND_INPUT_NUM_INVALID);
+  NNACL_CHECK_FALSE(t->data_type_ != kNumberTypeInt && t->data_type_ != kNumberTypeInt32,
+                    NNACL_TILE_SECOND_INPUT_DATA_TYPE_INVALID);
 
   int *input1_addr = (int *)(t->data_);
   for (int i = 0; i < GetElementNum(t); ++i) {
-    MS_CHECK_FALSE(input1_addr[i] <= 0, NNACL_TILE_SECOND_INPUT_VALUE_INVALID);
+    NNACL_CHECK_FALSE(input1_addr[i] <= 0, NNACL_TILE_SECOND_INPUT_VALUE_INVALID);
     tile->dims_[i] = i;
     tile->multiples_[i] = input1_addr[i];
   }
@@ -48,7 +48,7 @@ int SimpleTileImpl(TileStruct *tile, int task_id) {
   if (unit == 0 && task_id > 0) {
     return NNACL_OK;
   }
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(unit, (size_t)task_id), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(unit, (size_t)task_id), NNACL_ERR);
   size_t begin = unit * (size_t)(task_id);
   size_t end = MSMIN(begin + unit, tile->fast_outer_size_);
   TileSimple(tile->input_addr_, tile->output_addr_, begin, end, tile);
@@ -77,9 +77,9 @@ int TileFillOneDimTileParam(TileStruct *tile) {
   tile->one_dim_tile_ = large_one_multiple_count == 1;
   if (tile->one_dim_tile_) {
     tile->fast_multiple_ = (size_t)multiple;
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile->in_shape_[mul_index], tile->in_strides_[mul_index]), NNACL_ERR);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(tile->in_shape_[mul_index], tile->in_strides_[mul_index]), NNACL_ERR);
     tile->fast_stride_ = (size_t)(tile->in_shape_[mul_index] * tile->in_strides_[mul_index]);
-    MS_CHECK_FALSE(tile->fast_stride_ < 1, NNACL_TILE_INPUT_SHAPE_INVALID);
+    NNACL_CHECK_FALSE(tile->fast_stride_ < 1, NNACL_TILE_INPUT_SHAPE_INVALID);
     tile->fast_outer_size_ = (size_t)GetElementNum(tile->base_.in_[FIRST_INPUT]) / tile->fast_stride_;
   }
   tile->resize_done_ = true;
@@ -89,8 +89,8 @@ int TileFillOneDimTileParam(TileStruct *tile) {
 int tile_release(struct KernelBase *self) { return NNACL_OK; }
 
 int tile_prepare(struct KernelBase *self) {
-  MS_CHECK_FALSE(self->in_size_ < 1, NNACL_ERR);
-  MS_CHECK_FALSE(self->out_size_ < 1, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->in_size_ < 1, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->out_size_ < 1, NNACL_ERR);
   return NNACL_OK;
 }
 
@@ -108,7 +108,7 @@ int tile_resize(struct KernelBase *self) {
 
   if (self->in_size_ == kDoubleInputsSize) {
     int ret = TileDoubleInputScenes(tile);
-    MS_CHECK_FALSE(ret != NNACL_OK, ret);
+    NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
   }
 
   TensorC *input = self->in_[0];
@@ -117,8 +117,8 @@ int tile_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
   tile->in_dim_ = input->shape_size_;
-  MS_CHECK_TRUE_RET(tile->in_dim_ > 0 && tile->in_dim_ <= MAX_SHAPE_SIZE, NNACL_TILE_INPUT_SHAPE_INVALID);
-  MS_CHECK_FALSE(output->shape_size_ < tile->in_dim_, NNACL_TILE_INPUT_SHAPE_INVALID);
+  NNACL_CHECK_TRUE_RET(tile->in_dim_ > 0 && tile->in_dim_ <= MAX_SHAPE_SIZE, NNACL_TILE_INPUT_SHAPE_INVALID);
+  NNACL_CHECK_FALSE(output->shape_size_ < tile->in_dim_, NNACL_TILE_INPUT_SHAPE_INVALID);
 
   for (int i = 0; i < tile->in_dim_; ++i) {
     tile->in_shape_[i] = input->shape_[i];
@@ -129,13 +129,13 @@ int tile_resize(struct KernelBase *self) {
   ComputeStrides(tile->out_shape_, tile->out_strides_, tile->in_dim_);
 
   for (size_t i = 0; i < tile->dims_size_; i++) {
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile->multiples_[i], tile->in_shape_[i]), NNACL_ERRCODE_MUL_OVERFLOW);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(tile->multiples_[i], tile->in_shape_[i]), NNACL_ERRCODE_MUL_OVERFLOW);
     int ele_num = tile->multiples_[i] * tile->in_shape_[i] - 1;
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile->out_strides_[i], ele_num), NNACL_ERRCODE_MUL_OVERFLOW);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(tile->out_strides_[i], ele_num), NNACL_ERRCODE_MUL_OVERFLOW);
   }
 
   int ret = TileFillOneDimTileParam(tile);
-  MS_CHECK_FALSE(ret != NNACL_OK, ret);
+  NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
 
   if (tile->one_dim_tile_) {
     self->thread_nr_ =
@@ -154,12 +154,12 @@ int tile_compute(struct KernelBase *self) {
 
   if (!tile->resize_done_) {
     int ret = tile_resize(self);
-    MS_CHECK_FALSE(ret != NNACL_OK, ret);
-    MS_CHECK_FALSE(tile->resize_done_ == false, NNACL_TILE_RESIZE_IN_RUNTIME_FAILED);
+    NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
+    NNACL_CHECK_FALSE(tile->resize_done_ == false, NNACL_TILE_RESIZE_IN_RUNTIME_FAILED);
   }
 
   tile->data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
-  MS_CHECK_TRUE_RET(tile->data_size_ > 0, NNACL_TILE_DATA_TYPE_INVALID);
+  NNACL_CHECK_TRUE_RET(tile->data_size_ > 0, NNACL_TILE_DATA_TYPE_INVALID);
 
   if (tile->one_dim_tile_) {
     return self->env_->parallel_launch(self->env_->thread_pool_, SimpleTile, self, self->thread_nr_);

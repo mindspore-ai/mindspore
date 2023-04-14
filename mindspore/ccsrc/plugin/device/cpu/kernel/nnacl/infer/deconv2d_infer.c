@@ -47,28 +47,28 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   int32_t output_h = 0;
   int32_t output_w = 0;
   int32_t output_c = GetChannel(weight);
-  MS_CHECK_TRUE_RET(GetChannel(input) == GetBatch(weight), NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(GetChannel(input) == GetBatch(weight), NNACL_ERR);
   if (param->group_ == GetChannel(input) && 1 == GetChannel(weight)) {
     output_c = GetBatch(weight); /* depthwise */
   }
 
   int kernel_w = param->kernel_w_ != -1 ? param->kernel_w_ : GetWidth(weight);
   int kernel_h = param->kernel_h_ != -1 ? param->kernel_h_ : GetHeight(weight);
-  MS_CHECK_FALSE(kernel_w <= 0, NNACL_ERR);
-  MS_CHECK_FALSE(kernel_h <= 0, NNACL_ERR);
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, kernel_w), NNACL_ERR);
+  NNACL_CHECK_FALSE(kernel_w <= 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(kernel_h <= 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, kernel_w), NNACL_ERR);
 
   int stride_w = param->stride_w_;
   int stride_h = param->stride_h_;
-  MS_CHECK_FALSE(stride_w <= 0, NNACL_ERR);
-  MS_CHECK_FALSE(stride_h <= 0, NNACL_ERR);
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_h, stride_h), NNACL_ERR);
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_w, stride_w), NNACL_ERR);
+  NNACL_CHECK_FALSE(stride_w <= 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(stride_h <= 0, NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(input_h, stride_h), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(input_w, stride_w), NNACL_ERR);
 
   int dilate_w = param->dilation_w_;
   int dilate_h = param->dilation_h_;
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, dilate_h), NNACL_ERR);
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_w, dilate_w), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, dilate_h), NNACL_ERR);
+  NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_w, dilate_w), NNACL_ERR);
 
   int pad_mode = param->pad_mode_;
   if (pad_mode == Pad_pad) {

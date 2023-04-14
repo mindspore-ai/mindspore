@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_BASE_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_BASE_H_
+#ifndef NNACL_KERNEL_MATMUL_BASE_H_
+#define NNACL_KERNEL_MATMUL_BASE_H_
 
 #include "nnacl/kernel.h"
 #include "nnacl/matmul_parameter.h"
@@ -127,4 +127,4 @@ typedef struct MatmulFp32Struct {
   int (*parallel_run_by_row1_deep1_gepdot_)(struct MatmulFp32Struct *matmul, int task_id);
 } MatmulFp32Struct;
 
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_BASE_H_
+#endif  // NNACL_KERNEL_MATMUL_BASE_H_

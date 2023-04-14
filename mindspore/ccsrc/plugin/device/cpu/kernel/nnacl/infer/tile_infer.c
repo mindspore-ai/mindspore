@@ -22,7 +22,7 @@
 void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
   if (param->dims_size_ != 0) {
     int multiples_size_tmp[5] = {0};
-    MS_CHECK_TRUE_RET_VOID(out_shape_size <= 5);
+    NNACL_CHECK_TRUE_RET_VOID(out_shape_size <= 5);
     for (size_t i = 0; i < out_shape_size; i++) {
       multiples_size_tmp[i] = 1;
     }
@@ -62,7 +62,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (input1_shape_size > (int)(input->shape_size_) || input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
-  MS_CHECK_TRUE_RET(input1_shape_size <= MAX_SHAPE_SIZE, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(input1_shape_size <= MAX_SHAPE_SIZE, NNACL_ERR);
   int data_num = GetElementNum(inputs[1]);
   multiples_size = (size_t)(data_num);
   if (inputs[1]->data_type_ != kNumberTypeInt && inputs[1]->data_type_ != kNumberTypeInt32) {
@@ -72,7 +72,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (input1_data == NULL) {
     return NNACL_INFER_INVALID;
   }
-  MS_CHECK_TRUE_RET(data_num <= MAX_SHAPE_SIZE, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(data_num <= MAX_SHAPE_SIZE, NNACL_ERR);
   for (int i = 0; i < data_num; i++) {
     param->multiples_[i] = input1_data[i];
   }
@@ -81,13 +81,13 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   size_t dims_size = param->dims_size_;
   if (dims_size == 0) {
     int dim_num = GetElementNum(inputs[1]);
-    MS_CHECK_TRUE_RET(dim_num <= MAX_SHAPE_SIZE, NNACL_ERR);
+    NNACL_CHECK_TRUE_RET(dim_num <= MAX_SHAPE_SIZE, NNACL_ERR);
     for (int dim = 0; dim < dim_num; ++dim) {
       ShapePush(dims, &dims_size, dim);
     }
     param->dims_size_ = dims_size;
   }
-  MS_CHECK_TRUE_RET(multiples_size == dims_size, NNACL_ERR);
+  NNACL_CHECK_TRUE_RET(multiples_size == dims_size, NNACL_ERR);
   for (size_t i = 0; i < input->shape_size_; ++i) {
     ShapePush(out_shape, &out_shape_size, input->shape_[i]);
   }
@@ -98,7 +98,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     if (input->shape_[dims[i]] != 0 && param->multiples_[i] > INT_MAX / input->shape_[dims[i]]) {
       return NNACL_ERR;
     }
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(input->shape_[dims[i]], (param->multiples_[i])), NNACL_ERR);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(input->shape_[dims[i]], (param->multiples_[i])), NNACL_ERR);
     out_shape[dims[i]] = input->shape_[dims[i]] * (param->multiples_[i]);
   }
   // change caffe param format to tflite

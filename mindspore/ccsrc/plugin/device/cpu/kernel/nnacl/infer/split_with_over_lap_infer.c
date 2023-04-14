@@ -58,7 +58,7 @@ int SplitWithOverlapInferShape(const TensorC *const *inputs, size_t inputs_size,
   int visited_block = 0;
   for (int i = 0; i < number_split - 1; i++) {
     visited_block += ratio[i];
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(split_dim_size, visited_block) || total_block_count == 0, NNACL_ERR);
+    NNACL_CHECK_FALSE(INT_MUL_OVERFLOW(split_dim_size, visited_block) || total_block_count == 0, NNACL_ERR);
     int cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
     borders[i + 1] = cur_border;
   }

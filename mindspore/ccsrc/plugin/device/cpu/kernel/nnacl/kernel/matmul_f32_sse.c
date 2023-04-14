@@ -60,7 +60,7 @@ int MatmulFp32Sse_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
 
 int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)matmul->base_.param_;
-  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_oc = matmul->split_points_[task_id];
   int end_oc = matmul->col_step_;
