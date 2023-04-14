@@ -637,6 +637,20 @@ def convert_tupleslice_to_tensor(tuple_index):
     return tuple(new_tuple_index)
 
 
+def judeg_tuple_index_dim(data, tuple_index):
+    """Judge whether tuple_index's dim is valid"""
+    data_dim = data.ndim
+    index_dim = 0
+    for index in tuple_index:
+        if isinstance(toptypeof(index), mstype.tensor_type) and index.dtype == mstype.bool_:
+            index_dim += index.ndim
+        else:
+            index_dim += 1
+    if index_dim > data_dim:
+        raise IndexError(f"The dim of index cannot be greater than indexed data, but got "
+                         f"dim of index:{index_dim}, dim of data:{data_dim}")
+
+
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
     if not tuple_index:
@@ -649,6 +663,7 @@ def tensor_index_by_tuple(data, tuple_index):
 
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+    judeg_tuple_index_dim(data, tuple_index)
     indexes_types = hyper_map(toptypeof, tuple_index)
     contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
     if contain_type == const_utils.ALL_BASIC:

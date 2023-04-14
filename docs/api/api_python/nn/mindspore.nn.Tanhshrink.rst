@@ -19,7 +19,7 @@ mindspore.nn.Tanhshrink
         - **x** (Tensor) - 任意维度的Tensor。
 
     输出：
-        Tensor，数据类型和shape与 `x` 的相同。
+        Tensor，其shape与 `x` 的相同。
 
     异常：
         - **TypeError** - `x` 不是一个Tensor。
