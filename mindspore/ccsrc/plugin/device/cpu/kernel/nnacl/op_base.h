@@ -687,6 +687,18 @@ typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
 typedef enum EltwiseMode { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseMode;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
 
+typedef enum QuantTypeC {
+  Quant_None = 0,
+  Quant_AwareTraining = 1,
+  Quant_WeightQuant = 2,
+  Quant_PostTraining = 3,
+  Quant_QuantWeight = 4,
+  Quant_QuantAll = 5,
+  Quant_QuantDynamic = 6,
+  Quant_Min = Quant_None,
+  Quant_Max = Quant_QuantDynamic
+} QuantTypeC;
+
 typedef enum TensorCCategory {
   VarTensor,    // common tensor
   ConstTensor,  // const tensor
