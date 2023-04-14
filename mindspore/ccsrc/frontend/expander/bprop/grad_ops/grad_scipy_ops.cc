@@ -43,10 +43,10 @@ REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) 
   auto x_align = ib->Reshape(out, {row_size, -1});
   NodePtr grad_a;
   if (bp_trans.compare("T") == 0) {
-    auto conj = ib->Emit("Conj", {x_align});
+    auto conj = ib->Conj(x_align);
     grad_a = ib->MatMul(grad_b_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
   } else {
-    auto conj = ib->Emit("Conj", {grad_b_align});
+    auto conj = ib->Conj(grad_b_align);
     grad_a = ib->MatMul(x_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
   }
   int is_lower = static_cast<int>(GetValue<bool>(lower));
@@ -54,8 +54,8 @@ REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) 
   if (GetValue<bool>(unit_diagonal)) {
     auto fill = ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(grad_a)), ib->Value<ShapeVector>(ShapeVector(1, row_size)),
                                   ib->Tensor(0, ib->GetDtype(grad_a))});
-    grad_a = ib->Emit("MatrixSetDiagV3", {grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32)},
-                      {{"align", MakeValue("RIGHT_LEFT")}, {"max_length", MakeValue<int64_t>(200000000)}});
+    grad_a =
+      ib->MatrixSetDiagV3(grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32), MakeValue("RIGHT_LEFT"));
   }
   return {grad_a, grad_b};
 });
@@ -70,7 +70,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
 
   // helper functions
   auto Adjoint = [=](const BpropIRBuilder *ib, NodePtr x) -> NodePtr {
-    auto conj = ib->Emit("Conj", {x});
+    auto conj = ib->Conj(x);
     auto shape = ib->GetShape(conj);
     ShapeVector perm;
     for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
@@ -122,8 +122,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     auto diff = ib->Sub(ib->Emit("ExpandDims", {out_0, kValueNeg2}), ib->Emit("ExpandDims", {out_0, kValueNeg1}));
     auto diff_inv = ib->RealDiv(diff, ib->Add(ib->Mul(diff, diff), ib->Tensor(1e-20, ib->GetDtype(diff))));
 
-    auto f = ib->Emit("MatrixSetDiagV3", {diff_inv, ib->ZerosLike(out_0), zero_tensor},
-                      {{"max_length", MakeValue<int64_t>(200000000)}, {"align", MakeValue<std::string>("RIGHT_LEFT")}});
+    auto f = ib->MatrixSetDiagV3(diff_inv, ib->ZerosLike(out_0), zero_tensor, MakeValue("RIGHT_LEFT"));
 
     // _diag(a) equal F.expand_dims(a, -2) * F.eye(F.shape(a)[-1], F.shape(a)[-1], a.dtype)
     // compute F.eye(F.shape(a)[-1], F.shape(a)[-1], a.dtype)
@@ -164,13 +163,12 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   }
   size_vec.push_back(std::min(grad_a_shape[grad_a_shape.size() - kDim2], grad_a_shape.back()));
 
-  grad_a_diagonal = ib->Cast(ib->Emit("Slice", {res, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(size_vec)}),
-                             ib->GetDtype(grad_a));
+  grad_a_diagonal =
+    ib->Cast(ib->Slice(res, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(size_vec)), ib->GetDtype(grad_a));
 
   //  middle_diag equal 0.5 * grad_a.diagonal(0, -2, -1)
   auto middle_diag = ib->Mul(ib->Tensor(0.5, ib->GetDtype(grad_a_diagonal)), grad_a_diagonal);
-  grad_a = ib->Emit("MatrixSetDiagV3", {grad_a, middle_diag, zero_tensor},
-                    {{"max_length", MakeValue<int64_t>(200000000)}, {"align", MakeValue<std::string>("RIGHT_LEFT")}});
+  grad_a = ib->MatrixSetDiagV3(grad_a, middle_diag, zero_tensor, MakeValue("RIGHT_LEFT"));
   return {grad_a};
 });
 REG_BPROP_BUILDERS_END

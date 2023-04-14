@@ -216,7 +216,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     auto in_shape_1d = res[0];
     auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), res[1], res[2]);
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
-    auto out_grad = ib->Emit("ScatterNd", {ind, ib->Reshape(dout0, {-1}), in_shape_1d});
+    auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
     auto grad_k = ib->ZerosLike(ib->GetInput(kIndex1));
     return {out_grad, grad_k};
@@ -234,7 +234,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     auto in_shape_1d =
       ib->Value(ShapeVector(1, std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>())));
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
-    auto out_grad = ib->Emit("ScatterNd", {ind, ib->Reshape(dout0, {-1}), in_shape_1d});
+    auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, in_shape);
     auto grad_k = ib->ZerosLike(ib->GetInput(kIndex1));
     return {out_grad, grad_k};
@@ -268,7 +268,7 @@ REG_BPROP_BUILDER("Pad").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     begin.push_back(item.at(0));
   }
   auto x_shape = ib->Shape(x);
-  auto dx = ib->Emit("Slice", {dout, ib->EmitValue(MakeValue(begin)), x_shape});
+  auto dx = ib->Slice(dout, ib->EmitValue(MakeValue(begin)), x_shape);
   return {dx};
 });
 
@@ -719,9 +719,9 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
       auto res = ib->ShapeCalc({x2}, shape_func, infer_func, {});
       auto batch = ib->Cast(ib->Range(res[0]), kInt32);
       batch = ib->Tile(ib->Reshape(batch, {-1, 1}), res[2]);
-      auto gather_ind =
-        ib->Emit("Stack", {ib->MakeTuple({batch, ib->Reshape(ind, res[1])})}, {{"axis", MakeValue<int64_t>(-1)}});
-      dgrad = ib->Reshape(ib->Emit("GatherNd", {ib->Reshape(dout, res[1]), gather_ind}), shape);
+      int64_t axis = -1;
+      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, res[1])}, axis);
+      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, res[1]), gather_ind), shape);
     } else {
       auto b = x2_shape.at(0);
       auto c = x2_shape.at(1);
@@ -729,9 +729,9 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
       auto w = x2_shape.at(3);
       auto batch = ib->Tensor(Range(b), TypeIdToType(TypeId::kNumberTypeInt32));
       batch = ib->Tile(ib->Reshape(batch, {-1, 1}), {1, (c * h) * w});
-      auto gather_ind =
-        ib->Emit("Stack", {ib->MakeTuple({batch, ib->Reshape(ind, {b, -1})})}, {{"axis", MakeValue<int64_t>(-1)}});
-      dgrad = ib->Reshape(ib->Emit("GatherNd", {ib->Reshape(dout, {b, -1}), gather_ind}), {b, c, h, w});
+      int64_t axis = -1;
+      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, {b, -1})}, axis);
+      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, {b, -1}), gather_ind), {b, c, h, w});
     }
   }
   return {dx1, dx2, dgrad};
@@ -853,7 +853,7 @@ REG_BPROP_BUILDER("Mish").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx1 = ib->Emit("Tanh", {ib->Emit("Softplus", {x})});
-  auto dx2 = ib->Emit("SoftplusGrad", {ib->Emit("TanhGrad", {dx1, ib->Mul(x, dout)}), x});
+  auto dx2 = ib->Emit("SoftplusGrad", {ib->TanhGrad(dx1, ib->Mul(x, dout)), x});
   auto dx = ib->Add((ib->Mul(dx1, dout)), dx2);
   return {dx};
 });
@@ -976,8 +976,8 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
                {{"axis", MakeValue<int64_t>(-1)}});
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
-    auto sp_tensor = ib->Emit("ScatterNd", {idx_tensor, ones, res[4]});
-    sp_tensor = ib->Emit("Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}), res[5]});
+    auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
+    sp_tensor = ib->Slice(sp_tensor, ib->Value<ShapeVector>({1, 0}), res[5]);
     auto grad = ib->Transpose(dout, {0, 2, 3, 1});
     grad = ib->Reshape(grad, res[6]);
     grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
@@ -1013,10 +1013,9 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
     std::vector<int64_t> ones(out_indices_num, 1);
-    auto sp_tensor =
-      ib->Emit("ScatterNd", {idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
-    sp_tensor = ib->Emit("Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}),
-                                   ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
+    auto sp_tensor = ib->ScatterNd(idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape));
+    sp_tensor = ib->Slice(sp_tensor, ib->Value<ShapeVector>({1, 0}),
+                          ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num}));
     auto grad = ib->Transpose(dout, {0, 2, 3, 1});
     grad = ib->Reshape(grad, {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth});
     grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
@@ -1096,11 +1095,11 @@ REG_BPROP_BUILDER("Tanh").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto x_dtype_id = ib->GetDtypeId(x);
   NodePtr dx;
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    dout = ib->Emit("Conj", {dout});
-    dx = ib->Emit("TanhGrad", {out, dout});
-    dx = ib->Emit("Conj", {dx});
+    dout = ib->Conj(dout);
+    dx = ib->TanhGrad(out, dout);
+    dx = ib->Conj(dx);
   } else {
-    dx = ib->Emit("TanhGrad", {out, dout});
+    dx = ib->TanhGrad(out, dout);
   }
   return {dx};
 });
@@ -1110,7 +1109,7 @@ REG_BPROP_BUILDER("TanhGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dy = ib->Mul((ib->Mul((ib->Mul(dout, ib->Tensor(-2.0, ib->GetDtype(dout)))), grad)), y);
-  auto dgrad = ib->Emit("TanhGrad", {y, dout});
+  auto dgrad = ib->TanhGrad(y, dout);
   return {dy, dgrad};
 });
 
@@ -1776,9 +1775,7 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
     auto x = ib->ExpandDims(ib->TupleGetItem(dout, 1), 1);
     auto y = ib->ExpandDims(softmax, 2);
     auto matmul_tmp = ib->BatchMatMul(x, y);
-    grad =
-      grad +
-      (ib->TupleGetItem(dout, 1) - ib->Emit("Squeeze", {matmul_tmp}, {{"axis", MakeValue(ShapeVector{1})}})) * softmax;
+    grad = grad + (ib->TupleGetItem(dout, 1) - ib->Squeeze(matmul_tmp, MakeValue(ShapeVector{1}))) * softmax;
   }
   return {grad, ib->ZerosLike(labels)};
 });

@@ -115,6 +115,65 @@ class COMMON_EXPORT Emitter {
   }
   NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalAnd", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
+
+  NodePtr OnesLike(const NodePtr &x) const { return Emit("OnesLike", {x}); }
+  NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) const {
+    return Emit("UnsortedSegmentSum", {x, segment_ids, num_segments});
+  }
+  NodePtr GatherNd(const NodePtr &input_x, const NodePtr &indices) const {
+    return Emit("GatherNd", {input_x, indices});
+  }
+  NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) const {
+    return Emit("ScatterNd", {indices, update, shape});
+  }
+  NodePtr Stack(const NodePtr &x, const ValuePtr &axis) const { return Emit("Stack", {x}, {{"axis", axis}}); }
+  NodePtr Stack(const NodePtrList &x, int64_t axis) const { return Stack(MakeTuple(x), MakeValue(axis)); }
+  NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) const {
+    return Emit("TensorScatterUpdate", {input_x, indices, updates});
+  }
+  NodePtr Slice(const NodePtr &x, const NodePtr &begin, const NodePtr &size) const {
+    return Emit("Slice", {x, begin, size});
+  }
+  NodePtr Squeeze(const NodePtr &x, const ValuePtr &axis) const { return Emit("Squeeze", {x}, {{"axis", axis}}); }
+  NodePtr Sqrt(const NodePtr &x) const { return Emit("Sqrt", {x}); }
+  NodePtr MatrixSetDiagV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) const {
+    const auto diag_max_length = 200000000;
+    return Emit("MatrixSetDiagV3", {x, diagonal, k},
+                {{"max_length", MakeValue<int64_t>(diag_max_length)}, {"align", align}});
+  }
+  NodePtr MatrixDiagPartV3(const NodePtr &x, const NodePtr &diagonal, const NodePtr &k, const ValuePtr &align) const {
+    const auto diag_max_length = 200000000;
+    return Emit("MatrixDiagPartV3", {x, diagonal, k},
+                {{"max_length", MakeValue<int64_t>(diag_max_length)}, {"align", align}});
+  }
+  NodePtr LinSpace(const NodePtr &start, const NodePtr &stop, const NodePtr &num) const {
+    return Emit("LinSpace", {start, stop, num});
+  }
+
+  // complex
+  NodePtr Conj(const NodePtr &input) const {
+    TypeId type_id = input->dtype()->type_id();
+    if (type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128) {
+      return Emit("Conj", {input});
+    }
+    return input;
+  }
+  NodePtr Complex(const NodePtr &real, const NodePtr &imag) const { return Emit("Complex", {real, imag}); }
+
+  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) const {
+    return Emit("CumProd", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
+  }
+  NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) const {
+    return CumProd(x, axis, MakeValue(exclusive), MakeValue(reverse));
+  }
+  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) const {
+    return Emit("CumSum", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
+  }
+  NodePtr CumSum(const NodePtr &x, const NodePtr &axis, const bool &exclusive, const bool &reverse) const {
+    return CumSum(x, axis, MakeValue(exclusive), MakeValue(reverse));
+  }
+  NodePtr CSR2COO(const NodePtr &indptr, const NodePtr &nnz) const { return Emit("CSR2COO", {indptr, nnz}); }
+
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis, bool keep_dim,
                                           bool skip_mode = false) const;
   std::pair<bool, ShapeVector> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
@@ -153,6 +212,9 @@ class COMMON_EXPORT Emitter {
 
   NodePtr Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims = 0) const;
   NodePtr Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims = 0) const;
+  NodePtr GatherD(const NodePtr &x, const NodePtr &dim, const NodePtr &index) const {
+    return Emit("GatherD", {x, dim, index});
+  }
 
   /// \brief Emit a value node
   template <typename T>

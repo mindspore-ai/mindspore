@@ -256,7 +256,7 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto bc_x = ib->Emit(kDivOpName, {dout, y});
   auto bc_y = -(bc_x * out);
   auto result = BinopGradCommon(ib, x, y, bc_x, bc_y);
-  return {ib->Emit("Conj", {result[0]}), ib->Emit("Conj", {result[1]})};
+  return {ib->Conj(result[0]), ib->Conj(result[1])};
 });
 
 REG_BPROP_BUILDER("Less").SetUnusedInputs({i0, i1, i2, i3}).SetBody(CompareBpropExpander);
@@ -318,7 +318,7 @@ REG_BPROP_BUILDER("AsinhGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Sinh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto conj_x = ib->Emit("Conj", {x});
+  auto conj_x = ib->Conj(x);
   auto dx = ib->Mul((ib->Emit("Cosh", {conj_x})), dout);
   return {dx};
 });
@@ -387,7 +387,7 @@ REG_BPROP_BUILDER("Abs").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Conj").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Conj", {dout});
+  auto dx = ib->Conj(dout);
   return {dx};
 });
 
@@ -450,8 +450,7 @@ REG_BPROP_BUILDER("Erf").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto half_root_pi =
-    ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Emit("Sqrt", {ib->Tensor(pi, ib->GetDtype(x))}))),
-             ib->GetDtype(x));
+    ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Sqrt(ib->Tensor(pi, ib->GetDtype(x))))), ib->GetDtype(x));
   auto x_square = ib->Emit("Square", {x});
   auto dx = ib->Mul((ib->Mul(dout, half_root_pi)), (ib->Exp(ib->Emit("Neg", {x_square}))));
   return {dx};
@@ -461,8 +460,7 @@ REG_BPROP_BUILDER("Erfc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto half_root_pi =
-    ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Emit("Sqrt", {ib->Tensor(pi, ib->GetDtype(x))}))),
-             ib->GetDtype(x));
+    ib->Cast(ib->RealDiv(ib->Tensor(2, ib->GetDtype(x)), (ib->Sqrt(ib->Tensor(pi, ib->GetDtype(x))))), ib->GetDtype(x));
   auto x_square = ib->Emit("Square", {x});
   auto dx = ib->Mul(dout, (ib->Mul((ib->Emit("Neg", {half_root_pi})), (ib->Exp(ib->Emit("Neg", {x_square}))))));
   return {dx};
@@ -535,8 +533,7 @@ REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  return {ib->Emit("CumSum", {dout, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}}),
-          ib->ZerosLike(axis)};
+  return {ib->CumSum(dout, axis, ib->GetAttr("exclusive"), MakeValue(!reverse)), ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -779,7 +776,7 @@ REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
     (ib->Sub((ib->Mul(product, (ib->Emit("Cos", {product})))), (ib->Emit("Sin", {product})))), (ib->Mul(product, x)));
   TypeId rec_type = ib->GetDtypeId(reciprocal);
   if (rec_type == kNumberTypeComplex64 || rec_type == kNumberTypeComplex128) {
-    reciprocal = ib->Emit("Conj", {reciprocal});
+    reciprocal = ib->Conj(reciprocal);
   }
   auto dx = ib->Mul(reciprocal, dout);
   return {dx};
@@ -791,10 +788,8 @@ REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  auto prod =
-    ib->Emit("CumProd", {x, axis}, {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(reverse)}});
-  out = ib->Emit("CumSum", {ib->Mul(prod, dout), axis},
-                 {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}});
+  auto prod = ib->CumProd(x, axis, ib->GetAttr("exclusive"), MakeValue(reverse));
+  out = ib->CumSum(ib->Mul(prod, dout), axis, ib->GetAttr("exclusive"), MakeValue(!reverse));
   return {ib->RealDiv(out, x), ib->ZerosLike(axis)};
 });
 
@@ -1033,10 +1028,10 @@ REG_BPROP_BUILDER("Ger").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto m1 = ib->ExpandDims(input_y, 1);
   auto m2 = ib->ExpandDims(input_x, 1);
   ShapeVector axis = {1};
-  auto dx = ib->Emit("Squeeze", {ib->MatMul(dout, m1, false, false)}, {{"axis", MakeValue(axis)}});
+  auto dx = ib->Squeeze(ib->MatMul(dout, m1, false, false), MakeValue(axis));
   ShapeVector perm = {1, 0};
   auto transpose = ib->Transpose(dout, perm);
-  auto dy = ib->Emit("Squeeze", {ib->MatMul(transpose, m2, false, false)}, {{"axis", MakeValue(axis)}});
+  auto dy = ib->Squeeze(ib->MatMul(transpose, m2, false, false), MakeValue(axis));
   return {dx, dy};
 });
 
@@ -1073,7 +1068,7 @@ REG_BPROP_BUILDER("Erfinv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto out_type = ib->GetDtype(dout);
-  auto sqrt = ib->Emit("Sqrt", {ib->Tensor(pi, out_type)});
+  auto sqrt = ib->Sqrt(ib->Tensor(pi, out_type));
   auto root_pi_over_two = ib->RealDiv(sqrt, ib->Tensor(2, ib->GetDtype(sqrt)));
   auto out_square = ib->Emit("Square", {out});
   auto dx = ib->Mul((ib->Mul(dout, root_pi_over_two)), (ib->Exp(out_square)));
@@ -1122,10 +1117,8 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto permuted = ib->Transpose(x, res[3]);
   auto permuted_shape = ib->Shape(permuted);
   auto reshaped = ib->Reshape(permuted, res[2]);
-  auto left = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
-                       {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(false)}});
-  auto right = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
-                        {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
+  auto left = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, false);
+  auto right = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, true);
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   auto out = ib->Mul(ib->Transpose(y, res[4]), grad);
   auto dx = ib->Reshape(out, ib->Shape(x));
@@ -1211,20 +1204,19 @@ REG_BPROP_BUILDER("ComplexAbs").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  return {ib->DivNoNan(ib->Mul(ib->Emit("Complex", {dout, ib->ZerosLike(dout)}), x),
-                       ib->Emit("Complex", {out, ib->ZerosLike(out)}))};
+  return {ib->DivNoNan(ib->Mul(ib->Complex(dout, ib->ZerosLike(dout)), x), ib->Complex(out, ib->ZerosLike(out)))};
 });
 
 REG_BPROP_BUILDER("Real").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto zero = ib->ZerosLike(dout);
-  return {ib->Emit("Complex", {dout, zero})};
+  return {ib->Complex(dout, zero)};
 });
 
 REG_BPROP_BUILDER("Imag").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto zero = ib->ZerosLike(dout);
-  return {ib->Emit("Complex", {zero, dout})};
+  return {ib->Complex(zero, dout)};
 });
 
 REG_BPROP_BUILDER("Betainc").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -1367,7 +1359,7 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto meta_grad =
     ib->Emit("Concat", {ib->MakeTuple({meta_grad_up, meta_grad_down})}, {{"axis", MakeValue<int64_t>(-2)}});
   meta_grad = ib->Emit("MatrixExp", {meta_grad});
-  return {ib->Emit("Slice", {meta_grad, begins, sizes})};
+  return {ib->Slice(meta_grad, begins, sizes)};
 });
 
 REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -1618,10 +1610,10 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
   auto subdiag_conj = MatrixTranspose(ib, subdiag);
   auto rhs_conj = rhs;
   if ((*superdiag_type) == (*kComplex64) || (*superdiag_type) == (*kComplex128)) {
-    superdiag_conj = ib->Emit("Conj", {superdiag_conj});
-    maindiag_conj = ib->Emit("Conj", {maindiag_conj});
-    subdiag_conj = ib->Emit("Conj", {subdiag_conj});
-    rhs_conj = ib->Emit("Conj", {rhs});
+    superdiag_conj = ib->Conj(superdiag_conj);
+    maindiag_conj = ib->Conj(maindiag_conj);
+    subdiag_conj = ib->Conj(subdiag_conj);
+    rhs_conj = ib->Conj(rhs);
   }
   auto superdiag_grad = ib->ReduceSum(LeftShift(ib, rhs_conj) * dout, ShapeVector{-1LL});
   auto maindiag_grad = ib->ReduceSum(rhs_conj * dout, ShapeVector{-1LL});
