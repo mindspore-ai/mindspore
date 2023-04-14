@@ -40,6 +40,9 @@
 #include "ops/op_utils.h"
 #include "src/common/common.h"
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
+#ifdef MSLITE_ENABLE_CLOUD_INFERENCE
+#include "tools/converter/parser/primitivepy_to_c.h"
+#endif
 
 namespace mindspore::lite {
 namespace {
@@ -104,6 +107,27 @@ bool IsOptimizedFuncGraph(const FuncGraphPtr &func_graph) {
     is_optimized = GetValue<bool>(value);
   }
   return is_optimized;
+}
+
+int ReplacePrimitivePyToC(const FuncGraphPtr &func_graph) {
+#ifdef MSLITE_ENABLE_CLOUD_INFERENCE
+  MS_ASSERT(func_graph != nullptr);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  MS_CHECK_TRUE_MSG(optimizer != nullptr, RET_NULL_PTR, "optimizer is nullptr.");
+  auto pass_manager = std::make_shared<opt::LitePassManager>("replace_py pass manager", false);
+  MS_CHECK_TRUE_MSG(pass_manager != nullptr, RET_NULL_PTR, "asylic_pm is nullptr.");
+
+  pass_manager->AddPass(std::make_shared<opt::PrimitivePyToCFusion>());
+  optimizer->AddPassManager(pass_manager);
+
+  if (!optimizer->Optimize(func_graph)) {
+    MS_LOG(ERROR) << "ReplacePrimitivePyToC pass failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+#endif
+  return RET_OK;
 }
 
 int CommonAnfAdjust(const FuncGraphPtr &func_graph) {

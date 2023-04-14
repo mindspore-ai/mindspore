@@ -33,6 +33,7 @@ bool IsOriginalFuncGraph(const FuncGraphPtr &func_graph);
 bool IsOptimizedFuncGraph(const FuncGraphPtr &func_graph);
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 int CommonAnfAdjust(const FuncGraphPtr &func_graph);
+int ReplacePrimitivePyToC(const FuncGraphPtr &func_graph);
 int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index);
