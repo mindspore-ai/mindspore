@@ -1136,8 +1136,6 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   if (prim_->prim_type() == PrimType::kPrimTypePyCheck) {
     return EvalPyCheckPrim(engine, args);
   }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
   bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
     MS_EXCEPTION_IF_NULL(abs);
     auto value = abs->BuildValue();
@@ -1507,8 +1505,8 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
         << ".\nFor more details, please refer to "
         << "https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.jit_class.html \n";
     }
-    static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime) {
+    static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+    if (!allow_fallback_runtime) {
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
                               << "\nThe first argument should be a NameSpace, but got " << data->ToString();
     }
@@ -1761,8 +1759,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       constexpr auto max_args_len = 3;
       bool has_default = (args_abs_list.size() == max_args_len);
       if (!has_default) {
-        static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-        if (!support_fallback_runtime) {
+        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+        if (!allow_fallback_runtime) {
           MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
         }
 
@@ -1882,8 +1880,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-  if (!support_fallback_runtime && data_args->isa<abstract::AbstractScalar>()) {
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  if (!allow_fallback_runtime && data_args->isa<abstract::AbstractScalar>()) {
     ValuePtr data_value = data_args->BuildValue();
     if (data_value->isa<parse::InterpretedObject>()) {
       auto obj = ValueToPyData(data_value);
@@ -1897,7 +1895,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
 
   constexpr auto max_args_size = 3;
-  if (!support_fallback_runtime && args_abs_list.size() == max_args_size) {
+  if (!allow_fallback_runtime && args_abs_list.size() == max_args_size) {
     constexpr size_t default_index = 2;
     auto default_args = args_abs_list[default_index];
     if (default_args->isa<abstract::AbstractScalar>()) {
@@ -2513,8 +2511,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(local_abs_val);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
       if (local_abs_val == kValueAny) {
-        static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-        if (support_fallback_runtime) {
+        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+        if (allow_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
                        << "', the inputs should be constant, but found variable '" << py_data_name
                        << "' to be nonconstant. To convert to PyExecute() afterwards";

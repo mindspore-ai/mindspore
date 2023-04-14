@@ -70,11 +70,11 @@ def test_getattr_tensor_with_wrong_attr():
         abs_func = getattr(x, "abs2")
         return abs_func()
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(AttributeError) as err:
         foo(Tensor([-1, -2, -3]))  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_getattr_tensor_with_default():
@@ -223,11 +223,11 @@ def test_getattr_list_with_wrong_attr():
         abs_func = getattr(x, "abs2")
         return abs_func()
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(AttributeError) as err:
         foo([1, 2, 3, 4])  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_getattr_tuple():
@@ -344,11 +344,11 @@ def test_getattr_tuple_with_wrong_attr():
         abs_func = getattr(x, "shape")
         return abs_func()
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(AttributeError) as err:
         foo((1, 2, 3, 4))  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_getattr_dict():
@@ -431,11 +431,11 @@ def test_getattr_dict_with_wrong_attr():
         abs_func = getattr(x, "abs2")
         return abs_func()
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(AttributeError) as err:
         foo({"1": 1, "2": 2})  # Not throw error any more, should move to ST.
     assert "object has no attribute" in str(err.value)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_getattr_dict_with_default():

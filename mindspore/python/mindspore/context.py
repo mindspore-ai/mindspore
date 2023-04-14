@@ -35,15 +35,20 @@ from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _re
     _need_reset_device_target_for_ps
 from mindspore.parallel._offload_context import _set_offload_context, _get_offload_context
 
-__all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
-           'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode', 'set_ps_context',
-           'get_ps_context', 'reset_ps_context', 'set_offload_context', 'get_offload_context']
+__all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'STRICT', 'COMPATIBLE', 'LAX', 'set_context', 'get_context',
+           'set_auto_parallel_context', 'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode',
+           'set_ps_context', 'get_ps_context', 'reset_ps_context', 'set_offload_context', 'get_offload_context']
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
 _DEVICE_APP_MEMORY_SIZE = 31  # The max memory size of graph plus variable.
 _re_pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
 K_CONTEXT = None
+
+# Enumerate for the property 'jit_syntax_level'.
+STRICT = 0
+COMPATIBLE = 1
+LAX = 2
 
 
 def _make_directory(path):
@@ -200,6 +205,13 @@ class _Context:
             raise ValueError(f"For 'context.set_context', the argument 'mode' should be context.GRAPH_MODE (0) "
                              f"or context.PYNATIVE_MODE (1), but got {mode}.")
         self.set_param(ms_ctx_param.mode, mode)
+
+    def set_jit_syntax_level(self, level):
+        """"Set the JIT syntax level for graph compiling"""
+        if level != STRICT and level != COMPATIBLE and level != LAX:
+            raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT (0), "
+                             f"context.COMPATIBLE (1) or context.LAX (2), but got {level}.")
+        self.set_param(ms_ctx_param.jit_syntax_level, level)
 
     def set_memory_optimize_level(self, memory_optimize_level):
         """
@@ -456,7 +468,8 @@ class _Context:
         'op_timeout': set_op_timeout,
         'memory_offload': set_memory_offload,
         'deterministic': set_deterministic,
-        'ascend_config': set_ascend_config
+        'ascend_config': set_ascend_config,
+        'jit_syntax_level': set_jit_syntax_level
     }
 
     @property
@@ -826,7 +839,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str, ascend_config=dict)
+                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -909,6 +922,8 @@ def set_context(**kwargs):
     |                         |  memory_offload              |  GPU/Ascend                |
     |                         +------------------------------+----------------------------+
     |                         |  ascend_config               |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  jit_syntax_level            |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -1112,6 +1127,13 @@ def set_context(**kwargs):
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
+        jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
+            The value must be in [STRICT(0), COMPATIBLE(1) LAX(2)]. Default: LAX(2). All levels support all backends.
+
+            - STRICT(0): Only basic syntax is supported, and execution performance is optimal.
+            - COMPATIBLE(1): Besides basic syntax, supports more syntax, such as operations of dict, list, and scalar.
+            - LAX(2): Compatible with all Python syntax as much as possible. However, execution performance may be
+              affected and not optimal.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -1145,6 +1167,7 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
+        >>> ms.set_context(jit_syntax_level=ms.STRICT)
     """
     ctx = _context()
     # set device target first
@@ -1169,6 +1192,9 @@ def set_context(**kwargs):
                 value = 0
             if value > 3:
                 raise ValueError(f"value for save_graphs should be 0-3 but got '{value}'")
+        if key == 'jit_syntax_level' and value != STRICT and value != COMPATIBLE and value != LAX:
+            raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT (0), context.COMPATIBLE (1)"
+                             f" or context.LAX (1), but got {value}.")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):

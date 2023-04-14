@@ -108,7 +108,8 @@ void RegMsContext(const py::module *m) {
     .value("disable_format_transform", MsCtxParam::MS_CTX_DISABLE_FORMAT_TRANSFORM)
     .value("memory_offload", MsCtxParam::MS_CTX_ENABLE_MEM_OFFLOAD)
     .value("memory_optimize_level", MsCtxParam::MS_CTX_MEMORY_OPTIMIZE_LEVEL)
-    .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT);
+    .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT)
+    .value("jit_syntax_level", MsCtxParam::MS_CTX_JIT_SYNTAX_LEVEL);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")

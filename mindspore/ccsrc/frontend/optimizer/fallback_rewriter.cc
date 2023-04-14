@@ -230,8 +230,8 @@ class BeforeOptARewriter : public BaseRewriter {
 
  protected:
   void ConvertParameter() {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime || !is_dict_output_) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
       return;
     }
     for (const auto &para : root_graph_->parameters()) {
@@ -331,8 +331,8 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime || !is_dict_output_) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
     return nullptr;
@@ -394,8 +394,8 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime || !is_dict_output_) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
       return ConvertDictSetItemToTupleSetItem(node);
     }
     return nullptr;
@@ -414,8 +414,8 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime || !is_dict_output_) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
       return EraseMakeDictNode(node);
     }
     return nullptr;
@@ -540,8 +540,8 @@ class BeforeOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
     if (value->isa<ValueDictionary>()) {
-      const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-      if (!support_fallback_runtime || !is_dict_output_) {
+      const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+      if (!allow_fallback_runtime || !is_dict_output_) {
         return DictToTuple(value->cast<ValueDictionaryPtr>());
       }
     }
@@ -882,8 +882,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -988,8 +988,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   void CheckCNodeInputsHasNoneOrDict(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
       return;
     }
     if (AnfUtils::IsRealKernel(cnode)) {
@@ -1033,8 +1033,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   void CheckCNodeInputsHasClassType(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime || !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
       return;
     }
     const auto &inputs = cnode->inputs();
@@ -1168,8 +1168,8 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
-    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (support_fallback_runtime) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (allow_fallback_runtime) {
       if (value->isa<ValueDictionary>()) {
         return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {

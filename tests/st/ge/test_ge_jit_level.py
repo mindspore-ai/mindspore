@@ -37,7 +37,9 @@ def test_ge_graph_mode_with_jit_level():
     Description: Graph Mode jit_level==O3 with GE.
     Expectation: Run by ge_device_context when jit_level==O3.
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     run_testcase('ge_graph_mode_jit_level')
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level0
@@ -49,4 +51,6 @@ def test_pynative_ms_function_with_ge():
     Description: PyNative ms function with GE.
     Expectation: Run by ge_device_context when jit_level==O3.
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     run_testcase('ge_pynative_mode_jit_level')
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

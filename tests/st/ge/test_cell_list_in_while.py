@@ -26,7 +26,9 @@ def test_cell_list_in_while():
     Description: test cell in list with ge backend
     Expectation: success
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_cell_list_in_while.sh")
     os.system(f"grep -E 'ERROR|error' {sh_path}/cell_list_in_while/test_cell*log -C 3")
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert ret == 0

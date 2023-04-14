@@ -574,10 +574,10 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
             gradient_function = self.grad_op(self.net)
             return gradient_function(self.x)
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     grad_net = GradNetWrtX(Net())
     output = grad_net()
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert isinstance(output, tuple)
     expect = [(np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
@@ -587,10 +587,10 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
     assert compare(output, expect)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     grad_net = GradNetWrtX1(Net())
     output = grad_net()
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert isinstance(output, tuple)
     assert compare(output, expect)
 
@@ -627,13 +627,13 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
             gradient_function = self.grad_op(self.net)
             return gradient_function(mutable(x))
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     x = {'a': (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                Tensor([[0.5, 0.6, 4.0], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
          'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)}
     grad_net = GradNetWrtX(Net())
     output = grad_net(x)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert isinstance(output, tuple)
     expect = [(np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32),

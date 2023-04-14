@@ -329,9 +329,9 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   bool interpret_without_internal =
     (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
     origin_node->interpret();
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
   MS_EXCEPTION_IF_NULL(convert_result);
-  if (support_fallback_runtime) {
+  if (allow_fallback_runtime) {
     AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
     if (interpreted_output != nullptr) {
       return interpreted_output;
