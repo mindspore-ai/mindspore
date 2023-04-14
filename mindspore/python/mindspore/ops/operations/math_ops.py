@@ -1398,7 +1398,8 @@ class Cdist(Primitive):
     Refer to :func:`mindspore.ops.cdist` for more details.
 
     Args:
-        p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
+        p (float, optional): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞].
+            Default: 2.0.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.

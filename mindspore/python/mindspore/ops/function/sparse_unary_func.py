@@ -469,7 +469,7 @@ def csr_isfinite(x: CSRTensor) -> CSRTensor:
     .. math::
 
         out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+          & \text{ if } x_{i} = \text{Finite},\ \ True \\
           & \text{ if } x_{i} \ne \text{Finite},\ \ False
         \end{cases}
 
