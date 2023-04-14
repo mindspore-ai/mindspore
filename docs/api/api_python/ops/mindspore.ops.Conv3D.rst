@@ -29,6 +29,10 @@ mindspore.ops.Conv3D
     :math:`dilation` 为三维卷积核膨胀尺寸， :math:`stride` 为移动步长，
     :math:`padding` 为在输入两侧的填充长度。
 
+    .. note::
+        在Ascend平台上，目前只支持 :math:`group=1` 。
+
+
     参数：
         - **out_channel** (int) - 输出的通道数 :math:`C_{out}` 。
         - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。可以为单个int或包含三个整数的Tuple。一个整数表示卷积核的深度、高度和宽度均为该值。包含三个整数的Tuple分别表示卷积核的深度、高度和宽度。

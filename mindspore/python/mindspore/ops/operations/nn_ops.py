@@ -1274,8 +1274,7 @@ class Conv2D(Primitive):
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
-        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
+        On Ascend platform, :math:`group = 1` must be satisfied.
 
     Args:
         out_channel (int): The number of output channel :math:`C_{out}`.
@@ -7775,8 +7774,8 @@ class Conv3D(Primitive):
         validator.check_value_type("group", group, (int,), self.name)
         validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
         device_target = context.get_context("device_target")
-        if device_target == "Ascend" and group > 1 and out_channel != group:
-            raise ValueError("On Ascend platform, when group > 1, condition C_in = C_out = group must be satisfied.")
+        if device_target == "Ascend" and group != 1:
+            raise ValueError("On Ascend platform, group = 1 must be satisfied.")
 
         self.group = group
         self.add_prim_attr('groups', self.group)
