@@ -11,7 +11,7 @@ mindspore_lite.Context
 
     Context.parallel属性：
         - **workers_num** (int) - workers的数量。一个 `ModelParallelRunner` 包含多个worker，worker为实际执行并行推理的单元。将 `workers_num` 设置为0表示 `workers_num` 将基于计算机性能和核心数自动调整。
-        - **config_info** (dict{str: dict{str: str}}) - 传递模型权重文件路径的嵌套映射。例如：{"model_file": {"mindir_path": "/home/user/model.mindir"}}。key当前支持["model_file"]；value为dict格式，其中的key当前支持["mindir_path"]，其中的value为权重的路径，例如 "/home/user/model.mindir"。
+        - **config_info** (dict{str: dict{str: str}}) - 用于在构建 `ModelParallelRunner` 过程中在线传输用户定义选项的嵌套映射。更多可配置选项请参阅 `config_path` 。例如：{"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}。 `section` 为"model_file"，value为dict格式，其中的key之一为"mindir_path"，对应的value为"/home/user/model_graph.mindir"。
         - **config_path** (str) - 定义配置文件的路径，用于在构建 `ModelParallelRunner` 期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.txt"。
 
           - **用法1** - 进行混合精度推理的设置，配置文件内容及说明如下：
@@ -32,6 +32,23 @@ mindspore_lite.Context
                 input_shape=input_name:[input_dim]（模型输入维度，用于动态shape）
                 dynamic_dims=[min_dim~max_dim]（模型输入的动态维度范围，用于动态shape）
                 opt_dims=[opt_dim]（模型最优输入维度，用于动态shape）
+
+          - **用法3** - 对于大模型，使用model buffer进行加载编译的时候需要单独设置权重文件的路径，并且需要确保大模型文件和权重文件所在的文件夹位于同一文件夹中。例如，当目录如下时：
+
+            .. code-block::
+
+                .
+                └── /home/user/
+                     ├── model_graph.mindir
+                     └── model_variables
+                          └── data_0
+
+            配置文件内容及说明如下：
+
+            .. code-block::
+
+                [model_file]
+                mindir_path=[/home/user/model_graph.mindir]（大模型的存储路径）
 
     .. py:method:: target
         :property:

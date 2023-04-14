@@ -37,11 +37,11 @@ class Context:
         - **workers_num** (int) - the num of workers. A `ModelParallelRunner` contains multiple workers, which
           are the units that actually perform parallel inferring. Setting `workers_num` to 0 represents
           `workers_num` will be automatically adjusted based on computer performance and core numbers.
-        - **config_info** (dict{str, dict{str, str}}) - Nested map for passing model weight paths.
-          For example, {"model_file": {"mindir_path": "/home/user/model.mindir"}}.
-          key currently supports ["model_file"];
-          value is in dict format, key of it currently supports ["mindir_path"],
-          value of it is the path of weight, For example, "/home/user/model.mindir".
+        - **config_info** (dict{str, dict{str, str}}) - Nested map for transferring user defined options during building
+          `ModelParallelRunner` online. More configurable options refer to `config_path` .
+          For example, {"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}.
+          section is "model_file", one of the keys is "mindir_path",
+          the corresponding value in the map is "/home/user/model_graph.mindir".
         - **config_path** (str) - Set the config file path. The config file is used to transfer user-defined
           options during building `ModelParallelRunner` . In the following scenarios, users may need to set the
           parameter. For example, "/home/user/config.txt".
@@ -67,6 +67,26 @@ class Context:
                 dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
                 opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
 
+          - Usage 3: For the large model, when using the model buffer to load and compile, you need to set the path
+            of the weight file separately through passing the path of the large model. And it is necessary to ensure
+            that the large model file and the folder where the weight file is located are in the same folder.
+            For example, when the directory is as follows:
+
+            .. code-block::
+
+                .
+                └── /home/user/
+                     ├── model_graph.mindir
+                     └── model_variables
+                          └── data_0
+
+            The content and description of the configuration file are as follows:
+
+            .. code-block::
+
+                [model_file]
+                mindir_path=[/home/user/model_graph.mindir](storage path of the large model)
+
     Examples:
         >>> # create default context, which target is cpu by default.
         >>> import mindspore_lite as mslite
@@ -79,11 +99,11 @@ class Context:
         >>> context = mslite.Context()
         >>> context.target = ["cpu"]
         >>> context.parallel.workers_num = 4
-        >>> context.parallel.config_info = {"model_file": {"mindir_path": "/home/user/model.mindir"}}
+        >>> context.parallel.config_info = {"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}
         >>> context.parallel.config_path = "/home/user/config.txt"
         >>> print(context.parallel)
         workers num: 4,
-        config info: model_file: mindir_path /home/user/model.mindir,
+        config info: model_file: mindir_path /home/user/model_graph.mindir,
         config path: /home/user/config.txt.
     """
 
@@ -174,7 +194,7 @@ class Context:
             >>> context.target = ["cpu"]
             >>> print(context.target)
             ["cpu"]
-            >>> context.cpu.precision_mode="preferred_fp16"
+            >>> context.cpu.precision_mode = "preferred_fp16"
             >>> context.cpu.thread_num = 2
             >>> context.cpu.inter_op_parallel_num = 2
             >>> context.cpu.thread_affinity_mode = 1
@@ -712,20 +732,20 @@ class _Parallel:
 
     @property
     def config_info(self):
-        """Get the device id."""
+        """Get Nested map for transferring user defined options during building `ModelParallelRunner` online."""
         return self._runner_config.get_config_info_string().rstrip("\n")
 
     @config_info.setter
     def config_info(self, config_info):
         """
-        Set the device id.
+        set Nested map for transferring user defined options during building `ModelParallelRunner` online.
 
         Args:
-            config_info (dict{str, dict{str, str}}): Nested map for passing model weight paths.
-                For example, {"model_file": {"mindir_path": "/home/user/model.mindir"}}.
-                key currently supports ["model_file"];
-                value is in dict format, key of it currently supports ["mindir_path"],
-                value of it is the path of weight, For example, "/home/user/model.mindir".
+            config_info (dict{str, dict{str, str}}): Nested map for transferring user defined options during building
+                `ModelParallelRunner` online. More configurable options refer to `config_path` .
+                For example, {"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}.
+                `section` is "model_file", value is in dict format, one of the keys is "mindir_path",
+                the corresponding value is "/home/user/model_graph.mindir".
 
         Raises:
             TypeError: `config_info` is not a dict.
@@ -780,6 +800,26 @@ class _Parallel:
                       input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
                       dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
                       opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
+
+                - Usage 3: For the large model, when using the model buffer to load and compile, you need to set the
+                  path of the weight file separately through passing the path of the large model. And it is necessary to
+                  ensure that the large model file and the folder where the weight file is located are in the same
+                  folder. For example, when the directory is as follows:
+
+                  .. code-block::
+
+                      .
+                      └── /home/user/
+                           ├── model_graph.mindir
+                           └── model_variables
+                                └── data_0
+
+                  The content and description of the configuration file are as follows:
+
+                  .. code-block::
+
+                      [model_file]
+                      mindir_path=[/home/user/model_graph.mindir](storage path of the large model)
 
         Raises:
             TypeError: `config_path` is not a str.
