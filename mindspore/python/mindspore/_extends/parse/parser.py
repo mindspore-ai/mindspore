@@ -843,13 +843,22 @@ def eval_script(exp_str, params):
     return res
 
 
-def get_script_ids(script):
+def get_script_id_attrs(script):
     """Get the ids for the ast of script"""
     ast_tokens = asttokens.ASTTokens(script, parse=True)
     ast_tree = ast_tokens.tree
     ast_str = astunparse.dump(ast_tree)
     ids = re.findall(r"id='(.+?)'", ast_str)
-    return set(ids)
+    id_sets = set(ids)
+    pattern = r"Attribute\(\s*value.*?id='(.*?)'.*?attr='(.*?)'.*?\)"
+    matches = re.findall(pattern, ast_str, re.DOTALL)
+    id_attrs = ["{}.{}".format(match[0], match[1]) for match in matches]
+    logger.debug(f'id_attrs: {id_attrs}')
+    id_attrs_set = set(id_attrs)
+    logger.debug(f'id_attrs_set: {id_attrs_set}')
+    res = id_sets.union(id_attrs_set)
+    logger.debug(f'res: {res}')
+    return res
 
 
 def merge_global_params(global_dict):

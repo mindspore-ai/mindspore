@@ -191,8 +191,9 @@ prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
 // The cnode is non-effect-node, and the cnode is real node, and the inputs of cnode is dynamic.
 bool IsNonEffectRealNodeAndInputIsDynamic(const CNodePtr &cnode) {
   static const PrimitiveSet dynamic_input_node_prims = {
-    prim::kPrimStack,        prim::kPrimConcat,   prim::kPrimAddN,         prim::kPrimIdentityN,
-    prim::kPrimSparseConcat, prim::kPrimMeshgrid, prim::kPrimDynamicStitch};
+    prim::kPrimStack,        prim::kPrimConcat,   prim::kPrimAddN,          prim::kPrimIdentityN,
+    prim::kPrimSparseConcat, prim::kPrimMeshgrid, prim::kPrimDynamicStitch, prim::kPrimPyExecute,
+    prim::kPrimPyInterpret,  prim::kPrimMakeDict};
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
     return false;

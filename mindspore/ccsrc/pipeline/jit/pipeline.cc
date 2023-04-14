@@ -1330,12 +1330,12 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &
   T output_seq = T(res_seq.size());
   bool has_real_node_address = false;
   for (size_t i = 0; i < res_seq.size(); ++i) {
-    auto iter = res_seq[i];
-    output_seq[i] = res_seq[i];
-    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(output_seq[i], value);
+    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(res_seq[i], value);
     if (has_real_output) {
       output_seq[i] = py_res;
       has_real_node_address = true;
+    } else {
+      output_seq[i] = res_seq[i];
     }
   }
   return {output_seq, has_real_node_address};
