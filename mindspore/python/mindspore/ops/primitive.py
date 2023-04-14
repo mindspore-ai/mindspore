@@ -902,7 +902,7 @@ class _RunOpHook:
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if not _RunOpHook.current:
-        stub = _pynative_executor.run_op_async(obj, args)
+        stub = _pynative_executor.run_op_async(obj, op_name, args)
         return _convert_stub(stub)
     return _RunOpHook.current.hook(obj, args)
 

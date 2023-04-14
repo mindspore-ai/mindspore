@@ -461,18 +461,6 @@ ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   return converted_ret;
 }
 
-ValuePtr DataConvert::PyObjToStubNode(const py::object &obj) {
-  // In PyNative mode, AdapterTensor is treated as ms.Tensor.
-  if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR) && py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>()) {
-    py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
-  }
-  ValuePtr converted_ret = parse::data_converter::PyDataToStubNode(obj);
-  if (converted_ret == nullptr) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
-  }
-  return converted_ret;
-}
-
 ValuePtr DataConvert::BaseRefToValue(const BaseRef &value) {
   MS_EXCEPTION_IF_NULL(value);
   ValuePtr ret;

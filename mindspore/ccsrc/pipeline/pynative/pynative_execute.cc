@@ -101,19 +101,12 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 }
 
 py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
-  if (args.size() != static_cast<size_t>(AsyncRunOpArgsEnum::PY_ARGS_NUM)) {
-    MS_LOG(EXCEPTION) << "Two args are needed by RunOp";
-  }
-  auto prim = args[static_cast<size_t>(AsyncRunOpArgsEnum::PY_PRIM)];
-  auto input_args = args[static_cast<size_t>(AsyncRunOpArgsEnum::PY_INPUTS)];
-  const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
-  auto run_args = py::make_tuple(prim, adapter->name(), input_args);
-  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args, true);
+  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   SetCallbackForInputTensor(op_run_info);
 
   StoreAsyncStatus(op_run_info);
   // 1. get top_type from Primitive::PredictOutputType
-  auto top_type = PredictOutTypeByName(adapter->name());
+  auto top_type = PredictOutTypeByName(op_run_info->base_op_run_info.op_name);
   // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)
   if (DisablePyTraceAsync(op_run_info)) {
     // Wait for async task finish

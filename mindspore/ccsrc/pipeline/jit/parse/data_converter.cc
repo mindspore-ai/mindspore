@@ -239,6 +239,21 @@ ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
   return std::make_shared<ValueTuple>(value_list);
 }
 
+ValuePtr ConvertStubTuple(const py::object &obj, bool use_signature) {
+  MS_LOG(DEBUG) << "Converting python tuple";
+  auto tuple = obj.cast<py::tuple>();
+  std::vector<ValuePtr> value_list;
+  for (size_t it = 0; it < tuple.size(); ++it) {
+    ValuePtr out = nullptr;
+    bool success = ConvertStubData(tuple[it], &out, use_signature);
+    if (!success) {
+      return nullptr;
+    }
+    value_list.push_back(out);
+  }
+  return std::make_shared<ValueTuple>(value_list);
+}
+
 ValuePtr ConvertList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
 
@@ -247,6 +262,22 @@ ValuePtr ConvertList(const py::object &obj, bool use_signature) {
   for (size_t it = 0; it < list.size(); ++it) {
     ValuePtr out = nullptr;
     bool success = ConvertData(list[it], &out, use_signature);
+    if (!success) {
+      return nullptr;
+    }
+    value_list.push_back(out);
+  }
+  return std::make_shared<ValueList>(value_list);
+}
+
+ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
+  MS_LOG(DEBUG) << "Converting python list";
+
+  auto list = obj.cast<py::list>();
+  std::vector<ValuePtr> value_list;
+  for (size_t it = 0; it < list.size(); ++it) {
+    ValuePtr out = nullptr;
+    bool success = ConvertStubData(list[it], &out, use_signature);
     if (!success) {
       return nullptr;
     }
@@ -608,18 +639,27 @@ ValuePtr ObjCast(const py::object &obj) {
   return obj.cast<T>();
 }
 
+ValuePtr ConvertTensor(const py::object &obj) {
+  if (IsAdapterTensor(obj)) {
+    return ConvertAdapterTensor(obj);
+  }
+  return ObjCast<TensorPtr>(obj);
+}
+
+ValuePtr ConvertStub(const py::object &obj) {
+  auto stub_tensor = ConvertStubTensor(obj);
+  if (IsAdapterTensor(obj)) {
+    return std::make_shared<AdapterTensor>(stub_tensor);
+  }
+  return stub_tensor;
+}
+
 static const std::vector<DataConverterPtr> &GetDataConverters() {
   // Convert data by python object type.
   static const std::vector<DataConverterPtr> data_converters{
-    // AdapterTensor needs to be processed before Tensor and StubTensor.
-    std::make_shared<ByFuncDataConverter>(IsAdapterTensor, ConvertAdapterTensor),
-    std::make_shared<ByFuncDataConverter>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
-                                          [](const py::object &obj) -> ValuePtr { return ConvertStubTensor(obj); }),
-    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
-    std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
-    std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
-    std::make_shared<ByTypeDataConverter<COOTensor>>(ObjCast<COOTensorPtr>),
-    std::make_shared<ByTypeDataConverter<MapTensor>>(ObjCast<MapTensorPtr>),
+    // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
+    std::make_shared<ByFuncDataConverter>(IsStubTensor, ConvertStub),
+    std::make_shared<ByTypeDataConverter<Tensor>>(ConvertTensor),
     std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),
@@ -627,6 +667,10 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
     std::make_shared<ByTypeDataConverter<py::float_>>(ConvertFloatWithType),
     std::make_shared<ByTypeDataConverter<py::str>>(PyCast<StringImm, string>),
     std::make_shared<ByTypeDataConverter<py::none>>(kNone),
+    std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
+    std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
+    std::make_shared<ByTypeDataConverter<COOTensor>>(ObjCast<COOTensorPtr>),
+    std::make_shared<ByTypeDataConverter<MapTensor>>(ObjCast<MapTensorPtr>),
     std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
     std::make_shared<ByAttrDataConverter>(PYTHON_MS_CLASS, ConvertMsClass),
@@ -656,6 +700,8 @@ static const std::vector<DataConverterPtr> &GetStubDataConverters() {
   static const std::vector<DataConverterPtr> data_converters{
     std::make_shared<ByFuncDataConverter>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
                                           PyStubNodeCast),
+    std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertStubTuple),
+    std::make_shared<ByTypeDataConverter<py::list>>(ConvertStubList),
   };
   return data_converters;
 }
