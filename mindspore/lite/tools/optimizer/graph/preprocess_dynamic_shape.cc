@@ -456,9 +456,11 @@ int SplitInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
   out_shapes->clear();
   ShapeVector out_shape = in_shape;
   if (size_splits.empty()) {
-    MS_CHECK_TRUE_MSG(in_shape[axis] > 0 && in_shape[axis] % out_num == 0, lite::RET_ERROR,
-                      "Split's dim doesn't match split-axis.");
-    out_shape[axis] = in_shape[axis] / out_num;
+    if (out_shape[axis] != -1) {
+      MS_CHECK_TRUE_MSG(in_shape[axis] >= 0 && in_shape[axis] % out_num == 0, lite::RET_ERROR,
+                        "Split's dim doesn't match split-axis.");
+      out_shape[axis] = in_shape[axis] / out_num;
+    }
     out_shapes->insert(out_shapes->end(), out_num, out_shape);
   } else {
     for (auto v : size_splits) {
@@ -735,7 +737,7 @@ int DynamicShapePreprocessor::Run(const FuncGraphPtr &func_graph) {
   }
   auto ret = ProcessOps(func_graph);
   if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Preprocess for mul-reduce-fusion failed.";
+    MS_LOG(ERROR) << "Do DynamicShapePreprocessor failed.";
     return lite::RET_ERROR;
   }
   return lite::RET_OK;
