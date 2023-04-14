@@ -10,6 +10,10 @@ file(STRINGS "${TOP_DIR}/version.txt" MSVERSION)
 add_definitions(-DMSVERSION=\"${MSVERSION}\")
 add_compile_definitions(ENABLE_SECURITY)
 
+if(MSLITE_ENABLE_CONVERTER AND MSLITE_ENABLE_GRAPH_KERNEL)
+    add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
+endif()
+
 #link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
 file(GLOB GE_EXECUTOR_SRC

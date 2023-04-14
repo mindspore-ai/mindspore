@@ -193,8 +193,8 @@ bool FuseMatMul::Match(const AreaPtr &dom) {
       continue;
     }
     auto user_name = a->dom()->op();
-    // MatMul + Add/Cast  or  BatchMatMul + elemwise
-    if ((dom_name == kMatMulOpName && (user_name == kTensorAddOpName || user_name == kCastOpName)) ||
+    if ((dom_name == kMatMulOpName &&
+         (user_name == kTensorAddOpName || user_name == kCastOpName || user_name == kFastGeLUOpName)) ||
         (dom_name == kBatchMatMulOpName && a->pattern() == NodePattern::ELEMWISE)) {
       if (!HasCircle(dom, a)) {
         (void)fused_areas_.emplace_back(a);

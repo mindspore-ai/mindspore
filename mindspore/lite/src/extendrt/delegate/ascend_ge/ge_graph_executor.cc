@@ -33,6 +33,9 @@
 #include "src/extendrt/utils/func_graph_utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "flow_graph/data_flow.h"
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
+#endif
 
 namespace mindspore {
 namespace {
@@ -245,6 +248,12 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
     MS_LOG(ERROR) << "Input param graph_id is nullptr.";
     return false;
   }
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (GraphKernelOptimize(anf_graph, nullptr) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+    return false;
+  }
+#endif
   std::map<std::string, std::string> ge_options;
   GetGeGraphOptions(anf_graph, &ge_options);
 

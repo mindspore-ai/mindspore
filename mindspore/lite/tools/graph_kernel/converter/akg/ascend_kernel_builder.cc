@@ -31,6 +31,8 @@ AnfNodePtr AscendKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, c
   auto inputs = cnode->inputs();
   inputs[0] = NewValueNode(custom_prim);
   auto custom_cnode = func_graph->NewCNode(inputs);
+  custom_prim->EraseAttr("IsFeatureMapInputList");
+  custom_prim->EraseAttr("IsFeatureMapOutput");
 
   auto json_kernel_name = node_info_map_[cnode->cast<AnfNodePtr>()];
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
@@ -44,7 +46,10 @@ AnfNodePtr AscendKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, c
     output_names.push_back("y" + std::to_string(i));
   }
 
-  custom_prim->set_attr("reg_op_name", MakeValue(json_kernel_name));
+  std::ostringstream oss;
+  oss << "Fused_x" << input_num << "_y" << output_num;
+  std::string op_tye = oss.str();
+  custom_prim->set_attr("reg_op_name", MakeValue(op_tye));
   custom_prim->set_attr("info_path", MakeValue(dir_path_ + "/" + json_kernel_name + ".info"));
   custom_prim->set_attr("input_names", MakeValue(input_names));
   custom_prim->set_attr("output_names", MakeValue(output_names));
