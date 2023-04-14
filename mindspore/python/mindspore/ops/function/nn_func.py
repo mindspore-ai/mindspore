@@ -6410,8 +6410,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        new_attn_mask.masked_fill(attn_mask, float("-inf"))
-        attn_mask = new_attn_mask
+        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:
