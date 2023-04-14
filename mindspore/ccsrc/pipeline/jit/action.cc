@@ -965,6 +965,23 @@ bool HasAbstractFunction(const AbstractBasePtr &abs) {
   return abs->isa<abstract::AbstractFunction>();
 }
 
+bool AcceptableReturnValue(const AnfNodePtr &input0) {
+  if (IsValueNode<FuncGraph>(input0)) {
+    auto fg = GetValueNode<FuncGraphPtr>(input0);
+    MS_EXCEPTION_IF_NULL(fg);
+    auto debug_str = fg->ToString();
+    if (fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) && debug_str.find("CR-") != std::string::npos) {
+      return true;
+    }
+  }
+  auto func_graphs = abstract::GetFuncGraphsFromAbs(input0);
+  auto graph_has_function_output = [](const FuncGraphPtr &fg) { return HasAbstractFunction(fg->output()->abstract()); };
+  if (std::all_of(func_graphs.cbegin(), func_graphs.cend(), std::not_fn(graph_has_function_output))) {
+    return true;
+  }
+  return false;
+}
+
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
     if (node == nullptr || !node->isa<CNode>()) {
@@ -1007,11 +1024,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
       auto input0 = cnode->input(0);
       if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
           IsValueNode<FuncGraph>(input0)) {
-        auto func_graphs = abstract::GetFuncGraphsFromAbs(input0);
-        auto graph_has_function_output = [](const FuncGraphPtr &fg) {
-          return HasAbstractFunction(fg->output()->abstract());
-        };
-        if (std::all_of(func_graphs.cbegin(), func_graphs.cend(), std::not_fn(graph_has_function_output))) {
+        if (AcceptableReturnValue(input0)) {
           continue;
         }
       }

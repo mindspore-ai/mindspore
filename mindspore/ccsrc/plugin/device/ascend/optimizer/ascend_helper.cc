@@ -668,11 +668,19 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
     }
     input_types.push_back(type_id);
     input_formats.push_back(AnfAlgo::GetOutputFormat(param, 0));
-    input_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    if (kernel::TypeIdToKernelObjectType(AnfAlgo::GetOutputObjectType(param, 0)) == kernel::KernelObjectType::SCALAR) {
+      input_object_types.push_back(kernel::KernelObjectType::SCALAR);
+    } else {
+      input_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    }
   }
   for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
     output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
-    output_types.push_back(common::AnfAlgo::GetOutputInferDataType(sub_ret, i));
+    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(sub_ret, i);
+    if (type_id == kTypeUnknown) {
+      type_id = common::AnfAlgo::GetOutputInferDataType(sub_ret, i);
+    }
+    output_types.push_back(type_id);
     output_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
