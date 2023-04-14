@@ -892,7 +892,9 @@ class AfterOptARewriter : public BaseRewriter {
     MS_LOG(DEBUG) << "Raise node: " << cnode->DebugString();
     auto raise_pyexecute_node = std::make_shared<CNode>(*cnode);
     raise_pyexecute_node->CloneUserData(cnode);
-    raise_pyexecute_node->set_input(0, NewValueNode(prim::kPrimPyExecute));
+    auto raise_prim = std::make_shared<Primitive>(*prim::kPrimPyExecute);
+    raise_prim->set_attr("is_raise_prim", MakeValue(true));
+    raise_pyexecute_node->set_input(0, NewValueNode(raise_prim));
     raise_pyexecute_node->set_debug_info(cnode->debug_info());
     MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
     return raise_pyexecute_node;
