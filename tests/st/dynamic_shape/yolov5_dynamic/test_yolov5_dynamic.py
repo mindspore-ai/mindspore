@@ -54,6 +54,11 @@ def run_yolov5_dynamic_case(cur_model_path, device_target, mode="GRAPH"):
     return loss_list
 
 
+def check_and_print_when_fail(to_check, expect, rtol, atol):
+    if not np.allclose(to_check, expect, rtol, atol):
+        raise ValueError("Loss is %s, but expect %s!" % (str(to_chekc), str(expect)))
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -68,24 +73,26 @@ def test_yolov5_dynamic_gpu():
     expect_loss = [7200.505, 544.873, 600.88]
     # Different gpu device (such as V100 and 3090) lead to some differences
     # in the calculation results, so only the first 2 steps is compared
-    assert np.allclose(loss_list[:2], expect_loss[:2], 1e-1, 1e-1)
+    check_and_print_when_fail(loss_list[:2], expect_loss[:2], 1e-1, 1e-1)
     loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "GPU", "PYNATIVE")
-    assert np.allclose(loss_list_pynative[:2], expect_loss[:2], 1e-1, 1e-1)
+    check_and_print_when_fail(loss_list_pynative[:2], expect_loss[:2], 1e-1, 1e-1)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_yolov5_dynamic_ascend():
+def test_yolov5_dynamic_ascend_graph():
     """
     Feature: yolov5_dynamic
     Description: test yolov5_dynamic run
     Expectation: loss is same with the expect
     """
     cur_model_path = init_files()
-    loss_list = run_yolov5_dynamic_case(cur_model_path, "Ascend")
     expect_loss = [7200.35, 530]
     # Currently, the rtol/atol of loss of network running for many times exceeds
     # 1e-3, so only compare the first step
-    assert np.allclose(loss_list[0], expect_loss[0], 1e-3, 1e-3)
+    loss_list = run_yolov5_dynamic_case(cur_model_path, "Ascend")
+    check_and_print_when_fail(loss_list[0], expect_loss[0], 1e-3, 1e-3)
+    loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "Ascend", "PYNATIVE")
+    check_and_print_when_fail(loss_list_pynative[0], expect_loss[0], 1e-3, 1e-3)
