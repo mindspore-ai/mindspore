@@ -107,7 +107,7 @@ def _allow_mix_precision(node, allowed_list) -> bool:
         # if cell is already in allowed_list, it means to_float(mindspore.float16) is set by amp.
         # if cell is not in allowed_list, but has to_float(mindspore.float16),
         # it means to_float(mindspore.float16) is set by user.
-        if node.get_instance().to_float_fp16:
+        if hasattr(node.get_instance(), "to_float_fp16") and node.get_instance().to_float_fp16:
             return False
     allowed_list.append(node.get_instance())
     return True
@@ -159,6 +159,10 @@ def _insert_cast_operator_process(node, stree):
 def _insert_cast_operator_white_list(stree, white_list):
     """insert cast for operators in white_list."""
     allowed_list = []
+    # Ignore if net called ".to_float(mindspore.float16)"
+    net = stree.get_handler().get_origin_network()
+    if isinstance(net, nn.Cell) and hasattr(net, "to_float_fp16") and net.to_float_fp16:
+        return
     for node in stree.nodes():
         if node.get_targets() is None:
             continue
@@ -190,6 +194,8 @@ def _need_removed_cast_pair(node):
         return False
     for user in node.get_users():
         if isinstance(user.get_instance(), nn.Cell):
+            if not hasattr(user.get_instance(), "to_float_fp16"):
+                return False
             if not user.get_instance().to_float_fp16:
                 return False
         elif user.get_instance_type() == P.Cast:
