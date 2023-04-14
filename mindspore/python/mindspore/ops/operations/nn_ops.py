@@ -7115,7 +7115,7 @@ class CTCGreedyDecoder(Primitive):
           Data type is int64.
         - **decoded_values** (Tensor) - A tensor with shape of :math:`(total\_decoded\_outputs, )`,
           it stores the decoded classes. Data type is int64.
-        - **decoded_shape** (Tensor) - A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
+        - **decoded_shape** (Tensor) - A tensor with shape of :math:`(batch\_size, max\_decoded\_length)`.
           Data type is int64.
         - **log_probability** (Tensor) - A tensor with shape of :math:`(batch\_size, 1)`,
           containing sequence log-probability, has the same type as `inputs`.
@@ -7680,8 +7680,8 @@ class Conv3D(Primitive):
 
     where :math:`k` is kernel,
     :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
+    the output and :math:`j` is in the range of :math:`[0, C_{out} - 1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
     where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
@@ -7753,20 +7753,20 @@ class Conv3D(Primitive):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+                D_{out} = \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
         `pad_mode` is 'valid':
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -7774,11 +7774,11 @@ class Conv3D(Primitive):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 

@@ -229,7 +229,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，其shape为 :math:`(N, \ldots)`。
 
     输出：
-        Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
+        Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。shape为 :math:`()`。
 
         - loss(Tensor)，标量Tensor。
         - overflow(Tensor)，标量Tensor，类型为bool。
@@ -243,11 +243,11 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         使用Adasum算法训练。
 
         参数：
-            - **loss** (Tensor) - 网络训练的loss值。
+            - **loss** (Tensor) - 网络训练的loss值。shape为 :math:`()`。
             - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
 
         返回：
-            Tensor，网络训练过程中得到的loss值。
+            Tensor，网络训练过程中得到的loss值。shape为 :math:`()`。
 
     .. py:method:: check_adasum_enable()
 
@@ -268,10 +268,10 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         使用梯度累积算法训练。
 
         参数：
-            - **loss** (Tensor) - 网络训练的loss值。
+            - **loss** (Tensor) - 网络训练的loss值。shape为 :math:`()`。
             - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
-            - **sens** (Tensor) - 作为反向传播输入要填充的缩放数。
-            - **inputs** (tuple(Tensor)) - 网络训练的输入。
+            - **sens** (Tensor) - 作为反向传播输入要填充的缩放数。shape为 :math:`()`。
+            - **inputs** (tuple(Tensor)) - 网络训练的输入。shape为 :math:`(N, \ldots)`。
 
         返回：
             Tensor，网络训练过程中得到的loss值，其shape为 :math:`()`。
@@ -299,14 +299,14 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     输入：
-        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+        - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组。shape为 :math:`(N, \ldots)`。
 
     输出：
         Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
 
-        - **loss** (Tensor) - 标量Tensor。
-        - **overflow** (Tensor) - 标量Tensor，类型为bool。
-        - **loss scaling value** (Tensor) - 标量Tensor。
+        - **loss** (Tensor) - 标量Tensor。shape为 :math:`()`。
+        - **overflow** (Tensor) - 标量Tensor，类型为bool。shape为 :math:`()`。
+        - **loss scaling value** (Tensor) - 标量Tensor。shape为 :math:`()`。
 
     异常：
         - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。

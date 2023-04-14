@@ -3552,7 +3552,7 @@ class Ceil(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. Its element data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -5222,7 +5222,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
 
     Inputs:
         - **x** (Tensor) - The first input tensor with shape
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The second input tensor with same type as the `x`.
 
     Outputs:
@@ -5249,7 +5249,7 @@ class BitwiseOr(_BitwiseBinaryOp):
 
     Inputs:
         - **x** (Tensor) - The first input tensor with shape
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The second input tensor with same type as the `x`.
 
     Outputs:
@@ -5276,7 +5276,7 @@ class BitwiseXor(_BitwiseBinaryOp):
 
     Inputs:
         - **x** (Tensor) - The first input tensor with shape
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The second input tensor with same type as the `x`.
 
     Outputs:

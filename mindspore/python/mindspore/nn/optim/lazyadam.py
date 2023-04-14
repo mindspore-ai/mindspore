@@ -270,8 +270,9 @@ class LazyAdam(Optimizer):
         \begin{array}{ll} \\
             m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
             v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
-            w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
+            \widehat{m_{t+1}} = \frac{m_{t+1}}{1-\beta_1^t} \\
+            \widehat{v_{t+1}} = \frac{v_{t+1}}{1-\beta_2^t} \\
+            w_{t+1} = w_{t} - \gamma * \frac{\widehat{m_{t+1}}}{\sqrt{\widehat{v_{t+1}}} + \epsilon}
         \end{array}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
