@@ -158,13 +158,6 @@ mindspore
 
     mindspore.run_check
 
-内存回收
-----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.ms_memory_recycle
 
 二阶优化
 ----------
