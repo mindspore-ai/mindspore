@@ -384,10 +384,6 @@ CompileResult::~CompileResult() {
     delete (node);
   }
   arg_nodes_.clear();
-  for (auto &tensor : tensors_) {
-    delete (tensor);
-  }
-  tensors_.clear();
 }
 }  // namespace infer
 }  // namespace mindspore

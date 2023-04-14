@@ -94,8 +94,6 @@ Status DefaultInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor>
     return kLiteNullptr;
   }
   // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
-  // auto inner_inputs = xxx(inputs);
-  // auto inner_outputs = xxx(outputs);
   auto inner_inputs = runtime->GetInputs();
   auto inner_outputs = runtime->GetOutputs();
   auto status = CopyDataToInnerTensors(inputs, inner_inputs);
@@ -103,11 +101,6 @@ Status DefaultInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor>
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to input tensors failed";
     return status;
   }
-  // status = CopyDataToInnerTensors(*outputs, inner_outputs);
-  // if (status != kSuccess) {
-  //   MS_LOG(ERROR) << "DefaultInferSession::RunGraph Copy Data Pointer to output tensors failed";
-  //   return status;
-  // }
   status = runtime->Execute(inner_inputs, inner_outputs);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DefaultInferSession::RunGraph Execute Execution Plan Failed";
@@ -136,11 +129,6 @@ Status DefaultInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &
     return kLiteNullptr;
   }
   // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
-  // std::vector<infer::abstract::Tensor *> input_tensors;
-  // std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_tensors), [](const tensor::Tensor &tensor) {
-
-  //   auto input_tensor = new infer::abstract::Tensor();
-  // });
   auto inner_inputs = runtime->GetInputs();
   auto status = runtime->Resize(inner_inputs, dims);
   if (status != kSuccess) {
@@ -208,6 +196,13 @@ MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t graph_id
   return nullptr;
 }
 
+void DefaultInferSession::ResetTensorData(const std::vector<void *> &old_data,
+                                          const std::vector<lite::Tensor *> &tensors) {
+  for (size_t j = 0; j < old_data.size(); j++) {
+    tensors.at(j)->set_data(old_data.at(j));
+  }
+}
+
 Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
                                                    std::vector<infer::abstract::Tensor *> inner_tensors) {
   if (tensors.size() != inner_tensors.size()) {
@@ -219,12 +214,12 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
     auto &user_input = tensors.at(i);
     auto input = inner_tensors.at(i);
     if (user_input.data_type() != input->data_type()) {
-      // ResetTensorData(old_data, input_tensors);
+      ResetTensorData(old_data, inner_tensors);
       MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has a different data type from input"
                         << input->tensor_name() << ".";
     }
     if (user_input.data_c() == nullptr) {
-      // ResetTensorData(old_data, input_tensors);
+      ResetTensorData(old_data, inner_tensors);
       MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has no data.";
     }
     old_data.push_back(input->data());
@@ -232,7 +227,7 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
       std::vector<int32_t> shape =
         TruncateShape(user_input.shape_c(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.shape_c().empty())) {
-        // ResetTensorData(old_data, input_tensors);
+        ResetTensorData(old_data, inner_tensors);
         MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
       }
       input->set_shape(shape);
@@ -240,7 +235,7 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
     } else {
       if (user_input.data_c() != input->data()) {
         if (input->Size() != user_input.Size()) {
-          // ResetTensorData(old_data, input_tensors);
+          ResetTensorData(old_data, inner_tensors);
 #ifndef ENABLE_LITE_ACL
           MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has wrong data size.";
 #else

@@ -196,11 +196,6 @@ StatusCode CompileResultBuilder::RemoveSeqGetItemNode() {
       continue;
     }
     MS_LOG(INFO) << "Handling GetItem node: " << node->GetName();
-    // constexpr int kSize2 = 2;
-    // if (node->InputSize() != kSize2) {
-    //   MS_LOG(ERROR) << "GetItem node should has 2 inputs, but got " << node->InputSize();
-    //   return kLiteError;
-    // }
     if (node->OutputSize() != 1) {
       MS_LOG(ERROR) << "GetItem node should has 1 outputs, but got " << node->OutputSize();
       return kLiteError;
