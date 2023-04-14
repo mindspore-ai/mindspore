@@ -56,10 +56,10 @@ class BpropIRBuilder : public Emitter {
   NodePtr GetInput(size_t i) const;
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
-  // For node that has single output
-  ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
   NodePtrList BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift = 0) const;
 
+  // For node that has single output
+  ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
   // For node that has multiple outputs
   std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }
   TypePtr GetDtype(const NodePtr &node) const { return node->dtype(); }
@@ -103,6 +103,7 @@ class BpropIRBuilder : public Emitter {
   // case 3: x[..., 0:3:2, 0::2, :]   => StridedSlice(x, {{-3,{0,3,2}}, {-2,{0,LLONG_MAX,2}}})
   NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const;
   std::string GetInstanceName() const { return instance_name_; }
+  NodePtr TanhGrad(const NodePtr &y, const NodePtr &dy) const { return Emit("TanhGrad", {y, dy}); }
 
  protected:
   std::string name_;

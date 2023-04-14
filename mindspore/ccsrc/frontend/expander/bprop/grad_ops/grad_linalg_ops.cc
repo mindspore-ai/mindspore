@@ -35,7 +35,7 @@ NodePtr MatrixTranspose(const BpropIRBuilder *ib, const NodePtr &x) {
   return ib->Transpose(x, perm);
 }
 
-NodePtr Adjoint(const BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Emit("Conj", {x})); }
+NodePtr Adjoint(const BpropIRBuilder *ib, const NodePtr &x) { return MatrixTranspose(ib, ib->Conj(x)); }
 
 NodePtr MatrixDiag(const BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);

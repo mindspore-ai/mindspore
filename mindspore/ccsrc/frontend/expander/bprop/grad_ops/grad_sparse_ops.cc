@@ -141,7 +141,7 @@ NodePtrList CommonSparseSegmentBpropDefault(const BpropIRBuilder *ib, bool with_
   auto input0 = ib->Gather(dout, segment_ids, ib->Tensor(0, kInt64));
   input0 = ib->Cast(input0, kFloat32);
   indices = ib->Cast(indices, kInt32);
-  auto dx = ib->Emit("UnsortedSegmentSum", {input0, indices, output_dim0});
+  auto dx = ib->UnsortedSegmentSum(input0, indices, output_dim0);
   dx = ib->Cast(dx, ib->GetDtype(dout));
   NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
   if (with_segments) {
@@ -161,8 +161,8 @@ NodePtrList BpropSparseDenseCwiseCommon(const BpropIRBuilder *ib, const std::str
   auto scaled_indices = ib->RealDiv(x1_indices, scaling);
   std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
   std::vector<int64_t> size = {-1, -1};
-  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
-  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
+  scaled_indices = ib->Cast(ib->Slice(scaled_indices, ib->Value(begin), ib->Value(size)), kInt64);
+  auto dense_vals = ib->GatherNd(x2, scaled_indices);
   NodePtr dx1 = nullptr;
   NodePtr dx2_val = nullptr;
   if (op_name == "SparseDenseCwiseMul") {
@@ -184,14 +184,14 @@ REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUN
   auto indices = ib->GetInput(kIndex0);
   auto dense_shape = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {ib->ZerosLike(indices), ib->Emit("GatherNd", {dout, indices}), ib->ZerosLike(dense_shape)};
+  return {ib->ZerosLike(indices), ib->GatherNd(dout, indices), ib->ZerosLike(dense_shape)};
 });
 
 REG_BPROP_BUILDER("SparseToDenseV2").SetUnusedInputs({i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto output_shape = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex5);
-  auto sparse_values_grad = ib->Emit("GatherNd", {dout, indices});
+  auto sparse_values_grad = ib->GatherNd(dout, indices);
   auto default_value_grad = ib->ReduceSum(dout) - ib->ReduceSum(sparse_values_grad);
   return {ib->ZerosLike(indices), ib->ZerosLike(output_shape), sparse_values_grad, default_value_grad};
 });
@@ -289,7 +289,7 @@ REG_BPROP_BUILDER("CSRMV").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   auto dense = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex6);
   auto indices_shape = ib->GetShape(indices);
-  auto rows = ib->Emit("CSR2COO", {indptr, ib->Value(indices_shape.at(0))});
+  auto rows = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
   auto idx_dtype = ib->GetDtype(rows);
   constexpr int64_t axis = -1;
   auto sort_res =
@@ -332,9 +332,10 @@ REG_BPROP_BUILDER("CSRMul").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape, ib->Value(static_cast<int64_t>(1))});
   } else {
     auto indices_shape = ib->GetShape(indices);
-    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(indices_shape.at(0))});
-    auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
-    dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
+    auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
+    int64_t axis = -1;
+    auto coo_idx = ib->Stack({row, indices}, axis);
+    dense_grad = ib->TensorScatterUpdate(ib->ZerosLike(dense), coo_idx, dense_grad_value);
   }
   return {ib->ZerosLike(indptr), ib->ZerosLike(indices), csr_tensor_grad_value, ib->ZerosLike(ib->Value<int64_t>(0)),
           dense_grad};
@@ -382,9 +383,10 @@ REG_BPROP_BUILDER("CSRDiv").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape_node, ib->Value(static_cast<int64_t>(1))});
   } else {
     auto indices_shape = ib->GetShape(indices);
-    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(indices_shape.at(0))});
-    auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
-    dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
+    auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
+    int64_t axis = -1;
+    auto coo_idx = ib->Stack({row, indices}, axis);
+    dense_grad = ib->TensorScatterUpdate(ib->ZerosLike(dense), coo_idx, dense_grad_value);
   }
   return {ib->ZerosLike(indptr), ib->ZerosLike(indices), csr_tensor_grad_value, ib->ZerosLike(ib->Value<int64_t>(0)),
           dense_grad};
@@ -575,7 +577,7 @@ REG_BPROP_BUILDER("SparseTensorDenseAdd").SetUnusedInputs({i1, i2, i3, i4}).SetB
   auto x1_indices = ib->GetInput(kIndex0);
   auto x1_shape = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex5);
-  return {ib->ZerosLike(x1_indices), ib->Emit("GatherNd", {dout, x1_indices}), ib->ZerosLike(x1_shape), dout};
+  return {ib->ZerosLike(x1_indices), ib->GatherNd(dout, x1_indices), ib->ZerosLike(x1_shape), dout};
 });
 
 REG_BPROP_BUILDER("SparseSegmentMeanWithNumSegments").SetUnusedInputs({i0, i3, i4}).SetBody(BODYFUNC(ib) {

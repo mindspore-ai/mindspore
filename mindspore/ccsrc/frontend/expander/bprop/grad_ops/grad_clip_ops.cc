@@ -29,7 +29,7 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto square_out = ib->Emit("Square", {cast_x});
   auto reduce_sum_axis = ib->EmitValue(ib->GetAttr("axis"));
   auto reduce_sum_out = ib->ReduceSum(square_out, reduce_sum_axis, true);
-  auto sqrt_out = ib->Emit("Sqrt", {reduce_sum_out});
+  auto sqrt_out = ib->Sqrt(reduce_sum_out);
   auto max_out = ib->Maximum(sqrt_out, cast_clip_norm);
   auto mul_out = ib->Mul(cast_x, cast_clip_norm);
   auto div_bc_x = ib->Div(dout, max_out);

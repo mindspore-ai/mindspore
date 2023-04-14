@@ -157,10 +157,10 @@ REG_BPROP_BUILDER("RGBToHSV").SetBody(BODYFUNC(ib) {
   auto dout_r = ib->StridedSlice(dout, {{-1, {0}}});
   auto dout_g = ib->StridedSlice(dout, {{-1, {1}}});
   auto dout_b = ib->StridedSlice(dout, {{-1, {2}}});
-  auto axis = MakeValue<int64_t>(-1);
-  auto dv_drgb = ib->Emit("Stack", {ib->MakeTuple({dout_b * dv_dr, dout_b * dv_dg, dout_b * dv_db})}, {{"axis", axis}});
-  auto ds_drgb = ib->Emit("Stack", {ib->MakeTuple({dout_g * ds_dr, dout_g * ds_dg, dout_g * ds_db})}, {{"axis", axis}});
-  auto dh_drgb = ib->Emit("Stack", {ib->MakeTuple({dout_r * dh_dr, dout_r * dh_dg, dout_r * dh_db})}, {{"axis", axis}});
+  int64_t axis = -1;
+  auto dv_drgb = ib->Stack({dout_b * dv_dr, dout_b * dv_dg, dout_b * dv_db}, axis);
+  auto ds_drgb = ib->Stack({dout_g * ds_dr, dout_g * ds_dg, dout_g * ds_db}, axis);
+  auto dh_drgb = ib->Stack({dout_r * dh_dr, dout_r * dh_dg, dout_r * dh_db}, axis);
   auto doutient_input = dv_drgb + ds_drgb + dh_drgb;
   return {doutient_input};
 });
