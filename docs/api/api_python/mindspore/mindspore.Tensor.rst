@@ -142,6 +142,7 @@ mindspore.Tensor
     mindspore.Tensor.hypot
     mindspore.Tensor.i0
     mindspore.Tensor.igamma
+    mindspore.Tensor.igammac
     mindspore.Tensor.imag
     mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
