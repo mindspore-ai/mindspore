@@ -407,6 +407,16 @@ class Softmax(Primitive):
 
     Refer to :func:`mindspore.ops.softmax` for more details.
 
+    Args:
+        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: -1.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the logits.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -498,6 +508,13 @@ class Softsign(Primitive):
 
     Refer to :func:`mindspore.ops.softsign` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -520,6 +537,14 @@ class ReLU(Primitive):
     Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
     Refer to :func:`mindspore.ops.relu` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+
+    Outputs:
+        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -672,6 +697,12 @@ class ReLU6(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.relu6` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -821,6 +852,12 @@ class Sigmoid(Primitive):
     Sigmoid activation function.
     Refer to :func:`mindspore.ops.sigmoid` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
+
+    Outputs:
+        Tensor, with the same type and shape as the input_x.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -866,6 +903,12 @@ class Tanh(Primitive):
     Computes hyperbolic tangent of input element-wise.
 
     Refer to :func:`mindspore.ops.tanh` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - Input Tensor of any dimension, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -2961,6 +3004,21 @@ class SmoothL1Loss(Primitive):
 
     Refer to :func:`mindspore.ops.smooth_l1_loss` for more details.
 
+    Args:
+        beta (float, optional): A parameter used to control the point where the function will change between
+            L1 to L2 loss. The value should be greater than zero. Default: 1.0.
+        reduction (float, optional): Apply specific reduction method to the output: 'none', 'mean',
+            'sum'. Default: 'mean'.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
+          same shape and dtype as the `logits`.
+
+    Outputs:
+        Tensor, loss float tensor, same shape and dtype as the `logits`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4010,6 +4068,16 @@ class PReLU(PrimitiveWithInfer):
 
     Refer to :func:`mindspore.ops.prelu` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input Tensor of the activation function. The data type is float16 or float32.
+          The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
+        - **weight** (Tensor) -  Weight Tensor. The data type is float16 or float32.
+          The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
+          On GPU devices, when the input is a scalar, the shape is 1.
+
+    Outputs:
+        Tensor, with the same type as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4044,7 +4112,7 @@ class LSTM(Primitive):
     r"""
     Performs the Long Short-Term Memory (LSTM) on the input.
 
-    For detailsed information, please refer to :class:`mindspore.nn.LSTM`.
+    For more information, please refer to :class:`mindspore.nn.LSTM`.
 
     Args:
         input_size (int): Number of features of input.
@@ -8523,6 +8591,15 @@ class SoftShrink(Primitive):
 
     Refer to :func:`mindspore.ops.softshrink` for more details.
 
+    Args:
+        lambd(Float, optional): The :math:`\lambda` must be no less than zero. Default: 0.5.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of soft shrink with data type of float16 or float32.
+
+    Outputs:
+        Tensor, has the same shape and data type as `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -9805,6 +9882,16 @@ class Pdist(Primitive):
     Computes the p-norm distance between each pair of row vectors in the input.
 
     Refer to :func:`mindspore.ops.pdist` for more details.
+
+    Args:
+        p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: 2.0.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size,
+          one-dim or multi-dim. Supported dtypes: float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same dtype as `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

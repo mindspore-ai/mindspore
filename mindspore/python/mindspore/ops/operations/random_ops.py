@@ -924,6 +924,27 @@ class UniformCandidateSampler(Primitive):
 
     Refer to :func:`mindspore.ops.uniform_candidate_sampler` for more details.
 
+    Args:
+        num_true (int): The number of target classes in each training example.
+        num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
+            of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
+        unique (bool): Whether all sampled classes in a batch are unique.
+        range_max (int): The number of possible classes, must be non-negative.
+        seed (int, optional): Used for random number generation, must be non-negative. If seed has a value of 0,
+            the seed will be replaced with a randomly generated value. Default: 0.
+        remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: False.
+
+    Inputs:
+        - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of (batch_size, num_true).
+
+    Outputs:
+        - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
+          Shape: (num_sampled, ).
+        - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
+          of true_classes. Shape: (batch_size, num_true).
+        - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
+          each of sampled_candidates. Shape: (num_sampled, ).
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
