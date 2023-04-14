@@ -1304,11 +1304,11 @@ def get_ps_context(attr_key):
     Args:
         attr_key (str): The key of the attribute:
 
-            - enable_ps (bool): Whether to enable parameter server training mode.
+            - enable_ps (bool): Whether to enable parameter server training mode. Default: ``False`` .
             - config_file_path (string): Configuration file path used by recovery, parameter server training mode only
               supports Server disaster recovery currently. Default: ''.
-            - scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: 11202.
-            - enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
+            - scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: ``11202`` .
+            - enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: ``False`` .
             - client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
             - server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
 

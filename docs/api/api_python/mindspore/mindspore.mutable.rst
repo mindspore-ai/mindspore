@@ -16,7 +16,7 @@ mindspore.mutable
 
     参数：
         - **input_data** (Union[int, float, Tensor, tuple, list, dict]) - 要设置为可变的输入数据。如果 `input_data` 是list，tuple或者dict， 其内部元素的类型也需要是这些有效类型中的一个。
-        - **dynamic_len** (bool) - 是否要将整个序列设置为动态长度的。在图编译内，如果 `dynamic_len` 被设置为True， 那么 `input_data` 必须为tuple或者list， 并且其中的元素必须有相同的类型以及形状。默认值：False。
+        - **dynamic_len** (bool) - 是否要将整个序列设置为动态长度的。在图编译内，如果 `dynamic_len` 被设置为 ``True`` ， 那么 `input_data` 必须为tuple或者list， 并且其中的元素必须有相同的类型以及形状。默认值： ``False`` 。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
@@ -29,5 +29,5 @@ mindspore.mutable
 
     异常：
         - **TypeError** - 如果 `input_data` 不是int、float、tuple[Tensor]、list[Tensor]或dict[Tensor]的其中一种类型或者不是它们的嵌套结构。
-        - **TypeError** - 如果 `dynamic_len` 被设置为True并且 `input_data` 不是tuple或者list。
-        - **ValueError** - 如果 `dynamic_len` 被设置为True， `input_data` 是tuple或者list的情况下，其中的元素的形状或者类型不一致。
+        - **TypeError** - 如果 `dynamic_len` 被设置为 ``True`` 并且 `input_data` 不是tuple或者list。
+        - **ValueError** - 如果 `dynamic_len` 被设置为 ``True`` ， `input_data` 是tuple或者list的情况下，其中的元素的形状或者类型不一致。

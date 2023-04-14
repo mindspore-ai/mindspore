@@ -8,7 +8,7 @@ mindspore.load_param_into_net
     参数：
         - **net** (Cell) - 将要加载参数的网络。
         - **parameter_dict** (dict) - 加载checkpoint文件得到的字典。
-        - **strict_load** (bool) - 是否将参数严格加载到网络中。如果是False, 它将以相同的后缀名将参数字典中的参数加载到网络中，并会在精度不匹配时，进行精度转换，比如将 `float32` 转换为 `float16` 。默认值：False。
+        - **strict_load** (bool) - 是否将参数严格加载到网络中。如果是 ``False`` , 它将以相同的后缀名将参数字典中的参数加载到网络中，并会在精度不匹配时，进行精度转换，比如将 `float32` 转换为 `float16` 。默认值： ``False`` 。
 
     返回：
         - **param_not_load** (List)，网络中没有被加载的参数。

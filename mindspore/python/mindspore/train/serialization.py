@@ -338,14 +338,15 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                       param_name would be string, and the type of param_data would
                                       be parameter or Tensor).
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
-        integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
-        async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: False
+        integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: ``True`` .
+        async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: ``False`` .
         append_dict (dict): Additional information that needs to be saved. The key of dict must be str, the value
-                            of dict must be one of int, float, bool, string, Parameter or Tensor. Default: None.
-        enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
-                                      is not required. Default: None.
-        enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
+                            of dict must be one of int, float, bool, string, Parameter or Tensor. Default: ``None`` .
+        enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is ``None`` , the encryption
+                                      is not required. Default: ``None`` .
+        enc_mode (str): This parameter is valid only when enc_key is not set to ``None`` . Specifies the encryption
+                        mode, currently supports ``'AES-GCM'`` and ``'AES-CBC'`` and ``'SM4-CBC'`` .
+                        Default: ``'AES-GCM'`` .
 
     Raises:
         TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter `integrated_save`
@@ -790,23 +791,24 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
-        net (Cell): The network where the parameters will be loaded. Default: None
-        strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
+        net (Cell): The network where the parameters will be loaded. Default: ``None`` .
+        strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
-                            on the parameters of the same type, such as float32 to float16. Default: False.
+                            on the parameters of the same type, such as float32 to float16. Default: ``False`` .
         filter_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
-            filter_prefix will not be loaded. Default: None.
-        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
-                                      is not required. Default: None.
-        dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
-                        mode, currently supports 'AES-GCM' and 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
+            filter_prefix will not be loaded. Default: ``None`` .
+        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
+                                      is not required. Default: ``None`` .
+        dec_mode (str): This parameter is valid only when dec_key is not set to ``None`` . Specifies the decryption
+                        mode, currently supports ``'AES-GCM'`` and ``'AES-CBC'`` and ``'SM4-CBC'`` .
+                        Default: ``'AES-GCM'`` .
         specify_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
-            specify_prefix will be loaded. Default: None.
+            specify_prefix will be loaded. Default: ``None`` .
         choice_func (Union[None, function]) : Input value of the function is a Parameter name of type string,
-            and the return value is a bool. If returns True, the Parameter
-            that matches the custom condition will be loaded. If returns False, the Parameter that
-            matches the custom condition will be removed. Default: None.
+            and the return value is a bool. If returns ``True`` , the Parameter
+            that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
+            matches the custom condition will be removed. Default: ``None`` .
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
@@ -1021,10 +1023,10 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         net (Cell): The network where the parameters will be loaded.
         parameter_dict (dict): The dictionary generated by load checkpoint file,
                                it is a dictionary consisting of key: parameters's name, value: parameter.
-        strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
+        strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
-                            on the parameters of the same type, such as float32 to float16. Default: False.
+                            on the parameters of the same type, such as float32 to float16. Default: ``False`` .
 
     Returns:
         param_not_load (List), the parameter name in model which are not loaded into the network.
@@ -2024,20 +2026,21 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         network (Cell): Network for distributed predication.
         checkpoint_filenames (list[str]): The name of Checkpoint files in order of rank id.
         predict_strategy (dict): Strategy of predication process. It means that using one device to predict
-                                 when setting predict_strategy as None. Default: None.
+                                 when setting predict_strategy as None. Default: ``None`` .
         train_strategy_filename (str): The filename of training strategy protocol buffer file.
                                        When train_strategy_filename is None, the training strategy file will be
                                        obtained from context.get_auto_parallel_context("strategy_ckpt_load_file").
                                        Therefore, the training strategy file needs to be specified
-                                       in at least one of them. Default: None.
-        strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
+                                       in at least one of them. Default: ``None`` .
+        strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
-                            on the parameters of the same type, such as float32 to float16. Default: False.
-        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
-                                      is not required. Default: None.
-        dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
-                        mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
+                            on the parameters of the same type, such as float32 to float16. Default: ``False`` .
+        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
+                                      is not required. Default: ``None`` .
+        dec_mode (str): This parameter is valid only when dec_key is not set to ``None`` . Specifies the decryption
+                        mode, currently supports ``'AES-GCM'`` , ``'AES-CBC'``  and ``'SM4-CBC'`` .
+                        Default: ``'AES-GCM'`` .
 
     Raises:
         TypeError: The type of inputs do not match the requirements.
