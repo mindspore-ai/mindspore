@@ -37,7 +37,7 @@ typedef struct ArithmeticMatrixInfo {
   bool is_valid_;
   void *data_;
   int64_t inner_size_;
-  int shape_[MAX_SHAPE_SIZE];
+  int shape_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int shape_size_;
   int *batch_post_sum_; /* shape size + 1 */
 } ArithmeticMatrixInfo;

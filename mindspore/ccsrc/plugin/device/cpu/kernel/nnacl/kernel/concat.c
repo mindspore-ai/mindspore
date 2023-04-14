@@ -108,7 +108,7 @@ int InitConcatDynamicStatus(ConcatStruct *concat) {
       outer_size *= t->shape_[j];
     }
     int inner_size = DataTypeCSize(concat->data_type_);
-    NNACL_CHECK_TRUE_RET(inner_size > 0, NNACL_CONCAT_DATA_TYPE_INVALID);
+    NNACL_CHECK_TRUE_RET(inner_size > 0, NNACL_UNSUPPORTED_DATA_TYPE);
 
     for (int j = param->axis_; j < t->shape_size_; ++j) {
       NNACL_CHECK_INT_MUL_NOT_OVERFLOW(inner_size, t->shape_[j], NNACL_CONCAT_SHAPE_INVALID);

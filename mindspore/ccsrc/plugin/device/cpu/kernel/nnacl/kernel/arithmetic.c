@@ -27,7 +27,38 @@
 void InitArithmeticRunFunction(KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
 
-  ArithmeticFuncions fun_table[] = {{PrimType_Stack, ActType_No, NULL, NULL, NULL, NULL, NULL, NULL}};
+  ArithmeticFuncions fun_table[] = {
+    {PrimType_MulFusion, ActType_Relu, ElementMulRelu, ElementMulReluInt, NULL, ElementOptMulRelu, ElementOptMulReluInt,
+     NULL},
+    {PrimType_MulFusion, ActType_Relu6, ElementMulRelu6, ElementMulRelu6Int, NULL, ElementOptMulRelu6,
+     ElementOptMulRelu6Int, NULL},
+    {PrimType_MulFusion, ActType_No, ElementMul, ElementMulInt, NULL, ElementOptMul, ElementOptMulInt, NULL},
+    {PrimType_AddFusion, ActType_Relu, ElementAddRelu, NULL, NULL, ElementOptAddRelu, NULL, NULL},
+    {PrimType_AddFusion, ActType_Relu6, ElementAddRelu6, NULL, NULL, ElementOptAddRelu6, NULL, NULL},
+    {PrimType_AddFusion, ActType_No, ElementAdd, ElementAddInt, NULL, ElementOptAdd, ElementOptAddInt, NULL},
+    {PrimType_SubFusion, ActType_Relu, ElementSubRelu, NULL, NULL, ElementOptSubRelu, NULL, NULL},
+    {PrimType_SubFusion, ActType_Relu6, ElementSubRelu6, NULL, NULL, ElementOptSubRelu6, NULL, NULL},
+    {PrimType_SubFusion, ActType_No, ElementSub, ElementSubInt, NULL, ElementOptSub, ElementOptSubInt, NULL},
+    {PrimType_DivFusion, ActType_Relu, ElementDivRelu, NULL, NULL, ElementOptDivRelu, NULL, NULL},
+    {PrimType_DivFusion, ActType_Relu6, ElementDivRelu6, NULL, NULL, ElementOptDivRelu6, NULL, NULL},
+    {PrimType_DivFusion, ActType_No, ElementDiv, NULL, NULL, ElementOptDiv, ElementOptDivInt, NULL},
+    {PrimType_RealDiv, ActType_Relu, ElementDivRelu, NULL, NULL, ElementOptDivRelu, NULL, NULL},
+    {PrimType_RealDiv, ActType_Relu6, ElementDivRelu6, NULL, NULL, ElementOptDivRelu6, NULL, NULL},
+    {PrimType_RealDiv, ActType_No, ElementDiv, NULL, NULL, ElementOptDiv, ElementOptDivInt, NULL},
+    {PrimType_LogicalAnd, ActType_No, ElementLogicalAnd, ElementLogicalAndInt, ElementLogicalAndBool,
+     ElementOptLogicalAnd, ElementOptLogicalAndInt, ElementOptLogicalAndBool},
+    {PrimType_LogicalOr, ActType_No, ElementLogicalOr, NULL, ElementLogicalOrBool, NULL, NULL, ElementOptLogicalOrBool},
+    {PrimType_Maximum, ActType_No, ElementMaximum, ElementMaximumInt, NULL, ElementOptMaximum, ElementOptMaximumInt,
+     NULL},
+    {PrimType_Minimum, ActType_No, ElementMinimum, ElementMinimumInt, NULL, ElementOptMinimum, ElementOptMinimumInt,
+     NULL},
+    {PrimType_FloorMod, ActType_No, ElementFloorMod, ElementFloorModInt, NULL, ElementOptFloorMod,
+     ElementOptFloorModInt, NULL},
+    {PrimType_FloorDiv, ActType_No, ElementFloorDiv, ElementFloorDivInt, NULL, ElementOptFloorDiv,
+     ElementOptFloorDivInt, NULL},
+    {PrimType_Mod, ActType_No, ElementMod, ElementModInt, NULL, ElementOptMod, ElementOptModInt, NULL},
+    {PrimType_SquaredDifference, ActType_No, ElementSquaredDifference, NULL, NULL, ElementOptSquaredDifference, NULL,
+     NULL}};
 
   size_t length = sizeof(fun_table) / sizeof(ArithmeticFuncions);
   for (size_t i = 0; i < length; i++) {
@@ -90,9 +121,9 @@ void ArithmeticComputeOffset(ArithmeticStruct *arithmetic, int task_id) {
   }
   int offset_index = 0;
   for (; b_start < b_end; ++b_start) {
-    int delta = b_start;
-    int a_offset = 0;
-    int b_offset = 0;
+    int64_t delta = b_start;
+    int64_t a_offset = 0;
+    int64_t b_offset = 0;
     for (int j = 0; j <= arithmetic->batch_tail_dim_; ++j) {
       if (j > 0) {
         delta = delta % arithmetic->c_matrix_.batch_post_sum_[j];
@@ -154,14 +185,63 @@ int ArithmeticDoExecute(KernelBase *base, const void *input0, const void *input1
     }
   }
 
-  return NNACL_ARITHMETIC_DATA_TYPE_INVALID;
+  return NNACL_UNSUPPORTED_DATA_TYPE;
 }
 
 int ArithmeticRun(void *cdata, int task_id, float l, float r) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)cdata;
   NNACL_CHECK_FALSE(task_id < 0, NNACL_ERR);
   NNACL_CHECK_FALSE(task_id >= arithmetic->block_boundary_infos_size_, NNACL_ERR);
-  return NNACL_OK;
+
+  if (arithmetic->block_boundary_infos_[task_id].init_offset_ == false) {
+    ArithmeticComputeOffset(arithmetic, task_id);
+  }
+
+  ArithmeticBlockBoundaryInfo *block_info = &arithmetic->block_boundary_infos_[task_id];
+  int64_t b_start = block_info->batch_begin_;
+  int64_t s_start = block_info->size_begin_;
+  int64_t s_end = block_info->size_end_;
+  int64_t index_start = 0;
+  int64_t index_end = block_info->batch_end_ - b_start;
+  uint8_t *a_ptr = (uint8_t *)(arithmetic->a_matrix_.data_) + block_info->a_offset_[index_start];
+  uint8_t *b_ptr = (uint8_t *)(arithmetic->b_matrix_.data_) + block_info->b_offset_[index_start];
+  uint8_t *c_ptr = (uint8_t *)(arithmetic->c_matrix_.data_) +
+                   (b_start * arithmetic->c_matrix_.inner_size_ + s_start) * arithmetic->out_data_size_;
+  if (arithmetic->a_matrix_.inner_size_ > 1) {
+    a_ptr += s_start * arithmetic->in_data_size_;
+  }
+  if (arithmetic->b_matrix_.inner_size_ > 1) {
+    b_ptr += s_start * arithmetic->in_data_size_;
+  }
+
+  if (index_start == index_end) {
+    return arithmetic->execute_((KernelBase *)arithmetic, a_ptr, b_ptr, c_ptr, s_end - s_start);
+  }
+
+  int64_t size = arithmetic->c_matrix_.inner_size_ - s_start;
+  int ret = arithmetic->execute_((KernelBase *)arithmetic, a_ptr, b_ptr, c_ptr, size);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
+  ++index_start;
+  c_ptr += size * arithmetic->out_data_size_;
+  int64_t c_stride = arithmetic->c_matrix_.inner_size_ * arithmetic->out_data_size_;
+  for (; index_start < index_end; ++index_start) {
+    a_ptr = (uint8_t *)(arithmetic->a_matrix_.data_) + block_info->a_offset_[index_start];
+    b_ptr = (uint8_t *)(arithmetic->b_matrix_.data_) + block_info->b_offset_[index_start];
+    ret = arithmetic->execute_((KernelBase *)arithmetic, a_ptr, b_ptr, c_ptr, arithmetic->c_matrix_.inner_size_);
+    if (ret != NNACL_OK) {
+      return ret;
+    }
+    c_ptr += c_stride;
+  }
+  if (s_end == 0) {
+    return NNACL_OK;
+  }
+  a_ptr = (uint8_t *)(arithmetic->a_matrix_.data_) + block_info->a_offset_[index_start];
+  b_ptr = (uint8_t *)(arithmetic->b_matrix_.data_) + block_info->b_offset_[index_start];
+  return arithmetic->execute_((KernelBase *)arithmetic, a_ptr, b_ptr, c_ptr, s_end);
 }
 
 void ResetArithmeticMatric(KernelBase *base, ArithmeticMatrixInfo *matrix) {
@@ -180,7 +260,9 @@ int UpdateArithmeticParameter(ArithmeticStruct *arithmetic) {
   NNACL_CHECK_TRUE_RET(arithmetic->a_matrix_.shape_size_ == arithmetic->b_matrix_.shape_size_,
                        NNACL_ARITHMETIC_SHAPE_INVALID);
 
+  arithmetic->ndim_ = arithmetic->a_matrix_.shape_size_;
   ResetArithmeticMatric(&arithmetic->base_, &arithmetic->c_matrix_);
+
   for (size_t i = 0; i < arithmetic->ndim_; ++i) {
     NNACL_CHECK_TRUE_RET(arithmetic->a_matrix_.shape_[i] <= INT_MAX, NNACL_ARITHMETIC_SHAPE_INVALID);
     NNACL_CHECK_TRUE_RET(arithmetic->b_matrix_.shape_[i] <= INT_MAX, NNACL_ARITHMETIC_SHAPE_INVALID);
@@ -194,8 +276,85 @@ int UpdateArithmeticParameter(ArithmeticStruct *arithmetic) {
 }
 
 int OptimizeArithmeticShape(ArithmeticStruct *arithmetic) {
-  NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
-  return NNACL_OK;
+  ArithmeticMatrixInfo *a = &arithmetic->a_matrix_;
+  ArithmeticMatrixInfo *b = &arithmetic->b_matrix_;
+  arithmetic->ndim_ = a->shape_size_ >= b->shape_size_ ? a->shape_size_ : b->shape_size_;
+
+  int shape0[MAX_LEN] = {0};
+  int shape1[MAX_LEN] = {0};
+  /* init a & b shape */
+  int i = 0;
+  for (; i < arithmetic->ndim_; ++i) {
+    shape0[i] = 1;
+    shape1[i] = 1;
+  }
+
+  /* init matrix shape dim */
+  int a_matrix_size = arithmetic->ndim_ - a->shape_size_;
+  for (i = a_matrix_size; i < arithmetic->ndim_; i++) {
+    shape0[i] = a->shape_[i - a_matrix_size];
+  }
+
+  int b_matrix_size = arithmetic->ndim_ - b->shape_size_;
+  for (i = b_matrix_size; i < arithmetic->ndim_; i++) {
+    shape1[i] = b->shape_[i - b_matrix_size];
+  }
+
+  /* horizontal shape dims */
+  int shape0_temp[MAX_LEN] = {0};
+  int shape1_temp[MAX_LEN] = {0};
+  int shape_temp_size = 0;
+  for (i = 0; i < arithmetic->ndim_;) {  // horizontal comparison, merge the part of continuous 1.
+    shape0_temp[shape_temp_size] = shape0[i];
+    shape1_temp[shape_temp_size] = shape1[i];
+    shape_temp_size++;
+    if (shape0[i] != 1 && shape1[i] != 1) {
+      ++i;
+      continue;
+    }
+
+    size_t j0 = i;
+    while (j0 < arithmetic->ndim_ && shape0[j0] == 1) {
+      ++j0;
+    }
+    size_t j1 = i;
+    while (j1 < arithmetic->ndim_ && shape1[j1] == 1) {
+      ++j1;
+    }
+    size_t j = MSMAX(j0, j1);
+    while ((++i) < j) {
+      shape0_temp[shape_temp_size - 1] *= shape0[i];
+      shape1_temp[shape_temp_size - 1] *= shape1[i];
+    }
+  }
+
+  arithmetic->a_matrix_.shape_size_ = 0;
+  arithmetic->b_matrix_.shape_size_ = 0;
+
+  for (i = 0; i < shape_temp_size;) {  // vertical comparison, merge the part of continuous equation.
+    if (shape0_temp[i] == 1 && shape1_temp[i] == 1) {
+      ++i;
+      continue;
+    }
+    shape0[arithmetic->a_matrix_.shape_size_++] = shape0_temp[i];
+    shape1[arithmetic->b_matrix_.shape_size_++] = shape1_temp[i];
+    if (shape0_temp[i] != shape1_temp[i]) {
+      ++i;
+      continue;
+    }
+    while ((++i) < shape_temp_size) {
+      if (shape0_temp[i] != shape1_temp[i]) {
+        break;
+      }
+      shape0[arithmetic->a_matrix_.shape_size_ - 1] *= shape0_temp[i];
+      shape1[arithmetic->b_matrix_.shape_size_ - 1] *= shape1_temp[i];
+    }
+  }
+
+  memcpy(arithmetic->a_matrix_.shape_, shape0, arithmetic->a_matrix_.shape_size_ * sizeof(int));
+  memcpy(arithmetic->b_matrix_.shape_, shape1, arithmetic->b_matrix_.shape_size_ * sizeof(int));
+
+  return UpdateArithmeticParameter(arithmetic);
 }
 
 int ResetArithmeticStatus(ArithmeticStruct *arithmetic) {
@@ -223,11 +382,136 @@ void ArithmeticDoBroadcast(ArithmeticStruct *arithmetic, void *in_data, void *ou
 
 int ArithmeticBroadCastConstTensor(ArithmeticStruct *arithmetic) {
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
-  return NNACL_OK;
+
+  CalcStructMultiplesAndStrides(arithmetic);
+
+#ifdef PARALLEL_INFERENCE
+  bool prefer_explicit_broadcast = false;
+#else
+  bool prefer_explicit_broadcast = arithmetic->ndim_ != 1;
+#endif
+  prefer_explicit_broadcast =
+    prefer_explicit_broadcast && (arithmetic->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeBool);
+
+  bool exist_broadcast_ = false;
+  int buffer_size = GetElementNum(arithmetic->base_.out_[OUTPUT_INDEX]) * arithmetic->in_data_size_;
+  if (arithmetic->a_matrix_.is_const_) {
+    NNACL_CHECK_NULL_RETURN_ERR(arithmetic->base_.in_[FIRST_INPUT]->data_);
+    if (arithmetic->in_elements_num0_ != arithmetic->out_elements_num_ && prefer_explicit_broadcast) {
+      exist_broadcast_ = true;
+
+      arithmetic->a_matrix_.data_ = arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, buffer_size);
+      NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->a_matrix_.data_);
+      arithmetic->broadcast_buffer_[Index0] = arithmetic->a_matrix_.data_;
+
+      ArithmeticDoBroadcast(arithmetic, arithmetic->base_.in_[FIRST_INPUT]->data_, arithmetic->a_matrix_.data_, Index0);
+      arithmetic->in_elements_num0_ = arithmetic->out_elements_num_;
+
+      // shape must be equal to out
+      for (size_t i = 0; i < arithmetic->ndim_; ++i) {
+        arithmetic->in_shape0_[i] = arithmetic->out_shape_[i];
+        arithmetic->in_strides0_[i] = arithmetic->out_strides_[i];
+      }
+      memcpy(arithmetic->a_matrix_.shape_, arithmetic->c_matrix_.shape_, arithmetic->ndim_ * sizeof(int));
+      arithmetic->a_matrix_.is_valid_ = true;
+    }
+  }
+
+  if (arithmetic->b_matrix_.is_const_) {
+    NNACL_CHECK_NULL_RETURN_ERR(arithmetic->base_.in_[SECOND_INPUT]->data_);
+    if (arithmetic->in_elements_num1_ != arithmetic->out_elements_num_ && prefer_explicit_broadcast) {
+      exist_broadcast_ = true;
+
+      arithmetic->b_matrix_.data_ = arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, buffer_size);
+      NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->b_matrix_.data_);
+      arithmetic->broadcast_buffer_[Index1] = arithmetic->b_matrix_.data_;
+
+      ArithmeticDoBroadcast(arithmetic, arithmetic->base_.in_[Index1]->data_, arithmetic->b_matrix_.data_, Index1);
+      arithmetic->in_elements_num1_ = arithmetic->out_elements_num_;
+      // shape must be equal to out
+      for (size_t i = 0; i < arithmetic->ndim_; ++i) {
+        arithmetic->in_shape1_[i] = arithmetic->out_shape_[i];
+        arithmetic->in_strides1_[i] = arithmetic->out_strides_[i];
+      }
+
+      memcpy(arithmetic->b_matrix_.shape_, arithmetic->c_matrix_.shape_, arithmetic->ndim_ * sizeof(int));
+      arithmetic->b_matrix_.is_valid_ = true;
+    }
+  }
+  if (!exist_broadcast_) {
+    return NNACL_OK;
+  }
+  return OptimizeArithmeticShape(arithmetic);
 }
 
 int ArithmeticComputeOfflineInfo(ArithmeticStruct *arithmetic) {
-  NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
+  int bread_pos = -1;
+  int last_dim = arithmetic->a_matrix_.shape_size_ - 1;
+  for (int i = last_dim; i >= 0; --i) {
+    if (arithmetic->a_matrix_.shape_[i] != arithmetic->b_matrix_.shape_[i]) {
+      bread_pos = i;
+      break;
+    }
+  }
+  arithmetic->batch_tail_dim_ = bread_pos;
+  if (bread_pos == last_dim && arithmetic->batch_tail_dim_ >= 0) {
+    --arithmetic->batch_tail_dim_;
+  }
+
+  for (int i = last_dim; i > arithmetic->batch_tail_dim_; --i) {
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(arithmetic->a_matrix_.inner_size_, arithmetic->a_matrix_.shape_[i], NNACL_ERR);
+    arithmetic->a_matrix_.inner_size_ *= arithmetic->a_matrix_.shape_[i];
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(arithmetic->b_matrix_.inner_size_, arithmetic->b_matrix_.shape_[i], NNACL_ERR);
+    arithmetic->b_matrix_.inner_size_ *= arithmetic->b_matrix_.shape_[i];
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(arithmetic->c_matrix_.inner_size_, arithmetic->c_matrix_.shape_[i], NNACL_ERR);
+    arithmetic->c_matrix_.inner_size_ *= arithmetic->c_matrix_.shape_[i];
+  }
+
+  arithmetic->a_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+    arithmetic->base_.env_->allocator_, (arithmetic->a_matrix_.shape_size_ + 1) * sizeof(int));
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->a_matrix_.batch_post_sum_);
+  for (int i = 0; i < arithmetic->a_matrix_.shape_size_ + 1; i++) {
+    arithmetic->a_matrix_.batch_post_sum_[i] = 1;
+  }
+
+  arithmetic->b_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+    arithmetic->base_.env_->allocator_, (arithmetic->b_matrix_.shape_size_ + 1) * sizeof(int));
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->b_matrix_.batch_post_sum_);
+  for (int i = 0; i < arithmetic->b_matrix_.shape_size_ + 1; i++) {
+    arithmetic->b_matrix_.batch_post_sum_[i] = 1;
+  }
+
+  arithmetic->c_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+    arithmetic->base_.env_->allocator_, (arithmetic->c_matrix_.shape_size_ + 1) * sizeof(int));
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->c_matrix_.batch_post_sum_);
+  for (int i = 0; i < arithmetic->c_matrix_.shape_size_ + 1; i++) {
+    arithmetic->c_matrix_.batch_post_sum_[i] = 1;
+  }
+
+  for (int i = arithmetic->batch_tail_dim_; i >= 0; --i) {
+    if (i == arithmetic->batch_tail_dim_) {
+      arithmetic->a_matrix_.batch_post_sum_[i] = arithmetic->a_matrix_.shape_[i];
+      arithmetic->b_matrix_.batch_post_sum_[i] = arithmetic->b_matrix_.shape_[i];
+      arithmetic->c_matrix_.batch_post_sum_[i] = arithmetic->c_matrix_.shape_[i];
+    } else {
+      arithmetic->a_matrix_.batch_post_sum_[i] =
+        arithmetic->a_matrix_.shape_[i] * arithmetic->a_matrix_.batch_post_sum_[i + 1];
+      arithmetic->b_matrix_.batch_post_sum_[i] =
+        arithmetic->b_matrix_.shape_[i] * arithmetic->b_matrix_.batch_post_sum_[i + 1];
+      arithmetic->c_matrix_.batch_post_sum_[i] =
+        arithmetic->c_matrix_.shape_[i] * arithmetic->c_matrix_.batch_post_sum_[i + 1];
+    }
+  }
+
+  arithmetic->scalar_opt_ = false;
+  if (arithmetic->a_matrix_.inner_size_ == 1) {
+    arithmetic->in_elements_num0_ = 1;
+    arithmetic->scalar_opt_ = true;
+  }
+  if (arithmetic->b_matrix_.inner_size_ == 1) {
+    arithmetic->in_elements_num1_ = 1;
+    arithmetic->scalar_opt_ = true;
+  }
   return NNACL_OK;
 }
 
@@ -252,7 +536,7 @@ int ArithmeticChooseThreadCuttingStrategy(ArithmeticStruct *arithmetic) {
     block_boundary_info.batch_end_ = end / arithmetic->c_matrix_.inner_size_;
     block_boundary_info.init_offset_ = false;
 
-    int max_offset_size = block_boundary_info.batch_end_ / block_boundary_info.batch_begin_ + TWO_TENSOR;
+    int max_offset_size = block_boundary_info.batch_end_ - block_boundary_info.batch_begin_ + TWO_TENSOR;
     block_boundary_info.a_offset_ =
       (int *)arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, max_offset_size * sizeof(int));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(block_boundary_info.a_offset_);
@@ -275,9 +559,12 @@ int arithmetic_resize(struct KernelBase *self) {
   arithmetic_release(&arithmetic->base_);
 
   arithmetic->in_data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
-  NNACL_CHECK_TRUE_RET(arithmetic->in_data_size_ != 0, NNACL_ARITHMETIC_DATA_TYPE_INVALID);
+  NNACL_CHECK_TRUE_RET(arithmetic->in_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
   arithmetic->out_data_size_ = DataTypeCSize(self->out_[OUTPUT_INDEX]->data_type_);
-  NNACL_CHECK_TRUE_RET(arithmetic->out_data_size_ != 0, NNACL_ARITHMETIC_DATA_TYPE_INVALID);
+  NNACL_CHECK_TRUE_RET(arithmetic->out_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
+  arithmetic->in_elements_num0_ = GetElementNum(self->in_[FIRST_INPUT]);
+  arithmetic->in_elements_num1_ = GetElementNum(self->in_[SECOND_INPUT]);
+  arithmetic->out_elements_num_ = GetElementNum(self->in_[OUTPUT_INDEX]);
 
   int ret = ResetArithmeticStatus(arithmetic);
   if (ret != NNACL_OK) {
@@ -326,8 +613,9 @@ int arithmetic_prepare(struct KernelBase *self) {
     }
   }
   arithmetic->init_function_(self);
-  arithmetic->a_matrix_.is_const_ = self->in_[FIRST_INPUT]->data_ != NULL;
-  arithmetic->b_matrix_.is_const_ = self->in_[SECOND_INPUT]->data_ != NULL;
+
+  arithmetic->a_matrix_.is_const_ = IsConst(self->in_[FIRST_INPUT]);
+  arithmetic->b_matrix_.is_const_ = IsConst(self->in_[SECOND_INPUT]);
   return NNACL_OK;
 }
 
@@ -367,6 +655,7 @@ KernelBase *CreateArithmetic(OpParameter *param, int data_type) {
   arithmetic->c_matrix_.batch_post_sum_ = NULL;
   arithmetic->broadcast_buffer_[FIRST_INPUT] = NULL;
   arithmetic->broadcast_buffer_[SECOND_INPUT] = NULL;
+  arithmetic->tile_function_ = TileOneDimensionFp32;
   arithmetic->init_function_ = InitArithmeticRunFunction;
   arithmetic->execute_ = ArithmeticDoExecute;
   arithmetic->base_.prepare = arithmetic_prepare;

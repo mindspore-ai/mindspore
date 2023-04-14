@@ -30,7 +30,13 @@ typedef struct TensorC {
   char *name_;  // only used in micro now.
 } TensorC;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 inline bool IsConst(const TensorC *tensor) {
   return (tensor->category_ == ConstTensor || tensor->category_ == ConstScalar) && tensor->data_ != NULL;
 }
+#ifdef __cplusplus
+}
+#endif
 #endif  // MINDSPORE_NNACL_TENSOR_C_H_

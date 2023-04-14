@@ -19,10 +19,10 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/div_fp32_simd.h"
 
-int ElementOptDiv(const float *in0, const float *in1, float *out, int size, bool scalar) {
+int ElementOptDiv(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
 
-  if (scalar) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptDivNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -37,9 +37,9 @@ int ElementOptDiv(const float *in0, const float *in1, float *out, int size, bool
   return NNACL_OK;
 }
 
-int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, bool scalar) {
+int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (scalar) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptDivReluNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -57,10 +57,10 @@ int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, 
   return NNACL_OK;
 }
 
-int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, bool scalar) {
+int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
 
-  if (scalar) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptDivRelu6Num0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -76,10 +76,10 @@ int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size,
   return NNACL_OK;
 }
 
-int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, bool scalar) {
+int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int index = 0;
 
-  if (scalar) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptDivIntNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {

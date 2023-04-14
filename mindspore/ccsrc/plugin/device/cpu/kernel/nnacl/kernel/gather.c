@@ -97,7 +97,7 @@ int AssignGatherIndicesData(GatherStruct *gather, bool is_indices_int32) {
       }
       break;
     default:
-      return NNACL_GATHER_INDICES_DATA_TYPE_INVALID;
+      return NNACL_UNSUPPORTED_DATA_TYPE;
   }
   return NNACL_OK;
 }
