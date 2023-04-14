@@ -1492,25 +1492,26 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
   MS_EXCEPTION_IF_NULL(item);
   auto data_value = data->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
+  auto data_type = data->BuildType();
+  MS_EXCEPTION_IF_NULL(data_type);
+  std::string data_id_str = TypeIdToString(data_type->type_id());
+  if (data_value->isa<parse::ClassType>()) {
+    auto class_val = dyn_cast_ptr<parse::ClassType>(data_value);
+    auto class_obj = class_val->obj();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, class_obj);
+    data_value = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
+    data_id_str = class_val->name();
+  }
   if (!data_value->isa<parse::NameSpace>()) {
-    auto item_value = item->BuildValue();
-    MS_EXCEPTION_IF_NULL(item_value);
-    if (data_value->isa<parse::ClassType>()) {
-      auto class_val = dyn_cast_ptr<parse::ClassType>(data_value);
-      MS_EXCEPTION_IF_NULL(class_val);
-      const auto &class_name = class_val->name();
-      MS_EXCEPTION(TypeError)
-        << "Can not get attribute '" << item_value->ToString() << "' from " << class_name
-        << " in graph mode. Try using jit_class to decorate the class? "
-        << ".\nFor more details, please refer to "
-        << "https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.jit_class.html \n";
-    }
     static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
                               << "\nThe first argument should be a NameSpace, but got " << data->ToString();
     }
 
+    auto item_value = item->BuildValue();
+    MS_EXCEPTION_IF_NULL(item_value);
     MS_LOG(DEBUG) << "Evaluate " << data_value->ToString() << " attribute: " << item_value->ToString()
                   << ".\nnode: " << out_conf->node()->DebugString() << "\n"
                   << trace::GetDebugInfo(out_conf->node()->debug_info());
@@ -1520,12 +1521,6 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     }
     return res;
   }
-
-  auto item_value = item->BuildValue();
-  MS_EXCEPTION_IF_NULL(item_value);
-  auto data_type = data->BuildType();
-  MS_EXCEPTION_IF_NULL(data_type);
-  const auto &data_id_str = TypeIdToString(data_type->type_id());
   return GetEvaluatedValueForNameSpaceString(args_abs_list, data_value, out_conf, data_id_str);
 }
 
