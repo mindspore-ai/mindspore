@@ -3932,6 +3932,12 @@ class FastGeLU(Primitive):
 
     Refer to :func:`mindspore.ops.fast_gelu` for more details.
 
+    Inputs:
+        - **x** (Tensor) - Input to compute the FastGeLU with data type of float16 or float32.
+
+    Outputs:
+        Tensor, with the same type and shape as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -10388,6 +10394,16 @@ class ChannelShuffle(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.channel_shuffle` for more detail.
+
+    Args:
+        groups (int): Number of groups to divide channels in.
+
+    Inputs:
+        - **x** (Tensor) - Tensor to be divided, it has shape :math:`(*, C, H, W)`,
+          with float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64 data type.
+
+    Outputs:
+        A Tensor, has the same type as the `x`, and has the shape :math:`(*, C, H, W)`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

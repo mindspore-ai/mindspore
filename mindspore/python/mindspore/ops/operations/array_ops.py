@@ -891,6 +891,26 @@ class UniqueConsecutive(Primitive):
 
     Refer to :func:`mindspore.ops.unique_consecutive` for more details.
 
+    Args:
+        return_idx (bool, optional): Whether to return the index of where the element in the original input
+            maps to the position in the output. Default: False.
+        return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
+        axis (int, optional): The dimension to apply unique. If None, the unique of the flattened input is
+            returned. If specified, it must be int32 or int64. Default: None.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`).
+
+        - `output` has the same type as `x` and is used to represent the output list of unique scalar elements.
+        - If `return_idx` is True, there will be an additional returned tensor, `idx`,
+          which has the same shape as `x` and represents
+          the index of where the element in the original input maps to the position in the output.
+        - If `return_counts` is True, there will be an additional returned tensor, `counts`,
+          which represents the number of occurrences for each unique value or tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1405,6 +1425,17 @@ class MatrixBandPart(Primitive):
     the central band set to zero.
 
     Refer to :func:`mindspore.ops.matrix_band_part` for more details.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
+            The data type must be float16, float32, float64, int32 or int64.
+        - **lower** (Union[int, Tensor]) - Number of subdiagonals to keep. The data type must be int32 or int64.
+            If negative, keep entire lower triangle.
+        - **upper** (Union[int, Tensor]) - Number of superdiagonals to keep. The data type must be int32 or int64.
+            If negative, keep entire upper triangle.
+
+    Outputs:
+        Tensor, has the same type and shape as `x`.
 
     Supported Platforms:
 
@@ -5508,6 +5539,22 @@ class BatchToSpaceNDV2(Primitive):
 
     Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. It must be greater or equal to 2-D
+          tensor(equal to 4-D tensor on Ascend), batch dimension must be divisible by product of `block_shape`.
+        - **block_shape** (Union[list(int), tuple(int), int]) - The block shape of dividing block with all value greater
+          than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
+          to the number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the
+          same, equal to `block_shape`. In this case of Ascend, M must be 2.
+        - **crops** (Union[list(int), tuple(int)]) - The crops values for spatial dimensions, containing
+          M subtraction list. Each contains 2 integer values. All values must be >= 0. crops[i] specifies
+          the crops values for spatial dimension i, which corresponds to input dimension i + offset,
+          where offset = N-M, and N is the number of input dimensions. It is required that
+          :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
+
+    Outputs:
+        Tensor, contains the result of batch division and rearrangement of the original Tensor.
+
     Supported Platforms:
         ``Ascend``
     """
@@ -7903,6 +7950,23 @@ class AffineGrid(Primitive):
 
     Refer to :func:`mindspore.ops.affine_grid` for more details.
 
+    Args:
+        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
+            If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            irrelevant to resolution of the image. Default: False.
+
+    Inputs:
+        - **theta** (Tensor) - The input tensor of flow field whose dtype is float16, float32.
+          Input batch of affine matrices with shape :math:`(N, 2, 3)` for 2D grid or :math:`(N, 3, 4)` for 3D grid.
+        - **output_size** (tuple[int]) - The target output image size.
+          The value of target output with format :math:`(N, C, H, W)` for 2D grid
+          or :math:`(N, C, D, H, W)` for 3D grid.
+
+    Outputs:
+        Tensor, a tensor whose data type is same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
+        or :math:`(N, D, H, W, 3)` for 3D grid.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -8047,6 +8111,13 @@ class PopulationCount(Primitive):
 
     Refer to :func:`mindspore.ops.population_count` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of any dimension. The data type must be int16 or uint16 (Ascend).
+            The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
+
+    Outputs:
+        Tensor, with the same shape as the input, and the data type is uint8.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -8179,6 +8250,17 @@ class CountNonZero(Primitive):
     specified dimensions.
 
     Refer to :func:`mindspore.ops.count_nonzero` for more details.
+
+    Args:
+        dims (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
+            Default: None, reduce over all dimensions.
+
+    Inputs:
+        - **x** (Tensor) - Input data is used to count non-zero numbers. With shape
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+          Tensor, number of nonzero element across axis specified by `dims`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
