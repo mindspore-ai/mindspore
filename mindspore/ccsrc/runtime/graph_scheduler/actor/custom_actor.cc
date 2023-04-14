@@ -40,7 +40,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
-    // Collect the input data for infer shape.
+    // Collect the inputs from input data.
     const auto &data_iter = input_op_datas_.find(ctx->sequential_num_);
     if (data_iter != input_op_datas_.end()) {
       memory_free_list_.clear();
@@ -58,6 +58,9 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
         (void)memory_free_list_.emplace_back(input_data->data_);
       }
     }
+
+    // Collect the inputs from device tensor store.
+    FetchInputByTensorStore(&input_device_tensors_, ctx);
 
     // Launch custom func
     MS_EXCEPTION_IF_NULL(node);

@@ -1609,7 +1609,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   }
 
   // Record the internal parameter of dynamic shape kernel.
-  if (common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
+  if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
+      common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
     AbstractActor *dynamic_shape_actor = nullptr;
     auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
     if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
@@ -1658,7 +1659,9 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
     MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The device contexts size is wrong.";
   }
 
-  if (IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
+  // The custom actor will sync the device tensor data from the data arrow and no need copy.
+  if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
+      IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     SchedulerHelper::AddDataArrow(from_actor, to_actor, from_output_index, to_input_index, from_kernel);
@@ -1694,7 +1697,10 @@ void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor
   if (IsSkippedKernelActor(from_kernel)) {
     real_from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(from_kernel, 0, false);
     MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
-    LinkControlArrowBySkippedNode(to_actor, from_kernel, graph);
+    // The custom actor no need control arrow for skipped node.
+    if (to_actor->type_ != KernelTransformType::kCustomActor) {
+      LinkControlArrowBySkippedNode(to_actor, from_kernel, graph);
+    }
 
     MS_EXCEPTION_IF_NULL(to_kernel_with_input_idx.first);
     MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
@@ -2144,7 +2150,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
 }
 
 void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
-                                                 const GraphCompilerInfo &graph_compiler_info) const {
+                                                 const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -2175,40 +2181,13 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
         continue;
       }
 
-      auto kernel_type =
-        FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
-                                 graph_compiler_info.strategy_);
-      AbstractActor *from_actor =
-        FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
-      if (kernel_type == KernelTransformType::kInternalParameter) {
-        MS_EXCEPTION_IF_NULL(graph);
-        auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(from_kernel_with_output_idx.first);
-        auto front_output_node = front_output_with_index.first;
-        MS_EXCEPTION_IF_NULL(front_output_node);
-        if (IsSwitchActor(front_output_node) || (graph_output_to_actor_.count(front_output_with_index) == 0)) {
-          MS_LOG(INFO) << "Internal parameter has no data arrow for value depend custom actor:"
-                       << custom_actor->GetAID().Name() << ", kernel:" << base_node->fullname_with_scope()
-                       << ", input node:" << input_node->DebugString() << ", value depend input index:" << *iter;
-          continue;
-        }
-        // Update the from actor and from kernel.
-        from_actor = graph_output_to_actor_.at(front_output_with_index).first;
-        from_kernel_with_output_idx =
-          common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_output_to_actor_.at(front_output_with_index).second);
-      }
-
-      // The input_node maybe device tensor store and the from_actor is nullptr.
-      if (from_actor == nullptr) {
-        MS_LOG(INFO) << "No data arrow for value depend custom actor:" << custom_actor->GetAID().Name()
-                     << ", kernel:" << base_node->fullname_with_scope() << ", input node:" << input_node->DebugString()
-                     << ", value depend input index:" << *iter;
-        continue;
-      }
       MS_LOG(INFO) << "Link data arrow for value depend custom actor:" << custom_actor->GetAID().Name()
-                   << ", from actor:" << from_actor->GetAID().Name() << ", kernel:" << base_node->fullname_with_scope()
-                   << ", input node:" << input_node->DebugString() << ", value depend input index:" << *iter;
-      SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.second,
-                                    LongToSize(*iter), from_kernel_with_output_idx.first);
+                   << ", kernel:" << base_node->fullname_with_scope()
+                   << ", input node:" << input_node->fullname_with_scope() << ", value depend input index:" << *iter;
+      KernelWithIndex to_kernel_with_input_idx = std::make_pair(base_node, LongToSize(*iter));
+      // The gather of linking data arrows of kernel by the different from kernel type.
+      LinkDataArrow(custom_actor.get(), graph_compiler_info, graph, from_kernel_with_output_idx,
+                    to_kernel_with_input_idx);
     }
   }
 }
@@ -2601,8 +2580,8 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
 
   // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
-    MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                    << ", type:" << device_context->GetDeviceType();
+    MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
+                 << ", type:" << device_context->GetDeviceType();
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape());
