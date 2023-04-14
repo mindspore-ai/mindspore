@@ -101,7 +101,6 @@ constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossEntropyWithLogitsV2";
-constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
@@ -253,7 +252,6 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReservoirReplayBufferSample,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
-                                              kDeformableOffsetsGrad,
                                               kRandomShuffle};
 const std::set<std::string> kDynamicInputOps{kPrint,
                                              kPack,
@@ -286,7 +284,6 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kStack, "Pack"},
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},
-  {kDeformableOffsetsGrad, "kDeformableOffsetsGrad"},
   {kCumSum, "Cumsum"},
   {kCumProd, "Cumprod"},
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},

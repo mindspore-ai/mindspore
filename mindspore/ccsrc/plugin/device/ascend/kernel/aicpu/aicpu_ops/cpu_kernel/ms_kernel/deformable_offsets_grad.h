@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
 #include <utility>
-#include "common/kernel_base.h"
+#include "cpu_ops_kernel.h"
 
 namespace aicpu {
 struct DeformableOffsetGradDims {
@@ -46,37 +44,36 @@ struct DeformableOffsetGradDims {
   size_t deformable_group_channel = 0;
 };
 
-class DeformableOffsetsGradKernel : public KernelBase {
+class DeformableOffsetsGradKernel : public CpuKernel {
  public:
-  DeformableOffsetsGradKernel() : KernelBase("DeformableOffsetsGradKernel") {}
+  DeformableOffsetsGradKernel() = default;
 
   ~DeformableOffsetsGradKernel() = default;
 
  protected:
-  uint32_t ParseKernelParam() override;
-
-  uint32_t DoCompute() override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  void CheckInOutNum(size_t inputs_num, size_t outputs_num) const;
+  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
+  uint32_t CheckInOutNum(size_t inputs_num, size_t outputs_num) const;
 
-  void SetDims();
-
-  template <typename T>
-  void DeformableOffsetGradNHWCKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
-                                      const T *input_offset, const T *input_grad, T *output_grad_x,
-                                      T *output_grad_offset) const;
-  template <typename T>
-  void DeformableOffsetGradNCHWKernel(size_t num_kernels, const DeformableOffsetGradDims &dims, const T *input_x,
-                                      const T *input_offset, const T *input_grad, T *output_grad_x,
-                                      T *output_grad_offset) const;
+  uint32_t SetDims(const CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DeformableOffsetsGradTask();
-  std::string data_format_ = "NCHW";
+  uint32_t DoComputeNHWC(const CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
+                         const T *input_x, const T *input_offset, const T *input_grad, T *output_grad_x,
+                         T *output_grad_offset) const;
+  template <typename T>
+  uint32_t DoComputeNCHW(const CpuKernelContext &ctx, size_t num_kernels, const DeformableOffsetGradDims &dims,
+                         const T *input_x, const T *input_offset, const T *input_grad, T *output_grad_x,
+                         T *output_grad_offset) const;
+
+  template <typename T>
+  uint32_t DeformableOffsetsGradTask(const CpuKernelContext &ctx);
+  std::string data_format_ = "ND";
   DeformableOffsetGradDims dims_;
 
-  aicpuops::DataType index_type_{aicpuops::DataType::MS_UNKNOWN};
+  DataType index_type_{DT_FLOAT};
   int64_t index_output_size_ = 1;
   int64_t grad_output_size_ = 1;
   std::vector<int64_t> index_output_shape_;
