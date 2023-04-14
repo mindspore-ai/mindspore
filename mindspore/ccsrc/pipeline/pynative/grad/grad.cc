@@ -77,7 +77,7 @@ std::string GetCellId(const py::object &obj, const py::args &args, const InputAr
     if (cache_abs != nullptr) {
       fn(cache_abs);
     } else {
-      auto abs = PyNativeAlgo::DataConvert::PyObjToValue(args[i], true)->ToAbstract();
+      auto abs = PyNativeAlgo::DataConvert::PyObjToValue(args[i])->ToAbstract();
       fn(abs);
     }
   }
@@ -952,7 +952,6 @@ void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info
     // the graph info of the internal top cell needs to be updated so that the external top cell can perceive it.
     if (!input_args_info->is_grad_topest_cell) {
       pre_top_cell->SetGraphInfoMap(pre_top_cell->fg(), new_top_cell->graph_info_map().at(new_top_cell->fg()));
-      MS_LOG(DEBUG) << "TopCell:graph_info_map get whole map";
     }
     pre_top_cell->set_forward_already_run(true);
   }
@@ -1110,7 +1109,6 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
     } else {
       MS_LOG(DEBUG) << "No weights passed by python, add all graph_info weights parameters to bprop graph";
       const auto &graph_info = top_cell()->graph_info_map().at(curr_g());
-      MS_LOG(DEBUG) << "TopCell:graph_info_map get weight_params";
       for (auto it : graph_info->weight_params) {
         (void)w_args.emplace_back(it.second);
       }
@@ -1366,7 +1364,7 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const s
   SwitchTopCell();
   auto outer_graph_info = top_cell()->graph_info_map().at(curr_g());
   MS_EXCEPTION_IF_NULL(outer_graph_info);
-  MS_LOG(DEBUG) << "TopCell:graph_info_map get input_params";
+
   // Replace inputs param
   MS_EXCEPTION_IF_NULL(inputs);
   for (const auto &forward_arg : forward_args) {
@@ -1395,7 +1393,6 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const s
       (void)inner_graph_used_weights_set.emplace(weight_tensor->id());
     }
   }
-  MS_LOG(DEBUG) << "TopCell:graph_info_map get weight_params";
   for (const auto &weight : inner_graph_info->weight_params) {
     // If weight used in graph, but not need get grad by gradnet, it will be a valuenode, no need replace
     if (inner_graph_used_weights_set.find(weight.first) == inner_graph_used_weights_set.end()) {
@@ -1510,7 +1507,6 @@ AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const
 AnfNodePtr GradExecutor::GetParamInput(const ValuePtr &v, const std::string &id) const {
   const auto &graph_info = top_cell()->graph_info_map().at(curr_g());
   MS_EXCEPTION_IF_NULL(graph_info);
-  MS_LOG(DEBUG) << "TopCell:graph_info_map get input_params and weight_params";
   // Get input param input
   const auto it = graph_info->input_params.find(id);
   if (it != graph_info->input_params.end()) {
@@ -1544,7 +1540,6 @@ AnfNodePtr GradExecutor::GetParamInput(const ValuePtr &v, const std::string &id)
 }
 
 AnfNodePtr GradExecutor::GetOutputNodeAsInput(const std::string &obj_id) const {
-  MS_LOG(DEBUG) << "TopCell:graph_info_map get node_map";
   const auto &graph_info = top_cell()->graph_info_map().at(curr_g());
   MS_EXCEPTION_IF_NULL(graph_info);
   const auto it = graph_info->node_map.find(obj_id);
