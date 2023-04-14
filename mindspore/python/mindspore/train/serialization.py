@@ -1540,7 +1540,7 @@ def _msfunc_info(net, *inputs):
 
 def _cell_info(net, incremental, *inputs):
     """Get mindir stream and net dict of cell"""
-    phase_name = "predict" if _is_in_auto_parallel_mode() else "export.mindir"
+    phase_name = "export.mindir"
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir', incremental=incremental)
