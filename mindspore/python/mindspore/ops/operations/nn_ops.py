@@ -162,8 +162,8 @@ class AdaptiveAvgPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Args:
-        - output_size (Union[int, tuple]) - Specify the size of output tensor. It
-          can be a single int or a tuple of three ints.
+        output_size (Union[int, tuple]): Specify the size of output tensor. It
+            can be a single int or a tuple of three ints.
 
     Inputs:
         - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
