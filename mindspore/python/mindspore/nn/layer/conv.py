@@ -1164,7 +1164,7 @@ class Conv1dTranspose(_Conv):
     also called deconvolution (although it is not an actual deconvolution).
 
     The input is typically of shape :math:`(N, C_{in}, L_{in})`, where :math:`N` is batch size,
-    :math:`C` is a number of channels
+    :math:`C_{in}` is a number of channels
     and :math:`L_{in}` is a length of sequence.
 
     When Conv1d and ConvTranspose1d are initialized with the same parameters, and `pad_mode` is set to 'pad',
@@ -1213,22 +1213,14 @@ class Conv1dTranspose(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
-        pad_mode is 'same':
-
-        .. math::
-            L_{out} = \left \lfloor{\frac{L_{in}}{\text{stride}} + 1} \right \rfloor
+        pad_mode is 'same': :math:`L_{out} = \frac{ L_{in} + \text{stride} - 1 }{ \text{stride} }`
 
         pad_mode is 'valid':
-
-        .. math::
-            L_{out} = \left \lfloor{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
-            {\text{stride}} + 1} \right \rfloor
+        :math:`L_{out} = (L_{in} - 1) \times \text{stride} + \text{dilation} \times (\text{kernel_size} - 1) + 1`
 
         pad_mode is 'pad':
-
-        .. math::
-            L_{out} = \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{dilation} - 1) \times
-            \text{kernel_size} - 1 }{\text{stride}} + 1} \right \rfloor
+        :math:`L_{out} = (L_{in} - 1) \times \text{stride} - 2 \times \text{padding}
+        + \text{dilation} \times (\text{kernel_size} - 1) + 1`
 
     Raises:
         TypeError: If `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding` or `dilation` is not an int.

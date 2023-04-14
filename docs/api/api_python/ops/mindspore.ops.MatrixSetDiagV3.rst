@@ -31,7 +31,7 @@ mindspore.ops.MatrixSetDiagV3
     输入：
         - **x** (Tensor) - n维Tensor，其中 :math:`n >= 2` 。
         - **diagonal** (Tensor) - 输入对角线Tensor，具有与 `x` 相同的数据类型。
-          当 `k` 是整数或 :math:`k[0] == k[1]` 时，其为维度 :math:`n-1` ，否则，其维度为 `n` 。
+          当 `k` 是整数或 :math:`k[0] == k[1]` 时，其为维度 :math:`n-1` ，否则，其维度为 :math:`n` 。
         - **k** (Tensor) - int32类型的Tensor。对角线偏移量。正值表示超对角线，0表示主对角线，负值表示次对角线。
           `k` 可以是单个整数（对于单个对角线）或一对整数，分别指定矩阵带的上界和下界，且 `k[0]` 不得大于 `k[1]` 。
           其值必须在 :math:`(-x.shape[-2], x.shape[-1])` 中。采用图模式时，输入 `k` 必须是常量Tensor。
