@@ -25,7 +25,6 @@ class MIND_API GatherDGradV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GatherDGradV2);
   GatherDGradV2() : BaseOperator(kNameGatherDGradV2) { InitIOName({"x", "dim", "index", "grad"}, {"output"}); }
-  void Init() {}
 };
 MIND_API abstract::AbstractBasePtr GatherDGradV2Infer(const abstract::AnalysisEnginePtr &,
                                                       const PrimitivePtr &primitive,

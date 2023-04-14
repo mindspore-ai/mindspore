@@ -387,7 +387,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   auto kernel_object_type = kernel::TypeIdToKernelObjectTypeForTupleUnfold(abs_type);
   if (common::AnfAlgo::IsDynamicSequence(node)) {
     kernel_object_type = kernel::KernelObjectType::TUPLE;
-  } else if (abs_type == kObjectTypeTuple) {
+  } else if (abs_type == kObjectTypeTuple || abs_type == kObjectTypeList) {
     auto tuple_len = AnfAlgo::GetOutputElementNum(node);
     formats = std::vector<std::string>(tuple_len, formats[0]);
     types = std::vector<TypeId>(tuple_len, types[0]);
@@ -1127,7 +1127,7 @@ kernel::KernelObjectType GetTupleGetItemOutputKernelObjectType(const AnfNodePtr 
   return kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAbstractObjectType(node->abstract()));
 }
 
-void KernelGraph::SetKernelObjectTypesForUnrealNodes() {
+void KernelGraph::SetKernelObjectTypesForUnrealNodes() const {
   auto SetKernelObjectTypesForUnrealNode = [](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     std::vector<kernel::KernelObjectType> output_kernel_object_types;

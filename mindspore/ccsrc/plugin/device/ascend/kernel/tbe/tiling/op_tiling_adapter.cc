@@ -424,7 +424,7 @@ std::map<std::size_t, ::ge::NodePtr> OpTilingCalculateAdapter::ConvertDepends(
     auto const_tensor = iter->second;
     auto device_type = AnfAlgo::GetInputDeviceDataType(node, index);
     if (const_tensor->data_type() != device_type) {
-      const_tensor->set_data_type(device_type);
+      (void)const_tensor->set_data_type(device_type);
     }
     ::ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
     auto original_index = AnfAlgo::GetInputKernelIdxByGraphIdx(node, index);

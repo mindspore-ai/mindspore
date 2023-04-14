@@ -467,6 +467,8 @@ BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 BACKEND_EXPORT std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node);
 BACKEND_EXPORT bool IsKernelObjectTypeNotSupportedError(const std::string &error_str);
+BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
+
 template <typename Derived, typename AddressType = AddressPtr>
 class MatchKernelHelper {
  public:

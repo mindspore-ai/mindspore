@@ -594,7 +594,8 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
   return result;
 }
 
-bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType kernel_type) {
+std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node,
+                                                                                       KernelType kernel_type) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   // Only the kernel nodes that register kernel attr can support the backoff.
   bool backoff_support_condition =
@@ -626,17 +627,25 @@ bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType ker
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
       kernel_build_info->SetOpType(kernel::OpType::SKIP);
     }
-    return true;
+    return {true, {}};
   }
 
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
       !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
-    return false;
+    return {false, kernel::KernelObjectTypeNotSupportWarning(kernel_node)};
+  }
+
+  if (IsTupleNestedOutputKernelAttr(object_selected_kernel_attrs[0])) {
+    return {false,
+            {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
+               " Multiple tuple outputs is not supported for registered kernel attr: " +
+               kernel::FetchPrintInfoByKernelAttr(object_selected_kernel_attrs[0]),
+             TypeError}};
   }
 
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
-  return true;
+  return {true, {}};
 }
 
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node, KernelType kernel_type) {
@@ -649,9 +658,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   }
   auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-  bool selected = GetSelectKernelObjectTypeResult(kernel_node, kernel_type);
-  if (!selected) {
-    return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
+  auto selected = GetSelectKernelObjectTypeResult(kernel_node, kernel_type);
+  if (!selected.first) {
+    return selected.second;
   }
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
