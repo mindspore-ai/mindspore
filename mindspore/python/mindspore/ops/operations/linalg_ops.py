@@ -122,3 +122,20 @@ class Svd(Primitive):
         self.compute_uv = Validator.check_value_type("compute_uv", compute_uv, [bool], self.name)
         self.add_prim_attr('full_matrices', self.full_matrices)
         self.add_prim_attr('compute_uv', self.compute_uv)
+
+
+class Eigh(Primitive):
+    """
+    Eigh decomposition(Symmetric matrix)
+    Ax = lambda * x
+    """
+
+    @prim_attr_register
+    def __init__(self, compute_eigenvectors=True, lower=True):
+        super().__init__(name="Eigh")
+        self.init_prim_io_names(inputs=['A'], outputs=['output_w', 'output_v'])
+        self.compute_eigenvectors = validator.check_value_type(
+            "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
+        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.add_prim_attr('lower', self.lower)
+        self.add_prim_attr('compute_eigenvectors', self.compute_eigenvectors)
