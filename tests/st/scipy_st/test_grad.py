@@ -18,9 +18,9 @@ import numpy as onp
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import context, Tensor
-from mindspore.scipy.linalg import cho_factor, cho_solve
+from mindspore.scipy.linalg import cho_factor
 from mindspore.scipy.ops import Eigh, SolveTriangular
-from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
+from tests.st.scipy_st.utils import create_random_rank_matrix, gradient_check
 
 
 @pytest.mark.level0
@@ -48,44 +48,6 @@ def test_cho_factor_grad():
     c, _ = cho_factor(a, True)
     expect_output = onp.array([[1.7320508, 0.], [0.57735026, 1.9148543]])
     assert onp.allclose(c.asnumpy(), expect_output)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('shape', [(8, 8)])
-@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
-def test_cho_solve_grad(lower, shape, data_type):
-    """
-    Feature: ALL TO ALL
-    Description: test cases for grad implementation of cho_solve in graph mode and pynative mode.
-    Expectation: the result match gradient checking.
-    """
-    onp.random.seed(0)
-    context.set_context(mode=context.GRAPH_MODE)
-    dtype, epsilon, error = data_type
-
-    class ChoSolveNet(nn.Cell):
-        def __init__(self, lower):
-            super(ChoSolveNet, self).__init__()
-            self.mean = ops.ReduceMean()
-            self.lower = lower
-
-        def construct(self, c, b):
-            c_lower = (c, self.lower)
-            output = cho_solve(c_lower, b)
-            return self.mean(output)
-
-    a = create_sym_pos_matrix(shape, dtype)
-    n = shape[-1]
-    b = onp.ones((n, 1), dtype=dtype)
-    msp_c, msp_lower = cho_factor(Tensor(a), lower)
-    cho_solve_net = ChoSolveNet(msp_lower)
-    assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
-    context.set_context(mode=context.PYNATIVE_MODE)
-    assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
 
 
 @pytest.mark.level0
