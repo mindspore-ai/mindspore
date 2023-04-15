@@ -23,12 +23,12 @@
 #include <unordered_map>
 #include <set>
 #include <memory>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "src/litert/cpu_info.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 class ExitSubGraphKernel : public SubGraphKernel {

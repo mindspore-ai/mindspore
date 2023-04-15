@@ -141,9 +141,9 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel_exec.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/executor/kernel_exec.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel_exec_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/sub_graph_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/executor/sub_graph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/runtime_packed_node_pass.cc

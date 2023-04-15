@@ -206,10 +206,10 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/litert/kernel_registry.cc
         ${SRC_DIR}/registry/register_kernel_impl.cc
         ${SRC_DIR}/litert/lite_kernel.cc
-        ${SRC_DIR}/litert/kernel_exec.cc
+        ${SRC_DIR}/executor/kernel_exec.cc
         ${SRC_DIR}/litert/kernel_exec_util.cc
         ${SRC_DIR}/litert/scheduler.cc
-        ${SRC_DIR}/litert/sub_graph_kernel.cc
+        ${SRC_DIR}/executor/sub_graph_kernel.cc
         ${SRC_DIR}/litert/sub_graph_split.cc
         ${KERNEL_ONLINE_FUSION_SRC}
         ${SRC_DIR}/litert/lite_session.cc

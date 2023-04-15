@@ -18,7 +18,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/common/utils.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #ifdef ENABLE_FP16
 #include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
 #endif

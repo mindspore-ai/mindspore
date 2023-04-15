@@ -32,7 +32,7 @@
 #include "src/litert/lite_kernel.h"
 #include "ops/base_operator.h"
 #include "kernel/common_utils.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::kernel {
 using InferTensor = mindspore::infer::abstract::Tensor;

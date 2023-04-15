@@ -25,7 +25,7 @@
 #include "include/api/status.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore {
 namespace infer {

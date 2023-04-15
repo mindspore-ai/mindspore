@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/tensor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore {
 namespace kernel {

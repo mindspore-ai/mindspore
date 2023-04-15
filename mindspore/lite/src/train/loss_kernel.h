@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_TRAIN_LOSS_KERNEL_H_
 #define MINDSPORE_LITE_SRC_TRAIN_LOSS_KERNEL_H_
 #include <vector>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 namespace mindspore::kernel {
 
 class LossKernel : public LiteKernel {

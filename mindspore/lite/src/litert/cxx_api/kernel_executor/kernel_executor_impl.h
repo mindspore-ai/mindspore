@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "src/litert/cxx_api/kernel_executor/kernel_executor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "common/version_manager.h"
 
 namespace mindspore {

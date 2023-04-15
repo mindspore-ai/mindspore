@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "infer/tensor.h"
-#include "litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::infer::abstract {
 using Kernel = mindspore::kernel::KernelExec;

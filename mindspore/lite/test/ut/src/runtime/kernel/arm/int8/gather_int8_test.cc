@@ -19,7 +19,7 @@
 #include "nnacl/gather_parameter.h"
 #include "nnacl/int8/gather_int8.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 class TestGatherInt8 : public mindspore::CommonTest {

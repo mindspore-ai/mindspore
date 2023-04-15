@@ -22,7 +22,7 @@
 #include <vector>
 #include "src/litert/lite_model.h"
 #include "src/tensor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore {
 namespace lite {

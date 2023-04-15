@@ -23,7 +23,7 @@
 #include <set>
 #include <utility>
 #include "src/litert/inner_allocator.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/lite_mindrt.h"
 #include "src/litert/executor.h"
 #include "mindrt/src/actor/actormgr.h"

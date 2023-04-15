@@ -19,7 +19,7 @@
 #include <set>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/kernel_registry.h"
 #include "src/common/ops/anf_utils.h"
 #include "tools/optimizer/common/format_utils.h"

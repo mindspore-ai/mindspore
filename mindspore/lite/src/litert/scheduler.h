@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <set>
 #include <string>
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "src/litert/inner_context.h"
 #include "include/model.h"
 #include "src/litert/scheduler_cb.h"

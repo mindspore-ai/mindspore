@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/litert/kernel/cpu/base/quant_dtype_cast.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 

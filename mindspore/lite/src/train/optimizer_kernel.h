@@ -22,7 +22,7 @@
 #include <string>
 #include <atomic>
 #include <iostream>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "include/errorcode.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

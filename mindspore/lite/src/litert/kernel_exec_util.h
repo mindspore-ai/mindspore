@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_UTIL_H_
 #include <vector>
 #include <set>
-#include "src/litert/kernel_exec.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/kernel_exec.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "src/litert/inner_context.h"
 
 namespace mindspore::kernel {

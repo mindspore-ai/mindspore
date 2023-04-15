@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/fp16_grad/strided_slice_grad.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::kernel {
 class StridedSliceGradCPUKernelFp16 : public LiteKernel {

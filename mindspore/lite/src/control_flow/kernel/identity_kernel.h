@@ -28,7 +28,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "src/litert/cpu_info.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 // Identity kernel is used to update a reference to a tensor. This is useful in control flow model.

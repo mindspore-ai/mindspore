@@ -20,7 +20,7 @@
 
 #include "src/extendrt/tensor.h"
 #include "src/litert/kernel_exec_util.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::infer {
 ExecutionFlow::~ExecutionFlow() {

@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/space_to_batch_fp32.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 

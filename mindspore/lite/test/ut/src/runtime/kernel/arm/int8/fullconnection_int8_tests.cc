@@ -20,7 +20,7 @@
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 using lite::Tensor;

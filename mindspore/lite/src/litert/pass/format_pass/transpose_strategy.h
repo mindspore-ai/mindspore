@@ -20,7 +20,7 @@
 #include <set>
 #include <vector>
 #include <unordered_map>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/pass/format_pass/pass_utils.h"
 
 namespace mindspore::lite::pass {

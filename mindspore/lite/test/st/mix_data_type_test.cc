@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "src/common/config_file.h"
 #include "schema/inner/model_generated.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/lite_session.h"
 #include "include/api/model.h"
 #include "src/litert/cxx_api/model/model_impl.h"

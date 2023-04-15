@@ -24,7 +24,7 @@
 #include <string>
 #include <cfloat>
 #include "src/litert/lite_kernel.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "include/errorcode.h"
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/litert/tensor_category.h"

@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/tensor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 // this file is going to be removed when move create actor before schedule.
 namespace mindspore::kernel {

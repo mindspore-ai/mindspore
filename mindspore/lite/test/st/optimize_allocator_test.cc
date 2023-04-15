@@ -17,7 +17,7 @@
 #include "common/common_test.h"
 #include "gmock/gmock.h"
 #include "schema/inner/model_generated.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
 #include "include/model.h"
 #include "src/litert/lite_session.h"

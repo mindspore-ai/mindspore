@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/common/utils.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 class TestStridedSliceFp32 : public mindspore::CommonTest {

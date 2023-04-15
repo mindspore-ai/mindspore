@@ -18,8 +18,8 @@
 
 #include <string>
 #include <vector>
-#include "src/litert/kernel_exec.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/kernel_exec.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::lite::pass {
 static const std::vector<int> nh2nc_perm = {0, 3, 1, 2};

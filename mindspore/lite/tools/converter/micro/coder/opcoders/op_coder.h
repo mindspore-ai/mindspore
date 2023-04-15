@@ -23,7 +23,7 @@
 #include "tools/converter/micro/coder/context.h"
 #include "tools/converter/micro/coder/allocator/allocator.h"
 #include "include/errorcode.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/common/version_manager.h"
 #include "securec/include/securec.h"
 #include "tools/converter/micro/coder/opcoders/op_coder_register.h"

@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <map>
 #include <atomic>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/lite_model.h"
 #include "src/litert/inner_context.h"
 #include "src/litert/runtime_allocator.h"
@@ -37,7 +37,7 @@
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #endif
 #include "src/litert/scheduler_cb.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 #ifdef ENABLE_LITE_HELPER
 #include "src/common/helper/infer_helpers.h"
