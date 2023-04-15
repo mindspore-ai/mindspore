@@ -1429,5 +1429,39 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
   }
   return std::make_shared<TensorLayout>(input_tensor_layout);
 }
+
+// temporary method for handling StandardNormal Insertion in opt graph
+void InsertStdNormForTaggedNodes(const FuncGraphManagerPtr &manager, const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive == nullptr) {
+      continue;
+    }
+    if (common::AnfAlgo::IsCommunicationOp(node)) {
+      continue;
+    }
+    auto comm_prim = common::AnfAlgo::GetCNodePrimitive(node);
+    if (comm_prim->HasAttr("insert_rand")) {
+      MS_LOG(INFO) << "Insert StandardNormal to node" << node->DebugString();
+      std::vector<AnfNodePtr> inputShape = {NewValueNode(prim::kPrimShape), node->cast<CNodePtr>()->input(kIndex1)};
+      auto inputShapeNode = node->func_graph()->NewCNode(inputShape);
+
+      std::vector<AnfNodePtr> stdNorm = {NewValueNode(prim::kPrimStandardNormal), inputShapeNode->cast<AnfNodePtr>()};
+      auto stdNormNode = node->func_graph()->NewCNode(stdNorm);
+
+      auto stdNormPrim = GetCNodePrimitive(stdNormNode);
+      auto attrs = stdNormPrim->attrs();
+      attrs["seed"] = MakeValue<int64_t>(0);
+      attrs["seed2"] = MakeValue<int64_t>(0);
+      stdNormPrim->SetAttrs(attrs);
+
+      manager->SetEdge(node, 1, stdNormNode);
+    }
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore
