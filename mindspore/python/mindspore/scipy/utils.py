@@ -20,7 +20,7 @@ from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor, CSRTensor
 from ..common import dtype as mstype
-from .utils_const import _type_convert, _raise_value_error, _callable_const, _super_check, pack
+from .utils_const import _type_convert, _raise_value_error, _super_check, pack
 from ..ops.composite import GradOperation
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
@@ -154,54 +154,3 @@ def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b', sparse=Fal
     _super_check((arg1_shape, arg2_shape), (func_name, arg1_name, arg2_name, sparse), 'solve', 'solve', None, True)
     _super_check((arg1_dtype, arg2_dtype), (func_name, arg1_name, arg2_name, 'data type'), '==', 'match', None, False)
     return arg1, arg2
-
-
-def _sparse_check(func_name, a, m, b, x0):
-    """Used for cg method."""
-
-    def _check_right(arg, arg_name):
-        if arg is None:
-            return mnp.zeros_like(b)  # x0 same as b
-        # Type
-        _mstype_check(func_name, arg, mstype.tensor_type, arg_name)
-        # DType
-        _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
-        # Shape
-        if (arg.ndim != 1 and arg.ndim != 2) or (arg.ndim == 2 and arg.shape[1] != 1):
-            _raise_value_error("For: '", func_name, "', the shape of '", arg_name,
-                               "' should be like (N,) or (N, 1), bug got ", arg.shape, ".")
-        return arg
-
-    b = _check_right(b, 'b')
-    x0 = _check_right(x0, 'x0')
-
-    def _check_left(arg, arg_name):
-        if arg is None:
-            return lambda x: x  # identity function
-        # Type
-        _mstype_check(func_name, arg, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], arg_name)
-        if _callable_const(F.typeof(arg)):
-            return arg
-        # DType
-        if isinstance(arg, CSRTensor):
-            _dtype_check(func_name, arg.indptr, [mstype.int32], arg_name)
-            _dtype_check(func_name, arg.indices, [mstype.int32], arg_name)
-            _dtype_check(func_name, arg.values, [mstype.float32], arg_name)
-        else:
-            _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
-        # Shape
-        _solve_check(func_name, arg, b, arg_name, 'b', True)
-        _solve_check(func_name, arg, x0, arg_name, 'x0', True)
-        if isinstance(arg, Tensor) and F.dtype(arg) in (mstype.int32, mstype.int64):
-            arg = F.cast(arg, mstype.float64)
-        return arg
-
-    a = _check_left(a, 'A')
-    m = _check_left(m, 'M')
-
-    b = b.flatten()
-    x0 = x0.flatten()
-    if F.dtype(b) in (mstype.int32, mstype.int64):
-        b = F.cast(b, mstype.float64)
-        x0 = F.cast(x0, mstype.float64)
-    return a, m, b, x0
