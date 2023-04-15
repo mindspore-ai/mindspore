@@ -31,9 +31,6 @@ class MIND_API NPUAllocFloatStatus : public BaseOperator {
   NPUAllocFloatStatus() : BaseOperator(kNameNPUAllocFloatStatus) { InitIOName({}, {"data"}); }
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_NPU_ALLOC_FLOATSTATUS_H_

@@ -41,8 +41,26 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(TensorShape, BaseOperator);
-MIND_API_OPERATOR_IMPL(DynamicShape, BaseOperator);
+namespace {
+BaseShapePtr TensorShapeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto input = input_args[0]->cast<abstract::AbstractTensorPtr>();
+  if (input == nullptr) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "' input must be a Tensor, but got "
+                            << input_args[0]->BuildType()->ToString() << ".";
+  }
+  MS_EXCEPTION_IF_NULL(input->shape());
+  auto shape = input->shape()->shape();
+  ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
+  if (IsDynamicRank(shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
+  }
+  return std::make_shared<abstract::Shape>(tensor_shp);
+}
+
+TypePtr TensorShapeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  return kInt64;
+}
+
 abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
@@ -70,7 +88,28 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
 
   return tensor->ToAbstract();
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorShape, prim::kPrimTensorShape, TensorShapeInfer, nullptr, true);
-REGISTER_PRIMITIVE_EVAL_IMPL(DynamicShape, prim::kPrimDynamicShape, TensorShapeInfer, nullptr, true);
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(TensorShape, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicShape, BaseOperator);
+class MIND_API AGTensorShapeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorShapeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorShapeInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return TensorShapeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(TensorShape, prim::kPrimTensorShape, AGTensorShapeInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicShape, prim::kPrimDynamicShape, AGTensorShapeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

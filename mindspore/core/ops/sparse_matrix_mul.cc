@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "ops/sparse_matrix_mul.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -27,52 +26,70 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ops/core_ops.h"
+#include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "ops/sparse_matrix_mul.h"
 
 namespace mindspore {
 namespace ops {
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
-namespace {}  // namespace
+namespace {
+abstract::TupleShapePtr SparseMatrixMulInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  auto a_shape_shape = input_args[kInputIndex0]->BuildShape();
+  auto a_batch_pointers_shape = input_args[kInputIndex1]->BuildShape();
+  auto a_indptr_shape = input_args[kInputIndex2]->BuildShape();
+  auto a_indices_shape = input_args[kInputIndex3]->BuildShape();
+  auto a_values_shape = input_args[kInputIndex4]->BuildShape();
+
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    a_shape_shape, a_batch_pointers_shape, a_indptr_shape, a_indices_shape, a_values_shape});
+}
+
+TuplePtr SparseMatrixMulInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string op_name = primitive->name();
+
+  constexpr size_t kSMAInputsNum = 6;
+  mindspore::abstract::CheckArgsSize(op_name, input_args, kSMAInputsNum);
+  auto a_shape_type = input_args[kInputIndex0]->BuildType();
+  auto a_batch_pointers_type = input_args[kInputIndex1]->BuildType();
+  auto a_indptr_type = input_args[kInputIndex2]->BuildType();
+  auto a_indices_type = input_args[kInputIndex3]->BuildType();
+  auto a_values_type = input_args[kInputIndex4]->BuildType();
+
+  return std::make_shared<Tuple>(
+    std::vector<TypePtr>{a_shape_type, a_batch_pointers_type, a_indptr_type, a_indices_type, a_values_type});
+}
 
 AbstractBasePtr SparseMatrixMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const std::string op_name = primitive->name();
-  constexpr size_t kAShapeIdx = 0;
-  constexpr size_t kABatchPointersIdx = 1;
-  constexpr size_t kAIndptrIdx = 2;
-  constexpr size_t kAIndicesIdx = 3;
-  constexpr size_t kAValuesIdx = 4;
-  constexpr size_t kBDenseIdx = 5;
-  constexpr size_t kSMAInputsNum = 6;
-
-  mindspore::abstract::CheckArgsSize(op_name, input_args, kSMAInputsNum);
-  auto a_shape = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAShapeIdx);
-  auto a_batch_pointers = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kABatchPointersIdx);
-  auto a_indptr = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAIndptrIdx);
-  auto a_indices = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAIndicesIdx);
-  auto a_values = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kAValuesIdx);
-  auto b_dense = mindspore::abstract::CheckArg<AbstractTensor>(op_name, input_args, kBDenseIdx);
-  MS_EXCEPTION_IF_NULL(a_shape);
-  MS_EXCEPTION_IF_NULL(a_batch_pointers);
-  MS_EXCEPTION_IF_NULL(a_indptr);
-  MS_EXCEPTION_IF_NULL(a_indices);
-  MS_EXCEPTION_IF_NULL(a_values);
-  MS_EXCEPTION_IF_NULL(b_dense);
-
-  auto out_shape = std::make_shared<AbstractTensor>(a_shape->element()->BuildType(), a_shape->shape()->shape());
-  auto out_batch_pointers =
-    std::make_shared<AbstractTensor>(a_batch_pointers->element()->BuildType(), a_batch_pointers->shape()->shape());
-  auto out_indptr = std::make_shared<AbstractTensor>(a_indptr->element()->BuildType(), a_indptr->shape()->shape());
-  auto out_indices = std::make_shared<AbstractTensor>(a_indices->element()->BuildType(), a_indices->shape()->shape());
-  auto out_values = std::make_shared<AbstractTensor>(a_values->element()->BuildType(), a_values->shape()->shape());
-  AbstractBasePtrList ret = {out_shape, out_batch_pointers, out_indptr, out_indices, out_values};
-  return std::make_shared<AbstractTuple>(ret);
+  return abstract::MakeAbstract(SparseMatrixMulInferShape(primitive, input_args),
+                                SparseMatrixMulInferType(primitive, input_args));
 }
+}  // namespace
+
 MIND_API_OPERATOR_IMPL(SparseMatrixMul, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseMatrixMul, prim::kPrimSparseMatrixMul, SparseMatrixMulInfer, nullptr, true);
+class MIND_API AGSparseMatrixMulInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMulInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMulInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseMatrixMulInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseMatrixMul, prim::kPrimSparseMatrixMul, AGSparseMatrixMulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

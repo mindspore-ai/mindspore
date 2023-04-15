@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -31,12 +32,6 @@ namespace ops {
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
-constexpr size_t kFirstInput = 0;
-constexpr size_t kSpInputIndicesStart = 0;
-constexpr size_t kSpInputValuesStart = 1;
-constexpr size_t kSpInputShapesStart = 2;
-constexpr auto kConcatDim = "concat_dim";
-
 inline void CheckSparseConcatShape(const ShapeVector &input_shape, const size_t &expected_dim,
                                    const std::string &arg_name, const std::string &prim_name) {
   if (!IsDynamicRank(input_shape) && input_shape.size() != expected_dim) {
@@ -62,40 +57,38 @@ inline bool CheckSparseConcatShapeValue(const ShapeVector &indices_shape, const 
   }
   return is_dynamic;
 }
-}  // namespace
 
-std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SparseConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  if (!input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>() &&
-      !input_args[kSpInputIndicesStart]->isa<abstract::AbstractList>()) {
+  if (!input_args[kInputIndex0]->isa<abstract::AbstractTuple>() &&
+      !input_args[kInputIndex0]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
                                         << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kSpInputIndicesStart]->ToString() << ".";
+                                        << input_args[kInputIndex0]->ToString() << ".";
   }
-  auto inputs_indices = input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>()
-                          ? input_args[kSpInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                          : input_args[kSpInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_indices = input_args[kInputIndex0]->isa<abstract::AbstractTuple>()
+                          ? input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements()
+                          : input_args[kInputIndex0]->cast<abstract::AbstractListPtr>()->elements();
 
-  if (!input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>() &&
-      !input_args[kSpInputValuesStart]->isa<abstract::AbstractList>()) {
+  if (!input_args[kInputIndex1]->isa<abstract::AbstractTuple>() &&
+      !input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
                                         << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kSpInputValuesStart]->ToString() << ".";
+                                        << input_args[kInputIndex1]->ToString() << ".";
   }
-  auto inputs_values = input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSpInputValuesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSpInputValuesStart]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_values = input_args[kInputIndex1]->isa<abstract::AbstractTuple>()
+                         ? input_args[kInputIndex1]->cast<abstract::AbstractTuplePtr>()->elements()
+                         : input_args[kInputIndex1]->cast<abstract::AbstractListPtr>()->elements();
 
-  if (!input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>() &&
-      !input_args[kSpInputShapesStart]->isa<abstract::AbstractList>()) {
+  if (!input_args[kInputIndex2]->isa<abstract::AbstractTuple>() &&
+      !input_args[kInputIndex2]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
                                         << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kSpInputShapesStart]->ToString() << ".";
+                                        << input_args[kInputIndex2]->ToString() << ".";
   }
-  auto inputs_shapes = input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSpInputShapesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSpInputShapesStart]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_shapes = input_args[kInputIndex2]->isa<abstract::AbstractTuple>()
+                         ? input_args[kInputIndex2]->cast<abstract::AbstractTuplePtr>()->elements()
+                         : input_args[kInputIndex2]->cast<abstract::AbstractListPtr>()->elements();
   std::map<std::string, TypePtr> values_types;
   if ((inputs_indices.size() != inputs_values.size()) || (inputs_indices.size() != inputs_shapes.size())) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
@@ -113,26 +106,26 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
                                                      prim_name);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
-  std::vector<TypePtr> out_type = {};
-  out_type.push_back(inputs_indices[kFirstInput]->BuildType());
-  out_type.push_back(inputs_values[kFirstInput]->BuildType());
-  out_type.push_back(inputs_shapes[kFirstInput]->BuildType());
-  return out_type;
+
+  constexpr size_t kFirstInput = 0;
+  return std::make_shared<Tuple>(std::vector<TypePtr>{inputs_indices[kFirstInput]->BuildType(),
+                                                      inputs_values[kFirstInput]->BuildType(),
+                                                      inputs_shapes[kFirstInput]->BuildType()});
 }
 
-std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto inputs_indices = input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>()
-                          ? input_args[kSpInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                          : input_args[kSpInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto inputs_values = input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSpInputValuesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSpInputValuesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto inputs_shapes = input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSpInputShapesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSpInputShapesStart]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_indices = input_args[kInputIndex0]->isa<abstract::AbstractTuple>()
+                          ? input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements()
+                          : input_args[kInputIndex0]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_values = input_args[kInputIndex1]->isa<abstract::AbstractTuple>()
+                         ? input_args[kInputIndex1]->cast<abstract::AbstractTuplePtr>()->elements()
+                         : input_args[kInputIndex1]->cast<abstract::AbstractListPtr>()->elements();
+  auto inputs_shapes = input_args[kInputIndex2]->isa<abstract::AbstractTuple>()
+                         ? input_args[kInputIndex2]->cast<abstract::AbstractTuplePtr>()->elements()
+                         : input_args[kInputIndex2]->cast<abstract::AbstractListPtr>()->elements();
   int64_t kNumOne = 1;
   size_t indices_expect_rank = 2;
   size_t values_expect_rank = 1;
@@ -160,7 +153,8 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
     abstract::ShapePtr y_indices_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1, -1});
     abstract::ShapePtr y_values_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1});
     abstract::ShapePtr y_shape_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1});
-    return std::vector<abstract::ShapePtr>{y_indices_shape_ptr, y_values_shape_ptr, y_shape_shape_ptr};
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{y_indices_shape_ptr, y_values_shape_ptr, y_shape_shape_ptr});
   }
 
   std::vector<int64_t> out_indices_shape = {};
@@ -194,11 +188,10 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
     out_values_shape[0] = -1;
   }
 
-  std::vector<abstract::ShapePtr> out_shape = {};
-  out_shape.push_back(std::make_shared<mindspore::abstract::Shape>(out_indices_shape));
-  out_shape.push_back(std::make_shared<mindspore::abstract::Shape>(out_values_shape));
-  out_shape.push_back(std::make_shared<mindspore::abstract::Shape>(out_shape_shape));
-  return out_shape;
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{std::make_shared<mindspore::abstract::Shape>(out_indices_shape),
+                                        std::make_shared<mindspore::abstract::Shape>(out_values_shape),
+                                        std::make_shared<mindspore::abstract::Shape>(out_shape_shape)});
 }
 
 AbstractBasePtr SparseConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -210,15 +203,11 @@ AbstractBasePtr SparseConcatInfer(const abstract::AnalysisEnginePtr &, const Pri
   }
   const int64_t kInputNum = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
-  auto infer_types = SparseConcatInferType(primitive, input_args);
-  auto infer_shapes = SparseConcatInferShape(primitive, input_args);
-  auto out_indices_abstract = abstract::MakeAbstract(infer_shapes[0], infer_types[0]);
-  auto out_values_abstract = abstract::MakeAbstract(infer_shapes[1], infer_types[1]);
-  auto out_shape_abstract = abstract::MakeAbstract(infer_shapes[2], infer_types[2]);
-
-  AbstractBasePtrList ret = {out_indices_abstract, out_values_abstract, out_shape_abstract};
-  return std::make_shared<AbstractTuple>(ret);
+  auto infer_type = SparseConcatInferType(primitive, input_args);
+  auto infer_shape = SparseConcatInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
+}  // namespace
 
 void SparseConcat::Init(int64_t concat_dim) { this->set_concat_dim(concat_dim); }
 
@@ -232,6 +221,23 @@ int64_t SparseConcat::get_concat_dim() const {
 }
 
 MIND_API_OPERATOR_IMPL(SparseConcat, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseConcat, prim::kPrimSparseConcat, SparseConcatInfer, nullptr, true);
+class MIND_API AGSparseConcatInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseConcatInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseConcatInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SparseConcatInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseConcat, prim::kPrimSparseConcat, AGSparseConcatInfer, false);
 }  // namespace ops
 }  // namespace mindspore

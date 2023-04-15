@@ -36,9 +36,6 @@ class MIND_API SparseMatrixSoftmax : public BaseOperator {
                {"c_dense_shape", "c_batch_pointers", "c_row_pointer", "c_col_indices", "c_values"});
   }
 };
-MIND_API abstract::AbstractBasePtr SparseMatrixSoftmaxInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

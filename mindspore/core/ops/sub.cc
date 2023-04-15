@@ -44,7 +44,6 @@ TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Sub, BaseOperator);
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -57,6 +56,25 @@ AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   }
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Sub, prim::kPrimSub, SubInfer, nullptr, false);
+
+MIND_API_OPERATOR_IMPL(Sub, BaseOperator);
+class MIND_API AGSubInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return SubInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Sub, prim::kPrimSub, AGSubInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 
+#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -34,27 +35,48 @@
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
-namespace {
-constexpr size_t kScatterElementsArgSize = 3;
-}  // namespace
-
 namespace mindspore {
 namespace ops {
+namespace {
+BaseShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  return input_args[0]->BuildShape();
+}
+
+TypePtr ScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  const std::string op_name = primitive->name();
+  constexpr size_t kScatterElementsArgSize = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterElementsArgSize, op_name);
+  return input_args[0]->BuildType();
+}
+
+AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) {
+  return abstract::MakeAbstract(ScatterElementsInferShape(primitive, input_args),
+                                ScatterElementsInferType(primitive, input_args));
+}
+}  // namespace
+
 void ScatterElements::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t ScatterElements::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
-AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const abstract::AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, kScatterElementsArgSize);
-  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector shape = x->shape()->shape();
-  return std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(shape));
-}
-
 MIND_API_OPERATOR_IMPL(ScatterElements, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterElements, prim::kPrimScatterElements, ScatterElementsInfer, nullptr, true);
+class MIND_API AGScatterElementsInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterElementsInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterElementsInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return ScatterElementsInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ScatterElements, prim::kPrimScatterElements, AGScatterElementsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

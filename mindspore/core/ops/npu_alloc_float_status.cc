@@ -33,20 +33,48 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t kFloatStatusNum = 8;
+BaseShapePtr NPUAllocFloatStatusInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  ShapeVector output_shape;
+  constexpr int64_t kFloatStatusNum = 8;
+  output_shape.push_back(kFloatStatusNum);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
-MIND_API_OPERATOR_IMPL(NPUAllocFloatStatus, BaseOperator);
-AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+
+TypePtr NPUAllocFloatStatusInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (input_args.size() != 0) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "' op, input num should be 0, bug gets "
                             << input_args.size();
   }
-  ShapeVector output_shape;
-  output_shape.push_back(kFloatStatusNum);
-  return abstract::MakeAbstract(std::make_shared<abstract::Shape>(output_shape), kTensorTypeFP32);
+  return kTensorTypeFP32;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NPUAllocFloatStatus, prim::kPrimNPUAllocFloatStatus, NPUAllocFloatStatusInfer, nullptr,
-                             true);
+
+AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  return abstract::MakeAbstract(NPUAllocFloatStatusInferShape(primitive, input_args),
+                                NPUAllocFloatStatusInferType(primitive, input_args));
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(NPUAllocFloatStatus, BaseOperator);
+class MIND_API AGNPUAllocFloatStatusInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return NPUAllocFloatStatusInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return NPUAllocFloatStatusInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NPUAllocFloatStatusInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NPUAllocFloatStatus, prim::kPrimNPUAllocFloatStatus, AGNPUAllocFloatStatusInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore
