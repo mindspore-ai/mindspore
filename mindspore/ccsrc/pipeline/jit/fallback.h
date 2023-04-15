@@ -17,11 +17,29 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_FALLBACK_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_FALLBACK_H_
 
+#include <string>
 #include "ir/anf.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
-AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
+constexpr auto kPyExecPrefix = "__py_exec_index";
+constexpr auto kPyExecSuffix = "__";
+constexpr auto kUnderLine = "_";
+constexpr auto kHexPrefix = "0x";
+constexpr auto kPyExecuteSlice = "[__start__:__stop__:__step__]";
 
+AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
+                                              const AnfNodePtrList &node_inputs, std::string script_str);
+void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src);
+std::string GetNodeExprSrc(const AnfNodePtr &node);
+std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
+std::string ConvertToRealStr(const std::string &target);
+std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const std::string &right,
+                                                const std::string &op);
+std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op);
+std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
+
+AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node);
 }  // namespace mindspore
 

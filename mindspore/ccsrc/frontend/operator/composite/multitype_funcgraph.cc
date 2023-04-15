@@ -23,6 +23,7 @@
 #include "abstract/dshape.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/ms_context.h"
+#include "pipeline/jit/fallback.h"
 #include "include/common/pybind_api/api_register.h"
 #include "ir/signature.h"
 #include "ir/dtype.h"
@@ -223,6 +224,19 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
 }
 
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
+  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  bool has_any = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
+  if (allow_fallback_runtime && has_any) {
+    FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+    AnfNodePtrList node_inputs{};
+    for (auto type : types) {
+      node_inputs.push_back(func_graph->add_parameter());
+    }
+    auto ret_node = GeneratePyExecuteNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
+    func_graph->set_output(ret_node);
+    return func_graph;
+  }
+
   auto [py_fn, has_extra_u_monad, match_max_idx] = SignMatch(types);
   std::ostringstream buffer;
   buffer << types;

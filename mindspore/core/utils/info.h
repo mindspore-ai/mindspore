@@ -57,6 +57,7 @@ class Location {
   int column() const { return column_; }
   int column_end() const { return column_end_; }
   const std::string &expr_src() const { return expr_src_; }
+  void set_expr_src(const std::string &expr_src) { expr_src_ = expr_src; }
   const std::vector<std::string> &comments() const { return comments_; }
 
   bool operator<(const Location &other) const;

@@ -118,7 +118,6 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                          MS_EXCEPTION_IF_NULL(eval_result);
                          return eval_result->abstract();
                        });
-
   // Do undetermined infer firstly.
   auto do_signature = prim_->cast_ptr<prim::DoSignaturePrimitive>();
   MS_EXCEPTION_IF_NULL(do_signature);
@@ -146,6 +145,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
                       << args_conf_list.size() << ", inputs size " << out_node_inputs.size();
   }
+
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   AnfNodePtr new_node = nullptr;
   ScopePtr scope = out_conf->node()->scope();

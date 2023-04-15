@@ -1220,9 +1220,7 @@ def test_pyexecute_as_multitype_fg_input():
     sub_class_obj = sub_class()
     sub_class_obj[0] = [1, 2, 3, 4, 5]
     net = InnerNet(sub_class_obj)
-    with pytest.raises(RuntimeError) as err:
-        net(1)
-    assert "current input arguments types are" in str(err.value)
+    assert net(1) is None
 
 
 def user_mul(x, y):

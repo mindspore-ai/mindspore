@@ -474,7 +474,12 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
   FuncGraphPtr generated_func_graph;
   if (this->bound_node() != nullptr) {
-    TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(bound_node()->debug_info()));
+    auto node_debug_info = bound_node()->debug_info();
+    TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(node_debug_info));
+    auto node_location = trace::GetSourceCodeDebugInfo(node_debug_info)->location();
+    if (node_location != nullptr) {
+      meta_func_graph_->set_node_expr_src(node_location->expr_src());
+    }
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   } else {
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);

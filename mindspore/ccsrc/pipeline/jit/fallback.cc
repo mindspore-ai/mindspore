@@ -21,12 +21,15 @@
 #include <memory>
 #include <regex>
 #include <string>
+#include <vector>
 
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "abstract/abstract_value.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {
@@ -147,5 +150,202 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node) {
     return container_type;
   }
   return nullptr;
+}
+
+std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &script) {
+  // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
+  std::vector<std::string> ret;
+  size_t pos = 0;
+  size_t start_pos, end_pos;
+  while ((start_pos = script.find(kPyExecPrefix, pos)) != string::npos &&
+         (end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != string::npos) {
+    auto substr = script.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
+    pos = end_pos + std::strlen(kPyExecSuffix);
+    ret.push_back(substr);
+    MS_LOG(DEBUG) << "Found input: " << substr;
+  }
+  return ret;
+}
+
+AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
+                                              const AnfNodePtrList &node_inputs, std::string script_str) {
+  // Pack local parameters keys.
+  auto inputs_str = GetPyExecuteInputFromUnicodeStr(script_str);
+  if (inputs_str.size() != node_inputs.size()) {
+    if (script_str.find(kPyExecuteSlice) == string::npos) {
+      MS_LOG(EXCEPTION) << "Input string size is " << inputs_str.size()
+                        << " and input node size is: " << node_inputs.size() << ". Size not match.";
+    }
+    if (inputs_str.size() == 1 && types.size() > 1 && types[1]->isa<AnyType>()) {
+      // The script is subscript, and slice input is PyExecute node.
+      auto new_slice_str = ConvertRealStrToUnicodeStr("__slice__", 1);
+      script_str = inputs_str[0] + "[" + new_slice_str + "]";
+      inputs_str = {inputs_str[0], new_slice_str};
+    }
+  }
+
+  std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < node_inputs.size(); ++i) {
+    if (types[i]->isa<Slice>()) {
+      (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
+    } else {
+      auto input_str = inputs_str[i];
+      (void)key_value_names_list.emplace_back(NewValueNode(input_str));
+    }
+  }
+  const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+
+  // Pack the local parameters values.
+  std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < node_inputs.size(); ++i) {
+    auto input = node_inputs[i];
+    if (types[i]->isa<Slice>()) {
+      auto start_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("start")});
+      auto end_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("stop")});
+      auto step_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("step")});
+      (void)key_value_list.emplace_back(start_node);
+      (void)key_value_list.emplace_back(end_node);
+      (void)key_value_list.emplace_back(step_node);
+    } else {
+      (void)key_value_list.emplace_back(input);
+    }
+  }
+  const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+
+  // Build the PyExecute node.
+  auto ret_node = func_graph->NewCNodeInOrder(
+    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+  MS_LOG(DEBUG) << "Generate PyExecute node: " << ret_node;
+  return ret_node;
+}
+
+void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src) {
+  auto node_debug_info = node->debug_info();
+  MS_EXCEPTION_IF_NULL(node_debug_info);
+  auto node_location = node_debug_info->location();
+  MS_EXCEPTION_IF_NULL(node_location);
+  node_location->set_expr_src(expr_src);
+  MS_LOG(DEBUG) << "Set new expr src '" << expr_src << "' for node: " << node->DebugString();
+}
+
+std::string GetNodeExprSrc(const AnfNodePtr &node) {
+  auto node_debug_info = node->debug_info();
+  MS_EXCEPTION_IF_NULL(node_debug_info);
+  auto node_location = node_debug_info->location();
+  MS_EXCEPTION_IF_NULL(node_location);
+  return node_location->expr_src();
+}
+
+std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const std::string &right,
+                                                const std::string &op) {
+  auto real_left = ConvertToRealStr(left);
+  auto real_right = ConvertToRealStr(right);
+  auto unicode_left = ConvertRealStrToUnicodeStr(real_left, 0);
+  auto unicode_right = ConvertRealStrToUnicodeStr(real_right, 1);
+  auto ret = unicode_left + op + unicode_right;
+  MS_LOG(DEBUG) << "Generate new script for BinOp/Compare: " << ret;
+  return ret;
+}
+
+std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op) {
+  auto real_operand = ConvertToRealStr(operand);
+  auto unicode_operand = ConvertRealStrToUnicodeStr(real_operand, 0);
+  auto ret = op + " " + unicode_operand;
+  MS_LOG(DEBUG) << "Generate new script for UnaryOp: " << ret;
+  return ret;
+}
+
+std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice) {
+  auto real_value = ConvertToRealStr(value);
+  auto unicode_value = ConvertRealStrToUnicodeStr(real_value, 0);
+  std::string ret;
+  if (is_slice) {
+    ret = unicode_value + kPyExecuteSlice;
+  } else {
+    auto unicode_slice = ConvertRealStrToUnicodeStr(slice, 1);
+    ret = unicode_value + "[" + unicode_slice + "]";
+  }
+  MS_LOG(DEBUG) << "Generate new script for SubScript: " << ret;
+  return ret;
+}
+
+std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
+  std::stringstream script_buffer;
+  script_buffer << kPyExecPrefix << std::to_string(index);
+  std::vector<size_t> convert_pos;
+  for (size_t i = 0; i < target.size(); ++i) {
+    auto c = target[i];
+    if (!std::isalnum(c)) {
+      convert_pos.push_back(i);
+    }
+  }
+  size_t start = 0;
+  for (auto end : convert_pos) {
+    std::string sub_non_convert = target.substr(start, end - start);
+    if (sub_non_convert.size() != 0) {
+      script_buffer << kUnderLine << sub_non_convert;
+    }
+    char sub_convert = target[end];
+    std::stringstream hex_s;
+    hex_s << kUnderLine << kHexPrefix << std::hex << static_cast<int>(sub_convert);
+    script_buffer << hex_s.str();
+    start = end + 1;
+  }
+  if (target.substr(start).size() != 0) {
+    script_buffer << kUnderLine << target.substr(start);
+  }
+  script_buffer << kPyExecSuffix;
+  auto unicode_str = script_buffer.str();
+  MS_LOG(DEBUG) << "Get Unicode str: " << unicode_str;
+  return script_buffer.str();
+}
+
+std::string ConvertUnicodeStrToRealStr(const std::string &target) {
+  constexpr size_t non_script_size = 3;
+  size_t sub_target_len = target.size() - std::strlen(kPyExecPrefix) - non_script_size;
+  auto sub_target = target.substr(std::strlen(kPyExecPrefix) + 2, sub_target_len);
+  std::stringstream script_buffer;
+  sub_target = sub_target + "_";
+  auto pos = sub_target.find("_");
+  constexpr size_t base_16 = 16;
+  while (pos != sub_target.npos) {
+    auto cur_str = sub_target.substr(0, pos);
+    if (cur_str.size() == 0) {
+      break;
+    }
+    if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
+      script_buffer << char(std::stoi(cur_str, nullptr, base_16));
+    } else {
+      script_buffer << cur_str;
+    }
+    sub_target = sub_target.substr(pos + 1);
+    pos = sub_target.find("_");
+  }
+  auto real_str = script_buffer.str();
+  return real_str;
+}
+
+std::string ConvertToRealStr(const std::string &target) {
+  if (target.find(kPyExecPrefix) == string::npos) {
+    return target;
+  }
+  std::string real_str = "";
+  size_t pos = 0;
+  size_t start_pos, end_pos;
+  while ((start_pos = target.find(kPyExecPrefix, pos)) != std::string::npos &&
+         (end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != std::string::npos) {
+    if (start_pos > pos) {
+      real_str += target.substr(pos, start_pos - pos);
+    }
+    auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
+    pos = end_pos + std::strlen(kPyExecSuffix);
+    real_str += ConvertUnicodeStrToRealStr(substr);
+  }
+  if (pos < target.size()) {
+    real_str += target.substr(pos);
+  }
+  return real_str;
 }
 }  // namespace mindspore
