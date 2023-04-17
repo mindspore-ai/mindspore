@@ -13,9 +13,9 @@ mindspore.Tensor.var
         不支持NumPy参数 `dtype` 、 `out` 和 `where` 。
 
     参数：
-        - **axis** (Union[None, int, tuple(int)]) - 维度，在指定维度上计算方差。其默认值是展开Tensor的方差。默认值：None。
-        - **ddof** (int) - δ自由度。默认值：0。计算中使用的除数是 :math:`N - ddof` ，其中 :math:`N` 表示元素的数量。
-        - **keepdims** (bool) - 默认值：False。
+        - **axis** (Union[None, int, tuple(int)]) - 维度，在指定维度上计算方差。其默认值是展开Tensor的方差。默认值： ``None`` 。
+        - **ddof** (int) - δ自由度。默认值： ``0`` 。计算中使用的除数是 :math:`N - ddof` ，其中 :math:`N` 表示元素的数量。
+        - **keepdims** (bool) - 默认值： ``False`` 。
 
     返回：
         含有方差值的Tensor。

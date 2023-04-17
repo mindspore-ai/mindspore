@@ -15,13 +15,13 @@ mindspore.Tensor.argmax_with_value
         - `axis` 的取值范围为[-dims, dims - 1]。`dims` 为输入Tensor的维度长度。
 
     参数：
-        - **axis** (int) - 指定计算维度。默认值：0。
-        - **keep_dims** (bool) - 表示是否减少维度。如果为True，则输出维度和输入维度相同。如果为False，则减少输出维度。默认值：False。
+        - **axis** (int) - 指定计算维度。默认值： ``0`` 。
+        - **keep_dims** (bool) - 表示是否减少维度。如果为 ``True`` ，则输出维度和输入维度相同。如果为 ``False`` ，则减少输出维度。默认值： ``False`` 。
 
     返回：
         tuple (Tensor)，表示2个Tensor组成的tuple，包含对应的索引和输入Tensor的最大值。
 
-        - **index** (Tensor) - 输入Tensor最大值的索引。如果 `keep_dims` 为True，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)` 。否则，shape为 :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
+        - **index** (Tensor) - 输入Tensor最大值的索引。如果 `keep_dims` 为 ``True`` ，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)` 。否则，shape为 :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
         - **output_x** (Tensor) - 输入Tensor的最大值，其shape与索引相同。
 
     异常：

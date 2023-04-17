@@ -236,25 +236,26 @@ def set_algo_parameters(**kwargs):
 
     Args:
         fully_use_devices (bool): Whether ONLY searching strategies that fully use all available devices.
-            Default: True. For example with 8 devices available, if set true, strategy (4, 1) will not be included
-            in ReLU's candidate strategies, because strategy (4, 1) only utilizes 4 devices.
+            Default: ``True`` . For example with 8 devices available, if set ``True`` , strategy (4, 1) will not be
+            included in ReLU's candidate strategies, because strategy (4, 1) only utilizes 4 devices.
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the consistent strategies as its
-            subsequent operators. Default: False. For the example of ReLU followed by Add, where ReLU is elementwise
-            operator, if this flag is set true, then the searched strategy by the algorithm guarantees that strategies
-            of these two operators are consistent, e.g., ReLU's strategy (8, 1) and Add's strategy ((8, 1), (8, 1)).
-        enable_algo_approxi (bool): Whether to enable the approximation in the algorithms. Default: False. Due to large
-            solution space in searching parallel strategy for large DNN model, the algorithm takes fairly long time in
-            this case. To mitigate it, if this flag is set true, an approximation is made to discard some candidate
-            strategies, so that the solution space is shrunken.
-        algo_approxi_epsilon (float): The epsilon value used in the approximation algorithm. Default: 0.1. This value
-            describes the extent of approximation. For example, the number of candidate strategies of an operator is S,
-            if 'enable_algo_approxi' is true, then the remaining strategies is of size: min{S, 1/epsilon}.
-        tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False. Due to
-            properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag is true,
-            then the slice shape of MatMul is checked to prevent irregular shapes.
+            subsequent operators. Default: ``False`` . For the example of ReLU followed by Add, where ReLU is
+            elementwise operator, if this flag is set ``True`` , then the searched strategy by the algorithm
+            guarantees that strategies of these two operators are consistent, e.g., ReLU's strategy (8, 1) and Add's
+            strategy ((8, 1), (8, 1)).
+        enable_algo_approxi (bool): Whether to enable the approximation in the algorithms. Default: ``False`` . Due to
+            large solution space in searching parallel strategy for large DNN model, the algorithm takes fairly long
+            time in this case. To mitigate it, if this flag is set ``True`` , an approximation is made to discard some
+            candidate strategies, so that the solution space is shrunken.
+        algo_approxi_epsilon (float): The epsilon value used in the approximation algorithm. Default: ``0.1`` . This
+            value describes the extent of approximation. For example, the number of candidate strategies of an operator
+            is S, if 'enable_algo_approxi' is ``True`` , then the remaining strategies is of size: min{S, 1/epsilon}.
+        tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: ``False`` .
+            Due to properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag
+            is ``True`` , then the slice shape of MatMul is checked to prevent irregular shapes.
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
-            Default: 16. If 'tensor_slice_align_enable' is set true, then the slice size of last dimension of MatMul
-            tensors should be multiple of this value.
+            Default: ``16`` . If 'tensor_slice_align_enable' is set ``True`` , then the slice size of last dimension of
+            MatMul tensors should be multiple of this value.
 
     Raises:
         ValueError: If context keyword is not recognized.

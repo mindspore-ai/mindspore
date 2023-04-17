@@ -269,19 +269,19 @@ class SummaryLandscape:
             collect_landscape (Union[dict, None]): The meaning of the parameters
                 when creating loss landscape is consistent with the fields
                 with the same name in SummaryCollector. The purpose of setting here
-                is to allow users to freely modify creating parameters. Default: None.
+                is to allow users to freely modify creating parameters. Default: ``None`` .
 
                 - landscape_size (int): Specify the image resolution of the generated loss landscape.
-                  For example, if it is set to 128, the resolution of the landscape is 128 * 128.
+                  For example, if it is set to ``128`` , the resolution of the landscape is 128 * 128.
                   The calculation time increases with the increase of resolution.
-                  Default: 40. Optional values: between 3 and 256.
+                  Default: ``40`` . Optional values: between 3 and 256.
                 - create_landscape (dict): Select how to create loss landscape.
                   Training process loss landscape(train) and training result loss landscape(result).
-                  Default: {"train": True, "result": True}. Optional: True/False.
+                  Default: {"train": True, "result": True}. Optional: ``True`` / ``False`` .
                 - num_samples (int): The size of the dataset used to create the loss landscape.
                   For example, in image dataset, You can set num_samples is 2048,
                   which means that 2048 images are used to create loss landscape.
-                  Default: 2048.
+                  Default: ``2048`` .
                 - intervals (List[List[int]]): Specifies the interval
                   in which the loss landscape. For example: If the user wants to
                   create loss landscape of two training processes, they are 1-5 epoch
@@ -289,9 +289,9 @@ class SummaryLandscape:
                   Note: Each interval have at least three epochs.
             device_ids (List(int)): Specifies which devices are used to create loss landscape.
                 For example: [0, 1] refers to creating loss landscape with device 0 and device 1.
-                Default: None.
+                Default: ``None`` .
             output (str): Specifies the path to save the loss landscape.
-                Default: None. The default save path is the same as the summary file.
+                Default: ``None`` . The default save path is the same as the summary file.
         """
 
         executor = None

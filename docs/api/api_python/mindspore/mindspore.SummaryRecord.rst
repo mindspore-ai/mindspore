@@ -18,14 +18,14 @@ mindspore.SummaryRecord
 
     参数：
         - **log_dir** (str) - `log_dir` 是用来保存summary文件的目录。
-        - **file_prefix** (str) - 文件的前缀。默认值：`events` 。
-        - **file_suffix** (str) - 文件的后缀。默认值：`_MS` 。
-        - **network** (Cell) - 表示用于保存计算图的网络。默认值：None。
-        - **max_file_size** (int, 可选) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，预期写入文件最大不超过4GB，则设置 `max_file_size=4*1024**3` 。默认值：None，表示无限制。
-        - **raise_exception** (bool, 可选) - 设置在记录数据中发生RuntimeError或OSError异常时是否抛出异常。默认值：False，表示打印错误日志，不抛出异常。
-        - **export_options** (Union[None, dict]) - 可以将保存在summary中的数据导出，并使用字典自定义所需的数据和文件格式。注：导出的文件大小不受 `max_file_size` 的限制。例如，您可以设置{'tensor_format':'npy'}将Tensor导出为 `npy` 文件。支持导出的数据类型如下所示。默认值：None，表示不导出数据。
+        - **file_prefix** (str) - 文件的前缀。默认值： ``'events'`` 。
+        - **file_suffix** (str) - 文件的后缀。默认值： ``'_MS'`` 。
+        - **network** (Cell) - 表示用于保存计算图的网络。默认值： ``None`` 。
+        - **max_file_size** (int, 可选) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，预期写入文件最大不超过4GB，则设置 `max_file_size=4*1024**3` 。默认值： ``None`` ，表示无限制。
+        - **raise_exception** (bool, 可选) - 设置在记录数据中发生RuntimeError或OSError异常时是否抛出异常。默认值： ``False`` ，表示打印错误日志，不抛出异常。
+        - **export_options** (Union[None, dict]) - 可以将保存在summary中的数据导出，并使用字典自定义所需的数据和文件格式。注：导出的文件大小不受 `max_file_size` 的限制。例如，您可以设置{'tensor_format':'npy'}将Tensor导出为 `npy` 文件。支持导出的数据类型如下所示。默认值： ``None`` ，表示不导出数据。
 
-          - **tensor_format** (Union[str, None]) - 自定义导出的Tensor的格式。支持["npy", None]。默认值：None，表示不导出Tensor。
+          - **tensor_format** (Union[str, None]) - 自定义导出的Tensor的格式。支持["npy", None]。默认值： ``None`` ，表示不导出Tensor。
 
             - **npy**：将Tensor导出为NPY文件。
 
@@ -91,7 +91,7 @@ mindspore.SummaryRecord
         参数：
             - **step** (int) - 表示当前的step。
             - **train_network** (Cell) - 表示用于保存计算图的训练网络。默认值：None，表示当原始网络的图为None时，不保存计算图。
-            - **plugin_filter** (Callable[[str], bool], 可选) - 过滤器函数，用于过滤需要写入的标签项。默认值：None。
+            - **plugin_filter** (Callable[[str], bool], 可选) - 过滤器函数，用于过滤需要写入的标签项。默认值： ``None`` 。
 
         返回：
             bool，表示记录是否成功。

@@ -570,15 +570,15 @@ def set_auto_parallel_context(**kwargs):
     ===========================  ===========================
 
     Args:
-        device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
-        global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
+        device_num (int): Available device number, the value must be in [1, 4096]. Default: ``1`` .
+        global_rank (int): Global rank id, the value must be in [0, 4095]. Default: ``0`` .
         gradients_mean (bool): Whether to perform mean operator after allreduce of gradients.
-                     "stand_alone" do not support gradients_mean. Default: False.
+                     "stand_alone" do not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
-                     and "hybrid_parallel" do not support gradient_fp32_sync. Default: True.
-        parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
-                     "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Note the pynative mode only supports
-                     the "stand_alone" and "data_parallel" mode. Default: "stand_alone".
+                     and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
+        parallel_mode (str): There are five kinds of parallel modes, ``"stand_alone"`` , ``"data_parallel"`` ,
+                     ``"hybrid_parallel"`` , ``"semi_auto_parallel"`` and ``"auto_parallel"`` . Note the pynative mode
+                     only supports the ``"stand_alone"`` and ``"data_parallel"`` mode. Default: ``"stand_alone"`` .
 
                      - stand_alone: Only one processor is working.
 
@@ -589,8 +589,8 @@ def set_auto_parallel_context(**kwargs):
                      - semi_auto_parallel: Achieves data and model parallelism by setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
-        search_mode (str): There are three kinds of shard strategy search modes: "recursive_programming",
-                     "dynamic_programming" and "sharding_propagation". Default: "dynamic_programming".
+        search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
+                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"dynamic_programming"`` .
 
                      - recursive_programming: Recursive programming search mode.
 
@@ -602,17 +602,18 @@ def set_auto_parallel_context(**kwargs):
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
                      the same network initialization parameter values for all devices, broadcast the parameters
                      on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
-                     data_parallel mode, all parameters are broadcast except for the parameter whose attribute
-                     layerwise_parallel is True. Hybrid_parallel, semi_auto_parallel and auto_parallel mode, the
-                     segmented parameters do not participate in broadcasting. Default: False.
+                     ``data_parallel`` mode, all parameters are broadcast except for the parameter whose attribute
+                     layerwise_parallel is ``True`` . ``Hybrid_parallel`` , ``semi_auto_parallel``  and
+                     ``auto_parallel mode`` , the segmented parameters do not participate in broadcasting.
+                     Default: ``False`` .
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The parameter is not to be
                        recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The parameter is not to be
                        recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
-        full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
-                       should be set as True. Default: False. The interface is not to be recommended currently,
-                       it is better using 'dataset_strategy' to replace it.
-        dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: "data_parallel".
+        full_batch (bool): If you load whole batch datasets in ``auto_parallel`` mode, this parameter
+                       should be set as ``True`` . Default: ``False`` . The interface is not to be recommended
+                       currently, it is better using 'dataset_strategy' to replace it.
+        dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: ``"data_parallel"`` .
                        dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
                        equal to full_batch=True. For execution mode is 'GRAPH_MODE' and dataset load into net by model
                        parallel strategy likes ds_stra ((1, 8), (1, 8)), it requires using
@@ -620,18 +621,18 @@ def set_auto_parallel_context(**kwargs):
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
-                       `Lamb` and `AdamWeightDecay` in Ascend . Default: False.
+                       `Lamb` and `AdamWeightDecay` in Ascend . Default: ``False`` .
         enable_alltoall (bool): A switch that allows AllToAll operators to be generated during communication. If its
-                        value is False, there will be a combination of operators such as AllGather, Split and Concat
-                        instead of AllToAll. Default: False.
+                        value is ``False`` , there will be a combination of operators such as AllGather, Split and
+                        Concat instead of AllToAll. Default: ``False`` .
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages. Currently, this could only be used when parallel mode semi_auto_parallel is enabled.
-                        Default: 1.
+                        Default: ``1`` .
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
-                        This should be a positive int. Default: 1.
+                        This should be a positive int. Default: ``1`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. Currently it supports the key `gradient_accumulation_shard`.
@@ -639,26 +640,27 @@ def set_auto_parallel_context(**kwargs):
                         mindspore.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
-                        - gradient_accumulation_shard(bool): If true, the accumulation gradient parameters will be
+                        - gradient_accumulation_shard(bool): If ``true`` , the accumulation gradient parameters will be
                           sharded across the data parallel devices. This will
                           introduce additional communication(ReduceScatter) at
                           each step when accumulate the gradients, but saves a
                           lot of device memories, thus can make model be trained
                           with larger batch size. This configure is effective only
                           when the model runs on pipeline training or gradient
-                          accumulation with data parallel. Default True.
+                          accumulation with data parallel. Default ``True`` .
 
                         - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel
                           optimizer is enabled, parameters with size smaller than this threshold will not be sharded
                           across the devices. Parameter size = shape[0] \* ... \* shape[n] \* size(dtype). Non-negative.
-                          Unit: KB. Default: 64.
+                          Unit: KB. Default: ``64`` .
 
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
 
-                        - openstate: Whether turn on the communication fusion or not. If `openstate` is `True`, turn on
-                          the communication fusion, otherwise, turn off the communication fusion. Default: `True`.
+                        - openstate: Whether turn on the communication fusion or not. If `openstate` is ``True`` ,
+                          turn on the communication fusion, otherwise, turn off the communication fusion.
+                          Default: ``True`` .
 
                         - allreduce: If communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
                           and `index`. In `auto` mode, AllReduce fusion is configured by gradients size and the default
@@ -690,7 +692,7 @@ def set_auto_parallel_context(**kwargs):
                           Default: ''
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
-                          Default: True.
+                          Default: ``True`` .
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -850,7 +852,7 @@ def set_context(**kwargs):
     Note:
         Attribute name is required for setting attributes.
         The mode is not recommended to be changed after net was initialized because the implementations of some
-        operations are different in graph mode and pynative mode. Default: PYNATIVE_MODE.
+        operations are different in graph mode and pynative mode. Default: ``PYNATIVE_MODE`` .
 
     Some configurations are device specific, see the below table for details:
 
@@ -928,20 +930,21 @@ def set_context(**kwargs):
 
     Args:
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
-            while device_num_per_host should be no more than 4096. Default: 0.
+            while device_num_per_host should be no more than 4096. Default: ``0`` .
         device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
             If device target is not set, the version of MindSpore package is used.
-        max_device_memory (str): Set the maximum memory available for devices. The format is "xxGB". Default: "1024GB".
-            The actual used memory size is the minimum of the available memory of the device and max_device_memory.
+        max_device_memory (str): Set the maximum memory available for devices. The format is "xxGB".
+            Default: ``" 1024GB"`` . The actual used memory size is the minimum of the available memory of the device
+            and max_device_memory.
         variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
             Please use parameter 'max_device_memory' instead.
         mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
-            The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
-            of the available memory of the device and mempool_block_size.
+            The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block size is the
+            minimum of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
             If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
-            Default: 1900.
-        save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: 0.
+            Default: ``1900`` .
+        save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: ``0`` .
             Available values are:
 
             - False or 0: disable saving of intermediate compilation graphs.
@@ -949,22 +952,22 @@ def set_context(**kwargs):
             - True or 2: Generate more ir files related to backend process.
             - 3: Generate visualization computing graphs and detailed frontend ir graphs.
 
-            When the `save_graphs` attribute is set as True, 1, 2 or 3, attribute of `save_graphs_path` is used
-            to set the intermediate compilation graph storage path. By default, the graphs are saved in the current
-            directory.
+            When the `save_graphs` attribute is set as ``True`` , ``1`` , ``2`` or ``3`` , attribute of
+            `save_graphs_path` is used to set the intermediate compilation graph storage path. By default, the graphs
+            are saved in the current directory.
         save_graphs_path (str): Path to save graphs. Default: ".".
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
         deterministic (str): Whether to enable op run in deterministic mode. The value must be in the
-            range of ['ON', 'OFF'], and the default value is 'OFF'.
+            range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
 
             - "ON": Enable operator deterministic running mode.
             - "OFF": Disable operator deterministic running mode.
 
-            When deterministic mode is on, model ops will be deterministic in Ascend. This means that if op run multiple
-            times with the same inputs on the same hardware, it will have the exact same outputs each time. This is
-            useful for debugging models.
+            When deterministic mode is on, model ops will be deterministic in Ascend. This means that if op run
+            multiple times with the same inputs on the same hardware, it will have the exact same outputs each time.
+            This is useful for debugging models.
         enable_dump (bool): This parameters is deprecated, and will be deleted in the next version.
         save_dump_path (str): This parameters is deprecated, and will be deleted in the next version.
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
@@ -978,23 +981,23 @@ def set_context(**kwargs):
             configure RDR:
 
             - enable: controls whether the RDR is enabled to collect the key data during training and
-              save key data in the fault scenario. When set to true, the RDR will be turned on.
-              When set to false, the RDR will be turned off.
-            - mode: sets the mode of RDR on exporting data. When set to 1, the RDR only exports data
-              in the fault scenario. When set to 2, the RDR exports data in the fault scenario and the
-              normal end scenario. Default: 1.
+              save key data in the fault scenario. When set to ``true`` , the RDR will be turned on.
+              When set to ``false`` , the RDR will be turned off.
+            - mode: sets the mode of RDR on exporting data. When set to ``1`` , the RDR only exports data
+              in the fault scenario. When set to ``2`` , the RDR exports data in the fault scenario and the
+              normal end scenario. Default: ``1`` .
             - path: sets the path where RDR saves data. The current path must be absolute.
 
             Memory reuse:
 
-            - mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
-            - the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+            - mem_Reuse: controls whether the memory reuse function is turned on. When set to ``True`` ,
+            - the memory reuse function is turned on. When set to ``False`` , the memory reuse function is turned off.
 
-        precompile_only (bool): Whether to only precompile the network. Default: False.
-            If set to True, the network will only be compiled, not executed.
-        reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
+        precompile_only (bool): Whether to only precompile the network. Default: ``False`` .
+            If set to ``True`` , the network will only be compiled, not executed.
+        reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: ``True`` .
             Each node has a scope. A scope of a subnode is the name of its parent node. If reserve_class_name_in_scope
-            is set to True, the class name will be saved after keyword 'net-' in the scope.
+            is set to ``True`` , the class name will be saved after keyword 'net-' in the scope.
             For example:
 
             Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
@@ -1002,17 +1005,18 @@ def set_context(**kwargs):
             Default/net/net (reserve_class_name_in_scope=False)
 
         pynative_synchronize (bool): Whether to enable synchronous execution of the device in PyNative mode.
-            Default: False. When the value is set to False, the operator is executed asynchronously on the device.
-            When an error occurs in the execution of the operator, the specific error script code location cannot
-            be located, when the value is set to True, the operator is executed synchronously on the device. It will
-            reduce the execution performance of the program. At this time, when an error occurs in the execution of
-            the operator, the location of the error script code can be located according to the call stack of the error.
+            Default: ``False`` . When the value is set to ``False`` , the operator is executed asynchronously on the
+            device. When an error occurs in the execution of the operator, the specific error script code location
+            cannot be located, when the value is set to ``True`` , the operator is executed synchronously on the
+            device. It will reduce the execution performance of the program. At this time, when an error occurs in the
+            execution of the operator, the location of the error script code can be located according to the call stack
+            of the error.
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1).
-            Both modes support all backends. Default: PYNATIVE_MODE.
+            Both modes support all backends. Default: ``PYNATIVE_MODE`` .
         enable_graph_kernel (bool): Whether to enable graph kernel fusion to optimize network execution performance.
-            Default: False.
+            Default: ``False`` .
             Indicates whether to enable image-computing convergence to optimize network execution performance.
-            If enable_graph_kernel is set to True, acceleration can be enabled.
+            If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
             <https://www.mindspore.cn/tutorials/experts/en/master/debug/graph_fusion_engine.html>`_.
@@ -1022,7 +1026,7 @@ def set_context(**kwargs):
             For example, mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text"). Some general options:
 
             - opt_level: Set the optimization level.
-              Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
+              Default: ``2`` . Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
               Available values are:
 
               - 0: disables graph kernel fusion;
@@ -1033,14 +1037,14 @@ def set_context(**kwargs):
                 ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
                 Be caution when using this level.
 
-            - dump_as_text: dumps detail info as text files. Default: false.
+            - dump_as_text: dumps detail info as text files. Default: ``false`` .
 
             More options can refer to the implementation code.
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
-            be changed automatically. Default: True.
+            be changed automatically. Default: ``True`` .
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
-            Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
+            Default: ``NO_TUNE`` . The value must be in ['RL', 'GA', 'RL,GA'].
 
             - RL: Reinforcement Learning tune.
             - GA: Genetic Algorithm tune.
@@ -1052,36 +1056,36 @@ def set_context(**kwargs):
             `Enable the operator optimization tool
             <https://www.mindspore.cn/tutorials/experts/en/master/debug/auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
-            of back propagation node outputs is the same as input parameters. Default: False.
-        max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
+            of back propagation node outputs is the same as input parameters. Default: ``False`` .
+        max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .
             The max_call_depth parameter needs to be set when the nested call is too deep or the number
             of subgraphs is too large. If max_call_depth is set larger than before, the system max stack depth should be
             set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
-        grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
-            When grad_for_scalar is set to True, the function's scalar input can be derived.
-            The default value is False. Because the back-end does not support scaling operations currently,
+        grad_for_scalar (bool):  Whether to get gradient for scalar. Default: ``False`` .
+            When grad_for_scalar is set to ``True`` , the function's scalar input can be derived.
+            The default value is ``False`` . Because the back-end does not support scaling operations currently,
             this interface only supports simple operations that can be deduced by the front-end.
         enable_compile_cache (bool): Whether to save or load the cache of the graph compiled by front-end.
-            After enable_compile_cache is set to True, during the first execution, a hardware-independent
+            After enable_compile_cache is set to ``True`` , during the first execution, a hardware-independent
             compilation cache is generated and exported to a MINDIR file. When the network is executed again,
-            if enable_compile_cache is still set to True and the network scripts are not changed,
+            if enable_compile_cache is still set to ``True`` and the network scripts are not changed,
             the compile cache is loaded. Note that only limited automatic detection for the changes of
-            python scripts is supported by now, which means that there is a correctness risk. Default: False.
+            python scripts is supported by now, which means that there is a correctness risk. Default: ``False`` .
             This is an experimental prototype that is subject to change and/or deletion.
         compile_cache_path (str): Path to save the compile cache. Default: ".".
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
-        inter_op_parallel_num(int): The thread number of op parallel at the same time. Default value is 0,
+        inter_op_parallel_num(int): The thread number of op parallel at the same time. Default value is ``0`` ,
             which means use the default num.
         runtime_num_threads(int): The thread pool number of cpu kernel used in runtime,
-            which must bigger than or equal to 0. Default value is 30, if you run many processes at
+            which must bigger than or equal to 0. Default value is ``30`` , if you run many processes at
             the same time, you should set the value smaller to avoid thread contention.
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
-            When the network training performance of fp16 is worse than fp32,
-            `disable_format_transform` can be set to True to try to improve training performance. Default: False.
+            When the network training performance of fp16 is worse than fp32, `disable_format_transform` can be set to
+            ``True`` to try to improve training performance. Default: ``False`` .
         support_binary (bool): Whether to support run .pyc or .so in graph mode. If want to support run .so or .pyc
-            in graph mode, coulde set 'support_binary' to be True, and run once .py file. It would save the source
+            in graph mode, coulde set 'support_binary' to be ``True`` , and run once .py file. It would save the source
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
@@ -1091,7 +1095,7 @@ def set_context(**kwargs):
             - O1: priority memory option, enable SOMAS.
         memory_offload (str): Whether to enable the memory offload function. When it is enabled, the idle data will be
             temporarily copied to the host side in the case of insufficient device memory. The value must be in the
-            range of ['ON', 'OFF'], and the default value is 'OFF'.
+            range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
 
             - ON: Enable the memory Offload function. On Ascend hardware platform, this parameter does not take effect
               when the environment variable "GRAPH_OP_RUN=1" is not set; This parameter does not take effect when
@@ -1104,7 +1108,7 @@ def set_context(**kwargs):
 
             - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
               value of training network is based on the value of CANN, and the default value of inference network
-              is force_fp16. The value range is as follows:
+              is ``force_fp16`` . The value range is as follows:
 
               - force_fp16: When the operator supports both float16 and float32, select float16 directly.
               - allow_fp32_to_fp16: When the operator does not support the float32 data type, directly reduce
@@ -1305,13 +1309,13 @@ def set_ps_context(**kwargs):
     Args:
         enable_ps (bool): Whether to enable parameter server training mode.
                           Only after enable_ps is set True, the environment variables will be effective.
-                          Default: False.
+                          Default: ``False`` .
         config_file_path (string): Configuration file path used by recovery, parameter server training mode only
-                                   supports Server disaster recovery currently. Default: ''.
-        scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: 11202.
-        enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
-        client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
-        server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
+                                   supports Server disaster recovery currently. Default: ``''`` .
+        scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: ``11202`` .
+        enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: ``False`` .
+        client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ``''`` .
+        server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ``''`` .
 
     Raises:
         ValueError: If input key is not the attribute in parameter server training mode context.

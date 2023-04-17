@@ -6,7 +6,7 @@ mindspore.Tensor.set_const_arg
     指定该Tensor在作为网络入参时是否是一个常量。
 
     参数：
-        - **const_arg** (bool) - Tensor在作为网络入参时是否是一个常量。默认值：True。
+        - **const_arg** (bool) - Tensor在作为网络入参时是否是一个常量。默认值： ``True`` 。
 
     返回：
         Tensor，被指定了是否是一个常量网络入参。

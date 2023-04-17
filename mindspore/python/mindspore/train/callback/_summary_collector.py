@@ -90,50 +90,51 @@ class SummaryCollector(Callback):
             and the unit is `step`. If a frequency is set, we will collect data
             when (current steps % freq) equals to 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
-            It is not recommended to collect data too frequently, which can affect performance. Default: 10.
+            It is not recommended to collect data too frequently, which can affect performance. Default: ``10`` .
         collect_specified_data (Union[None, dict]): Perform custom operations on the collected data.
             By default, if set to None, all data is collected as the default behavior.
             You can customize the collected data with a dictionary.
             For example, you can set {'collect_metric': False} to control not collecting metrics.
-            The data that supports control is shown below. Default: None.
+            The data that supports control is shown below. Default: ``None`` .
 
             - collect_metric (bool): Whether to collect training metrics, currently only the loss is collected.
-              The first output will be treated as the loss and it will be averaged. Default: True.
+              The first output will be treated as the loss and it will be averaged. Default: ``True`` .
             - collect_graph (bool): Whether to collect the computational graph. Currently, only
-              training computational graph is collected. Default: True.
+              training computational graph is collected. Default: ``True`` .
             - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the `lineage page \
               <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
-              of MindInsight. Default: True.
+              of MindInsight. Default: ``True`` .
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
-              this field will be displayed on the lineage page of MindInsight. Default: True.
+              this field will be displayed on the lineage page of MindInsight. Default: ``True`` .
             - collect_input_data (bool): Whether to collect dataset for each training.
               Currently only image data is supported.
               If there are multiple columns of data in the dataset, the first column should be image data.
-              Default: True.
-            - collect_dataset_graph (bool): Whether to collect dataset graph for the training phase. Default: True.
+              Default: ``True`` .
+            - collect_dataset_graph (bool): Whether to collect dataset graph for the training phase.
+              Default: ``True`` .
             - histogram_regular (Union[str, None]): Collect weight and bias for parameter distribution page
               and displayed in MindInsight. This field allows regular strings to control which parameters to collect.
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
-              Default: None, it means only the first five parameters are collected.
+              Default: ``None`` , it means only the first five parameters are collected.
             - collect_landscape (Union[dict,None]): Whether to collect the parameters needed to create the
               loss landscape. If set to None, collect_landscape parameters will not be collected. All parameter
               information is collected by default and stored in file `{summary_dir}/ckpt_dir/train_metadata.json`.
 
               - landscape_size (int): Specify the image resolution of the generated loss landscape.
-                For example, if it is set to 128, the resolution of the landscape is 128 * 128.
+                For example, if it is set to ``128`` , the resolution of the landscape is 128 * 128.
                 The calculation time increases with the increase of resolution.
-                Default: 40. Optional values: between 3 and 256.
-              - unit (str): Specify the interval strength of the training process. Default: "step".
+                Default: ``40`` . Optional values: between 3 and 256.
+              - unit (str): Specify the interval strength of the training process. Default: ``"step"`` .
                 Optional: epoch/step.
               - create_landscape (dict): Select how to create loss landscape.
                 Training process loss landscape(train) and training result loss landscape(result).
-                Default: {"train": True, "result": True}. Optional: True/False.
+                Default: {"train": True, "result": True}. Optional: ``True`` / ``False`` .
               - num_samples (int): The size of the dataset used to create the loss landscape.
                 For example, in image dataset, You can set num_samples is 128,
                 which means that 128 images are used to create loss landscape.
-                Default: 128.
+                Default: ``128`` .
               - intervals (List[List[int]]): Specifies the interval
                 in which the loss landscape. For example: If the user wants to
                 create loss landscape of two training processes, they are 1-5 epoch
@@ -143,10 +144,10 @@ class SummaryCollector(Callback):
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
             True: it means that after specified data is set, non-specified data is collected as the default behavior.
             False: it means that after specified data is set, only the specified data is collected,
-            and the others are not collected. Default: True.
+            and the others are not collected. Default: ``True`` .
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
             lineage page. In the custom data, the type of the key supports str, and the type of value supports str, int
-            and float. Default: None, it means there is no custom data.
+            and float. Default: ``None`` , it means there is no custom data.
         collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
             Because TensorSummary data is too large to be compared with other summary data, this parameter is used to
             reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 20,
@@ -156,18 +157,18 @@ class SummaryCollector(Callback):
             but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
             Also note that when in parallel mode, the total steps will be split evenly, which will
             affect the number of steps TensorSummary will be collected.
-            Default: None, which means to follow the behavior as described above.
+            Default: ``None`` , which means to follow the behavior as described above.
         max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
             For example, to write not larger than 4GB, specify `max_file_size=4*1024**3`.
-            Default: None, which means no limit.
+            Default: ``None`` , which means no limit.
         export_options (Union[None, dict]): Perform custom operations on the export data.
             Note that the size of export files is not limited by the max_file_size.
             You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
             to export tensor as npy file. The data that supports control is shown below.
-            Default: None, it means that the data is not exported.
+            Default: ``None`` , it means that the data is not exported.
 
             - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
-              Default: None, it means that the tensor is not exported.
+              Default: ``None`` , it means that the tensor is not exported.
 
               - npy: export tensor as npy file.
 

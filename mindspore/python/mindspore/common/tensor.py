@@ -80,26 +80,26 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
-            another Tensor, Python number or NumPy ndarray. Default: None.
+            another Tensor, Python number or NumPy ndarray. Default: ``None`` .
         dtype (:class:`mindspore.dtype`): Used to indicate the data type of the output Tensor. The argument should
-            be defined in `mindspore.dtype`. If it is None, the data type of the output Tensor will be the same
-            as the `input_data`. Default: None.
+            be defined in `mindspore.dtype`. If it is ``None`` , the data type of the output Tensor will be the same
+            as the `input_data`. Default: ``None`` .
         shape (Union[tuple, list, int]): Used to indicate the shape of the output Tensor. The argument should be
             a list of integers, a tuple of integers or an integer. If `input_data` is available,
             `shape` doesn't need to be set. If None in shape, a tensor of dynamic shape is created, `input_data`
             doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
-            must be set. Default: None.
+            must be set. Default: ``None`` .
         init (Initializer): The information of init data.
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
             'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
             Tensor, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
-            Default: None.
+            Default: ``None`` .
         internal (bool): Whether it is created by the framework.
-            'True' means that the tensor is created by framework.
-            'False' means that the tensor is created by user.
-            Default: False
+            ``'True'`` means that the tensor is created by framework.
+            ``'False'`` means that the tensor is created by user.
+            Default: ``False`` .
         const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
-            Default: False.
+            Default: ``False`` .
 
     Outputs:
         Tensor.
@@ -548,7 +548,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Args:
             const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
-                Default: True.
+                Default: ``True`` .
 
         Returns:
             Tensor, has been specified whether to be a const network argument.
@@ -1751,8 +1751,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype, can be in
                 format of `mindspore.dtype.float32` or `numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
-                tensor. If this is set to false, the input tensor is returned instead
-                of a copy. Default: True.
+                tensor. If this is set to ``false`` , the input tensor is returned instead
+                of a copy. Default:  ``True`` .
 
         Returns:
             Tensor, with the designated dtype.
@@ -1828,16 +1828,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             - The value range of `axis` is [-dims, dims - 1]. `dims` is the dimension length of this tensor.
 
         Args:
-            axis (int): The dimension to reduce. Default: 0.
-            keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-                            the output will reduce dimension if false. Default: False.
+            axis (int): The dimension to reduce. Default: ``0`` .
+            keep_dims (bool): Whether to reduce dimension, if ``true`` the output will keep the same dimension as the
+                            input, the output will reduce dimension if ``false`` . Default: ``False`` .
 
         Returns:
             tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
             tensor.
 
             - **index** (Tensor) - The index for the maximum value of the input tensor.
-              If `keep_dims` is true, the shape of
+              If `keep_dims` is ``true`` , the shape of
               output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
               :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
             - **value** (Tensor) - The maximum value of input tensor, with the same shape as index.
@@ -2003,25 +2003,25 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the maximum is selected over multiple axes,
-                instead of a single axis or all the axes as before. Default: None.
+                instead of a single axis or all the axes as before. Default: ``None`` .
             keepdims (bool, optional):
-                If this is set to True, the axes which are reduced are left in the
+                If this is set to ``True`` , the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
-                broadcast correctly against the input array. Default: False.
+                broadcast correctly against the input array. Default: ``False`` .
 
         Keyword Args:
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
-                computation on empty slice. Default: None.
+                computation on empty slice. Default: ``None`` .
             where (bool Tensor, optional):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
-                is passed, initial must also be provided. Default: True.
-            return_indices (bool, optional): Whether to return the index of the maximum value. Default: False.
-                If `axis` is a list or tuple of ints, it must be False.
+                is passed, initial must also be provided. Default: ``True`` .
+            return_indices (bool, optional): Whether to return the index of the maximum value.
+                Default: ``False`` . If `axis` is a list or tuple of ints, it must be ``False`` .
 
         Returns:
-            Tensor or scalar, maximum of input tensor. If `axis` is None, the result is a scalar
+            Tensor or scalar, maximum of input tensor. If `axis` is ``None`` , the result is a scalar
             value. If `axis` is given, the result is a tensor of dimension ``self.ndim - 1``.
 
         Raises:
@@ -2070,25 +2070,25 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis (Union[None, int, list, tuple of ints], optional): An axis or
                 axes along which to operate. By default, flattened input is used. If
                 `axis` is a tuple of ints, the minimum is selected over multiple axes,
-                instead of a single axis or all the axes as before. Default: None.
+                instead of a single axis or all the axes as before. Default: ``None`` .
             keepdims (bool, optional):
-                If True, the axes which are reduced are left in the
+                If ``True`` , the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
-                broadcast correctly against the input array. Default: False.
+                broadcast correctly against the input array. Default: ``False`` .
 
         Keyword Args:
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
-                computation on empty slice. Default: None.
+                computation on empty slice. Default: ``None`` .
             where (Tensor[bool], optional):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
-                is passed, initial must also be provided. Default: True.
-            return_indices (bool, optional): Whether to return the index of the minimum value. Default: False.
-                If `axis` is a list or tuple of ints, it must be False.
+                is passed, initial must also be provided. Default: ``True`` .
+            return_indices (bool, optional): Whether to return the index of the minimum value. Default: ``False`` .
+                If `axis` is a list or tuple of ints, it must be ``False`` .
 
         Returns:
-            Tensor or scalar, minimum of input tensor. If `axis` is None, the result is a scalar
+            Tensor or scalar, minimum of input tensor. If `axis` is ``None`` , the result is a scalar
             value. If `axis` is given, the result is a tensor of dimension ``self.ndim - 1``.
 
         Raises:
@@ -2252,10 +2252,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Args:
             axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
-                The default is to compute the variance of the flattened tensor. Default: None.
-            keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
+                The default is to compute the variance of the flattened tensor. Default: ``None`` .
+            keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
                 dimensions with size one. With this option, the result will broadcast correctly against the tensor.
-                Default is False.
+                Default is ``False`` .
 
         Returns:
             Tensor.
@@ -2621,18 +2621,18 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Args:
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
-                the flattened input tensor is used. Default: `None`.
+                the flattened input tensor is used. Default: ``None`` .
             mode ('raise', 'wrap', 'clip', optional):
 
-                - raise: Raises an error;
+                - ``raise``: Raises an error;
 
-                - wrap: Wraps around;
+                - ``wrap``: Wraps around;
 
-                - clip: Clips to the range. 'clip' mode means that all indices that are
+                - ``clip``: Clips to the range. ``'clip'`` mode means that all indices that are
                   too large are replaced by the index that addresses the last element
                   along that axis. Note that this disables indexing with negative numbers.
 
-                Default: 'clip'.
+                Default: ``'clip'`` .
 
         Returns:
             Tensor, the indexed result.
@@ -2768,10 +2768,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             side (str, optional): If 'left', the index of the first suitable
                 location found is given. If 'right', return the last such index. If there is
                 no suitable index, return either 0 or N (where N is the length of the tensor).
-                Default: 'left'.
+                Default: ``left`` .
             sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional tensor of
                 integer indices that sort the tensor into ascending order. They are typically
-                the result of argsort. Default: None.
+                the result of argsort. Default: ``None`` .
 
         Returns:
             Tensor, array of insertion points with the same shape as `v`.
@@ -2850,10 +2850,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Args:
             axis (Union[None, int, tuple(int)]): Axis or axes along which the variance is computed.
-                The default is to compute the variance of the flattened array. Default: `None`.
-            ddof (int): Means Delta Degrees of Freedom. Default: 0.
+                The default is to compute the variance of the flattened array. Default: ``None`` .
+            ddof (int): Means Delta Degrees of Freedom. Default: ``0`` .
                 The divisor used in calculations is :math:`N - ddof`, where :math:`N` represents the number of elements.
-            keepdims (bool): Default: `False`.
+            keepdims (bool): Default: ``False`` .
 
         Returns:
             Variance tensor.
@@ -2915,23 +2915,23 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             `extobj` are not supported.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
+            axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: ``None`` .
                 If None, sum all the elements of the input tensor.
                 If the axis is negative, it counts from the last to the first axis.
                 If the axis is a tuple of ints, a sum is performed on all the axes specified in the tuple
                 instead of a single axis or all the axes as before.
-            dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            dtype (:class:`mindspore.dtype`, optional): defaults to ``None`` . Overrides the dtype of the
                 output Tensor.
-            keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
-                dimensions with size one. With this option, the result will broadcast correctly against the input array.
-                If the default value is passed, then keepdims will not be passed through to the sum method of
-                sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
-                implement keepdims any exceptions will be raised. Default: `False`.
-            initial (scalar): Starting value for the sum. Default: `None`.
+            keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
+                dimensions with size one. With this option, the result will broadcast correctly against the input
+                array. If the default value is passed, then keepdims will not be passed through to the sum method
+                of sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
+                implement keepdims any exceptions will be raised. Default: ``False`` .
+            initial (scalar): Starting value for the sum. Default: ``None`` .
 
         Returns:
             Tensor. A tensor with the same shape as input, with the specified axis removed.
-            If the input tensor is a 0-d array, or if the axis is None, a scalar is returned.
+            If the input tensor is a 0-d array, or if the axis is ``None`` , a scalar is returned.
 
         Raises:
             TypeError: If input is not array_like, or `axis` is not int or tuple of ints,
