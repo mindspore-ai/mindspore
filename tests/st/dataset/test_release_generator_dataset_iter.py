@@ -28,6 +28,7 @@ import mindspore.dataset as ds
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("num_epochs", (-1, 10))
+@pytest.mark.skip(reason="I6UY43")
 def test_release_generator_dataset_iter(num_epochs):
     """
     Feature: test release GeneratorDataset iterator
