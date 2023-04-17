@@ -10301,8 +10301,8 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
 
 class ChannelShuffle(Primitive):
     r"""
-    Divide the channels in a tensor of shape (*, C, H, W) into g groups and
-    rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
+    Divide the channels in a tensor of shape :math:`(*, C, H, W)` into :math:`g` groups and
+    rearrange them as :math:`(*, \frac C g, g, H*W)`, while keeping the original tensor shapes.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

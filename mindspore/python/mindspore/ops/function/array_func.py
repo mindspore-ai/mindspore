@@ -3189,7 +3189,6 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
         indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the min operation with `input_x`.
@@ -4124,7 +4123,7 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
 
     Returns:
         A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`(I, J, ..., L, M, N)` . Let `max_diag_len` be the maximum length among all
+        Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
         diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
         Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
         If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
@@ -5518,12 +5517,11 @@ def tensor_split(input, indices_or_sections, axis=0):
 
             - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-              - If :math:`input.size(axis)` can be divisible by n, sub-sections will have equal size
-                :math:`input.size(axis) / n` .
-              - If :math:`input.size(axis)` is not divisible by n, the first :math:`input.size(axis) % n` sections
-                will have size :math:`x.size(axis) // n + 1` , and the rest will have
-                size :math:`input.size(axis) // n` .
-
+              - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
+                :math:`input.shape(axis) / n` .
+              - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
+                will have size :math:`x.shape(axis) // n + 1` , and the rest will have
+                size :math:`input.shape(axis) // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
               and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,

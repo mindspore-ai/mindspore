@@ -1990,7 +1990,7 @@ def coo_isinf(x: COOTensor) -> COOTensor:
 
 
 def csr_atanh(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. math::
@@ -2031,12 +2031,12 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
 
 
 def coo_atanh(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. math::
 
-        out_i = tanh^{-1}(x_{i})
+        out_i = \tanh^{-1}(x_{i})
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
