@@ -83,6 +83,12 @@ std::vector<std::pair<KernelAttr, GeLUGradGpuKernelMod::GeLUGradGpuLaunchFunc>> 
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &GeLUGradGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &GeLUGradGpuKernelMod::LaunchKernel<double>},
 };
 
 std::vector<KernelAttr> GeLUGradGpuKernelMod::GetOpSupport() {
