@@ -27,7 +27,7 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/context_util.h"
 #include "src/common/ops/populate/populate_register.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/inner_context.h"
 #include "src/tensor.h"

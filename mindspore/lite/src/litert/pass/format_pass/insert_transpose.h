@@ -21,7 +21,7 @@
 #include <string>
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "src/litert/pass/format_pass/pass_utils.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::lite::pass {
 class InsertTranspose : public FormatPass {

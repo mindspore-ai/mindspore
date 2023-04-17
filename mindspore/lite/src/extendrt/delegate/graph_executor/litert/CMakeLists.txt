@@ -44,9 +44,9 @@ set(LITE_SRC
         ${LITE_DIR}/src/litert/lite_model.cc
         ${LITE_DIR}/src/litert/kernel_registry.cc
         ${LITE_DIR}/src/litert/lite_kernel.cc
-        ${LITE_DIR}/src/litert/kernel_exec.cc
+        ${LITE_DIR}/src/executor/kernel_exec.cc
         ${LITE_DIR}/src/litert/kernel_exec_util.cc
-        ${LITE_DIR}/src/litert/sub_graph_kernel.cc
+        ${LITE_DIR}/src/executor/sub_graph_kernel.cc
         ${LITE_DIR}/src/litert/scheduler.cc
         ${LITE_DIR}/src/litert/lite_session.cc
         ${LITE_DIR}/src/errorcode.cc

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include <algorithm>
 #include <queue>
 #include "src/tensor.h"

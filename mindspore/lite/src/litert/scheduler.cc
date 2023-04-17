@@ -31,7 +31,7 @@
 #include "include/registry/register_kernel.h"
 #endif
 #include "src/litert/kernel_exec_util.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "src/common/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "src/common/prim_util.h"

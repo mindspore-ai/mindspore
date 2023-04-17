@@ -23,7 +23,7 @@
 #include "src/litert/kernel/opencl/opencl_kernel.h"
 #include "src/litert/kernel/gpu/opencl/opencl_allocator.h"
 #include "src/litert/kernel/gpu/opencl/opencl_executor.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 class OpenCLSubGraph : public SubGraphKernel {

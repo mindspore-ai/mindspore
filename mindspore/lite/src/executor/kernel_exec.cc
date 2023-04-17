@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include <algorithm>
 #include "src/tensor.h"
 #include "src/common/utils.h"

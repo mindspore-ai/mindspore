@@ -23,11 +23,11 @@
 #include <set>
 #include <utility>
 #include "actor/op_actor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "src/litert/cpu_info.h"
 #include "src/tensorlist.h"
 

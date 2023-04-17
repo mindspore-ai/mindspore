@@ -21,7 +21,7 @@
 #include "nnacl/space_to_depth_parameter.h"
 #include "nnacl/base/space_to_depth_base.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
 

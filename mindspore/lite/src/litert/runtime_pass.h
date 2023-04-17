@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 
 #include <vector>
-#include "src/litert/kernel_exec.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/kernel_exec.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 

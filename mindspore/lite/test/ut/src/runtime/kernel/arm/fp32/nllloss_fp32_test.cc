@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/litert/kernel/cpu/fp32/nllloss_fp32.h"
 #include "src/litert/kernel_registry.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/tensor_category.h"
 
 namespace mindspore {

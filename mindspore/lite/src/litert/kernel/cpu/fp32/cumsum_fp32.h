@@ -19,7 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/cumsum_parameter.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::kernel {
 class CumSumCPUKernel : public LiteKernel {

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/litert/inner_allocator.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore::lite {
 class Executor {

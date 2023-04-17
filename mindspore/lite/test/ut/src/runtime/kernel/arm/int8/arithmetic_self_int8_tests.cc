@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "nnacl/arithmetic_self_parameter.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/kernel_exec.h"
+#include "mindspore/lite/src/executor/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 
 namespace mindspore {

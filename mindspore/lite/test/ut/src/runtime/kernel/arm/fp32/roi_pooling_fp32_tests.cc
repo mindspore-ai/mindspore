@@ -17,7 +17,7 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/litert/kernel/cpu/fp32/roi_pooling_fp32.h"
 #include "src/litert/kernel_registry.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 namespace mindspore {
 class TestROIPoolingFp32 : public mindspore::CommonTest {

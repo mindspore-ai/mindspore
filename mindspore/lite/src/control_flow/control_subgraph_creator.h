@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_
 #define MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_
 #include "src/litert/lite_kernel.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::lite {
 kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::LiteKernel *kernel);

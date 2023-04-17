@@ -22,7 +22,7 @@
 
 #include "include/model.h"
 #include "src/tensor.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 
 using Model = mindspore::lite::Model;
 using LiteGraph = mindspore::lite::LiteGraph;

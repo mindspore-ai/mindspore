@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_
 #ifdef ENABLE_AVX
 #include <vector>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "nnacl/op_base.h"
 #include "src/litert/kernel/cpu/base/convolution_base.h"
 

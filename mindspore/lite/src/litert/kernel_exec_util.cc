@@ -19,7 +19,7 @@
 #include <queue>
 #include <unordered_map>
 #include <set>
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "nnacl/call_parameter.h"
 #if GPU_OPENCL
 #include "src/litert/kernel/opencl/opencl_subgraph.h"

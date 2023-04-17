@@ -29,7 +29,7 @@
 #include "nnacl/op_base.h"
 #include "src/litert/inner_context.h"
 #include "src/tensor.h"
-#include "src/litert/sub_graph_kernel.h"
+#include "src/executor/sub_graph_kernel.h"
 #include "include/model.h"
 
 namespace mindspore::lite {

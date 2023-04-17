@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "schema/model_generated.h"
 
 using mindspore::kernel::kKernelArch_MAX;

@@ -23,7 +23,7 @@
 #include <string>
 #include "include/errorcode.h"
 #include "nnacl/fp32/resize_fp32.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/kernel/cpu/fp32/resize_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {

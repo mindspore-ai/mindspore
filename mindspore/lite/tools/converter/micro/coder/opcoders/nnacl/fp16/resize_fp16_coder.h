@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <string>
 #include "include/errorcode.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "nnacl/base/cast_base.h"
 
 namespace mindspore::lite::micro::nnacl {

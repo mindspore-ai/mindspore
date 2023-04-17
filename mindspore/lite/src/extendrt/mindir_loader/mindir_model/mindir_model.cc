@@ -23,7 +23,7 @@
 #include "utils/ms_utils_secure.h"
 #include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
 #include "extendrt/mindir_loader/mindir_model/kernel_mod_util.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "extendrt/mindir_loader/mindir_model/inner_kernel.h"
 #include "extendrt/mock/lite_runtime/populate/base_operator_populate_register.h"
 

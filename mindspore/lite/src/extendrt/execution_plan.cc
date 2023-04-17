@@ -20,7 +20,7 @@
 
 #include "litert/lite_kernel.h"
 #include "litert/kernel_exec_util.h"
-#include "litert/sub_graph_kernel.h"
+#include "executor/sub_graph_kernel.h"
 
 namespace mindspore::infer {
 ExecutionPlan::~ExecutionPlan() {

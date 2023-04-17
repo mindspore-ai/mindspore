@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/kernel.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/lite_kernel.h"
 
 namespace mindspore::nnacl {

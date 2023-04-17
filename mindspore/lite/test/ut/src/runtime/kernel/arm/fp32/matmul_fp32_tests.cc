@@ -19,7 +19,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/litert/kernel_registry.h"
-#include "src/litert/kernel_exec.h"
+#include "src/executor/kernel_exec.h"
 #include "src/litert/tensor_category.h"
 #include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
 
