@@ -156,7 +156,7 @@ void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
                             << ", the name of operator is [" << op_name
                             << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
   }
-  MS_LOG(DEBUG) << "Update abstract " << abs->ToString() << " for StubNode " << op_run_info->stub_output->id();
+  MS_LOG(DEBUG) << "Update StubNode abstract " << abs->ToString();
 }
 }  // namespace
 
@@ -243,6 +243,7 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   Init();
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
+  PyNativeAlgo::Common::StubNodeToValue(op_run_info);
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
   // 2.Infer output abstract
