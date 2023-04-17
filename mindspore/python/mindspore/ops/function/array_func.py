@@ -6728,7 +6728,7 @@ def swapaxes(input, axis0, axis1):
         >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
         >>> output = ops.swapaxes(input, 0, 2)
         >>> print(output.shape)
-        (4,3,2)
+        (4, 3, 2)
     '''
     if not isinstance(input, Tensor):
         raise TypeError(f'For ops.swapaxes, parameter `input` must be Tensor, but got {type(input)}')
@@ -6778,7 +6778,7 @@ def swapdims(input, dim0, dim1):
         >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
         >>> output = ops.swapdims(input, 0, 2)
         >>> print(output.shape)
-        (4,3,2)
+        (4, 3, 2)
     '''
     return F.swapaxes(input, dim0, dim1)
 

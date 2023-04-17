@@ -711,7 +711,7 @@ class Tanhshrink(Cell):
         - **x** (Tensor) - Tensor of any dimension.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same shape as the `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
