@@ -814,6 +814,10 @@ class CustomRegOp(RegOp):
             TypeError: If `index` is neither int nor None.
             TypeError: If `name` is neither str nor None.
             TypeError: If `param_type` is neither str nor None.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "paramType"]
@@ -849,6 +853,10 @@ class CustomRegOp(RegOp):
             TypeError: If `index` is neither int nor None.
             TypeError: If `name` is neither str nor None.
             TypeError: If `param_type` is neither str nor None.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "paramType"]
@@ -872,6 +880,10 @@ class CustomRegOp(RegOp):
 
         Raises:
             ValueError: If the size of `args` not equal to the sum of input tensors and output tensors.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         io_nums = len(self.inputs) + len(self.outputs)
         if len(args) != io_nums:
@@ -924,6 +936,10 @@ class CustomRegOp(RegOp):
             TypeError: If `param_type` is neither str nor None.
             TypeError: If `value_type` is neither str nor None.
             TypeError: If `default_value` is neither str nor None.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         param_list = [name, param_type, value_type, default_value]
         key_list = ["name", "paramType", "type", "defaultValue"]
@@ -944,6 +960,10 @@ class CustomRegOp(RegOp):
 
         Raises:
             TypeError: If `target` is neither str nor None.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         if target is not None:
             self._is_string(target)
@@ -954,6 +974,10 @@ class CustomRegOp(RegOp):
         """
         Return the generated registration information as a dict. This function should be invoked at last on the
         `CustomRegOp` instance as shown in the above example.
+
+        Tutorial Examples:
+            - `Custom Operators (Custom-based)
+              <https://mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_
         """
         op_info = {}
         for k, v in self.__dict__.items():

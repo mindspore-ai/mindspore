@@ -44,12 +44,48 @@ mindspore_lite.Model
             - **RuntimeError** - 从 `config_path` 加载配置文件失败。
             - **RuntimeError** - 从文件加载并构建模型失败。
 
+    .. py:method:: build_multi_models(model_path0, model_path1, model_type, context, config_path)
+
+        用于加载共享权重的两个模型。Beta接口，后续可能会被删除。
+
+        参数：
+            - **model_path0** (str) - 第一个模型的文件路径。
+            - **model_path1** (str) - 第二个模型的文件路径。
+            - **model_type** (ModelType) - 输入模型的文件类型，当前仅支持ModelType.MINDIR。
+            - **context** (Context，可选) - 定义上下文，用于在执行期间传递选项。
+            - **config_path** (str，可选) - 定义配置文件的路径，用于在构建模型期间传递用户定义选项。
+
+        返回：
+            list[Model]，共享权重的两个Model对象。
+
+        异常：
+            - **TypeError** - `model_path0` 、 `model_path1` 或 `config_path` 不是str类型。
+            - **TypeError** - `model_type` 不是ModelType类型。
+            - **TypeError** - `context` 不是Context类型。
+            - **RuntimeError** - `model_path0` 、 `model_path1` 或 `config_path` 指定的文件不存在。
+            - **RuntimeError** - 加载 `config_path` 指定的配置失败。
+            - **RuntimeError** - 加载模型失败。
+
     .. py:method:: get_inputs()
 
         获取模型的所有输入Tensor。
 
         返回：
             list[Tensor]，模型的输入Tensor列表。
+
+    .. py:method:: init_distributed(rank_table_file, rank_id, device_id, provider="ge")
+
+        用于声明大模型的分布式信息。Beta接口，后续可能会被删除。
+
+        参数：
+            - **rank_table_file** (str) - rank table的文件路径。
+            - **rank_id** (int) - 模型的rank id。
+            - **device_id** (int) - 目标device id。
+            - **provider** (str) - 支持目标设备推理能力的provider，当前仅支持 "ge"。
+
+        异常：
+            - **TypeError** - `rank_table_file` 或 `provider` 不是str类型。
+            - **TypeError** - `rank_id` 或 `device_id` 不是int类型。
 
     .. py:method:: predict(inputs)
 
@@ -90,39 +126,3 @@ mindspore_lite.Model
             - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
             - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
             - **RuntimeError** - 调整输入形状的大小失败。
-
-    .. py:method:: init_distributed(rank_table_file, rank_id, device_id, provider="ge")
-
-        用于声明大模型的分布式信息。Beta接口，后续可能会被删除。
-
-        参数:
-            - **rank_table_file** (str) - rank table的文件路径。
-            - **rank_id** (int) - 模型的rank id。
-            - **device_id** (int) - 目标device id。
-            - **provider** (str) - 支持目标设备推理能力的provider，当前仅支持 "ge"。
-
-        异常:
-            - **TypeError** - `rank_table_file` 或 `provider` 不是str类型。
-            - **TypeError** - `rank_id` 或 `device_id` 不是int类型。
-
-    .. py:method:: build_multi_models(model_path0, model_path1, model_type, context, config_path)
-
-        用于加载共享权重的两个模型。Beta接口，后续可能会被删除。
-
-        参数:
-            - **model_path0** (str) - 第一个模型的文件路径。
-            - **model_path1** (str) - 第二个模型的文件路径。
-            - **model_type** (ModelType) - 输入模型的文件类型，当前仅支持ModelType.MINDIR。
-            - **context** (Context，可选) - 定义上下文，用于在执行期间传递选项。
-            - **config_path** (str，可选) - 定义配置文件的路径，用于在构建模型期间传递用户定义选项。
-
-        返回：
-            list[Model]，共享权重的两个Model对象。
-
-        异常:
-            - **TypeError** - `model_path0` 、 `model_path1` 或 `config_path` 不是str类型。
-            - **TypeError** - `model_type` 不是ModelType类型。
-            - **TypeError** - `context` 不是Context类型。
-            - **RuntimeError** - `model_path0` 、 `model_path1` 或 `config_path` 指定的文件不存在。
-            - **RuntimeError** - 加载 `config_path` 指定的配置失败。
-            - **RuntimeError** - 加载模型失败。

@@ -2063,7 +2063,16 @@ def slice(input_x, begin, size):
 
 
 def concat(tensors, axis=0):
-    """Alias for :func:`mindspore.ops.cat()`"""
+    """
+    Alias for :func:`mindspore.ops.cat()`.
+
+    Tutorial Examples:
+        - `Tensor <https://mindspore.cn/tutorials/en/master/beginner/tensor.html>`_
+        - `FGSM Network Adversarial Attack <https://mindspore.cn/tutorials/application/en/master/cv/fgsm.html>`_
+        - `Vision Transformer Image Classification <https://mindspore.cn/tutorials/application/en/master/cv/vit.html>`_
+        - `Sentiment Classification Implemented by RNN
+          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html>`_
+    """
     return cat(tensors, axis)
 
 

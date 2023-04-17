@@ -277,6 +277,10 @@ class DynamicLossScaler(LossScaler):
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
+
+        Tutorial Examples:
+            - `Automatic Mix Precision
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
         """
         inputs = mutable(inputs)
         return _grad_scale_map(self.scale_value, inputs)
@@ -290,6 +294,10 @@ class DynamicLossScaler(LossScaler):
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
+
+        Tutorial Examples:
+            - `Automatic Mix Precision
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
         """
         inputs = mutable(inputs)
         return _grad_unscale_map(self.scale_value, inputs)
@@ -300,6 +308,10 @@ class DynamicLossScaler(LossScaler):
 
         Args:
             grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+
+        Tutorial Examples:
+            - `Automatic Mix Precision
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor
