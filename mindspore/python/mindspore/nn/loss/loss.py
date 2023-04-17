@@ -554,11 +554,11 @@ class SmoothL1Loss(LossBase):
         \end{cases}
 
     .. note::
-        For Ascend platform, the float64 data type of `logits` is not support now.
-        SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
-        L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
-        squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
-        robust to outliers, and the loss function has better robustness.
+        - On the Ascend platform, float64 data type will result in low operator performance.
+        - SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
+        - L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
+        - squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
+        - robust to outliers, and the loss function has better robustness.
 
     Args:
         beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
@@ -583,7 +583,6 @@ class SmoothL1Loss(LossBase):
         TypeError: If dtype of `logits` is not the same as `labels`.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
-        TypeError: The float64 data type of `logits` is support on Ascend platform.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
