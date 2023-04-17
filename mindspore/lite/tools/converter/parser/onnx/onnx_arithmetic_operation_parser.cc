@@ -21,6 +21,7 @@
 #include "ops/fusion/div_fusion.h"
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/exp_fusion.h"
+#include "ops/real_div.h"
 #include "ops/equal.h"
 #include "ops/less.h"
 #include "ops/greater.h"
@@ -44,6 +45,7 @@
 #include "ops/eltwise.h"
 #include "ops/sin.h"
 #include "ops/reciprocal.h"
+#include "ops/mod.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -63,6 +65,7 @@ PrimitiveCPtr OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onn
 PrimitiveCPtr OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::DivFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->AddAttr(ops::kOriginalOpName, api::MakeValue(std::string(ops::kNameRealDiv)));
   return prim->GetPrim();
 }
 

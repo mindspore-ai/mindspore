@@ -31,6 +31,7 @@ INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_D
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
+REG_ADPT_DESC(Gather, kNameGather, ADPT_DESC(GatherV2))
 
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};
@@ -80,8 +81,7 @@ INPUT_MAP(GatherV2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 INPUT_ATTR_MAP(GatherV2D) = {{3, ATTR_DESC(axis, AnyTraits<int64_t>())}};
 ATTR_MAP(GatherV2D) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2D, prim::kPrimGather->name(), ADPT_DESC(GatherV2D))
-REG_ADPT_DESC(Gather, kNameGather, ADPT_DESC(GatherV2D))
+REG_ADPT_DESC(GatherV2D, kNameGatherV2D, ADPT_DESC(GatherV2D))
 
 // ScatterNd
 INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
