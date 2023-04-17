@@ -34,6 +34,7 @@
 #include "include/common/utils/offload_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/bprop_utils.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "include/backend/distributed/ps/util.h"
 #endif
@@ -119,6 +120,7 @@ void RegModule(py::module *m) {
   RegSecurity(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::prim::RegCompositeOpsGroup(m);
+  mindspore::graph_bprop::RegBpropExpanderOps();
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
