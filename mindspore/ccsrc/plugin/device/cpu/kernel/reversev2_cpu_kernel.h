@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_set>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -59,7 +60,7 @@ class ReverseV2CpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, ReverseV2Func>> func_list_;
   ReverseV2Func kernel_func_;
   std::vector<int64_t> input_shape_;
-  std::vector<int64_t> axis_shape_;
+  std::unordered_set<int64_t> axis_;
   int64_t input_dims_ = 0;
   int64_t axis_dims_ = 0;
 };
