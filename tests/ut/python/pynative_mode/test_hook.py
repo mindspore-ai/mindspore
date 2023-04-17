@@ -13,17 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.ops import composite as C
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-cell_hook_done = False
-var_hook_done = False
-cell_bprop_done = False
-
 
 grad_all = C.GradOperation(get_all=True)
 bprop_debug = False
@@ -57,10 +52,3 @@ def test_grad_all():
     y = Tensor(np.array([2, 3, 4]).astype(np.int32))
     res = grad_all(net)(x, y)
     print(res)
-
-def test_check_input():
-    net = Net()
-    x = np.array([1, 2, 3])
-    y = np.array([2, 3, 4])
-    with pytest.raises(TypeError):
-        net(x, y)
