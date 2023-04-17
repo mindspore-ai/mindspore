@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
+#include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -25,8 +26,146 @@ namespace opt {
 namespace {
 constexpr size_t kCdistInputNum = 2;
 constexpr size_t kCdistGradInputNum = 4;
-constexpr int64_t kInputXDimP = -1;
-constexpr int64_t kInputYDimR = -2;
+constexpr int64_t kInputXDimP = -2;
+constexpr int64_t kInputYDimR = -3;
+constexpr int64_t kInputGradDim = -1;
+constexpr int64_t kInputOutDim = -1;
+constexpr size_t kCdistInputDimsMin = 2;
+
+// cdist ascend infershape is different from cpu/gpu
+abstract::ShapePtr CdistAscendInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  if (x_size != y_size) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
+                             << ", rank of input_y: " << y_size << ".";
+  }
+
+  if (x_size < kCdistInputDimsMin) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                             << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
+  }
+
+  for (size_t i = 0; i < x_size; i++) {
+    if (x_shape[i] == -1 || y_shape[i] == -1) {
+      continue;
+    }
+    if (x_shape[i] != y_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the shape of 'x' must be the same as the shape of 'y', "
+                                  "but got 'x_shape["
+                               << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+    }
+  }
+
+  auto out_shape = x_shape;
+  out_shape.pop_back();
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr CdistAscendInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("input_x", input_args[0]->BuildType());
+  (void)types.emplace("input_y", input_args[1]->BuildType());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+}
+
+// cdist ascend infershape is different from cpu/gpu
+AbstractBasePtr CdistAscendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = CdistAscendInferType(primitive, input_args);
+  auto infer_shape = CdistAscendInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+REGISTER_PRIMITIVE_BACKEND_EVAL_IMPL(Cdist, prim::kPrimCdist, CdistAscendInfer, nullptr);
+
+// the cdist grad ascend infershape is different from cpu/gpu
+abstract::ShapePtr CdistGradAscendInferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto cdist_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  if (IsDynamic(x_shape) || IsDynamic(y_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+  CheckAndConvertUtils::Check("grad shape", grad_shape, kEqual, cdist_shape, prim_name, ValueError);
+  if (x_size != y_size) {
+    MS_EXCEPTION(ValueError) << "For 'CdistGrad', rank of input_x and input_y must be equal, but got input_x size: "
+                             << x_size << ", input_y size: " << y_size << ".";
+  }
+
+  if (x_size < kCdistInputDimsMin) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                             << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
+  }
+
+  for (size_t i = 0; i < x_size; i++) {
+    if (x_shape[i] != y_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the shape of 'x' must be the same as the shape of 'y', "
+                                  "but got 'x_shape["
+                               << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+    }
+  }
+
+  auto out_shape = x_shape;
+  out_shape.pop_back();
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr CdistGradAscendInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("grad", input_args[kDim0]->BuildType());
+  (void)types.emplace("input_x", input_args[kDim1]->BuildType());
+  (void)types.emplace("input_y", input_args[kDim2]->BuildType());
+  (void)types.emplace("cdist", input_args[kDim3]->BuildType());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+}
+
+AbstractBasePtr CdistGradAscendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = CdistGradAscendInferType(primitive, input_args);
+  auto infer_shape = CdistGradAscendInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+REGISTER_PRIMITIVE_BACKEND_EVAL_IMPL(CdistGrad, prim::kPrimCdistGrad, CdistGradAscendInfer, nullptr);
 
 ShapeVector CalCdistBroadCastShape(ShapeVector x_shape, ShapeVector y_shape) {
   (void)x_shape.insert(x_shape.cend() + kInputXDimP, 1);
@@ -65,7 +204,8 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  (void)expand_shape.insert(expand_shape.cend() + dim, 1);
+  auto axis = dim < 0 ? dim + expand_shape.size() + 1 : dim;
+  (void)expand_shape.insert(expand_shape.cend() + axis, 1);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
@@ -97,6 +237,9 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(node);
   auto cdist_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cdist_cnode);
+  if (common::AnfAlgo::IsDynamicShape(cdist_cnode)) {
+    MS_LOG(EXCEPTION) << "Cdist don't support dynamic shape, node: " << cdist_cnode->fullname_with_scope();
+  }
   if (GetBoolAttr(cdist_cnode, kAttrVisited)) {
     return nullptr;
   }
@@ -129,6 +272,9 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(node);
   auto cdist_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cdist_grad_cnode);
+  if (common::AnfAlgo::IsDynamicShape(cdist_grad_cnode)) {
+    MS_LOG(EXCEPTION) << "CdistGrad don't support dynamic shape, node: " << cdist_grad_cnode->fullname_with_scope();
+  }
   if (GetBoolAttr(cdist_grad_cnode, kAttrVisited)) {
     return nullptr;
   }
@@ -142,10 +288,10 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   auto x_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim2], 0);
   auto y_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim3], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
-  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], 0, broadcast_to_shape, *this);
+  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], kInputGradDim, broadcast_to_shape, *this);
   auto broadcast_input_x = AddBroadCastToNode(graph, cdist_grad_inputs[kDim2], kInputXDimP, broadcast_to_shape, *this);
   auto broadcast_input_y = AddBroadCastToNode(graph, cdist_grad_inputs[kDim3], kInputYDimR, broadcast_to_shape, *this);
-  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], 0, broadcast_to_shape, *this);
+  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], kInputOutDim, broadcast_to_shape, *this);
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimCdistGrad->name())),
                                      broadcast_grad, broadcast_input_x, broadcast_input_y, broadcast_out};
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
