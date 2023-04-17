@@ -36,8 +36,8 @@ class MIND_API ScaleGrad : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ScaleGrad for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ScaleGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ScaleGradInferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
