@@ -47,7 +47,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   float *sum_data_ = losses_ + data_size;
   std::fill(losses_, losses_ + data_size, 0);
   std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
-  Softmax(ins, losses_, sum_data_, &sm_params_);
+  Softmax(ins, losses_, sum_data_, sm_params_.axis_, sm_params_.n_dim_, sm_params_.input_shape_);
   ForwardPostExecute(labels, losses_, grads, out, param_->number_of_classes_, param_->batch_size_);
   return RET_OK;
 }

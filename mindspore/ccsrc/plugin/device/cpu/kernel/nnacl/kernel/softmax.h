@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_SOFTMAX_H_
-#define MINDSPORE_NNACL_FP32_SOFTMAX_H_
+#ifndef MINDSPORE_NNACL_KERNEL_SOFTMAX_H_
+#define MINDSPORE_NNACL_KERNEL_SOFTMAX_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/softmax_parameter.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, int axis, int n_dim, const int *input_shape);
-int SoftmaxLastAxis(const float *src, float *dst, int batch, int channel);
-void SoftmaxNorm(const float *src, float *dst, int batch, int channel);
-#ifdef __cplusplus
-}
-#endif
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#endif  // MINDSPORE_NNACL_FP32_SOFTMAX_H_
+KernelBase *CreateSoftmax(OpParameter *param, int data_type);
+
+#endif  // MINDSPORE_NNACL_KERNEL_SOFTMAX_H_

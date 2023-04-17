@@ -16,7 +16,6 @@
 
 #include "src/litert/kernel/cpu/base/softmax_base.h"
 #include <vector>
-#include "src/litert/kernel/cpu/fp32/softmax_fp32.h"
 #include "nnacl/fp32/softmax_fp32.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"

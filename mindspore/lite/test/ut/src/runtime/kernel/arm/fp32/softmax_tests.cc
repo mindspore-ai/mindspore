@@ -17,7 +17,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "nnacl/softmax_parameter.h"
-#include "mindspore/lite/src/litert/kernel_registry.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class TestSoftmaxFp32 : public mindspore::CommonTest {
@@ -35,16 +35,16 @@ TEST_F(TestSoftmaxFp32, 001) {
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
-  SoftmaxParameter parameter = {{}, -1, {2, 1, 1, 5}, 10, 4};
+  SoftmaxParameter parameter;
+  parameter.axis_ = -1;
+  OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
+  param->type_ = schema::PrimitiveType_Softmax;
+  param->thread_num_ = 1;
+
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Softmax};
-
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
-  ASSERT_NE(kernel, nullptr);
+  auto *kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
 
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
@@ -52,11 +52,11 @@ TEST_F(TestSoftmaxFp32, 001) {
   EXPECT_EQ(0, ret);
 
   float expect[] = {0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f};
-  for (size_t i = 0; i < sizeof(expect) / sizeof(expect[0]); ++i) {
-    EXPECT_EQ(output_data[i], expect[i]);
-  }
+  ASSERT_EQ(0, CompareOutputData(output_data, expect, 10));
+
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  kernel->set_parameter(nullptr);
   delete kernel;
 }
 }  // namespace mindspore

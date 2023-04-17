@@ -19,10 +19,14 @@
 #include "nnacl/kernel/biasadd.h"
 #include "nnacl/kernel/exp.h"
 #include "nnacl/kernel/fullconnection.h"
+#include "nnacl/kernel/gather.h"
 #include "nnacl/kernel/gather_d.h"
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/shape.h"
+#include "nnacl/kernel/softmax.h"
+#include "nnacl/kernel/tile.h"
 
 void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat32)] = CreateActivation;
@@ -42,6 +46,10 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_FullConnection][REGIST_DT(kNumberTypeFloat32)] = CreateFullconnection;
+  creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat16)] = CreateGather;
+  creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat32)] = CreateGather;
+  creators[PrimType_Gather][REGIST_DT(kNumberTypeInt32)] = CreateGather;
+  creators[PrimType_Gather][REGIST_DT(kNumberTypeBool)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat32)] = CreateGatherD;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeInt32)] = CreateGatherD;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
@@ -57,10 +65,24 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeBool)] = CreateReshape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeInt32)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeBool)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat32)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeInt8)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeUInt8)] = CreateShape;
+  creators[PrimType_Shape][REGIST_DT(kNumberTypeInt64)] = CreateShape;
+  creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat16)] = CreateSoftmax;
+  creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat32)] = CreateSoftmax;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
+  creators[PrimType_TileFusion][REGIST_DT(kNumberTypeInt32)] = CreateTile;
+  creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat32)] = CreateTile;
+  creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
+  creators[PrimType_TileFusion][REGIST_DT(kNumberTypeBool)] = CreateTile;
+  creators[PrimType_TileFusion][REGIST_DT(kNumberTypeUInt8)] = CreateTile;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;

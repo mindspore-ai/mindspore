@@ -67,7 +67,8 @@ int SoftmaxCrossEntropyWithLogitsCoder::DoCode(CoderContext *const context) {
     grad_str = allocator_->GetRuntimeAddr(output_tensors_.at(1));
   }
   auto *softmax_cross_entropy_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter_);
-  code.CodeFunction("Softmax", in_str, losses_, sum_data_, "&softmax_params");
+  code.CodeFunction("Softmax", in_str, losses_, sum_data_, "softmax_params.axis_", "softmax_params.n_dim_",
+                    "softmax_params.input_shape_");
   code.CodeFunction("ForwardPostExecute", labels_str, losses_, grad_str, out_str,
                     softmax_cross_entropy_param->number_of_classes_, softmax_cross_entropy_param->batch_size_);
 
