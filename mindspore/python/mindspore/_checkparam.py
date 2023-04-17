@@ -863,8 +863,8 @@ def prepare_shape_for_squeeze(shape, axes):
 
     def _check(axes, ndim):
         if axes >= ndim or axes < -ndim:
-            raise ValueError("For Tensor.squeeze, the 'axis' must be in the range of [-{0}, {0}), but got {1}." \
-                .format(ndim, axes))
+            raise ValueError(f"For Tensor.squeeze, the 'axis' must be in the range of [-{ndim}, {ndim}), " \
+                             f"but got {axes}.")
 
     def _check_for(axes, ndim):
         for axis in axes:
@@ -881,15 +881,16 @@ def prepare_shape_for_squeeze(shape, axes):
                 new_axes += (item,)
         axes = new_axes
     else:
-        raise TypeError("For Tensor.squeeze, the parameter 'axes' must be one of [int, tuple, list], but got {}" \
-            .format(type(axes)))
+        raise TypeError(f"For Tensor.squeeze, the parameter 'axes' must be one of [int, tuple, list], " \
+                        f"but got {type(axes)}")
 
     def _check_axis(s, idx, axes, ndim):
         # if an axis is selected with shape entry greater than one, an error is raised.
         if s != 1 and ((idx in axes) or (idx - ndim in axes)):
             raise ValueError(f"For Tensor.squeeze, the shape of parameter 'axis' {axes} must be 1, but got {s}.")
 
-    for idx, s in enumerate(shape):
+    for idx in range(ndim):
+        s = shape[idx]
         _check_axis(s, idx, axes, ndim)
         if s != 1 or (idx not in axes) and (idx - ndim not in axes):
             new_shape = new_shape + (s,)

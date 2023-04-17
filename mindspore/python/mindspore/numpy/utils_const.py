@@ -231,7 +231,7 @@ def _raise_type_error(info, param=None):
     raise TypeError(info + f"{type(param)}")
 
 
-@constexpr
+@_primexpr
 def _raise_value_error(info, param=None):
     """
     Raise TypeError in both graph/pynative mode
