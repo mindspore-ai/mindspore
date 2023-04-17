@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import pytest
 from tests.st.control.cases_register import case_register
 from mindspore import context
@@ -41,6 +42,7 @@ def test_level0_gpu_cases():
     Expectation: All cases passed.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     case_register.check_and_run(f"GPU", 0)
 
 

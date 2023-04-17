@@ -14,6 +14,7 @@
 # ============================================================================
 """ test array ops """
 import functools
+import os
 import numpy as np
 import pytest
 import mindspore as ms
@@ -479,6 +480,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():
     context.set_context(mode=context.GRAPH_MODE)
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     return test_exec_case
 
 

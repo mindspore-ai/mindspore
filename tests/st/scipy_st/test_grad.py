@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """st for scipy.ops_grad."""
+import os
 import pytest
 import numpy as onp
 import mindspore.nn as nn
@@ -105,6 +106,7 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
     """
     onp.random.seed(0)
     dtype, epsilon, error = data_type
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
 
     class Net(nn.Cell):
         def __init__(self):

@@ -20,6 +20,7 @@ import pytest
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_sit_multifieldembeddinglookup_parallel():
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     cmd = "mpirun -n 8 pytest -s multifieldembeddinglookup_parallel.py > multifieldembeddinglookup.log 2>&1"
     ret = os.system(cmd)
     os.system(f"grep -E 'ERROR|error' multifieldembeddinglookup.log -C 3")

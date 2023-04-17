@@ -32,7 +32,8 @@ from mindspore import context
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
+from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
+    _AutoIdentifyDynamicShape
 from mindspore.common.api import _generate_branch_control_input
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
@@ -159,6 +160,8 @@ class Cell(Cell_):
         self.ge_init = False
         self.ge_sync_data = False
         self.amp_converted = False
+        self.auto_identify_dynamic_shape = _AutoIdentifyDynamicShape()
+
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -929,8 +932,9 @@ class Cell(Cell_):
             kwargs (dict): Kwargs of the Cell object.
         """
         if self._dynamic_shape_inputs is None:
+            compile_args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args)
             _cell_graph_executor.compile(self, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, *args, **kwargs)
+                                         jit_config_dict=self._jit_config_dict, *compile_args, **kwargs)
         else:
             self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
             self.saved_dynamic_shape = self._dynamic_shape_inputs
