@@ -62,11 +62,6 @@ class FunctionDefParser(Parser):
                 stree.append_python_node(node, body)
             else:
                 parser.process(stree, body)
-
-        if hasattr(node, "decorator_list"):
-            stree.try_append_python_node(node, node.decorator_list)
-        if hasattr(node, "returns"):
-            stree.try_append_python_node(node, node.returns)
         self.remove_dead_code(stree)
 
 
