@@ -177,6 +177,14 @@ bool ForwardExecutor::IsVmOp(const std::string &op_name) const {
   return kVmOperators.find(op_name) != kVmOperators.end();
 }
 
+std::string ForwardExecutor::GetCurrentCellObjId() const {
+  if (forward_cell_stack_.empty()) {
+    return "";
+  }
+  auto &cell = forward_cell_stack_.top();
+  return cell->id();
+}
+
 GradExecutorPtr ForwardExecutor::grad() const {
   auto grad_executor = grad_executor_.lock();
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -291,6 +299,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
   (void)op_run_prim_py_list_.emplace_back(op_run_info->op_prim);
+  op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }
 
