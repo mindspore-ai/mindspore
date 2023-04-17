@@ -425,6 +425,7 @@ constexpr const char kNameIdentity[] = "Identity";
 constexpr const char kNameUpdateState[] = "UpdateState";
 constexpr const char kNameTransData[] = "TransData";
 constexpr const char kNameWhere[] = "Where";
+constexpr const char kNameSelectV2[] = "SelectV2";
 constexpr const char kNameSend[] = "Send";
 constexpr const char kNameReceive[] = "Receive";
 constexpr const char kNameIndexAdd[] = "IndexAdd";

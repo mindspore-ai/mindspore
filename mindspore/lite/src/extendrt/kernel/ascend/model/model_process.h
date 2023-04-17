@@ -81,6 +81,7 @@ class ModelProcess {
   bool CheckAndInitOutput(const std::vector<KernelTensorPtr> &outputs);
   bool CheckInputTensors(const std::vector<KernelTensorPtr> &inputs);
   bool CheckOutputTensors(const std::vector<KernelTensorPtr> &outputs);
+  void CheckAndSetDynFlag();
   bool GetOutputs(const std::vector<KernelTensorPtr> &outputs);
 
   bool ResetInputSize(const std::vector<ShapeVector> &new_shapes);
@@ -88,6 +89,7 @@ class ModelProcess {
   bool IsDynamicShape();
   bool IsDynamicBatchSize();
   bool IsDynamicImageSize();
+  bool ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_ = UINT32_MAX;
@@ -98,6 +100,7 @@ class ModelProcess {
   aclmdlDataset *outputs_ = nullptr;
 
   bool loaded_ = false;
+  bool output_dynamic_ = false;
   size_t data_input_num_ = 0;
   std::vector<AclTensorInfo> input_infos_;
   std::vector<AclTensorInfo> output_infos_;

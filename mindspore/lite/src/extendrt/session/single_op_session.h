@@ -49,12 +49,13 @@ class SingleOpInferSession : public InferSession {
   Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
   Status BuildCustomAscendKernel(const CNodePtr &node);
   Status InitInputOutputInfos(const FuncGraphPtr &graph);
-
+  void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
   uint32_t device_id_ = 0;
+  bool dyn_outshape_ = false;
 
   kernel::KernelModPtr kernel_mod_ = nullptr;
   kernel::KernelArgs kernel_args_;

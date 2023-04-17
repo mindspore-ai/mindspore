@@ -213,6 +213,10 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
     auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
     auto shape = kernel_tensor->GetShapeVector();
+    if (IsDynamicShape(shape)) {
+      dyn_outshape_ = true;
+      MS_LOG(INFO) << "The output shape is dynamic: " << shape;
+    }
     outputs_.push_back(std::make_shared<TensorDefaultImpl>(tensor_name, data_type, shape));
     output_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
   }
@@ -257,6 +261,18 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     return ret;
   }
   return kSuccess;
+}
+
+void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs) {
+  if (dyn_outshape_) {
+    for (size_t i = 0; i < kernel_args_.outputs.size(); ++i) {
+      ShapeVector shape = kernel_args_.outputs[i]->GetShapeVector();
+      (*outputs)[i].set_shape(shape);
+      kernel::AddressPtr addr = kernel_args_.outputs[i]->GetHostData();
+      TypeId out_type = kernel_args_.outputs[i]->GetDtype();
+      (*outputs)[i] = tensor::Tensor(out_type, shape, addr->addr, addr->size);
+    }
+  }
 }
 
 Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
@@ -311,7 +327,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
   for (size_t i = 0; i < outputs->size(); i++) {
     auto &output = (*outputs)[i];
     auto &kernel_output = kernel_args_.outputs[i];
-    if (output.Size() != kernel_output->GetSizeInBytes()) {
+    if (!dyn_outshape_ && output.Size() != kernel_output->GetSizeInBytes()) {
       MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output.Size()
                     << ", expected size " << kernel_output->GetSizeInBytes()
                     << ", output shape: " << kernel_output->GetShapeVector();
@@ -341,6 +357,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
     MS_LOG(ERROR) << "Failed to launch kernel, exception: " << e.what();
     return kLiteError;
   }
+  SetBackOutputIfDynamic(outputs);
   return kSuccess;
 }
 
