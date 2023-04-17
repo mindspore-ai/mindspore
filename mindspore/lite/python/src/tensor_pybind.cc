@@ -17,6 +17,9 @@
 #include "include/api/data_type.h"
 #include "include/api/format.h"
 #include "src/common/log_adapter.h"
+#include "third_party/securec/include/securec.h"
+#include "mindspore/lite/src/common/mutable_tensor_impl.h"
+#include "mindspore/lite/python/src/tensor_numpy_impl.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -28,6 +31,7 @@ namespace mindspore::lite {
 namespace py = pybind11;
 
 py::buffer_info GetPyBufferInfo(const MSTensor &tensor);
+bool SetTensorNumpyData(MSTensor *tensor, const py::array &input);
 
 void TensorPyBind(const py::module &m) {
   (void)py::enum_<DataType>(m, "DataType")
@@ -88,13 +92,7 @@ void TensorPyBind(const py::module &m) {
     .def("get_data", &MSTensor::MutableData)
     .def("is_null", [](const MSTensor &tensor) { return tensor == nullptr; })
     .def("set_data_from_numpy",
-         [](MSTensor &tensor, const py::array &input) {
-           PyArrayObject *darray = PyArray_GETCONTIGUOUS(reinterpret_cast<PyArrayObject *>(input.ptr()));
-           void *data = PyArray_DATA(darray);
-           auto tensor_data = tensor.MutableData();
-           memcpy(tensor_data, data, tensor.DataSize());
-           Py_DECREF(darray);
-         })
+         [](MSTensor &tensor, const py::array &input) { return SetTensorNumpyData(&tensor, input); })
     .def("get_data_to_numpy", [](MSTensor &tensor) -> py::array {
       auto info = GetPyBufferInfo(tensor);
       py::object self = py::cast(&tensor);
@@ -145,6 +143,40 @@ std::string GetPyTypeFormat(DataType data_type) {
       MS_LOG(ERROR) << "Unsupported DataType " << static_cast<int>(data_type) << ".";
       return "";
   }
+}
+
+bool IsCContiguous(const py::array &input) {
+  auto flags = static_cast<unsigned int>(input.flags());
+  return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
+}
+
+bool SetTensorNumpyData(MSTensor *tensor_ptr, const py::array &input) {
+  auto &tensor = *tensor_ptr;
+  // Check format.
+  if (!IsCContiguous(input)) {
+    PyArrayObject *darray = PyArray_GETCONTIGUOUS(reinterpret_cast<PyArrayObject *>(input.ptr()));
+    void *data = PyArray_DATA(darray);
+    auto tensor_data = tensor.MutableData();
+    memcpy_s(tensor_data, tensor.DataSize(), data, tensor.DataSize());
+    Py_DECREF(darray);
+    return true;
+  }
+  auto py_buffer_info = input.request();
+  auto py_data_type = TensorNumpyImpl::GetDataType(py_buffer_info);
+  if (py_data_type != tensor.DataType()) {
+    MS_LOG(ERROR) << "Expect data type " << static_cast<int>(tensor.DataType()) << ", but got "
+                  << static_cast<int>(py_data_type);
+    return false;
+  }
+  auto py_data_size = py_buffer_info.size * py_buffer_info.itemsize;
+  if (py_data_size != static_cast<int64_t>(tensor.DataSize())) {
+    MS_LOG(ERROR) << "Expect data size " << tensor.DataSize() << ", but got " << py_data_size << ", expected shape "
+                  << tensor.Shape() << ", got shape " << py_buffer_info.shape;
+    return false;
+  }
+  auto tensor_impl = std::make_shared<TensorNumpyImpl>(tensor.Name(), std::move(py_buffer_info), tensor.Shape());
+  tensor = MSTensor(tensor_impl);
+  return true;
 }
 
 py::buffer_info GetPyBufferInfo(const MSTensor &tensor) {

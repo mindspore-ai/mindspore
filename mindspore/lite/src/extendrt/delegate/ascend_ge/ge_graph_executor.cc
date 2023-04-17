@@ -36,6 +36,7 @@
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #endif
+#include "src/extendrt/utils/tensor_utils.h"
 
 namespace mindspore {
 namespace {
@@ -113,20 +114,27 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
   auto &ge_options = *ge_options_ptr;
   ge_options["ge.trainFlag"] = "0";
   ge_options["ge.enablePrintOpPass"] = "0";
+  auto config_it = config_infos_.find(lite::kGeSessionOptionsSection);
+  if (config_it != config_infos_.end()) {
+    for (auto &item : config_it->second) {
+      ge_options[item.first] = item.second;
+      MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
+    }
+  }
   auto ascend_info = GetAscendDeviceInfo();
   if (ascend_info == nullptr) {
-    MS_LOG(ERROR) << "Cannot faid ascend device info";
-    return;
+    MS_LOG(EXCEPTION) << "Failed to get ge session options, can not find ascend device context.";
   }
   ge_options["ge.exec.device_id"] = std::to_string(ascend_info->GetDeviceID());
 
-  auto config_it = config_infos_.find(lite::kAscendContextSection);
+  config_it = config_infos_.find(lite::kAscendContextSection);
   if (config_it == config_infos_.end()) {
     return;
   }
   auto config = config_it->second;
-  if (config.find(lite::kDumpPathKey) != config.end()) {
-    auto dump_path = config.at(lite::kDumpPathKey);
+  auto option_id = config.find(lite::kDumpPathKey);
+  if (option_id != config.end()) {
+    auto dump_path = option_id->second;
     auto real_path = lite::RealPath(dump_path.c_str());
     std::ifstream ifs(real_path);
     if (!ifs.good() || !ifs.is_open()) {
@@ -143,8 +151,9 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
       ge_options["ge.exec.dumpMode"] = dump_cfg_json[kDump][kDumpMode].get<std::string>();
     }
   }
-  if (config.find(lite::kProfilingPathKey) != config.end()) {
-    auto profiling_path = config.at(lite::kProfilingPathKey);
+  option_id = config.find(lite::kProfilingPathKey);
+  if (option_id != config.end()) {
+    auto profiling_path = option_id->second;
     auto real_path = lite::RealPath(profiling_path.c_str());
     std::ifstream ifs(real_path);
     if (!ifs.good() || !ifs.is_open()) {
@@ -161,17 +170,17 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
       ge_options["ge.exec.profilingOptions"] = profiling_cfg_json[kProfiling].dump();
     }
   }
-  if (config.find(lite::kGeVariableMemoryMaxSize) != config.end()) {
-    auto variable_memory_max_size = config[lite::kGeVariableMemoryMaxSize];
-    ge_options["ge.variableMemoryMaxSize"] = variable_memory_max_size;
+  option_id = config.find(lite::kGeVariableMemoryMaxSize);
+  if (option_id != config.end()) {
+    ge_options["ge.variableMemoryMaxSize"] = option_id->second;
   }
-  if (config.find(lite::kGeGraphMemoryMaxSize) != config.end()) {
-    auto graph_memory_max_size = config[lite::kGeGraphMemoryMaxSize];
-    ge_options["ge.graphMemoryMaxSize"] = graph_memory_max_size;
+  option_id = config.find(lite::kGeGraphMemoryMaxSize);
+  if (option_id != config.end()) {
+    ge_options["ge.graphMemoryMaxSize"] = option_id->second;
   }
-  if (config.find(lite::kGraphCompilerCacheDirKey) != config.end()) {
-    auto graph_compiler_cache_dir = config[lite::kGraphCompilerCacheDirKey];
-    ge_options["ge.graph_compiler_cache_dir"] = graph_compiler_cache_dir;
+  option_id = config.find(lite::kGraphCompilerCacheDirKey);
+  if (option_id != config.end()) {
+    ge_options["ge.graph_compiler_cache_dir"] = option_id->second;
   }
 }
 
@@ -181,25 +190,30 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(ge_options_ptr);
   auto &ge_options = *ge_options_ptr;
   ge_options["ge.graph_key"] = anf_graph->ToString();
-  auto device_list = context_->MutableDeviceInfo();
-  auto itr =
-    std::find_if(device_list.begin(), device_list.end(), [](const std::shared_ptr<DeviceInfoContext> &device_info) {
-      return device_info->GetDeviceType() == DeviceType::kAscend;
-    });
-  if (itr == device_list.end()) {
-    MS_LOG(EXCEPTION) << "Can not find ascend device context.";
+  auto config_it = config_infos_.find(lite::kGeGraphOptionsSection);
+  if (config_it != config_infos_.end()) {
+    for (auto &item : config_it->second) {
+      ge_options[item.first] = item.second;
+      MS_LOG(INFO) << "Set ge graph option " << item.first << " to " << item.second;
+    }
   }
-  auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
+  auto ascend_device_info = GetAscendDeviceInfo();
+  if (ascend_device_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to get graph session options, can not find ascend device context.";
+  }
   auto precision_mode = ascend_device_info->GetPrecisionMode();
   if (!precision_mode.empty()) {
     ge_options["ge.exec.precision_mode"] = TransforPrecisionToAcl(precision_mode);
   }
-  if (config_infos_.find(lite::kAscendContextSection) == config_infos_.end()) {
+  config_it = config_infos_.find(lite::kAscendContextSection);
+  if (config_it == config_infos_.end()) {
     return;
   }
-  auto config = config_infos_.at(lite::kAscendContextSection);
-  ge_options["ge.exec.modify_mixlist"] =
-    config.find(lite::kModifyMixList) == config.end() ? "" : config.at(lite::kModifyMixList);
+  auto config = config_it->second;
+  auto option_id = config.find(lite::kModifyMixList);
+  if (option_id != config.end()) {
+    ge_options["ge.exec.modify_mixlist"] = option_id->second;
+  }
 }
 
 bool GeGraphExecutor::CreateSession() {
@@ -407,10 +421,9 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
       }
     }
   } else {
-    MS_LOG(INFO) << "Output is empty.";
     for (size_t i = 0; i < ge_outputs.size(); i++) {
       auto &ge_tensor = ge_outputs[i];
-      auto ms_tensor = transform::TransformUtil::ConvertGeTensor(std::make_shared<::ge::Tensor>(ge_tensor));
+      auto ms_tensor = ConvertGeTensorNoCopy(&ge_tensor);
       if (ms_tensor == nullptr) {
         MS_LOG(ERROR) << "Failed to converter output " << i << " GE Tensor to ME Tensor";
         return false;
@@ -428,6 +441,41 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
 std::vector<tensor::Tensor> GeGraphExecutor::GetInputInfos(uint32_t graph_id) {
   return graph_inputs_.find(graph_id) != graph_inputs_.end() ? graph_inputs_.at(graph_id)
                                                              : std::vector<tensor::Tensor>();
+}
+
+tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr) {
+  auto &ge_tensor = *ge_tensor_ptr;
+  auto ge_tensor_desc = ge_tensor.GetTensorDesc();
+  auto me_shape = transform::TransformUtil::ConvertGeShape(ge_tensor_desc.GetShape());
+  TypeId type_id = transform::TransformUtil::ConvertGeDataType(ge_tensor_desc.GetDataType());
+  if (type_id == kTypeUnknown) {
+    MS_LOG(ERROR) << "Could not convert Ge Tensor because of unsupported data type: "
+                  << static_cast<int>(ge_tensor_desc.GetDataType());
+    return nullptr;
+  }
+  if (ge_tensor_desc.GetPlacement() != ::ge::kPlacementHost) {
+    MS_LOG(ERROR) << "It is not supported that graph output data's placement is device now.";
+    return nullptr;
+  }
+  auto &&ge_data_uni = ge_tensor.ResetData();
+  auto deleter = ge_data_uni.get_deleter();
+  auto ge_data = ge_data_uni.release();
+  if (ge_data == nullptr) {
+    MS_LOG(ERROR) << "Ge data cannot be nullptr";
+    return nullptr;
+  }
+  constexpr int64_t kTensorAlignBytes = 64;
+  if (reinterpret_cast<uintptr_t>(ge_data) % kTensorAlignBytes != 0) {
+    MS_LOG(ERROR) << "Skip zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data)
+                  << ", bytes not aligned with expected.";
+    return nullptr;
+  }
+  int64_t elem_num = 1;
+  for (size_t i = 0; i < me_shape.size(); ++i) {
+    elem_num *= me_shape[i];
+  }
+  auto tensor_data = std::make_shared<TensorRefData>(ge_data, elem_num, ge_tensor.GetSize(), me_shape.size(), deleter);
+  return std::make_shared<tensor::Tensor>(type_id, me_shape, tensor_data);
 }
 
 std::vector<tensor::Tensor> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) {

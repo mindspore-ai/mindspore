@@ -28,6 +28,14 @@ std::vector<std::shared_ptr<Model>> BuildMultiModels(const std::string &model_pa
   return Model::Build(model_path, inc_model_path, model_type, context, config_file);
 }
 
+std::vector<MSTensor> PyPredict(Model *model, const std::vector<MSTensor> &inputs) {
+  std::vector<MSTensor> outputs;
+  if (!model->Predict(inputs, &outputs).IsOk()) {
+    return {};
+  }
+  return outputs;
+}
+
 void ModelPyBind(const py::module &m) {
   (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
@@ -82,10 +90,7 @@ void ModelPyBind(const py::module &m) {
                            const std::string &, const std::string &>(&Model::Build))
     .def("load_config", py::overload_cast<const std::string &>(&Model::LoadConfig))
     .def("resize", &Model::Resize)
-    .def("predict",
-         py::overload_cast<const std::vector<MSTensor> &, std::vector<MSTensor> *, const MSKernelCallBack &,
-                           const MSKernelCallBack &>(&Model::Predict),
-         py::call_guard<py::gil_scoped_release>())
+    .def("predict", &PyPredict, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &Model::GetInputs)
     .def("get_outputs", &Model::GetOutputs)
     .def("get_input_by_tensor_name",
