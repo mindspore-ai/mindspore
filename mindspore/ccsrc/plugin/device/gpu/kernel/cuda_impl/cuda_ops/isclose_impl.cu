@@ -80,7 +80,7 @@ __global__ void BroadcastIsCloseTrueKernel(const size_t l0, const size_t l1, con
     if (isnan(static_cast<float>(inputx[pos])) && isnan(static_cast<float>(inputy[r_index]))) {
       output[pos] = true;
     } else {
-      output[pos] = fabsf(inputx[pos] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
+      output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
     }
   }
 }
@@ -117,7 +117,7 @@ __global__ void BroadcastIsCloseFalseKernel(const size_t l0, const size_t l1, co
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    output[pos] = fabsf(inputx[pos] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
+    output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
   }
 }
 
