@@ -97,6 +97,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
+  bool IsLocalVariable(const std::string &var_name);
   void AddGlobalPyParam(const std::string &name, const py::object &obj) {
     MS_LOG(DEBUG) << "Add global param '" << name << "', " << py::str(obj) << " for the block:" << ToString();
     global_py_params_[py::str(name)] = obj;

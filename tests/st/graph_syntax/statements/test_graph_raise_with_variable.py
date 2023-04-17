@@ -998,3 +998,46 @@ def test_raise_parse_with_interpret_2():
     input_z = Tensor(0)
     net = RaiseNet()
     assert net(input_x, input_y, input_z) is None
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_input_error_type_1():
+    """
+    Feature: graph raise.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y=ValueError):
+            raise y(f"The input can not be {x}.")
+
+    with pytest.raises(ValueError) as raise_info:
+        net = RaiseNet()
+        x = Tensor(11)
+        res = net(x)
+        print("res:", res)
+    assert "The input can not be 11." in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_input_error_type_2():
+    """
+    Feature: graph raise.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x):
+            y = ValueError
+            raise y(f"The input can not be {x}.")
+
+    with pytest.raises(ValueError) as raise_info:
+        net = RaiseNet()
+        x = Tensor(11)
+        res = net(x)
+        print("res:", res)
+    assert "The input can not be 11." in str(raise_info.value)

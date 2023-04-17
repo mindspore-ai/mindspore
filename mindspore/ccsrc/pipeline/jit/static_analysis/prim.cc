@@ -54,6 +54,7 @@
 #include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
+using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 namespace abstract {
 namespace interpret_abstract_bool_checker {
 std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) {
@@ -2766,7 +2767,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       MS_LOG(EXCEPTION) << "No active exception to reraise.";
     }
 
-    std::string exception_type = GetExceptionType(args_abs_list[0]);
+    std::string exception_type = GetExceptionType(args_abs_list[0], node);
     has_variable_ = false;
     size_t index_begin = 2;
     auto cnode = node->cast_ptr<CNode>();
@@ -2787,7 +2788,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       exception_string = key;
     }
     // Processed in units of nodes. Raise ValueError(xxxx)
-    for (size_t index = index_begin; index < inputs.size(); ++index) {
+    for (size_t index = index_begin; index < inputs.size() - 1; ++index) {
       const auto input = inputs[index];
       auto input_abs = args_abs_list[index - 1];
       MS_EXCEPTION_IF_NULL(input_abs);
@@ -2800,11 +2801,12 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       if (need_symbol) {
         exception_string += "'";
       }
-      if (index != inputs.size() - 1) {
+      constexpr auto end_index = 2;
+      if (index < inputs.size() - end_index) {
         exception_string += ", ";
       }
     }
-    bool need_out_symbol = inputs.size() > 3;
+    bool need_out_symbol = inputs.size() > 4;
     if (need_out_symbol) {
       exception_string = "(" + exception_string + ")";
     }
@@ -2851,7 +2853,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   std::vector<AnfNodePtr> keys_;
   std::vector<AnfNodePtr> values_;
   bool has_variable_ = false;
-  // string need add quotation marks
   void CheckHasVariable(const AbstractBasePtr &arg) {
     if (arg->isa<abstract::AbstractSequence>()) {
       auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
@@ -2870,7 +2871,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
   void RaiseConstant(const std::string &type, const std::string &exception_string = "") {
     auto iter = exception_types_map.find(type);
-    if (iter == exception_types_map.end()) {
+    if (iter == exception_types_map.end() && keys_.size() <= 1) {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << type
                         << ". Raise only support some Python standard exception types: "
                         << SupportedExceptionsToString();
@@ -2882,6 +2883,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION(error_type) << exception_string;
     }
   }
+  // string need add quotation marks
   bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
     MS_EXCEPTION_IF_NULL(abs);
     bool need_symbol = false;
@@ -3004,8 +3006,19 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return exception_str;
   }
 
-  std::string GetExceptionType(const AbstractBasePtr &abs) const {
+  std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(abs);
+    auto cnode = node->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &inputs = cnode->inputs();
+    auto clt = GetValueNode<ClassTypePtr>(inputs[inputs.size() - 1]);
+    if (clt != nullptr) {
+      const auto &class_name = clt->name();
+      auto begin = class_name.find("'") + 1;
+      auto end = class_name.substr(begin).find("'");
+      auto class_type = class_name.substr(begin, end);
+      return class_type;
+    }
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
@@ -3014,8 +3027,12 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(scalar_value);
       if (scalar_value->isa<StringImm>()) {
         str = GetValue<std::string>(scalar_value);
+        if (GetValueNode<StringImmPtr>(inputs[inputs.size() - 1]) == nullptr) {
+          (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(str)));
+          (void)values_.emplace_back(inputs[inputs.size() - 1]);
+        }
+        return str;
       }
-      return str;
     }
     MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
   }
