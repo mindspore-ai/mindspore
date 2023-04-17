@@ -501,22 +501,14 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
   {KernelAttr().AddInputAttr(kObjectTypeNumber, kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    CreateCastFunc<bool, bool>}};
 }  // namespace
+
 bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   source_dtype_ = inputs[kIndex0]->GetDtype();
   target_dtype_ = outputs[kIndex0]->GetDtype();
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Cast does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = kernel_attr_lists[index].second();
+  ResetKernelFunc(inputs, outputs);
   return true;
 }
 
@@ -527,6 +519,29 @@ std::vector<KernelAttr> CastCpuKernelMod::GetOpSupport() {
                          [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
   }
   return support_list;
+}
+
+int CastCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->GetDtype())->ToString()
+                << ", out : " << TypeIdToType(outputs[0]->GetDtype())->ToString();
+  ResetKernelFunc(inputs, outputs);
+  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+}
+
+void CastCpuKernelMod::ResetKernelFunc(const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Cast does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = kernel_attr_lists[index].second();
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cast, CastCpuKernelMod);
 }  // namespace kernel

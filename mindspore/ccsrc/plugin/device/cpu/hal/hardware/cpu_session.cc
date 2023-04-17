@@ -35,6 +35,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/pass_manager.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
+#include "plugin/device/cpu/optimizer/insert_cast_to_pyexecute.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
@@ -107,6 +108,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   pm->AddPass(std::make_shared<opt::PrintValueType>("print_value_type"));
+  pm->AddPass(std::make_shared<opt::InsertCastToPyExecute>("insert_cast_for_pyexecute"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

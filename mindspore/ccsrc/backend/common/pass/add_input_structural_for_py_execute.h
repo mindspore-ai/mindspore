@@ -31,4 +31,4 @@ class AddInputStructuralForPyExecute : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_CONST_INPUT_TO_ATTR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_INPUT_STRUCTURAL_OF_PY_EXECUTE_H_
