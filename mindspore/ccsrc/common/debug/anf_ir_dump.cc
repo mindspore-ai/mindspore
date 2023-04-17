@@ -33,7 +33,7 @@
 #include "ir/meta_func_graph.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"
-#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_meta_func_graph.h"
 #include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/map.h"
 
@@ -121,7 +121,7 @@ std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
   } else if (meta_func_graph->isa<prim::VmapGeneralRule>()) {
     prim::VmapGeneralRulePtr general_rule_fg = meta_func_graph->cast<prim::VmapGeneralRulePtr>();
     oss << "{prim=" << general_rule_fg->prim_name() << ", axis_size=" << general_rule_fg->axis_size() << "}";
-  } else if (meta_func_graph->isa<graph_bprop::BpropMetaFuncGraph>()) {
+  } else if (meta_func_graph->isa<expander::bprop::BpropMetaFuncGraph>()) {
     oss << "{" << meta_func_graph->name() << "}";
   } else if (Skip(meta_func_graph)) {
     // Do nothing.
