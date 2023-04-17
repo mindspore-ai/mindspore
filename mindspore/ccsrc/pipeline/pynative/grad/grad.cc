@@ -1271,11 +1271,12 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
     auto find_top_cell = GetTopCell(check_already_run_cell_id);
     if (find_top_cell != nullptr) {
-      MS_LOG(DEBUG) << "Find already run top cell";
+      MS_LOG(DEBUG) << "Find already run top cell " << find_top_cell->cell_id();
       forward_run = top_cell()->forward_already_run();
       bool input_args_changed = !top_cell()->input_args_id().empty() && top_cell()->input_args_id() != input_args_id;
       if (forward_run && input_args_changed) {
-        MS_LOG(WARNING) << "The input info of this cell has changed, forward process will run again";
+        MS_LOG(WARNING) << "The input info " << input_args_id << " is not the same with pre input info "
+                        << top_cell()->input_args_id() << ", forward process will run again";
         forward_run = false;
       }
     }
