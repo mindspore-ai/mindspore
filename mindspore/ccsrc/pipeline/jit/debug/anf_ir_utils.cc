@@ -32,7 +32,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/map.h"
-#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_meta_func_graph.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "include/common/utils/utils.h"
@@ -286,7 +286,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   } else if (meta_func_graph->isa<prim::VmapGeneralRule>()) {
     prim::VmapGeneralRulePtr general_rule_fg = meta_func_graph->cast<prim::VmapGeneralRulePtr>();
     oss << "{prim=" << general_rule_fg->prim_name() << ", axis_size=" << general_rule_fg->axis_size() << "}";
-  } else if (meta_func_graph->isa<graph_bprop::BpropMetaFuncGraph>()) {
+  } else if (meta_func_graph->isa<expander::bprop::BpropMetaFuncGraph>()) {
     oss << "{" << meta_func_graph->name() << "}";
   } else if (Skip(meta_func_graph)) {
     // Do nothing.
