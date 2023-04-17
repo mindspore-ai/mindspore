@@ -92,4 +92,4 @@ RUN cd /tmp \
 # Install MindSpore cuda-11.1, MindInsight, Serving whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/MindSpore/unified/x86_64/mindspore-2.0.0rc1-cp37-cp37m-linux_x86_64.whl \
     && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/MindInsight/any/mindinsight-2.0.0rc1-py3-none-any.whl \
-    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/Serving/x86_64/mindspore_serving-2.0.0rc1-cp37-cp37m-linux_x86_64.whl
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0rc1/Serving/x86_64/mindspore_serving-2.0.0-cp37-cp37m-linux_x86_64.whl
