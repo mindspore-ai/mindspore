@@ -177,8 +177,20 @@ void SwapManager::FreeHostMemory(void *ptr) {
   pin_mem_pool_->FreeTensorMem(ptr);
 }
 
-bool SwapManager::CreateFile(const std::string &file_name) {
+bool SwapManager::CreateFile(const std::string &file_name, size_t file_size) {
   MS_EXCEPTION_IF_NULL(io_handle_);
+  bool (SwapManager::*allocate_func)(const size_t &size) = &SwapManager::EnoughFileSpace;
+  std::function<bool(bool)> success = [](bool ret) { return ret; };
+  {
+    std::lock_guard<std::mutex> lock(swapping_tensors_file_mutex_);
+    bool enough = false;
+    if (!TryAllocate(swapping_tensors_file_, file_size, allocate_func, success, &enough)) {
+      MS_LOG(WARNING) << "There is no enough disk space for creating file, size: " << file_size;
+      return false;
+    }
+  }
+  current_used_file_size_ += file_size;
+  file_size_[file_name] = file_size;
   return io_handle_->CreateSwapFile(file_name);
 }
 
@@ -209,18 +221,6 @@ bool SwapManager::EnoughFileSpace(const size_t &size) { return current_used_file
 bool SwapManager::HostMemoryToFile(const std::string &file_name, const void *data, size_t byte_num, bool async,
                                    AsyncIOToken *sync_key) {
   MS_EXCEPTION_IF_NULL(io_handle_);
-  bool (SwapManager::*allocate_func)(const size_t &size) = &SwapManager::EnoughFileSpace;
-  std::function<bool(bool)> success = [](bool ret) { return ret; };
-  {
-    std::lock_guard<std::mutex> lock(swapping_tensors_file_mutex_);
-    bool enough = false;
-    if (!TryAllocate(swapping_tensors_file_, byte_num, allocate_func, success, &enough)) {
-      MS_LOG(WARNING) << "There is no enough disk space for file writing, size: " << byte_num;
-      return false;
-    }
-  }
-  current_used_file_size_ += byte_num;
-  file_size_[file_name] = byte_num;
   if (async) {
     return io_handle_->WriteAsync(file_name, data, byte_num, sync_key);
   } else {
