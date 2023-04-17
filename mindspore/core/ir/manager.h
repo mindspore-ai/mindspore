@@ -58,7 +58,7 @@ using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 using FuncGraphIndexPtr = std::shared_ptr<FuncGraphPassIndex>;
 
 using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
-using NodeUsersMap = mindspore::HashMap<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
+using NodeUsersMap = mindspore::HashMap<AnfNodePtr, AnfNodeIndexSet>;
 using FuncGraphIndexMap = mindspore::HashMap<FuncGraphPtr, FuncGraphIndexPtr>;
 
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
