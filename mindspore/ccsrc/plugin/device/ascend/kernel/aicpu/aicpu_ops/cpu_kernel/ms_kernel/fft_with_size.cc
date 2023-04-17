@@ -110,21 +110,33 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-double FFTWithSizeCpuKernel::Getnormalized(int64_t n, std::string normalized, bool is_reverse) {
-  double result;
-  std::cout << "n = " << n << std::endl;
-  std::cout << "1 / result = " << 1 / n << std::endl;
+double FFTWithSizeCpuKernel::Getnormalized(std::vector<int64_t> shape, std::string normalized, bool is_reverse,
+                                           uint64_t dim, bool is_real, std::vector<int64_t> end_shape) {
+  double result{0};
+  int64_t n = 1;
+  int64_t m = 1;
+  for (size_t i = shape.size() - 1, j = dim; j > 0; i--, j--) {
+    n *= shape[i];
+  }
+  for (size_t i = end_shape.size() - 1, j = dim; j > 0; i--, j--) {
+    m *= end_shape[i];
+  }
   if (!is_reverse) {
     if (normalized == "forward") result = 1.0 / n;
     if (normalized == "backward") result = 1.0;
     if (normalized == "ortho") result = 1.0 / sqrt((double)n);
   }
   if (is_reverse) {
-    if (normalized == "forward") result = 1.0;
-    if (normalized == "backward") result = 1.0 / n;
-    if (normalized == "ortho") result = 1.0 / sqrt((double)n);
+    if (is_real) {
+      if (normalized == "forward") result = 1.0 * m;
+      if (normalized == "backward") result = 1.0;
+      if (normalized == "ortho") result = 1.0 * sqrt((double)m);
+    } else {
+      if (normalized == "forward") result = 1.0 * n;
+      if (normalized == "backward") result = 1.0;
+      if (normalized == "ortho") result = 1.0 * sqrt((double)n);
+    }
   }
-  std::cout << "result = " << result << std::endl;
   return result;
 }
 
@@ -316,7 +328,6 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   std::vector<int64_t> y_shape = x_shape;
   Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> tensor_shape = GetFlatShape<signal_ndim>(x_shape, x_dims);
   Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> in(&input_x[0], tensor_shape);
-  std::cout << in;
   Eigen::array<unsigned int, signal_ndim> axes;
   change_axes<signal_ndim, 1, signal_ndim>(&axes);
   Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> out;
@@ -329,17 +340,10 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   if (is_real) {
     inverse = real_inverse;
   }
-
-  std::cout << out;
-  auto cout = x_shape_ptr->NumElements();
-  auto norm = Getnormalized(cout, normalized, inverse);
-  std::cout << "input_x.size()=" << cout << std::endl;
-  std::cout << "x_shape.size() = " << x_shape.size() << std::endl;
-  std::cout << "normalized=" << normalized << std::endl;
-  std::cout << "inverse=" << inverse << std::endl;
-  std::cout << "norm=" << norm << std::endl;
+  auto end_shape = y_shape;
+  end_shape.back() = out.dimensions().back();
+  auto norm = Getnormalized(x_shape, normalized, inverse, signal_ndim, is_real, end_shape);
   out = norm * out;
-  // ifend
   T2 *out_ptr = out.data();
   auto out_count = out.size();
   for (int i = 0; i < out_count; i++) {

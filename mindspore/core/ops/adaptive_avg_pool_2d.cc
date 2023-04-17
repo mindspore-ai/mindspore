@@ -89,6 +89,11 @@ TypePtr AdaptiveAvgPool2DInferType(const PrimitivePtr &primitive, const std::vec
 }
 }  // namespace
 
+std::vector<int64_t> AdaptiveAvgPool2D::get_output_size() const {
+  auto value_ptr = GetAttr("output_size");
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2D, BaseOperator);
 AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
