@@ -292,7 +292,16 @@ class AssignParser(Parser):
             args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
                                                 [ScopedValue(ValueType.NamingValue, "", "obj"),
                                                  ScopedValue(ValueType.StringValue, "", func_name)])
-            body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
+            # Add .to_float(mindspore.float16) if origin subnet has this attribute
+            if hasattr(sub_tree.get_origin_network(), "to_float_fp16")\
+                and sub_tree.get_origin_network().to_float_fp16:
+                call_func_value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
+                call_func = ast.Attribute(value=call_func_value, attr='to_float', ctx=ast.Load())
+                call_arg = ast.Attribute(value=ast.Name(id='mindspore', ctx=ast.Load()), attr='float16',
+                                         ctx=ast.Load())
+                body.value = ast.Call(func=call_func, args=[call_arg], keywords=[])
+            else:
+                body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
             break
         return changed
 
