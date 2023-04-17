@@ -346,11 +346,12 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
   // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
   auto attrs = prim->attrs();
-  if ((StrategyFound(attrs) && prim->name() != CAST) || load_strategy_from_ckpt) {
-    SetStrategyToOperator(operator_info, prim, attrs, is_last_nodes, stra_map, strategy_key_name);
-    return operator_info;
+  if (ParallelContext::GetInstance()->strategy_search_mode() != kRecursiveProgramming) {
+    if ((StrategyFound(attrs) && prim->name() != CAST) || load_strategy_from_ckpt) {
+      SetStrategyToOperator(operator_info, prim, attrs, is_last_nodes, stra_map, strategy_key_name);
+      return operator_info;
+    }
   }
-
   // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();

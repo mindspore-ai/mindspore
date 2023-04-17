@@ -1562,6 +1562,10 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
       MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
                    << " is empty, using batch parallel";
       in_strategy = GenerateBatchParallelStrategy(op_info, prim);
+    } else if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
+      MS_LOG(INFO) << "Using SAPP recursive programming, user's predefined strategy of " << cnode->ToString()
+                   << " prim " << prim->name() << "will be ignored. ";
+      in_strategy = GenerateBatchParallelStrategy(op_info, prim);
     } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
       in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
       out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
