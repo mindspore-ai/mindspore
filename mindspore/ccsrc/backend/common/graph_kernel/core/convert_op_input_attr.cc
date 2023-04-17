@@ -73,6 +73,8 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   AnfNodePtrList new_inputs;
   auto primitive = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
+  primitive = primitive->Clone();
+  MS_EXCEPTION_IF_NULL(primitive);
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     if (op_idx_info_.find(primitive->name()) == op_idx_info_.end()) {
@@ -94,7 +96,7 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
-  new_inputs.push_back(inputs[0]);
+  new_inputs.push_back(NewValueNode(primitive));
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
