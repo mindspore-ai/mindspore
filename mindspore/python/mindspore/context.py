@@ -1128,7 +1128,7 @@ def set_context(**kwargs):
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
-            The value must be in [STRICT(0), COMPATIBLE(1) LAX(2)]. Default: LAX(2). All levels support all backends.
+            The value must be in [STRICT(0), COMPATIBLE(1), LAX(2)]. Default: LAX(2). All levels support all backends.
 
             - STRICT(0): Only basic syntax is supported, and execution performance is optimal.
             - COMPATIBLE(1): Besides basic syntax, supports more syntax, such as operations of dict, list, and scalar.
