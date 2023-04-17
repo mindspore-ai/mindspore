@@ -140,8 +140,9 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
   int64_t out_d = 0;
   int64_t out_h = 0;
   int64_t out_w = 0;
+  auto kernel_name = primitive->name();
   if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name
                              << "', stride_d or stride_h or stride_w must be non-zero, but got stride_d: " << stride_d
                              << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
   }
@@ -155,18 +156,36 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
     out_h = in_h == -1 ? -1 : MaxPool3DCeilDiv(in_h, stride_h);
     out_w = in_w == -1 ? -1 : MaxPool3DCeilDiv(in_w, stride_w);
   } else {
-    double out_d_tmp =
-      in_d == -1
-        ? -1
-        : static_cast<double>(in_d + pad_list[kInputIndex0] + pad_list[kInputIndex1] - kernel_d) / stride_d + 1;
-    double out_h_tmp =
-      in_h == -1
-        ? -1
-        : static_cast<double>(in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h) / stride_h + 1;
-    double out_w_tmp =
-      in_w == -1
-        ? -1
-        : static_cast<double>(in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1;
+    auto pad_d = pad_list[kInputIndex0] + pad_list[kInputIndex1];
+    if (pad_d > kernel_d) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name
+                               << "', the summation of padding on head and tail must be smaller than, or equal to the "
+                                  "kernel size on depth, but got padding: ["
+                               << pad_list[kInputIndex0] << ", " << pad_list[kInputIndex1]
+                               << "], kernel_d: " << kernel_d << ".";
+    }
+
+    auto pad_h = pad_list[kInputIndex2] + pad_list[kInputIndex3];
+    if (pad_h > kernel_h) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name
+                               << "', the summation of padding on top and bottom must be smaller than, or equal to the "
+                                  "kernel size on height, but got padding: ["
+                               << pad_list[kInputIndex2] << ", " << pad_list[kInputIndex3]
+                               << "], kernel_h: " << kernel_h << ".";
+    }
+
+    auto pad_w = pad_list[kInputIndex4] + pad_list[kInputIndex5];
+    if (pad_w > kernel_w) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name
+                               << "', the summation of padding on left and right must be smaller than, or equal to the "
+                                  "kernel size on width, but got padding: ["
+                               << pad_list[kInputIndex4] << ", " << pad_list[kInputIndex5]
+                               << "], kernel_w: " << kernel_w << ".";
+    }
+
+    double out_d_tmp = in_d == -1 ? -1 : static_cast<double>(in_d + pad_d - kernel_d) / stride_d + 1;
+    double out_h_tmp = in_h == -1 ? -1 : static_cast<double>(in_h + pad_h - kernel_h) / stride_h + 1;
+    double out_w_tmp = in_w == -1 ? -1 : static_cast<double>(in_w + pad_w - kernel_w) / stride_w + 1;
 
     if (ceil_mode) {
       out_d = DoubleToLong(std::ceil(out_d_tmp));

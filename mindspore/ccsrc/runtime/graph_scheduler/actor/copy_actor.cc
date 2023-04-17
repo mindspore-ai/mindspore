@@ -140,8 +140,8 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   }
 
   if (is_need_update_output_size_ && (input_device_tensor_[0]->GetSize() != output_device_tensor_[0]->GetSize())) {
-    MS_LOG(INFO) << GetAID().Name() << " update output size from " << output_device_tensor_[0]->GetSize() << " to "
-                 << input_device_tensor_[0]->GetSize();
+    MS_LOG(DEBUG) << GetAID().Name() << " update output size from " << output_device_tensor_[0]->GetSize() << " to "
+                  << input_device_tensor_[0]->GetSize();
     output_device_tensor_[0]->SetSize(input_device_tensor_[0]->GetSize());
   }
 }
