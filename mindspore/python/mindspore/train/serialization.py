@@ -1315,6 +1315,43 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     _export(net, file_name, file_format, *inputs, **kwargs)
 
 
+def _get_funcgraph(net, *inputs):
+    """
+    Compile the MindSpore network and get FuncGraph.
+
+    Arg:
+        net (Union[Cell, function]): MindSpore network.
+        inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
+             of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
+             it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
+             In second situation, you should adjust batch size of dataset script manually which will impact on
+             the batch size of 'net' input. Only supports parse "image" column from dataset currently.
+
+    Returns:
+        FuncGraph, a mindspore._c_expression.FuncGraph obj.
+
+    Raises:
+        ValueError: input `net` is not a nn.Cell.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>>
+        >>> net = LeNet()
+        >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
+        >>> ms.get_funcgraph(net, input_tensor)
+
+    """
+    if not isinstance(net, nn.Cell):
+        raise ValueError(f"For get_funcgraph's parameter 'net', currently only support Cell right now.")
+    phase_name = "lite_infer_predict" if _is_in_auto_parallel_mode() else "lite_infer_get_func_graph"
+    graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
+    # pylint: disable=protected-access
+    func_graph = _executor._get_func_graph(net, graph_id)
+    return func_graph
+
+
 def _export(net, file_name, file_format, *inputs, **kwargs):
     """
     It is an internal conversion function. Export the MindSpore prediction model to a file in the specified format.

@@ -1489,6 +1489,16 @@ class _CellGraphExecutor:
             branch_control_input = _generate_branch_control_input(obf_random_seed)
         return branch_control_input
 
+    def _get_func_graph(self, obj, exec_id, use_prefix=False):
+        """Get func graph from pipeline."""
+        if use_prefix:
+            exec_id = exec_id + '.' + obj.arguments_key
+        if self._graph_executor.has_compiled(exec_id) is False:
+            return None
+        if self.obfuscate_config is not None:
+            raise ValueError('For get func graph, obfuscate_config is currently not supported now.')
+        return self._graph_executor.get_func_graph(exec_id)
+
     def _get_func_graph_proto(self, obj, exec_id, ir_type="onnx_ir", use_prefix=False, incremental=False):
         """Get graph proto from pipeline."""
         if use_prefix:
