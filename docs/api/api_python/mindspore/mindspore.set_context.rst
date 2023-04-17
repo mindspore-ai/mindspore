@@ -80,6 +80,8 @@ mindspore.set_context
     |                         |  memory_offload              |  GPU/Ascend                |
     |                         +------------------------------+----------------------------+
     |                         |  ascend_config               |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  jit_syntax_level            |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     参数：
@@ -186,6 +188,12 @@ mindspore.set_context
             - allow_mix_precision_bf16: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16。
 
           - **jit_compile** (bool): 表示是否选择在线编译。默认值：以CANN设置的默认值为准。当设置为False时，优先选择系统中已经编译好的算子二进制文件，提升编译性能。
+        - **jit_syntax_level** (int): 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
+          其值必须在[STRICT(0)，COMPATIBLE(1)，LAX(2)]范围内，默认值为LAX(2)。全部级别都支持所有后端。
+
+          - STRICT(0): 仅支持基础语法，且执行性能最佳。
+          - COMPATIBLE(1): 除支持基础语法外，还支持更多语法，如dict，list和scalar的操作等。
+          - LAX(2): 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。
