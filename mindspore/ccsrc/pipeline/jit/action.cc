@@ -918,7 +918,8 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   auto grad_exec = pynative_exec->grad_executor();
   bool eliminate_forward = grad_exec->eliminate_forward();
   grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
-  auto grad_graph = ad::Grad(ms_func_graph, opt::Optimizer::MakeEmptyOptimizer(resource));
+  // After Grad, ms function may be changed; If ms func graph execute secondly, the graph is not same to first execute
+  auto grad_graph = ad::Grad(BasicClone(ms_func_graph), opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);
   graph_executor->SetGradGraph(grad_graph, phase);
   ModifyOutputNode(ms_func_graph);

@@ -264,7 +264,8 @@ bool IsMonadPrim(const PrimitivePtr &prim, const CNodePtr &cnode, const GradPara
     MS_LOG(DEBUG) << "Get monad cnode " << cnode->DebugString();
     return true;
   }
-  if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
+  if ((prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) &&
+      (cnode->inputs().back()->abstract()->isa<abstract::AbstractMonad>())) {
     std::vector<AnfNodePtr> inputs{cnode->inputs().begin(), cnode->inputs().end() - 1};
     cnode->set_inputs(inputs);
   }
