@@ -713,7 +713,7 @@ def test_raise_none_with_variable_control_flow3():
         grad = GradNet(net)
         grad.set_inputs(dyn_tensor)
         print(grad(data))
-    assert "('ddddd, ', Tensor(" in str(control.value)
+    assert "(ddddd, [" in str(control.value)
 
 
 @pytest.mark.skip(reason="No support yet.")

@@ -53,6 +53,7 @@
 #include "utils/parallel_node_check.h"
 #include "utils/check_convert_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
@@ -2839,24 +2840,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
         SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
       }
     }
-    // initialize member variable to avoid problems caused by reusing instance.
-    num_str_ = 0;
-    keys_ = {NewValueNode(prim::kPrimMakeTuple)};
-    values_ = {NewValueNode(prim::kPrimMakeTuple)};
     auto node = out_conf->node();
-    AnalysisEnginePtr eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    if (node->has_user_data("__raise_flag__")) {
-      TypePtr type = kFloat64;
-      ShapeVector shp;
-      (void)shp.emplace_back(Shape::kShapeRankAny);
-      BaseShapePtr shape = std::make_shared<Shape>(shp);
-      AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
-      res->set_user_data("__raise_flag__", MakeValue(true));
-      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-      return infer_result;
-    }
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
@@ -2864,38 +2848,48 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       // process raise
       MS_LOG(EXCEPTION) << "No active exception to reraise.";
     }
-
-    std::string exception_type = GetExceptionType(args_abs_list[0], node);
-    has_variable_ = false;
-    size_t index_begin = 2;
-    auto cnode = node->cast_ptr<CNode>();
+    const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto inputs = cnode->inputs();
+    has_variable_ = false;
+    size_t index_begin = 2;
+    size_t index_end = inputs.size() - 1;
     for (size_t index = index_begin; index < inputs.size(); ++index) {
       CheckHasVariable(args_abs_list[index - 1]);
     }
+    // continue to fallback if has variable
+    bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
+    if (is_variable_condition) {
+      AbstractBasePtr res = std::make_shared<AbstractAny>();
+      auto prim = prim::kPrimRaise;
+      (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
+      cnode->set_input(0, NewValueNode(prim));
+      cnode->set_has_side_effect_node(true);
+      cur_graph->set_has_side_effect_node(true);
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
+    } else if (has_variable_) {
+      MS_LOG(EXCEPTION) << "Using raise with variable under a constant condition. You may need to check your code.";
+    }
+    std::shared_ptr<raiseutils::KeyValueInfo> key_value = std::make_shared<raiseutils::KeyValueInfo>();
+    std::string exception_type = raiseutils::GetExceptionType(args_abs_list[0], inputs[index_end], key_value, false);
     std::string exception_string;
-    if (args_abs_list.size() == 1 && !has_variable_) {
-      if (!cur_graph->is_tensor_condition_branch()) {
-        RaiseConstant(exception_type);
-      }
-      // Process raise ValueError()
-      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
-      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
-      (void)values_.emplace_back(NewValueNode(std::make_shared<StringImm>("")));
-      exception_string = key;
+    // Process raise ValueError()
+    if (args_abs_list.size() == 1) {
+      RaiseConstant(exception_type);
     }
     // Processed in units of nodes. Raise ValueError(xxxx)
     for (size_t index = index_begin; index < inputs.size() - 1; ++index) {
       const auto input = inputs[index];
       auto input_abs = args_abs_list[index - 1];
       MS_EXCEPTION_IF_NULL(input_abs);
-      const bool need_symbol = CheckNeedSymbol(input, input_abs);
+      const bool need_symbol = raiseutils::CheckNeedSymbol(input_abs);
       if (need_symbol) {
         exception_string += "'";
       }
       bool need_comma = !IsPrimitiveCNode(input, prim::kPrimMakeTuple);
-      exception_string += GetExceptionString(input_abs, input, node, need_comma, need_symbol);
+      exception_string += raiseutils::GetExceptionString(input_abs, input, key_value, need_symbol, need_comma);
       if (need_symbol) {
         exception_string += "'";
       }
@@ -2908,48 +2902,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     if (need_out_symbol) {
       exception_string = "(" + exception_string + ")";
     }
-    if (keys_.size() <= 1 && !has_variable_) {
-      if (!cur_graph->is_tensor_condition_branch()) {
-        RaiseConstant(exception_type, exception_string);
-      }
-      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
-      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
-      (void)values_.emplace_back(NewValueNode(std::make_shared<StringImm>(exception_string)));
-      exception_string = key;
-    }
-
-    // Build PyExecute node for raise
-    const std::string error_msg =
-      "__import__('mindspore').common._utils._jit_fallback_raise_func(" + exception_type + "," + exception_string + ")";
-    const auto script_str = std::make_shared<StringImm>(error_msg);
-    // Pack local parameter keys
-    const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);
-
-    // Pack local parameter values
-    const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
-
-    // Build the PyExecute node for raise error.
-    auto prim = prim::kPrimRaise;
-    (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
-    const auto raise_error_node =
-      cur_graph->NewCNodeInOrder({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
-
-    // Avoid entering the Evaluator process multiple times.
-    raise_error_node->set_user_data("__raise_flag__", std::make_shared<bool>(true));
-    raise_error_node->set_debug_info(node->debug_info());
-
-    // Set isolated side effect flag for raise node.
-    raise_error_node->set_has_side_effect_node(true);
-    cur_graph->set_has_side_effect_node(true);
-    MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf, false);
+    RaiseConstant(exception_type, exception_string);
+    MS_LOG(EXCEPTION) << "constant raise is not raising exception correctly";
   }
 
  private:
-  int num_str_ = 0;
-  std::vector<AnfNodePtr> keys_;
-  std::vector<AnfNodePtr> values_;
   bool has_variable_ = false;
   void CheckHasVariable(const AbstractBasePtr &arg) {
     if (arg->isa<abstract::AbstractSequence>()) {
@@ -2969,7 +2926,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
   void RaiseConstant(const std::string &type, const std::string &exception_string = "") {
     auto iter = exception_types_map.find(type);
-    if (iter == exception_types_map.end() && keys_.size() <= 1) {
+    if (iter == exception_types_map.end()) {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << type
                         << ". Raise only support some Python standard exception types: "
                         << SupportedExceptionsToString();
@@ -2980,175 +2937,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     } else {
       MS_EXCEPTION(error_type) << exception_string;
     }
-  }
-  // string need add quotation marks
-  bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
-    MS_EXCEPTION_IF_NULL(abs);
-    bool need_symbol = false;
-    if (abs->isa<abstract::AbstractScalar>()) {
-      auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
-      MS_EXCEPTION_IF_NULL(scalar);
-      auto scalar_value = scalar->BuildValue();
-      MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<StringImm>()) {
-        need_symbol = true;
-      }
-    } else if (abs->isa<abstract::AbstractSequence>()) {
-      auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
-      MS_EXCEPTION_IF_NULL(abs_list);
-      const auto &elements = abs_list->elements();
-      for (auto &element : elements) {
-        MS_EXCEPTION_IF_NULL(element);
-        if (element->isa<abstract::AbstractScalar>()) {
-          auto scalar = element->cast_ptr<abstract::AbstractScalar>();
-          auto scalar_value = scalar->BuildValue();
-          if (scalar_value->isa<StringImm>()) {
-            need_symbol = true;
-            break;
-          }
-        }
-      }
-    }
-    return need_symbol;
-  }
-  std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                 bool need_comma = false, bool need_symbol = false) {
-    std::string exception_str;
-    MS_EXCEPTION_IF_NULL(arg);
-    if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
-      return GetTupleOrListString(arg, input, node, need_comma, need_symbol);
-    } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
-               IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
-      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
-      num_str_ += 1;
-      if (need_symbol) {
-        exception_str = exception_str + "'+f'{" + key + "}'+'";
-      } else {
-        exception_str = exception_str + key;
-      }
-      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
-      (void)values_.emplace_back(input);
-    } else if (arg->isa<abstract::AbstractDictionary>()) {
-      MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
-    } else if (arg->isa<abstract::AbstractScalar>()) {
-      // Process raise ValueError
-      exception_str += GetScalarStringValue(arg, node);
-    } else {
-      MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
-    }
-    return exception_str;
-  }
-
-  std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, std::string exception_str) {
-    std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
-    num_str_ += 1;
-    if (need_symbol) {
-      exception_str = exception_str + "'+f'{" + key + "}'+'";
-    } else {
-      exception_str = exception_str + key;
-    }
-    (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
-    (void)values_.emplace_back(input);
-    return exception_str;
-  }
-
-  std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
-                                   bool need_comma, bool need_symbol = false) {
-    MS_EXCEPTION_IF_NULL(arg);
-    std::string exception_str;
-    bool is_tuple = arg->isa<abstract::AbstractTuple>();
-    // Process raise ValueError("str")
-    auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
-    MS_EXCEPTION_IF_NULL(arg_tuple);
-    const auto &arg_tuple_elements = arg_tuple->elements();
-    if (!input->isa<CNode>() && has_variable_) {
-      return GetVariable(input, need_symbol, exception_str);
-    }
-    if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
-      if (is_tuple) {
-        exception_str += "(";
-      } else {
-        exception_str += "[";
-      }
-    }
-    auto cnode = input->cast_ptr<CNode>();
-    bool not_variable = !has_variable_;
-    if (has_variable_) {
-      not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
-    }
-    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
-      auto &element = arg_tuple_elements[index];
-      if (has_variable_) {
-        auto inputs = cnode->inputs();
-        if (arg_tuple_elements.size() >= cnode->inputs().size()) {
-          MS_LOG(EXCEPTION) << "Size of cnode should be greater than arg_tuple_elements, "
-                            << "but got cnode size: " << cnode->inputs().size()
-                            << " arg_tuple_elements size: " << arg_tuple_elements.size();
-        }
-        auto inputs_in_tuple = inputs[index + 1];
-        exception_str += GetExceptionString(element, inputs_in_tuple, node, need_comma, need_symbol);
-      } else {
-        exception_str += GetExceptionString(element, input, node, need_comma, need_symbol);
-      }
-      if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
-        exception_str += ", ";
-      }
-    }
-    if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
-      if (is_tuple) {
-        exception_str += ")";
-      } else {
-        exception_str += "]";
-      }
-    }
-    return exception_str;
-  }
-
-  std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(abs);
-    auto cnode = node->cast_ptr<CNode>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    const auto &inputs = cnode->inputs();
-    auto clt = GetValueNode<ClassTypePtr>(inputs[inputs.size() - 1]);
-    if (clt != nullptr) {
-      const auto &class_name = clt->name();
-      auto begin = class_name.find("'") + 1;
-      auto end = class_name.substr(begin).find("'");
-      auto class_type = class_name.substr(begin, end);
-      return class_type;
-    }
-    std::string str;
-    if (abs->isa<abstract::AbstractScalar>()) {
-      auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
-      MS_EXCEPTION_IF_NULL(scalar);
-      auto scalar_value = scalar->BuildValue();
-      MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<StringImm>()) {
-        str = GetValue<std::string>(scalar_value);
-        if (GetValueNode<StringImmPtr>(inputs[inputs.size() - 1]) == nullptr) {
-          (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(str)));
-          (void)values_.emplace_back(inputs[inputs.size() - 1]);
-        }
-        return str;
-      }
-    }
-    MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
-  }
-
-  std::string GetScalarStringValue(const AbstractBasePtr &abs, const AnfNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(abs);
-    MS_EXCEPTION_IF_NULL(node);
-    std::string str;
-    auto scalar = abs->cast<abstract::AbstractScalarPtr>();
-    MS_EXCEPTION_IF_NULL(scalar);
-    auto scalar_value = scalar->BuildValue();
-    auto scalar_type = scalar->BuildType();
-    if (scalar_type->isa<Float>()) {
-      str = std::to_string(GetValue<float>(scalar_value));
-    } else {
-      str = scalar_value->ToString();
-    }
-    return str;
   }
 };
 

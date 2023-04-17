@@ -124,6 +124,19 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
   return nullptr;
 }
 
+bool FunctionBlock::CheckhasVariable(const std::string &var_name) {
+  auto node = ReadLocalVariable(var_name);
+  if (node != nullptr) {
+    return true;
+  }
+  if (!prev_blocks_.empty()) {
+    auto block = prev_blocks_[0];
+    MS_EXCEPTION_IF_NULL(block);
+    return block->CheckhasVariable(var_name);
+  }
+  return false;
+}
+
 std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
   // Search the predecessors of the current block for the local parameter. If one of the local parameter of the
   // predecessors is interpret node, the phi_param needs to set the interpret true.

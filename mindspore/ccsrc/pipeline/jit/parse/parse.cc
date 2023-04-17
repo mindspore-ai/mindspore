@@ -1225,7 +1225,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   if (py::isinstance<py::none>(function_ast_node)) {
     auto name = python_adapter::GetPyObjAttr(node, "id");
     auto name_id = py::cast<std::string>(name);
-    if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
+    if (support_fallback() != "0" && block->CheckhasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       error_node = HandleInterpret(block, error_node, name);
       return {NewValueNode(name_id), error_node};
@@ -1248,7 +1248,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     auto node_list = ParseException(block, args, name_id);
-    if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
+    if (support_fallback() != "0" && block->CheckhasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       error_node = HandleInterpret(block, error_node, name);
       (void)node_list.emplace_back(error_node);

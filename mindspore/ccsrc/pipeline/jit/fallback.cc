@@ -412,4 +412,207 @@ std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const 
   return res;
 }
 }  // namespace fallback
+
+namespace raiseutils {
+std::string MakeRaiseKey(const int index) { return "__internal_error_value" + std::to_string(index) + "__"; }
+
+bool CheckIsStr(const AbstractBasePtr &abs) {
+  auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
+  auto scalar_type = scalar->BuildType();
+  MS_EXCEPTION_IF_NULL(scalar_type);
+  if (scalar_type->IsSameTypeId(String::kTypeId)) {
+    return true;
+  }
+  return false;
+}
+
+bool CheckNeedSymbol(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  bool need_symbol = false;
+  if (abs->isa<abstract::AbstractScalar>()) {
+    need_symbol = CheckIsStr(abs);
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
+    const auto &elements = abs_list->elements();
+    for (auto &element : elements) {
+      MS_EXCEPTION_IF_NULL(element);
+      if (element->isa<abstract::AbstractScalar>()) {
+        need_symbol = CheckIsStr(element);
+        if (need_symbol) {
+          return need_symbol;
+        }
+      }
+    }
+  }
+  return need_symbol;
+}
+
+std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input,
+                               const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol, bool need_comma) {
+  std::string exception_str;
+  MS_EXCEPTION_IF_NULL(arg);
+  if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
+    return GetTupleOrListString(arg, input, key_value, need_symbol, need_comma);
+  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
+             IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
+    exception_str = GetVariable(input, need_symbol, key_value, exception_str);
+  } else if (arg->isa<abstract::AbstractDictionary>()) {
+    MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
+  } else if (arg->isa<abstract::AbstractScalar>()) {
+    // Process raise ValueError
+    exception_str += GetScalarStringValue(arg);
+  } else {
+    MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
+  }
+  return exception_str;
+}
+
+std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, const std::shared_ptr<KeyValueInfo> &key_value,
+                        std::string exception_str) {
+  std::string key = MakeRaiseKey(key_value->num_str);
+  key_value->num_str += 1;
+  if (need_symbol) {
+    exception_str = exception_str + "'+f'{" + key + "}'+'";
+  } else {
+    exception_str = exception_str + key;
+  }
+  (void)key_value->keys.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+  (void)key_value->values.emplace_back(input);
+  return exception_str;
+}
+
+bool CheckHasVariable(const AbstractBasePtr &arg) {
+  if (arg->isa<abstract::AbstractSequence>()) {
+    auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(arg_tuple);
+    const auto &arg_tuple_elements = arg_tuple->elements();
+    if (arg_tuple_elements.size() == 0) {
+      MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
+    }
+    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+      auto &element = arg_tuple_elements[index];
+      if (CheckHasVariable(element)) {
+        return true;
+      }
+    }
+  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
+    return true;
+  }
+  return false;
+}
+
+std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input,
+                                 const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol, bool need_comma) {
+  MS_EXCEPTION_IF_NULL(arg);
+  bool has_variable = CheckHasVariable(arg);
+  std::string exception_str;
+  bool is_tuple = arg->isa<abstract::AbstractTuple>();
+  // Process raise ValueError("str")
+  auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
+  MS_EXCEPTION_IF_NULL(arg_tuple);
+  const auto &arg_tuple_elements = arg_tuple->elements();
+  if (!input->isa<CNode>() && has_variable) {
+    return GetVariable(input, need_symbol, key_value, exception_str);
+  }
+  if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
+    if (is_tuple) {
+      exception_str += "(";
+    } else {
+      exception_str += "[";
+    }
+  }
+  auto cnode = input->cast_ptr<CNode>();
+  bool not_variable = !has_variable;
+  if (has_variable) {
+    not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+  }
+  for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+    auto &element = arg_tuple_elements[index];
+    if (has_variable) {
+      const auto &inputs = cnode->inputs();
+      if (arg_tuple_elements.size() >= cnode->inputs().size()) {
+        MS_LOG(EXCEPTION) << "Size of cnode should be greater than arg_tuple_elements, "
+                          << "but got cnode size: " << cnode->inputs().size()
+                          << " arg_tuple_elements size: " << arg_tuple_elements.size();
+      }
+      auto inputs_in_tuple = inputs[index + 1];
+      exception_str += GetExceptionString(element, inputs_in_tuple, key_value, need_symbol, need_comma);
+    } else {
+      exception_str += GetExceptionString(element, input, key_value, need_symbol, need_comma);
+    }
+    if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
+      exception_str += ", ";
+    }
+  }
+  if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
+    if (is_tuple) {
+      exception_str += ")";
+    } else {
+      exception_str += "]";
+    }
+  }
+  return exception_str;
+}
+
+std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node,
+                             const std::shared_ptr<KeyValueInfo> &key_value, bool has_variable) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto clt = GetValueNode<ClassTypePtr>(node);
+  if (clt != nullptr) {
+    const auto &class_name = clt->name();
+    auto begin = class_name.find("'") + 1;
+    auto end = class_name.substr(begin).find("'");
+    auto class_type = class_name.substr(begin, end);
+    return class_type;
+  }
+  std::string str;
+  if (abs->isa<abstract::AbstractScalar>()) {
+    auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    auto scalar_value = scalar->BuildValue();
+    MS_EXCEPTION_IF_NULL(scalar_value);
+    if (scalar_value->isa<StringImm>()) {
+      str = GetValue<std::string>(scalar_value);
+      if (GetValueNode<StringImmPtr>(node) == nullptr && has_variable) {
+        (void)key_value->keys.emplace_back(NewValueNode(std::make_shared<StringImm>(str)));
+        (void)key_value->values.emplace_back(node);
+      }
+      return str;
+    }
+  }
+  MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
+}
+
+std::string GetScalarStringValue(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  auto scalar = abs->cast<abstract::AbstractScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar);
+  auto scalar_value = scalar->BuildValue();
+  return scalar_value->ToString();
+}
+
+bool HasVariableCondition(FuncGraphPtr cur_graph, FuncGraphPtr prev_graph) {
+  if (cur_graph == nullptr) {
+    return false;
+  }
+  if (cur_graph->is_tensor_condition_branch()) {
+    return true;
+  }
+  auto cur_fg_map = cur_graph->func_graph_cnodes_index();
+  for (auto &cur_fg_use : cur_fg_map) {
+    auto temp_node = cur_fg_use.first->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(temp_node);
+    if (prev_graph != nullptr && temp_node->func_graph() == prev_graph) {
+      return false;
+    }
+    if (HasVariableCondition(temp_node->func_graph(), cur_graph)) {
+      return true;
+    }
+  }
+  if (HasVariableCondition(cur_graph->parent())) {
+    return true;
+  }
+  return false;
+}
+}  // namespace raiseutils
 }  // namespace mindspore
