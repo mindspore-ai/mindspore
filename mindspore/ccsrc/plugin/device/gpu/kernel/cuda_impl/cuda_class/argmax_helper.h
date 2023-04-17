@@ -47,13 +47,26 @@ class ArgMaxHelperGpuKernel : public GpuKernelHelperBase {
     constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
+    size_t cur_size_in = sizeof(T);
+    int inp_flag = 0;
+    if (input_shapes[0].size() == 0) {
+      // Constant number.
+      input_size_list_.emplace_back(cur_size_in);
+    } else {
+      inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
+    }
     if (inp_flag == -1) {
       return inp_flag;
     }
     input_shape_ = input_shapes[0];
-    int out_flag =
-      CalShapesSizeInBytes<S>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
+    size_t cur_size_out = sizeof(S);
+    int out_flag = 0;
+    if (output_shapes[0].size() == 0) {
+      // Constant number.
+      output_size_list_.emplace_back(cur_size_out);
+    } else {
+      out_flag = CalShapesSizeInBytes<S>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
+    }
     if (out_flag == -1) {
       return out_flag;
     }
