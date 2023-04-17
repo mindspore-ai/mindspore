@@ -11,7 +11,7 @@ mindspore_lite.Context
 
     Context.parallel属性：
         - **workers_num** (int) - workers的数量。一个 `ModelParallelRunner` 包含多个worker，worker为实际执行并行推理的单元。将 `workers_num` 设置为0表示 `workers_num` 将基于计算机性能和核心数自动调整。
-        - **config_info** (dict{str: dict{str: str}}) - 传递模型权重文件路径的嵌套映射。例如：{"weight": {"weight_path": "/home/user/weight.cfg"}}。key当前支持["weight"]；value为dict格式，其中的key当前支持["weight_path"]，其中的value为权重的路径，例如 "/home/user/weight.cfg"。
+        - **config_info** (dict{str: dict{str: str}}) - 用于在构建 `ModelParallelRunner` 过程中在线传输用户定义选项的嵌套映射。更多可配置选项请参阅 `config_path` 。例如：{"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}。 `section` 为"model_file"，value为dict格式，其中的key之一为"mindir_path"，对应的value为"/home/user/model_graph.mindir"。
         - **config_path** (str) - 定义配置文件的路径，用于在构建 `ModelParallelRunner` 期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.txt"。
 
           - **用法1** - 进行混合精度推理的设置，配置文件内容及说明如下：
@@ -33,6 +33,23 @@ mindspore_lite.Context
                 dynamic_dims=[min_dim~max_dim]（模型输入的动态维度范围，用于动态shape）
                 opt_dims=[opt_dim]（模型最优输入维度，用于动态shape）
 
+          - **用法3** - 对于大模型，使用model buffer进行加载编译的时候需要单独设置权重文件的路径，并且需要确保大模型文件和权重文件所在的文件夹位于同一文件夹中。例如，当目录如下时：
+
+            .. code-block::
+
+                .
+                └── /home/user/
+                     ├── model_graph.mindir
+                     └── model_variables
+                          └── data_0
+
+            配置文件内容及说明如下：
+
+            .. code-block::
+
+                [model_file]
+                mindir_path=[/home/user/model_graph.mindir]（大模型的存储路径）
+
     .. py:method:: target
         :property:
 
@@ -49,7 +66,7 @@ mindspore_lite.Context
             - **precision_mode** (str) - 设置混合精度模式。选项有 "preferred_fp16" 和 "enforce_fp32"。
 
               - **preferred_fp16** - 优先使用fp16。
-              - **enforce_fp32** - 强制设置fp32。
+              - **enforce_fp32** - 强制使用fp32。
 
             - **thread_num** (int) - 设置运行时的线程数。 `thread_num` 不能小于 `inter_op_parallel_num` 。将 `thread_num` 设置为0表示 `thread_num` 将基于计算机性能和核心数自动调整。
             - **thread_affinity_mode** (int) - 设置运行时的CPU绑核策略模式。支持以下 `thread_affinity_mode` 。
@@ -66,7 +83,7 @@ mindspore_lite.Context
             - **precision_mode** (str) - 设置混合精度模式。选项有 "preferred_fp16" 和 "enforce_fp32"。
 
               - **preferred_fp16** - 优先使用fp16。
-              - **enforce_fp32** - 强制设置fp32。
+              - **enforce_fp32** - 强制使用fp32。
 
             - **rank_id** (int) - 当前设备在集群中的ID，固定从0开始编号。仅获取，不可设置。
 
@@ -74,9 +91,9 @@ mindspore_lite.Context
             - **device_id** (int) - 设备id。
             - **precision_mode** (str) - 设置混合精度模式。选项有 "enforce_fp32"、 "preferred_fp32"、 "enforce_fp16"、 "enforce_origin" 和 "preferred_optimal"。
 
-              - **enforce_fp32** - 对应ACL选项为force_fp3，强制使用fp32。
-              - **preferred_fp32** - 对应ACL选项为force_fp32，优先使用fp32。
-              - **enforce_fp16** - 对应ACL选项为force_fp116，强制使用fp16。
+              - **enforce_fp32** - 对应ACL选项为force_fp32，强制使用fp32。
+              - **preferred_fp32** - 对应ACL选项为allow_fp32_to_fp16，优先使用fp32。
+              - **enforce_fp16** - 对应ACL选项为force_fp16，强制使用fp16。
               - **enforce_origin** - 对应ACL选项为must_keep_origin_dtype，强制使用原始类型。
               - **preferred_optimal** - 对应ACL选项为allow_mix_precision，优先使用fp16+精度权衡。
 
