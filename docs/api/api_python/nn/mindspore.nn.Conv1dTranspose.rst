@@ -5,7 +5,7 @@ mindspore.nn.Conv1dTranspose
 
     计算一维转置卷积，可以视为Conv1d对输入求梯度，也称为反卷积（实际不是真正的反卷积）。
 
-    输入的shape通常是 :math:`(N, C_{in}, L_{in})` ，其中 :math:`N` 是batch size， :math:`C_{in}` 是空间维度， :math:`L_{in}` 是序列的长度。
+    输入的shape通常是 :math:`(N, C_{in}, L_{in})` ，其中 :math:`N` 是batch size， :math:`C_{in}` 是通道数， :math:`L_{in}` 是序列的长度。
     当Conv1d和ConvTranspose1d使用相同的参数初始化时，且 `pad_mode` 设置为"pad"，它们会在输入的两端填充 :math:`dilation * (kernel\_size - 1) - padding` 个零，这种情况下它们的输入和输出shape是互逆的。
     然而，当 `stride` 大于1时，Conv1d会将多个输入的shape映射到同一个输出shape。反卷积网络可以参考 `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_ 。
 

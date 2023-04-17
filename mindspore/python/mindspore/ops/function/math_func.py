@@ -3420,7 +3420,7 @@ def slogdet(input):
         The type of output always be real-value, even `input` is complex.
 
     Args:
-        input (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
+        input (Tensor): A matrix to be calculated, its shape is :math:`(..., M, M)`.
           The matrix must be at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
@@ -8511,7 +8511,7 @@ def inner(input, other):
 
 
 def bmm(input_x, mat2):
-    """
+    r"""
     Computes matrix multiplication between two tensors by batch.
 
     .. math::
