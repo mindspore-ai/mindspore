@@ -21,6 +21,7 @@
 #include <iomanip>
 #include "utils/label.h"
 #include "utils/hash_map.h"
+#include "utils/symbolic.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
@@ -29,8 +30,256 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "ir/meta_func_graph.h"
+#include "pipeline/jit/parse/resolve.h"
+#include "frontend/operator/composite/composite.h"
+#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
+#include "frontend/operator/composite/vmap.h"
+#include "frontend/operator/composite/map.h"
 
+using MetaFuncGraph = mindspore::MetaFuncGraph;
+using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
 namespace mindspore {
+std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) {
+  auto py_funcs = mt_func_graph->GetPyFunctions();
+  if (py_funcs.empty()) {
+    return "";
+  }
+
+  std::ostringstream oss;
+
+  oss << "{";
+  bool is_first = true;
+  for (const auto &py_func : py_funcs) {
+    if (is_first) {
+      is_first = false;
+    } else {
+      oss << ", ";
+    }
+    oss << "(";
+    for (size_t i = 0; i < py_func.first.size(); ++i) {
+      if (i > 0) {
+        oss << ", ";
+      }
+      oss << py_func.first[i]->DumpText();
+    }
+    oss << ")";
+  }
+  oss << "}";
+
+  return oss.str();
+}
+
+inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
+  return meta_func_graph->isa<prim::Tail>() || meta_func_graph->isa<prim::MakeTupleGradient>() ||
+         meta_func_graph->isa<prim::MakeListGradient>() || meta_func_graph->isa<prim::MakeDictGradient>() ||
+         meta_func_graph->isa<prim::TupleAdd>() || meta_func_graph->isa<prim::SequenceSliceGetItem>() ||
+         meta_func_graph->isa<prim::ListSliceSetItem>() || meta_func_graph->isa<prim::UnpackCall>() ||
+         meta_func_graph->isa<prim::ZipOperation>() || meta_func_graph->isa<prim::ListAppend>() ||
+         meta_func_graph->isa<prim::ListInsert>() || meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>() ||
+         meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>() ||
+         meta_func_graph->isa<prim::GradAux>() || meta_func_graph->isa<prim::PyExecuteGradient>() ||
+         meta_func_graph->isa<prim::MutableGradient>() || meta_func_graph->isa<prim::ZerosLike>();
+}
+
+std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
+  if (meta_func_graph == nullptr) {
+    return "";
+  }
+
+  std::ostringstream oss;
+  oss << meta_func_graph->type_name() << "-" << meta_func_graph->name();
+
+  if (meta_func_graph->isa<prim::MultitypeFuncGraph>()) {
+    prim::MultitypeFuncGraphPtr mt_func_graph = meta_func_graph->cast<prim::MultitypeFuncGraphPtr>();
+    oss << GetMultitypeFuncGraphText(mt_func_graph);
+  } else if (meta_func_graph
+               ->isa<prim::HyperMapPy>()) {  // This statement must before 'meta_graph->isa<prim::HyperMap>()'
+    auto hyper_map = meta_func_graph->cast<prim::HyperMapPyPtr>();
+    if (hyper_map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::HyperMap>()) {
+    auto hyper_map = meta_func_graph->cast<prim::HyperMapPtr>();
+    if (hyper_map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::MapPy>()) {  // This statement must before 'meta_graph->isa<prim::Map>()'
+    auto map = meta_func_graph->cast<prim::MapPyPtr>();
+    if (map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::Map>()) {
+    auto map = meta_func_graph->cast<prim::MapPtr>();
+    if (map->GetFnLeaf() != nullptr) {
+      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
+    }
+  } else if (meta_func_graph->isa<prim::GradOperation>()) {
+    prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
+    oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
+        << ", sens_param=" << grad_op->sens_param_ << "}";
+  } else if (meta_func_graph->isa<prim::VmapGeneralRule>()) {
+    prim::VmapGeneralRulePtr general_rule_fg = meta_func_graph->cast<prim::VmapGeneralRulePtr>();
+    oss << "{prim=" << general_rule_fg->prim_name() << ", axis_size=" << general_rule_fg->axis_size() << "}";
+  } else if (meta_func_graph->isa<graph_bprop::BpropMetaFuncGraph>()) {
+    oss << "{" << meta_func_graph->name() << "}";
+  } else if (Skip(meta_func_graph)) {
+    // Do nothing.
+  } else {
+    MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
+  }
+
+  return oss.str();
+}
+
+std::string GetPrimitiveText(const PrimitivePtr &prim) {
+  std::ostringstream oss;
+  if (prim == nullptr) {
+    return oss.str();
+  }
+  oss << prim->name();
+  // Output primitive attributes
+  oss << prim->GetAttrsText();
+
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
+    auto &func = do_signature->function();
+    if (func->isa<Primitive>()) {
+      auto sig_prim = dyn_cast<Primitive>(func);
+      oss << sig_prim->GetAttrsText();
+    }
+  }
+
+  return oss.str();
+}
+
+std::string GetNameSpaceText(const parse::NameSpacePtr &ns) {
+  std::ostringstream oss;
+  if (ns == nullptr) {
+    return oss.str();
+  }
+
+  // Dump related module information in Namespace
+  oss << ns->module();
+
+  return oss.str();
+}
+
+std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst,
+                                       const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(sym_inst);
+  AnfNodePtr sym_node = sym_inst->node();
+  MS_EXCEPTION_IF_NULL(sym_node);
+  std::ostringstream oss;
+  if (sym_node->isa<Parameter>()) {
+    auto idx = -1;
+    if (gsub->local_var_map.find(sym_node) != gsub->local_var_map.end()) {
+      idx = gsub->local_var_map[sym_node];
+    }
+    if (idx < 0) {
+      ParameterPtr p = dyn_cast<Parameter>(sym_node);
+      if (p == nullptr) {
+        MS_LOG(EXCEPTION) << "Sym_inst's node could not cast to parameter";
+      }
+      MS_LOG(WARNING) << "Can not find SymbolicKeyInstance: " << p->name();
+    }
+    oss << "SymInst(%para" << idx << ")";
+  } else {
+    MS_LOG(WARNING) << "SymbolicKeyInstance does not embed a parameter: " << sym_node->ToString();
+    oss << "SymInst(cnode_" << sym_node->ToString() << ")";
+  }
+
+  return oss.str();
+}
+
+std::string GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value,
+                            const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  std::ostringstream oss;
+  // Output ValueList, ValueTuple
+  ValueSequencePtr seq = dyn_cast<ValueSequence>(value);
+  MS_EXCEPTION_IF_NULL(seq);
+  MS_EXCEPTION_IF_NULL(value);
+  bool is_tuple = value->isa<ValueTuple>();
+  oss << (is_tuple ? "(" : "[");
+  bool first_flag = true;
+  for (auto elem : seq->value()) {
+    if (first_flag) {
+      first_flag = false;
+    } else {
+      oss << ", ";
+    }
+    oss << GetValueText(func_graph, elem, gsub);
+  }
+  oss << (is_tuple ? ")" : "]");
+  return oss.str();
+}
+
+std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
+                        const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  std::ostringstream oss;
+  ValueDictionaryPtr dict = value->cast<ValueDictionaryPtr>();
+  oss << "{";
+  bool first_flag = true;
+  for (const auto &elem : dict->value()) {
+    if (first_flag) {
+      first_flag = false;
+    } else {
+      oss << ", ";
+    }
+    oss << "\"" << elem.first << "\": " << GetValueText(func_graph, elem.second, gsub);
+  }
+  oss << "}";
+  return oss.str();
+}
+
+std::string GetOtherValueText(const ValuePtr &value) {
+  std::ostringstream oss;
+
+  oss << value->type_name() << "[" << value->DumpText() << "]";
+
+  return oss.str();
+}
+
+static bool CanUseDumpText(const ValuePtr &value) {
+  return (value->isa<RefKey>() || value->isa<Scalar>() || value->isa<StringImm>() || value->isa<tensor::Tensor>() ||
+          value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>() || value->isa<ValueSlice>() ||
+          value->isa<Type>() || value->isa<KeywordArg>());
+}
+
+std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
+                         const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (func_graph == nullptr || value == nullptr) {
+    return "";
+  }
+  if (value->isa<Primitive>()) {
+    return GetPrimitiveText(value->cast<PrimitivePtr>());
+  }
+  if (value->isa<MetaFuncGraph>()) {
+    MetaFuncGraphPtr meta_func_graph = value->cast<MetaFuncGraphPtr>();
+    return GetMetaFuncGraphText(meta_func_graph);
+  }
+  if (value->isa<SymbolicKeyInstance>()) {
+    return GetSymbolicKeyInstanceText(func_graph, value->cast<SymbolicKeyInstancePtr>(), gsub);
+  }
+  if (value->isa<ValueSequence>()) {
+    return GetSequenceText(func_graph, value, gsub);
+  }
+  if (value->isa<ValueDictionary>()) {
+    return GetDictText(func_graph, value, gsub);
+  }
+  if (value->isa<parse::NameSpace>()) {
+    return GetNameSpaceText(value->cast<parse::NameSpacePtr>());
+  }
+  if (value->isa<parse::PyObjectWrapper>()) {
+    return value->type_name();
+  }
+  if (CanUseDumpText(value)) {
+    return value->ToString();
+  }
+  return GetOtherValueText(value);
+}
+
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
@@ -256,7 +505,8 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
     if (value != nullptr) {
-      gsub->buffer << value->ToString();
+      auto value_string = GetValueText(node->func_graph(), value, gsub);
+      gsub->buffer << value_string;
     }
   } else {
     // It's Parameter.
@@ -330,7 +580,9 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
         // ValueNode except FuncGraph.
-        gsub->buffer << GetValueNode(in)->ToString();
+        auto value = GetValueNode(in);
+        auto value_string = GetValueText(node->func_graph(), value, gsub);
+        gsub->buffer << value_string;
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
         gsub->buffer << "@" << fg->ToString();
