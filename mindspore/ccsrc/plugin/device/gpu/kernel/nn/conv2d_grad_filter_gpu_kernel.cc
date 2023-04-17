@@ -193,33 +193,6 @@ void ConvGradFilterBkwGpuKernelMod::SetStrideAndDilation(const std::vector<int64
   }
 }
 
-void ConvGradFilterBkwGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
-  constexpr int requested_algo_count = 1;
-  int returned_algo_count = 0;
-  cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
-  std::string set_cudnn_conv2d_algo = common::GetEnv("SET_CUDNN_CONV2D_ALGO");
-  if (!set_cudnn_conv2d_algo.empty()) {
-    algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
-  } else {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
-                                                    requested_algo_count, &returned_algo_count, &perf_results),
-      "GetConvolutionBackwardFilterAlgorithm failed");
-    algo_ = perf_results.algo;
-  }
-#if CUDNN_VERSION < 8000
-  if (group_ > 1) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardFilterAlgorithm(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
-                                                 CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0, &algo_),
-      "GetConvolutionBackwardFilterAlgorithm failed");
-  }
-#endif
-  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-    algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
-  }
-}
-
 void ConvGradFilterBkwGpuKernelMod::InitSizeLists() {
   if (!is_null_input_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dy_desc_, reinterpret_cast<size_t *>(&dy_size_)),
@@ -366,7 +339,11 @@ int ConvGradFilterBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
   }
-  SelectAlgorithm(x_desc_real);
+  algo_ = SelectBackwardFilterAlgorithm(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_, group_,
+                                        kConv2dBwdFilterAlgoName);
+  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+    algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+  }
   InitSizeLists();
   return KRET_OK;
 }

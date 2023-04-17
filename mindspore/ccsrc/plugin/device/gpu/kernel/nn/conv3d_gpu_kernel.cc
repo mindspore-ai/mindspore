@@ -147,7 +147,8 @@ int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
   }
-  SelectAlgorithm(input_descriptor_real);
+  conv_algorithm_ = SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
+                                           group_, kConv3dFwdAlgoName);
   InitSizeLists();
   return KRET_OK;
 }
@@ -174,17 +175,6 @@ void Conv3dGpuKernelMod::SetNDDesc(const ShapeVector &in_shape, const ShapeVecto
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensorNdDescriptor(output_desc_, cudnn_data_type_, kDims, dimAout, strideAout),
     "cudnnSetTensor4dDescriptor failed");
-}
-
-void Conv3dGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t input_descriptor_real) {
-  const int requested_algo_count = 1;
-  int returned_algo_count = 0;
-  cudnnConvolutionFwdAlgoPerf_t perf_results;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                           requested_algo_count, &returned_algo_count, &perf_results),
-    "cudnnGetConvolutionForwardAlgorithm_v7 failed");
-  conv_algorithm_ = perf_results.algo;
 }
 
 void Conv3dGpuKernelMod::SetStrideAndDilation(std::vector<int64_t> stride_me, std::vector<int64_t> dilation_me) {

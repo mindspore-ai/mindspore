@@ -363,36 +363,13 @@ int ConvGradInputBkwGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                        "cudnnSetConvolutionMathType failed.")
   }
-  SelectAlgorithm(dx_desc_real);
-  InitSizeLists();
-  return KRET_OK;
-}
-
-void ConvGradInputBkwGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t dx_desc_real) {
-  constexpr int requested_algo_count = 1;
-  int returned_algo_count = 0;
-  cudnnConvolutionBwdDataAlgoPerf_t perf_results;
-  std::string set_cudnn_conv2d_algo = common::GetEnv("SET_CUDNN_CONV2D_ALGO");
-  if (!set_cudnn_conv2d_algo.empty()) {
-    algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
-  } else {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardDataAlgorithm_v7(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
-                                                  requested_algo_count, &returned_algo_count, &perf_results),
-      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
-    algo_ = perf_results.algo;
-  }
-#if CUDNN_VERSION < 8000
-  if (group_ > 1) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnGetConvolutionBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
-                                               CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &algo_),
-      "cudnnGetConvolutionBackwardDataAlgorithm failed");
-  }
-#endif
+  algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_,
+                                      kConv2dBwdDataAlgoName);
   if (cudnn_data_type_ == CUDNN_DATA_HALF) {
     algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
   }
+  InitSizeLists();
+  return KRET_OK;
 }
 
 void ConvGradInputBkwGpuKernelMod::ResetResource() noexcept {
