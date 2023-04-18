@@ -46,6 +46,8 @@ class OpCoderBuilder {
 
   OpCoderBuilder &support_parallel(bool parallel);
 
+  OpCoderBuilder &is_builtin_custom(bool builtin_custom);
+
   void Reset();
 
  private:
@@ -70,6 +72,8 @@ class OpCoderBuilder {
   std::vector<uint32_t> output_indices_;
 
   bool support_parallel_{false};
+
+  bool builtin_custom_{false};
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_BUILDER_H_

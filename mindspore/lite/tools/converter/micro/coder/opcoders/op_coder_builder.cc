@@ -27,6 +27,14 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build(int schema_version) {
   MS_CHECK_PTR_RET_NULL(node_->primitive_);
   int primitive_type = GetPrimitiveType(node_->primitive_, schema_version);
   CoderKey coder_key(target_, data_type_, primitive_type);
+  if (builtin_custom_) {
+    auto custom_type = reinterpret_cast<const schema::Primitive *>(node_->primitive_)->value_as_Custom()->type();
+    if (custom_type == nullptr || custom_type->str().empty()) {
+      MS_LOG(ERROR) << "Builtin custom-op has no type.";
+      return nullptr;
+    }
+    coder_key = CoderKey(target_, data_type_, schema::PrimitiveType_Custom, custom_type->str());
+  }
   CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key);
   if (creator_func == nullptr) {
     MS_LOG(ERROR) << "caught unsupported layer: " << node_->name_;
@@ -109,6 +117,11 @@ OpCoderBuilder &OpCoderBuilder::target(Target target) {
 
 OpCoderBuilder &OpCoderBuilder::support_parallel(bool parallel) {
   support_parallel_ = parallel;
+  return *this;
+}
+
+OpCoderBuilder &OpCoderBuilder::is_builtin_custom(bool builtin_custom) {
+  builtin_custom_ = builtin_custom;
   return *this;
 }
 

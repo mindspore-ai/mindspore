@@ -37,9 +37,9 @@ OpCoderFactory *OpCoderFactory::GetInstance() {
 }
 
 int OpCoderFactory::RegistOpCoder(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                                  const CoderCreatorFunc &creator_func) {
+                                  const std::string &builtin_custom_type, const CoderCreatorFunc &creator_func) {
   // check key
-  CoderKey key(target, data_type, operator_type);
+  CoderKey key(target, data_type, operator_type, builtin_custom_type);
   // insert pair to registry
   if (this->opcoder_sets_.find(key) != this->opcoder_sets_.end()) {
     MS_LOG(ERROR) << "coder already exist: " << key.ToString();
@@ -63,7 +63,7 @@ CoderCreatorFunc OpCoderFactory::FindOpCoder(const CoderKey &key) {
 }
 
 OpCoderRegister::OpCoderRegister(Target target, TypeId data_type, schema::PrimitiveType operator_type,
-                                 const CoderCreatorFunc &creatorFunc) {
-  OpCoderFactory::GetInstance()->RegistOpCoder(target, data_type, operator_type, creatorFunc);
+                                 const std::string &builtin_custom_type, const CoderCreatorFunc &creatorFunc) {
+  OpCoderFactory::GetInstance()->RegistOpCoder(target, data_type, operator_type, builtin_custom_type, creatorFunc);
 }
 }  // namespace mindspore::lite::micro

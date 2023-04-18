@@ -36,6 +36,31 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
+namespace {
+bool IsBuiltInCustomNode(const void *primitive, int schema_version) {
+  if (!IsCustomNode(primitive, schema_version)) {
+    return false;
+  }
+  const auto &custom = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_Custom();
+  if (custom == nullptr) {
+    return false;
+  }
+  const auto &attrs = custom->attr();
+  if (attrs == nullptr) {
+    return false;
+  }
+  for (size_t i = 0; i < attrs->size(); ++i) {
+    if (attrs->Get(i) == nullptr || attrs->Get(i)->name() == nullptr) {
+      continue;
+    }
+    if (attrs->Get(i)->name()->str() == "builtin") {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
 int CoderSession::PassArgsToContext(const std::string &model_name) {
@@ -271,7 +296,9 @@ int CoderSession::CreateOpCoders() {
     }
 
     OpParameter *parameter = nullptr;
-    if (IsCustomNode(node->primitive_, schema_version_)) {
+    bool is_custom_op = IsCustomNode(node->primitive_, schema_version_);
+    bool is_built_in_custom_op = IsBuiltInCustomNode(node->primitive_, schema_version_);
+    if (is_custom_op && !is_built_in_custom_op) {
       KernelRegistry::GetInstance()->RegisterKernel(schema::PrimitiveType_Custom);
     } else {
       parameter = GenParameterAndInfer(node, inputs, &outputs);  // built-in ops infer
@@ -289,6 +316,7 @@ int CoderSession::CreateOpCoders() {
                                                 .mode(code_mode)
                                                 .input_indices(input_indices)
                                                 .output_indices(output_indices)
+                                                .is_builtin_custom(is_built_in_custom_op)
                                                 .build(schema_version_);
     if (op_coder == nullptr) {
       coder_graph_->DumpUnSupportLayer(code_target);

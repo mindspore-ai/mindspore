@@ -80,6 +80,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/arithmetic_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/avg_pooling_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/concat_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/custom_gru_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/deconv2d_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/resize_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/transpose_fp16_coder.cc
@@ -102,6 +103,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/custom_gru_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/full_connection_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/groupnorm_fp32_coder.cc
