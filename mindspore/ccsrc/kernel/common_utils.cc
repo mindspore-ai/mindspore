@@ -1926,12 +1926,15 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
 }
 
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs) {
+  MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_attrs = apply_kernel_attrs;
   if (kernel_attrs.empty()) {
     return;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(apply_kernel);
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto kernel_attr = GetKernelAttrFromBuildInfo(build_info);
   std::vector<int64_t> dyn_input_sizes = {};
   if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, apply_kernel)) {
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(apply_kernel, kAttrDynInputSizes);
@@ -1952,12 +1955,11 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
   auto [is_match, index] = match_result;
   if (!is_match) {
     constexpr auto recursive_level = 2;
-    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
-                      << " does not support this kernel data type: " << kernel_attr
-                      << "\nnode: " << apply_kernel->DebugString(recursive_level);
+    MS_LOG(EXCEPTION) << apply_kernel->fullname_with_scope()
+                      << " does not support this kernel data type: " << build_info->ToString()
+                      << ", node debug name: " << apply_kernel->DebugString(recursive_level);
   }
 
-  MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &matched_kernel_attr = kernel_attrs[index];
