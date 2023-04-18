@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "./deformable_offsets_grad_kernels.h"
+#include "./deformable_offsets_grad.h"
 #include <Eigen/Dense>
 #include <cmath>
 #include <utility>
 #include <set>
 #include <algorithm>
-#include <thread>
+#include <mutex>
 #include <map>
 #include <functional>
+#include <thread>
 #include <tuple>
-#include "aicpu_sharder/aicpu_sharder.h"
+#include "cpu_kernel_utils.h"
+#include "securec.h"
+#include "utils/kernel_util.h"
 
 namespace aicpu {
 namespace {
+const char *kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 constexpr auto kDeformableGroups = "deformable_groups";
 constexpr auto kPads = "pads";
 constexpr auto kStrides = "strides";
@@ -41,7 +45,6 @@ constexpr size_t kOutputNum = 2;
 constexpr size_t kGradIndex = 0;
 constexpr size_t kXIndex = 1;
 constexpr size_t kOffsetIndex = 2;
-constexpr size_t kOutputAddressOffsets = 3;
 constexpr size_t kGradXIndex = 0;
 constexpr size_t kGradOffsetIndex = 1;
 
@@ -141,10 +144,12 @@ inline std::tuple<size_t, size_t, size_t> CalPosition(const OffsetIndex &offset_
 
 inline InputXIndex CalInputXIndex(const OffsetIndex &offset_index, const DeformableOffsetGradDims &dims) {
   InputXIndex input_x_index;
-  input_x_index.i = -1.0f * SizeToFloat(dims.pad_top);
-  input_x_index.j = -1.0f * SizeToFloat(dims.pad_left);
-  input_x_index.i += SizeToFloat(offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h);
-  input_x_index.j += SizeToFloat(offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w);
+  input_x_index.i = -1.0f * static_cast<float>(dims.pad_top);
+  input_x_index.j = -1.0f * static_cast<float>(dims.pad_left);
+  input_x_index.i +=
+    static_cast<float>(offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h);
+  input_x_index.j +=
+    static_cast<float>(offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w);
   return input_x_index;
 }
 
@@ -261,10 +266,10 @@ void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStr
 }
 
 template <typename T>
-void DeformableOffsetsGradKernel::DeformableOffsetGradNHWCKernel(size_t num_kernels,
-                                                                 const DeformableOffsetGradDims &dims, const T *input_x,
-                                                                 const T *input_offset, const T *input_grad,
-                                                                 T *output_grad_x, T *output_grad_offset) const {
+uint32_t DeformableOffsetsGradKernel::DoComputeNHWC(const CpuKernelContext &ctx, size_t num_kernels,
+                                                    const DeformableOffsetGradDims &dims, const T *input_x,
+                                                    const T *input_offset, const T *input_grad, T *output_grad_x,
+                                                    T *output_grad_offset) const {
   OffsetStride offset_stride;
   offset_stride.kernel_w_stride = 1;
   offset_stride.kernel_h_stride = dims.kernel_w * offset_stride.kernel_w_stride;
@@ -310,15 +315,16 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNHWCKernel(size_t num_kern
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
-  const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
-  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  const int64_t per_unit_size = static_cast<int64_t>(num_kernels / std::thread::hardware_concurrency());
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
+  return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-void DeformableOffsetsGradKernel::DeformableOffsetGradNCHWKernel(size_t num_kernels,
-                                                                 const DeformableOffsetGradDims &dims, const T *input_x,
-                                                                 const T *input_offset, const T *input_grad,
-                                                                 T *output_grad_x, T *output_grad_offset) const {
+uint32_t DeformableOffsetsGradKernel::DoComputeNCHW(const CpuKernelContext &ctx, size_t num_kernels,
+                                                    const DeformableOffsetGradDims &dims, const T *input_x,
+                                                    const T *input_offset, const T *input_grad, T *output_grad_x,
+                                                    T *output_grad_offset) const {
   OffsetStride offset_stride;
   offset_stride.offset_w_stride = 1;
   offset_stride.offset_h_stride = dims.offset_w * offset_stride.offset_w_stride;
@@ -365,163 +371,168 @@ void DeformableOffsetsGradKernel::DeformableOffsetGradNCHWKernel(size_t num_kern
                                  input_grad, output_grad_x, output_grad_offset);
     }
   };
-  const int64_t per_unit_size = UlongToLong(num_kernels / std::thread::hardware_concurrency());
-  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  const int64_t per_unit_size = static_cast<int64_t>(num_kernels / std::thread::hardware_concurrency());
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
+  return KERNEL_STATUS_OK;
 }
 
-uint32_t DeformableOffsetsGradKernel::ParseKernelParam() {
-  const size_t &num_input = node_def_.inputs_size();
-  const size_t &num_output = node_def_.outputs_size();
-
-  CheckInOutNum(num_input, num_output);
-  aicpuops::Tensor grad_x_output_tensor = node_def_.outputs(kGradXIndex);
+uint32_t DeformableOffsetsGradKernel::ParseKernelParam(const CpuKernelContext &ctx) {
+  const size_t &num_input = ctx.GetInputsSize();
+  const size_t &num_output = ctx.GetOutputsSize();
+  auto ret = CheckInOutNum(num_input, num_output);
+  if (ret != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("It should get %zu inputs and %zu outputs, but got %zu input and %zu outputs.", kInputNum,
+                     kInputNum, num_input, num_output);
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  auto grad_x_output_tensor = ctx.Output(kGradXIndex);
 
   // Get the dtype of the inputs
-  index_type_ = static_cast<aicpuops::DataType>(grad_x_output_tensor.tensor_type());
-  const auto &output_shape = grad_x_output_tensor.tensor_shape();
-  index_output_size_ = 1;
-  for (int i = 0; i < output_shape.dim_size(); ++i) {
-    (void)index_output_shape_.emplace_back(output_shape.dim(i).size());
-    index_output_size_ *= output_shape.dim(i).size();
+  index_type_ = grad_x_output_tensor->GetDataType();
+  const auto &output_shape = grad_x_output_tensor->GetTensorShape();
+  index_output_size_ = output_shape->NumElements();
+  index_output_shape_ = output_shape->GetDimSizes();
+
+  auto grad_offset_output_tensor = ctx.Output(kGradOffsetIndex);
+  const auto &grad_output_shape = grad_offset_output_tensor->GetTensorShape();
+  grad_output_size_ = grad_output_shape->NumElements();
+  grad_output_shape_ = grad_output_shape->GetDimSizes();
+  ret = SetDims(ctx);
+  if (ret != KERNEL_STATUS_OK) {
+    KERNEL_LOG_ERROR("Set dims failed.");
+    return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  aicpuops::Tensor grad_offset_output_tensor = node_def_.outputs(kGradOffsetIndex);
-  const auto &grad_output_shape = grad_offset_output_tensor.tensor_shape();
-  grad_output_size_ = 1;
-  for (int i = 0; i < grad_output_shape.dim_size(); ++i) {
-    (void)grad_output_shape_.emplace_back(grad_output_shape.dim(i).size());
-    grad_output_size_ *= grad_output_shape.dim(i).size();
-  }
-  SetDims();
-  return kAicpuKernelStateSucess;
+  return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask() {
+uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask(const CpuKernelContext &ctx) {
   const size_t num_kernels =
     dims_.x_n * dims_.offset_h * dims_.offset_w * dims_.kernel_h * dims_.kernel_w * dims_.deformable_group;
 
-  const T *input_grad = reinterpret_cast<T *>(io_addrs_[kGradXIndex]);
-  const T *input_x = reinterpret_cast<T *>(io_addrs_[kXIndex]);
-  const T *input_offset = reinterpret_cast<T *>(io_addrs_[kOffsetIndex]);
-  T *output_grad_x = reinterpret_cast<T *>(io_addrs_[kGradXIndex + kOutputAddressOffsets]);
-  T *output_grad_offset = reinterpret_cast<T *>(io_addrs_[kGradOffsetIndex + kOutputAddressOffsets]);
+  const T *input_grad = reinterpret_cast<T *>(ctx.Input(kGradXIndex)->GetData());
+  const T *input_x = reinterpret_cast<T *>(ctx.Input(kXIndex)->GetData());
+  const T *input_offset = reinterpret_cast<T *>(ctx.Input(kOffsetIndex)->GetData());
+  T *output_grad_x = reinterpret_cast<T *>(ctx.Output(kGradXIndex)->GetData());
+  T *output_grad_offset = reinterpret_cast<T *>(ctx.Output(kGradOffsetIndex)->GetData());
 
-  auto grad_x_size = LongToSize(index_output_size_ * sizeof(T));
-  auto grad_offset_size = LongToSize(grad_output_size_ * sizeof(T));
+  auto grad_x_size = static_cast<size_t>(index_output_size_ * sizeof(T));
+  auto grad_offset_size = static_cast<size_t>(grad_output_size_ * sizeof(T));
   // Reset output initial value to 0.
   auto ret = memset_s(output_grad_x, grad_x_size, 0, grad_x_size);
   if (ret != 0) {
-    return kAicpuKernelStateFailed;
+    return KERNEL_STATUS_INNER_ERROR;
   }
   ret = memset_s(output_grad_offset, grad_offset_size, 0, grad_offset_size);
   if (ret != 0) {
-    return kAicpuKernelStateFailed;
+    return KERNEL_STATUS_INNER_ERROR;
   }
   if (data_format_ == kNCHW) {
-    DeformableOffsetGradNCHWKernel<T>(num_kernels, dims_, input_x, input_offset, input_grad, output_grad_x,
-                                      output_grad_offset);
+    ret =
+      DoComputeNCHW<T>(ctx, num_kernels, dims_, input_x, input_offset, input_grad, output_grad_x, output_grad_offset);
   } else {
-    DeformableOffsetGradNHWCKernel<T>(num_kernels, dims_, input_x, input_offset, input_grad, output_grad_x,
-                                      output_grad_offset);
+    ret =
+      DoComputeNHWC<T>(ctx, num_kernels, dims_, input_x, input_offset, input_grad, output_grad_x, output_grad_offset);
   }
-  return kAicpuKernelStateSucess;
+  return ret;
 }
 
-void DeformableOffsetsGradKernel::CheckInOutNum(size_t inputs_num, size_t outputs_num) const {
+uint32_t DeformableOffsetsGradKernel::CheckInOutNum(size_t inputs_num, size_t outputs_num) const {
   if (inputs_num != kInputNum) {
-    AICPU_LOGE("Get the kernel name %s failed, the number of inputs must be %d but got %d", kernel_name_, kInputNum,
-               inputs_num);
+    KERNEL_LOG_ERROR("The number of inputs must be %d but got %d", kInputNum, inputs_num);
+    return KERNEL_STATUS_PARAM_INVALID;
   }
   if (outputs_num != kOutputNum) {
-    AICPU_LOGE("Get the kernel name %s failed, the number of outputs must be %d but got %d", kernel_name_, kOutputNum,
-               outputs_num);
+    KERNEL_LOG_ERROR("The number of outputs must be %d but got %d", kOutputNum, outputs_num);
+    return KERNEL_STATUS_PARAM_INVALID;
   }
+  return KERNEL_STATUS_OK;
 }
 
-void DeformableOffsetsGradKernel::SetDims() {
-  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
-
-  dims_.deformable_group = LongToSize(attrs[kDeformableGroups].i());
+uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
+  dims_.deformable_group = static_cast<size_t>(ctx.GetAttr(kDeformableGroups)->GetInt());
   if (dims_.deformable_group == 0) {
-    AICPU_LOGE("Get the kernel name %s failed, deformable group must be greater than 0, but got 0", kernel_name_);
+    KERNEL_LOG_ERROR("Deformable group must be greater than 0, but got 0");
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  aicpuops::AttrValue_ArrayValue pad = attrs[kPads].array();
-  if (pad.s_size() != UlongToLong(kPadNum)) {
-    AICPU_LOGE("Get the kernel name %s failed, the length of 'pad' must be %d but got %d", kernel_name_, kPadNum,
-               pad.s_size());
+  auto pad = ctx.GetAttr(kPads)->GetListInt();
+  if (pad.size() != kPadNum) {
+    KERNEL_LOG_ERROR("the length of 'pad' must be %d but got %d", kPadNum, pad.size());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  dims_.pad_top = LongToSize(pad.i(kPadTopIndex));
-  dims_.pad_left = LongToSize(pad.i(kPadLeftIndex));
+  dims_.pad_top = static_cast<size_t>(pad[kPadTopIndex]);
+  dims_.pad_left = static_cast<size_t>(pad[kPadLeftIndex]);
 
-  aicpuops::AttrValue_ArrayValue stride = attrs[kStrides].array();
-  if (stride.s_size() != UlongToLong(kStrideNum)) {
-    AICPU_LOGE("Get the kernel name %s failed, the length of 'stride' must be %d but got %d", kernel_name_, kStrideNum,
-               stride.s_size());
+  auto stride = ctx.GetAttr(kStrides)->GetListInt();
+  if (stride.size() != kStrideNum) {
+    KERNEL_LOG_ERROR("The length of 'stride' must be %d but got %d", kStrideNum, stride.size());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  dims_.stride_h = LongToSize(stride.i(kStrideHIndex));
-  dims_.stride_w = LongToSize(stride.i(kStrideWIndex));
+  dims_.stride_h = static_cast<size_t>(stride[kStrideHIndex]);
+  dims_.stride_w = static_cast<size_t>(stride[kStrideWIndex]);
 
-  aicpuops::AttrValue_ArrayValue dilation = attrs[kDilations].array();
-  if (dilation.s_size() != UlongToLong(kDilationNum)) {
-    AICPU_LOGE("Get the kernel name %s failed, the length of 'dilation' must be %d but got %d", kernel_name_,
-               kDilationNum, dilation.s_size());
+  auto dilation = ctx.GetAttr(kDilations)->GetListInt();
+  if (dilation.size() != kDilationNum) {
+    KERNEL_LOG_ERROR("The length of 'dilation' must be %d but got %d", kDilationNum, dilation.size());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  dims_.dilation_h = LongToSize(dilation.i(kDilationHIndex));
-  dims_.dilation_w = LongToSize(dilation.i(kDilationWIndex));
+  dims_.dilation_h = static_cast<size_t>(dilation[kDilationHIndex]);
+  dims_.dilation_w = static_cast<size_t>(dilation[kDilationWIndex]);
 
-  aicpuops::AttrValue_ArrayValue ksize = attrs[kSize].array();
-  if (ksize.s_size() != UlongToLong(kKernelSizeNum)) {
-    AICPU_LOGE("Get the kernel name %s failed, the length of 'ksize' must be %d but got %d", kernel_name_,
-               kKernelSizeNum, ksize.s_size());
+  auto ksize = ctx.GetAttr(kSize)->GetListInt();
+  if (ksize.size() != kKernelSizeNum) {
+    KERNEL_LOG_ERROR("The length of 'ksize' must be %d but got %d", kKernelSizeNum, ksize.size());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  dims_.kernel_h = LongToSize(ksize.i(kKernelHIndex));
-  dims_.kernel_w = LongToSize(ksize.i(kKernelWIndex));
+  dims_.kernel_h = static_cast<size_t>(ksize[kKernelHIndex]);
+  dims_.kernel_w = static_cast<size_t>(ksize[kKernelWIndex]);
   if (dims_.kernel_h == 0 || dims_.kernel_w == 0) {
-    AICPU_LOGE("Get the kernel name %s failed, the value of 'ksize' must be larger than 0.", kernel_name_);
+    KERNEL_LOG_ERROR("The value of 'ksize' must be larger than 0.");
+    return KERNEL_STATUS_PARAM_INVALID;
   }
-  aicpuops::Tensor input_tensor = node_def_.inputs(kXIndex);
-  aicpuops::TensorShape x_shape = input_tensor.tensor_shape();
-  dims_.x_n = LongToSize(x_shape.dim(0).size());
+  auto input_tensor = ctx.Input(kXIndex)->GetTensorShape();
+  auto x_shape = input_tensor->GetDimSizes();
+  dims_.x_n = static_cast<size_t>(x_shape[0]);
 
-  aicpuops::Tensor grad_index_input_tensor = node_def_.inputs(kGradIndex);
-  const auto &grad_shape = grad_index_input_tensor.tensor_shape();
+  auto grad_index_input_tensor = ctx.Input(kGradIndex);
+  const auto &grad_shape = grad_index_input_tensor->GetTensorShape()->GetDimSizes();
 
-  data_format_ = attrs[kDataformat].s();
+  data_format_ = ctx.GetAttr(kDataformat)->GetString();
   if (data_format_ == kNCHW) {
-    dims_.grad_h = LongToSize(grad_shape.dim(kHIndexForNCHW).size());
-    dims_.grad_w = LongToSize(grad_shape.dim(kWIndexForNCHW).size());
-    dims_.x_h = LongToSize(x_shape.dim(kHIndexForNCHW).size());
-    dims_.x_w = LongToSize(x_shape.dim(kWIndexForNCHW).size());
-    dims_.deformable_group_channel = LongToSize(x_shape.dim(kCIndexForNCHW).size()) / dims_.deformable_group;
+    dims_.grad_h = static_cast<size_t>(grad_shape[kHIndexForNCHW]);
+    dims_.grad_w = static_cast<size_t>(grad_shape[kWIndexForNCHW]);
+    dims_.x_h = static_cast<size_t>(x_shape[kHIndexForNCHW]);
+    dims_.x_w = static_cast<size_t>(x_shape[kWIndexForNCHW]);
+    dims_.deformable_group_channel = static_cast<size_t>(x_shape[kCIndexForNCHW]) / dims_.deformable_group;
   } else {
-    dims_.grad_h = LongToSize(grad_shape.dim(kHIndexForNHWC).size());
-    dims_.grad_w = LongToSize(grad_shape.dim(kWIndexForNHWC).size());
-    dims_.x_h = LongToSize(x_shape.dim(kHIndexForNHWC).size());
-    dims_.x_w = LongToSize(x_shape.dim(kWIndexForNHWC).size());
-    dims_.deformable_group_channel = LongToSize(x_shape.dim(kCIndexForNHWC).size()) / dims_.deformable_group;
+    dims_.grad_h = static_cast<size_t>(grad_shape[kHIndexForNHWC]);
+    dims_.grad_w = static_cast<size_t>(grad_shape[kWIndexForNHWC]);
+    dims_.x_h = static_cast<size_t>(x_shape[kHIndexForNHWC]);
+    dims_.x_w = static_cast<size_t>(x_shape[kWIndexForNHWC]);
+    dims_.deformable_group_channel = static_cast<size_t>(x_shape[kCIndexForNHWC]) / dims_.deformable_group;
   }
   dims_.offset_h = dims_.grad_h / dims_.kernel_h;
   dims_.offset_w = dims_.grad_w / dims_.kernel_w;
+  return KERNEL_STATUS_OK;
 }
 
-uint32_t DeformableOffsetsGradKernel::DoCompute() {
-  std::map<aicpuops::DataType, std::function<uint32_t()>> calls;
-  calls[aicpuops::DataType::MS_FLOAT32] =
-    std::bind(&DeformableOffsetsGradKernel::DeformableOffsetsGradTask<float>, this);
-  calls[aicpuops::DataType::MS_FLOAT16] =
-    std::bind(&DeformableOffsetsGradKernel::DeformableOffsetsGradTask<Eigen::half>, this);
-  if (calls.find(index_type_) == calls.end()) {
-    AICPU_LOGE("DeformableOffsetsGradKernel op don't support index tensor types: %s", typeid(index_type_).name());
-    return kAicpuKernelStateFailed;
+uint32_t DeformableOffsetsGradKernel::Compute(CpuKernelContext &ctx) {
+  KERNEL_HANDLE_ERROR(ParseKernelParam(ctx), "DeformableOffsetsGrad normal check failed.");
+  uint32_t ret = KERNEL_STATUS_OK;
+  switch (index_type_) {
+    case DT_FLOAT:
+      ret = DeformableOffsetsGradTask<float>(ctx);
+      break;
+    case DT_FLOAT16:
+      ret = DeformableOffsetsGradTask<Eigen::half>(ctx);
+      break;
+    default:
+      KERNEL_LOG_ERROR("Error type %s.", DTypeStr(index_type_).c_str());
+      return KERNEL_STATUS_INNER_ERROR;
   }
-  return calls[index_type_]();
+  return ret;
 }
-}  // namespace aicpu
 
-extern "C" {
-__attribute__((visibility("default"))) uint32_t DeformableOffsetsGrad(void *param) {
-  aicpu::DeformableOffsetsGradKernel deformable_offsets_grad_kernel;
-  return deformable_offsets_grad_kernel.Compute(param);
-}
-}  // namespace kernel
+REGISTER_CPU_KERNEL(kDeformableOffsetsGrad, DeformableOffsetsGradKernel);
+}  // namespace aicpu

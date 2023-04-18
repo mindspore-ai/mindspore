@@ -162,7 +162,8 @@ from .reservoir_replay_buffer import _rrb_create_op_cpu
 from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
-from .deformable_offsets_grad import _deformable_offsets_grad_op_info_aicpu
 from .scatter_nd import _scatter_nd_aicpu
 from .scatter_nd_update import _scatter_nd_update_aicpu
 from .tensor_scatter_update import _tensor_scatter_update_aicpu
+from .deformable_offsets import _deformable_offsets_aicpu
+from .deformable_offsets_grad import _deformable_offsets_grad_aicpu

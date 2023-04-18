@@ -47,8 +47,8 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
                                                       kGatherDGradV2OpName,
                                                       kSliceGradOpName};
   static const std::set<std::string> kMigrateAicpuKernelOps = {
-    mindspore::kScatterNdOpName, mindspore::kScatterNdUpdateOpName, mindspore::kTensorScatterUpdateOpName,
-    mindspore::kGatherNdOpName};
+    mindspore::kScatterNdOpName, mindspore::kScatterNdUpdateOpName,   mindspore::kTensorScatterUpdateOpName,
+    mindspore::kGatherNdOpName,  mindspore::kDeformableOffsetsOpName, mindspore::kDeformableOffsetsGradOpName};
 
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
   static const std::string kCpuKernelSoName = "mindspore_cpu_kernels";
