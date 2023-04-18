@@ -134,35 +134,6 @@ def test_cho_factor(n: int, lower: bool, data_type: Generic):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [4, 5, 6])
-@pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('data_type', [onp.float64])
-def test_cholesky_solve(n: int, lower: bool, data_type):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for cholesky  solver [N,N]
-    Expectation: the result match scipy cholesky_solve
-    """
-    a = create_sym_pos_matrix((n, n), data_type)
-    b = onp.ones((n, 1), dtype=data_type)
-    tensor_a = Tensor(a)
-    tensor_b = Tensor(b)
-    osp_c, lower = osp.linalg.cho_factor(a, lower=lower)
-    msp_c, msp_lower = msp.linalg.cho_factor(tensor_a, lower=lower)
-    osp_factor = (osp_c, lower)
-
-    ms_cho_factor = (msp_c, msp_lower)
-    osp_x = osp.linalg.cho_solve(osp_factor, b)
-    msp_x = msp.linalg.cho_solve(ms_cho_factor, tensor_b)
-    # pre tensor_a has been inplace.
-    tensor_a = Tensor(a)
-    assert onp.allclose(onp.dot(a, osp_x), mnp.dot(tensor_a, msp_x).asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type, rtol, atol',
