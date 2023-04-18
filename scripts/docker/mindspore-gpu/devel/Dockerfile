@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04
 
 MAINTAINER MindSpore Authors
 
