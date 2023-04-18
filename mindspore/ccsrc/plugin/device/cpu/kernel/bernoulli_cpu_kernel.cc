@@ -52,8 +52,8 @@ uint64_t BernoulliCpuKernelMod::New64() const {
 
 void BernoulliCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
   if (seed_ == kBernoulliDefaultSeed && offset_ == kBernoulliDefaultOffset) {
-    seed_ = SizeToLong(New64());
-    offset_ = SizeToLong(New64());
+    seed_ = SizeToUlong(New64());
+    offset_ = SizeToUlong(New64());
   }
   generator_ = random::MSPhiloxRandom(seed_, offset_);
 }
