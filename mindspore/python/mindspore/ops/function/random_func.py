@@ -29,6 +29,12 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.common.api import _function_forbid_reuse
 
 
+@constexpr
+def _set_prim_op_user_data(prim, key, value):
+    prim.set_user_data(key, value)
+    return prim
+
+
 @_function_forbid_reuse
 def random_gamma(shape, alpha, seed=None):
     r"""
@@ -69,7 +75,8 @@ def random_gamma(shape, alpha, seed=None):
         (7, 5, 2)
     """
     seed1, seed2 = _get_seed(seed, "random_gamma")
-    random_gamma_op = _get_cache_prim(P.RandomGamma)(seed1, seed2)
+    random_gamma_op = P.RandomGamma(seed1, seed2)
+    random_gamma_op = _set_prim_op_user_data(random_gamma_op, "random_cache", False)
     output = random_gamma_op(shape, alpha)
     return output
 
@@ -115,7 +122,8 @@ def standard_laplace(shape, seed=None):
         (4, 4)
     """
     seed1, seed2 = _get_seed(seed, "standard_laplace")
-    standard_laplace_op = _get_cache_prim(P.StandardLaplace)(seed=seed1, seed2=seed2)
+    standard_laplace_op = P.StandardLaplace(seed=seed1, seed2=seed2)
+    standard_laplace_op = _set_prim_op_user_data(standard_laplace_op, "random_cache", False)
     return standard_laplace_op(shape)
 
 
@@ -154,6 +162,7 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
         (10, 8)
     """
     random_categorical_ = P.RandomCategorical(dtype)
+    random_categorical_ = _set_prim_op_user_data(random_categorical_, "random_cache", False)
     return random_categorical_(logits, num_sample, seed)
 
 
@@ -209,8 +218,9 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
             raise TypeError("For multinomial_with_replacement,",
                             "the input[offset] must be int, but got {}.".format(type(offset)))
         offset = Tensor(offset, dtype=mstype.int64)
-    multinomial_with_replacement_ = _get_cache_prim(P.MultinomialWithReplacement)(numsamples=numsamples,
-                                                                                  replacement=replacement)
+    multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
+                                                                 replacement=replacement)
+    multinomial_with_replacement_ = _set_prim_op_user_data(multinomial_with_replacement_, "random_cache", False)
     return multinomial_with_replacement_(x, seed, offset)
 
 
@@ -281,11 +291,13 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     seed1, seed2 = _get_seed(seed, "uniform")
     if const_utils.is_same_type(dtype, mstype.int32):
         random_uniform = P.UniformInt(seed1, seed2)
+        random_uniform = _set_prim_op_user_data(random_uniform, "random_cache", False)
         value = random_uniform(shape, minval, maxval)
     else:
         uniform_real = P.UniformReal(seed1, seed2)
-        random_uniform = uniform_real(shape)
-        value = random_uniform * (maxval - minval) + minval
+        uniform_real = _set_prim_op_user_data(uniform_real, "random_cache", False)
+        uniform_real = uniform_real(shape)
+        value = uniform_real * (maxval - minval) + minval
     return value
 
 
@@ -325,7 +337,8 @@ def standard_normal(shape, seed=None):
         (4, 4)
     """
     seed1, seed2 = _get_seed(seed, "standard_normal")
-    standard_normal_op = _get_cache_prim(P.StandardNormal)(seed=seed1, seed2=seed2)
+    standard_normal_op = P.StandardNormal(seed=seed1, seed2=seed2)
+    standard_normal_op = _set_prim_op_user_data(standard_normal_op, "random_cache", False)
     return standard_normal_op(shape)
 
 
@@ -381,12 +394,13 @@ def uniform_candidate_sampler(true_classes,
         >>> print(output3.shape)
         (3,)
     """
-    sampler_op = _get_cache_prim(P.UniformCandidateSampler)(num_true,
-                                                            num_sampled,
-                                                            unique,
-                                                            range_max,
-                                                            seed=seed,
-                                                            remove_accidental_hits=remove_accidental_hits)
+    sampler_op = P.UniformCandidateSampler(num_true,
+                                           num_sampled,
+                                           unique,
+                                           range_max,
+                                           seed=seed,
+                                           remove_accidental_hits=remove_accidental_hits)
+    sampler_op = _set_prim_op_user_data(sampler_op, "random_cache", False)
     sampled_candidates, true_expected_count, sampled_expected_count = sampler_op(true_classes)
     return sampled_candidates, true_expected_count, sampled_expected_count
 
@@ -450,7 +464,8 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         (2, 2) Int64
     """
     seed1, seed2 = _get_seed(seed, "random_poisson")
-    prim_random_poisson = P.random_ops.RandomPoisson(seed1, seed2, dtype)
+    prim_random_poisson = P.RandomPoisson(seed1, seed2, dtype)
+    prim_random_poisson = _set_prim_op_user_data(prim_random_poisson, "random_cache", False)
     value = prim_random_poisson(shape, rate)
     return value
 
@@ -481,7 +496,8 @@ def shuffle(x, seed=None):
         (3. 4. 2. 1.)
     """
     seed, seed2 = _get_seed(seed, "shuffle")
-    random_shuffle_ = _get_cache_prim(RandomShuffle)(seed=seed, seed2=seed2)
+    random_shuffle_ = RandomShuffle(seed=seed, seed2=seed2)
+    random_shuffle_ = _set_prim_op_user_data(random_shuffle_, "random_cache", False)
     output = random_shuffle_(x)
     return output
 
@@ -535,7 +551,8 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
 
     """
 
-    sampler = _get_cache_prim(P.LogUniformCandidateSampler)(num_true, num_sampled, unique, range_max, seed)
+    sampler = P.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
+    sampler = _set_prim_op_user_data(sampler, "random_cache", False)
     return sampler(true_classes)
 
 
@@ -581,7 +598,8 @@ def choice_with_mask(input_x, count=256, seed=None):
         (256,)
     """
     seed1, seed2 = _get_seed(seed, "choice_with_mask")
-    choice_with_mask_ = _get_cache_prim(RandomChoiceWithMask)(count=count, seed=seed1, seed2=seed2)
+    choice_with_mask_ = RandomChoiceWithMask(count=count, seed=seed1, seed2=seed2)
+    choice_with_mask_ = _set_prim_op_user_data(choice_with_mask_, "random_cache", False)
     output = choice_with_mask_(input_x)
     return output
 
@@ -634,7 +652,8 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
     """
     if not isinstance(n, Tensor):
         n = Tensor(n)
-    randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
+    randperm_ = RandpermV2(dtype=dtype)
+    randperm_ = _set_prim_op_user_data(randperm_, "random_cache", False)
     return randperm_(n, seed, offset)
 
 
@@ -699,6 +718,7 @@ def normal(shape, mean, stddev, seed=None):
     const_utils.check_type_valid(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
+    stdnormal = _set_prim_op_user_data(stdnormal, "random_cache", False)
     _check_shape(shape)
     random_normal = stdnormal(shape)
     value = random_normal * stddev + mean
@@ -748,6 +768,7 @@ def laplace(shape, mean, lambda_param, seed=None):
     const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
     seed1, seed2 = _get_seed(seed, "laplace")
     stdlaplace = P.StandardLaplace(seed1, seed2)
+    stdlaplace = _set_prim_op_user_data(stdlaplace, "random_cache", False)
     _check_shape(shape)
     rnd = stdlaplace(shape)
     value = rnd * lambda_param + mean
@@ -829,6 +850,7 @@ def gamma(shape, alpha, beta, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "gamma")
     gamma_v = P.Gamma(seed1, seed2)
+    gamma_v = _set_prim_op_user_data(gamma_v, "random_cache", False)
     value = gamma_v(shape, alpha, beta)
     return value
 
@@ -896,6 +918,7 @@ def rand(*size, dtype=None, seed=None):
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand')
     rand_op = P.UniformReal(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     output = rand_op(shape)
     return cast_(output, dtype)
 
@@ -942,6 +965,7 @@ def rand_like(input, seed=None, *, dtype=None):
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand_like')
     rand_op = P.UniformReal(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     output = rand_op(shape)
     return cast_(output, dtype)
 
@@ -986,6 +1010,7 @@ def randn(*size, dtype=None, seed=None):
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn')
     rand_op = P.StandardNormal(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     output = rand_op(shape)
     return cast_(output, dtype)
 
@@ -1031,6 +1056,7 @@ def randn_like(input, seed=None, *, dtype=None):
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn_like')
     rand_op = P.StandardNormal(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     output = rand_op(shape)
     return cast_(output, dtype)
 
@@ -1081,6 +1107,7 @@ def randint(low, high, size, seed=None, *, dtype=None):
     seed1, seed2 = _get_seed(seed, 'randint')
     cast_ = P.Cast()
     rand_op = P.UniformInt(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     low_ = Tensor(low, mstype.int32)
     high_ = Tensor(high, mstype.int32)
     output = rand_op(size, low_, high_)
@@ -1131,6 +1158,7 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
     size = input.shape
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)
+    rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     cast_ = P.Cast()
     low_ = Tensor(low, mstype.int32)
     high_ = Tensor(high, mstype.int32)
@@ -1187,6 +1215,7 @@ def poisson(shape, mean, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "poisson")
     random_poisson_op = P.Poisson(seed1, seed2)
+    random_poisson_op = _set_prim_op_user_data(random_poisson_op, "random_cache", False)
     value = random_poisson_op(shape, mean)
     return value
 
@@ -1271,7 +1300,8 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         vals = real_div(log(random_uniform), input + 1e-6)
         _, indices = top_k(vals, num_samples)
         return indices
-    random_nomial = _get_cache_prim(P.Multinomial)(seed1, seed2)
+    random_nomial = P.Multinomial(seed1, seed2)
+    random_nomial = _set_prim_op_user_data(random_nomial, "random_cache", False)
     return random_nomial(input, num_samples)
 
 
