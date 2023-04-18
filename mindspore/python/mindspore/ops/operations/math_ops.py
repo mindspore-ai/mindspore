@@ -2003,6 +2003,21 @@ class InplaceIndexAdd(Primitive):
 
     Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
+    Args:
+        axis (int): The dimension along which to index. It should be in range :math:`[0, len(var.dim))`.
+
+    Inputs:
+        - **var** (Parameter) - The input Parameter to add to, with data type uint8, int8, int16, int32,
+          float16, float32, float64.
+        - **indices** (Tensor) - The indies along `axis` to perform the addition. A 1D Tensor
+          of shape :math:`(updates.shape[axis],)`, every value of it
+          should be in range :math:`[0, var.shape[axis])` with data type int32.
+        - **updates** (Tensor) - The input Tensor with the value to add. Must have same data type as `var`.
+          The shape must be the same as `var` except the `axis` th dimension.
+
+    Outputs:
+        Tensor, updated result, has the same shape and dtype as `var`.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -3895,6 +3910,21 @@ class Quantile(Primitive):
     q-th quantile lies between two data points.
 
     Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more details.
+
+    Args:
+        dim (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
+            input tensor being flattened before computation. Default: None.
+        keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
+        ignore_nan (bool, optional): Whether to ignore NaN values in the input. Default: False.
+
+    Inputs:
+        - **input** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          Supported dtypes: float32, float64.
+        - **q** (Union[float, Tensor]) - A scalar or 1D tensor of quantile values in the range [0, 1].
+          Supported dtypes: float32, float64.
+
+    Outputs:
+        Tensor, has the same dtype as the `input`.
 
     Supported Platforms:
 
@@ -7289,6 +7319,22 @@ class Bernoulli(Primitive):
 
     Refer to :func:`mindspore.ops.bernoulli` for more details.
 
+    Args:
+        seed (int, optional): The seed value for random generating. The value of `seed` must be -1 or a
+            positive integer, and -1 means using the current timestamp. Default: -1.
+        offset (int, optional): Used to change the starting position during the generation of
+            random number sequence. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - Input Tensor.
+          Data type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
+        -**p** (Union[Tensor, float], optional) - Success probability, representing the probability of
+          setting 1 for the corresponding position of the current Tensor. It has the same shape as `x`,
+          the value of `p` must be in the range `[0, 1]`. Default: 0.5.
+
+    Outputs:
+        output (Tensor), with the same shape and type as `x` .
+
     Supported Platforms:
         ``GPU`` ``CPU``
 
@@ -7372,6 +7418,17 @@ class Renorm(Primitive):
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
     Refer to :func:`mindspore.ops.renorm` for more details.
+
+    Args:
+        p (int): Power of norm calculation.
+        dim (int): The dimension that expected to get the slice-tensor.
+        maxnorm (float32): Max norm.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor, types: float32 or float16.
+
+    Outputs:
+        Tensor, has the same dtype and shape as input.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

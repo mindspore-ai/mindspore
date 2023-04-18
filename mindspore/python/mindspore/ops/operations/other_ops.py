@@ -560,6 +560,12 @@ class StopGradient(Primitive):
 
     Refer to :func:`mindspore.ops.stop_gradient` for more details.
 
+    Inputs:
+        - **value** (Any) - The value whose effect on the gradient to be eliminated.
+
+    Outputs:
+        The same as `value`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
