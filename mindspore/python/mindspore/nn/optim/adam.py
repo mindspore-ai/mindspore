@@ -634,7 +634,7 @@ class Adam(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 1e-3.
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -649,22 +649,22 @@ class Adam(Optimizer):
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
-                       Default: 0.9.
+                       Default: ``0.9`` .
         beta2 (float): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
-                       Default: 0.999.
-        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
-                     1e-8.
+                       Default: ``0.999`` .
+        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
+                     Default: ``1e-8`` .
         use_locking (bool): Whether to enable a lock to protect the updating process of variable tensors.
-            If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``true`` , updates of the `w`, `m`, and `v` tensors will be protected by a lock.
+            If ``false`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``true`` , update the gradients using NAG.
+            If ``false`` , update the gradients without using NAG. Default: ``False`` .
         use_amsgrad (bool): Whether to use Amsgrad algorithm to update the gradients.
-            If true, update the gradients using Amsgrad.
-            If false, update the gradients without using Amsgrad. Default: False.
+            If ``true`` , update the gradients using Amsgrad.
+            If ``false`` , update the gradients without using Amsgrad. Default: ``False`` .
 
-        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 
             - float: The fixed weight decay value. Must be equal to or greater than 0.
 
@@ -681,14 +681,14 @@ class Adam(Optimizer):
 
         kwargs:
 
-            - use_lazy (bool): Whether to use Lazy Adam algorithm. Default: False.
-              If true, apply lazy adam algorithm.
-              If false, apply normal adam algorithm.
+            - use_lazy (bool): Whether to use Lazy Adam algorithm. Default: ``False`` .
+              If ``true`` , apply lazy adam algorithm.
+              If ``false`` , apply normal adam algorithm.
 
             - use_offload (bool): Whether to offload adam optimizer to host CPU and keep parameters being updated on
-              the device in order to minimize the memory cost. Default: False.
-              If true, apply offload adam.
-              If false, apply normal adam.
+              the device in order to minimize the memory cost. Default: ``False`` .
+              If ``true`` , apply offload adam.
+              If ``false`` , apply normal adam.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -705,8 +705,8 @@ class Adam(Optimizer):
         ValueError: If `loss_scale` or `eps` is less than or equal to 0.
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
-        ValueError: If `use_lazy` and `use_offload` are both true.
-        ValueError: If `use_amsgrad` is true and (`use_lazy` or `use_offload` is true).
+        ValueError: If `use_lazy` and `use_offload` are both ``true`` .
+        ValueError: If `use_amsgrad` is ``true`` and (`use_lazy` or `use_offload` is ``true`` ).
         ValueError: If `use_amsgrad` while using distributed training.
 
     Supported Platforms:
@@ -1206,7 +1206,7 @@ class AdamOffload(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 1e-3.
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -1221,19 +1221,19 @@ class AdamOffload(Optimizer):
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
-                       Default: 0.9.
+                       Default: ``0.9`` .
         beta2 (float): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
-                       Default: 0.999.
-        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
-                     1e-8.
+                       Default: ``0.999`` .
+        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
+                       Default: ``1e-8`` .
         use_locking (bool): Whether to enable a lock to protect the updating process of variable tensors.
-            If true, updates of the `w`, `m`, and `v` tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``true`` , updates of the `w`, `m`, and `v` tensors will be protected by a lock.
+            If ``false`` , the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``true`` , update the gradients using NAG.
+            If ``false`` , update the gradients without using NAG. Default: ``False`` .
 
-        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 
             - float: The fixed weight decay value. Must be equal to or greater than 0.
 
@@ -1252,7 +1252,7 @@ class AdamOffload(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        Tensor[bool], the value is True.
+        Tensor[bool], the value is ``True`` .
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.

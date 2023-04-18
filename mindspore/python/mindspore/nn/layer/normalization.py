@@ -188,24 +188,29 @@ class BatchNorm1d(_BatchNorm):
 
     Args:
         num_features (int): number of features or channels `C` of the input `x` .
-        eps (float): :math:`\epsilon` added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.9.
-        affine (bool): A bool value. When set to True, :math:`\gamma` and :math:`\beta` can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.9`` .
+        affine (bool): A bool value. When set to ``True`` , :math:`\gamma` and :math:`\beta` can be learned.
+            Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'``, etc.
+            Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
-        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
-            use the mean value and variance value of specified value. If None, the training process will use the mean
-            and variance of current batch data and track the running mean and variance, the evaluation process will use
-            the running mean and variance. Default: None.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
+        use_batch_statistics (bool): If ``true`` , use the mean value and variance value of current batch data. If
+            ``false`` , use the mean value and variance value of specified value. If ``None`` , the training process
+            will use the mean and variance of current batch data and track the running mean and variance, the
+            evaluation process will use the running mean and variance. Default: ``None`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C)` or :math:`(N, C, L)` ,
@@ -274,29 +279,34 @@ class BatchNorm2d(_BatchNorm):
     Args:
         num_features (int): The number of channels of the input tensor. Expected input size is :math:`(N, C, H, W)`,
             `C` represents the number of channels.
-        eps (float): :math:`\epsilon` added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.9.
-        affine (bool): A bool value. When set to True, :math:`\gamma` and :math:`\beta` can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.9`` .
+        affine (bool): A bool value. When set to ``True`` , :math:`\gamma` and :math:`\beta` can be learned.
+            Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
         use_batch_statistics (bool):
 
-            - If true, use the mean value and variance value of current batch data and track running mean
+            - If ``true`` , use the mean value and variance value of current batch data and track running mean
               and running variance.
-            - If false, use the mean value and variance value of specified value, and not track statistical value.
-            - If None, the use_batch_statistics is automatically set to true or false according to the training
-              and evaluation mode. During training, the parameter is set to true, and during evaluation, the
-              parameter is set to false. Default: None.
+            - If ``false`` , use the mean value and variance value of specified value, and not track statistical value.
+            - If ``None`` , the use_batch_statistics is automatically set to ``true`` or ``false`` according to the
+              training and evaluation mode. During training, the parameter is set to true, and during evaluation, the
+              parameter is set to false. Default: ``None`` .
 
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`.
@@ -355,22 +365,26 @@ class BatchNorm3d(Cell):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, D, H, W)` .
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.9.
-        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.9`` .
+        affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
-        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
-            use the mean value and variance value of specified value. If None, the training process will use the mean
-            and variance of current batch data and track the running mean and variance, the evaluation process will use
-            the running mean and variance. Default: None.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            Default: ``'ones'`` .
+        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If
+            ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
+            will use the mean and variance of current batch data and track the running mean and variance, the
+            evaluation process will use the running mean and variance. Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
