@@ -212,8 +212,16 @@ bool IsAdapterTensor(const py::object &obj) {
 ValuePtr ConvertAdapterTensor(const py::object &obj) {
   // Use class AdapterTensor instead of Tensor to avoid circular dependencies.
   MS_LOG(DEBUG) << "Converting adapter tensor";
-  auto tensor = obj.cast<TensorPtr>();
-  return std::make_shared<AdapterTensor>(tensor);
+  // AdapterParameter inherits from ms.Parameter.
+  if (py::hasattr(obj, "__parameter__")) {
+    return std::make_shared<AdapterTensor>(obj.cast<TensorPtr>());
+  }
+  // AdapterTensor inherits from StubTensor.
+  if (IsStubTensor(obj)) {
+    auto stub_tensor = ConvertStubTensor(obj);
+    return std::make_shared<AdapterTensor>(stub_tensor);
+  }
+  MS_LOG(EXCEPTION) << "AdapterTensor should inherit from StubTensor.";
 }
 
 ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
@@ -603,7 +611,7 @@ ValuePtr ObjCast(const py::object &obj) {
 static const std::vector<DataConverterPtr> &GetDataConverters() {
   // Convert data by python object type.
   static const std::vector<DataConverterPtr> data_converters{
-    // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
+    // AdapterTensor needs to be processed before Tensor and StubTensor.
     std::make_shared<ByFuncDataConverter>(IsAdapterTensor, ConvertAdapterTensor),
     std::make_shared<ByFuncDataConverter>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
                                           [](const py::object &obj) -> ValuePtr { return ConvertStubTensor(obj); }),

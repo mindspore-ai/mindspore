@@ -34,8 +34,8 @@ def test_abs():
     def func(x):
         return abs(x)
 
-    assert type(func(ms.Tensor(-5))) is ms.Tensor
-    assert type(func(adapter.Tensor(-5))) is adapter.Tensor
+    assert type(func(ms.Tensor([-5]))) is ms.Tensor
+    assert type(func(adapter.Tensor([-5]))) is adapter.Tensor
 
 
 @pytest.mark.level0
@@ -51,8 +51,8 @@ def test_round():
     def func(x):
         return round(x)
 
-    assert type(func(ms.Tensor(1.55))) is ms.Tensor
-    assert type(func(adapter.Tensor(1.55))) is adapter.Tensor
+    assert type(func(ms.Tensor([1.55]))) is ms.Tensor
+    assert type(func(adapter.Tensor([1.55]))) is adapter.Tensor
 
 
 @pytest.mark.level0
@@ -161,7 +161,7 @@ def test_enumerate():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_instance():
+def test_isinstance():
     """
     Feature: MSAdapter
     Description: Test python built-in function isinstance()
@@ -192,9 +192,9 @@ def test_max():
     def func(x, y, z):
         return max(x), max(y, z)
 
-    x = adapter.Tensor([1, 2], ms.float32)
-    y = adapter.Tensor([1], ms.float32)
-    z = adapter.Tensor([2], ms.float32)
+    x = adapter.Tensor([1, 2], dtype=ms.float32)
+    y = adapter.Tensor([1], dtype=ms.float32)
+    z = adapter.Tensor([2], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
@@ -213,9 +213,9 @@ def test_min():
     def func(x, y, z):
         return min(x), min(y, z)
 
-    x = adapter.Tensor([1, 2], ms.float32)
-    y = adapter.Tensor([1], ms.float32)
-    z = adapter.Tensor([2], ms.float32)
+    x = adapter.Tensor([1, 2], dtype=ms.float32)
+    y = adapter.Tensor([1], dtype=ms.float32)
+    z = adapter.Tensor([2], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
@@ -234,9 +234,9 @@ def test_sum():
     def func(x, y, z):
         return sum(x), sum(y, z)
 
-    x = adapter.Tensor([[1, 2], [3, 4]], ms.float32)
-    y = adapter.Tensor([1, 2, 3], ms.float32)
-    z = adapter.Tensor([4, 5, 6], ms.float32)
+    x = adapter.Tensor([[1, 2], [3, 4]], dtype=ms.float32)
+    y = adapter.Tensor([1, 2, 3], dtype=ms.float32)
+    z = adapter.Tensor([4, 5, 6], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
