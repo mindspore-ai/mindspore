@@ -16,9 +16,11 @@
 
 #include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_cpu_kernel.h"
 #include <cmath>
+#include <map>
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
+#include "ops/adaptive_avg_pool_2d.h"
 
 namespace mindspore {
 namespace kernel {
@@ -54,13 +56,26 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-void AdaptiveAvgPool2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  node_wpt_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dim_sizes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  output_size_data_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
+bool AdaptiveAvgPool2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool2D>(base_operator);
+  output_size_data_ = kernel_ptr->get_output_size();
+  return true;
+}
+
+int AdaptiveAvgPool2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  input_dim_sizes_ = inputs[kIndex0]->GetShapeVector();
+  return KRET_OK;
 }
 
 template <typename SCALAR_T>
@@ -134,11 +149,6 @@ bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   size_t input_dims = input_dim_sizes_.size();
   auto input_x = static_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_x);
-
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' node_wpt_, it should not be expired.";
-  }
 
   auto output_y = static_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_y);

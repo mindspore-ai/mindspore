@@ -19,7 +19,8 @@ class FFTWithSizeCpuKernel : public CpuKernel {
   static uint32_t FFTWithSizeCompute(CpuKernelContext &ctx, bool onesided, bool inverse, std::string normalized,
                                      std::vector<int64_t> &checked_signal_size);
 
-  static double Getnormalized(int64_t n, std::string normalized, bool is_reverse);
+  static double Getnormalized(std::vector<int64_t> shape, std::string normalized, bool is_reverse, uint64_t dim,
+                              bool is_real, std::vector<int64_t> end_shape);
 };
 }  // namespace aicpu
 #endif
