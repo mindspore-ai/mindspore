@@ -2123,7 +2123,7 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
   TensorRedistribution tensor_redistribution;
 
   std::vector<std::pair<CNodePtr, LossNodeInfo>> sens_loss_pairs = GetSensLossPairs(root);
-  bool has_backward = !sens_loss_pairs.empty();
+  auto has_backward = HasBackward(root);
   // split sens must before inserting the operators.
   for (auto &pair : sens_loss_pairs) {
     // If the shape of grad-sens tensor is not [] or [1], use get tensor slice to handle it.

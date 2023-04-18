@@ -802,6 +802,19 @@ void Reorder(const FuncGraphPtr &root) {
   } else {
     forward_end_before_pair = forward_end_pair;
   }
+  auto ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = DeepScopedGraphSearch(ret_after);
+  auto manager = root->manager();
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    if (IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusOpName)) {
+      InsertDepend(node, forward_end.front(), manager, root);
+      break;
+    }
+  }
   ReorderForForward(forward_start_pair.first, forward_end_pair.second, root);
   ReorderForBackward(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair,
                      forward_end_before_pair, root);
