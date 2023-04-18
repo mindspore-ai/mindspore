@@ -1575,6 +1575,13 @@ void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
     for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
       auto internal_parameter = internal_parameter_weakptr.lock();
       MS_EXCEPTION_IF_NULL(internal_parameter);
+      if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
+        const auto &shapes = BaseShapeToShapeVector(cnode->Shape());
+        std::vector<TypeId> types =
+          std::vector(shapes.size(), common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first));
+        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
+        continue;
+      }
       common::AnfAlgo::SetOutputInferTypeAndShape(
         {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
         {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
@@ -2095,7 +2102,7 @@ void AnfRuntimeAlgorithm::UpdateValueNodeShape(const AnfNodePtr &node) {
     } else if (sub_value->isa<tensor::Tensor>()) {
       const auto &tensor = sub_value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      auto abstract = std::make_shared<abstract::AbstractTensor>(sub_value->type(), tensor->shape());
+      auto abstract = std::make_shared<abstract::AbstractTensor>(tensor->Dtype(), tensor->shape());
       (void)abstract_list.emplace_back(abstract);
     } else {
       MS_LOG(EXCEPTION) << "Invalid value:" << sub_value->ToString()

@@ -239,47 +239,6 @@ std::vector<FuncGraphPtr> TopoSortForFuncGraph(const FuncGraphPtr &root, FuncGra
   return result;
 }
 
-// Create a device tensor for the front node.
-// Get the output format and select kernel build info from the backend node corresponding to the front node to
-// create the device address.
-void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node,
-                                    const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(backend_node);
-  MS_EXCEPTION_IF_NULL(device_context);
-  const auto &front_node = front_node_with_index.first;
-  MS_EXCEPTION_IF_NULL(front_node);
-
-  const auto &node_value = front_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(node_value);
-  if (node_value->isa<FuncGraph>() || node_value->isa<Primitive>()) {
-    return;
-  }
-
-  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(backend_node, 0);
-  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(backend_node, 0);
-  if (output_type_id == kTypeUnknown) {
-    output_type_id = common::AnfAlgo::GetOutputInferDataType(backend_node, 0);
-  }
-  CreateBuildInfoForFrontNode(front_node_with_index, backend_node);
-  device::DeviceAddressPtr address = nullptr;
-  if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
-    // If is_forward_output, get address from tensor
-    auto tensor = node_value->cast<TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  } else {
-    // Create device tensor.
-    std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
-    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format,
-                                                                       output_type_id, ShapeVector());
-  }
-  MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node)
-                << " index:" << front_node_with_index.second << " addr:" << address << " size:" << tensor_size;
-  AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
-  UpdateRefCount(address.get(), true);
-}
-
 TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   TypeId type_id = kTypeUnknown;
@@ -325,7 +284,7 @@ size_t FetchOutputSizeByValue(const ValuePtr &value) {
     const auto &value_sequence = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_sequence);
     if (value_sequence->size() == 0) {
-      return 1;
+      return 0;
     }
     size_t size = 0;
     for (const auto &sub_value : value_sequence->value()) {
@@ -367,6 +326,51 @@ size_t FetchOutputSizeByNode(const AnfNodePtr &node, size_t index, TypeId type_i
     size = AnfAlgo::GetOutputTensorMemSize(node, index);
   }
   return size;
+}
+
+// Create a device tensor for the front node.
+// Get the output format and select kernel build info from the backend node corresponding to the front node to
+// create the device address.
+void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node,
+                                    const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(backend_node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  const auto &front_node = front_node_with_index.first;
+  MS_EXCEPTION_IF_NULL(front_node);
+
+  const auto &node_value = front_node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(node_value);
+  if (node_value->isa<FuncGraph>() || node_value->isa<Primitive>()) {
+    return;
+  }
+
+  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(backend_node, 0);
+  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(backend_node, 0);
+  if (output_type_id == kTypeUnknown) {
+    output_type_id = common::AnfAlgo::GetOutputInferDataType(backend_node, 0);
+  }
+  if (front_node->abstract() != nullptr && front_node->abstract()->isa<abstract::AbstractSequence>() &&
+      front_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+    tensor_size = FetchOutputSizeByNode(front_node, front_node_with_index.second, output_type_id);
+  }
+  CreateBuildInfoForFrontNode(front_node_with_index, backend_node);
+  device::DeviceAddressPtr address = nullptr;
+  if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
+    // If is_forward_output, get address from tensor
+    auto tensor = node_value->cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  } else {
+    // Create device tensor.
+    std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
+    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format,
+                                                                       output_type_id, ShapeVector());
+  }
+  MS_EXCEPTION_IF_NULL(address);
+  MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node)
+                << " index:" << front_node_with_index.second << " addr:" << address << " size:" << tensor_size;
+  AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
+  UpdateRefCount(address.get(), true);
 }
 
 // Create a device tensor for front node.

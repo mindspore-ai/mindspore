@@ -2054,11 +2054,11 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
     }
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (HasNodeAttr(kAttrDynamicLenName, cnode)) {
-      return GetBooleanAttr(node, kAttrDynamicLenName);
+    if (cnode->HasAttr(kAttrDynamicLenName)) {
+      return GetValue<bool>(cnode->GetAttr(kAttrDynamicLenName));
     } else {
       bool is_dynamic = is_dynamic_len_func();
-      AnfAlgo::SetNodeAttr(kAttrDynamicLenName, MakeValue(is_dynamic), cnode);
+      cnode->AddAttr(kAttrDynamicLenName, MakeValue(is_dynamic));
       return is_dynamic;
     }
   } else if (node->isa<ValueNode>()) {

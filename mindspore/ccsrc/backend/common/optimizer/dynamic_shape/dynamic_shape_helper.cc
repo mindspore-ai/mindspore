@@ -102,7 +102,7 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
   MS_EXCEPTION_IF_NULL(abs);
 
   ShapeVector shape;
-  TypeId type = TypeId::kTypeUnknown;
+  TypeId type;
   if (abs->isa<abstract::AbstractScalar>()) {
     shape = {1};
     type = abs->BuildType()->type_id();
@@ -118,10 +118,14 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
     shape = {SizeToLong(elem_num)};
   } else if (abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractSequence>()) {
     shape = trans::GetRuntimePaddingShape(real_input, real_input_index);
-    type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
-    if (type == TypeId::kTypeUnknown) {
-      // The type of weight parameter of cpu and ValueNode in KernelInfo is kTypeUnknown.
+    if (real_input->isa<ValueNode>()) {
+      // the type of ValueNode in KernelInfo is kTypeUnknown
       type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+    } else {
+      type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
+      if (type == TypeId::kTypeUnknown) {
+        type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+      }
     }
   } else {
     MS_LOG(EXCEPTION) << "For node:" << real_input->fullname_with_scope() << ", abstract(" << abs->ToString()
@@ -218,6 +222,7 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     } else {
       MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
     }
+    new_abs->set_value(depended_value);
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto abstract_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abstract_seq);
