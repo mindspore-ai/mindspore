@@ -300,13 +300,27 @@ class AddRecomputeDepend : public AnfVisitor {
     auto fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     // Add depend to make sure the forward nodes of k graph are executed after the gradient from last bprop is ready.
-    auto depend =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), k_fg_caller_->input(1), bprop_caller->input(1)});
-    manager->SetEdge(k_fg_caller_, 1, depend);
+    auto bprop_caller_fg = bprop_caller->func_graph();
+    std::vector<AnfNodePtr> new_k_fg_caller_inputs{k_fg_caller_->input(0)};
+    auto dout = bprop_caller->input(1);
+    (void)std::transform(k_fg_caller_->inputs().begin() + 1, k_fg_caller_->inputs().end(),
+                         std::back_inserter(new_k_fg_caller_inputs),
+                         [&fg, &bprop_caller_fg, &dout](const AnfNodePtr &node) -> AnfNodePtr {
+                           auto ret_node = node;
+                           if (bprop_caller_fg != fg) {
+                             if (HasAbstractUMonad(node)) {
+                               ret_node = NewValueNode(kUMonad);
+                             } else if (HasAbstractIOMonad(node)) {
+                               ret_node = NewValueNode(kIOMonad);
+                             }
+                           }
+                           return bprop_caller_fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), ret_node, dout});
+                         });
+    auto new_k_fg_caller = bprop_caller_fg->NewCNodeInOrder(new_k_fg_caller_inputs);
+    auto new_tuple_getitem = bprop_caller_fg->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(1))});
     // Add attr in case of repeatedly handling.
-    k_fg_caller_->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
-    auto new_tuple_getitem =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), k_fg_caller_, NewValueNode(static_cast<int64_t>(1))});
+    new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
     return new_tuple_getitem;
   }
 
