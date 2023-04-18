@@ -14,6 +14,7 @@
 # ============================================================================
 """ test MSAdapter. """
 
+import os
 import pytest
 import mindspore as ms
 from tests.st.ms_adapter import Tensor, Parameter
@@ -36,8 +37,10 @@ def test_tensor_attr():
     def func(x):
         return x.attr
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor(1)
     assert func(x) == 10
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -53,8 +56,10 @@ def test_tensor_method():
     def func(x):
         return x.method(10)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor(1)
     assert func(x) == 20
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -70,8 +75,10 @@ def test_parameter_attr():
     def func(x):
         return x.attr
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Parameter(Tensor(1))
     assert func(x) == 10
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -87,8 +94,10 @@ def test_parameter_method():
     def func(x):
         return x.method(10)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Parameter(Tensor(1))
     assert func(x) == 20
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -110,12 +119,14 @@ def test_tensor_convert_type():
         d = y.size(0)
         return x, y, (a, b, c, d)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor([1, 2, 3])
     y = ms.Tensor([1, 2, 3])
     out = func(x, y)
     assert type(out[0]) is ms.Tensor
     assert type(out[1]) is Tensor
     assert out[2] == (3, 3, 3, 3)
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -136,9 +147,11 @@ def test_tensor_isinstance():
         c = isinstance(x, Tensor)
         return a, b, c
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor(1)
     out = func(x)
     assert out[0] and not out[1] and out[2]
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -157,7 +170,9 @@ def test_parameter_isinstance():
         c = isinstance(y, Parameter)
         return a, b, c
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor([1])
     y = Parameter(Tensor([2]), name="val")
     out = func(x, y)
     assert not out[0] and out[1] and out[2]
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'

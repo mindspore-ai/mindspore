@@ -1,3 +1,4 @@
+import os
 from mindspore.common.api import set_adapter_config
 from mindspore._extends.parse import trope as T
 from mindspore._extends.parse.resources import convert_object_map
@@ -39,6 +40,8 @@ convert_object_map[T.sum] = S.adapter_sum
 
 adapter_config = {"Tensor": Tensor, "Parameter": Parameter, "convert_object_map": convert_object_map}
 set_adapter_config(adapter_config)
+# Set to 0 to avoid affecting unrelated testcases.
+os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 __all__ = ["Tensor", "Parameter"]

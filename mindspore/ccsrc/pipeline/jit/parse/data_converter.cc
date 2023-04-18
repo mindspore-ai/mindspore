@@ -198,6 +198,10 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
 
 namespace {
 bool IsAdapterTensor(const py::object &obj) {
+  const auto support_ms_adapter = (common::GetEnv("MS_DEV_ENABLE_MS_ADAPTER") == "1");
+  if (!support_ms_adapter) {
+    return false;
+  }
   if (!py::hasattr(obj, PYTHON_ADAPTER_TENSOR)) {
     return false;
   }

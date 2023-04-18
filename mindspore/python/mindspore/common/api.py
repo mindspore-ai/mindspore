@@ -918,6 +918,7 @@ def set_adapter_config(config):
     Args:
         config (dict): Configuration information.
     """
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     if not isinstance(config, dict):
         raise TypeError(f"The input argument of 'set_adapter_config' should be a dict, but got {config}.")
     for key, value in config.items():

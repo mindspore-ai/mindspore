@@ -14,6 +14,7 @@
 # ============================================================================
 """ test grad in MSAdapter. """
 
+import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -39,6 +40,7 @@ def test_ms_adapter_grad():
         def construct(self, x, y, z):
             return x * y * z
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = Tensor([1, 2], dtype=mstype.int32)
     y = Tensor([-2, 3], dtype=mstype.int32)
     z = Tensor([0, 3], dtype=mstype.int32)
@@ -49,3 +51,4 @@ def test_ms_adapter_grad():
     grad_z = Tensor([-2, 6], dtype=mstype.int32)
     assert np.all(output[0].asnumpy() == grad_y.asnumpy())
     assert np.all(output[1].asnumpy() == grad_z.asnumpy())
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'

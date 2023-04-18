@@ -437,6 +437,10 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
 py::object DataConvert::ValueToPyObj(const ValuePtr &v) { return ValueToPyData(v); }
 
 void SetAdapterTensorAttr(const py::object &obj) {
+  const auto support_ms_adapter = (common::GetEnv("MS_DEV_ENABLE_MS_ADAPTER") == "1");
+  if (!support_ms_adapter) {
+    return;
+  }
   if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR)) {
     // In PyNative mode, AdapterTensor is treated as ms.Tensor.
     py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
@@ -454,11 +458,11 @@ void SetAdapterTensorAttr(const py::object &obj) {
 }
 
 ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
+  SetAdapterTensorAttr(obj);
   ValuePtr converted_ret;
   if (stub) {
     converted_ret = parse::data_converter::PyDataToStubNode(obj);
   } else {
-    SetAdapterTensorAttr(obj);
     converted_ret = parse::data_converter::PyDataToValue(obj);
   }
   if (converted_ret == nullptr) {
