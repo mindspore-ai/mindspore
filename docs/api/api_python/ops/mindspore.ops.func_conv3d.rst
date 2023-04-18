@@ -37,7 +37,7 @@ mindspore.ops.conv3d
           - **pad**: 对输入 `input` 进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union[int, tuple[int]]，可选) - 输入 `input` 的深度、高度和宽度方向上填充的数量。数据类型为int或包含3个int组成的tuple。如果 `padding` 是一个int，那么前、后、上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有3个int组成的tuple，那么前、后的填充为 `padding[0]` ，上、下的填充为 `padding[1]` ，左、右的填充为 `padding[2]` 。值必须大于等于0，默认值：0。
-        - **dilation** (Union[int, tuple[int]]，可选) - 卷积核膨胀尺寸。数据类型为int或由3个int组成的tuple： :math:`(dilation_d, dilation_h, dilation_w)`。目前在Ascend后端， 只支持改值为1。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。前后、垂直和水平方向上，其取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。
+        - **dilation** (Union[int, tuple[int]]，可选) - 卷积核膨胀尺寸。数据类型为int或由3个int组成的tuple： :math:`(dilation_d, dilation_h, dilation_w)`。目前在Ascend后端， 只支持该值为1。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。前后、垂直和水平方向上，其取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。
         - **groups** (int，可选) - 将过滤器拆分的组数， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：1。
 
     返回：

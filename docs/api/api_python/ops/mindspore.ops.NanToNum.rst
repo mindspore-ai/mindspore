@@ -9,3 +9,14 @@ mindspore.ops.NanToNum
         这是一个实验性API，后续可能修改或删除。
 
     更多细节请参考 :func:`mindspore.ops.nan_to_num` 。
+
+    参数：
+        - **nan** (float，可选) - 替换 `NaN` 的值。默认值为0.0。
+        - **posinf** (float，可选) - 如果是一个数字，则为替换正无穷的值。如果为None，则将正无穷替换为 `input` 类型支持的上限。默认值为None。
+        - **neginf** (float，可选) - 如果是一个数字，则为替换负无穷的值。如果为None，则将负无穷替换为 `input` 类型支持的下限。默认值为None。
+
+    输入：
+        - **input** (Tensor) - shape为 :math:`(input_1, input_2, ..., input_R)` 的Tensor。类型必须为float32或float16。
+
+    输出：
+        Tensor，数据shape和类型与 `input` 相同。

@@ -9,3 +9,10 @@
         这是一个实验性API，后续可能修改或删除。
 
     更多细节请参考 :func:`mindspore.ops.expand`。
+
+    输入：
+        - **x** (Tensor) - 输入Tensor。
+        - **shape** (Tensor) - `x` 扩展后的shape。
+
+    输出：
+        Tensor，其shape为 `size` 。

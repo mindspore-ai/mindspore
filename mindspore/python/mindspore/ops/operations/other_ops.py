@@ -29,6 +29,14 @@ class Assign(Primitive):
 
     Refer to :func:`mindspore.ops.assign` for more details.
 
+    Inputs:
+        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions, its rank should be less than 8.
+        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `variable`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -395,6 +403,20 @@ class IOU(Primitive):
 
     Refer to :func:`mindspore.ops.iou` for more details.
 
+    Args:
+        mode (string): The mode is used to specify the calculation method,
+                       now supporting 'iou' (intersection over union) or 'iof'
+                       (intersection over foreground) mode. Default: 'iou'.
+
+    Inputs:
+        - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
+          and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
+        - **gt_boxes** (Tensor) - Ground truth boxes, tensor of shape (M, 4). "M" indicates the number of ground
+          truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
+
+    Outputs:
+        Tensor, the 'iou' values, tensor of shape (M, N), with the same data type as `anchor_boxes`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -551,6 +573,12 @@ class StopGradient(Primitive):
     such as truncating the gradient propagation from an output of a function.
 
     Refer to :func:`mindspore.ops.stop_gradient` for more details.
+
+    Inputs:
+        - **value** (Any) - The value whose effect on the gradient to be eliminated.
+
+    Outputs:
+        The same as `value`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

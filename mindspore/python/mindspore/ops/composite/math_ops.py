@@ -46,7 +46,8 @@ def is_const(x):
 
 def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     r"""
-    Count number of nonzero elements across axis of input tensor.
+    Count number of nonzero elements across axis of input tensor. If `axis` is not specified,
+    conputes the number of nonzero elements from all elements in the input Tensor.
 
     Args:
         x (Tensor): Input data is used to count non-zero numbers. With shape
