@@ -775,7 +775,7 @@ class ResizeBicubic(Primitive):
     Inputs:
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
           The format must be NCHW.
-          Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+          Types allowed: float16, float32, float64.
         - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
           Types allowed: int32.
 
@@ -808,15 +808,12 @@ class ResizeBicubic(Primitive):
         ...     def construct(self, images, size):
         ...         return self.resize(images, size)
         ...
-        >>> images = Tensor(np.array([1, 2, 3, 4]).reshape(1, 2, 2, 1).astype(np.float32))
+        >>> images = Tensor(np.array([1, 2, 3, 4]).reshape(1, 1, 2, 2).astype(np.float32))
         >>> size = Tensor([1, 4], mindspore.int32)
         >>> resizebicubic = NetResizeBicubic()
         >>> output = resizebicubic(images, size)
         >>> print(output)
-            [[[[1.     ]
-            [1.5    ]
-            [2.     ]
-            [2.09375]]]]
+            [[[[1. 1.5 2. 2.09375]]]]
     """
 
     @prim_attr_register

@@ -6,10 +6,11 @@ mindspore.ops.fold
     将提取出的滑动局部区域块还原成更大的输出Tensor。
 
     .. warning::
-        目前，仅支持输出为一个四维的Tensor（类似图片格式）。
+        - 在2.0rc1版本，该算子的输入应为四维Tensor，其shape为 :math:`(N, C, H, W)` 。
+        - 在2.0版本中，其输入则须为三维Tensor，其shape为 :math:`(N, C \times H, W)` 。
 
     参数：
-        - **input** (Tensor) - 四维Tensor，支持数据类型为float16和float32。
+        - **input** (Tensor) - 三维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。
         - **output_size** (Tensor) - 一维Tensor，包含两个元素，均为整数类型。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小。如果是两个int，则分别为滑窗的高度和宽度；如果是一个int，则高度和宽度均为这个int值。是一个必要参数。
         - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率，如果是两个int，则分别作用于滑窗的高度和宽度；如果是一个int，则这个值作用于滑窗的高度和宽度。默认值：1。
