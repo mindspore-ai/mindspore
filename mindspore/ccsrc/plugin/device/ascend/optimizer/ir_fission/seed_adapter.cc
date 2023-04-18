@@ -30,9 +30,9 @@
 
 namespace mindspore::opt {
 namespace {
-const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
-                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName,
-                                                      kDropoutGenMaskOpName, kMultinomialOpName};
+const std::set<std::string> kNodeWithSeedOperators = {
+  kGammaOpName, kPoissonOpName, kStandardLaplaceOpName, kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName,
+};
 template <typename T>
 tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor
@@ -80,50 +80,28 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<ValueNodePtr> ret = {};
-  // DropoutGenMask only create offset
-  if (op_info->op_name() == kDropoutGenMaskOpName) {
-    uint64_t offset = 0;
-    auto offset0 = CreateValueNode(offset);
-    auto offset1 = CreateValueNode(offset);
-    if (offset0 == nullptr || offset1 == nullptr) {
-      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << trace::DumpSourceLines(cnode);
-    }
-    (void)ret.emplace_back(offset0);
-    (void)ret.emplace_back(offset1);
-  } else if (op_info->op_name() == kMultinomialOpName) {
-    uint64_t count = 0;
-    int64_t state = 0;
-    auto count_node = CreateValueNode(count);
-    auto state_node = CreateValueNode(state);
-    if (count_node == nullptr || state_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << trace::DumpSourceLines(cnode);
-    }
-    (void)ret.emplace_back(count_node);
-    (void)ret.emplace_back(state_node);
-  } else {
-    // Get seed to create value node
-    auto attrs = op_info->attrs_ptr();
-    if (attrs.empty()) {
-      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
+  // Get seed to create value node
+  auto attrs = op_info->attrs_ptr();
+  if (attrs.empty()) {
+    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
+                      << trace::DumpSourceLines(cnode);
+  }
+  for (const auto &attr : attrs) {
+    if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
+      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
                         << trace::DumpSourceLines(cnode);
     }
-    for (const auto &attr : attrs) {
-      if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
-        MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
-                          << trace::DumpSourceLines(cnode);
-      }
-      auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
-      auto value_node = CreateValueNode(attr_value);
-      if (value_node == nullptr) {
-        MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
-                          << trace::DumpSourceLines(cnode);
-      }
-      (void)ret.emplace_back(value_node);
-    }
-    if (ret.empty()) {
-      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
+    auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
+    auto value_node = CreateValueNode(attr_value);
+    if (value_node == nullptr) {
+      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
                         << trace::DumpSourceLines(cnode);
     }
+    (void)ret.emplace_back(value_node);
+  }
+  if (ret.empty()) {
+    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
+                      << trace::DumpSourceLines(cnode);
   }
   return ret;
 }

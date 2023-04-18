@@ -91,6 +91,9 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   void SetDebuggerInit() const;
 #endif
 
+  // Get serialized random status of all random kernels in this graph
+  std::string GetRandomStatus(const ActorInfo &actor_info);
+
   // Get the device target.
   std::string GetDeviceTarget() { return device_name_; }
 

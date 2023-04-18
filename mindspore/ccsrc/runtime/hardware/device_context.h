@@ -189,6 +189,7 @@ class GraphExecutor {
                         std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
+  virtual std::string GetRandomStatus(const std::vector<FuncGraphPtr> &graphs) { return ""; }
 
  protected:
   DeviceContext *device_context_{nullptr};

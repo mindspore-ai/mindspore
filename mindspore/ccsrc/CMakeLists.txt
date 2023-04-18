@@ -298,9 +298,14 @@ if(MODE_ASCEND_ALL)
             "plugin/device/ascend/hal/device/dump/proto/*.proto")
     ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
+    file(GLOB_RECURSE  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "plugin/device/ascend/kernel/aicpu/proto/*.proto")
+    ms_protobuf_generate(RANDOM_PROTOSRC RANDOM_PROTOHDR
+            "plugin/device/ascend/optimizer/ir_fission/random_status.proto")
+
     list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})
     list(APPEND MINDSPORE_PROTO_LIST ${PREDICT_PROTOSRCS})
     list(APPEND MINDSPORE_PROTO_LIST ${DUMP_PROTOSRCS})
+    list(APPEND MINDSPORE_PROTO_LIST ${RANDOM_PROTOSRC})
 
     add_compile_definitions(ENABLE_D)
 endif()

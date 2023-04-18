@@ -1508,6 +1508,23 @@ py::dict GraphExecutorPy::GetParams(const std::string &phase) {
   return parameter_dict;
 }
 
+py::bytes GraphExecutorPy::GetRandomStatus(const std::string &phase) const {
+  auto iter = info_.find(phase);
+  if (iter == info_.end()) {
+    MS_LOG(ERROR) << "Phase " << phase << " must compile.";
+    return "";
+  }
+  MS_EXCEPTION_IF_NULL(iter->second);
+  MS_EXCEPTION_IF_NULL(iter->second->resource);
+  auto &resource = iter->second->resource;
+  auto backend = resource->GetBackend();
+  const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
+  MS_EXCEPTION_IF_NULL(mindrt_backend);
+  auto actor_info = resource->GetResult(kActorInfo).cast<compile::ActorInfo>();
+  auto random_status = mindrt_backend->GetRandomStatus(actor_info);
+  return py::bytes(random_status.c_str(), random_status.size());
+}
+
 void GraphExecutorPy::PyExePath(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
