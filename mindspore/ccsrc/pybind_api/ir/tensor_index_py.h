@@ -70,7 +70,7 @@ class Slice final {
  public:
   Slice(const py::object &start_index, const py::object &stop_index, const py::object &step_index) {
     dim_size_ = kIndexMax;
-    if (py::isinstance<TensorPtr>(step_index) || IsStubTensor(step_index)) {
+    if (py::isinstance<Tensor>(step_index) || IsStubTensor(step_index)) {
       auto step_tensor = IsStubTensor(step_index) ? ConvertStubTensor(step_index) : step_index.cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(step_tensor);
       if (step_tensor->data_type() == kMetaTypeNone) {
@@ -314,7 +314,7 @@ class TensorIndex final {
 
   inline const float &floating_point() const { return float_; }
 
-  inline bool IsFloat() const { return type_ == TensorIndexType::Array; }
+  inline bool IsFloat() const { return type_ == TensorIndexType::Float; }
 
   inline const TensorIndexType &type() const { return type_; }
 
