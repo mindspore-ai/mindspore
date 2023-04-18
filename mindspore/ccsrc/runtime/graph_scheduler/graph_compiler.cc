@@ -622,7 +622,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Adjust kernel graph before run graph.
   device_context->kernel_executor_->PreprocessBeforeRun(graph);
-
+  graph->UpdateInternalParameter();
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context);
 
