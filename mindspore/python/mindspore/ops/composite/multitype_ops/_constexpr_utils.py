@@ -725,7 +725,7 @@ def unpack(x):
     return x
 
 
-@_primexpr
+@constexpr
 def normalize_start(start, dim_size):
     """
     Normalize `start` according to the number of dimensions (`dim_size`).
