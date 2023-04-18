@@ -729,12 +729,6 @@ py::object TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, cons
 // ***********************************************for set_item*******************************************
 TensorIndex TensorIndex::FormatList(const TensorIndex &tensor_index, int64_t length) {
   bool transform_to_array = std::all_of(tensor_index.list_.begin(), tensor_index.list_.end(), [](auto &x) {
-    if (py::isinstance<tensor::TensorPtr>(x) || IsStubTensor(x)) {
-      auto tensor_x = IsStubTensor(x) ? ConvertStubTensor(x) : py::cast<TensorPtr>(x);
-      MS_EXCEPTION_IF_NULL(tensor_x);
-      return CheckTypeIsInstance<TypeId>(tensor_x->data_type(), {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32,
-                                                                 kNumberTypeInt64, kNumberTypeBool});
-    }
     return py::isinstance<py::int_>(x) || py::isinstance<py::bool_>(x);
   });
   if (transform_to_array) {
@@ -1308,6 +1302,21 @@ py::object TensorIndex::GetItemByList(const ShapeVector &data_shape, const Tenso
   return GetItemByTuple(data_shape, tensor_index.ExpandToVector());
 }
 
+static void JudgeTupleIndexDim(int64_t data_dim, const std::vector<TensorIndex> &new_tuple_indexes) {
+  int64_t index_dims = 0;
+  for (const TensorIndex &index : new_tuple_indexes) {
+    if (index.IsTensor() && index.tensor() != nullptr && index.tensor()->data_type() == kNumberTypeBool) {
+      index_dims += index.tensor()->DataDim();
+    } else {
+      index_dims += 1;
+    }
+  }
+  if (index_dims > data_dim) {
+    MS_EXCEPTION(IndexError) << "The dim of index cannot be greater than indexed data, but got dim of index:"
+                             << index_dims << ", dim of data:" << data_dim;
+  }
+}
+
 py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std::vector<TensorIndex> &tensor_indexes) {
   MS_LOG(DEBUG) << "In branch get item by tuple, data_shape: " << data_shape << " tensor_indexes: " << tensor_indexes;
   std::vector<int64_t> data_transfer_types;
@@ -1333,6 +1342,7 @@ py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std:
   constexpr int max_data_dim = 8;
   int64_t data_dim = SizeToLong(new_data_shape.size());
   JudgeDataDim(data_dim, min_data_dim, max_data_dim);
+  JudgeTupleIndexDim(data_dim, new_tuple_indexes);
   bool normal_tuple = std::all_of(new_tuple_indexes.begin(), new_tuple_indexes.end(), [](auto &index_e) {
     return index_e.IsEllipsis() || index_e.IsInteger() || index_e.IsSlice();
   });
