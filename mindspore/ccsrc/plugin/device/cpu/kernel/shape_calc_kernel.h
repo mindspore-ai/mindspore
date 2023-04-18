@@ -45,7 +45,7 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
-  ops::ShapeFunc func_{nullptr};
+  ShapeCalcFunctorPtr functor_{nullptr};
   std::vector<int64_t> inputs_size_;
   std::vector<TypeId> inputs_type_;
   ShapeArray outs_shape_;
