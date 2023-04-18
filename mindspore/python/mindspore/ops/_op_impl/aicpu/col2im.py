@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Col2Im op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
@@ -27,6 +26,9 @@ col2im_op_info = AiCPURegOp("Col2Im") \
     .attr("padding", "listInt") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.F64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I32_Default, DataType.C64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I32_Default, DataType.C128_Default) \
     .get_op_info()
 
 
