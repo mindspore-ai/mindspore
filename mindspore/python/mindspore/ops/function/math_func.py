@@ -9109,6 +9109,12 @@ def kron(x, y):
     return result
 
 
+def _check_is_tensor(param_name, input, cls_name):
+    """Returns True if input is Tensor."""
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input)}.")
+
+
 def all(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
@@ -9116,8 +9122,8 @@ def all(input, axis=None, keep_dims=False):
     by controlling `keep_dims`.
 
     Args:
-        input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
+            any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
             r, axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
@@ -9158,8 +9164,11 @@ def all(input, axis=None, keep_dims=False):
         >>> print(output)
         [False True]
     """
+    _check_is_tensor("input", input, "all")
     if axis is None:
         axis = ()
+    if input.dtype != mstype.bool_:
+        input = _get_cache_prim(P.Cast)()(input, mstype.bool_)
     return _get_cache_prim(P.ReduceAll)(keep_dims)(input, axis)
 
 
@@ -9170,8 +9179,8 @@ def any(input, axis=None, keep_dims=False):
     by controlling `keep_dims`.
 
     Args:
-        input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
+            any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
             axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
@@ -9212,8 +9221,11 @@ def any(input, axis=None, keep_dims=False):
         >>> print(output)
         [True True]
     """
+    _check_is_tensor("input", input, "any")
     if axis is None:
         axis = ()
+    if input.dtype != mstype.bool_:
+        input = _get_cache_prim(P.Cast)()(input, mstype.bool_)
     return _get_cache_prim(P.ReduceAny)(keep_dims)(input, axis)
 
 
