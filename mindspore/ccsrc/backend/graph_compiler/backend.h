@@ -115,6 +115,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // propagation, then compile and run single op graph.
   void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
+  runtime::ActorSet *RealCompileGraphBeforeRunActor(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
+                                                    bool no_multi_graph);
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                         const VectorRef &args, VectorRef *outputs);
 

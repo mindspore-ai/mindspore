@@ -103,38 +103,23 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
 namespace {
 void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
   MS_EXCEPTION_IF_NULL(flatted_value);
-  if (utils::isa<ValueSequencePtr>(arg)) {
+  if (utils::isa<tensor::Tensor>(arg)) {
+    flatted_value->emplace_back(utils::cast<TensorPtr>(arg));
+  } else if (utils::isa<Scalar>(arg)) {
+    flatted_value->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
+  } else if (utils::isa<ValueSequencePtr>(arg)) {
     auto value_sequence = utils::cast<ValueSequencePtr>(arg);
     MS_EXCEPTION_IF_NULL(value_sequence);
     auto sequence_value = value_sequence->value();
     for (auto &value : sequence_value) {
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        (void)flatted_value->emplace_back(value);
-      } else if (value->isa<Scalar>()) {
-        auto scalar = value->cast<ScalarPtr>();
-        MS_EXCEPTION_IF_NULL(scalar);
-        (void)flatted_value->emplace_back(ScalarToTensor(scalar));
-      } else {
-        FlattenValue(value, flatted_value);
-      }
+      FlattenValue(value, flatted_value);
     }
   } else if (utils::isa<ValueDictionaryPtr>(arg)) {
     auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
     MS_EXCEPTION_IF_NULL(value_dict);
     auto dict_value = value_dict->value();
     for (auto &iter : dict_value) {
-      auto value = iter.second;
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        (void)flatted_value->emplace_back(value);
-      } else if (value->isa<Scalar>()) {
-        auto scalar = value->cast<ScalarPtr>();
-        MS_EXCEPTION_IF_NULL(scalar);
-        (void)flatted_value->emplace_back(ScalarToTensor(scalar));
-      } else {
-        FlattenValue(value, flatted_value);
-      }
+      FlattenValue(iter.second, flatted_value);
     }
   } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
     auto coo_tensor = utils::cast<tensor::COOTensorPtr>(arg);
@@ -171,7 +156,8 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
 }
 
 void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
-                     size_t index, std::vector<tensor::TensorPtr> *input_tensors) {
+                     size_t index, std::map<size_t, ValuePtrList> *flatten_values,
+                     std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   const size_t position = iter - parameters.begin();
@@ -183,13 +169,18 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
     (void)input_tensors->emplace_back(nullptr);
     return;
   }
-  ValuePtrList flatted_value_tuple_value;
-  FlattenValue(args[position], &flatted_value_tuple_value);
-  if (index >= flatted_value_tuple_value.size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Index out of flatted_value_tuple_value range, index value is "
-                      << index << " and flatted_value_tuple_value size is " << flatted_value_tuple_value.size() << ".";
+
+  // Avoid repeating flatten tuple for each args position.
+  auto &flatten_value = (*flatten_values)[position];
+  if (flatten_value.empty()) {
+    FlattenValue(args[position], &flatten_value);
   }
-  auto input = flatted_value_tuple_value[index];
+
+  if (index >= flatten_value.size()) {
+    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Index out of flatten_value range, index value is " << index
+                      << " and flatten_value size is " << flatten_value.size() << ".";
+  }
+  const auto &input = flatten_value[index];
   MS_EXCEPTION_IF_NULL(input);
   auto tensor_input = input->cast<tensor::TensorPtr>();
   input_tensors->push_back(tensor_input);
@@ -200,13 +191,16 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
                                                               const VectorRef &args) {
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
   std::vector<std::vector<tensor::TensorPtr>> input_tensor_lists;
+  std::map<size_t, ValuePtrList> flatten_values;
+
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
     std::vector<tensor::TensorPtr> input_tensors;
     MS_EXCEPTION_IF_NULL(kernel_graph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
       auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
       if (element_pair.first) {
-        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensors);
+        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &flatten_values,
+                        &input_tensors);
       } else {
         const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
         PushTensor(args, origin_parameters, front_node, &input_tensors);
@@ -227,7 +221,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
     MS_EXCEPTION_IF_NULL(abs);
     if (abs->isa<abstract::AbstractSequence>() && (!common::AnfAlgo::IsDynamicSequence(parameter))) {
       MS_LOG(DEBUG) << "Fetch input tensor for tuple parameter:" << parameter->DebugString() << " in control flow.";
-      PushTupleTensor(args, origin_parameters, parameter, parameter_with_index.second, &input_tensors);
+      PushTupleTensor(args, origin_parameters, parameter, parameter_with_index.second, &flatten_values, &input_tensors);
     } else {
       PushTensor(args, origin_parameters, parameter, &input_tensors);
     }

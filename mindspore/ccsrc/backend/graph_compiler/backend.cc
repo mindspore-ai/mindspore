@@ -590,18 +590,60 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
 }
 }  // namespace
 
+runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphCompilerInfo &graph_compiler_info,
+                                                                 const VectorRef &args, bool no_multi_graph) {
+  auto graphs = graph_compiler_info.graphs_;
+  auto device_contexts = graph_compiler_info.device_contexts_;
+
+  for (size_t i = 0; i < graphs.size(); ++i) {
+    const auto &graph = graphs[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    graph->set_flag(kFlagPyNativeRunInGraph, true);
+    graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
+
+    if (no_multi_graph) {
+      MS_LOG(INFO) << "Replace parameter format";
+      // The input tensors of heterogeneous graphs or control flow graphs are null.
+      // Need to get tensor after ParseControlNodes.
+      auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+      pynative::GraphAdapter::ReplaceGraphParameterProperties(graph, input_tensors.at(i), device_contexts[i]);
+    }
+    (void)graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
+    pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
+    graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
+    // Clear front outputs after the outputs is cached.
+    graph->set_front_outputs({});
+    AnfAlgo::UpdateGraphValidRefPair(graph);
+    pynative::GraphAdapter::SensTensorToDevice(graph, device_contexts[i]);
+  }
+
+  ParseControlNodes(graph_compiler_info);
+  UpdateGraphCompilerInfo(graph_compiler_info.name_);
+  auto actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  constexpr auto kKernelActorThreshold = 5000;
+  // Turning off multithreading may cause stack overflow in control flow scenarios.
+  if (no_multi_graph && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
+    // Multithreading can cause spikes in memory usage and performance fluctuations.
+    actor_set->is_multi_thread_execution_ = false;
+    MS_LOG(INFO) << "Actor Multithreading is turned off!";
+  }
+  runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+
+  for (auto &graph : graphs) {
+    pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
+    pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
+  }
+  return actor_set;
+}
+
 void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                      const VectorRef &args, VectorRef *outputs) {
   MS_LOG(INFO) << "Start";
   WaitTaskFinish();
-  auto inputs = GetRunGraphInputs(graph_compiler_info, args);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto graphs = graph_compiler_info.graphs_;
   auto device_contexts = graph_compiler_info.device_contexts_;
-  if (graphs.size() > inputs.size()) {
-    MS_LOG(EXCEPTION) << "The actor_set " << actor_info << " graphs size " << graphs.size()
-                      << " should less than or equal to inputs size " << inputs.size();
-  }
   if (device_contexts.size() != graphs.size()) {
     MS_LOG(EXCEPTION) << "Graphs size " << graphs.size() << " is not equal to device_contexts size "
                       << device_contexts.size();
@@ -609,59 +651,24 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   // KernelByKernel: The size of control_nodes is at least 1 since there is return node in the graph.
   // GraphMode: No control nodes.
-  bool no_control_flow = control_nodes_.size() <= 1 && graphs.size() == 1;
-
+  bool no_multi_graph = control_nodes_.size() <= 1 && graphs.size() == 1;
   auto actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   if (actor_set == nullptr) {
-    // Need to compile graph for the first step.
-    for (size_t i = 0; i < graphs.size(); ++i) {
-      const auto &graph = graphs[i];
-      MS_EXCEPTION_IF_NULL(graph);
-      graph->set_flag(kFlagPyNativeRunInGraph, true);
-      graph->set_flag(kFlagIsPynativeBpropGraph, root_graph_->has_flag(kFlagIsPynativeBpropGraph));
-
-      if (no_control_flow) {
-        MS_LOG(INFO) << "Replace parameter format";
-        // The input tensors of heterogeneous graphs or control flow graphs are null.
-        // Need to get tensor after ParseControlNodes.
-        pynative::GraphAdapter::ReplaceGraphParameterProperties(graph, inputs.at(i), device_contexts[i]);
-      }
-      (void)graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
-      pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
-      graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
-      // Clear front outputs after the outputs is cached.
-      graph->set_front_outputs({});
-      AnfAlgo::UpdateGraphValidRefPair(graph);
-      pynative::GraphAdapter::SensTensorToDevice(graph, device_contexts[i]);
-    }
-
-    ParseControlNodes(graph_compiler_info);
-    UpdateGraphCompilerInfo(graph_compiler_info.name_);
-    actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
-    MS_EXCEPTION_IF_NULL(actor_set);
-    constexpr auto kKernelActorThreshold = 5000;
-    // Turning off multithreading may cause stack overflow in control flow scenarios.
-    if (no_control_flow && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
-      // Multithreading can cause spikes in memory usage and performance fluctuations.
-      actor_set->is_multi_thread_execution_ = false;
-      MS_LOG(INFO) << "Actor Multithreading is turned off!";
-    }
-    runtime::GraphScheduler::GetInstance().Schedule(actor_set);
-
-    for (auto &graph : graphs) {
-      pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
-      pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
-    }
+    actor_set = RealCompileGraphBeforeRunActor(graph_compiler_info, args, no_multi_graph);
   }
 
   if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     for (size_t i = 0; i < graphs.size(); ++i) {
-      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_control_flow);
+      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_multi_graph);
       pynative::GraphAdapter::UpdateDynamicValueNodeAbstract(graphs[i]);
     }
   }
 
-  std::vector<std::vector<tensor::TensorPtr>> input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  if (graphs.size() > input_tensors.size()) {
+    MS_LOG(EXCEPTION) << "The actor_set " << actor_info << " graphs size " << graphs.size()
+                      << " should less than or equal to inputs size " << input_tensors.size();
+  }
   pynative::GraphAdapter::HandleHeterogeneousTensors(input_tensors, device_contexts);
 
   // Release GIL and run actor DAG.
