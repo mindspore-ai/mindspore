@@ -56,15 +56,20 @@ class MS_CORE_API List final : public Object {
   ~List() override {}
   MS_DECLARE_PARENT(List, Object)
 
+  TypeId generic_type_id() const override { return kObjectTypeList; }
+  TypePtr DeepCopy() const override;
+  std::string ToReprString() const override { return "list_"; }
+  std::string ToString() const override { return DumpContent(false); }
+  std::string DumpText() const override { return DumpContent(true); }
+
   /// \brief Get type of List element.
   ///
   /// \param[in] dim Define the index of List element.
   /// \return TypePtr of List element.
   const TypePtr operator[](std::size_t dim) const;
 
-  TypeId generic_type_id() const override { return kObjectTypeList; }
-  TypePtr DeepCopy() const override;
   bool operator==(const Type &other) const override;
+
   std::size_t hash() const override;
 
   /// \brief Get the number of elements in this List.
@@ -76,9 +81,11 @@ class MS_CORE_API List final : public Object {
   ///
   /// \return The elements of List object.
   TypePtrList elements() const { return elements_; }
-  std::string ToReprString() const override { return "list_"; }
-  std::string ToString() const override { return DumpContent(false); }
-  std::string DumpText() const override { return DumpContent(true); };
+
+  /// \brief Set the elements of Tuple object.
+  ///
+  /// \param[in] elements Define the element types to be set.
+  void set_elements(TypePtrList &&elements) { elements_ = std::move(elements); }
 
   /// \brief Determine whether the list is dynamic length.
   ///
@@ -153,6 +160,11 @@ class MS_CORE_API Tuple final : public Object {
   ///
   /// \return The elements of the Tuple object.
   TypePtrList elements() const { return elements_; }
+
+  /// \brief Set the elements of Tuple object.
+  ///
+  /// \param[in] elements Define the element types to be set.
+  void set_elements(TypePtrList &&elements) { elements_ = std::move(elements); }
 
   /// \brief Get the number of elements in the Tuple object.
   ///

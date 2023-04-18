@@ -893,11 +893,19 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
   constexpr size_t line_end_index = 3;
   constexpr size_t column_end_index = 4;
   constexpr size_t expr_src_index = 5;
+  constexpr size_t comments_index = 6;
+  // Deal with the comments.
+  std::vector<std::string> comments_str_list;
+  const auto comments_list = res[comments_index].cast<py::list>();
+  for (size_t i = 0; i < comments_list.size(); ++i) {
+    (void)comments_str_list.emplace_back(comments_list[i].cast<std::string>());
+  }
+  MS_LOG(DEBUG) << "@jit comments: " << comments_str_list;
   // Refer to Location::Location() for each member of res: line, column, line_end, column_end, expr_src.
-  auto location =
-    std::make_shared<Location>(res[file_name_index].cast<std::string>(), res[line_index].cast<int64_t>(),
-                               res[column_index].cast<int64_t>(), res[line_end_index].cast<int64_t>(),
-                               res[column_end_index].cast<int64_t>(), res[expr_src_index].cast<std::string>());
+  auto location = std::make_shared<Location>(res[file_name_index].cast<std::string>(), res[line_index].cast<int64_t>(),
+                                             res[column_index].cast<int64_t>(), res[line_end_index].cast<int64_t>(),
+                                             res[column_end_index].cast<int64_t>(),
+                                             res[expr_src_index].cast<std::string>(), std::move(comments_str_list));
   return location;
 }
 

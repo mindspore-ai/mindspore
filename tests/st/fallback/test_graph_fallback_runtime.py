@@ -1280,3 +1280,31 @@ def test_fallback_anytype():
     ms_out = func(ms.Tensor(np.array([1, -1])))
     np_out = func_numpy(x_np)
     assert np.allclose(np_out, ms_out.asnumpy())
+
+
+class CreateDynTensor(nn.Cell):
+    def construct(self, x):
+        # @jit.typing: () -> tensor[int32]
+        shape_tensor1 = Tensor(ops.shape(x), ms.int32)
+        output1 = ops.FillV2()(shape_tensor1, Tensor(1, ms.int32))
+
+        shape_tensor2 = Tensor(ops.shape(x), ms.int32)  # @jit.typing: () -> tensor[int32]
+        output2 = ops.FillV2()(shape_tensor2, Tensor(1, ms.int32))
+        return output1 + output2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_shape_tensor():
+    """
+    Feature: Fallback runtime.
+    Description: Set PyExecute output type by the annotation from comment.
+    Expectation: No error.
+    """
+    net = CreateDynTensor()
+    x = Tensor(dtype=ms.int32, input_data=[2, 2])
+    out = net(x)
+    return out

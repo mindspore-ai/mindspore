@@ -19,11 +19,13 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <string>
 
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "ops/core_ops.h"
+#include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
@@ -63,5 +65,85 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   interpreted_cnode->set_debug_info(node->debug_info());
   fg->ReplaceInOrder(node, interpreted_cnode);
   return interpreted_cnode;
+}
+
+// Get the type from python type string, defined in Python module 'mindspore.common.dtype'.
+TypePtr GetTypeFromString(const std::string &dtype) {
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto get_dtype_python_function = "get_dtype";
+  auto type = python_adapter::CallPyModFn(mod, get_dtype_python_function, py::str(dtype));
+  MS_LOG(DEBUG) << "type: " << type;
+  if (py::isinstance<py::none>(type)) {
+    return nullptr;
+  }
+  auto type_ptr = py::cast<TypePtr>(type);
+  return type_ptr;
+}
+
+TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node) {
+  const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+  const auto &location = debug_info->location();
+  if (location == nullptr) {
+    MS_LOG(WARNING) << "Location info is null, node: " << node->DebugString();
+    return nullptr;
+  }
+  const auto &comments = location->comments();
+  if (comments.empty()) {
+    return nullptr;
+  }
+  // Only use the last comment.
+  const auto &comment = comments.back();
+  std::regex regex("^#\\s*@jit.typing\\s*:\\s*\\(\\)\\s*->\\s*(tensor|tuple_|list_)+\\[?([a-zA-Z0-9]+)?\\]?$");
+  std::smatch matched_results;
+  if (std::regex_match(comment, matched_results, regex)) {
+    constexpr auto container_match_count = 3;
+    // Not match.
+    if (matched_results.size() != container_match_count) {
+      return nullptr;
+    }
+    const auto &container_type_str = matched_results[1];
+    const auto &dtype_str = matched_results[container_match_count - 1];
+    MS_LOG(INFO) << "matched_results: " << matched_results[0] << ", " << container_type_str << ", " << dtype_str;
+    // Match nothing.
+    if (container_type_str.str().empty()) {
+      return nullptr;
+    }
+    // Handle base type only.
+    if (dtype_str.str().empty()) {
+      const auto &base_type_str = container_type_str;
+      const auto &base_type = GetTypeFromString(base_type_str);
+      return base_type;
+    }
+    // Handle container type: tensor, list_ and tuple_.
+    const auto &container_type = GetTypeFromString(container_type_str);
+    if (container_type == nullptr) {
+      return nullptr;
+    }
+    const auto &dtype = GetTypeFromString(dtype_str);
+    if (dtype == nullptr) {
+      return nullptr;
+    }
+    if (container_type->isa<TensorType>()) {  // Handle tensor type.
+      if (!dtype->isa<Number>()) {
+        MS_LOG(EXCEPTION) << "Cannot get dtype for by input string: '" << dtype_str << "', for '" << container_type_str
+                          << "'";
+      }
+      container_type->cast<TensorTypePtr>()->set_element(dtype);
+    } else if (container_type->isa<Tuple>() || container_type->isa<List>()) {  // Handle list_/tuple_ type.
+      // To handle nested sequence later.
+      if (!dtype->isa<Number>() && !dtype->isa<TensorType>()) {
+        MS_LOG(EXCEPTION) << "Cannot get element type for by input string: '" << dtype_str << "', for '"
+                          << container_type_str << "'";
+      }
+      if (container_type->isa<Tuple>()) {
+        container_type->cast<TuplePtr>()->set_elements(TypePtrList({dtype}));
+      } else if (container_type->isa<List>()) {
+        container_type->cast<ListPtr>()->set_elements(TypePtrList({dtype}));
+      }
+      return nullptr;  // Supports tuple_[...] / list_[...] later.
+    }
+    return container_type;
+  }
+  return nullptr;
 }
 }  // namespace mindspore

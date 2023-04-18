@@ -34,7 +34,7 @@ class TestDebugInfo : public UT::Common {
 // Description: Make a location
 // Expectation: make a location with no error
 TEST_F(TestDebugInfo, test_make_location) {
-  LocationPtr loc1 = std::make_shared<Location>("/home/workspace/a.py", 0, 4, 1, 8, "");
+  LocationPtr loc1 = std::make_shared<Location>("/home/workspace/a.py", 0, 4, 1, 8, "", std::vector<std::string>());
   std::string s = loc1->ToString(kSourceLineTipDiscard);
 
   std::string expect_str("In file /home/workspace/a.py:0\n");
@@ -45,15 +45,15 @@ TEST_F(TestDebugInfo, test_make_location) {
 // Description: Deduplicate the debug infos which have the same print
 // Expectation: a set of debug infos is deduplicated
 TEST_F(TestDebugInfo, test_location_dedup) {
-  LocationPtr loc1 = std::make_shared<Location>("file1.py", 0, 0, 0, 0, "");
+  LocationPtr loc1 = std::make_shared<Location>("file1.py", 0, 0, 0, 0, "", std::vector<std::string>());
   NodeDebugInfoPtr debug_info1 = std::make_shared<NodeDebugInfo>();
   debug_info1->set_location(loc1);
 
-  LocationPtr loc2 = std::make_shared<Location>("file1.py", 0, 0, 0, 0, "");
+  LocationPtr loc2 = std::make_shared<Location>("file1.py", 0, 0, 0, 0, "", std::vector<std::string>());
   NodeDebugInfoPtr debug_info2 = std::make_shared<NodeDebugInfo>();
   debug_info2->set_location(loc2);
 
-  LocationPtr loc3 = std::make_shared<Location>("file2.py", 0, 0, 0, 0, "");
+  LocationPtr loc3 = std::make_shared<Location>("file2.py", 0, 0, 0, 0, "", std::vector<std::string>());
   NodeDebugInfoPtr debug_info3 = std::make_shared<NodeDebugInfo>();
   debug_info3->set_location(loc3);
 
