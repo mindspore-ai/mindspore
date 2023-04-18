@@ -445,11 +445,10 @@ def test_tensor_scatter_dy_shape(func_name):
     scatter_indices = Tensor(np.array([[0], [2]]).astype(np.int32))
     updates = Tensor(np.array([[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
                                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]).astype(np.float32))
-    input_x_dyn = Tensor(shape=[4, None, None], dtype=input_x.dtype)
     indice_dyn = Tensor(shape=[None, None], dtype=scatter_indices.dtype)
     update_dyn = Tensor(shape=[None, None, None], dtype=updates.dtype)
     net = TestTensorScatterNet(func_name)
-    net.set_inputs(input_x_dyn, indice_dyn, update_dyn)
+    net.set_inputs(input_x, indice_dyn, update_dyn)
     ms_result = net(input_x, scatter_indices, updates)
     np_result = tensor_scatter_np(func_name, input_x, scatter_indices, updates)
     assert ms_result.asnumpy().shape == np_result.shape

@@ -2417,7 +2417,7 @@ def softmin(x, axis=-1, *, dtype=None):
     if dtype is not None:
         x = ops.cast(x, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
-    return softmax_(-x)
+    return softmax_(-1*x)
 
 
 def softshrink(x, lambd=0.5):

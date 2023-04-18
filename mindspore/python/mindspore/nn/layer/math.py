@@ -220,7 +220,7 @@ class LGamma(Cell):
         self.shape = P.Shape()
         self.dyn_shape = P.TensorShape()
         self.dtype = P.DType()
-        self.fill = P.Fill()
+        self.fill = P.FillV2()
         self.floor = P.Floor()
         self.equal = P.Equal()
         self.greater = P.Greater()
@@ -237,7 +237,7 @@ class LGamma(Cell):
         if F.is_sequence_value_unknown(self.shape(x)):
             infinity = self.ones_like(x) * F.cast(self.inf, input_dtype)
         else:
-            infinity = self.fill(input_dtype, self.shape(x), self.inf)
+            infinity = self.fill(self.shape(x), F.cast(self.inf, input_dtype))
 
         need_to_reflect = self.less(x, 0.5)
         neg_input = -x
@@ -330,7 +330,7 @@ class DiGamma(Cell):
         self.abs = P.Abs()
         self.shape = P.Shape()
         self.dtype = P.DType()
-        self.fill = P.Fill()
+        self.fill = P.FillV2()
         self.floor = P.Floor()
         self.equal = P.Equal()
         self.less = P.Less()
@@ -338,6 +338,7 @@ class DiGamma(Cell):
         self.sin = P.Sin()
         self.cos = P.Cos()
         self.logicaland = P.LogicalAnd()
+        self.cast = P.Cast()
 
     def construct(self, x):
         input_dtype = self.dtype(x)
@@ -365,7 +366,7 @@ class DiGamma(Cell):
         reduced_input = x + self.abs(self.floor(x + 0.5))
         reflection = y - self.pi * self.cos(self.pi * reduced_input) / self.sin(self.pi * reduced_input)
         real_result = self.select(need_to_reflect, reflection, y)
-        nan = self.fill(self.dtype(x), self.shape(x), np.nan)
+        nan = self.fill(self.shape(x), self.cast(np.nan, self.dtype(x)))
 
         return self.select(self.logicaland(self.less(x, 0), self.equal(x, self.floor(x))),
                            nan, real_result)
@@ -385,10 +386,11 @@ def _igamma_series(ax, x, a, enabled):
 
     logicaland = P.LogicalAnd()
     greater = P.Greater()
-    fill = P.Fill()
+    fill = P.FillV2()
     shape = P.Shape()
     dtype = P.DType()
     select = P.Select()
+    cast = P.Cast()
 
     # If more data types are supported, this epsilon need to be selected.
     epsilon = eps_fp32
@@ -418,8 +420,8 @@ def _igamma_series(ax, x, a, enabled):
                 select(enabled, x, vals[4]), select(enabled, dc_da, vals[5]),
                 select(enabled, dans_da, vals[6]))
 
-    ones = fill(dtype(a), shape(a), 1)
-    zeros = fill(dtype(a), shape(a), 0)
+    ones = fill(shape(a), cast(1, dtype(a)))
+    zeros = fill(shape(a), cast(0, dtype(a)))
     vals = (enabled, a, ones, ones, x, zeros, zeros)
 
     vals = _while_helper_func(cond, body, vals)
@@ -435,10 +437,11 @@ def _igammac_continued_fraction(ax, x, a, enabled):
     greater = P.Greater()
     less = P.Less()
     notequal = P.NotEqual()
-    fill = P.Fill()
+    fill = P.FillV2()
     shape = P.Shape()
     dtype = P.DType()
     select = P.Select()
+    cast = P.Cast()
 
     # If more data types are supported, this epsilon need to be selected.
     epsilon = eps_fp32
@@ -476,7 +479,7 @@ def _igammac_continued_fraction(ax, x, a, enabled):
         qk_is_nonzero = notequal(qk, 0)
         r = pk / qk
 
-        t = select(qk_is_nonzero, abs_x((ans - r) / r), fill(dtype(t), shape(t), 1))
+        t = select(qk_is_nonzero, abs_x((ans - r) / r), fill(shape(t), cast(1, dtype(t))))
         ans = select(qk_is_nonzero, r, ans)
 
         dpk_da = dpkm1_da * z - pkm1 - dpkm2_da * yc + pkm2 * c
@@ -484,7 +487,7 @@ def _igammac_continued_fraction(ax, x, a, enabled):
         dans_da_new = select(qk_is_nonzero, (dpk_da - ans * dqk_da) / qk, dans_da)
         grad_conditional = select(qk_is_nonzero,
                                   abs_x(dans_da_new - dans_da),
-                                  fill(dtype(dans_da), shape(dans_da), 1))
+                                  fill(shape(dans_da), cast(1, dtype(dans_da))))
 
         pkm2 = pkm1
         pkm1 = pk
@@ -519,16 +522,16 @@ def _igammac_continued_fraction(ax, x, a, enabled):
 
     y = 1 - a
     z = x + y + 1
-    c = fill(dtype(x), shape(x), 0)
-    pkm2 = fill(dtype(x), shape(x), 1)
+    c = fill(shape(x), cast(0, dtype(x)))
+    pkm2 = fill(shape(x), cast(1, dtype(x)))
     qkm2 = x
     pkm1 = x + 1
     qkm1 = z * x
     ans = pkm1 / qkm1
-    t = fill(dtype(x), shape(x), 1)
-    dpkm2_da = fill(dtype(x), shape(x), 0)
-    dqkm2_da = fill(dtype(x), shape(x), 0)
-    dpkm1_da = fill(dtype(x), shape(x), 0)
+    t = fill(shape(x), cast(1, dtype(x)))
+    dpkm2_da = fill(shape(x), cast(0, dtype(t)))
+    dqkm2_da = fill(shape(x), cast(0, dtype(t)))
+    dpkm1_da = fill(shape(x), cast(0, dtype(t)))
     dqkm1_da = -x
     dans_da = (dpkm1_da - ans * dqkm1_da) / qkm1
     vals = (enabled, ans, t, y, z, c, pkm1, qkm1, pkm2, qkm2, dpkm2_da, dqkm2_da, dpkm1_da, dqkm1_da, dans_da)
@@ -598,7 +601,7 @@ class IGamma(Cell):
         self.exp = P.Exp()
         self.select = P.Select()
         self.zeroslike = P.ZerosLike()
-        self.fill = P.Fill()
+        self.fill = P.FillV2()
         self.shape = P.Shape()
         self.dtype = P.DType()
         self.lgamma = LGamma()
@@ -625,7 +628,8 @@ class IGamma(Cell):
                              1 - _igammac_continued_fraction(ax, x, a, self.logicaland(enabled, use_igammac)),
                              _igamma_series(ax, x, a, self.logicaland(enabled, self.logicalnot(use_igammac))))
         output = self.select(x_is_zero, self.zeroslike(output), output)
-        output = self.select(domain_error, self.fill(self.dtype(a), self.shape(a), np.nan), output)
+        nan = self.fill(self.shape(a), self.cast(np.nan, mstype.float32))
+        output = self.select(domain_error, nan, output)
         return output
 
 
