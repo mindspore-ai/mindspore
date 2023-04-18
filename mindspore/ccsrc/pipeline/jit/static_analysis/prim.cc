@@ -2074,22 +2074,33 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   const std::string &script = script_obj->value();
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
-
-  TypePtr type = kFloat64;
-  if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
-    type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
-    MS_LOG(DEBUG) << "type: " << type->ToString();
+  // Make abstract by type and shape.
+  AbstractBasePtr res = nullptr;
+  // Support Tensor annotation type. Add list and tuple here later.
+  const auto &type = GetJitAnnotationTypeFromComment(current_interpret_node);
+  TypePtr dtype = nullptr;
+  if (type != nullptr && type->isa<TensorType>()) {
+    dtype = type->cast<TensorTypePtr>()->element();
   }
-  BaseShapePtr shape;
-  if (current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
-    shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
-    MS_LOG(DEBUG) << "shape: " << shape->ToString();
+  if (dtype != nullptr) {
+    res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
   } else {
-    ShapeVector shp;
-    (void)shp.emplace_back(Shape::kShapeRankAny);
-    shape = std::make_shared<Shape>(shp);
+    TypePtr preset_type = kFloat64;
+    if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
+      preset_type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
+      MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
+    }
+    BaseShapePtr shape;
+    if (current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
+      shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
+      MS_LOG(DEBUG) << "shape: " << shape->ToString();
+    } else {
+      ShapeVector shp;
+      (void)shp.emplace_back(Shape::kShapeRankAny);
+      shape = std::make_shared<Shape>(shp);
+    }
+    res = std::make_shared<AbstractTensor>(preset_type, shape);
   }
-  AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
   // User data '__py_execute_cnode_flag__' is used by 'IsPyExecuteCNodeData' to check forward PyExecute CNode.
   res->set_user_data("__py_execute_cnode_flag__", std::make_shared<bool>(true));
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());

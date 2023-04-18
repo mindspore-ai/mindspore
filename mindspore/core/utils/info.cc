@@ -304,8 +304,9 @@ LocationPtr GraphDebugInfo::location() const {
   auto loc = DebugInfo::location();
   if (deco_loc_ != nullptr && loc != nullptr) {
     auto loc_line = loc->line() + ((deco_loc_->line_end() - deco_loc_->line()) + 1);
+    auto comments = loc->comments();
     return std::make_shared<Location>(loc->file_name(), loc_line, loc->line_end(), loc->column(), loc->column_end(),
-                                      loc->expr_src());
+                                      loc->expr_src(), std::move(comments));
   }
   return loc;
 }
