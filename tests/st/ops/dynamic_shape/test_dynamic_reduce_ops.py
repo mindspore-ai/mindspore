@@ -156,7 +156,7 @@ def test_dynamic_axis_reduce(data_type):
     dyn_axis_case(data_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

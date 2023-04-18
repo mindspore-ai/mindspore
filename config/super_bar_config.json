@@ -422,6 +422,7 @@
     "PRelu",
     "Trunc",
     "AccumulateNV2",
+    "SoftmaxCrossEntropyWithLogits",
     "ReduceMeanD",
     "SquareSumV1",
     "SplitVD",
@@ -456,7 +457,6 @@
     "TransData ": "performance and accuracy",
     "ScatterNdD ": "Accuracy issues",
     "Trace": "Hadn't adapted tbe implementation",
-    "AssignAdd": "Frac_nz in pangu not support",
     "Range": "not support dynamic shape with tiling failed",
     "AtomicAddrClean": "need to clean addr larger than 2G, int32 is not enough",
     "TensorMove": "not support uint32 in op json",
@@ -465,7 +465,7 @@
     "PadV3Grad": "not support float in AiCore",
     "BNInferGrad": "Currently, the input whose format is NCH is not supported in AiCore.",
     "AvgPool": "not support strides > 63.",
-    "GatherNd": "Can't call check_supported function."
+    "AssignAdd": "Frac_nz in pangu not support"
   },
   "SkipNodes": [
     "Im2col",
@@ -495,7 +495,6 @@
     "ACos",
     "TransData",
     "ScatterNdD",
-    "AssignAdd",
     "Range",
     "AtomicAddrClean",
     "Assign",
@@ -505,7 +504,7 @@
     "PadV3Grad",
     "BNInferGrad",
     "AvgPool",
-    "GatherNd"
+    "AssignAdd"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
