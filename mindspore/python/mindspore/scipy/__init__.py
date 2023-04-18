@@ -14,4 +14,4 @@
 # ============================================================================
 """Scipy-like interfaces in mindspore."""
 
-from . import linalg, optimize, sparse
+from . import linalg, optimize

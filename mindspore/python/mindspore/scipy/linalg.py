@@ -26,7 +26,7 @@ from ..ops.operations.math_ops import Cholesky
 from ..ops import functional as F
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
+__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky', 'eigh', 'lu_factor', 'lu']
 
 
 def block_diag(*arrs):
@@ -150,11 +150,10 @@ def inv(a, overwrite_a=False, check_finite=True):
 
 def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
-    Compute the cholesky decomposition of a matrix, to use in cho_solve.
+    Compute the cholesky decomposition of a matrix.
 
     Returns a matrix containing the cholesky decomposition,
     :math:`a = l l*` or :math:`a = u* u` of a Hermitian positive-definite matrix `a`.
-    The return value can be directly used as the first parameter to `cho_solve`.
 
     Note:
         - `cho_factor` is not supported on Windows platform yet.
@@ -273,68 +272,6 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     if not lower:
         c = _nd_transpose(c)
     return c
-
-
-def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
-    """Given the cholesky factorization of a, solve the linear equation
-
-    .. math::
-        a x = b
-
-    Note:
-        - `cho_solve` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
-
-    Args:
-        c_and_lower ((Tensor, bool)): cholesky factorization of a, as given by cho_factor.
-        b (Tensor): Right-hand side.
-        overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance). Default: False.
-        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
-            Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
-
-    Returns:
-        Tensor, the solution to the system a x = b
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as onp
-        >>> from mindspore.common import Tensor
-        >>> from mindspore.scipy.linalg import cho_factor, cho_solve
-        >>> a = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
-        >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float32))
-        >>> c, low = cho_factor(a)
-        >>> x = cho_solve((c, low), b)
-        >>> print(x)
-        [-0.01749266  0.11953348  0.01166185  0.15743434]
-    """
-    func_name = "cho_solve"
-    (c, lower) = c_and_lower
-    _type_check(func_name, overwrite_b, bool, 'overwrite_b')
-    _type_check(func_name, check_finite, bool, 'check_finite')
-    _type_check(func_name, lower, bool, 'lower')
-    _mstype_check(func_name, c, mstype.tensor_type, 'c')
-    _mstype_check(func_name, b, mstype.tensor_type, 'b')
-    _dtype_check(func_name, c, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'c')
-    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
-    _solve_check(func_name, c, b, 'c', 'b')
-
-    if F.dtype(c) in (mstype.int32, mstype.int64):
-        c = F.cast(c, mstype.float64)
-        b = F.cast(b, mstype.float64)
-    # Do not support complex, so trans is chosen from ('T', 'N')
-    if lower:
-        l_trans = 'N'
-        l_t_trans = 'T'
-    else:
-        l_trans = 'T'
-        l_t_trans = 'N'
-    b = SolveTriangular(lower=lower, unit_diagonal=False, trans=l_trans)(c, b)
-    b = SolveTriangular(lower=lower, unit_diagonal=False, trans=l_t_trans)(c, b)
-    return b
 
 
 def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
