@@ -82,6 +82,14 @@ class ModelImpl {
                       const std::vector<std::string> &model_paths, ModelType model_type,
                       const std::shared_ptr<Context> &model_context);
 
+  /// \brief Build a model from func graph so that it can run on a device.
+  ///
+  /// \param[in] func_graph FuncGraph compiled from frontend.
+  /// \param[in] model_context Define the context used to store options during execution.
+  ///
+  /// \return Status.
+  Status Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context);
+
   /// \brief Resize model inputs shape and memory from specified dims.
   ///
   /// \param[in] inputs Define dst inputs tensors.

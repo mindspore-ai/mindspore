@@ -16,12 +16,16 @@
 MindSpore Lite Python API.
 """
 from __future__ import absolute_import
+import os
 
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
 from mindspore_lite.model import ModelType, Model, ModelParallelRunner
 from mindspore_lite.tensor import DataType, Format, Tensor
+
+if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
+    from mindspore_lite import lite_infer
 
 __all__ = []
 __all__.extend(__version__)

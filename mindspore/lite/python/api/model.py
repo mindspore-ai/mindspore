@@ -23,6 +23,7 @@ from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import Tensor
+from .base_model import BaseModel
 
 __all__ = ['ModelType', 'Model', 'ModelParallelRunner']
 
@@ -74,7 +75,7 @@ model_type_cxx_py_map = {
 }
 
 
-class Model:
+class Model(BaseModel):
     """
     The `Model` class defines a MindSpore Lite's model, facilitating computational graph management.
 
@@ -86,7 +87,7 @@ class Model:
     """
 
     def __init__(self):
-        self._model = _c_lite_wrapper.ModelBind()
+        super(Model, self).__init__(_c_lite_wrapper.ModelBind())
         self.model_path_ = ""
 
     def __str__(self):
@@ -290,10 +291,8 @@ class Model:
             >>> model.build_from_file("mobilenetv2.mindir", mslite.ModelType.MINDIR)
             >>> inputs = model.get_inputs()
         """
-        inputs = []
-        for _tensor in self._model.get_inputs():
-            inputs.append(Tensor(_tensor))
-        return inputs
+        # pylint: disable=useless-super-delegation
+        return super(Model, self).get_inputs()
 
     def predict(self, inputs):
         """
@@ -366,21 +365,8 @@ class Model:
             ...
             outputs' shape:  (1,1001)
         """
-        if not isinstance(inputs, list):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
-        _inputs = []
-        for i, element in enumerate(inputs):
-            if not isinstance(element, Tensor):
-                raise TypeError(f"inputs element must be Tensor, but got "
-                                f"{type(element)} at index {i}.")
-            _inputs.append(element._tensor)
-        outputs = self._model.predict(_inputs)
-        if not outputs:
-            raise RuntimeError(f"predict failed!")
-        predict_outputs = []
-        for output in outputs:
-            predict_outputs.append(Tensor(output))
-        return predict_outputs
+        # pylint: disable=useless-super-delegation
+        return super(Model, self).predict(inputs)
 
     def resize(self, inputs, dims):
         """
@@ -421,31 +407,8 @@ class Model:
             >>> print("After resize, the first input shape: ", inputs[0].shape)
             After resize, the first input shape: [1, 112, 112, 3]
         """
-        if not isinstance(inputs, list):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
-        _inputs = []
-        if not isinstance(dims, list):
-            raise TypeError("dims must be list, but got {}.".format(type(dims)))
-        for i, element in enumerate(inputs):
-            if not isinstance(element, Tensor):
-                raise TypeError(f"inputs element must be Tensor, but got "
-                                f"{type(element)} at index {i}.")
-        for i, element in enumerate(dims):
-            if not isinstance(element, list):
-                raise TypeError(f"dims element must be list, but got "
-                                f"{type(element)} at index {i}.")
-            for j, dim in enumerate(element):
-                if not isinstance(dim, int):
-                    raise TypeError(f"dims element's element must be int, but got "
-                                    f"{type(dim)} at {i}th dims element's {j}th element.")
-        if len(inputs) != len(dims):
-            raise ValueError(f"inputs' size does not match dims' size, but got "
-                             f"inputs: {len(inputs)} and dims: {len(dims)}.")
-        for _, element in enumerate(inputs):
-            _inputs.append(element._tensor)
-        ret = self._model.resize(_inputs, dims)
-        if not ret.IsOk():
-            raise RuntimeError(f"resize failed! Error is {ret.ToString()}")
+        # pylint: disable=useless-super-delegation
+        super(Model, self).resize(inputs, dims)
 
 
 class ModelParallelRunner:

@@ -27,6 +27,17 @@ def _read_file(filename):
         return f.read()
 
 
+def _get_package_data():
+    pkg_data = [
+        '__init__.py', '_checkparam.py', 'base_model.py', 'context.py', 'converter.py', 'model.py', 'tensor.py',
+        'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*', 'include/api/metrics/*',
+        'include/mindapi/base/*', 'include/registry/converter_context.h', 'include/converter.h'
+    ]
+    if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
+        pkg_data.append('lite_infer.py')
+    return pkg_data
+
+
 version = _read_file(TOP_DIR + '/version.txt').replace("\n", "")
 readme = _read_file(TOP_DIR + '/mindspore/lite/README.md')
 
@@ -46,9 +57,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    package_data={'': ['*.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*',
-                       'include/api/metrics/*', 'include/mindapi/base/*', 'include/registry/converter_context.h',
-                       'include/converter.h']},
+    package_data={'': _get_package_data()},
     include_package_data=True,
     cmdclass={},
     entry_points={},
