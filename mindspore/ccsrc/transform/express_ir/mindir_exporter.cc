@@ -37,6 +37,7 @@
 #endif
 #include "abstract/abstract_function.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "ir/functor.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -157,6 +158,7 @@ class IrExportBuilder {
   bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetQuantizationParamToAttrProto(const std::shared_ptr<QuantizationParam> &quantization_param,
                                        mind_ir::TensorProto_QuantParamProto *const quant_param_proto);
+  bool SetFunctorToAttrProto(const FunctorPtr &value, mind_ir::AttributeProto *const attr_proto);
 
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
@@ -530,6 +532,26 @@ bool IrExportBuilder::SetQuantizationParamToAttrProto(const std::shared_ptr<Quan
       MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
       return false;
     }
+  }
+  return true;
+}
+
+bool IrExportBuilder::SetFunctorToAttrProto(const FunctorPtr &func, mind_ir::AttributeProto *const attr_proto) {
+  auto *functor_proto = attr_proto->mutable_functor();
+  attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FUNCTOR);
+  if (func->isa<ShapeCalcFunctor>()) {
+    functor_proto->set_type(mind_ir::FunctorProto_FunctorType_SHAPE_CALC_FUNCTOR);
+  } else {
+    MS_LOG(ERROR) << "Unknown functor: " << func->ToString();
+    return false;
+  }
+  functor_proto->set_name(func->name());
+  auto values = func->ToValue();
+  if (values == nullptr) {
+    values = kNone;
+  }
+  if (!SetValueToAttributeProto(values, functor_proto->add_values())) {
+    return false;
   }
   return true;
 }
@@ -1245,9 +1267,8 @@ bool IrExportBuilder::SetNamedValueToAttributeProto(const ValuePtr &value,
 }
 
 bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
-  if (value == nullptr || attr_proto == nullptr) {
-    MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
-  }
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(attr_proto);
   if (value->isa<StringImm>() || value->isa<Scalar>()) {
     return SetScalarToAttributeProto_ir(value, attr_proto);
   } else if (value->isa<Number>() || value->isa<TensorType>()) {
@@ -1291,6 +1312,8 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
       return false;
     }
+  } else if (value->isa<Functor>()) {
+    return SetFunctorToAttrProto(value->cast<FunctorPtr>(), attr_proto);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << value->type_name();
     return false;

@@ -22,12 +22,11 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
+#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 
 namespace mindspore {
 namespace expander {
 namespace bprop {
-constexpr int64_t kShapeDimAny = -1;
-
 NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
                                 const std::string &instance_name) {
   inputs_ptr_ = &inputs;
@@ -37,29 +36,7 @@ NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, c
 }
 
 NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) const {
-  auto shape_func = [shift](const ShapeArray &inputs) -> ShapeArray {
-    auto shape_x = inputs.at(kIndex0);
-    ShapeVector broadcast_shape_of_x;
-    auto x_shape_num = shape_x.size() > shift ? (shape_x.size() - shift) : 0;
-    for (size_t i = 0; i < x_shape_num; ++i) {
-      broadcast_shape_of_x.push_back(shape_x[i]);
-    }
-
-    auto shape_y = inputs.at(kIndex1);
-    ShapeVector broadcast_shape_of_y;
-    auto y_shape_num = shape_y.size() > shift ? (shape_y.size() - shift) : 0;
-    for (size_t i = 0; i < y_shape_num; ++i) {
-      broadcast_shape_of_y.push_back(shape_y[i]);
-    }
-
-    auto broadcast_axis = bprop::BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
-    return broadcast_axis;
-  };
-  auto rank_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector {
-    return {kShapeDimAny, kShapeDimAny};
-  };
-
-  return ShapeCalc({s0, s1}, shape_func, rank_func);
+  return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1});
 }
 
 ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {

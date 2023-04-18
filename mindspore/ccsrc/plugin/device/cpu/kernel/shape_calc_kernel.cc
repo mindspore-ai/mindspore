@@ -29,7 +29,7 @@ bool ShapeCalcCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_name_ = kernel_ptr->name();
-  func_ = kernel_ptr->get_shape_func();
+  functor_ = kernel_ptr->get_functor();
   outputs_ = outputs;
   return true;
 }
@@ -69,7 +69,7 @@ int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  if (func_ == nullptr) {
+  if (functor_ == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape func pointer is nullptr";
     return false;
   }
@@ -92,7 +92,7 @@ bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
       (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
     }
   }
-  outs_shape_ = func_(args);
+  outs_shape_ = functor_->Calc(args);
   if (outputs.size() != outs_shape_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', outputs address list size must be equal to the number of outputs of shape func, but got "

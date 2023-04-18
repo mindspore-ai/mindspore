@@ -15,6 +15,7 @@
  */
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
+#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 #include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -1195,18 +1196,8 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     return {ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)))};
   }
 
-  auto shape_func = [one_axis](const ShapeArray &inputs) -> ShapeArray {
-    // inputs: {x_shape}
-    return {GetTransposeAxis(inputs.at(0), one_axis)};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
-    return {x_rank};
-  };
-
-  NodePtr reverse_axis =
-    IsDynamicRank(shp) ? ib->ShapeCalc({x}, shape_func, infer_func)[0] : ib->Value(GetTransposeAxis(shp, one_axis));
+  NodePtr reverse_axis = IsDynamicRank(shp) ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(one_axis), {x})[0]
+                                            : ib->Value(GetTransposeAxis(shp, one_axis));
   out = ib->Transpose(out, reverse_axis);
   dout = ib->Transpose(dout, reverse_axis);
   auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));

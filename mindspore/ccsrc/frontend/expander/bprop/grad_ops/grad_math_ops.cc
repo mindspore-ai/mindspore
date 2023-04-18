@@ -19,6 +19,7 @@
 #include "include/common/utils/utils.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "utils/ms_context.h"
+#include "ir/functor.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList CheckBpropExpander(const BpropIRBuilder *ib) {

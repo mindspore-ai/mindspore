@@ -28,6 +28,7 @@
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -548,21 +549,7 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
 }
 
 NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
-  // Grad definition for `Sum` operation.
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto x_shape = inputs.at(0);
-    auto axis_value = inputs.at(1);
-    auto r_shape = ReduceShape(x_shape, axis_value);
-    auto scaling = TupleDiv(x_shape, r_shape);
-    return {r_shape, scaling};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
-    return {x_rank, x_rank};
-  };
-
-  auto calc_res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  auto calc_res = ib->ShapeCalc(std::make_shared<SumGradShapeCalc>(), {x, axis}, {1});
   const size_t cal_num = 2;
   if (calc_res.size() != cal_num) {
     MS_LOG(EXCEPTION) << "Number of ShapeCalc should be 2, but got " << calc_res.size();
