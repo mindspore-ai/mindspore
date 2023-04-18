@@ -55,8 +55,6 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::shared_ptr<ge::Session> ge_session_ = nullptr;
   std::vector<uint32_t> init_graph_id_list_;
   std::vector<uint32_t> compute_graph_id_list_;
-  std::shared_ptr<transform::DfGraphConvertContext> converter_context =
-    std::make_shared<transform::DfGraphConvertContext>();
 
   std::shared_ptr<AscendDeviceInfo> GetAscendDeviceInfo();
   void GetGeGraphOptions(const FuncGraphPtr &anf_graph, std::map<std::string, std::string> *ge_options);
@@ -65,7 +63,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   bool AddGraph(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &options,
                 uint32_t *graph_id);
-  bool RunGeInitGraph(uint32_t init_graph_id);
+  bool RunGeInitGraph(uint32_t init_graph_id, const std::vector<tensor::TensorPtr> &init_tensors);
   tensor::TensorPtr ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
 
   static std::atomic_uint32_t global_graph_idx_;

@@ -477,32 +477,10 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (op_itor == op_cache_.end()) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
-    // create tensor descriptor for output descriptor
     auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
     if (desc == nullptr) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
-    }
-
-    OperatorPtr const_op = nullptr;
-    if (convert_context_ != nullptr) {
-      auto const_it = convert_context_->const_op_map.find(name);
-      if (const_it != convert_context_->const_op_map.end()) {
-        const_op = const_it->second.lock();
-      }
-    }
-    if (const_op == nullptr) {
-      auto adpt_const = FindAdapter(kNameConst, training_);
-      if (adpt_const == nullptr) {
-        continue;
-      }
-      auto const_op_new = adpt_const->generate(name + "_const");
-      (void)adpt_const->setAttr(const_op_new, "value", it.second);
-      (void)std::static_pointer_cast<Constant>(const_op_new)->update_output_desc_y(*desc);
-      if (convert_context_ != nullptr) {
-        convert_context_->const_op_map[name] = const_op_new;
-      }
-      const_op = const_op_new;
     }
 
     bool will_be_update = false;
@@ -516,6 +494,13 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       }
     }
     if (!training_ && !will_be_update) {
+      auto adpt_const = FindAdapter(kNameConst, training_);
+      if (adpt_const == nullptr) {
+        continue;
+      }
+      auto const_op = adpt_const->generate(name + "_const");
+      (void)adpt_const->setAttr(const_op, "value", it.second);
+      (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
       const_op_to_value_[const_op] = it.second;
       vars_[name] = const_op;
       op_itor->second = const_op;
@@ -539,6 +524,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       init_ops_.push_back(param_op);
       init_ops_.push_back(assign_op);
       init_ops_.push_back(init_var);
+      init_data_names_.push_back(name);
     }
 
     auto variable = std::make_shared<Variable>(name);
