@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_CONCAT_PARAMETER_H_
-#define MINDSPORE_NNACL_CONCAT_PARAMETER_H_
+#ifndef NNACL_KERNEL_F16_STACK_F16_H_
+#define NNACL_KERNEL_F16_STACK_F16_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/int8/quantize.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
+#include "nnacl/kernel/stack.h"
 
-typedef struct ConcatParameter {
-  OpParameter op_parameter_;
-  ConcatQuantArg quant_arg_;
-  int axis_;
+typedef struct StackF16Struct {
+  StackStruct stack_;
+  bool *init_;
+} StackF16Struct;
 
-  /* micro */
-  int thread_count_;
-  int input_num_;
-  int **input_shapes_;
-  int *output_shapes_;
-  int64_t after_axis_size;
-  int64_t count_unit_;
-} ConcatParameter;
+KernelBase *CreateStackF16(OpParameter *param, int data_type);
 
-#endif  // MINDSPORE_NNACL_CONCAT_PARAMETER_H_
+#endif  // NNACL_KERNEL_F16_STACK_F16_H_

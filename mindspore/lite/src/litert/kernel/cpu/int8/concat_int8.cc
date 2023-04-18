@@ -153,7 +153,10 @@ void ConcatInt8CPUKernel::DoExecute(int task_id) {
   if (real_dst_count <= 0) {
     return;
   }
-  Int8Concat(input_data_, output_data_, concat_param_, concat_param_->axis_, real_dst_count, task_id);
+
+  Int8Concat(input_data_, output_data_, concat_param_, concat_param_->axis_, real_dst_count, task_id,
+             concat_param_->input_num_, concat_param_->count_unit_, concat_param_->after_axis_size,
+             concat_param_->input_shapes_, concat_param_->output_shapes_);
   return;
 }
 

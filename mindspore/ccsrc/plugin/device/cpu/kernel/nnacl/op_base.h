@@ -161,6 +161,7 @@
 #define kInputSize2 3
 #define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
+#define MAX_THREAD_NUM 64
 #define FLT16_MAX 65504
 #define kDefaulLiteMaxSpinCount 300000
 #define kDefaulLiteMinSpinCount 1

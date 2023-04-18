@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_FP16
-#include "nnacl/kernel/stack_f16.h"
+#include "nnacl/kernel/f16/stack_f16.h"
 #include "nnacl/fp16/cast_fp16.h"
 
 void *StackF16InitBuffer(KernelBase *base, TensorC *t, bool init) {
@@ -91,4 +90,3 @@ KernelBase *CreateStackF16(OpParameter *param, int data_type) {
 }
 
 REG_KERNEL_CREATOR(PrimType_Stack, kNumberTypeFloat16, CreateStackF16)
-#endif
