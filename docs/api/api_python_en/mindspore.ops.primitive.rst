@@ -76,6 +76,7 @@ Neural Network
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
+    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
 
@@ -473,6 +474,7 @@ Array Operation
     mindspore.ops.Hypot
     mindspore.ops.Identity
     mindspore.ops.Igamma
+    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd

@@ -451,13 +451,15 @@ def where(condition, x, y):
         raise TypeError(f"For 'where', 'condition' must be a Tensor, but got {type(condition)}.")
     if isinstance(x, (int, float)):
         if not isinstance(y, Tensor):
-            raise TypeError(f"For 'where', at least one of 'x' and 'y' should be Tensor, \
-            but got x:{type(x)}, y:{type(y)}.")
+            raise TypeError(
+                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
+            )
         x = cast_(x, y.dtype)
     elif isinstance(y, (int, float)):
         if not isinstance(x, Tensor):
-            raise TypeError(f"For 'where', at least one of 'x' and 'y' should be Tensor, \
-            but got x:{type(x)}, y:{type(y)}.")
+            raise TypeError(
+                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
+            )
         y = cast_(y, x.dtype)
     output_shape = _calc_broadcast_shape(x.shape, y.shape, condition.shape)
     condition = broadcast_to(condition, output_shape)
@@ -6175,14 +6177,15 @@ def _check_fold_param(param, param_name):
 
 
 def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
-    """
+    r"""
     Combines an array of sliding local blocks into a large containing tensor.
 
     .. warning::
-        - Currently, only 4-D output tensors (batched image-like tensors) are supported.
+        - In version 2.0rc1, the input should be a 4-dimensional Tensor whose shape is :math:`(N, C, H, W)` .
+        - In later versions, it must be a 3-dimensional Tensor with shape :math:`(N, C \times H, W)` .
 
     Args:
-        input (Tensor): 4-D Tensor with data type float16 or float32.
+        input (Tensor): 3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
         output_size (Tensor): 1D tensor with `2` elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
@@ -6208,7 +6211,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+        >>> x = Tensor(input_data=np.random.rand(16, 64, 25), dtype=mstype.float32)
         >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
         >>> output = ops.fold(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
         >>> print(output.shape)
@@ -6219,6 +6222,10 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     padding = _check_fold_param(padding, "padding")
     stride = _check_fold_param(stride, "stride")
     fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
+    input_shape = F.shape(input)
+    k = (kernel_size[0] * kernel_size[-1])
+    r_shape = input_shape[:1] + (-1, k) + input_shape[-1:]
+    input = F.reshape(input, r_shape)
     return fold_op(input, output_size)
 
 
@@ -6236,15 +6243,42 @@ def _check_unfold_params(param, param_name, param_size):
 
 
 def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
-    """
-    Reshapes a tensor of format (N, C, H, W) by extracting sliding local blocks from the input Tensor
-    and concatenating them along a new dimension.
+    r"""
+    Extracts sliding local blocks from a batched input tensor.
+
+    Consider a batched input tensor of shape :math:`(N, C, *)`,
+    where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
+    and :math:`*` represent arbitrary spatial dimensions. This operation flattens
+    each sliding `Kernel_size`- sized block within the spatial dimensions
+    of input `x` into a column (i.e., last dimension) of a 3-D output
+    tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)`, where
+    :math:`C \times \prod(\text{kernel_size})` is the total number of values
+    within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+    locations each containing a `C`-channeled vector), and :math:`L` is
+    the total number of such blocks:
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{spatial_size}[d] + 2 \times \text{pads}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    where :math:`\text{spatial_size}` is formed by the spatial dimensions
+    of input `x` (:math:`*` above), and :math:`d` is over all spatial
+    dimensions.
+
+    Therefore, indexing `output` at the last dimension (column dimension)
+    gives all values within a certain block.
+
+    The `dilation`, `padding` and `stride` arguments specify
+    how the sliding blocks are retrieved.
 
     .. warning::
-        - Currently, only 4-D input tensors (batched image-like tensors) are supported.
+        - In version 2.0rc1, the output is a 4-dimensional Tensor whose shape
+          is :math:`(N, C, \prod(\text{kernel_size}), L)` .
+        - In later versions, it is a 3-dimensional Tensor whose shape is
+          :math:`(N, C \times \prod(\text{kernel_size}), L)` .
 
     Args:
-        input (Tensor): 4-D Tensor. Support all real number data type.
+        input (Tensor): 4-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
@@ -6258,7 +6292,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
             for height and width. If type is int, it means that height equal with width. Default: 1.
 
     Returns:
-        A Tensor, with same type as `input`.
+        A Tensor, with same type as `input` . And its shape is as described above.
 
     Raises:
         TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `kernel_size` is not int, tuple or list.
@@ -6273,7 +6307,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
         >>> output = ops.unfold(x, kernel_size=3, dilation=1, stride=1)
         >>> print(output.shape)
-        (4, 4, 9, 900)
+        (4, 36, 900)
     """
     kernel_size = _check_unfold_params(kernel_size, "kernel_size", [1, 2])
     dilation = _check_unfold_params(dilation, "dilation", [1, 2])
@@ -6283,7 +6317,11 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
                                         strides=stride,
                                         dilations=dilation,
                                         pads=padding)
-    return unfold_op(input)
+    tmp = unfold_op(input)
+    tmp_shape = F.shape(tmp)
+    out_shape = tmp_shape[:1] + (-1,) + tmp_shape[-1:]
+    out = F.reshape(tmp, out_shape)
+    return out
 
 
 @constexpr

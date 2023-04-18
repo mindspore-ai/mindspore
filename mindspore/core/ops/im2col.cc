@@ -73,7 +73,7 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   constexpr size_t size_4 = 4;
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamic(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{size_4, abstract::Shape::kShapeDimAny});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(size_4, abstract::Shape::kShapeDimAny));
   }
 
   (void)CheckAndConvertUtils::CheckInteger("dimension of input x", SizeToLong(in_shape.size()), kEqual,
