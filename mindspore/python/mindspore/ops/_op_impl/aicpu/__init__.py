@@ -20,6 +20,8 @@ from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
 from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
 from .less import _less_aicpu
+from .lgamma import _lgamma_aicpu
+from .lstsq import _lstsq_aicpu
 from .add import _add_aicpu
 from .sparse_matrix_transpose import _sparse_matrix_transpose_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
@@ -47,6 +49,7 @@ from .argmin_with_value import _argmin_with_value_aicpu
 from .avgpool_v1 import _avgpool_v1_aicpu
 from .avgpool_grad_v1 import _avgpool_grad_v1_aicpu
 from .matrix_solve import _matrix_solve_aicpu
+from .matrix_logarithm import _matrix_logarithm_aicpu
 from .betainc import _betainc_aicpu
 from .bartlett_window import _bartlett_window_aicpu
 from .batch_norm_grad_grad import _batch_norm_grad_grad_aicpu
@@ -96,6 +99,7 @@ from .rsqrt import _rsqrt_aicpu
 from .sqrt import _sqrt_aicpu
 from .sqrt_grad import _sqrt_grad_aicpu
 from .masked_fill import _masked_fill_aicpu
+from .masked_scatter import _masked_scatter_aicpu
 from .sort import _sort_aicpu
 from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
@@ -164,6 +168,7 @@ from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
 from .asinh import _asinh_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
+from .matrix_exp import _matrix_exp_aicpu
 from .matrix_diag_v3 import _matrix_diag_v3_aicpu
 from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .tan import _tan_aicpu
@@ -233,6 +238,7 @@ from .reduce_sum import _reduce_sum_aicpu
 from .adaptive_avg_pool_2d import _adaptive_avg_pool_2d_aicpu
 from .adaptive_avg_pool_2d_grad import _adaptive_avg_pool_2d_grad_aicpu
 from .fill_v2 import _fill_v2_aicpu
+from .fill_diagonal import _fill_diagonal_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
 from .multinomial import _multinomial_aicpu
 from .fft_with_size import _fft_with_size_aicpu
@@ -294,6 +300,7 @@ from .cumulative_logsumexp import _cumulative_logsumexp_aicpu
 from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
 from .scale_and_translate import _scale_and_translate_aicpu
 from .quant_dtype_cast import _quant_dtype_cast_aicpu
+from .quantile import _quantile_aicpu
 from .fse_decode import _fse_decode_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .dense_to_sparse_set_operation import _dense_to_sparse_set_operation_aicpu
@@ -318,6 +325,7 @@ from .heaviside import _heaviside_aicpu
 from .hypot import _hypot_aicpu
 from .identity_n import _identity_n_aicpu
 from .index_fill import _index_fill_aicpu
+from .index_put import _index_put_aicpu
 from .kldivloss import _kldiv_loss_aicpu
 from .kldivlossgrad import _kldiv_loss_grad_aicpu
 from .lcm import _lcm_aicpu
@@ -334,6 +342,7 @@ from .cholesky import _cholesky_aicpu
 from .hsv_to_rgb import _hsv_to_rgb_aicpu
 from .im2col import _im2col_aicpu
 from .lu_solve import _lu_solve_aicpu
+from .lu import _lu_aicpu
 from .relu_grad_v3 import _relu_grad_v3_aicpu
 from .resize_bicubic import _resize_bicubic_aicpu
 from .extract_glimpse import _extract_glimpse_aicpu

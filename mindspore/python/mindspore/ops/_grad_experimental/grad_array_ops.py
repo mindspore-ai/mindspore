@@ -285,6 +285,7 @@ def get_bprop_index_put(self):
     tile = P.Tile()
     masked_select = MaskedSelect()
     masked_scatter = MaskedScatter()
+    reduce_ = P.ReduceSum(keep_dims=True)
     accumulate_grad = self.accumulate
     index_put = IndexPut(accumulate=accumulate_grad)
     is_ascend = context.get_context("device_target") == 'Ascend'
@@ -304,7 +305,7 @@ def get_bprop_index_put(self):
         indices_grad = stack(indices_ms).T
         values_grad = gather_nd(dout, indices_grad)
         if x2.shape[0] == 1:
-            values_grad = values_grad.sum().reshape(1)
+            values_grad = reduce_(values_grad, [0])
         if values_grad.shape != x2.shape and len(indices) < len(x1.shape):
             _, values_grad = binop_grad_common(x1, x2, dout, values_grad)
         if accumulate_grad == 0:
