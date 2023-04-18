@@ -298,7 +298,6 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
-  (void)op_run_prim_py_list_.emplace_back(op_run_info->op_prim);
   op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }
@@ -535,10 +534,6 @@ void ForwardExecutor::Sync() {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->SyncStream();
   }
-  {
-    py::gil_scoped_acquire acquire;
-    op_run_prim_py_list_.clear();
-  }
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -607,7 +602,6 @@ void ForwardExecutor::ClearRes() {
   infer_operation()->ClearConstFlagPrimCache();
   std::stack<CellPtr>().swap(forward_cell_stack_);
   mindrt_backends_.clear();
-  op_run_prim_py_list_.clear();
 }
 }  // namespace pynative
 }  // namespace mindspore

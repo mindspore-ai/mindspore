@@ -88,15 +88,6 @@ void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::BackendOpRunTask>
   (void)actor_in_queue_.insert(op_run_task->context()->graph_id());
 }
 
-void OpExecutor::ClearOpBuildTasks() {
-  std::unique_lock<std::mutex> lock(build_mutex_);
-  for (auto &task : op_build_tasks_) {
-    task->SetBuildReady(true);
-  }
-  op_build_tasks_.clear();
-  MS_LOG(DEBUG) << "Clear build task";
-}
-
 std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> OpExecutor::PopOpBuildTasks() {
   std::unique_lock<std::mutex> lock(build_mutex_);
   auto build_tasks = op_build_tasks_;
