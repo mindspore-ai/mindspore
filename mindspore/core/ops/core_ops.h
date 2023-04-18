@@ -1580,6 +1580,7 @@ GVAR_DEF(PrimitivePtr, kPrimErrorOnDynamicShapeInput, std::make_shared<Primitive
 GVAR_DEF(PrimitivePtr, kPrimIsDimUnknown, std::make_shared<Primitive>("IsDimUnKnown"));
 GVAR_DEF(PrimitivePtr, kPrimIsShapeUnknown, std::make_shared<Primitive>("IsShapeUnKnown"));
 GVAR_DEF(PrimitivePtr, kPrimIsElementUnknown, std::make_shared<Primitive>("IsElementUnknown"));
+GVAR_DEF(PrimitivePtr, kPrimIsTensorBoolCond, std::make_shared<Primitive>("IsTensorBoolCond"));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimCheckValid, std::make_shared<Primitive>("CheckValid"));
