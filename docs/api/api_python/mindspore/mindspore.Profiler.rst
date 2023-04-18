@@ -26,7 +26,7 @@ mindspore.Profiler
         - **sync_enable** (bool, 可选) -（仅限GPU）Profiler是否用同步的方式收集算子耗时，默认值： ``True`` 。
 
           - True: 同步方式，在把算子发送到GPU之前，在CPU端记录开始时间戳。然后在算子执行完毕返回到CPU端后，再记录结束时间戳。算子耗时为两个时间戳的差值。
-          - False: 异步方式，算子耗时为从CPU发送到GPU的耗时。这种方式能减少因增加Profiler对训练时间的影响。
+          - False: 异步方式，算子耗时为从CPU发送到GPU的耗时。这种方式能减少因增加Profiler对整体训练时间的影响。
 
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值： ``True`` 。
         - **timeline_limit** (int, 可选) - 设置限制timeline文件存储上限大小（单位M），使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``500`` 。
