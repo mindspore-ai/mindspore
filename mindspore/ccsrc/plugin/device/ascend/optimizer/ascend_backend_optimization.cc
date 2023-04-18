@@ -39,6 +39,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
+#include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
@@ -370,6 +371,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
+  ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
@@ -446,6 +448,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
+  ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());

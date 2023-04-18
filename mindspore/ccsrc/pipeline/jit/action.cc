@@ -171,6 +171,7 @@ void TaskEmitActionForMindRT(const ResourcePtr &resource) {
   // The output of graph compiler is actor.
   auto actor_info = mindrt_bc_ptr->CompileGraphs(resource->func_graph());
   resource->SetResult(kOutput, actor_info);
+  resource->SetResult(kActorInfo, actor_info);
 }
 
 void ExecuteActionForMindRT(const ResourcePtr &resource) {

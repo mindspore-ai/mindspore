@@ -472,6 +472,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
     graph->set_root_graph_id(root_graph->graph_id());
     graph->set_run_mode(device::RunMode::kGraphMode);
     graph->set_is_loop_count_sink(true);
+    graph->set_attrs(func_graph->attrs());
     // Convert the illegal data type.
     opt::EliminateIllegalDataTypePass(graph);
   }

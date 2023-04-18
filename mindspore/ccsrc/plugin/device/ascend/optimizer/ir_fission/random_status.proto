@@ -1,0 +1,14 @@
+syntax = "proto3";
+package mindspore;
+
+message RandomNode {
+  string name = 1;  // OpName-op123, etc.
+  string code = 2;  // sample.py:234, etc.
+  uint32 graph_id = 3;
+  uint64 status0 = 4;
+  uint64 status1 = 5;
+}
+
+message RandomNodeList {
+  repeated RandomNode nodes = 1;
+}
