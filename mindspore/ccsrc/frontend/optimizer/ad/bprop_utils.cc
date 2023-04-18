@@ -34,7 +34,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/expander/bprop/bprop_expander_meta_func_graph.h"
+#include "frontend/expander/bprop/bprop_meta_func_graph.h"
 
 namespace mindspore {
 namespace ad {
@@ -330,35 +330,18 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
   static const std::string gradients_scope = "Gradients/";
   static const std::string grad_op_child_scope_prefix = "/grad";
   MS_EXCEPTION_IF_NULL(prim);
+  const auto &prim_name = prim->name();
   auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +
-                                       grad_op_child_scope_prefix + prim->name());
+                                       grad_op_child_scope_prefix + prim_name);
   ScopeGuard scope_guard(scope);
 
-  // Firstly we get bprop from mindir. If failed, parse the python function registered.
-  FuncGraphPtr func_graph = nullptr;
-  if (common::GetEnv("MS_DEV_GET_PYTHON_BPROP") != "1") {
-    const auto &bprop_impl_map = graph_bprop::GetPrimitiveBpropImplMap();
-    auto iter = bprop_impl_map.find(prim->name());
-    if (iter != bprop_impl_map.end()) {
-      std::vector<AnfNodePtr> node_lists = cnode->inputs();
-      auto forward_inputs_size = cnode->inputs().size() - 1;
-      for (size_t i = 1; i < node_lists.size(); i++) {
-        auto input_i = node_lists[i];
-        if (HasAbstractMonad(input_i)) {
-          --forward_inputs_size;
-        }
-      }
-      func_graph = iter->second(prim, forward_inputs_size);
-      MS_EXCEPTION_IF_NULL(func_graph);
-      func_graph->set_flag(mindspore::kFuncGraphFlagMetaFuncGraphBprop, true);
-      if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP)) {
-        func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
-      }
-      return func_graph;
-    }
+  // Firstly we get bprop from expander. If failed, try mindir. If still failed, try the python bprop function.
+  FuncGraphPtr func_graph = expander::bprop::GetBpropMetaFuncGraph(prim, cnode);
+  if (func_graph != nullptr) {
+    return func_graph;
   }
 #ifndef _WIN32
-  if (IsSerializableBprop(prim->name())) {
+  if (IsSerializableBprop(prim_name)) {
     func_graph = ImportBpropFromMindIR(prim);
     if (func_graph != nullptr) {
       OptimizeBpropFromMindIR(func_graph, resources, prim);
@@ -371,20 +354,20 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
 #endif
   py::function fn;
   if (prim->is_base()) {
-    fn = GetBpropFunction(prim->name());
+    fn = GetBpropFunction(prim_name);
   } else {
     fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
     if (py::isinstance<py::none>(fn)) {
-      fn = GetBpropFunction(prim->name());
+      fn = GetBpropFunction(prim_name);
     }
   }
   if (!fn || py::isinstance<py::none>(fn)) {
-    MS_LOG(INFO) << "Fail to find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+    MS_LOG(INFO) << "Fail to find bprop function for " << prim_name << ". fn: " << py::str(fn);
     return nullptr;
   }
   func_graph = parse::ParsePythonCode(fn);
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Fail to parse bprop function for " << prim->name() << ".";
+    MS_LOG(ERROR) << "Fail to parse bprop function for " << prim_name << ".";
     return nullptr;
   }
   auto bprop_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP);
