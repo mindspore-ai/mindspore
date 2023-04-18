@@ -141,6 +141,9 @@ int InnerContext::CreateThreadPool() {
       if (inter_op_parallel_num_ > 1) {
         thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
                                                             this->affinity_core_list_, bind_mode_, runner_id_);
+      } else if (thread_num_ == 1 && !IsCpuFloat16Enabled()) {
+        thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
+        thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
       } else {
         thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num_, this->thread_num_,
                                                          this->affinity_core_list_, bind_mode_);

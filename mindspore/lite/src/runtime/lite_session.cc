@@ -1291,12 +1291,17 @@ int LiteSession::PreCheck(Model *model) {
 int LiteSession::InitExecutor() {
   int ret;
 #ifdef ENABLE_MINDRT
-  ret = IsolateOutputTensor();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Isolate output tensor failed.";
-    return ret;
+  if (ms_context_->GetThreadNum() == 1 && !context_->IsCpuFloat16Enabled()) {
+    executor_ = new (std::nothrow) Executor();
+  } else {
+    ret = IsolateOutputTensor();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Isolate output tensor failed.";
+      return ret;
+    }
+    executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
   }
-  executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+
 #else
   executor_ = new (std::nothrow) Executor();
 #endif
