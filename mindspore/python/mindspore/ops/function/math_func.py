@@ -7577,25 +7577,11 @@ def _check_last_dim_shape_eq(a, b):
         raise ValueError('shapes are not aligned')
 
 
-def dot(a, b):
-    """dot function"""
-    res_dtype = _check_dtype(a.dtype, b.dtype)
-    ndim_a, ndim_b = a.ndim, b.ndim
-    if ndim_a == 0 or ndim_b == 0:
-        return ops.tensor_mul(a, b)
-    if ndim_a > 0 and ndim_b >= 2:
-        perm = ops.make_range(ndim_b)
-        perm = perm[:-2] + (perm[-1],) + (perm[-2],)
-        b = ops.transpose(b, perm)
-
-    _check_last_dim_shape_eq(a, b)
-    a_aligned = a.reshape(-1, a.shape[-1]).astype(mstype.float32)
-    output_aligned = b.reshape(-1, b.shape[-1]).astype(mstype.float32)
-
-    res = ops.matmul(a_aligned, output_aligned.T)
-    res = res.reshape(a.shape[:-1] + b.shape[:-1])
-
-    return res.astype(res_dtype)
+def _complex_square(A):
+    """calculate square with complex or not"""
+    if ops.is_complex(A):
+        return ops.conj(A) * A
+    return ops.square(A)
 
 
 def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
@@ -7720,9 +7706,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         A = ops.cast(A, dtype)
     # Immediately handle some default, simple, fast, and common cases.
     if immediate:
-        A = A.ravel()
-        sqnorm = dot(A, A)
-        ret = ops.sqrt(sqnorm)
+        ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
         if keepdim:
             ret = ret.reshape(ndim * [1])
         return ret
@@ -7769,7 +7753,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
         if ord is None:
             # special case for speedup
-            s = ops.conj(A) * A
+            s = _complex_square(A)
             reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdim)
             return ops.sqrt(reduce_sum(s, dim))
         # None of the str-type keywords for ord ('fro', 'nuc')
@@ -7799,11 +7783,11 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
                 row_axis -= 1
             ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
         elif ord == 'fro':
-            ret = ops.sqrt(ops.reduce_sum((ops.conj(A) * A), dim))
+            ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
         elif ord == 'nuc':
             ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
         else:
-            ret = ops.sqrt(ops.reduce_sum((ops.conj(A) * A), dim))
+            ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
         if keepdim:
             ret_shape = list(A.shape)
             ret_shape[dim[0]] = 1
