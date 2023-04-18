@@ -130,8 +130,11 @@ GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
 
 void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(converter_param_);
-  const CallbackImplRegister callback(
+  if (converter_param_ == nullptr) {
+    converter_param_ = std::make_shared<ConverterPara>();
+    converter_param_->device = "Ascend";
+  }
+  const CallbackImplRegister callback_reg(
     [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
 
   auto device = Callback::Instance()->GetTargetFromContext();

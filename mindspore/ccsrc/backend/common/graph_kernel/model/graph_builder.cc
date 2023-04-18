@@ -28,9 +28,8 @@ NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape
   return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
 }
 
-NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, const int64_t &axis) const {
-  auto axis_value = MakeValue(axis);
-  return Emit("Gather", {param, indice}, {{"axis", axis_value}});
+NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, int64_t axis, int64_t batch_dims) const {
+  return Emit("Gather", {param, indice}, {{"axis", MakeValue(axis)}, {"batch_dims", MakeValue(batch_dims)}});
 }
 
 NodePtr GraphBuilder::Concat(const NodePtrList &inputs, const int64_t &axis) const {

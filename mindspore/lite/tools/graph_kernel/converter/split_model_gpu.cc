@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,50 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/graph_kernel/converter/split_model_cpu.h"
+#include "tools/graph_kernel/converter/split_model_gpu.h"
 #include <memory>
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER(kCPUDevice, SplitModelCpu);
+SPLIT_MODEL_REGISTER(kGPUDevice, SplitModelGpu);
 constexpr size_t kReduceFusionDepth = 20;
 constexpr size_t kBroadcastFusionDepth = 20;
 
-class FuseConv : public FusePattern {
- public:
-  FuseConv() : FusePattern("conv") { direction_ = FuseDirection::BACKWARD; }
-  ~FuseConv() = default;
-
- protected:
-  bool Check(const AreaPtr &dom) override {
-    if (dom->dom()->op() != "Conv2D") {
-      return false;
-    }
-    return true;
-  }
-  bool Match(const AreaPtr &dom) override {
-    for (auto d : dom->users_with_relation()) {
-      auto a = d.first;
-      if (HasCircle(dom, a)) {
-        continue;
-      }
-      if (a->pattern() < NodePattern::BROADCAST ||
-          (a->pattern() == NodePattern::BROADCAST && a->dom()->shape == dom->dom()->shape)) {
-        (void)fused_areas_.emplace_back(a);
-      }
-    }
-    return !fused_areas_.empty();
-  }
-
-  FuseType fuse_type_;
-};
-
-void SplitModelCpu::InitFusePatterns() {
+void SplitModelGpu::InitFusePatterns() {
   AddPattern(std::make_shared<FuseVirtualNode>(), true);
   AddPattern(std::make_shared<FuseReshape>(), true);
   AddPattern(FuseElemwiseFwd::CreateDepthMatcher(), true);
   AddPattern(FuseElemwiseFwd::CreateWidthMatcher(), true);
-  AddPattern(std::make_shared<FuseConv>(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
   AddPattern(FuseReduceFwd::CreateDepthMatcher(kReduceFusionDepth), true);
@@ -66,5 +36,5 @@ void SplitModelCpu::InitFusePatterns() {
   AddPattern(std::make_shared<FuseIsolateReshape>(), true);
 }
 
-AreaMode SplitModelCpu::GetDefaultAreaMode(const PrimOpPtr &) const { return AreaMode::COMPOSITE; }
+AreaMode SplitModelGpu::GetDefaultAreaMode(const PrimOpPtr &) const { return AreaMode::COMPOSITE; }
 }  // namespace mindspore::graphkernel::inner

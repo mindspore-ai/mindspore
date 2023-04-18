@@ -101,14 +101,15 @@ void SetOutputsFormat(const CNodePtr &cnode) {
 }
 
 void FixFormatsBeforeTranspose(const CNodePtr &cnode) {
+  auto outputs_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
+  if (outputs_format.empty()) {
+    MS_LOG(INFO) << "The outputs_format of node " << cnode->fullname_with_scope() << " is empty.";
+    return;
+  }
   for (size_t i = 1; i < cnode->size(); i++) {
     auto prev_node = cnode->input(i);
     if (IsPrimitiveCNode(prev_node, prim::kPrimTranspose)) {
       continue;
-    }
-    auto outputs_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
-    if (outputs_format.empty()) {
-      MS_LOG(EXCEPTION) << "The outputs_format of node " << cnode->fullname_with_scope() << " is empty.";
     }
     if (prev_node->isa<CNode>()) {
       auto prev_cnode = prev_node->cast<CNodePtr>();

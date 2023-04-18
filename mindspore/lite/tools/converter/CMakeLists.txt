@@ -51,6 +51,10 @@ if(NOT WIN32)
         )
 endif()
 
+if(ENABLE_GPU)
+    add_compile_definitions(ENABLE_GPU)
+endif()
+
 if(MSLITE_ENABLE_GRAPH_KERNEL)
     add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC

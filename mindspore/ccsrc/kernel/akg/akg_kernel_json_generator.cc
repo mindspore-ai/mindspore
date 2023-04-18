@@ -25,7 +25,11 @@
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+#ifdef ENABLE_GPU
+#include <cuda.h>
+#endif
+#else
 #include "kernel/oplib/oplib.h"
 #include "runtime/hardware/device_context_manager.h"
 #endif
@@ -1183,30 +1187,72 @@ void GetCpuInfo(nlohmann::json *target_info) {
   }
   return;
 }
+
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+#ifdef ENABLE_GPU
+bool GetGpuInfo(nlohmann::json *target_info) {
+  int major_version = -1;
+  auto ret = cuDeviceGetAttribute(&major_version, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
+  if (ret != CUDA_SUCCESS) {
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
+    return false;
+  }
+  int minor_version = -1;
+  auto ret = cuDeviceGetAttribute(&minor_version, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
+  if (ret != CUDA_SUCCESS) {
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, error message: " << msg;
+    return false;
+  }
+  int sm_count = -1;
+  auto ret = cuDeviceGetAttribute(&sm_count, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
+  if (ret != CUDA_SUCCESS) {
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT fail, error message: " << msg;
+    return false;
+  }
+  if (major_version == -1 || minor_version == -1 || sm_count == -1) {
+    return false;
+  } else {
+    (*target_info)[kJsonKeyComputeCapability] = std::to_string(major_version) + "." + std::to_string(minor_version);
+    (*target_info)[kJsonKeySmCount] = sm_count;
+  }
+  return true;
+}
+#else
+bool GetGpuInfo(nlohmann::json *) { return false; }
+#endif
+#else
+bool GetGpuInfo(nlohmann::json *target_info) {
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto deprecated_ptr = device_context->GetDeprecatedInterface();
+  MS_EXCEPTION_IF_NULL(deprecated_ptr);
+  auto major_version = deprecated_ptr->GetGPUCapabilityMajor();
+  auto minor_version = deprecated_ptr->GetGPUCapabilityMinor();
+  auto sm_count = deprecated_ptr->GetGPUMultiProcessorCount();
+  if (major_version == -1 || minor_version == -1 || sm_count == -1) {
+    return false;
+  } else {
+    (*target_info)[kJsonKeyComputeCapability] = std::to_string(major_version) + "." + std::to_string(minor_version);
+    (*target_info)[kJsonKeySmCount] = sm_count;
+  }
+  return true;
+}
+#endif
 }  // namespace
 
 void TargetInfoSetter::GetTargetInfo() {
   auto target = Callback::Instance()->GetTargetFromContext(true);
-#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (target == kGPUDevice) {
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    auto deprecated_ptr = device_context->GetDeprecatedInterface();
-    MS_EXCEPTION_IF_NULL(deprecated_ptr);
-    auto major_version = deprecated_ptr->GetGPUCapabilityMajor();
-    auto minor_version = deprecated_ptr->GetGPUCapabilityMinor();
-    auto sm_count = deprecated_ptr->GetGPUMultiProcessorCount();
-    if (major_version == -1 || minor_version == -1 || sm_count == -1) {
-      has_info_ = false;
-    } else {
-      (target_info_)[kJsonKeyComputeCapability] = std::to_string(major_version) + "." + std::to_string(minor_version);
-      (target_info_)[kJsonKeySmCount] = sm_count;
-    }
+    has_info_ = GetGpuInfo(&target_info_);
     return;
   }
-#endif
-
   if (target == kCPUDevice) {
     GetCpuInfo(&target_info_);
     return;

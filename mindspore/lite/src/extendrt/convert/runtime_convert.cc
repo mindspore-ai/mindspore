@@ -185,6 +185,8 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
           return ret;
         }
       }
+    } else if (device->GetDeviceType() == mindspore::kGPU) {
+      param->device = "GPU";
     } else {
       continue;
     }

@@ -136,8 +136,12 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
 }
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) {
-  if (GetTargetFromContextImpl(false) == "Ascend") {
+  auto target = GetTargetFromContextImpl(false);
+  if (target == "Ascend") {
     return "aicore";
+  }
+  if (target == "GPU") {
+    return "cuda";
   }
   return "cpu";
 }
@@ -151,7 +155,7 @@ std::string CallbackImpl::GetTargetFromContextImpl(bool detail) {
     }
     return target == "Ascend" ? "Ascend910" : target;
   }
-  return "CPU";
+  return !target.empty() ? target : "CPU";
 }
 
 void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {

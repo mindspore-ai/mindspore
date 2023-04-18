@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
+#include "tools/graph_kernel/converter/akg/utils.h"
 
 #include <iostream>
 #include <fstream>
@@ -77,5 +77,73 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
     *kernel_names = std::move(unique_kernel_name);
   }
   return dir_path.value();
+}
+
+std::string GetCNodeDynamicInputIndex(const CNodePtr &cnode) {
+  std::string dynamic_input_index;
+  auto cb = Callback::Instance();
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    if (cnode->input(i)->isa<CNode>() || cnode->input(i)->isa<Parameter>()) {
+      auto input_shape = cb->GetInputShape(cnode, i - 1);
+      if (input_shape.size() <= 0 || input_shape[0] != 1) {
+        MS_LOG(EXCEPTION) << "Dynamic inputs' batch size should be 1";
+      }
+      dynamic_input_index += std::to_string(i - 1) + ",";
+    }
+  }
+  return dynamic_input_index;
+}
+
+std::string GetCNodeInputShapeStr(const CNodePtr &cnode) {
+  std::string input_shape_str;
+  auto cb = Callback::Instance();
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    auto input_shape = cb->GetInputShape(cnode, i - 1);
+    input_shape_str += std::to_string(input_shape.size()) + ",";
+    for (auto &v : input_shape) {
+      input_shape_str += std::to_string(v) + ",";
+    }
+  }
+  return input_shape_str;
+}
+
+std::string GetCNodeOutputShapeStr(const CNodePtr &cnode) {
+  std::string output_shape_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_shape = cb->GetOutputShape(cnode, i);
+    output_shape_str += std::to_string(output_shape.size()) + ",";
+    for (auto &v : output_shape) {
+      output_shape_str += std::to_string(v) + ",";
+    }
+  }
+  return output_shape_str;
+}
+
+std::string GetCNodeOutputTypeStr(const CNodePtr &cnode) {
+  std::string output_type_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_type = cb->GetOutputType(cnode, i);
+    output_type_str += std::to_string(static_cast<int>(output_type)) + ",";
+  }
+  return output_type_str;
+}
+
+std::string GetCNodeOutputFormatStr(const CNodePtr &cnode) {
+  std::string output_format_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_format = cb->GetOutputFormat(cnode, i);
+    if (output_format == kOpFormat_NHWC) {
+      output_format_str += "1,";
+    } else {  // default, NCHW
+      output_format_str += "0,";
+    }
+  }
+  return output_format_str;
 }
 }  // namespace mindspore::graphkernel

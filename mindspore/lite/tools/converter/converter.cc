@@ -815,9 +815,9 @@ int CheckTrainModel(const std::shared_ptr<ConverterPara> &param) {
 
 int CheckDevice(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr && !(param->device.empty())) {
-    std::set valid_values = {"Ascend310", "Ascend310P", "Ascend"};
+    std::set valid_values = {"Ascend310", "Ascend310P", "Ascend", "GPU"};
     if (std::find(valid_values.begin(), valid_values.end(), param->device) == valid_values.end()) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: device is not in {Ascend310, Ascend310P}, but got " << param->device;
+      MS_LOG(ERROR) << "INPUT ILLEGAL: device is not in {GPU, Ascend, Ascend310, Ascend310P}, got " << param->device;
       return RET_INPUT_PARAM_INVALID;
     }
   }

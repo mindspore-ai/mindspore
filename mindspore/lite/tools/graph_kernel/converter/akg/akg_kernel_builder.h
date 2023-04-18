@@ -46,8 +46,5 @@ class AkgKernelBuilder {
   }
 };
 using AkgKernelBuilderPtr = std::shared_ptr<AkgKernelBuilder>;
-
-std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
-                          std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_KERNEL_BUILDER_H_
