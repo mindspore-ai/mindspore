@@ -458,17 +458,14 @@ def check_dense_input_shape(x, prim_name=None):
 
 
 class Identity(Cell):
-    """
-    Returns a Tensor with the same shape and contents as input.
+    r"""
+    A placeholder identity operator that returns the same as input.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+        - **x** (Any) - The input of Identity.
 
     Outputs:
-        Tensor, the shape of tensor and the data type are the same as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+        The same as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -484,11 +481,9 @@ class Identity(Cell):
     def __init__(self):
         """Initialize Identity."""
         super(Identity, self).__init__()
-        self.identity = P.Identity()
 
     def construct(self, x):
-        out = self.identity(x)
-        return out
+        return x
 
 
 class Dense(Cell):

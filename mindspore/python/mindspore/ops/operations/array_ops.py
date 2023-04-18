@@ -6318,25 +6318,10 @@ class GatherD(Primitive):
 
 class Identity(Primitive):
     """
-    Returns a Tensor with the same shape and contents as input.
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
-
-    Outputs:
-        Tensor, the shape of tensor and the data type are the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    The 'ops.Identity' interface is deprecated, please use the :class: `mindspore.ops.deepcopy` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
-        >>> output = ops.Identity()(x)
-        >>> print(output)
-        [1 2 3 4]
+        Deprecated
     """
 
     @prim_attr_register
