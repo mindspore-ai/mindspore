@@ -395,6 +395,23 @@ def test_nn_flatten_single_element():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+def test_ops_flatten_invalid_input():
+    """
+    Feature: gpu Flatten ops.
+    Description: test flatten with invalid input.
+    Expectation: success.
+    """
+    x = Tensor([[1, 2], [3, 4]], mstype.int32)
+    with pytest.raises(TypeError):
+        NetFlattenOps()(x, start_dim=True)
+
+    with pytest.raises(TypeError):
+        NetFlattenOps()(x, end_dim=True)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_ops_flatten_dynamic_shape():
     """
     Feature: Flatten ops.
