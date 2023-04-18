@@ -389,7 +389,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      bool input_is_tensor = op_run_info->input_value[i]->isa<tensor::Tensor>();
+      bool input_is_tensor = PyNativeAlgo::Common::IsTensor(op_run_info->input_value[i]);
       if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
           op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
         auto tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
@@ -402,6 +402,10 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       } else {
         result[i] = op_run_info->input_value[i];
       }
+    }
+    // If input is tuple or list, just return origin input format of tuple or list
+    if (op_run_info->input_size == 1 && !PyNativeAlgo::Common::IsTensor(op_run_info->input_value[kIndex0])) {
+      return result[kIndex0];
     }
     auto result_v = std::make_shared<ValueTuple>(result);
     MS_LOG(DEBUG) << "RunOpInVM end";
