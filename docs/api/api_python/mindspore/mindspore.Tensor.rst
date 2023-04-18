@@ -6,18 +6,18 @@ mindspore.Tensor
     张量，即存储多维数组（n-dimensional array）的数据结构。
 
     参数：
-        - **input_data** (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]) - 被存储的数据，可以是其它Tensor，也可以是Python基本数据（如int，float，bool等），或是一个NumPy对象。默认值：None。
-        - **dtype** (:class:`mindspore.dtype`) - 用于定义该Tensor的数据类型，必须是 *mindspore.dtype* 中定义的类型。如果该参数为None，则数据类型与 `input_data` 一致，默认值：None。
-        - **shape** (Union[tuple, list, int]) - 用于定义该Tensor的形状。如果指定了 `input_data` ，则无需设置该参数。默认值：None。
-        - **init** (Initializer) - 用于在并行模式中延迟Tensor的数据的初始化，如果指定该参数，则 `dtype` 和 `shape` 也必须被指定。不推荐在非自动并行之外的场景下使用该接口。只有当调用 `Tensor.init_data` 时，才会使用指定的 `init` 来初始化Tensor数据。默认值：None。
-        - **internal** (bool) - Tensor是否由框架创建。如果为True，表示Tensor是由框架创建的，如果为False，表示Tensor是由用户创建的。默认值：False。
-        - **const_arg** (bool) - 指定该Tensor作为网络输入时是否为常量。默认值：False。
+        - **input_data** (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]) - 被存储的数据，可以是其它Tensor，也可以是Python基本数据（如int，float，bool等），或是一个NumPy对象。默认值： ``None`` 。
+        - **dtype** (:class:`mindspore.dtype`) - 用于定义该Tensor的数据类型，必须是 *mindspore.dtype* 中定义的类型。如果该参数为 ``None`` ，则数据类型与 `input_data` 一致，默认值： ``None`` 。
+        - **shape** (Union[tuple, list, int]) - 用于定义该Tensor的形状。如果指定了 `input_data` ，则无需设置该参数。默认值： ``None`` 。
+        - **init** (Initializer) - 用于在并行模式中延迟Tensor的数据的初始化，如果指定该参数，则 `dtype` 和 `shape` 也必须被指定。不推荐在非自动并行之外的场景下使用该接口。只有当调用 `Tensor.init_data` 时，才会使用指定的 `init` 来初始化Tensor数据。默认值： ``None`` 。
+        - **internal** (bool) - Tensor是否由框架创建。如果为 ``True`` ，表示Tensor是由框架创建的，如果为 ``False`` ，表示Tensor是由用户创建的。默认值： ``False`` 。
+        - **const_arg** (bool) - 指定该Tensor作为网络输入时是否为常量。默认值： ``False`` 。
 
     输出：
         Tensor。
 
     .. note::
-        `input_data` 的默认值None只作为一个占位符，并不意味着可以创建一个NoneType的Tensor。
+        `input_data` 的默认值 ``None`` 只作为一个占位符，并不意味着可以创建一个NoneType的Tensor。
 
 .. mscnautosummary::
     :toctree: Tensor

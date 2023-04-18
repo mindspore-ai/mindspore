@@ -250,13 +250,13 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
             If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
             If None, none derivative of any input will be solved, and in this case, `weights` is required.
-            Default: 0.
+            Default: ``0`` .
         weights (Union[ParameterTuple, Parameter, list[Parameter]]): The parameters of the training network that need to
             calculate the gradient. `weights` can be got through `weights = net.trainable_params()` .
-            Default: None.
-        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+            Default: ``None`` .
+        has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
+            outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: ``False`` .
 
     Returns:
         Function, returns the gradient function to calculate forward output and gradient for the input function or cell.

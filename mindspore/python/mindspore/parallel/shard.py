@@ -174,19 +174,19 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
                              Tuple defines the layout of the corresponding input
                              and None represents a data parallel strategy.
         out_strategy (Union[tuple, None]): Define the layout of outputs similar with `in_strategy`.
-                                           It is not in use right now. Default: None.
+                                           It is not in use right now. Default: ``None`` .
         parameter_plan (Union[dict, None]): Define the layout for the specified parameters. Each element in dict
                                             defines the layout of the parameter like "param_name: layout".
                                             The key is a parameter name of type 'str'.
                                             The value is a 1-D integer tuple, indicating the corresponding layout.
                                             If the parameter name is incorrect or the corresponding parameter
                                             has been set, the parameter setting will be ignored.
-                                            Default: None.
+                                            Default: ``None`` .
         device (string): Select a certain `device` target. It is not in use right now.
-                         Support ["CPU", "GPU", "Ascend"]. Default: "Ascend".
+                         Support ["CPU", "GPU", "Ascend"]. Default: ``"Ascend"`` .
         level (int): Option for parallel strategy infer algorithm, namely the object function, maximize computation
                      over communication ratio, maximize speed performance, minimize memory usage etc. It is not in
-                     use right now. Support ["0", "1", "2"]. Default: "0".
+                     use right now. Support ["0", "1", "2"]. Default: ``"0"`` .
 
     Returns:
         Function, return the function that will be executed under auto parallel process.
