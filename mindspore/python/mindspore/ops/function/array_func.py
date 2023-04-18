@@ -1636,7 +1636,8 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     # Check the types of arguments.
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'flatten', argument 'input' must be Tensor.")
-    if not isinstance(start_dim, int) or not isinstance(end_dim, int):
+    if not isinstance(start_dim, int) or not isinstance(end_dim, int) or \
+        isinstance(start_dim, bool) or isinstance(end_dim, bool):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
