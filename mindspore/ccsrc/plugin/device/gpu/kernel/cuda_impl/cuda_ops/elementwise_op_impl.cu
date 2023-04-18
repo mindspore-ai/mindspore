@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,16 +418,14 @@ template CUDA_LIB_EXPORT void SqrtOpt<Complex<double>>(const Complex<double> *in
 // onesLike
 template <typename T>
 struct OnesLikeFunctor {
-  T one_ = static_cast<T>(1.0);
   OnesLikeFunctor() {}
-  __device__ __forceinline__ T operator()(T x) const { return one_; }
+  __device__ __forceinline__ T operator()(T x) const { return static_cast<T>(1.0); }
 };
 
 template <>
 struct OnesLikeFunctor<half> {
-  half one_ = half(1.0);
   OnesLikeFunctor() {}
-  __device__ __forceinline__ half operator()(half x) const { return one_; }
+  __device__ __forceinline__ half operator()(half x) const { return half(1.0); }
 };
 
 template <typename T>
