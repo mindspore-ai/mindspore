@@ -21,7 +21,6 @@ from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
-from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -66,14 +65,19 @@ def test_net():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_neg_tensor_api_modes(mode):
+@pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64,
+                                   np.int8, np.int16, np.int32, np.int64,
+                                   np.float16, np.float32, np.float64,
+                                   np.complex64, np.complex128])
+def test_neg_tensor_api_modes(mode, dtype):
     """
     Feature: Test neg tensor api.
     Description: Test neg tensor api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=mode, device_target="CPU")
-    x = Tensor([1, 2, -1, 2, 0, -3.5], mstype.float32)
+    x_np = np.array([1, 2, -1, 2, 0, -5], dtype=dtype)
+    output_np = np.negative(x_np)
+    x = Tensor(x_np)
     output = x.neg()
-    expected = np.array([-1, -2, 1, -2, 0, 3.5], np.float32)
-    np.testing.assert_array_equal(output.asnumpy(), expected)
+    np.testing.assert_array_equal(output.asnumpy(), output_np)
