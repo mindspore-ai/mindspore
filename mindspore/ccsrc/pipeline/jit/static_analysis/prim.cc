@@ -1710,7 +1710,7 @@ bool IsPyExecuteCNodeData(const AbstractBasePtr &data_abstract) {
 
 void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, const AbstractBasePtr &data_args) {
   // Check if the obj's attr is invalid or decoratored by @jit_forbidden_register
-  std::string data_type_str = TypeIdLabel(data_type->type_id());
+  std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
   if (data_args->isa<AbstractRefTensor>()) {
     data_type_str = "Parameter";
   }

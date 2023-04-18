@@ -191,6 +191,16 @@ TEST_F(TestDType, TestTypeIdNormalize) {
   ASSERT_EQ(kNumberTypeFloat, NormalizeTypeId(kNumberTypeFloat32));
   ASSERT_EQ(kNumberTypeFloat, NormalizeTypeId(kNumberTypeFloat64));
 
+  ASSERT_EQ(kNumberTypeUInt, NormalizeTypeId(kNumberTypeUInt));
+  ASSERT_EQ(kNumberTypeUInt, NormalizeTypeId(kNumberTypeUInt8));
+  ASSERT_EQ(kNumberTypeUInt, NormalizeTypeId(kNumberTypeUInt16));
+  ASSERT_EQ(kNumberTypeUInt, NormalizeTypeId(kNumberTypeUInt32));
+  ASSERT_EQ(kNumberTypeUInt, NormalizeTypeId(kNumberTypeUInt64));
+
+  ASSERT_EQ(kNumberTypeComplex, NormalizeTypeId(kNumberTypeComplex));
+  ASSERT_EQ(kNumberTypeComplex, NormalizeTypeId(kNumberTypeComplex64));
+  ASSERT_EQ(kNumberTypeComplex, NormalizeTypeId(kNumberTypeComplex128));
+
   ASSERT_EQ(kNumberTypeBool, NormalizeTypeId(kNumberTypeBool));
 }
 }  // namespace mindspore
