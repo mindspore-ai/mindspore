@@ -5723,8 +5723,9 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
 
         - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
         - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keepdims`
-          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
-          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
+          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
+          ..., input_N)` .
 
     Raises:
         TypeError: If `input` is not Tensor.
@@ -5826,8 +5827,9 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         - **values** (Tensor) - The minimum value of input tensor, with the same
           shape as `index`, and same dtype as `x`.
         - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keepdims`
-          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
-          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
+          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
+          ..., input_N)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
