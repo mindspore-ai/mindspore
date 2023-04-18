@@ -125,6 +125,7 @@ bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       y[i] = std::isnan(static_cast<float>(out_before_clip)) ? static_cast<T>(0) : out_before_clip;
       local_sum += static_cast<double>(y[i]);
     }
+    std::unique_lock<std::mutex> lock(mutex_);
     total_sum += local_sum;
   };
   ParallelLaunchAutoSearch(task, output_before_reduction_shape_size_, this, &parallel_search_info_);
