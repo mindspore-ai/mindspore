@@ -419,6 +419,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"long", std::string("to_long")},                                   // long()
        {"cholesky", std::string("cholesky")},                              // cholesky()
        {"cholesky_inverse", std::string("cholesky_inverse")},              // cholesky_inverse()
+       {"cholesky_solve", std::string("cholesky_solve")},                  // cholesky_solve()
        {"conj", std::string("conj")},                                      // conj()
        {"cross", std::string("cross")},                                    // cross()
        {"erfinv", std::string("erfinv")},                                  // erfinv()

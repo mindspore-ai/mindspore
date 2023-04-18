@@ -384,6 +384,7 @@ from .math_func import (
     trapz,
     cholesky,
     cholesky_inverse,
+    cholesky_solve,
     conj,
     cross,
     erfinv,
