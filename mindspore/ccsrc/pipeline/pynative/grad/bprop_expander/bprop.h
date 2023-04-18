@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class BpropExpander {
   const BpropHandle *GetBpropHandle(const std::string &name) const {
     return BpropIRBuilderFactory::Instance().GetBuilder(name);
   }
-  void PostProcess();
+  void PostProcess(const BpropIRBuilder *ir_builder) const;
   void DumpResult(const std::string &name) const;
   NodePtrList input_nodes_;
   // outputs_ must be CNodePtrList, but output_nodes_ may not necessary. output_nodes_ are used to

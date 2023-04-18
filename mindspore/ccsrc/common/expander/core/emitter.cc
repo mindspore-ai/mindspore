@@ -20,6 +20,7 @@
 #include <functional>
 #include <unordered_set>
 #include <utility>
+#include "include/common/utils/convert_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
@@ -54,6 +55,11 @@ std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
     }
   }
   return std::make_pair(false, std::vector<int64_t>{});
+}
+
+ValuePtr CreateZeroScalar(const TypePtr &type) {
+  auto tensor = std::make_shared<tensor::Tensor>(0, type);
+  return CreateValueFromTensor(tensor);
 }
 }  // namespace
 
@@ -184,7 +190,7 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) const {
 NodePtr Emitter::ZerosLike(const NodePtr &node) const {
   if (node->isa<ValueNode>()) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
-      return Emit(prim::kZerosLike, {Tensor(0)});
+      return Tensor(0);
     }
     auto value_node = node->get<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -192,11 +198,13 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<ValueSequence>()) {
       auto sh = GetValue<std::vector<int64_t>>(v);
-      return Emit(prim::kZerosLike, {Tensor(sh)});
-    } else if (v->isa<Scalar>() || v->isa<Type>()) {
-      return Emit(prim::kZerosLike, {Tensor(0, v->type())});
+      return Tensor(sh);
+    } else if (v->isa<Scalar>()) {
+      return EmitValue(CreateZeroScalar(v->type()));
+    } else if (v->isa<Type>()) {
+      return Tensor(0, v->type());
     } else if (v->isa<Monad>()) {
-      return Emit(prim::kZerosLike, {Tensor(0)});
+      return Tensor(0);
     }
   }
 
@@ -207,7 +215,6 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     return Emit(prim::kZerosLike, {node});
   } else if (abs->isa<abstract::AbstractMonad>() || abs->isa<abstract::AbstractType>() ||
              abs->isa<abstract::AbstractNone>()) {
-    // To prevent return input directly, and return a operator for latter cnode link.
     return node;
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
@@ -216,7 +223,8 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     }
     return Emit(prim::kSequenceZerosLike, {node});
   } else if (abs->isa<abstract::AbstractScalar>()) {
-    return Emit(prim::kZerosLike, {Tensor(0, abs->BuildType())});
+    auto value = CreateZeroScalar(abs->BuildType());
+    return EmitValue(value);
   }
 
   MS_LOG(EXCEPTION) << "Cannot emit ZerosLike for " << node->get()->ToString() << " with abstract " << abs;
