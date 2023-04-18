@@ -17,6 +17,7 @@
 #include "col2im.h"
 
 #include <vector>
+#include <complex>
 
 #include "cpu_ops_kernel.h"
 #include "cpu_kernel_utils.h"
@@ -44,6 +45,15 @@ uint32_t Col2imCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (data_type) {
+    case DT_COMPLEX64:
+      ret = Col2imCompute<std::complex<float>>(ctx);
+      break;
+    case DT_COMPLEX128:
+      ret = Col2imCompute<std::complex<double>>(ctx);
+      break;
+    case DT_DOUBLE:
+      ret = Col2imCompute<double>(ctx);
+      break;
     case DT_FLOAT:
       ret = Col2imCompute<float>(ctx);
       break;

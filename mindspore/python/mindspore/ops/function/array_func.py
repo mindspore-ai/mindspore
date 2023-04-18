@@ -6261,7 +6261,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     """
     kernel_size = _check_unfold_params(kernel_size, "kernel_size", [1, 2])
     dilation = _check_unfold_params(dilation, "dilation", [1, 2])
-    padding = _check_unfold_params(padding, "padding", [1, 2, 4])
+    padding = _check_unfold_params(padding, "padding", [1, 2])
     stride = _check_unfold_params(stride, "stride", [1, 2])
     unfold_op = _get_cache_prim(Im2Col)(ksizes=kernel_size,
                                         strides=stride,
