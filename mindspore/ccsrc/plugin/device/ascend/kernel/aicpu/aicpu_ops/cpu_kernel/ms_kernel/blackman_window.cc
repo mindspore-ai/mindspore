@@ -103,9 +103,9 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute(CpuKernelContext &ctx) {
   auto output = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   auto y = ctx.Output(0);
   // 属性 periodic
-  auto periodic = reinterpret_cast<bool *>(ctx.GetAttr("periodic"));
+  auto periodic = ctx.GetAttr("periodic");
 
-  bool periodic_value = *periodic;
+  bool periodic_value = periodic->GetBool();
   double pre_window_length = window_length;
 
   // 更新输出的动态shape
@@ -150,9 +150,9 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(CpuKernelContext &ctx) 
   // float* output_data;
   auto y = ctx.Output(0);
   // 属性 periodic
-  auto periodic = reinterpret_cast<bool *>(ctx.GetAttr("periodic"));
+  auto periodic = ctx.GetAttr("periodic");
 
-  bool periodic_value = *periodic;
+  bool periodic_value = periodic->GetBool();
   double pre_window_length = window_length;
 
   // 更新输出的动态shape
