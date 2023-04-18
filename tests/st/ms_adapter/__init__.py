@@ -37,7 +37,7 @@ convert_object_map[T.min] = S.adapter_min
 convert_object_map[T.sum] = S.adapter_sum
 
 
-adapter_config = {"Tensor": Tensor, "convert_object_map": convert_object_map}
+adapter_config = {"Tensor": Tensor, "Parameter": Parameter, "convert_object_map": convert_object_map}
 set_adapter_config(adapter_config)
 
 

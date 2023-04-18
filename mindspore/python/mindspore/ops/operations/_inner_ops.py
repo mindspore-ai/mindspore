@@ -19,6 +19,7 @@ from collections.abc import Iterable
 import numpy as np
 
 from mindspore.common import Tensor
+from mindspore.common._stub_tensor import StubTensor
 from mindspore.ops import composite as C
 from mindspore.ops.operations.array_ops import Cast
 from mindspore.ops.operations._scalar_ops import bit_or, bit_and
@@ -2379,8 +2380,8 @@ class ConvertToAdapterTensor(Primitive):
         """Initialize"""
 
     def __call__(self, x):
-        """run in PyNative mode"""
-        return ms_adapter_registry.tensor(x, inner=True)
+        """Run in PyNative mode"""
+        return ms_adapter_registry.tensor(x, cast_tensor=True)
 
 convert_to_adapter_tensor = ConvertToAdapterTensor()
 
@@ -2410,7 +2411,9 @@ class ConvertToMsTensor(Primitive):
         """Initialize"""
 
     def __call__(self, x):
-        """run in PyNative mode"""
+        """Run in PyNative mode"""
+        if isinstance(x, StubTensor):
+            return StubTensor(stub=x.stub, tensor=x.tensor)
         return Tensor(x)
 
 convert_to_ms_tensor = ConvertToMsTensor()

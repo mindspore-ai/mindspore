@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
 
 """Registry MSAdapter config."""
 
-from mindspore.common.tensor import Tensor
-
 
 class Registry:
     """Registry class for ms adapter."""
 
     def __init__(self):
         self._tensor = None
+        self._parameter = None
         self._convert_map = {}
 
     @property
@@ -33,6 +32,13 @@ class Registry:
         return self._tensor
 
     @property
+    def parameter(self):
+        """Return the registered parrameter."""
+        if self._parameter is None:
+            raise ValueError("Before using Parameter in MSAdapter, please call 'set_adapter_config'.")
+        return self._parameter
+
+    @property
     def convert_map(self):
         """Return the registered convert map."""
         return self._convert_map
@@ -41,9 +47,13 @@ class Registry:
         """Register the tensor of ms adapter."""
         if self._tensor is not None:
             raise ValueError("Repeated registration of tensor in ms adapter config.")
-        if not issubclass(value, Tensor):
-            raise ValueError(f"The tensor definition here should be a subclass of ms.Tensor, but got {value}.")
         self._tensor = value
+
+    def register_parameter(self, value):
+        """Register the parameter of ms adapter."""
+        if self._parameter is not None:
+            raise ValueError("Repeated registration of Parameter in ms adapter config.")
+        self._parameter = value
 
     def register_convert_map(self, value):
         """Register the convert map of ms adapter."""

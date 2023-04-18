@@ -126,8 +126,8 @@ def test_binary_operator():
     def check_output_type(func):
         ms_x = ms.Tensor([1, 2, 3])
         ms_y = ms.Tensor([3, 2, 1])
-        adapter_x = adapter.Tensor([1, 2, 3])
-        adapter_y = adapter.Tensor([3, 2, 1])
+        adapter_x = adapter.Tensor([1, 2, 3], dtype=ms.int32)
+        adapter_y = adapter.Tensor([3, 2, 1], dtype=ms.int32)
         assert type(func(ms_x, ms_y)) is ms.Tensor
         assert type(func(adapter_x, adapter_y)) is adapter.Tensor    # "Tensor", "Tensor"
         assert type(func(adapter_x, 1)) is adapter.Tensor            # "Tensor", "Number"
@@ -248,8 +248,8 @@ def test_matmul():
 
     ms_x = ms.Tensor([1, 2], ms.float32)
     ms_y = ms.Tensor([3, 4], ms.float32)
-    adapter_x = adapter.Tensor([1, 2], ms.float32)
-    adapter_y = adapter.Tensor([3, 4], ms.float32)
+    adapter_x = adapter.Tensor([1, 2], dtype=ms.float32)
+    adapter_y = adapter.Tensor([3, 4], dtype=ms.float32)
     assert type(func(ms_x, ms_y)) is ms.Tensor
     assert type(func(adapter_x, adapter_y)) is adapter.Tensor
 
@@ -301,7 +301,7 @@ def test_setitem():
 
     ms_x = ms.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_x = adapter.Tensor([[1, 2, 3], [4, 5, 6]])
-    adapter_index = adapter.Tensor(0)
+    adapter_index = adapter.Tensor([0], dtype=ms.int32)
     adapter_value = adapter.Tensor([7, 8, 9])
     assert type(setitem_fn(adapter_x, adapter_index, adapter_value)) is adapter.Tensor
     assert type(setitem_fn(ms_x, adapter_index, adapter_value)) is ms.Tensor
