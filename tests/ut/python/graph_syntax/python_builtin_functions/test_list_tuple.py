@@ -174,7 +174,7 @@ def test_fallback_tuple_with_input_variable_len_list_2():
     """
     @jit
     def foo():
-        a = mutable([], True)
+        a = mutable([1], True)
         x = tuple(a)
         return isinstance(x, tuple), F.is_sequence_shape_unknown(x)
     out = foo()
@@ -208,7 +208,7 @@ def test_fallback_list_with_input_variable_len_tuple_2():
     """
     @jit
     def foo():
-        a = mutable((), True)
+        a = mutable((1,), True)
         x = list(a)
         return isinstance(x, list), F.is_sequence_shape_unknown(x)
     out = foo()

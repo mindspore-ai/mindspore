@@ -472,6 +472,47 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPt
   return result;
 }
 
+EvalResultPtr AnalysisEngine::CheckAndTransToDynamicLen(const EvalResultPtr &result, const AnfNodePtr &node) {
+  if (dyn_len_args_.find(node) != dyn_len_args_.cend()) {
+    result->set_abstract(result->abstract()->cast<AbstractSequencePtr>()->BroadenToDynamicLenSequence());
+    return result;
+  }
+  auto origin_abs = node->abstract();
+  if (origin_abs == nullptr) {
+    return result;
+  }
+  auto abs_seq = origin_abs->cast<AbstractSequencePtr>();
+  if (abs_seq == nullptr) {
+    return result;
+  }
+  if (!abs_seq->is_arg_of_dyn_len_param() && !abs_seq->dynamic_len()) {
+    return result;
+  }
+  auto result_abs_seq = result->abstract()->cast<AbstractSequencePtr>();
+  if (result_abs_seq == nullptr || result_abs_seq->dynamic_len()) {
+    return result;
+  }
+  result->set_abstract(result_abs_seq->BroadenToDynamicLenSequence());
+  return result;
+}
+
+void AnalysisEngine::RecordAllDynamicLenArgs(const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
+  for (auto &node : manager->all_nodes()) {
+    if (node->abstract() == nullptr) {
+      continue;
+    }
+    auto abs_seq = node->abstract()->cast<abstract::AbstractSequencePtr>();
+    if (abs_seq == nullptr) {
+      continue;
+    }
+    if (abs_seq->is_arg_of_dyn_len_param() || abs_seq->dynamic_len()) {
+      MS_LOG(DEBUG) << "Add dyn arg:" << node->DebugString();
+      (void)dyn_len_args_.insert(node);
+    }
+  }
+}
+
 EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   AnfNodePtr node = conf->node();
@@ -514,7 +555,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   }
 #endif
   MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
-  return eval_result;
+  return CheckAndTransToDynamicLen(eval_result, node);
 }
 
 AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const {
@@ -698,7 +739,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
   // Check if func graph contains isolated side-effect, and sync.
   if (check_side_effect()) {
-    func->Visit([this, &contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
+    func->Visit([&contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
       const auto &real_func_atom = GetRealFuncAtom(possible_func);
       if (CheckFuncSideEffect(real_func_atom)) {
         contains_side_effect = CheckFuncSideEffect(real_func_atom);
@@ -767,6 +808,7 @@ void AnalysisEngine::Clear() {
   prim_py_evaluators_.clear();
   constructors_app_.clear();
   continued_evals_.clear();
+  dyn_len_args_.clear();
   root_func_graph_ = nullptr;
   root_context_ = nullptr;
 }

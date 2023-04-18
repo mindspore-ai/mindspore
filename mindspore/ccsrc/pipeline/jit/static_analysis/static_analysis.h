@@ -64,6 +64,7 @@ class EvalResult : public Base {
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
   const AbstractBasePtr &abstract() const { return abstract_; }
+  void set_abstract(const AbstractBasePtr &abstract) { abstract_ = abstract; }
   const AttrValueMapPtr &attribute() const { return attribute_; }
   bool has_side_effect_node() const { return has_side_effect_node_; }
   void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
@@ -344,6 +345,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   void set_check_side_effect(bool check_side_effect) { check_side_effect_ = check_side_effect; }
   void SetUndeterminedFlag(const std::string &thread_id, const FuncGraph &fg);
   void SetIgnoreValueFlag(const std::string &thread_id, FuncGraph *fg);
+  EvalResultPtr CheckAndTransToDynamicLen(const EvalResultPtr &result, const AnfNodePtr &cnode);
+  void RecordAllDynamicLenArgs(const FuncGraphManagerPtr &manager);
 
  private:
   // Overloaded function.
@@ -394,6 +397,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   bool enable_recursive_eval_;
 
   bool check_side_effect_;
+
+  HashSet<AnfNodePtr> dyn_len_args_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;
