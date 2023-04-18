@@ -92,3 +92,9 @@ def dict_setitem(dic, key, val):
 def raise_func(type_name, script):
     """raise function for jit fallback."""
     raise type_name(script)
+
+
+def ms_setattr(class_obj, attr_name, target_obj):
+    """Set attr for object and return the object for jit fallback."""
+    setattr(class_obj, attr_name, target_obj)
+    return target_obj

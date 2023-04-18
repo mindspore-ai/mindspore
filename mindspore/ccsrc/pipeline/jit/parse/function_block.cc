@@ -579,6 +579,23 @@ void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &s
   AddIsolatedNode(assign_node);
 }
 
+void FunctionBlock::ConvertUnusedNodesToIsolated(const std::pair<std::string, std::pair<AnfNodePtr, bool>> var) {
+  auto &node = var.second.first;
+  bool is_used = var.second.second;
+  if (node == nullptr || is_used) {
+    return;
+  }
+  auto &var_name = var.first;
+  if (CanBeIsolatedNode(var_name, node)) {
+    const int recursive_level = 2;
+    MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(recursive_level)
+                 << ", var_name: " << var_name << ", block: " << this << "/"
+                 << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                 << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
+    AddIsolatedNode(node);
+  }
+}
+
 void FunctionBlock::FindIsolatedNodes() {
   //
   // Search isolate nodes from variables, for example,
@@ -588,34 +605,14 @@ void FunctionBlock::FindIsolatedNodes() {
   //        a = print(x) # isolate node
   //        return x + y
   //
-  std::set<AnfNodePtr> used;
-  // Find used variables.
-  for (const auto &var : assigned_vars_) {
-    auto &node = var.second.first;
-    if (node == nullptr) {
-      continue;
-    }
-    bool is_used = var.second.second;
-    if (is_used) {
-      used.emplace(node);
-    }
-  }
   // Add isolated nodes which is unused var but not found in used set.
   for (const auto &var : assigned_vars_) {
-    auto &node = var.second.first;
-    bool is_used = var.second.second;
-    if (node == nullptr || is_used) {
-      continue;
-    }
-    auto &var_name = var.first;
-    if (used.find(node) == used.end() && CanBeIsolatedNode(var_name, node)) {
-      const int recursive_level = 2;
-      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(recursive_level)
-                   << ", var_name: " << var_name << ", block: " << this << "/"
-                   << (func_graph() ? func_graph()->ToString() : "FG(Null)")
-                   << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
-      AddIsolatedNode(node);
-    }
+    ConvertUnusedNodesToIsolated(var);
+  }
+
+  // Add isolated setattr nodes which is unused.
+  for (const auto &var : changed_non_param_attrs_) {
+    ConvertUnusedNodesToIsolated(var);
   }
 }
 

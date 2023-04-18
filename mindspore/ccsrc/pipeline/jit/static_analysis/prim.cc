@@ -42,6 +42,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
@@ -2080,6 +2081,12 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   } else {
     res = std::make_shared<AbstractAny>();
   }
+
+  if (current_interpret_node->has_user_data(kPyObject)) {
+    MS_LOG(DEBUG) << "Current PyExecute node has python object, attach it to the abstract.";
+    res->set_user_data<py::object>(kPyObject, current_interpret_node->user_data<py::object>(kPyObject));
+  }
+
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;
@@ -2224,6 +2231,91 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     // may add different entry to anfnode_config_map, like getattr primitive;
     evaluator_cache_mgr_->SetValue(args_abs_list, res);
     return res;
+  }
+};
+
+class SetAttrEvaluator : public TransitionPrimEvaluator {
+ public:
+  SetAttrEvaluator() : TransitionPrimEvaluator("SetAttrEvaluator") {}
+  ~SetAttrEvaluator() override = default;
+  MS_DECLARE_PARENT(SetAttrEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
+                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+    constexpr size_t args_size = 3;
+    constexpr size_t obj_index = 0;
+    constexpr size_t attr_index = 1;
+    constexpr size_t target_index = 2;
+    constexpr auto class_obj_str = "__class_obj__";
+    constexpr auto attr_name_str = "__attr_name__";
+    constexpr auto target_obj_str = "__target_obj_str__";
+    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+    if (res_abstract != nullptr) {
+      MS_LOG(DEBUG) << "SetAttrEvaluator eval Undetermined";
+      return res_abstract;
+    }
+    if (args_abs_list.size() != args_size) {
+      MS_LOG(EXCEPTION) << "For Primitive SetAttr, the input size should be " << args_size
+                        << ", but got size:" << args_abs_list.size();
+    }
+    auto attr_abs = args_abs_list[attr_index];
+    auto attr_abs_type = attr_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(attr_abs_type);
+    auto type_id = attr_abs_type->type_id();
+    if (type_id != TypeId::kObjectTypeString) {
+      MS_EXCEPTION(TypeError) << "setattr(): attribute name must be string but got: " << TypeIdToString(type_id);
+    }
+
+    auto out_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(out_node);
+    auto out_cnode = dyn_cast<CNode>(out_node);
+    MS_EXCEPTION_IF_NULL(out_cnode);
+    FuncGraphPtr func_graph = out_node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils.ms_setattr(" << class_obj_str << ", " << attr_name_str
+                  << ", " << target_obj_str << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    auto script_node = NewValueNode(script_str);
+
+    // Pack local parameters keys.
+    const auto class_obj_node = NewValueNode(std::make_shared<StringImm>(class_obj_str));
+    const auto attr_name_node = NewValueNode(std::make_shared<StringImm>(attr_name_str));
+    const auto target_obj_node = NewValueNode(std::make_shared<StringImm>(target_obj_str));
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(class_obj_node);
+    (void)key_value_names_list.emplace_back(attr_name_node);
+    (void)key_value_names_list.emplace_back(target_obj_node);
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+
+    // Pack the local parameters values
+    auto obj_node = out_cnode->input(obj_index + 1);
+    auto attr_node = out_cnode->input(attr_index + 1);
+    auto target_node = out_cnode->input(target_index + 1);
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple), obj_node, attr_node, target_node};
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+    AnfNodePtrList ret_inputs{NewValueNode(prim::kPrimPyExecute), script_node, key_value_name_tuple, key_value_tuple};
+    auto new_node = func_graph->NewCNode(ret_inputs);
+    MS_LOG(DEBUG) << "create setattr pyexecute node: " << new_node->DebugString();
+
+    // Attach result abstract to pyexecute node user data.
+    auto obj_abs = args_abs_list[obj_index];
+    if (!obj_abs->has_user_data(kPyObject)) {
+      MS_LOG(EXCEPTION) << "For setattr, the first input should attach python object.";
+    }
+    auto origin_obj = obj_abs->user_data<PyExecObject>(kPyObject);
+    auto new_obj = std::make_shared<PyExecObject>();
+    new_obj->obj = origin_obj->obj;
+    new_obj->changed = true;
+    new_node->set_user_data<PyExecObject>(kPyObject, new_obj);
+
+    func_graph->ReplaceInOrder(out_node, new_node);
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf, false);
   }
 };
 
@@ -3267,6 +3359,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimEmbed] = std::make_shared<EmbedEvaluator>();
   constructor[prim::kPrimRefToEmbed] = std::make_shared<RefToEmbedEvaluator>();
   constructor[prim::kPrimGetAttr] = std::make_shared<GetAttrEvaluator>();
+  constructor[prim::kPrimSetAttr] = std::make_shared<SetAttrEvaluator>();
   constructor[prim::kPrimResolve] = std::make_shared<ResolveEvaluator>();
   constructor[prim::kPrimCreateInstance] = std::make_shared<CreateInstanceEvaluator>();
   constructor[prim::kPrimCallInstance] = std::make_shared<CallInstanceEvaluator>();

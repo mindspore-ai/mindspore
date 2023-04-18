@@ -17,12 +17,20 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
 
+#include <memory>
 #include "include/common/visible.h"
 #include "pybind11/pybind11.h"
 #include "ir/value.h"
 namespace py = pybind11;
 
 namespace mindspore {
+constexpr char kPyObject[] = "__py_object__";
+struct PyExecObject {
+  py::object obj;
+  bool changed = false;
+};
+using PyExecObjectPtr = std::shared_ptr<PyExecObject>;
+
 COMMON_EXPORT bool HasPyExecuteOutput();
 COMMON_EXPORT py::object PopPyExecuteOutput();
 COMMON_EXPORT void PushPyExecuteOutput(const py::object &output);
