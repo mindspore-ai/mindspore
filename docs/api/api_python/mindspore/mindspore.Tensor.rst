@@ -75,6 +75,7 @@ mindspore.Tensor
     mindspore.Tensor.broadcast_to
     mindspore.Tensor.ceil
     mindspore.Tensor.cholesky
+    mindspore.Tensor.cholesky_solve
     mindspore.Tensor.choose
     mindspore.Tensor.chunk
     mindspore.Tensor.clamp
