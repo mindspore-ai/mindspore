@@ -32,6 +32,7 @@ from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops import composite
+from ...ops.operations import array_ops
 from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
@@ -4431,3 +4432,19 @@ def amin(input, axis=None, keep_dims=False):
     For details, please refer to :func:`mindspore.ops.amin`.
     """
     return F.amin(input, axis, keep_dims)
+
+
+def masked_scatter(input, mask, tensor):
+    r"""
+    For details, please refer to :func:`mindspore.Tensor.masked_scatter`
+    """
+    return array_ops.MaskedScatter()(input, mask, tensor)
+
+
+def index_put(input, indices, values, accumulate=False):
+    r"""
+    For details, please refer to :func:`mindspore.Tensor.index_put`
+    """
+    check_bool_type(accumulate, 'accumulate', 'Tensor.index_put')
+    _index_put = array_ops.IndexPut(0 if accumulate is False else 1)
+    return _index_put(input, values, indices)
