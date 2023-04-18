@@ -46,25 +46,9 @@ from mindspore._check_jit_forbidden_api import jit_forbidden_register
 
 def _check_args(args):
     """Check the input args's type"""
-    index = 1
     for item in args:
         if isinstance(item, Tensor) and item.has_init:
             item.init_data()
-        elif isinstance(item, numpy.ndarray):
-            suffix = "th"
-            if index == 1:
-                suffix = "st"
-            elif index == 2:
-                suffix = "nd"
-            elif index == 3:
-                suffix = "rd"
-
-            input_index = str(index) + suffix
-            raise TypeError(f"For 'Cell', inputs should not be numpy array. Only support bool, int, float, None, "
-                            f"Tensor, Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint"
-                            f"), and tuple or list containing only these types, and dict whose values are these "
-                            f"types, but the {input_index} arg type is {type(item)}.")
-        index += 1
 
 
 class Cell(Cell_):
