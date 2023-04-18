@@ -5681,9 +5681,10 @@ def _init_and_select_elem(input, initial, where, cmp_fn):    # pylint: disable=r
         initial = ops.fill(input.dtype, input.shape, initial)
         input = cmp_fn(input, initial)
 
-    if where is not None and not where:
-        if not isinstance(where, Tensor):
-            where = Tensor(where)
+    if where is not None and not isinstance(where, Tensor):
+        where = Tensor(where, dtype=mstype.bool_)
+
+    if where is not None and (where.shape or not where):
         if initial is None:
             raise ValueError('initial value must be provided for where masks')
         where = where.broadcast_to(input.shape)
