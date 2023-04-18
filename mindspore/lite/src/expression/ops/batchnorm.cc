@@ -17,7 +17,7 @@
 #include "src/expression/ops/batchnorm.h"
 #include <memory>
 #include "nnacl/batchnorm_parameter.h"
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_grad.h"
 #include "src/expression/import.h"
 #include "src/expression/ops.h"
 #include "src/litert/cxx_api/expression/node_impl.h"

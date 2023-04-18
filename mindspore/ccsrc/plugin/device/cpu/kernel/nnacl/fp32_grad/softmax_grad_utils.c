@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32_grad/softmax.h"
+#include "nnacl/fp32_grad/softmax_grad_utils.h"
 #include <math.h>
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
