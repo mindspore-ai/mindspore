@@ -20,5 +20,5 @@ mindspore.ops.chunk
         - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `axis` 不是int类型。
         - **TypeError** - `chunks` 不是int。
-        - **ValueError** - 参数 `axis` 超出 :math:`(-input.ndim, input.ndim)` 范围。
+        - **ValueError** - 参数 `axis` 超出 :math:`[-input.ndim, input.ndim)` 范围。
         - **ValueError** - 参数 `chunks` 不是正数。
