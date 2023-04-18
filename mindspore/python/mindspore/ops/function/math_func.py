@@ -3902,8 +3902,8 @@ def equal(input, other):
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i} = y_{i} \\
-            & \text{False,   if } x_{i} \ne y_{i}
+            & \text{True,    if } input_{i} = other_{i} \\
+            & \text{False,   if } input_{i} \ne other_{i}
             \end{cases}
 
     Note:
