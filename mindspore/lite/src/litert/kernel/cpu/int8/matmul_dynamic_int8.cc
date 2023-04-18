@@ -45,8 +45,8 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  float *bias_ptr = fp32_bias_ptr_;
-  if (fp32_bias_ptr_ != nullptr) {
+  float *bias_ptr = static_cast<float *>(bias_ptr_);
+  if (bias_ptr_ != nullptr) {
     bias_ptr += cur_stride;
   }
   float *filter_scale = quant_param_->filter_scale_;
@@ -57,9 +57,9 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
   int64_t act_type = static_cast<int64_t>(param_->act_type_);
 
   DynamicMatmul4x16x4AIWI(batch_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, bias_ptr,
-                          fp32_batch_c_ptr_ + cur_stride, param_->row_, cur_oc, param_->deep_, param_->deep_align_,
-                          param_->col_, quant_param_->input_zp_, quant_param_->input_scale_, filter_scale, filter_zp,
-                          filter_per_channel_, act_type);
+                          static_cast<float *>(batch_c_ptr_) + cur_stride, param_->row_, cur_oc, param_->deep_,
+                          param_->deep_align_, param_->col_, *quant_param_->input_zp_, quant_param_->input_scale_,
+                          filter_scale, filter_zp, input_per_channel_, filter_per_channel_, act_type);
   return RET_OK;
 }
 
@@ -83,9 +83,16 @@ void MatmulDynamicInt8CPUKernel::InitParameter() {
 }
 
 int MatmulDynamicInt8CPUKernel::Run() {
-  auto ret = InitInputQuantParam();
+  std::vector<float> input_scales;
+  std::vector<int32_t> input_zp;
+  auto ret = InitInputQuantParam(&input_scales, &input_zp);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init input quant param failed.";
+    return ret;
+  }
+  ret = InitMatrixABuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << " failed.";
     return ret;
   }
   if (!param_->b_const_) {
@@ -106,7 +113,7 @@ int MatmulDynamicInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(a_ptr);
   CHECK_NULL_RETURN(c_ptr);
   for (int i = 0; i < param_->batch; i++) {
-    memset(pack_a_ptr_, quant_param_->input_zp_, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
+    memset(pack_a_ptr_, *(quant_param_->input_zp_), param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
     auto current_src_a = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {
       MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
@@ -118,14 +125,15 @@ int MatmulDynamicInt8CPUKernel::Run() {
 
     batch_a_ptr_ = pack_a_ptr_;
     batch_b_ptr_ = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
-    fp32_batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
+    batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 
-    ret = ParallelLaunch(this->ms_context_, MatmulDynamicInt8Run, this, thread_count_);
+    ret = ParallelLaunch(this->ms_context_, MatmulDynamicInt8Run, this, thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
       return ret;
     }
   }
+  FreeMatrixABuffer();
   return RET_OK;
 }
 }  // namespace mindspore::kernel

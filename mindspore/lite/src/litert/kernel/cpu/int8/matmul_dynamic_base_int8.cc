@@ -82,20 +82,20 @@ int MatmulDynamicBaseInt8CPUKernel::InitFilterQuantParam() {
   }
   int col = param_->b_transpose_ ? w_shape[w_shape.size() - kSize2] : w_shape[w_shape.size() - kSize1];
   filter_per_channel_ = (weight_quant_params.size() > 1);
-  channel_num_ = filter_per_channel_ ? col : 1;
-  if (static_cast<int>(weight_quant_params.size()) != channel_num_) {
+  auto channel_num = filter_per_channel_ ? col : 1;
+  if (static_cast<int>(weight_quant_params.size()) != channel_num) {
     MS_LOG(ERROR) << weight_tensor->tensor_name() << " quant params size:" << weight_quant_params.size()
-                  << " != channel_num_:" << channel_num_;
+                  << " != channel_num:" << channel_num;
     return RET_ERROR;
   }
-  quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(channel_num_ * sizeof(float)));
+  quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(channel_num * sizeof(float)));
   CHECK_NULL_RETURN(quant_param_->filter_scale_);
-  memset(quant_param_->filter_scale_, 0, sizeof(channel_num_));
-  quant_param_->filter_zp_ = reinterpret_cast<int32_t *>(malloc(channel_num_ * sizeof(int32_t)));
+  memset(quant_param_->filter_scale_, 0, sizeof(channel_num));
+  quant_param_->filter_zp_ = reinterpret_cast<int32_t *>(malloc(channel_num * sizeof(int32_t)));
   CHECK_NULL_RETURN(quant_param_->filter_zp_);
-  memset(quant_param_->filter_zp_, 0, sizeof(channel_num_));
+  memset(quant_param_->filter_zp_, 0, sizeof(channel_num));
 
-  for (int i = 0; i < channel_num_; i++) {
+  for (int i = 0; i < channel_num; i++) {
     quant_param_->filter_scale_[i] = static_cast<float>(weight_quant_params[i].scale);
     quant_param_->filter_zp_[i] = weight_quant_params[i].zeroPoint;
   }
@@ -115,49 +115,48 @@ void MatmulDynamicBaseInt8CPUKernel::ResizeMatrixBParameter() {
   param_->col_align_ = UP_ROUND(param_->col_, col_tile_);
   param_->deep_align_ = UP_ROUND(param_->deep_, deep_tile_);
 
-  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(param_->col_align_, col_tile_));
-  thread_stride_ = UP_DIV(UP_DIV(param_->col_align_, col_tile_), thread_count_);
+  thread_num_ = MSMIN(op_parameter_->thread_num_, UP_DIV(param_->col_align_, col_tile_));
+  thread_stride_ = UP_DIV(UP_DIV(param_->col_align_, col_tile_), thread_num_);
   return;
 }
 
 void MatmulDynamicBaseInt8CPUKernel::FreeTmpBuffer() {
-  if (pack_a_ptr_ != nullptr) {
-    free(pack_a_ptr_);
-    pack_a_ptr_ = nullptr;
-  }
+  FreeMatrixABuffer();
   if (pack_b_ptr_ != nullptr && !weight_is_packed_) {
     free(pack_b_ptr_);
     pack_b_ptr_ = nullptr;
-  }
-  if (input_sums_ != nullptr) {
-    free(input_sums_);
-    input_sums_ = nullptr;
   }
   if (weight_sums_ != nullptr && !weight_is_packed_) {
     free(weight_sums_);
     weight_sums_ = nullptr;
   }
-  if (fp32_bias_ptr_ != nullptr) {
-    free(fp32_bias_ptr_);
-    fp32_bias_ptr_ = nullptr;
+  if (bias_ptr_ != nullptr) {
+    free(bias_ptr_);
+    bias_ptr_ = nullptr;
   }
-#ifdef ENABLE_FP16
-  if (fp16_bias_ptr_ != nullptr) {
-    free(fp16_bias_ptr_);
-    fp16_bias_ptr_ = nullptr;
-  }
-#endif
-  return;
 }
 
-int MatmulDynamicBaseInt8CPUKernel::InitInputQuantParam() {
+int MatmulDynamicBaseInt8CPUKernel::InitInputQuantParam(std::vector<float> *scales, std::vector<int32_t> *zp) {
   auto in_quant_params = in_tensors_.at(kInputIndex)->quant_params();
   if (in_quant_params.empty()) {
     MS_LOG(ERROR) << "invalid in quant param";
     return RET_ERROR;
   }
-  quant_param_->input_zp_ = in_quant_params.front().zeroPoint;
-  quant_param_->input_scale_ = static_cast<float>(in_quant_params.front().scale);
+  input_per_channel_ = (in_quant_params.size() > 1);
+  auto channel_num = input_per_channel_ ? param_->row_ : 1;
+  if (static_cast<int>(in_quant_params.size()) != channel_num) {
+    MS_LOG(ERROR) << in_tensors_.at(kInputIndex)->tensor_name() << " quant params size:" << in_quant_params.size()
+                  << " != channel_num:" << channel_num;
+    return RET_ERROR;
+  }
+  scales->resize(channel_num);
+  zp->resize(channel_num);
+  for (int i = 0; i < channel_num; ++i) {
+    (*scales)[i] = in_quant_params[i].scale;
+    (*zp)[i] = in_quant_params[i].zeroPoint;
+  }
+  quant_param_->input_zp_ = zp->data();
+  quant_param_->input_scale_ = scales->data();
   return RET_OK;
 }
 
@@ -188,27 +187,33 @@ int MatmulDynamicBaseInt8CPUKernel::TransferB() {
 }
 
 int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
-  if (pack_a_ptr_ != nullptr) {
-    free(pack_a_ptr_);
-    pack_a_ptr_ = nullptr;
+  size_t pack_a_size = param_->row_align_ * param_->deep_align_ * sizeof(int8_t);
+  size_t sum_a_size = param_->row_align_ * sizeof(int);
+  if (ms_context_ != nullptr && ms_context_->allocator != nullptr) {
+    pack_a_ptr_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(pack_a_size + sum_a_size));
+  } else {
+    pack_a_ptr_ = reinterpret_cast<int8_t *>(malloc(pack_a_size + sum_a_size));
   }
-  pack_a_ptr_ = reinterpret_cast<int8_t *>(malloc(param_->row_align_ * param_->deep_align_ * sizeof(int8_t)));
   if (pack_a_ptr_ == nullptr) {
-    FreeTmpBuffer();
-    return RET_ERROR;
+    MS_LOG(ERROR) << "alloc run-buffer for matrix-a failed.";
+    return lite::RET_NULL_PTR;
   }
-  if (input_sums_ != nullptr) {
-    free(input_sums_);
-    input_sums_ = nullptr;
-  }
-  input_sums_ = reinterpret_cast<int *>(malloc(param_->row_align_ * sizeof(int)));
-  if (input_sums_ == nullptr) {
-    FreeTmpBuffer();
-    return RET_ERROR;
-  }
-  memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
-  memset(input_sums_, 0, param_->row_align_ * sizeof(int));
+  input_sums_ = reinterpret_cast<int *>(pack_a_ptr_ + pack_a_size);
+  memset(pack_a_ptr_, 0, pack_a_size + sum_a_size);
   return RET_OK;
+}
+
+void MatmulDynamicBaseInt8CPUKernel::FreeMatrixABuffer() {
+  if (pack_a_ptr_ == nullptr) {
+    return;
+  }
+  if (ms_context_ != nullptr && ms_context_->allocator != nullptr) {
+    ms_context_->allocator->Free(pack_a_ptr_);
+  } else {
+    free(pack_a_ptr_);
+  }
+  pack_a_ptr_ = nullptr;
+  input_sums_ = nullptr;
 }
 
 int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
@@ -244,32 +249,18 @@ int MatmulDynamicBaseInt8CPUKernel::CopyBias() {
   if (in_tensors_.size() == kHasBiasSize) {
     CHECK_NULL_RETURN(in_tensors_[kBiasIndex]);
     auto bias_tensor = in_tensors_[kBiasIndex];
-
-#ifdef ENABLE_FP16
-    if (enable_fp16_) {
-      fp16_bias_ptr_ = static_cast<float16_t *>(malloc(bias_tensor->Size()));
-      if (fp16_bias_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Memory allocation failed";
-        FreeTmpBuffer();
-        return RET_MEMORY_FAILED;
-      }
-      memcpy(fp16_bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float16_t));
+    auto bias_shape = bias_tensor->shape();
+    MS_CHECK_TRUE_MSG(bias_shape.size() == 1, lite::RET_INPUT_TENSOR_ERROR, "bias is not 1D.");
+    size_t bias_pack_size = UP_ROUND(bias_shape.back(), col_tile_) * lite::DataTypeSize(bias_tensor->data_type());
+    bias_ptr_ = malloc(bias_pack_size);
+    if (bias_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
     }
-#endif
-    if (!enable_fp16_) {
-      fp32_bias_ptr_ = static_cast<float *>(malloc(bias_tensor->Size()));
-      if (fp32_bias_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "Memory allocation failed";
-        FreeTmpBuffer();
-        return RET_MEMORY_FAILED;
-      }
-      memcpy(fp32_bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float));
-    }
+    memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->Size());
   } else {
-    fp32_bias_ptr_ = nullptr;
-#ifdef ENABLE_FP16
-    fp16_bias_ptr_ = nullptr;
-#endif
+    bias_ptr_ = nullptr;
   }
   return RET_OK;
 }
@@ -345,12 +336,6 @@ int MatmulDynamicBaseInt8CPUKernel::ReSize() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitBroadcastParams failed.";
     return RET_ERROR;
-  }
-
-  ret = InitMatrixABuffer();
-  if (ret != RET_OK) {
-    FreeQuantParam();
-    return ret;
   }
 
   if (!param_->b_const_) {

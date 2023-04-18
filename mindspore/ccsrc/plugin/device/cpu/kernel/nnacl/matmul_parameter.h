@@ -90,8 +90,8 @@ typedef struct MatmulQuantParameter {
 } MatmulQuantParameter;
 
 typedef struct MatmulDynamicQuantParameter {
-  float input_scale_;
-  int32_t input_zp_;
+  float *input_scale_;
+  int32_t *input_zp_;
   float *filter_scale_;
   int32_t *filter_zp_;
 } MatmulDynamicQuantParameter;
