@@ -27,7 +27,10 @@ namespace mindspore {
 namespace pynative {
 class CastOperation {
  public:
-  CastOperation() = default;
+  CastOperation() {
+    type_prim_cache_.reserve(kDefaultContainerSize);
+    implicit_cast_map_.reserve(kDefaultContainerSize);
+  }
   ~CastOperation() = default;
   void DoCast(const FrontendOpRunInfoPtr &op_run_info);
   void ClearRes();

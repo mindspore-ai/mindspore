@@ -51,17 +51,20 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
-  static void GetConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info);
+  static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
+                                  const std::string &device_target, bool is_dynamic_shape,
+                                  mindspore::HashSet<size_t> *input_to_attr_index);
   static ValueNodePtr CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs = nullptr);
   static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value);
   static tensor::TensorPtr CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor);
-  static inline bool IsParamTensor(TensorGradType grad_type) {
+  static inline bool IsParam(TensorGradType grad_type) {
     return grad_type == TensorGradType::kParameter || grad_type == TensorGradType::kInput;
   }
-  static inline bool IsConstantTensor(TensorGradType grad_type) { return grad_type == TensorGradType::kConstant; }
+  static inline bool IsConstant(TensorGradType grad_type) { return grad_type == TensorGradType::kConstant; }
   static TensorGradType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell,
                                          TensorGradType grad_type);
   static TensorGradType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
+  static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph);
 };
 
 // Parser python

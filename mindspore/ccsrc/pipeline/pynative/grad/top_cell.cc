@@ -73,6 +73,10 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const 
 }
 
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const {
+  // Dynamic shape no need do value node replace
+  if (use_dynamic_shape_process()) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->op_info.clear();
   op_run_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_);
@@ -124,6 +128,10 @@ void TopCellInfo::ClearDeviceMemory() const {
   }
 }
 
+void TopCellInfo::AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data) {
+  param_grad_info_[tensor] = auto_grad_meta_data;
+}
+
 void TopCellInfo::Clear() {
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
   hook_changed_ = false;
@@ -135,9 +143,6 @@ void TopCellInfo::Clear() {
   resource_ = nullptr;
   fg_ = nullptr;
   graph_info_map_.clear();
-  id_with_op_info_.clear();
-  op_info_with_tensor_object_.clear();
-  cnode_hash_with_op_index_.clear();
 }
 
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const {
@@ -217,19 +222,9 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
   graph_info->node_map[id] = std::make_pair(node, index);
 }
 
-void TopCellInfo::SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index) {
-  MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    // Only one output, index will be 0
-    const auto t = v->cast<tensor::TensorPtr>();
-    id_with_op_info_[t->id()] = std::make_pair(op_info, out_index);
-  } else if (v->isa<ValueSequence>()) {
-    const auto &v_seq = v->cast<ValueSequencePtr>();
-    // Multi output, index will increase from 1
-    for (const auto &item : v_seq->value()) {
-      SetIdWithOpInfo(item, op_info, ++out_index);
-    }
-  }
+void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
+  MS_LOG(DEBUG) << "Save top cell forward output tensor info";
+  SaveForwardOutputTensorInfo(func_graph, !use_dynamic_shape_process_, &replace_info_);
 }
 }  // namespace pynative
 }  // namespace mindspore

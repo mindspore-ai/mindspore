@@ -387,7 +387,10 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
-  UnifyMindIR(root_graph);
+  bool pynative_with_ms_function_call_graph = func_graph->has_flag(kFlagPyNativeWithMsFunctionCallGraph);
+  if (!pynative_with_ms_function_call_graph) {
+    UnifyMindIR(root_graph);
+  }
   root_graph_ = root_graph;
 
   // Register a summary callback function, which is called in the final stages of summary.
@@ -418,7 +421,9 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
       CompileSubGraph(func_graph, device::RunMode::kKernelMode);
     }
   } else {
-    ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
+    if (!pynative_with_ms_function_call_graph) {
+      ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
+    }
     CompileSubGraph(func_graph);
   }
 
@@ -517,9 +522,10 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   CompileGraph(root_graph, run_mode);
 
   MS_EXCEPTION_IF_NULL(root_graph->manager());
-  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+  const auto &sub_graphs = root_graph->manager()->func_graphs();
   for (const auto &sub_graph : sub_graphs) {
-    if (sub_graph != func_graph && sub_graph != nullptr) {
+    if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagMsFunctionCallGraph)) {
+      MS_LOG(INFO) << "Compile sub graph " << sub_graph->ToString();
       CompileGraph(sub_graph, run_mode);
     }
   }
@@ -533,7 +539,7 @@ void MindRTBackendBase::CompileGraph(const FuncGraphPtr &func_graph, device::Run
   bool contain_multi_target = false;
   // Split graph to segments.
   const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
-  MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
+  MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size: " << segments.size();
 
   // Foreach the segments to compile graph.
   for (const auto &segment : segments) {
@@ -568,7 +574,8 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     MS_EXCEPTION_IF_NULL(context_ptr);
     GraphId graph_id;
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
-      graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
+      graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context,
+                                                      root_graph_->has_flag(kFlagPyNativeWithMsFunctionCallGraph));
     } else {
       graph_id =
         graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);

@@ -274,20 +274,24 @@ FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_ren
   return graph_opt->step(func_graph, false);
 }
 
-FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
+FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_flow) {
   MS_EXCEPTION_IF_NULL(resource);
-  opt::irpass::OptimizeIRPassLib irpass;
   auto func_graph = resource->func_graph();
-  opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
+
+  opt::irpass::OptimizeIRPassLib irpass;
+  OptPassGroupMap map;
+  opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
+  });
+  map.push_back({"ad_inline", inline_opt});
+
+  opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.tuple_list_get_item_eliminator_,
     irpass.zero_like_fill_zero_,
   });
-  OptPassGroupMap map({
-    {"ad_grad_graph_opt", grad_graph_opt},
-  });
+  (void)map.push_back({"grad_graph_opt", grad_graph_opt});
 
-  if (func_graph->has_flag(kFlagMSFunctionGraph)) {
+  if (has_control_flow) {
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({
       irpass.environ_get_eliminate_,
       irpass.environ_get_add_eliminate_,

@@ -268,7 +268,7 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
       continue;
     }
 
@@ -429,7 +429,7 @@ void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext 
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
       continue;
     }
     const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);

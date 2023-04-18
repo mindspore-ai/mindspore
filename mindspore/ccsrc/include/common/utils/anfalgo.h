@@ -229,7 +229,7 @@ class COMMON_EXPORT AnfAlgo {
   // Judge a control operator need be compiled into kernel graph rather than be cut into single op and
   // executed in vm. For example, the operator "bprop_cut" will be compiled into kernel graph and be launch
   // in backend in PyNative mode.
-  static bool IsControlOpExecInBackend(const AnfNodePtr &node);
+  static bool IsBpropCutOpExecInBackend(const AnfNodePtr &node);
 
   static bool IsNodeInputContainMonad(const AnfNodePtr &node);
   // Check whether a cnode has a monad input.

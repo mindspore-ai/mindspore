@@ -89,7 +89,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         }
       }
       akg_nodes.push_back(kernel);
-    } else if (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
+    } else if (!common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
       std::shared_ptr<kernel::NativeGpuKernelMod> gpu_kernel_mod = nullptr;
       bool new_factory = true;
       const auto &kernel_name = common::AnfAlgo::GetCNodeName(kernel);

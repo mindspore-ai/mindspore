@@ -722,6 +722,8 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     auto tensor_value = value_tuple->value()[output_index];
     if (tensor_value->isa<tensor::Tensor>()) {
       return tensor_value->cast<tensor::TensorPtr>();
+    } else {
+      return opt::CreateTupleTensor(value_tuple);
     }
   } else if (value->isa<tensor::Tensor>()) {
     if (output_index != 0) {
@@ -852,7 +854,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                                                                 : kParameterDataTensorMask);
     } else if (real_input->isa<CNode>()) {
       tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
-      if (common::AnfAlgo::IsControlOpExecInBackend(real_input)) {
+      if (common::AnfAlgo::IsBpropCutOpExecInBackend(real_input)) {
         CheckInputTensorShape(tensor, cnode, i - 1);
       }
       input_tensor_info->input_kernel.insert(kernel_with_index);
@@ -904,7 +906,7 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
     return GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
   } else if (real_input->isa<CNode>()) {
     tensor::TensorPtr tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
-    if (common::AnfAlgo::IsControlOpExecInBackend(real_input)) {
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(real_input)) {
       CheckInputTensorShape(tensor, cnode, input_index);
     }
     input_tensor_info->input_kernel.insert(kernel_with_index);

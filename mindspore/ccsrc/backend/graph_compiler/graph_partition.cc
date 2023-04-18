@@ -628,6 +628,10 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
     }
     AnfNodePtr fn = inputs[0];
     if (!IsValueNode<Primitive>(fn)) {
+      // Call node not cut in pynative control for dynamic shape
+      if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionCallNode, cnode)) {
+        return false;
+      }
       return true;
     }
     auto node_prim = GetValueNode<PrimitivePtr>(fn);

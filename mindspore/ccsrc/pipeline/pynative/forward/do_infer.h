@@ -29,7 +29,10 @@ namespace mindspore {
 namespace pynative {
 class InferOperation {
  public:
-  InferOperation() = default;
+  InferOperation() {
+    node_abs_cache_.reserve(kDefaultContainerSize);
+    prim_abs_list_.reserve(kDefaultContainerSize);
+  }
   ~InferOperation() = default;
   void DoInfer(const FrontendOpRunInfoPtr &op_run_info);
   // Manage node abs cache.
@@ -43,7 +46,7 @@ class InferOperation {
   inline void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
   py::object CallConstantFolding(const py::args &args) const;
   void set_only_single_op_run(bool only_single_op_run) { only_single_op_run_ = only_single_op_run; }
-  inline bool only_single_op_run() { return only_single_op_run_; }
+  inline bool only_single_op_run() const { return only_single_op_run_; }
 
  private:
   void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const;

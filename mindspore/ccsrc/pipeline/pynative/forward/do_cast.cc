@@ -291,7 +291,11 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_run_info->op_prim);
-  PyNativeAlgo::Common::GetConstInputToAttr(cast_run_info);
+  bool is_dynamic_shape =
+    cast_run_info->base_op_run_info.has_dynamic_output || cast_run_info->base_op_run_info.use_dynamic_shape_process;
+  PyNativeAlgo::Common::GetConstInputToAttr(cast_run_info->op_prim, cast_run_info->base_op_run_info.op_name,
+                                            cast_run_info->base_op_run_info.device_target, is_dynamic_shape,
+                                            &cast_run_info->input_to_attr);
   (void)cast_run_info->input_value.emplace_back(v);
   (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;

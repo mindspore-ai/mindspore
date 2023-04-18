@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
+const size_t kDefaultContainerSize = 5000;
 
 struct BaseOpRunInfo {
   bool has_dynamic_output = false;
@@ -76,16 +77,16 @@ struct FrontendOpRunInfo {
   std::string op_info;
   std::string out_value_id;
   std::string cell_obj_id;
-  std::vector<AbstractBasePtr> input_abs;
-  std::vector<ValuePtr> input_value;
-  std::vector<bool> input_unused_in_bprop;
+  abstract::AbstractBasePtrList input_abs{};
+  std::vector<ValuePtr> input_value{};
+  std::vector<bool> input_unused_in_bprop{};
   // Hold tensorGradType
-  std::vector<TensorGradType> input_value_grad_type;
-  std::vector<std::string> input_value_id;
-  stub::StubNodePtr stub_output;
-  std::vector<Signature> signatures;
+  std::vector<TensorGradType> input_value_grad_type{};
+  std::vector<std::string> input_value_id{};
+  stub::StubNodePtr stub_output{nullptr};
+  std::vector<Signature> signatures{};
   AsyncStatus async_status;
-  mindspore::HashSet<size_t> input_to_attr;
+  mindspore::HashSet<size_t> input_to_attr{};
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 

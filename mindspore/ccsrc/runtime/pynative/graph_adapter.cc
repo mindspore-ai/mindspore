@@ -364,7 +364,7 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
 
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   auto is_cut_graph = std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
-    return common::AnfAlgo::IsControlOpExecInBackend(node);
+    return common::AnfAlgo::IsBpropCutOpExecInBackend(node);
   });
 
   auto has_comm_op = std::any_of(node_list.begin(), node_list.end(),
