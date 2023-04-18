@@ -189,10 +189,10 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   }
   if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
     storage_info_.file_name_ = GetSwapFileName();
-  }
-  if (!swap_manager->CreateFile(storage_info_.file_name_)) {
-    MS_LOG(WARNING) << "Create file for swapping failed.";
-    return false;
+    if (!swap_manager->CreateFile(storage_info_.file_name_, GetFileAlignSize())) {
+      MS_LOG(WARNING) << "Create file for swapping failed.";
+      return false;
+    }
   }
   if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, GetFileAlignSize(), async)) {
     MS_LOG(WARNING) << "Copy data from host to file failed.";
@@ -340,13 +340,19 @@ bool LoadableDeviceAddress::Wait() const {
     MS_LOG(WARNING) << "Device address is in moving, but no valid swap event can be found.";
   }
   if (status_ == DeviceAddressStatus::kInFileToHost) {
-    swap_manager->DeleteFile(storage_info_.file_name_);
+    if (storage_info_.file_name_mutable_) {
+      swap_manager->DeleteFile(storage_info_.file_name_);
+      storage_info_.file_name_ = "";
+    }
     status_ = DeviceAddressStatus::kInHost;
   } else if (status_ == DeviceAddressStatus::kInDeviceToHost) {
     swap_manager->FreeDeviceMemory(ptr_);
     status_ = DeviceAddressStatus::kInHost;
   } else {
-    swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+    if (storage_info_.host_ptr_mutable_) {
+      swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+      storage_info_.host_ptr_ = nullptr;
+    }
     if (status_ == DeviceAddressStatus::kInHostToDevice) {
       status_ = DeviceAddressStatus::kInHost;
     } else {

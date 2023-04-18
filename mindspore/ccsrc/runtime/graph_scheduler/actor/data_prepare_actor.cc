@@ -51,12 +51,17 @@ bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
   return ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
 }
 
-void *GetOffloadPtr(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor,
-                    const DeviceContext *device_context) {
+device::StorageInfo GetStorageInfo(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor,
+                                   const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(host_tensor);
   MS_EXCEPTION_IF_NULL(device_tensor);
   if (host_tensor->data_type() == device_tensor->type_id()) {
-    return host_tensor->data_c();
+    const auto &offload_file = host_tensor->GetOffloadFilePath();
+    if (!offload_file.empty()) {
+      return {nullptr, offload_file};
+    } else {
+      return {host_tensor->data_c(), ""};
+    }
   }
   const auto shape_size = abstract::ShapeSize(host_tensor->shape());
   const auto data_size = host_tensor->Size();
@@ -73,7 +78,7 @@ void *GetOffloadPtr(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
                       << TypeIdToString(host_tensor->data_type())
                       << ", dst type: " << TypeIdToString(device_tensor->type_id());
   }
-  return offload_ptr;
+  return {offload_ptr, ""};
 }
 
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
@@ -127,7 +132,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
       host_shape = real_host_tensor->shape();
     }
     if (taken_over_by_swap_manager) {
-      device_tensor->SetStorageInfo({GetOffloadPtr(real_host_tensor, device_tensor, device_context), ""});
+      device_tensor->SetStorageInfo(GetStorageInfo(real_host_tensor, device_tensor, device_context));
     } else if (!device_tensor->SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type,
                                                 real_host_tensor->data_c(),
                                                 real_host_tensor->device_info().host_format_)) {

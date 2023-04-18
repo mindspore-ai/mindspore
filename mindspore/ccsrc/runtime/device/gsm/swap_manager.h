@@ -45,7 +45,7 @@ class BACKEND_EXPORT SwapManager {
   void FreeHostMemory(void *ptr);
 
   // File
-  bool CreateFile(const std::string &file_name);
+  bool CreateFile(const std::string &file_name, size_t file_size);
   bool DeleteFile(const std::string &file_name);
   bool FileToHostMemory(void *host_memory, const std::string &file_name, size_t byte_num, bool async,
                         AsyncIOToken *sync_token);
