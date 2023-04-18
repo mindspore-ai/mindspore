@@ -16,9 +16,8 @@
 LiteInfer API.
 """
 from __future__ import absolute_import
+import importlib
 
-from mindspore.train.serialization import _get_funcgraph
-from mindspore.train import Model as MSMODEL
 from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite._checkparam import check_isinstance
@@ -32,7 +31,7 @@ class LiteInfer(BaseModel):
     The LiteInfer class takes training model as input and performs predictions directly.
 
     Args:
-        train_model (MSMODEL): MindSpore Model.
+        train_model (Model): MindSpore Model.
         net_inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
@@ -45,21 +44,28 @@ class LiteInfer(BaseModel):
         ValueError: `train_model` is not a MindSpore Model.
     """
 
-    def __init__(self, train_model: MSMODEL, *net_inputs, context=None):
+    def __init__(self, train_model, *net_inputs, context=None):
         super(LiteInfer, self).__init__(_c_lite_wrapper.LiteInferPyBind())
-        if not isinstance(train_model, MSMODEL):
+        self._mindspore = None
+        # pylint: disable=broad-except
+        try:
+            self._mindspore = importlib.import_module('mindspore')
+        except (ImportError, BaseException):
+            raise ImportError("For 'LiteInfer', import mindspore fail.")
+
+        if not isinstance(train_model, self._mindspore.train.Model):
             raise ValueError("For LiteInfer, input train model is not ms.train.Model.")
         self._func_graph = self._get_func_graph(train_model.predict_network, *net_inputs)
         self._build_from_fun_graph(self._func_graph, context)
 
-    @staticmethod
-    def _get_func_graph(pyobj, *net_inputs):
+    def _get_func_graph(self, pyobj, *net_inputs):
         """
         Get Func graph from frontend compile.
 
         Return: a _c_expression FunGraph object.
         """
-        return _get_funcgraph(pyobj, *net_inputs)
+        # pylint: disable=protected-access
+        return self._mindspore.train.serialization._get_funcgraph(pyobj, *net_inputs)
 
     def get_inputs(self):
         """

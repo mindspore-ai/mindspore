@@ -21,6 +21,7 @@ from functools import wraps
 import os
 import math
 import copy
+import importlib
 import numpy as np
 
 import mindspore
@@ -231,6 +232,8 @@ class Model:
         self.enable_recovery = False
         self._backbone_is_train = True
         self.need_load_ckpt = False
+        self._lite_predictor = None
+        self._mindspore_lite = None
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -1472,7 +1475,48 @@ class Model:
 
         return eval_result
 
-    def predict(self, *predict_data):
+    def _predict_lite(self, *predict_data):
+        """
+        Generate output predictions for the input samples using backend 'lite'.
+
+        Args:
+            predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
+                The predict data, can be a single tensor,
+                a list of tensor, or a tuple of tensor.
+
+        Returns:
+            Tensor, array(s) of predictions.
+        """
+        def _get_lite_context(lite_context_input):
+            lite_context_input.target = [context.get_context("device_target")]
+            lite_context_input.cpu.thread_num = 1
+            lite_context_input.cpu.thread_affinity_mode = 2
+            return lite_context_input
+
+        if not self._mindspore_lite:
+            self._mindspore_lite = importlib.import_module('mindspore_lite')
+
+        check_input_data(*predict_data, data_class=Tensor)
+        if not self._lite_predictor:
+            lite_context = _get_lite_context(self._mindspore_lite.Context())
+            self._lite_predictor = \
+                self._mindspore_lite.lite_infer.LiteInfer(self, *predict_data, context=lite_context)
+
+        inputs = self._lite_predictor.get_inputs()
+        if len(predict_data) != len(inputs):
+            raise RuntimeError(f"For 'Model.predict', numbers of predict_data {len(predict_data)} "
+                               f"is not equal to numbers of net input {len(inputs)}")
+        for i, single_data in enumerate(predict_data):
+            inputs[i].set_data_from_numpy(single_data.asnumpy())
+        outputs: list = self._lite_predictor.predict(inputs)
+        if not outputs:
+            return Tensor(outputs)
+        if len(outputs) == 1:
+            return Tensor(outputs[0].get_data_to_numpy())
+        outputs = [Tensor(single_output.get_data_to_numpy()) for single_output in outputs]
+        return tuple(outputs)
+
+    def predict(self, *predict_data, backend=None):
         """
         Generate output predictions for the input samples.
 
@@ -1494,6 +1538,17 @@ class Model:
             >>> model = Model(Net())
             >>> result = model.predict(input_data)
         """
+        if backend == "lite":
+            # pylint: disable=broad-except
+            try:
+                return self._predict_lite(*predict_data)
+            except RuntimeError:
+                logger.warning("Lite inference failed, fallback to original inference!")
+            except ImportError:
+                logger.warning("Import mindspore_lite failed, fallback to original inference!")
+            except BaseException as e:
+                logger.warning(f"Lite inference failed, {e.__str__()}, fallback to original inference!")
+
         self._check_network_mode(self._predict_network, False)
         check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
         _parallel_predict_check()
