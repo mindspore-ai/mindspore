@@ -442,6 +442,32 @@ AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const Primitive
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(abs_seq->dynamic_len()), kBool);
 }
 
+AbstractBasePtr InferImplIsTensorBoolCond(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_abs_list) {
+  constexpr size_t input_size = 1;
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_abs_list, input_size);
+  auto abs = args_abs_list[0];
+  if (!abs->isa<AbstractTensor>()) {
+    MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be a tensor but got " << abs->ToString();
+  }
+
+  auto build_shape = abs->cast<AbstractTensorPtr>()->BuildShape();
+  MS_EXCEPTION_IF_NULL(build_shape);
+  if (build_shape->IsDimUnknown()) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
+  }
+  auto shape = build_shape->cast<abstract::ShapePtr>()->shape();
+  if (shape.size() == 0) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
+  }
+  if (shape.size() == 1 && (shape[0] == abstract::Shape::kShapeDimAny || shape[0] == 1)) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
+  }
+  MS_EXCEPTION(ValueError) << "Only tensor which shape is () or (1,) can be converted to bool, "
+                           << "but got tensor shape is " << build_shape->ToString();
+}
+
 AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const AbstractBasePtrList &args_abs_list) {
   constexpr size_t input_size = 1;
