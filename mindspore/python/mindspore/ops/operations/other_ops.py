@@ -705,12 +705,12 @@ class identity(Primitive):
     # Side effect will propagated from the first argument to return value.
     side_effect_propagate = 1
 
-    @deprecated('2.0', 'nn.Identity', False)
     @prim_attr_register
     def __init__(self):
         """Initialize identity."""
         self.add_prim_attr('side_effect_propagate', 1)
 
+    @deprecated('2.0', 'nn.Identity', False)
     def __call__(self, x):
         return x
 
