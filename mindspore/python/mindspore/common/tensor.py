@@ -2229,6 +2229,45 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('fills')(self, value)
 
+    def fill_diagonal(self, fill_value, wrap=False):
+        """
+        Fills the main diagonal of a Tensor with a specified value and returns the result.
+        The input has at least 2 dimensions, and all dimensions of input must be equal in length
+        when the dimension of input is greater than 2.
+
+        Args:
+            - fill_value (float): The value to fill with the diagonal of `self`.
+            - wrap (bool, optional): Controls whether the diagonal elements continue onto the
+              remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: False.
+
+        Returns:
+            - y (Tensor): Tensor, has the same shape and data type as `self`.
+
+        Raises:
+            TypeError: If data type of `self` is not one of the following: float32, int32, int64.
+            ValueError: If the dimension of `self` is not greater than 1.
+            ValueError: If the size of each dimension is not equal, when the dimension is greater than 2.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((6, 3)), mindspore.float32)
+            >>> output = x.fill_diagonal(x, 5.0, wrap=True)
+            >>> print(output)
+            [[5. 1. 1.]
+             [1. 5. 1.]
+             [1. 1. 5.]
+             [1. 1. 1.]
+             [5. 1. 1.]
+             [1. 5. 1.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fill_diagonal')(fill_value, wrap)(self)
+
     def masked_fill(self, mask, value):
         """
         For details, please refer to :func:`mindspore.ops.masked_fill`.
