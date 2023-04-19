@@ -318,6 +318,8 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   }
   output_shapes_.clear();
   output_size_list_.clear();
+  auto primitive = base_operator->GetPrim();
+  MS_ERROR_IF_NULL(primitive);
   for (auto &output : outputs) {
     size_t tensor_size = 0;
     size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
@@ -329,8 +331,6 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       // and the output_size_list_ can be set by max_shape
       auto max_shape = output->GetMaxShape();
       if (max_shape.empty()) {
-        auto primitive = base_operator->GetPrim();
-        MS_ERROR_IF_NULL(primitive);
         MS_LOG(DEBUG) << "For " << primitive->name()
                       << ", the max_shape should not be empty when input shape is known.";
         ret = KRET_UNKNOWN_OUT_SHAPE;
@@ -339,8 +339,17 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
         ret = KRET_UNKNOWN_OUT_SHAPE;
       }
     } else {
-      tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+      if (shape.empty()) {
+        tensor_size = type_size;
+      } else {
+        auto cur_out_shape_num = SizeOf(shape);
+        tensor_size = cur_out_shape_num * type_size;
+        if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
+          MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the shape of outputs["
+                                   << output_size_list_.size() << "]: " << shape
+                                   << " is too big, mindspore cannot apply for such a large amount of memory.";
+        }
+      }
       tensor_size = std::max(tensor_size, type_size);
     }
     (void)output_size_list_.emplace_back(tensor_size);
