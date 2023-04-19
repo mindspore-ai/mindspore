@@ -1044,18 +1044,17 @@ class _PyNativeExecutor:
         """
         return self._executor.real_run_op(*args)
 
-    def run_op_async(self, prim, args):
+    def run_op_async(self, *args):
         """
         Run single op async.
 
         Args:
-            prim (Primitive): Op primitive
-            args (tuple): input arguments.
+            args (tuple): Op prim and input arguments.
 
         Return:
             StubNode, result of run op.
         """
-        return self._executor.run_op_async(prim, args)
+        return self._executor.run_op_async(*args)
 
     def new_graph(self, obj, *args, **kwargs):
         """

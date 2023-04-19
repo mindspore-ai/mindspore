@@ -66,7 +66,6 @@ struct PyParser {
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
-  static ValuePtr PyObjToStubNode(const py::object &obj);
   static ValuePtr BaseRefToValue(const BaseRef &value);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
   static void FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
