@@ -1138,6 +1138,8 @@ def get_masked_select_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(MaskedSelectGrad)
 def get_masked_select_grad_vmap_rule(prim, axis_size):
     """VmapRule for `MaskedSelect`."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
 
     def vmap_rule(x_bdim, mask_bdim, outgrad_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, mask_bdim, outgrad_bdim)
