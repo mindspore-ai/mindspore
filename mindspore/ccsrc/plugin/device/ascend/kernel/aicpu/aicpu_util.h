@@ -32,12 +32,15 @@ constexpr auto kDataFormat = "data_format";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kInitDataSetQueue = "InitDataSetQueue";
 constexpr auto kInitData = "InitData";
+constexpr auto kInplaceIndexAdd = "InplaceIndexAdd";
+constexpr auto kLeftShift = "LeftShift";
 constexpr auto kCTCLossV2 = "CTCLossV2";
 constexpr auto kCTCLossV2Grad = "CTCLossV2Grad";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
 constexpr auto kPack = "Pack";
 constexpr auto kCumSum = "CumSum";
+constexpr auto kCumMax = "CumMax";
 constexpr auto kCumProd = "CumProd";
 constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kOutputTypes = "output_types";
@@ -48,6 +51,8 @@ constexpr auto kShapes = "shapes";
 constexpr auto kTypes = "types";
 constexpr auto kQueueName = "queue_name";
 constexpr auto kNameRangeV2 = "RangeV2";
+constexpr auto kNLLLoss = "NLLLoss";
+constexpr auto kNLLLossGrad = "NLLLossGrad";
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kSeed = "seed";
 constexpr auto kSeed0 = "Seed0";
@@ -149,6 +154,7 @@ constexpr auto kGridSampler3D = "GridSampler3D";
 constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
+constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
 constexpr auto kTril = "Tril";
 constexpr auto kSub = "Sub";
 constexpr auto kDiv = "Div";
@@ -179,6 +185,7 @@ constexpr auto kAddcmul = "Addcmul";
 constexpr auto kAdd = "Add";
 constexpr auto kTriu = "Triu";
 constexpr auto kUniformCandidateSampler = "UniformCandidateSampler";
+constexpr auto kUniform = "Uniform";
 constexpr auto kExpand = "Expand";
 constexpr auto kExpandDims = "ExpandDims";
 constexpr auto kReshape = "Reshape";
@@ -242,9 +249,12 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kTensorScatterElements,
                                           kAdd,
                                           kLess,
+                                          kFillDiagonal,
                                           kLinSpace,
                                           kIsInf,
                                           kIsNan,
+                                          kInplaceIndexAdd,
+                                          kLeftShift,
                                           kLogMatrixDeterminant,
                                           kCross,
                                           kGridSampler2D,
@@ -253,15 +263,23 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGridSampler3DGrad,
                                           kScatterNdMax,
                                           kScatterNdMin,
+                                          kScatterAddWithAxis,
                                           kTril,
                                           kSub,
                                           kDiv,
                                           kNeg,
                                           kNonZero,
                                           kNotEqual,
+                                          kNLLLoss,
+                                          kNLLLossGrad,
                                           kConjugateTranspose,
                                           kCheckNumerics,
                                           kCumSum,
+                                          kCumMax,
+                                          kUpsampleNearest3D,
+                                          kUpsampleNearest3DGrad,
+                                          kUpsampleTrilinear3D,
+                                          kUpsampleTrilinear3DGrad,
                                           kLog1p,
                                           kRsqrt,
                                           kSquare,
@@ -325,6 +343,7 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReshape,
                                               kFlatten,
                                               kSqueeze,
+                                              kUniform,
                                               kUniformCandidateSampler,
                                               kExpandDims};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
@@ -367,6 +386,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},
   {kCumSum, "Cumsum"},
+  {kCumMax, "Cummax"},
   {kCumProd, "Cumprod"},
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
   {kSparseSoftmaxCrossEntropyWithLogitsV2, "SparseSoftmaxCrossEntropyWithLogits"},

@@ -163,6 +163,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kInstanceNormV2GradOpName,
   mindspore::kLayerNormGradGradOpName,
   mindspore::kExpm1OpName,
+  mindspore::kExpandOpName,
   mindspore::kBiasAddOpName,
   mindspore::kBiasAddGradOpName,
   mindspore::kBincountOpName,
@@ -275,6 +276,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kLog1pOpName,
   mindspore::kMulOpName,
   mindspore::kMaskedSelectOpName,
+  mindspore::kMaskedFillOpName,
   mindspore::kMaskedSelectGradOpName,
   mindspore::kConjOpName,
   mindspore::kZerosLikeOpName,
@@ -282,6 +284,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kDenseToCSRSparseMatrixOpName,
   mindspore::kDenseToSparseSetOperation,
   mindspore::kDiagOpName,
+  mindspore::kDigammaOpName,
   mindspore::kDiagonalOpName,
   mindspore::kDiagPartOpName,
   mindspore::kDigammaOpName,
@@ -338,7 +341,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kSparseToDenseV2OpName,
   mindspore::kTrilOpName,
   mindspore::kBernoulliOpName,
-  mindspore::kGluOpName,
+  mindspore::kGLUOpName,
   mindspore::kGluGradOpName,
   mindspore::kIndexPutOpName};
 

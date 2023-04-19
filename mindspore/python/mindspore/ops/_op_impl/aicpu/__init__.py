@@ -54,6 +54,8 @@ from .betainc import _betainc_aicpu
 from .bartlett_window import _bartlett_window_aicpu
 from .batch_norm_grad_grad import _batch_norm_grad_grad_aicpu
 from .no_repeat_ngram import _no_repeat_ngram_aicpu
+from .nllloss import _nll_loss_aicpu
+from .nllloss_grad import _nll_loss_grad_aicpu
 from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
 from .padding import _padding_aicpu
@@ -134,7 +136,12 @@ from .not_equal import _not_equal_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
 from .upper_bound import _upper_bound_aicpu
+from .upsample_nearest_3d import _upsample_nearest_3d_aicpu
+from .upsample_nearest_3d_grad import _upsample_nearest_3d_grad_aicpu
+from .upsample_trilinear_3d import _upsample_trilinear_3d_aicpu
+from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
+from .uniform import _uniform_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
 from .standard_laplace import _standard_laplace_aicpu
@@ -162,6 +169,7 @@ from .xdivy import _xdivy_aicpu
 from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
 from .meshgrid import _meshgrid_aicpu
 from .div import _div_aicpu
+from .digamma import _digamma_aicpu
 from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu
@@ -195,6 +203,7 @@ from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .check_numerics import _check_numerics_aicpu
 from .cumsum import _cumsum_aicpu
+from .cummax import _cummax_aicpu
 from .round import _round_aicpu
 from .stft import _stft_aicpu
 from .floor_div import _floor_div_aicpu
@@ -218,6 +227,7 @@ from .scatter_nd_update import _scatter_nd_update_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
+from .scatter_add_with_axis import _scatter_add_with_axis_aicpu
 from .compare_and_bitpack import _compare_and_bitpack_aicpu
 from .addcdiv import _addcdiv_aicpu
 from .unique_consecutive import _unique_consecutive_aicpu
@@ -326,6 +336,7 @@ from .hypot import _hypot_aicpu
 from .identity_n import _identity_n_aicpu
 from .index_fill import _index_fill_aicpu
 from .index_put import _index_put_aicpu
+from .inplace_index_add import _inplace_index_add_aicpu
 from .kldivloss import _kldiv_loss_aicpu
 from .kldivlossgrad import _kldiv_loss_grad_aicpu
 from .lcm import _lcm_aicpu
