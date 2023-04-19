@@ -64,6 +64,7 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> input_x_shape_;
   std::vector<int64_t> input_target_shape_;
   std::vector<int64_t> output_before_reduction_shape_;
+  std::mutex mutex_;
 };
 }  // namespace kernel
 }  // namespace mindspore
