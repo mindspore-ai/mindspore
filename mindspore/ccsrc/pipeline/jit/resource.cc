@@ -484,6 +484,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"qr", std::string("qr")},                                          // qr()
        {"amax", std::string("amax")},                                      // amax()
        {"amin", std::string("amin")},                                      // amin()
+       {"lu_solve", std::string("lu_solve")},                              // lu_solve()
        {"masked_scatter", std::string("masked_scatter")},                  // masked_scatter()
        {"index_put", std::string("index_put")},                            // index_input()
      }},
