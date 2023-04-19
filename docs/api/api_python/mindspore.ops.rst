@@ -497,6 +497,7 @@ Array操作
     mindspore.ops.concat
     mindspore.ops.conj
     mindspore.ops.count_nonzero
+    mindspore.ops.deepcopy
     mindspore.ops.diag
     mindspore.ops.diagflat
     mindspore.ops.diagonal

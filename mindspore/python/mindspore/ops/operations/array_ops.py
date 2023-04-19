@@ -6435,7 +6435,7 @@ class GatherD(Primitive):
 
 class Identity(Primitive):
     """
-    The 'ops.Identity' interface is deprecated, please use the :class: `mindspore.ops.deepcopy` instead.
+    The `mindspore.ops.Identity` interface is deprecated, please use the :func:`mindspore.ops.deepcopy` instead.
 
     Supported Platforms:
         Deprecated
