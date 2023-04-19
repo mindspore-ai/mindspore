@@ -417,6 +417,7 @@ from .math_func import (
     triu_indices,
     nextafter,
     trace,
+    zeta,
     histc
 )
 from .nn_func import (
