@@ -276,9 +276,9 @@ class LazyAdam(Optimizer):
         \end{array}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
-    :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent
+    :math:`g` represents `gradients`, :math:`\gamma` represents `learning_rate`, :math:`\beta_1, \beta_2` represent
     `beta1` and `beta2`, :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
-    `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
+    `beta1_power` and `beta2_power`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
     Note:
