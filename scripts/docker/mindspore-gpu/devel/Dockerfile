@@ -45,9 +45,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libnuma-dev
 
-# Configure cuDNN (v7.6.5)
-RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.8.0.5 /usr/local/cuda/lib64/libcudnn.so
-
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
