@@ -52,6 +52,18 @@ class IsCloseHelperGpuKernel : public GpuKernelHelperBase {
     is_null_input_ = false;
   }
 
+  bool IsBroadcast(const std::vector<int64_t> &shapex, const std::vector<int64_t> &shapey) {
+    if (shapex.size() != shapey.size()) {
+      return true;
+    }
+    for (size_t i = 0; i < shapex.size(); i++) {
+      if (shapex[i] != shapey[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   virtual ~IsCloseHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
@@ -74,11 +86,7 @@ class IsCloseHelperGpuKernel : public GpuKernelHelperBase {
       return 0;
     }
 
-    for (size_t i = 0; i < inputx_shape.size(); i++) {
-      if (inputx_shape[i] != inputy_shape[i]) {
-        need_broadcast_ = true;
-      }
-    }
+    need_broadcast_ = IsBroadcast(inputx_shape, inputy_shape);
 
     lhs_shape_.resize(MAX_DIMS, 1);
     rhs_shape_.resize(MAX_DIMS, 1);
