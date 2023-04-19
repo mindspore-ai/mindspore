@@ -45,6 +45,8 @@ class MS_API AclModelOptions {
   void SetDumpModelName(const std::string &name) noexcept { dump_model_name_ = name; }
   std::string GetDumpModelName() const { return dump_model_name_; }
   std::string GetInputShape() const { return input_shape_; }
+  void SetInitOptionsMap(std::map<std::string, std::string> init_options) { init_options_map_ = init_options; }
+  void SetBuildOptionsMap(std::map<std::string, std::string> build_options) { build_options_map_ = build_options; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
@@ -61,6 +63,8 @@ class MS_API AclModelOptions {
   std::string dynamic_image_size_;
   std::string buffer_optimize_mode_;
   std::map<int, std::vector<int>> input_shape_map_;
+  std::map<std::string, std::string> init_options_map_;
+  std::map<std::string, std::string> build_options_map_;
   // other options
   uint32_t device_id_{0};
   std::optional<bool> first_graph_flag_{false};

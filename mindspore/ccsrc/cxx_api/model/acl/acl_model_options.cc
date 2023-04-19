@@ -147,6 +147,27 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
     build_options.emplace(acl_option_key, *ms_option);
   }
 
+  // init by config file param
+  for (auto item : init_options_map_) {
+    MS_LOG(INFO) << "Option " << item.first << " : " << item.second;
+    if (init_options.find(item.first) != init_options.end()) {
+      MS_LOG(WARNING) << "the parameters[" << item.first
+                      << "] have been set through the API and do not need to be repeated.";
+      continue;
+    }
+    init_options.emplace(item.first, item.second);
+  }
+
+  for (auto item : build_options_map_) {
+    MS_LOG(INFO) << "Option " << item.first << " : " << item.second;
+    if (build_options.find(item.first) != build_options.end()) {
+      MS_LOG(WARNING) << "the parameters[" << item.first
+                      << "] have been set through the API and do not need to be repeated.";
+      continue;
+    }
+    build_options.emplace(item.first, item.second);
+  }
+
   // first_graph_flag has value means being multi graph mode
   if (first_graph_flag_.has_value()) {
     for (const auto &option : multi_graph_unsupported_options) {
