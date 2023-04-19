@@ -7,8 +7,9 @@ ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
 ENV CUDA_PATH /usr/local/cuda
+ENV CUDNN_PATH /usr/lib/x86_64-linux-gnu
 ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${PYTHON_ROOT_PATH}:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${PYTHON_ROOT_PATH}:${CUDA_PATH}/lib64:${CUDNN_PATH}:$LD_LIBRARY_PATH
 
 # install basic tools
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
