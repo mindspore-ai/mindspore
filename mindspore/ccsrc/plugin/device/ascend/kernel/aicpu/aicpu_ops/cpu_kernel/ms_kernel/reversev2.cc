@@ -16,17 +16,41 @@
 
 #include "reversev2.h"
 #include <securec.h>
+#include <unordered_set>
 #include "Eigen/Core"
 
 #include "cpu_kernel_utils.h"
 #include "iostream"
 #include "utils/eigen_tensor.h"
+#include "utils/tensor_iterator.h"
 #include "utils/kernel_util.h"
 using namespace std;
 namespace {
 const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
 const char *kReverseV2 = "ReverseV2";
+
+vector<int64_t> idx2coord(int idx, const vector<int64_t> &accum_dim) {
+  vector<int64_t> coord(accum_dim.size());
+  for (size_t i = 0; i < coord.size(); ++i) {
+    coord[i] = idx / accum_dim[i];
+    idx -= coord[i] * accum_dim[i];
+  }
+  return coord;
+}
+
+inline int64_t calc_target_idx(const vector<int64_t> &coord, const unordered_set<int64_t> &dims,
+                               const vector<int64_t> &shape, const vector<int64_t> &accum_dim) {
+  int64_t idx = 0;
+  for (size_t i = 0; i < coord.size(); ++i) {
+    if (dims.count(i) != 0) {
+      idx += accum_dim[i] * (shape[i] - coord[i] - 1);
+    } else {
+      idx += accum_dim[i] * coord[i];
+    }
+  }
+  return idx;
+}
 }  // namespace
 
 namespace aicpu {
@@ -39,17 +63,9 @@ uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   auto x_shape = ctx.Input(0)->GetTensorShape();
   auto axis_shape = ctx.Input(1)->GetTensorShape();
   DataType data_type = DataType(ctx.Input(0)->GetDataType());
-  std::vector<int64_t> reverse_shape;
-  for (int i = 0; i < x_shape->GetDims(); i++) {
-    reverse_shape.push_back(false);
-  }
   // dims check
   if (x_shape->GetDims() == 0 || axis_shape->GetDims() == 0) {
-    uint32_t ret = ComputeDiffType(data_type, reverse_shape, ctx);
-    if (ret != KERNEL_STATUS_OK) {
-      return ret;
-    }
-    return KERNEL_STATUS_OK;
+    return ComputeDiffType(data_type, ctx);
   }
   KERNEL_CHECK_FALSE((x_shape->GetDims() > 0 && x_shape->GetDims() <= x_max_dim), KERNEL_STATUS_PARAM_INVALID,
                      "Shapes of x is not support.")
@@ -67,46 +83,42 @@ uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   for (int j = 0; j < axis_element; j++) {
     int64_t realdim = *(input_axis + j) < 0 ? dim + *(input_axis + j) : *(input_axis + j);
     KERNEL_CHECK_FALSE((realdim >= 0 && realdim < dim), KERNEL_STATUS_PARAM_INVALID, "[%d] is invalid", realdim)
-    KERNEL_CHECK_FALSE((!reverse_shape[realdim]), KERNEL_STATUS_PARAM_INVALID, "axis [%d], specified more than once.",
-                       realdim)
-    reverse_shape[realdim] = true;
   }
-  uint32_t ret = ComputeDiffType(data_type, reverse_shape, ctx);
+  uint32_t ret = ComputeDiffType(data_type, ctx);
   if (ret != KERNEL_STATUS_OK) {
     return ret;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, std::vector<int64_t> reverse_shape,
-                                             CpuKernelContext &ctx) {
+uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, CpuKernelContext &ctx) {
   switch (data_type) {
     case DT_FLOAT16:
-      return ComputeReverseV2<Eigen::half>(reverse_shape, ctx);
+      return ComputeReverseV2<Eigen::half>(ctx);
     case DT_FLOAT:
-      return ComputeReverseV2<float>(reverse_shape, ctx);
+      return ComputeReverseV2<float>(ctx);
     case DT_DOUBLE:
-      return ComputeReverseV2<double>(reverse_shape, ctx);
+      return ComputeReverseV2<double>(ctx);
     case DT_UINT8:
-      return ComputeReverseV2<uint8_t>(reverse_shape, ctx);
+      return ComputeReverseV2<uint8_t>(ctx);
     case DT_INT8:
-      return ComputeReverseV2<int8_t>(reverse_shape, ctx);
+      return ComputeReverseV2<int8_t>(ctx);
     case DT_UINT16:
-      return ComputeReverseV2<uint16_t>(reverse_shape, ctx);
+      return ComputeReverseV2<uint16_t>(ctx);
     case DT_INT16:
-      return ComputeReverseV2<int16_t>(reverse_shape, ctx);
+      return ComputeReverseV2<int16_t>(ctx);
     case DT_INT32:
-      return ComputeReverseV2<int32_t>(reverse_shape, ctx);
+      return ComputeReverseV2<int32_t>(ctx);
     case DT_INT64:
-      return ComputeReverseV2<int64_t>(reverse_shape, ctx);
+      return ComputeReverseV2<int64_t>(ctx);
     case DT_BOOL:
-      return ComputeReverseV2<bool>(reverse_shape, ctx);
+      return ComputeReverseV2<bool>(ctx);
     case DT_COMPLEX64:
-      return ComputeReverseV2<std::complex<float>>(reverse_shape, ctx);
+      return ComputeReverseV2<std::complex<float>>(ctx);
     case DT_COMPLEX128:
-      return ComputeReverseV2<std::complex<double>>(reverse_shape, ctx);
+      return ComputeReverseV2<std::complex<double>>(ctx);
     case DT_STRING:
-      return ComputeReverseV2<string>(reverse_shape, ctx);
+      return ComputeReverseV2<string>(ctx);
     default:
       KERNEL_LOG_ERROR("ReverseV2 invalid input type[%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
@@ -115,71 +127,51 @@ uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, std::vector<int
 }
 
 template <typename T>
-uint32_t ReverseV2CpuKernel::ComputeReverseV2(std::vector<int64_t> reverse_shape, CpuKernelContext &ctx) {
-  auto x_shape = ctx.Input(0)->GetTensorShape();
-  auto input_data = reinterpret_cast<T *>(ctx.Input(0)->GetData());
+uint32_t ReverseV2CpuKernel::ComputeReverseV2(CpuKernelContext &ctx) {
+  auto input = ctx.Input(0);
+  auto input_shape = input->GetTensorShape()->GetDimSizes();
+  auto input_data = reinterpret_cast<T *>(input->GetData());
+  auto num_elem = input->NumElements();
+  auto axis = ctx.Input(1);
+  auto axis_shape = axis->GetTensorShape()->GetDimSizes();
+  auto axis_data = reinterpret_cast<int64_t *>(axis->GetData());
   auto output_data = reinterpret_cast<T *>(ctx.Output(0)->GetData());
-  if (x_shape->GetDims() == 0) {
-    *(output_data) = *(input_data);
+
+  if (axis_shape.size() == 0) {
+    std::copy(input_data, input_data + num_elem, output_data);
     return KERNEL_STATUS_OK;
   }
-  auto axis_shape = ctx.Input(1)->GetTensorShape();
-  if (axis_shape->GetDims() == 0) {
-    for (int i = 0; i < x_shape->NumElements(); i++) {
-      *(output_data + i) = *(input_data + i);
-    }
-    return KERNEL_STATUS_OK;
+
+  std::unordered_set<int64_t> axes;
+  std::transform(axis_data, axis_data + axis->NumElements(), std::inserter(axes, axes.begin()),
+                 [&input_shape](int64_t x) { return x >= 0 ? x : input_shape.size() + x; });
+
+  std::vector<int64_t> accum_dim(input_shape.size());
+  accum_dim.back() = 1;
+  for (size_t i = input_shape.size() - 1; i > 0; --i) {
+    accum_dim[i - 1] = accum_dim[i] * input_shape[i];
   }
-  int64_t front = 1;
-  int64_t shape_element = x_shape->NumElements();
-  int64_t dim = x_shape->GetDims();
-  std::vector<int64_t> dims = x_shape->GetDimSizes();
-  bool redo = false;
-  for (int j = 0; j < dim; j++) {
-    front = front * dims[j];
-    if (j != dim - 1 && reverse_shape[j] == true) {
-      if (redo == true) {
-        auto copy_size = shape_element * sizeof(T);
-        auto ret_mem = memcpy_s(input_data, copy_size, output_data, copy_size);
-        KERNEL_CHECK_FALSE(ret_mem == EOK, KERNEL_STATUS_INNER_ERROR, "Memcpy failed, size = [%zu].", copy_size);
-      }
-      int64_t row_size = shape_element / front;
-      int64_t input_forward = (dims[j] - 1) * row_size;
-      int64_t save = input_forward;
-      int64_t output_forward = 0;
-      int64_t behind = shape_element / (front / dims[j]);
-      for (int k = 0; k < front / dims[j]; k++) {
-        int64_t remain = dims[j];
-        while (remain > 0) {
-          auto copy_size = row_size * sizeof(T);
-          auto cur_output = output_data + output_forward;
-          auto cur_input = input_data + input_forward;
-          auto ret_mem = memcpy_s(cur_output, copy_size, cur_input, copy_size);
-          KERNEL_CHECK_FALSE(ret_mem == EOK, KERNEL_STATUS_INNER_ERROR, "Memcpy size[%zu] from input to output failed.",
-                             copy_size);
-          input_forward = input_forward - row_size;
-          output_forward = output_forward + row_size;
-          remain--;
-        }
-        save = save + behind;
-        input_forward = save;
-      }
-      redo = true;
-    } else if (j == dim - 1 && reverse_shape[j] == true) {
-      if (redo == true) {
-        auto copy_size = shape_element * sizeof(T);
-        auto ret_mem = memcpy_s(input_data, copy_size, output_data, copy_size);
-        KERNEL_CHECK_FALSE(ret_mem == EOK, KERNEL_STATUS_INNER_ERROR, "Memcpy failed, size = [%zu].", copy_size);
-      }
-      int64_t output_forward = 0;
-      for (int k = 0; k < shape_element / dims[j]; k++) {
-        for (int i = dims[j] - 1; i >= 0; i--) {
-          *(output_data + output_forward) = *(input_data + i + k * dims[j]);
-          output_forward++;
-        }
-      }
+
+  auto sharder_reverse = [&](int64_t start, int64_t end) {
+    std::vector<int64_t> cur_coord = idx2coord(start, accum_dim);
+    auto coord_iter = TensorIterator(input_shape, cur_coord);
+    for (int i = start; i < end; ++i) {
+      auto target_idx = calc_target_idx(*coord_iter, axes, input_shape, accum_dim);
+      output_data[target_idx] = input_data[i];
+      ++coord_iter;
     }
+  };
+
+  const int64_t kParallelDataNum = 2 * 1024;
+  if (num_elem > kParallelDataNum) {
+    uint32_t min_core_num = 1;
+    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
+    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_elem, num_elem / max_core_num, sharder_reverse),
+                        "ReverseV2 compute failed.");
+  } else {
+    sharder_reverse(0, num_elem);
   }
+
   return KERNEL_STATUS_OK;
 }
 REGISTER_CPU_KERNEL(kReverseV2, ReverseV2CpuKernel);
