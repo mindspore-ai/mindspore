@@ -105,6 +105,9 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  if (kernel_graph->has_attr(kAttrPackFunction)) {
+    common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
+  }
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

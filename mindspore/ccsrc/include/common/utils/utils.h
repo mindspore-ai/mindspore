@@ -1197,6 +1197,7 @@ constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagHasControlFlow = "has_control_flow";
 constexpr auto kFlagGraphGradByExpander = "graph_grad_by_expander";
 constexpr auto kAttrMSFunction = "ms_function_graph";
+constexpr auto kAttrPackFunction = "pack_func";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

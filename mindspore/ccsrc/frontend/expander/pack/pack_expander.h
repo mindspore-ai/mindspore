@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace expander {
+constexpr auto PY_ATTR_PACK_NODE = "pack_node";
 class PackNode {
  public:
   explicit PackNode(AnfNodePtr node) : node_(node) {}
@@ -53,8 +54,9 @@ class PackExpander {
   py::object Emit(const py::object &prim, const py::args &inputs) const;
 
  private:
-  AnfNodePtr EmitCNode(const AnfNodePtrList &cnode_inputs) const;
+  AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;
   AnfNodePtr ConvertInput(const py::object &arg) const;
+  void CNodeInfer(const CNodePtr &cnode) const;
 
   FuncGraphPtr graph_{nullptr};
 };

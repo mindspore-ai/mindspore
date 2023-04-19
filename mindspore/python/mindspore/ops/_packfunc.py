@@ -16,7 +16,7 @@
 
 import inspect
 from functools import reduce
-from mindspore import Tensor
+from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import PackExpander, PackNode
@@ -24,7 +24,11 @@ from mindspore._c_expression import PackExpander, PackNode
 
 def _unsupport_method(method):
     def fun(*arg, **kwargs):
-        raise Exception("unsuport method call: " + str(method))
+        pack_tensor = arg[0]
+        if pack_tensor.stub_sync() is None:
+            raise Exception("unsuport method call: " + str(method))
+        arg = (pack_tensor.stub_sync(),) + arg[1:]
+        return method(*arg, **kwargs)
     return fun
 
 
@@ -51,6 +55,7 @@ class _PackTensor:
 
     def __init__(self, node):
         self.pack_node = node
+        self.tensor = None
 
     @property
     def shape(self):
@@ -85,7 +90,12 @@ class _PackTensor:
 
     def stub_sync(self):
         """subclass hook for Tensor"""
-        return self
+        if self.tensor is None:
+            val = self.pack_node.get_value()
+            if val is None:
+                return None
+            self.tensor = Tensor(val, internal=True)
+        return self.tensor
 
 
 def _init_trace_tensor_api():
@@ -132,6 +142,7 @@ class PackFunc(Primitive):
 def pack(fn):
     """Create an pack func from a python function"""
     pack_func = PackFunc(fn, id(fn))
+
     def _pack_wrap(*args):
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
             obj = args[0]

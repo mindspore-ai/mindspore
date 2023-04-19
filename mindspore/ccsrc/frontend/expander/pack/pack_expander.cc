@@ -19,9 +19,22 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/expander/pack/pack_expander.h"
+#include "frontend/operator/composite/do_signature.h"
+#include "include/common/utils/convert_utils_py.h"
+#include "backend/common/pass/convert_const_input_to_attr.h"
 
 namespace mindspore {
 namespace expander {
+namespace {
+AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
+  const auto &abs = node->abstract();
+  if (abs == nullptr) {
+    MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ValueNode>(), node->ToString() + " has no abstract");
+    return node->cast<ValueNodePtr>()->value()->ToAbstract();
+  }
+  return abs;
+}
+}  // namespace
 py::object PackNode::GetShape() const {
   auto base = node_->abstract()->BuildShape();
   auto shape = base->cast<abstract::ShapePtr>();
@@ -41,7 +54,12 @@ py::object PackNode::GetDtype() const {
   return py::cast(base);
 }
 
-py::object PackNode::GetValue() const { return py::none(); }
+py::object PackNode::GetValue() const {
+  if (node_->abstract()->BuildValue() != kValueAny) {
+    return ValueToPyData(node_->abstract()->BuildValue());
+  }
+  return py::none();
+}
 
 py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs) {
   py::tuple outputs(inputs.size());
@@ -65,39 +83,43 @@ py::object PackExpander::Emit(const py::object &prim, const py::args &inputs) co
   MS_EXCEPTION_IF_NULL(graph_);
   const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
   auto prim_py = std::make_shared<PrimitivePy>(prim, adapter);
-  AnfNodePtrList cnode_inputs = {NewValueNode(prim_py)};
+  AnfNodePtrList cnode_inputs;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto node = ConvertInput(inputs[i]);
     MS_EXCEPTION_IF_NULL(node);
     cnode_inputs.emplace_back(node);
   }
-  auto cnode = EmitCNode(cnode_inputs);
+  auto cnode = EmitCNode(prim_py, cnode_inputs);
   auto ret = std::make_shared<PackNode>(cnode);
   return py::cast(ret);
 }
 
-AnfNodePtr PackExpander::EmitCNode(const AnfNodePtrList &cnode_inputs) const {
-  auto cnode = graph_->NewCNode(cnode_inputs);
-  AbstractBasePtr abs;
+void PackExpander::CNodeInfer(const CNodePtr &cnode) const {
   auto prim = GetCNodePrimitive(cnode);
   auto found = abstract::GetPrimitiveInferImpl(prim);
+  auto cnode_inputs = cnode->inputs();
+  for (const auto &node : cnode_inputs) {
+    if (node->isa<CNode>() && node->abstract() == nullptr) {
+      CNodeInfer(node->cast<CNodePtr>());
+    }
+  }
   if (found.has_value() && found.value().IsImplInferShapeAndType()) {
     AbstractBasePtrList abs_list;
-    (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(abs_list),
-                         [](const AnfNodePtr &node) {
-                           const auto &abs = node->abstract();
-                           if (abs == nullptr) {
-                             MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ValueNode>(), node->ToString() + " has no abstract");
-                             return node->cast<ValueNodePtr>()->value()->ToAbstract();
-                           }
-                           return abs;
-                         });
-    abs = found.value().InferShapeAndType(nullptr, prim, abs_list);
+    (void)std::transform(cnode_inputs.cbegin() + 1, cnode_inputs.cend(), std::back_inserter(abs_list), GetAbstract);
+    auto abs = found.value().InferShapeAndType(nullptr, prim, abs_list);
     cnode->set_abstract(abs);
   } else {
     MS_LOG(WARNING) << "donot found infer:" << prim->name();
   }
-  return cnode;
+}
+
+AnfNodePtr PackExpander::EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const {
+  AbstractBasePtrList abs_list;
+  (void)std::transform(cnode_inputs.cbegin(), cnode_inputs.cend(), std::back_inserter(abs_list), GetAbstract);
+  auto node = mindspore::prim::GenerateCNode(graph_, prim->name(), prim, abs_list, cnode_inputs);
+  auto cnode = node->cast<CNodePtr>();
+  CNodeInfer(cnode);
+  return node;
 }
 
 AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
@@ -105,23 +127,23 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
     if (!py::isinstance<py::tuple>(arg)) return false;
     py::tuple tuple = py::cast<py::tuple>(arg);
     for (size_t i = 0; i < tuple.size(); ++i) {
-      if (py::hasattr(tuple[i], "pack_node") || py::isinstance<tensor::Tensor>(tuple[i])) {
+      if (py::hasattr(tuple[i], PY_ATTR_PACK_NODE) || py::isinstance<tensor::Tensor>(tuple[i])) {
         return true;
       }
     }
     return false;
   };
   if (IsTensorTuple()) {
-    AnfNodePtrList cnode_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    AnfNodePtrList cnode_inputs;
     py::tuple tuple = py::cast<py::tuple>(arg);
     for (size_t i = 0; i < tuple.size(); ++i) {
       cnode_inputs.emplace_back(ConvertInput(tuple[i]));
     }
-    return EmitCNode(cnode_inputs);
+    return EmitCNode(prim::kPrimMakeTuple, cnode_inputs);
   }
   // value
-  if (py::hasattr(arg, "pack_node")) {
-    py::object node = py::getattr(arg, "pack_node");
+  if (py::hasattr(arg, PY_ATTR_PACK_NODE)) {
+    py::object node = py::getattr(arg, PY_ATTR_PACK_NODE);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
