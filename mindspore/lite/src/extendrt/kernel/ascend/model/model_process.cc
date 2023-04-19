@@ -206,6 +206,21 @@ const std::vector<TypeId> ModelProcess::GetInputDataType() {
   return data_types;
 }
 
+void ModelProcess::CheckAndSetDynFlag() {
+  size_t output_size = aclmdlGetNumOutputs(model_desc_);
+  aclmdlIODims dyn_dims;
+  for (size_t i = 0; i < output_size; ++i) {
+    aclmdlGetOutputDims(model_desc_, i, &dyn_dims);
+    for (size_t j = 0; j < dyn_dims.dimCount; ++j) {
+      if (dyn_dims.dims[j] < 0) {
+        output_dynamic_ = true;
+        MS_LOG(INFO) << "output_dynamic_ is true now.";
+        return;
+      }
+    }
+  }
+}
+
 bool ModelProcess::InitInputsBuffer() {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
@@ -215,10 +230,15 @@ bool ModelProcess::InitInputsBuffer() {
   }
   size_t input_size = aclmdlGetNumInputs(model_desc_);
   MS_LOG(INFO) << "input_size = " << input_size;
+  CheckAndSetDynFlag();
   for (size_t i = 0; i < input_size; ++i) {
     aclmdlIODims dims;
     // To get correct dims with static AIPP configured, same result as aclmdlGetInputDims without static AIPP
-    ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
+    if (output_dynamic_) {  // There is a bug for aclmdlGetInputDimsV2 when output is dynamic shape.
+      ret = aclmdlGetInputDims(model_desc_, i, &dims);
+    } else {
+      ret = aclmdlGetInputDimsV2(model_desc_, i, &dims);
+    }
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Get input shape failed, ret = " << ret;
       return false;
@@ -232,6 +252,13 @@ bool ModelProcess::InitInputsBuffer() {
     aclDataType data_type = aclmdlGetInputDataType(model_desc_, i);
     std::vector<int64_t> shape(dims.dims, dims.dims + dims.dimCount);
     std::string input_name = aclmdlGetInputNameByIndex(model_desc_, i);
+    aclFormat input_format = aclmdlGetInputFormat(model_desc_, i);
+    aclTensorDesc *desc = aclCreateTensorDesc(data_type, dims.dimCount, dims.dims, input_format);
+    ret = aclmdlSetDatasetTensorDesc(inputs_, desc, i);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclmdlSetDatasetTensorDesc failed, ret = " << ret;
+      return false;
+    }
     if (input_name.empty()) {
       MS_LOG(WARNING) << "Get name of input " << i << " failed.";
     }
@@ -595,6 +622,10 @@ bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &output
                   << outputs.size();
     return false;
   }
+  if (output_dynamic_) {
+    MS_LOG(INFO) << "This Model has dynamic output shape.";
+    return true;
+  }
   for (size_t i = 0; i < outputs.size(); ++i) {
     auto &tensor = outputs[i];
     auto &info = output_infos_[i];
@@ -713,6 +744,26 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &output
   return true;
 }
 
+bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs) {
+  for (size_t i = 0; i < output_infos_.size(); ++i) {
+    auto &output = outputs[i];
+    auto &output_info = output_infos_[i];
+    output->SetDynOutput(std::make_unique<uint8_t[]>(output_info.buffer_size));
+    auto new_addr_struct_ptr = std::make_shared<kernel::Address>(output->GetDynOutput(), output_info.buffer_size);
+    output->SetHostData(new_addr_struct_ptr);
+
+    aclTensorDesc *tensor_info = aclmdlGetDatasetTensorDesc(outputs_, i);
+    size_t dim_nums = aclGetTensorDescNumDims(tensor_info);
+    ShapeVector shape;
+    for (size_t j = 0; j < dim_nums; ++j) {
+      int64_t shape_j = aclGetTensorDescDim(tensor_info, j);
+      shape.emplace_back(shape_j);
+    }
+    output->SetShapeVector(shape);
+  }
+  return true;
+}
+
 bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   if (!loaded_) {
@@ -747,6 +798,12 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;
     return false;
+  }
+  if (output_dynamic_) {
+    bool ret = ResetDynamicOutputTensor(outputs);
+    if (!ret) {
+      return false;
+    }
   }
   if (!GetOutputs(outputs)) {
     MS_LOG(ERROR) << "Build outputs failed";

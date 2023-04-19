@@ -31,6 +31,7 @@ namespace {
 constexpr size_t kNumFlagThree = 3;
 constexpr size_t kInputNumThree = 3;
 constexpr size_t kInputNumTwo = 2;
+constexpr size_t kKParamSize = 1;
 }  // namespace
 
 STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
@@ -62,12 +63,26 @@ STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
     }
     ParameterPtr k_param = k_input->cast<ParameterPtr>();
     MS_CHECK_TRUE_MSG(k_param != nullptr, lite::RET_ERROR, "ParameterPtr casts failed.");
-    auto data = acl::GetIntParameterData(k_param);
-    if (data.size() != 1) {
-      MS_LOG(ERROR) << "The k node data size must be 1, but real size " << data.size();
-      return RET_ERROR;
+    auto k_default_param = k_param->default_param();
+    MS_CHECK_TRUE_MSG(k_default_param != nullptr, lite::RET_ERROR, "k_default_param is nullptr.");
+    auto k_defualt_param_ptr = utils::cast<tensor::TensorPtr>(k_default_param);
+    MS_CHECK_TRUE_MSG(k_defualt_param_ptr != nullptr, lite::RET_ERROR, "k_defualt_param_ptr is nullptr.");
+    ValueNodePtr value_node = nullptr;
+    if (k_defualt_param_ptr->data_type() == kNumberTypeInt32 || k_defualt_param_ptr->data_type() == kNumberTypeInt) {
+      auto data = acl::GetIntParameterData(k_param);
+      if (data.size() != kKParamSize) {
+        MS_LOG(ERROR) << "The k node data size must be 1, but real size " << data.size();
+        return RET_ERROR;
+      }
+      value_node = NewValueNode<int32_t>(static_cast<int32_t>(data[0]));
+    } else if (k_defualt_param_ptr->data_type() == kNumberTypeInt64) {
+      auto data = acl::GetInt64ParameterData(k_param);
+      if (data.size() != kKParamSize) {
+        MS_LOG(ERROR) << "The k node data size must be 1, but real size " << data.size();
+        return RET_ERROR;
+      }
+      value_node = NewValueNode<int64_t>(static_cast<int64_t>(data[0]));
     }
-    ValueNodePtr value_node = NewValueNode<int64_t>(static_cast<int64_t>(data[0]));
     MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
     std::vector<int64_t> shape_vec = {};
     auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec);
@@ -81,17 +96,16 @@ STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(INFO) << "There is no attr k";
     return lite::RET_OK;
   }
-  int64_t k_val;
   auto data_type = attr_val->type()->number_type();
+  ValueNodePtr value_node = nullptr;
   if (data_type == kNumberTypeInt64) {
-    k_val = GetValue<int64_t>(attr_val);
+    value_node = NewValueNode<int64_t>(GetValue<int64_t>(attr_val));
   } else if (data_type == kNumberTypeInt || data_type == kNumberTypeInt32) {
-    k_val = static_cast<int64_t>(GetValue<int32_t>(attr_val));
+    value_node = NewValueNode<int32_t>(GetValue<int32_t>(attr_val));
   } else {
     MS_LOG(ERROR) << "Not supported data type: " << static_cast<int64_t>(data_type);
     return RET_ERROR;
   }
-  ValueNodePtr value_node = NewValueNode<int64_t>(k_val);
   MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
   cnode->add_input(value_node);
   return lite::RET_OK;
