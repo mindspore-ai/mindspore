@@ -4158,6 +4158,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('imag')(self)
 
 
+    def lu_solve(self, LU_data, LU_pivots):
+        r"""
+        For details, please refer to :func:`mindspore.ops.lu_solve`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('lu_solve')(self, LU_data, LU_pivots)
+
+
     def nextafter(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.nextafter`.
