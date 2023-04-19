@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "coder/opcoders/op_coder.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 namespace mindspore::lite::micro::nnacl {
 class TransposeFp32Coder : public OperatorCoder {
  public:

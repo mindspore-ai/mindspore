@@ -107,7 +107,7 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "wrapper/fp32/transpose_fp32_wrapper.h",
-            "nnacl/transpose.h",
+            "nnacl/transpose_parameter.h",
             "nnacl/errorcode.h",
             "nnacl/fp32/transpose_fp32.h",
           },
@@ -176,11 +176,14 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
     }
     code.CodeArray("position", position, dims_ * thread_num_);
     code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, "output_shape", "dim_size", "position",
-                      "&trans_param", kDefaultTaskId, thread_num_);
+                      "trans_param.perm_", "trans_param.strides_", "trans_param.out_strides_", "trans_param.num_axes_",
+                      kDefaultTaskId, thread_num_);
     free(dim_size);
     free(position);
   } else {
-    code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, "output_shape", "&trans_param");
+    code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, "output_shape", "trans_param.perm_",
+                      "trans_param.strides_", "trans_param.out_strides_", "trans_param.data_num_",
+                      "trans_param.num_axes_");
   }
   context->AppendCode(code.str());
   return RET_OK;

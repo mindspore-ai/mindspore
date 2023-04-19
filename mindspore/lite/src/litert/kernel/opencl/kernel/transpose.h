@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "src/litert/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

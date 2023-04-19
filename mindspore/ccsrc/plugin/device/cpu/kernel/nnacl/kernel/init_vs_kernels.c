@@ -30,6 +30,7 @@
 #include "nnacl/kernel/stack.h"
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/kernel/tile.h"
+#include "nnacl/kernel/transpose.h"
 #ifdef ENABLE_FP16
 #include "nnacl/kernel/f16/arithmetic_f16.h"
 #include "nnacl/kernel/f16/concat_f16.h"
@@ -64,6 +65,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
+  creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat16)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
 #endif
 }
@@ -143,6 +145,8 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat32)] = CreateTile;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeBool)] = CreateTile;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeUInt8)] = CreateTile;
+  creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat32)] = CreateTranspose;
+  creators[PrimType_Transpose][REGIST_DT(kNumberTypeInt32)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt64)] = CreateReshape;

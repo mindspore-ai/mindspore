@@ -22,6 +22,7 @@
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/transpose_fp32.h"
+#include "nnacl/transpose_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -183,7 +184,8 @@ int NNAPIConv::TransConvWeightFromKHWCToCHWK(ANeuralNetworksModel *nnapi_model,
   if (weight.DataType() == DataType::kNumberTypeFloat32) {
     ret = DoTransposeFp32(reinterpret_cast<float *>(weight.MutableData()),
                           reinterpret_cast<float *>(new_weight->MutableData()),
-                          reinterpret_cast<const int *>(out_shape.data()), &param);
+                          reinterpret_cast<const int *>(out_shape.data()), param.perm_, param.strides_,
+                          param.out_strides_, param.data_num_, param.num_axes_);
   } else {
     MS_LOG(ERROR) << "Unsupported to pack depthwise conv weight";
     delete new_weight;

@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_FP32_TRANSPOSE_FP32_WRAPPER_H_
 #include <string.h>
 #include "nnacl/fp32/transpose_fp32.h"
+#include "nnacl/transpose_parameter.h"
 
 typedef struct {
   const void *input_;

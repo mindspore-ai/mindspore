@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "coder/opcoders/nnacl/fp32/transpose_fp32_coder.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 namespace mindspore::lite::micro::nnacl {
 class TransposeFp16Coder final : public TransposeFp32Coder {
  public:

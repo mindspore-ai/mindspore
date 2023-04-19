@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_TRANSPOSE_BASE_H_
 
 #include <vector>
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "src/litert/lite_kernel.h"
 
 namespace mindspore::kernel {

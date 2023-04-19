@@ -18,7 +18,7 @@
 #define MINDSPORE_NNACL_INT8_TRANSPOSE_INT8_H_
 
 #include <string.h>
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus

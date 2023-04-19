@@ -17,7 +17,7 @@
 #define MINDSPORE_NNACL_FP32_TRANSPOSE_SERVER_FP32_H_
 
 #ifdef BFC_MEMORY
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
