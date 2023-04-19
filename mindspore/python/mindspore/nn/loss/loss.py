@@ -1339,8 +1339,9 @@ class MultiMarginLoss(LossBase):
 
     Inputs:
         - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+          x is :math:`x` in the above formula.
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-          value of target should be non-negative, less than C.
+          value of target should be non-negative, less than C. `target` is :math:`y` in the above formula.
 
     Outputs:
         Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.

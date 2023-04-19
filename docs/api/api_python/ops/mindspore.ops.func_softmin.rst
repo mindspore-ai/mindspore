@@ -11,7 +11,7 @@ mindspore.ops.softmin
     其中 :math:`N` 代表Tensor的长度。
 
     参数：
-        - **x** (Tensor) - Softmin的输入，任意维度的Tensor。其数据类型为float16或float32。
+        - **x** (Tensor) - Softmin的输入，其数据类型为float16或float32。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **axis** (Union[int, tuple[int]], 可选) - 指定Softmin操作的轴。默认值：-1。
     
     关键字参数：
