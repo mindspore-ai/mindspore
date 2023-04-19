@@ -74,8 +74,16 @@ mindspore.train.RunContext
         返回：
             dict，含有模型的相关信息的对象。
 
+        教程样例：
+            - `回调机制 Callback - 自定义回调机制
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/callback.html#自定义回调机制>`_
+
     .. py:method:: request_stop()
 
         在训练期间设置停止请求。
 
         可以使用此函数请求停止训练。 `Model.train()` 会检查是否调用此函数。
+
+        教程样例：
+            - `回调机制 Callback - 自定义终止训练
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/callback.html#自定义终止训练>`_

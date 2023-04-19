@@ -357,6 +357,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>>
         >>> net = Net()
         >>> ms.save_checkpoint(net, "lenet.ckpt")
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading the Model Weight
+          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
@@ -567,6 +571,10 @@ def load(file_name, **kwargs):
         [[[[4. 6. 4.]
            [6. 9. 6.]
            [4. 6. 4.]]]]
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading MindIR
+          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     if not isinstance(file_name, str):
         raise ValueError("For 'load', the argument 'file_name' must be string, but "
@@ -848,6 +856,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>> param_dict2 = ms.load_checkpoint(ckpt_file_name, choice_func=func)
         >>> print(param_dict2)
         {'conv1.weight': Parameter (name=conv1.weight, shape=(6, 1, 5, 5), dtype=Float32, requires_grad=True)}
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading the Model Weight
+          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
@@ -1044,6 +1056,10 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         >>> param_not_load, _ = ms.load_param_into_net(net, param_dict)
         >>> print(param_not_load)
         ['conv1.weight']
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading the Model Weight
+          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     if not isinstance(net, nn.Cell):
         logger.critical("Failed to combine the net and the parameters.")
@@ -1285,6 +1301,10 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> net = LeNet()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading MindIR
+          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:

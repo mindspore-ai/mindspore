@@ -504,6 +504,10 @@ class RunContext:
 
         Returns:
            Dict, an object that holds the original arguments of model.
+
+        Tutorial Examples:
+            - `Callback Mechanism - Customized Callback Mechanism
+              <https://mindspore.cn/tutorials/en/master/advanced/model/callback.html#customized-callback-mechanism>`_
         """
         return self._original_args
 
@@ -513,6 +517,11 @@ class RunContext:
 
         Callbacks can use this function to request stop of iterations.
         model.train() checks whether this is called or not.
+
+        Tutorial Examples:
+            - `Callback Mechanism - Customized Training Termination Time
+              <https://mindspore.cn/tutorials/en/master/advanced/model/callback.html#
+              customized-training-termination-time>`_
         """
         self._stop_requested = True
 

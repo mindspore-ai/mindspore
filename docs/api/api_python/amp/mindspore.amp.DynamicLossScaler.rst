@@ -23,8 +23,8 @@ mindspore.amp.DynamicLossScaler
             - **grads_finite** (Tensor) - bool类型的标量Tensor，表示梯度是否为有效值（无溢出）。
 
         教程样例：
-            - `自动混合精度
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_
+            - `自动混合精度 - 损失缩放
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html#损失缩放>`_
 
     .. py:method:: scale(inputs)
 
@@ -37,8 +37,8 @@ mindspore.amp.DynamicLossScaler
             Union(Tensor, tuple(Tensor))，scale后的值。
 
         教程样例：
-            - `自动混合精度
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_
+            - `自动混合精度 - 损失缩放
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html#损失缩放>`_
 
     .. py:method:: unscale(inputs)
 
@@ -51,5 +51,5 @@ mindspore.amp.DynamicLossScaler
             Union(Tensor, tuple(Tensor))，unscale后的值。
 
         教程样例：
-            - `自动混合精度
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html>`_
+            - `自动混合精度 - 损失缩放
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/mixed_precision.html#损失缩放>`_

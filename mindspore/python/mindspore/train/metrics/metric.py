@@ -179,8 +179,8 @@ class Metric(metaclass=ABCMeta):
             All subclasses must override this interface.
 
         Tutorial Examples:
-            - `Evaluation Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html>`_
+            - `Evaluation Metrics - Customized Metrics
+              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define clear function to use this base class')
 
@@ -193,8 +193,8 @@ class Metric(metaclass=ABCMeta):
             All subclasses must override this interface.
 
         Tutorial Examples:
-            - `Evaluation Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html>`_
+            - `Evaluation Metrics - Customized Metrics
+              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define eval function to use this base class')
 
@@ -210,8 +210,8 @@ class Metric(metaclass=ABCMeta):
             inputs: A variable-length input argument list, usually are the logits and the corresponding labels.
 
         Tutorial Examples:
-            - `Evaluation Metrics
-              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html>`_
+            - `Evaluation Metrics - Customized Metrics
+              <https://mindspore.cn/tutorials/en/master/advanced/model/metric.html#customized-metrics>`_
         """
         raise NotImplementedError('Must define update function to use this base class')
 

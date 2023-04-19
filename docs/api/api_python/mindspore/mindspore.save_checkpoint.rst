@@ -16,3 +16,6 @@ mindspore.save_checkpoint
 
     异常：
         - **TypeError** - 如果参数 `save_obj` 类型不为nn.Cell或者list，且如果参数 `integrated_save` 及 `async_save` 非bool类型。如果参数 `ckpt_file_name` 不是字符串类型。
+
+    教程样例：
+        - `保存与加载 - 保存和加载模型权重 <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载模型权重>`_

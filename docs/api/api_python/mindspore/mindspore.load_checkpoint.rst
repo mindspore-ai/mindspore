@@ -28,3 +28,6 @@ mindspore.load_checkpoint
         - **ValueError** - checkpoint文件格式不正确。
         - **ValueError** - 没有一个参数被成功加载。
         - **TypeError** - `specify_prefix` 或者 `filter_prefix` 的数据类型不正确。
+
+    教程样例：
+        - `保存与加载 - 保存和加载模型权重 <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载模型权重>`_

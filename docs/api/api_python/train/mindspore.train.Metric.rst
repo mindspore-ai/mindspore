@@ -17,8 +17,8 @@ mindspore.train.Metric
             所有子类都必须重写此接口。
 
         教程样例：
-            - `评价指标 Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html>`_
+            - `评价指标 Metrics - 自定义Metrics
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_
 
     .. py:method:: eval()
         :abstractmethod:
@@ -29,8 +29,8 @@ mindspore.train.Metric
             所有子类都必须重写此接口。
 
         教程样例：
-            - `评价指标 Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html>`_
+            - `评价指标 Metrics - 自定义Metrics
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_
 
     .. py:method:: indexes
         :property:
@@ -67,5 +67,5 @@ mindspore.train.Metric
             - **inputs** - 可变长度输入参数列表。通常是预测值和对应的真实标签。
 
         教程样例：
-            - `评价指标 Metrics
-              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html>`_
+            - `评价指标 Metrics - 自定义Metrics
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model/metric.html#自定义metrics>`_

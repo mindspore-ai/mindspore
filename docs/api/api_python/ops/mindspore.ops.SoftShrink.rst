@@ -13,5 +13,5 @@ mindspore.ops.SoftShrink
     输入：
         - **input_x** (Tensor) - Soft Shrink的输入，数据类型为float16或float32。
 
-    返回：
+    输出：
         Tensor，shape和数据类型与 `input_x` 相同。

@@ -2068,11 +2068,13 @@ def concat(tensors, axis=0):
     Alias for :func:`mindspore.ops.cat()`.
 
     Tutorial Examples:
-        - `Tensor <https://mindspore.cn/tutorials/en/master/beginner/tensor.html>`_
-        - `FGSM Network Adversarial Attack <https://mindspore.cn/tutorials/application/en/master/cv/fgsm.html>`_
-        - `Vision Transformer Image Classification <https://mindspore.cn/tutorials/application/en/master/cv/vit.html>`_
-        - `Sentiment Classification Implemented by RNN
-          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html>`_
+        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
+        - `FGSM Network Adversarial Attack - Implementing FGSM
+          <https://mindspore.cn/tutorials/application/en/master/cv/fgsm.html#implementing-fgsm>`_
+        - `Vision Transformer Image Classification - Building ViT as a whole
+          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
+        - `Sentiment Classification Implemented by RNN - Dense
+          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
     """
     return cat(tensors, axis)
 
