@@ -915,12 +915,13 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
       return;
     }
   }
-  MS_LOG(DEBUG) << "Check abs for scalar";
+  MS_LOG(DEBUG) << "Check abs for scalar, type size:" << types.size();
   for (size_t i = 0; i < types.size(); ++i) {
     abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
     (void)abstract_list.emplace_back(abstract);
   }
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  MS_LOG(DEBUG) << "set abs:" << abstract_tuple->ToString() << " to node:" << node->DebugString();
   node->set_abstract(abstract_tuple);
 }
 
@@ -2058,13 +2059,15 @@ bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
     }
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (HasNodeAttr(kAttrDynamicLenName, cnode)) {
-      return GetBooleanAttr(node, kAttrDynamicLenName);
+    if (cnode->HasAttr(kAttrDynamicLenName)) {
+      return GetValue<bool>(cnode->GetAttr(kAttrDynamicLenName));
     } else {
       bool is_dynamic = is_dynamic_len_func();
-      AnfAlgo::SetNodeAttr(kAttrDynamicLenName, MakeValue(is_dynamic), cnode);
+      cnode->AddAttr(kAttrDynamicLenName, MakeValue(is_dynamic));
       return is_dynamic;
     }
+  } else if (node->isa<ValueNode>()) {
+    return is_dynamic_len_func();
   }
   return false;
 }

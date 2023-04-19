@@ -783,8 +783,9 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
                       << "independently verify the performance of data processing without training. "
                       << "Refer to the link for data processing optimization suggestions: "
                       << "https://mindspore.cn/tutorials/experts/zh-CN/master/dataset/optimize.html";
-      MS_LOG(WARNING) << "    4) Check whether the input parameters are set to dynamic through `set_inputs` if it is a "
-                         "dynamic dataset.";
+      MS_LOG(WARNING)
+        << "    4) If it is a dynamic dataset, please set the input to dynamic through `set_inputs`, or set sink_size "
+           "to 1. It is recommended to use the former, because the latter has poor performance.";
     }
 
     E2eDump::DumpInputData(node, false, path, &full_scope_name);

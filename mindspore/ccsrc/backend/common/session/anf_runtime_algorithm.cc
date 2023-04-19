@@ -1903,4 +1903,195 @@ bool AnfRuntimeAlgorithm::IsSummaryNode(const AnfNodePtr &node) {
   return (IsPrimitiveCNode(node, prim::kPrimScalarSummary) || IsPrimitiveCNode(node, prim::kPrimTensorSummary) ||
           IsPrimitiveCNode(node, prim::kPrimImageSummary) || IsPrimitiveCNode(node, prim::kPrimHistogramSummary));
 }
+
+namespace {
+bool CheckValidTensorTuple(const std::vector<ValuePtr> &values) {
+  if (values.empty() || values[0] == nullptr || (!values[0]->isa<tensor::Tensor>())) {
+    return false;
+  }
+  const auto &const_tensor = values[0]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(const_tensor);
+  const auto &const_shape = const_tensor->shape();
+  const auto &const_type_id = const_tensor->data_type();
+  size_t const_size = const_tensor->Size();
+  for (size_t i = 1; i < values.size(); ++i) {
+    if (values[i] == nullptr || (!values[i]->isa<tensor::Tensor>())) {
+      MS_LOG(ERROR) << "Invalid value:" << (values[i] == nullptr ? "nullptr" : values[i]->ToString()) << " index:" << i
+                    << " in value tuple";
+      return false;
+    }
+    const auto &tensor = values[i]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    const auto &shape = tensor->shape();
+    const auto &type_id = tensor->data_type();
+    size_t size = tensor->Size();
+    if (shape != const_shape || type_id != const_type_id || size != const_size) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Return a new tensor with type like single_value.
+void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &tensor_type_id = tensor->data_type();
+  const auto dst_ptr = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(dst_ptr);
+  MS_LOG(DEBUG) << "Set scalar tuple to tensor, dst size:" << tensor->data().nbytes();
+  for (size_t i = 0; i < values.size(); ++i) {
+    // Check mem size.
+    if (SizeToLong(abstract::TypeIdSize(tensor_type_id) * (i + 1)) > tensor->data().nbytes()) {
+      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Value size:" << values.size() << " type:" << tensor_type_id
+                        << " out of range:" << tensor->data().nbytes();
+    }
+    const auto &value = values[i];
+    MS_EXCEPTION_IF_NULL(value);
+    // Check value type.
+    if (value->type()->type_id() != tensor_type_id) {
+      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value type:" << value->type()->type_id()
+                        << " for value:" << value->ToString() << " dst type:" << tensor_type_id;
+    }
+    if (tensor_type_id == TypeId::kNumberTypeInt8) {
+      (reinterpret_cast<int8_t *>(dst_ptr))[i] = GetValue<int8_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt16) {
+      (reinterpret_cast<int16_t *>(dst_ptr))[i] = GetValue<int16_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt32 || tensor_type_id == kNumberTypeInt) {
+      (reinterpret_cast<int32_t *>(dst_ptr))[i] = GetValue<int32_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt64) {
+      (reinterpret_cast<int64_t *>(dst_ptr))[i] = GetValue<int64_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeBool) {
+      (reinterpret_cast<bool *>(dst_ptr))[i] = GetValue<bool>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeFloat32 || tensor_type_id == TypeId::kNumberTypeFloat) {
+      (reinterpret_cast<float *>(dst_ptr))[i] = GetValue<float>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeFloat64) {
+      (reinterpret_cast<double *>(dst_ptr))[i] = GetValue<double>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt8) {
+      (reinterpret_cast<uint8_t *>(dst_ptr))[i] = GetValue<uint8_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt16) {
+      (reinterpret_cast<uint16_t *>(dst_ptr))[i] = GetValue<uint16_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt || tensor_type_id == TypeId::kNumberTypeUInt32) {
+      (reinterpret_cast<uint32_t *>(dst_ptr))[i] = GetValue<uint32_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt64) {
+      (reinterpret_cast<uint64_t *>(dst_ptr))[i] = GetValue<uint64_t>(value);
+    } else {
+      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid tuple type:" << tensor_type_id
+                        << " for scalar to tensor.";
+    }
+  }
+}
+}  // namespace
+
+// In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
+// to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
+// of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
+tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<ValueSequence>()) {
+    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid sequence value:" << value->ToString();
+  }
+
+  const auto &sequence_value = value->cast<ValueSequencePtr>();
+  const auto &values = sequence_value->value();
+  if (values.empty()) {
+    auto tensor = std::make_shared<tensor::Tensor>();
+    abstract::BaseShapePtr base_shape = nullptr;
+    if (value->isa<ValueTuple>()) {
+      base_shape = std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList());
+    } else {
+      base_shape = std::make_shared<abstract::ListShape>(abstract::BaseShapePtrList());
+    }
+    tensor->set_base_shape(base_shape);
+    return tensor;
+  }
+  if (values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<tensor::Tensor>()))) {
+    MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
+    return std::make_shared<tensor::Tensor>();
+  }
+
+  ShapeVector shape_vector{SizeToLong(values.size())};
+  if (values[0]->isa<tensor::Tensor>()) {
+    MS_LOG(DEBUG) << "Check dynamic tuple tensor";
+    if (!CheckValidTensorTuple(values)) {
+      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid dynamic sequence tuple:" << value->ToString();
+    }
+    const auto &tensor = values[0]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    size_t size = tensor->Size();
+    const auto &type_id = tensor->data_type();
+    auto single_shape_vector = tensor->shape();
+    const auto &single_shape = std::make_shared<abstract::Shape>(single_shape_vector);
+    (void)shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
+    const auto &shape = std::make_shared<abstract::Shape>(shape_vector);
+    auto new_tensor = std::make_shared<tensor::Tensor>(type_id, shape_vector);
+    MS_EXCEPTION_IF_NULL(new_tensor);
+    const auto dst_ptr = new_tensor->data_c();
+    MS_EXCEPTION_IF_NULL(dst_ptr);
+    MS_LOG(DEBUG) << "Copy start, dst size:" << new_tensor->data().nbytes();
+    for (size_t i = 0; i < values.size(); ++i) {
+      const auto &sub_value = values[i];
+      MS_EXCEPTION_IF_NULL(sub_value);
+      const auto &src_tensor = sub_value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(src_tensor);
+      MS_EXCEPTION_IF_NULL(src_tensor->data_c());
+      auto ret = memcpy_s((reinterpret_cast<char *>(dst_ptr)) + i * size,
+                          static_cast<size_t>(new_tensor->data().nbytes()), src_tensor->data_c(), size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to copy data into tensor, memcpy_s errorno: "
+                          << ret;
+      }
+    }
+    const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), single_shape);
+    new_tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
+    MS_LOG(DEBUG) << "merge tensor from:" << value->ToString() << " to:" << new_tensor->ToString() << " tensor addr"
+                  << new_tensor;
+    return new_tensor;
+  }
+
+  // Create the tensor.
+  auto tensor = std::make_shared<tensor::Tensor>(values[0]->type()->type_id(), shape_vector);
+  MS_EXCEPTION_IF_NULL(tensor);
+  SetScalarToTensor(values, tensor);
+  // Build the tuple shape and set into tensor.
+  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
+  const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
+  tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
+  return tensor;
+}
+
+void AnfRuntimeAlgorithm::UpdateValueNodeShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<ValueNode>()) {
+    return;
+  }
+  const auto &value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<ValueSequence>()) {
+    return;
+  }
+  const auto &value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  std::vector<abstract::AbstractBasePtr> abstract_list;
+  for (const auto &sub_value : value_sequence->value()) {
+    MS_EXCEPTION_IF_NULL(sub_value);
+    if (sub_value->isa<Scalar>()) {
+      auto abstract = std::make_shared<abstract::AbstractScalar>(sub_value->type());
+      (void)abstract_list.emplace_back(abstract);
+    } else if (sub_value->isa<tensor::Tensor>()) {
+      const auto &tensor = sub_value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto abstract = std::make_shared<abstract::AbstractTensor>(tensor->Dtype(), tensor->shape());
+      (void)abstract_list.emplace_back(abstract);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid value:" << sub_value->ToString()
+                        << " in dynamic sequence value node:" << node->DebugString();
+    }
+  }
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  MS_LOG(INFO) << "Set abstract for node:" << node->DebugString() << "from:" << node->abstract()->ToString()
+               << " to:" << abstract_tuple->ToString();
+  node->set_abstract(abstract_tuple);
+}
 }  // namespace mindspore::session

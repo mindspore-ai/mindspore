@@ -47,162 +47,6 @@ Backend::Backend(const std::string &name) : name_(name), is_multi_graph_sink_(fa
   convert_fn_ = MsVmConvert;
 }
 
-namespace {
-using Tensor = tensor::Tensor;
-bool CheckValidTensorTuple(const std::vector<ValuePtr> &values) {
-  if (values.empty() || values[0] == nullptr || (!values[0]->isa<tensor::Tensor>())) {
-    return false;
-  }
-  const auto &const_tensor = values[0]->cast<TensorPtr>();
-  MS_EXCEPTION_IF_NULL(const_tensor);
-  const auto &const_shape = const_tensor->shape();
-  const auto &const_type_id = const_tensor->data_type();
-  size_t const_size = const_tensor->Size();
-  for (size_t i = 1; i < values.size(); ++i) {
-    if (values[i] == nullptr || (!values[i]->isa<Tensor>())) {
-      MS_LOG(ERROR) << "Invalid value:" << (values[i] == nullptr ? "nullptr" : values[i]->ToString()) << " index:" << i
-                    << " in value tuple";
-      return false;
-    }
-    const auto &tensor = values[i]->cast<TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    const auto &shape = tensor->shape();
-    const auto &type_id = tensor->data_type();
-    size_t size = tensor->Size();
-    if (shape != const_shape || type_id != const_type_id || size != const_size) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// Return a new tensor with type like single_value.
-void SetScalarToTensor(const std::vector<ValuePtr> &values, const TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  const auto &tensor_type_id = tensor->data_type();
-  const auto dst_ptr = tensor->data_c();
-  MS_EXCEPTION_IF_NULL(dst_ptr);
-  MS_LOG(DEBUG) << "Set scalar tuple to tensor, dst size:" << tensor->data().nbytes();
-  for (size_t i = 0; i < values.size(); ++i) {
-    // Check mem size.
-    if (SizeToLong(abstract::TypeIdSize(tensor_type_id) * (i + 1)) > tensor->data().nbytes()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Value size:" << values.size() << " type:" << tensor_type_id
-                        << " out of range:" << tensor->data().nbytes();
-    }
-    const auto &value = values[i];
-    MS_EXCEPTION_IF_NULL(value);
-    // Check value type.
-    if (value->type()->type_id() != tensor_type_id) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value type:" << value->type()->type_id()
-                        << " for value:" << value->ToString() << " dst type:" << tensor_type_id;
-    }
-    if (tensor_type_id == TypeId::kNumberTypeInt8) {
-      (reinterpret_cast<int8_t *>(dst_ptr))[i] = GetValue<int8_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeInt16) {
-      (reinterpret_cast<int16_t *>(dst_ptr))[i] = GetValue<int16_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeInt32 || tensor_type_id == kNumberTypeInt) {
-      (reinterpret_cast<int32_t *>(dst_ptr))[i] = GetValue<int32_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeInt64) {
-      (reinterpret_cast<int64_t *>(dst_ptr))[i] = GetValue<int64_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeBool) {
-      (reinterpret_cast<bool *>(dst_ptr))[i] = GetValue<bool>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeFloat32 || tensor_type_id == TypeId::kNumberTypeFloat) {
-      (reinterpret_cast<float *>(dst_ptr))[i] = GetValue<float>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeFloat64) {
-      (reinterpret_cast<double *>(dst_ptr))[i] = GetValue<double>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeUInt8) {
-      (reinterpret_cast<uint8_t *>(dst_ptr))[i] = GetValue<uint8_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeUInt16) {
-      (reinterpret_cast<uint16_t *>(dst_ptr))[i] = GetValue<uint16_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeUInt || tensor_type_id == TypeId::kNumberTypeUInt32) {
-      (reinterpret_cast<uint32_t *>(dst_ptr))[i] = GetValue<uint32_t>(value);
-    } else if (tensor_type_id == TypeId::kNumberTypeUInt64) {
-      (reinterpret_cast<uint64_t *>(dst_ptr))[i] = GetValue<uint64_t>(value);
-    } else {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid tuple type:" << tensor_type_id
-                        << " for scalar to tensor.";
-    }
-  }
-}
-
-// In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
-// to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
-// of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
-TensorPtr SequenceToTensor(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (!value->isa<ValueSequence>()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid sequence value:" << value->ToString();
-  }
-
-  const auto &sequence_value = value->cast<ValueSequencePtr>();
-  const auto &values = sequence_value->value();
-  if (values.empty()) {
-    auto tensor = std::make_shared<tensor::Tensor>();
-    abstract::BaseShapePtr base_shape = nullptr;
-    if (value->isa<ValueTuple>()) {
-      base_shape = std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList());
-    } else {
-      base_shape = std::make_shared<abstract::ListShape>(abstract::BaseShapePtrList());
-    }
-    tensor->set_base_shape(base_shape);
-    return tensor;
-  }
-  if (values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<Tensor>()))) {
-    MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
-    return std::make_shared<tensor::Tensor>();
-  }
-
-  ShapeVector shape_vector{SizeToLong(values.size())};
-  if (values[0]->isa<Tensor>()) {
-    MS_LOG(DEBUG) << "Check dynamic tuple tensor";
-    if (!CheckValidTensorTuple(values)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid dynamic sequence tuple:" << value->ToString();
-    }
-    const auto &tensor = values[0]->cast<TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    size_t size = tensor->Size();
-    const auto &type_id = tensor->data_type();
-    auto single_shape_vector = tensor->shape();
-    const auto &single_shape = std::make_shared<abstract::Shape>(single_shape_vector);
-    (void)shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
-    const auto &shape = std::make_shared<abstract::Shape>(shape_vector);
-    auto new_tensor = std::make_shared<tensor::Tensor>(type_id, shape_vector);
-    MS_EXCEPTION_IF_NULL(new_tensor);
-    const auto dst_ptr = new_tensor->data_c();
-    MS_EXCEPTION_IF_NULL(dst_ptr);
-    MS_LOG(DEBUG) << "Copy start, dst size:" << new_tensor->data().nbytes();
-    for (size_t i = 0; i < values.size(); ++i) {
-      const auto &sub_value = values[i];
-      MS_EXCEPTION_IF_NULL(sub_value);
-      const auto &src_tensor = sub_value->cast<TensorPtr>();
-      MS_EXCEPTION_IF_NULL(src_tensor);
-      MS_EXCEPTION_IF_NULL(src_tensor->data_c());
-      auto ret = memcpy_s((reinterpret_cast<char *>(dst_ptr)) + i * size,
-                          static_cast<size_t>(new_tensor->data().nbytes()), src_tensor->data_c(), size);
-      if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to copy data into tensor, memcpy_s errorno: "
-                          << ret;
-      }
-    }
-    const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), single_shape);
-    new_tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
-    MS_LOG(DEBUG) << "merge tensor from:" << value->ToString() << " to:" << new_tensor->ToString() << " tensor addr"
-                  << new_tensor;
-    return new_tensor;
-  }
-
-  // Create the tensor.
-  auto tensor = std::make_shared<tensor::Tensor>(values[0]->type()->type_id(), shape_vector);
-  MS_EXCEPTION_IF_NULL(tensor);
-  SetScalarToTensor(values, tensor);
-  // Build the tuple shape and set into tensor.
-  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
-  const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
-  tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
-  return tensor;
-}
-}  // namespace
-
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
@@ -217,7 +61,7 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
       MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value:" << value->ToString()
                         << " for dynamic sequence node:" << node->DebugString();
     }
-    const auto &tensor = SequenceToTensor(value);
+    const auto &tensor = AnfAlgo::SequenceToTensor(value);
     inputs->push_back(tensor);
     return;
   }
@@ -573,6 +417,109 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   return actor_info;
 }
 
+namespace {
+constexpr size_t kPartialFuncGraphPos = 1;
+constexpr size_t kPartialInputStartPos = 2;
+
+bool CheckAbstractUnify(const abstract::AbstractBasePtr abs1, const abstract::AbstractBasePtr abs2) {
+  if ((!abs1->isa<abstract::AbstractSequence>()) && (!abs2->isa<abstract::AbstractSequence>())) {
+    return true;
+  }
+  if ((abs1->isa<abstract::AbstractSequence>() && (!abs2->isa<abstract::AbstractSequence>())) ||
+      (abs2->isa<abstract::AbstractSequence>() && (!abs1->isa<abstract::AbstractSequence>()))) {
+    MS_LOG(ERROR) << "Abstract:" << abs1->ToString() << " and abstract:" << abs2->ToString() << " is inconsistent.";
+    return false;
+  }
+  const auto &sequence_abs1 = abs1->cast<abstract::AbstractSequencePtr>();
+  const auto &sequence_abs2 = abs2->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abs1);
+  MS_EXCEPTION_IF_NULL(sequence_abs2);
+  if (sequence_abs1->dynamic_len() != sequence_abs2->dynamic_len()) {
+    MS_LOG(ERROR) << "Abstract:" << abs1->ToString() << " and abstract:" << abs2->ToString() << " is inconsistent.";
+    return false;
+  }
+  if (sequence_abs1->dynamic_len()) {
+    return true;
+  }
+  for (size_t i = 0; i < sequence_abs1->size(); ++i) {
+    if (!CheckAbstractUnify(sequence_abs1->elements()[i], sequence_abs2->elements()[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckTupleDynamicLenUnify(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsCallNode(node)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
+    if (func_graphs.empty()) {
+      MS_LOG(EXCEPTION) << "Get func graphs from abstract failed.";
+    }
+    for (auto func_graph : func_graphs) {
+      MS_EXCEPTION_IF_NULL(func_graph);
+      // Check the consistency of return outputs and call outputs.
+      MS_EXCEPTION_IF_NULL(func_graph->return_node());
+      if (!CheckAbstractUnify(func_graph->return_node()->abstract(), node->abstract())) {
+        MS_LOG(ERROR) << "Invalid abs:" << func_graph->return_node()->abstract()->ToString()
+                      << " for node:" << func_graph->return_node()->DebugString()
+                      << " and:" << node->abstract()->ToString() << " for node:" << node->DebugString();
+        return false;
+      }
+      // Check the consistency of arguments and parameters.
+      size_t args_num = cnode->inputs().size() - 1;
+      size_t para_num = func_graph->parameters().size();
+      if (args_num > para_num) {
+        MS_LOG(EXCEPTION) << "Invalid args num:" << args_num << " for funcgraph:" << func_graph->ToString()
+                          << " parameters num:" << func_graph->parameters().size();
+      }
+      for (size_t i = 0; i < args_num; ++i) {
+        MS_EXCEPTION_IF_NULL(cnode->input(args_num - i));
+        MS_EXCEPTION_IF_NULL((func_graph->parameters())[para_num - 1 - i]);
+        if (!CheckAbstractUnify(cnode->input(args_num - i)->abstract(),
+                                (func_graph->parameters())[para_num - 1 - i]->abstract())) {
+          MS_LOG(ERROR) << "Invalid abs:" << cnode->input(args_num - i)->abstract()->ToString()
+                        << " for node:" << cnode->DebugString()
+                        << " and:" << (func_graph->parameters())[para_num - 1 - i]->ToString()
+                        << " for node:" << (func_graph->parameters())[para_num - 1 - i]->DebugString();
+          return false;
+        }
+      }
+    }
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    size_t input_num = cnode->inputs().size();
+    if (input_num <= kPartialFuncGraphPos || cnode->input(kPartialFuncGraphPos) == nullptr ||
+        (!cnode->input(kPartialFuncGraphPos)->isa<ValueNode>())) {
+      MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
+    }
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
+      MS_LOG(EXCEPTION) << "Invalid args num:" << input_num - kPartialInputStartPos
+                        << " in partial node:" << cnode->DebugString() << " for fungraph:" << func_graph->ToString()
+                        << " parameter num:" << func_graph->parameters().size();
+    }
+    for (size_t i = kPartialInputStartPos; i < input_num; ++i) {
+      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      MS_EXCEPTION_IF_NULL(func_graph->parameters()[i - kPartialInputStartPos]);
+      if (!CheckAbstractUnify(cnode->input(i)->abstract(),
+                              func_graph->parameters()[i - kPartialInputStartPos]->abstract())) {
+        MS_LOG(ERROR) << "Invalid abs:" << cnode->input(i)->abstract()->ToString()
+                      << " for node:" << cnode->input(i)->DebugString()
+                      << " and:" << func_graph->parameters()[i - kPartialInputStartPos]->ToString()
+                      << " for node:" << func_graph->parameters()[i - kPartialInputStartPos]->DebugString();
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
@@ -601,6 +548,12 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       if (node == nullptr || (!node->isa<CNode>())) {
         continue;
       }
+      // Check consistency of dynamic len flag in partial and call.
+      if ((common::AnfAlgo::IsCallNode(node) || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) &&
+          (!CheckTupleDynamicLenUnify(node))) {
+        MS_LOG(EXCEPTION) << "Invalid abs in node:" << node->DebugString();
+      }
+
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       // List name --> tuple name.
