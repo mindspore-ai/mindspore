@@ -3633,6 +3633,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('cholesky_inverse')(upper=upper)(self)
 
+    def cholesky_solve(self, input2, upper=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.cholesky_solve`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cholesky_solve')(self, input2, upper)
+
     def conj(self):
         r"""
         For details, please refer to :func:`mindspore.ops.conj`.
