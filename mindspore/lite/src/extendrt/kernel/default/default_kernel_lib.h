@@ -29,9 +29,9 @@ class DefaultKernelLib : public KernelLib {
  public:
   DefaultKernelLib() : KernelLib(kDefaultKernelLibName, "CPU") {}
 
-  bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) override;
+  bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) override;
+                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 
  private:
   static std::shared_ptr<mindspore::kernel::KernelMod> CreateKernelMod(const PrimitiveType &op_type,
