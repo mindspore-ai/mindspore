@@ -416,7 +416,8 @@ from .math_func import (
     triu_indices,
     histc,
     nextafter,
-    trace
+    trace,
+    zeta
 )
 from .nn_func import (
     adaptive_avg_pool1d,
