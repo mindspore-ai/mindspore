@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorGetData, BaseOperator);
-AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args) {
+
+AbstractBasePtr MapTensorGetDataInferInner(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.
   constexpr int64_t input_num = 1;
@@ -62,6 +63,45 @@ AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &, const
   AbstractBasePtrList abstract_list{key_abs, value_abs};
   return std::make_shared<abstract::AbstractTuple>(abstract_list);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MapTensorGetData, prim::kPrimMapTensorGetData, MapTensorGetDataInfer, nullptr, true);
+
+abstract::BaseShapePtr MapTensorGetDataInferShape(const PrimitivePtr &prim,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  auto abs = MapTensorGetDataInferInner(prim, input_args);
+  auto shape = abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  return shape;
+}
+
+TypePtr MapTensorGetDataInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto abs = MapTensorGetDataInferInner(prim, input_args);
+  auto type = abs->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
+}
+
+AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) {
+  return MapTensorGetDataInferInner(primitive, input_args);
+}
+
+// AG means auto generated
+class MIND_API AGMapTensorGetDataInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetDataInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetDataInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetDataInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MapTensorGetData, prim::kPrimMapTensorGetData, AGMapTensorGetDataInfer, false);
 }  // namespace ops
 }  // namespace mindspore

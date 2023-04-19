@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,27 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorGet, BaseOperator);
-AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
+
+abstract::ShapePtr MapTensorGetInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorGet, input_args, kInputIndex1);
+  if (key_tensor_shape->shape().size() != 1) {
+    MS_EXCEPTION(TypeError) << kNameMapTensorGet << " - key_tensor shape should be 1 rank"
+                            << " but got " << key_tensor_shape->ToString() << ".";
+  }
+  auto abs_map_tensor =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGet, input_args, kInputIndex0);
+  auto value_shape = abs_map_tensor->value_shape();
+  // Concate key shape and value shape as the result shape.
+  ShapeVector shape_vec = key_tensor_shape->shape();
+  const auto &value_shape_vec = value_shape->shape();
+  (void)shape_vec.insert(shape_vec.end(), value_shape_vec.begin(), value_shape_vec.end());
+  auto infer_shape = std::make_shared<abstract::Shape>(shape_vec);
+  return infer_shape;
+}
+
+TypePtr MapTensorGetInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   // Check number of arguments.
   constexpr int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorGet);
@@ -49,29 +67,35 @@ AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const Pri
   // Get key dtype, value dtype and value shape of the map tensor.
   auto map_tensor_type = abs_map_tensor->map_tensor_type();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
-  auto key_dtype = map_tensor_type->key_dtype();
   auto value_dtype = map_tensor_type->value_dtype();
-  auto value_shape = abs_map_tensor->value_shape();
+  return value_dtype;
+}
 
-  // Check 'key_tensor' dtype and shape.
-  auto key_tensor_dtype = CheckAndConvertUtils::GetTensorInputType(kNameMapTensorGet, input_args, kInputIndex1);
-  if (!common::IsEqual(key_dtype, key_tensor_dtype)) {
-    MS_EXCEPTION(TypeError) << kNameMapTensorGet << " - required key_tensor dtype " << key_dtype->ToString()
-                            << " but got " << key_tensor_dtype->ToString() << ".";
-  }
-  auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorGet, input_args, kInputIndex1);
-  if (key_tensor_shape->shape().size() != 1) {
-    MS_EXCEPTION(TypeError) << kNameMapTensorGet << " - key_tensor shape should be 1 rank"
-                            << " but got " << key_tensor_shape->ToString() << ".";
-  }
-
-  // Concate key shape and value shape as the result shape.
-  ShapeVector shape_vec = key_tensor_shape->shape();
-  const auto &value_shape_vec = value_shape->shape();
-  (void)shape_vec.insert(shape_vec.end(), value_shape_vec.begin(), value_shape_vec.end());
-  auto infer_shape = std::make_shared<abstract::Shape>(shape_vec);
+AbstractBasePtr MapTensorGetInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const std::vector<AbstractBasePtr> &input_args) {
+  auto value_dtype = MapTensorGetInferType(primitive, input_args);
+  auto infer_shape = MapTensorGetInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(value_dtype, infer_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MapTensorGet, prim::kPrimMapTensorGet, MapTensorGetInfer, nullptr, true);
+
+// AG means auto generated
+class MIND_API AGMapTensorGetInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorGetInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MapTensorGet, prim::kPrimMapTensorGet, AGMapTensorGetInfer, false);
 }  // namespace ops
 }  // namespace mindspore

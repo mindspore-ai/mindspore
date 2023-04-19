@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,22 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorErase, BaseOperator);
-AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  // Check number of arguments.
-  constexpr int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorErase);
-  // Check argument abstracts.
+
+abstract::ShapePtr MapTensorEraseInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
+  auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorErase, input_args, kInputIndex1);
+  if (key_tensor_shape->shape().size() != 1) {
+    MS_EXCEPTION(TypeError) << kNameMapTensorErase << " - key_tensor shape should be 1 rank"
+                            << " but got " << key_tensor_shape->ToString() << ".";
+  }
+  return abs_map_tensor->shape();
+}
 
+TypePtr MapTensorEraseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto abs_map_tensor =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
   // Get key dtype of the map tensor.
   auto map_tensor_type = abs_map_tensor->map_tensor_type();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
@@ -54,14 +60,41 @@ AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const P
     MS_EXCEPTION(TypeError) << kNameMapTensorErase << " - required key_tensor dtype " << key_dtype->ToString()
                             << " but got " << key_tensor_dtype->ToString() << ".";
   }
-  auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorErase, input_args, kInputIndex1);
-  if (key_tensor_shape->shape().size() != 1) {
-    MS_EXCEPTION(TypeError) << kNameMapTensorErase << " - key_tensor shape should be 1 rank"
-                            << " but got " << key_tensor_shape->ToString() << ".";
-  }
+  return abs_map_tensor->BuildType();
+}
+
+AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  // Check number of arguments.
+  constexpr int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorErase);
+  auto abs_map_tensor =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
+  // check shape and type
+  (void)MapTensorEraseInferShape(primitive, input_args);
+  (void)MapTensorEraseInferType(primitive, input_args);
   // Return the input AbstractMapTensor.
   return abs_map_tensor;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MapTensorErase, prim::kPrimMapTensorErase, MapTensorEraseInfer, nullptr, true);
+// AG means auto generated
+class MIND_API AGMapTensorEraseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorEraseInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorEraseInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorEraseInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MapTensorErase, prim::kPrimMapTensorErase, AGMapTensorEraseInfer, false);
 }  // namespace ops
 }  // namespace mindspore
