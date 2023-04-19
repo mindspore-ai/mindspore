@@ -22,7 +22,7 @@ mindspore.nn.AdaptiveMaxPool2d
 
     参数：
         - **output_size** (Union[int, tuple]) - 输出特征图的size。 `ouput_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。 :math:`H` 和 :math:`W` 可以是int或None，如果是None，则意味着输出的size与输入相同。
-        - **return_indices** (bool) - 如果为True，输出最大值的索引，默认值为False。
+        - **return_indices** (bool) - 如果为 ``True`` ，输出最大值的索引，默认值为 ``False`` 。
 
     输入：
         - **input** (Tensor) - AdaptiveMaxPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。

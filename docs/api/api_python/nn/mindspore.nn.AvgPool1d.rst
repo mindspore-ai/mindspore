@@ -13,17 +13,17 @@ mindspore.nn.AvgPool1d
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     参数：
-        - **kernel_size** (int) - 指定池化核尺寸大小，数据类型为整型。默认值：1。
-        - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值：1。
-        - **pad_mode** (str) - 指定池化的填充方式，可选值为"same"，"valid"或"pad"，不区分大小写。默认值："valid"。
+        - **kernel_size** (int) - 指定池化核尺寸大小，数据类型为整型。默认值： ``1`` 。
+        - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值： ``1`` 。
+        - **pad_mode** (str) - 指定池化的填充方式，可选值为 ``"same"`` ， ``"valid"`` 或 ``"pad"`` ，不区分大小写。默认值： ``"valid"`` 。
 
           - **same** - 输出的宽度与输入整除 `stride` 后的值相同。
           - **valid** - 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
-          - **pad** - 对输入进行填充。在输入的左右两端填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
+          - **pad** - 对输入进行填充。在输入的左右两端填充 `padding` 大小的 ``0`` 。如果设置此模式， `padding` 必须大于或等于 ``0`` 。
 
-        - **padding** (Union(int, tuple[int], list[int])) - 池化填充值，只有 `pad` 模式才能设置为非0。默认值：0。 `padding` 只能是一个整数或者包含一个整数的tuple/list，设定后，则会在输入的左边和右边填充 `padding` 次或者 `padding[0]` 次。
-        - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
-        - **count_include_pad** (bool) - 如果为True，平均计算将包括零填充。默认值：True。
+        - **padding** (Union(int, tuple[int], list[int])) - 池化填充值，只有 `pad` 模式才能设置为非0。默认值： ``0`` 。 `padding` 只能是一个整数或者包含一个整数的tuple/list，设定后，则会在输入的左边和右边填充 `padding` 次或者 `padding[0]` 次。
+        - **ceil_mode** (bool) - 若为 ``True`` ，使用ceil来计算输出shape。若为 ``False`` ，使用floor来计算输出shape。默认值： ``False`` 。
+        - **count_include_pad** (bool) - 如果为 ``True`` ，平均计算将包括零填充。默认值： ``True`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 或 :math:`(C_{in}, L_{in})` 的Tensor。

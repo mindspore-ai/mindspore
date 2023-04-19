@@ -607,9 +607,9 @@ def set_auto_parallel_context(**kwargs):
                      ``auto_parallel mode`` , the segmented parameters do not participate in broadcasting.
                      Default: ``False`` .
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The parameter is not to be
-                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The parameter is not to be
-                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ``''``
         full_batch (bool): If you load whole batch datasets in ``auto_parallel`` mode, this parameter
                        should be set as ``True`` . Default: ``False`` . The interface is not to be recommended
                        currently, it is better using 'dataset_strategy' to replace it.
@@ -1132,11 +1132,13 @@ def set_context(**kwargs):
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
-            The value must be in [STRICT(0), COMPATIBLE(1), LAX(2)]. Default: LAX(2). All levels support all backends.
+            The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
+            support all backends.
 
-            - STRICT(0): Only basic syntax is supported, and execution performance is optimal.
-            - COMPATIBLE(1): Besides basic syntax, supports more syntax, such as operations of dict, list, and scalar.
-            - LAX(2): Compatible with all Python syntax as much as possible. However, execution performance may be
+            - STRICT(``0``): Only basic syntax is supported, and execution performance is optimal.
+            - COMPATIBLE(``1``): Besides basic syntax, supports more syntax, such as operations of dict, list, and
+              scalar.
+            - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
 
     Raises:
@@ -1330,11 +1332,13 @@ def get_ps_context(attr_key):
 
             - enable_ps (bool): Whether to enable parameter server training mode. Default: ``False`` .
             - config_file_path (string): Configuration file path used by recovery, parameter server training mode only
-              supports Server disaster recovery currently. Default: ''.
+              supports Server disaster recovery currently. Default: ``''`` .
             - scheduler_manage_port (int): Scheduler manage port used to scale out/in. Default: ``11202`` .
             - enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: ``False`` .
-            - client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
-            - server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
+            - client_password (str): Password to decrypt the secret key stored in the client certificate.
+              Default: ``''`` .
+            - server_password (str): Password to decrypt the secret key stored in the server certificate.
+              Default: ``''`` .
 
     Returns:
         Returns attribute value according to the key.

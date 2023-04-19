@@ -780,13 +780,13 @@ class AvgPool3d(_PoolNd):
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
             can be an int number or a single element tuple that represents depth, height and width, or a tuple of three
-            positive integers that represent depth, height and width respectively. Default: 1.
+            positive integers that represent depth, height and width respectively. Default: ``1`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, can be a positive int or a single
             element tuple that represents the depth, height and width of movement, or a tuple of three positive integers
             that represents depth, height and width of movement respectively. If the value is None, the default value
-            `kernel_size` is used. Default: 1.
-        pad_mode (str, optional): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
-            case insensitive. Default: "valid".
+            `kernel_size` is used. Default: ``1`` .
+        pad_mode (str, optional): Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"``
+            or ``"pad"`` , case insensitive. Default: ``"valid"`` .
 
             - same: The depth, height and width of the output is the same as the value after the input is divided
               by stride.
@@ -798,7 +798,7 @@ class AvgPool3d(_PoolNd):
               If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int]), optional): Pooling padding value, only 'pad' mode can be set to
-            non-zero. Default: 0. Only the following paddings are supported:
+            non-zero. Default: ``0`` . Only the following paddings are supported:
 
             - `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
               front, back, top, bottom, left and right of the input.
@@ -806,10 +806,13 @@ class AvgPool3d(_PoolNd):
             - `padding` is a tuple/list containing three integers, it will be padded in front and back of the input
               `padding[0]` times, up and down `padding[1]` times, and left and right of the input `padding[2]` times.
 
-        ceil_mode (bool, optional): If True, use ceil to compute the output shape instead of floor. Default: False.
-        count_include_pad (bool, optional): If True, averaging calculation will include the zero-padding. Default: True.
+        ceil_mode (bool, optional): If ``True`` , use ceil to compute the output shape instead of floor.
+            Default: ``False`` .
+        count_include_pad (bool, optional): If ``True`` , averaging calculation will include the zero-padding.
+            Default: ``True`` .
         divisor_override (int, optional): If it is specified as a non-zero parameter, this parameter will be used as the
-            divisor in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
+            divisor in the average calculation. Otherwise, `kernel_size` will be used as the divisor.
+            Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
@@ -905,33 +908,34 @@ class AvgPool2d(_PoolNd):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
             The data type of kernel_size must be int or a single element tuple and the value represents the height
             and width, or a tuple of two int numbers that represent height and width respectively.
-            Default: 1.
+            Default: ``1`` .
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
             represents the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
-            case insensitive. Default: "valid".
+            represent height and width of movement respectively. Default: ``1`` .
+        pad_mode (str) - Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"`` or
+            ``"pad"`` , case insensitive. Default: ``"valid"`` .
 
-            - same: The height and width of the output is the same as the value after the input is divided by stride.
+            - ``"same"``: The height and width of the output is the same as the value after the input is divided by
+              stride.
 
-            - valid: Returns the output obtained by effective calculation without padding.
+            - ``"valid"``: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
 
-            - pad: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number of
-              zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
+              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
-            Default: 0. `padding` can only be an integer or a tuple/list containing one or two integers.
+            Default: ``0`` . `padding` can only be an integer or a tuple/list containing one or two integers.
             If `padding` is an integer or a tuple/list containing one integer, it will be padded `padding` times in the
             four directions of the input. If `padding` is a tuple/list containing two integers, it will be padded
             `padding[0]` times in the up-down direction of the input and `padding[1]` times in the left-right direction
             of the input.
-        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
-        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
+        count_include_pad (bool): If ``True`` , averaging calculation will include the zero-padding. Default: ``True`` .
         divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
-            in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+            in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: ``None`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
@@ -1057,11 +1061,11 @@ class AvgPool1d(_PoolNd):
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     Args:
-        kernel_size (int): The size of kernel window used to take the average value, Default: 1.
+        kernel_size (int): The size of kernel window used to take the average value, Default: ``1`` .
         stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is strides, Default: 1.
-        pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
-            case insensitive. Default: "valid".
+            the width of movement is strides, Default: ``1`` .
+        pad_mode (str) - Specifies the padding method of pooling, optional values are ``"same"``, ``"valid"`` or
+            ``"pad"`` , case insensitive. Default: ``"valid"`` .
 
             - same: The width of the output is the same as the value after the input is divided by stride.
 
@@ -1069,13 +1073,13 @@ class AvgPool1d(_PoolNd):
               The excess pixels that do not meet the calculation will be discarded.
 
             - pad: Performs padding on the input. Adds padding size of zeros to both ends of the input.
-              If this mode is set, padding must be greater than or equal to 0.
+              If this mode is set, padding must be greater than or equal to ``0`` .
 
         padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
-            Default: 0. padding can only be an integer or a tuple/list containing a single integer, in which case
+            Default: ``0`` . padding can only be an integer or a tuple/list containing a single integer, in which case
             padding times or padding[0] times are padded on both sides of the input.
-        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
-        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
+        count_include_pad (bool): If ``True`` , averaging calculation will include the zero-padding. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
@@ -1517,8 +1521,8 @@ class AdaptiveMaxPool2d(Cell):
         output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool): If `return_indices` is ``True`` , the indices of max value would be output.
+            Default: ``False`` .
 
     Inputs:
         - **input** (Tensor) - The input of AdaptiveMaxPool2d, which is a 3D or 4D tensor,
@@ -1598,8 +1602,8 @@ class AdaptiveMaxPool3d(Cell):
         output_size (Union[int, tuple]): The specified output size, which is a positive integer that represents depth,
             height and width, or a tuple of three positive integers that represent depth, height and width respectively.
             If it is None, the output size and input size of the corresponding dimension are the same.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
-            Otherwise, the indices will not be returned. Default: False.
+        return_indices (bool, optional): If `return_indices` is ``True`` , the indices of max value would be output.
+            Otherwise, the indices will not be returned. Default: ``False`` .
 
     Inputs:
         - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
@@ -1607,7 +1611,7 @@ class AdaptiveMaxPool3d(Cell):
     Outputs:
         - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .
         - **argmax** (Tensor) - Tensor, the indices of the maximum values along with the outputs, has the same shape as
-          `y` and a dtype of int32. Return this only when `return_indices` is True.
+          `y` and a dtype of int32. Return this only when `return_indices` is ``True`` .
 
     Raises:
         TypeError: If `input` is not a Tensor.
