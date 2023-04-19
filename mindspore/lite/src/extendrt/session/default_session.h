@@ -53,6 +53,8 @@ class DefaultInferSession : public InferSession {
 
   virtual std::shared_ptr<infer::abstract::GraphRuntime> GetGraphRuntime() { return runtime_; }
 
+  void ResetTensorData(const std::vector<void *> &old_data, const std::vector<lite::Tensor *> &tensors);
+
  private:
   Status CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
                                 std::vector<infer::abstract::Tensor *> inner_tensors);

@@ -58,7 +58,7 @@ bool ExecutionPlan::BuildKernels() {
       MS_LOG(ERROR) << "ExecutionPlan::BuildKernels construct execution flow to Sub Graph Kernel failed.";
       return false;
     }
-    auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+    auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
     for (auto &node : subgraph_kernel->nodes()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
@@ -77,27 +77,18 @@ bool ExecutionPlan::BuildKernels() {
 }
 
 bool ExecutionPlan::MallocTensorData(abstract::Kernel *kernel) {
-  auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+  auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     MS_LOG(ERROR)
-      << "ExecutionPlan::MallocTensorData subgraph target is not GPU, cannot malloc data with default allocator";
+      << "ExecutionPlan::MallocTensorData subgraph target is not CPU, cannot malloc data with default allocator";
     return false;
   }
-  auto kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph_kernel)->nodes();
+  auto kernel_list = subgraph_kernel->nodes();
   for (auto kernel : kernel_list) {
-    for (auto tensor : kernel->out_tensors()) {
-      if (tensor->data() == nullptr) {
-        tensor->MallocData();
-      }
-    }
     for (auto tensor : kernel->in_tensors()) {
-      if (tensor->data() == nullptr) {
-        tensor->MallocData();
-      } else {
-        if (tensor->category() == lite::VAR) {
-          auto ref_count = tensor->init_ref_count();
-          tensor->set_init_ref_count(ref_count + 1);
-        }
+      if (tensor->category() == lite::VAR) {
+        auto ref_count = tensor->init_ref_count();
+        tensor->set_init_ref_count(ref_count + 1);
       }
     }
   }
