@@ -275,8 +275,9 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   auto func_type = anf_graph->get_attr(kAttrFuncType);
   is_data_flow_graph_ = func_type != nullptr && GetValue<std::string>(func_type) == kDataFlowGraphType;
   if (!is_data_flow_graph_) {
-    auto converter = transform::NewConverter(anf_graph, converter_context);
-    transform::BuildGraph(anf_graph->ToString(), converter, GetParams(anf_graph));
+    auto converter = transform::NewConverter(anf_graph);
+    auto params_vals = GetParams(anf_graph);
+    transform::BuildGraph(anf_graph->ToString(), converter, params_vals);
     auto err_code = transform::ErrCode(converter);
     if (err_code != 0) {
       transform::ClearGraph();
@@ -284,15 +285,27 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
       return false;
     }
     auto init_graph = transform::GetInitGraph(converter);
+    auto init_data_names = converter->GetInitDataNames();
     if (init_graph != nullptr) {
       uint32_t init_graph_id = 0;
       if (!AddGraph(init_graph, {}, &init_graph_id)) {
         MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
         return false;
       }
-      init_graph_id_list_.push_back(init_graph_id);
+      std::vector<tensor::TensorPtr> init_data_tensors;
+      for (auto &item : init_data_names) {
+        auto it = params_vals.find(item);
+        if (it == params_vals.end()) {
+          MS_LOG(ERROR) << "Cannot find parameter " << item << " in parameter map";
+          return false;
+        }
+        init_data_tensors.push_back(it->second);
+      }
       // copy init weight to device
-      RunGeInitGraph(init_graph_id);
+      if (!RunGeInitGraph(init_graph_id, init_data_tensors)) {
+        MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
+        return false;
+      }
     } else {
       MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
     }
@@ -332,11 +345,20 @@ std::shared_ptr<AscendDeviceInfo> GeGraphExecutor::GetAscendDeviceInfo() {
   return ascend_device_info;
 }
 
-bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id) {
+bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id, const std::vector<tensor::TensorPtr> &init_tensors) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
-  std::vector<::ge::Tensor> ge_tensors;
+  std::vector<::ge::Tensor> ge_inputs;
+  for (size_t i = 0; i < init_tensors.size(); i++) {
+    auto &input = init_tensors[i];
+    auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW);
+    if (ge_tensor == nullptr) {
+      MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
+      return false;
+    }
+    ge_inputs.emplace_back(*ge_tensor);
+  }
   std::vector<::ge::Tensor> ge_outputs;
-  auto ge_status = ge_session_->RunGraph(init_graph_id, ge_tensors, ge_outputs);
+  auto ge_status = ge_session_->RunGraph(init_graph_id, ge_inputs, ge_outputs);
   if (ge_status != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Exec init graph failed, graph id " << init_graph_id;
     return false;

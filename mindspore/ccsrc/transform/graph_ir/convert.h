@@ -79,15 +79,9 @@ class GeOpConvertor {
   static std::map<int, std::string> GetAclDynamicOutputNames(const AnfNodePtr &node);
 };
 
-struct DfGraphConvertContext {
-  mindspore::HashMap<std::string, std::weak_ptr<::ge::Operator>> const_op_map;
-};
-
 class DfGraphConvertor {
  public:
-  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph,
-                            const std::shared_ptr<DfGraphConvertContext> &context = nullptr)
-      : anf_graph_(anf_graph), convert_context_(context) {
+  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
     auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
@@ -170,6 +164,7 @@ class DfGraphConvertor {
 
   DfGraphPtr GetComputeGraph();
   DfGraphPtr GetInitGraph();
+  std::vector<std::string> GetInitDataNames() const { return init_data_names_; }
   DfGraphPtr GetSaveCheckpointGraph();
   DfGraphPtr GetBroadcastGraph();
   int ErrCode() const { return static_cast<int>(error_); }
@@ -289,6 +284,7 @@ class DfGraphConvertor {
   std::vector<AnfNodePtr> graph_anf_outputs_;
   std::vector<OperatorPtr> graph_const_inputs_;
   std::vector<OperatorPtr> init_ops_;
+  std::vector<std::string> init_data_names_;
   std::vector<OperatorPtr> broadcast_ops_;
   std::vector<AnfNodePtr> inputs_;
   ShapeArray input_shapes_;
@@ -312,8 +308,6 @@ class DfGraphConvertor {
   mindspore::HashMap<OperatorPtr, std::shared_ptr<tensor::Tensor>> const_op_to_value_;
   AnfNodePtr prev_while_node_ = nullptr;
   size_t prev_while_node_out_size_ = 0;
-
-  std::shared_ptr<DfGraphConvertContext> convert_context_ = nullptr;
 
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> while_graph_cache_;
   mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<OutHandler>>> call_input_handle_cache_;
