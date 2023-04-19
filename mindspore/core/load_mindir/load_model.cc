@@ -33,6 +33,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/map_tensor.h"
+#include "ir/functor.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -344,6 +345,7 @@ class MSANFModelParser {
   ValuePtr ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto);
   std::vector<std::shared_ptr<mindspore::QuantizationParam>> GenerateQuantizationParam(
     const mind_ir::TensorProto &attr_tensor);
+  FunctorPtr GenerateFunctorValue(const mind_ir::FunctorProto &functor_proto);
   bool little_endian() const { return little_endian_; }
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);
@@ -419,6 +421,14 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
       }
       return dict_value;
     }
+    case mind_ir::AttributeProto_AttributeType_FUNCTOR: {
+      auto functor_value = GenerateFunctorValue(attr_proto.functor());
+      if (functor_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get functor value for " << attr_name;
+        return nullptr;
+      }
+      return functor_value;
+    }
     default: {
       ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
       if (value == nullptr) {
@@ -428,6 +438,24 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
       return value;
     }
   }
+}
+
+FunctorPtr MSANFModelParser::GenerateFunctorValue(const mind_ir::FunctorProto &functor_proto) {
+  auto name = functor_proto.name();
+  auto type = functor_proto.type();
+  auto values = GetValueFromAttributeProto(functor_proto.values(0));
+  if (type == mind_ir::FunctorProto_FunctorType_SHAPE_CALC_FUNCTOR) {
+    auto creator = FunctorRegistry::Instance().GetCreator(name);
+    if (creator == nullptr) {
+      MS_LOG(ERROR) << "Cannot find the functor creator: " << name;
+      return nullptr;
+    }
+    auto functor = creator();
+    functor->FromValue(values);
+    return functor;
+  }
+  MS_LOG(ERROR) << "Unknown functor type: " << type;
+  return nullptr;
 }
 
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {

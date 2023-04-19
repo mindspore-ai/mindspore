@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <utility>
 #include "include/common/utils/convert_utils.h"
+#include "ir/functor.h"
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
@@ -336,20 +337,47 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
 }
 
-NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
-                               const ops::InferFunc &infer_func,
+namespace deprecated {
+class DeprecatedShapeCalcFunctor : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC(DeprecatedShapeCalcFunctor)
+  DeprecatedShapeCalcFunctor(const ShapeFunc &shape_func, const InferFunc &infer_func)
+      : ShapeCalcFunctor("DeprecatedShapeCalcFunctor"), shape_func_(shape_func), infer_func_(infer_func) {}
+
+  ShapeArray Calc(const ShapeArray &shape_array) const override {
+    MS_EXCEPTION_IF_NULL(shape_func_);
+    return shape_func_(shape_array);
+  }
+
+  std::vector<int64_t> Infer(const ShapeArray &shape_array, const HashSet<size_t> &unknown_inputs) const override {
+    MS_EXCEPTION_IF_NULL(infer_func_);
+    return infer_func_(shape_array, std::unordered_set<size_t>(unknown_inputs.begin(), unknown_inputs.end()));
+  }
+
+ protected:
+  ShapeFunc shape_func_{nullptr};
+  InferFunc infer_func_{nullptr};
+};
+}  // namespace deprecated
+
+NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
+                               const deprecated::InferFunc &infer_func,
                                const std::vector<int64_t> &value_depend_indices) const {
-  MS_EXCEPTION_IF_NULL(shape_func);
-  MS_EXCEPTION_IF_NULL(infer_func);
+  auto functor = std::make_shared<deprecated::DeprecatedShapeCalcFunctor>(shape_func, infer_func);
+  return ShapeCalc(functor, inputs, value_depend_indices);
+}
+
+NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
+                               const std::vector<int64_t> &value_depend) const {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "ShapeCalc got empty inputs";
   }
-  std::unordered_set<int64_t> indices(value_depend_indices.begin(), value_depend_indices.end());
-  std::unordered_set<int64_t> const_args_indices;
+  std::unordered_set<size_t> const_args_indices;
   ShapeArray const_args(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
-    if (indices.find(static_cast<int64_t>(i)) == indices.end()) {
+    if (std::find(value_depend.begin(), value_depend.end(), static_cast<int64_t>(i)) == value_depend.end()) {
       // input[i]'s shape is used
       auto input_shape = inputs[i]->shape();
       if (!IsDynamic(input_shape)) {
@@ -361,15 +389,16 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
       auto [success, vec] = GetIntList(inputs[i]);
       if (success) {
         (void)const_args_indices.insert(i);
-        const_args[i] = vec;
+        const_args[i] = std::move(vec);
       }
     }
   }
 
   NodePtrList res;
+  // all inputs are static-shape tensors,
   if (const_args_indices.size() == inputs.size()) {
-    // Directly execute the lambda function only when all inputs are static
-    auto out = shape_func(const_args);
+    auto out = functor->Calc(const_args);
+    res.reserve(out.size());
     (void)std::transform(out.begin(), out.end(), std::back_inserter(res),
                          [this](const ShapeVector &sh) { return Value(sh); });
     return res;
@@ -377,24 +406,22 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
 
   NodePtrList args(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
-    if (const_args_indices.find(static_cast<int64_t>(i)) != const_args_indices.end()) {
+    if (const_args_indices.count(i) != 0) {
       args[i] = Value(const_args[i]);
-    } else if (indices.find(static_cast<int64_t>(i)) == indices.end()) {
+    } else if (std::find(value_depend.begin(), value_depend.end(), static_cast<int64_t>(i)) == value_depend.end()) {
       args[i] = Emit("TensorShape", {inputs[i]});
     } else {
       args[i] = inputs[i];
     }
   }
-  auto out = Emit(ops::kNameShapeCalc, args,
-                  {{ops::kAttrShapeFunc, std::make_shared<ops::ShapeFunction>(shape_func)},
-                   {ops::kAttrInferFunc, std::make_shared<ops::InferFunction>(infer_func)},
-                   {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)}});
+  auto out = Emit(kShapeCalc, args, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_depend)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTuple>()) {
     auto abstract_tuple = abs->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abstract_tuple);
+    res.reserve(abstract_tuple->size());
     for (size_t i = 0; i < abstract_tuple->size(); ++i) {
       res.push_back(TupleGetItem(out, i));
     }
@@ -402,7 +429,7 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
     res.push_back(out);
   }
   return res;
-}  // namespace expander
+}
 
 std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) const {
   auto it1 = type_map_.find(lhs->dtype()->type_id());

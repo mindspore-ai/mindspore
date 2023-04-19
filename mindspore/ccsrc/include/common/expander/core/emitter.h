@@ -20,17 +20,23 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_set>
 #include <map>
 #include <tuple>
 #include "ir/func_graph.h"
 #include "ops/core_ops.h"
 #include "ops/shape_calc.h"
+#include "ir/functor.h"
 #include "include/common/utils/utils.h"
 #include "include/common/expander/core/node.h"
 #include "include/common/expander/core/infer.h"
 
 namespace mindspore {
 namespace expander {
+namespace deprecated {
+using ShapeFunc = std::function<ShapeArray(const ShapeArray &)>;
+using InferFunc = std::function<ShapeVector(const ShapeArray &, const std::unordered_set<size_t> &)>;
+}  // namespace deprecated
 class COMMON_EXPORT Emitter {
  public:
   Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
@@ -238,7 +244,7 @@ class COMMON_EXPORT Emitter {
   /// \brief get the ExpanderInferPtr
   ExpanderInferPtr infer() const { return infer_; }
 
-  /// \brief Shape calculation.
+  /// \brief Deprecated, Shape calculation.
   ///
   /// \param[in] inputs The input tensors.
   /// \param[in] shape_func The lambda function that encapsulated the shape calculation logic. Apply 'func' on input
@@ -247,10 +253,22 @@ class COMMON_EXPORT Emitter {
   ///     used in infer_shape of 'ShapeCalc' op.
   /// \param[in] value_depend_indices If index i exists in 'value_depend', then the value of i'th input tensor instead
   ///     of its shape will be passed to 'func'.
-  /// \param[in] size The size of outputs.
   /// \return NodePtrList, the outputs shape list.
-  NodePtrList ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func, const ops::InferFunc &infer_func,
+  NodePtrList ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
+                        const deprecated::InferFunc &infer_func,
                         const std::vector<int64_t> &value_depend_indices = {}) const;
+
+  /// \brief Shape calculation. This interface is used to unify the code between static-shape and dynamic-shape
+  /// situation, the output type is depend on types of inputs.
+  ///
+  /// \param[in] functor The ShapeCalcFunctor object.
+  /// \param[in] inputs The input tensors.
+  /// \param[in] value_depend If index i exists in 'value_depend', the value of inputs[i] is sent to 'functor'.
+  ///                         otherwise the shape of inputs[i] is sent.
+  /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
+  /// otherwise CNode tensors are returned.
+  NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
+                        const std::vector<int64_t> &value_depend = {}) const;
 
   using BlockFunc = std::function<NodePtrList(const Emitter *)>;
   /// \brief Generate a conditional block.
