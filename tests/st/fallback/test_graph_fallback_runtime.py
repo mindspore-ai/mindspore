@@ -1308,3 +1308,79 @@ def test_dynamic_shape_tensor():
     x = Tensor(dtype=ms.int32, input_data=[2, 2])
     out = net(x)
     return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_nested_dict1():
+    """
+    Feature: Return nested output of dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net1():
+        return {'a': None, 'b': {'a': 1}}
+
+    @ms.jit
+    def dict_net2():
+        return {'a': None, 'b': {'a': {'c': 1}}}
+
+    out = dict_net1()
+    assert out == {'a': None, 'b': {'a': 1}}
+    out = dict_net2()
+    assert out == {'a': None, 'b': {'a': {'c': 1}}}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_nested_dict2():
+    """
+    Feature: Return nested output of dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net1():
+        return {'a': None, 'b': [1, 2, None]}
+
+    @ms.jit
+    def dict_net2():
+        return {'a': None, 'b': [1, 2, {'a': 1}]}
+
+    out = dict_net1()
+    assert out == {'a': None, 'b': [1, 2, None]}
+    out = dict_net2()
+    assert out == {'a': None, 'b': [1, 2, {'a': 1}]}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_nested_dict3():
+    """
+    Feature: Return nested output of dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net1():
+        return {'a': None, 'b': (1, 2, None)}
+
+    @ms.jit
+    def dict_net2():
+        return {'a': None, 'b': (1, 2, {'a': 1})}
+
+    out = dict_net1()
+    assert out == {'a': None, 'b': (1, 2, None)}
+    out = dict_net2()
+    assert out == {'a': None, 'b': (1, 2, {'a': 1})}
