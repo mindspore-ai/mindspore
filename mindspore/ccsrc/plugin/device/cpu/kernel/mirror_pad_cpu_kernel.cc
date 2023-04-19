@@ -29,6 +29,29 @@ constexpr size_t kInputNum = 2;
 }  // namespace
 
 template <typename T>
+bool process_dim_one(T *outputs_addr, T *inputs_addr, int64_t *paddings, const int64_t input_elements,
+                     const int64_t mode) {
+  int ret =
+    memcpy_s(outputs_addr, paddings[0] * int64_t(sizeof(T)), inputs_addr + mode, paddings[0] * int64_t(sizeof(T)));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+  ret = memcpy_s(outputs_addr + paddings[0] + input_elements, paddings[1] * int64_t(sizeof(T)),
+                 inputs_addr + input_elements - paddings[1] - mode, paddings[1] * int64_t(sizeof(T)));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+  ret = memcpy_s(outputs_addr + paddings[0], input_elements * int64_t(sizeof(T)), inputs_addr,
+                 input_elements * int64_t(sizeof(T)));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  }
+  std::reverse(outputs_addr, outputs_addr + paddings[0]);
+  std::reverse(outputs_addr + paddings[0] + input_elements, outputs_addr + paddings[0] + input_elements + paddings[1]);
+  return true;
+}
+
+template <typename T>
 void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracted_paddings) {
   for (int64_t i = 0; i < padd_dim; i++) {
     extracted_paddings[i * PADDING_SIZE] = int64_t(paddings_arg[i * PADDING_SIZE]);
@@ -97,7 +120,7 @@ int MirrorPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 template <typename T1, typename T2>
 bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) const {
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
@@ -113,15 +136,7 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   extract_paddings(paddings_arg, padd_dim, paddings);
   // quickly solve one-dimensional simple cases
   if (dims_ == 1) {
-    (void)memcpy_s(outputs_addr, paddings[0] * element_size, inputs_addr + mode, paddings[0] * element_size);
-    (void)memcpy_s(outputs_addr + paddings[0] + input_elements_, paddings[1] * element_size,
-                   inputs_addr + input_elements_ - paddings[1] - mode, paddings[1] * element_size);
-    (void)memcpy_s(outputs_addr + paddings[0], input_elements_ * element_size, inputs_addr,
-                   input_elements_ * element_size);
-    std::reverse(outputs_addr, outputs_addr + paddings[0]);
-    std::reverse(outputs_addr + paddings[0] + input_elements_,
-                 outputs_addr + paddings[0] + input_elements_ + paddings[1]);
-    return true;
+    return process_dim_one<T1>(outputs_addr, inputs_addr, paddings, input_elements_, mode);
   }
   // solve other situations
   std::vector<int64_t> output_strides_(dims_, 0);
@@ -137,47 +152,60 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     index[i - 1].first = index[i].first + output_strides_[i - 1] * paddings[(i - 1) * PADDING_SIZE];
     index[i - 1].second = index[i].second + output_strides_[i - 1] * paddings[(i - 1) * PADDING_SIZE + 1];
   }
-
-  std::vector<int64_t> pos(dims_ - 1, 0);
   std::vector<int64_t> output_pos;
+  output_pos.resize(input_elements_ / input_shape_[dims_ - 1]);
   std::vector<int64_t> tmp_pos;
-  int64_t output_index = index[0].first;
   int64_t copy_size = element_size * input_shape_[dims_ - 1];
-  for (int64_t i = 0; i < input_elements_; i += input_shape_[dims_ - 1]) {
-    (void)memcpy_s(outputs_addr + output_index, copy_size, inputs_addr + i, copy_size);
-    output_pos.push_back(output_index);
-    pos[dims_ - kTwo] += 1;
-    int64_t dep = dims_ - 1;
-    for (int64_t j = dims_ - 2; j >= 0; --j) {
-      if (j > 0 && pos[j] >= input_shape_[j]) {
-        pos[j] -= input_shape_[j];
-        pos[j - 1] += 1;
-        dep = j;
-      } else {
-        break;
+  const size_t input_length = IntToSize(input_elements_);
+  auto cpy_task = [this, outputs_addr, copy_size, inputs_addr, &output_pos, &paddings, &output_strides_](size_t start,
+                                                                                                         size_t end) {
+    for (size_t i = start; i < end; i += input_shape_[dims_ - 1]) {
+      std::vector<int64_t> pos(dims_, 0);
+      auto idx = i / input_shape_[dims_ - 1];
+      for (int j = dims_ - 2; j >= 0; --j) {
+        if (idx == 0) break;
+        pos[j] = idx % input_shape_[j];
+        idx /= input_shape_[j];
       }
+      int64_t output_index = 0;
+      for (size_t j = 0; j < pos.size(); j++) {
+        output_index += (pos[j] + paddings[j * PADDING_SIZE]) * output_strides_[j];
+      }
+      int ret = memcpy_s(outputs_addr + output_index, copy_size, inputs_addr + i, copy_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      }
+      output_pos[i / input_shape_[dims_ - 1]] = output_index;
     }
-    output_index += index[dep].first + index[dep].second + input_shape_[dims_ - 1];
-  }
+  };
+  ParallelLaunchAutoSearch(cpy_task, input_length, this, &parallel_search_info_);
   for (int64_t i = dims_ - 1; i >= 0; --i) {
     int64_t block_size = output_strides_[i];
-    int64_t count = 0;
     copy_size = block_size * element_size;
-    for (auto item : output_pos) {
+    const size_t length = IntToSize(output_pos.size());
+    auto input_shape = input_shape_;
+    for (size_t j = 0; j < length; j++) {
+      auto item = output_pos[j];
       T1 *base_output_ptr1 = outputs_addr + item;
       for (int64_t cnt = 1; cnt <= paddings[i * PADDING_SIZE]; ++cnt) {
-        (void)memcpy_s(base_output_ptr1 - cnt * block_size, copy_size, base_output_ptr1 + (cnt - 1 + mode) * block_size,
-                       copy_size);
+        int ret = memcpy_s(base_output_ptr1 - cnt * block_size, copy_size,
+                           base_output_ptr1 + (cnt - 1 + mode) * block_size, copy_size);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+        }
       }
-      T1 *base_output_ptr2 = outputs_addr + item + input_shape_[i] * block_size;
+      T1 *base_output_ptr2 = outputs_addr + item + input_shape[i] * block_size;
       for (int64_t cnt = 1; cnt <= paddings[i * PADDING_SIZE + 1]; ++cnt) {
-        (void)memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size,
-                       base_output_ptr2 - (cnt + mode) * block_size, copy_size);
+        int ret = memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size,
+                           base_output_ptr2 - (cnt + mode) * block_size, copy_size);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+        }
       }
-      if (i > 0 && count % input_shape_[i - 1] == 0) {
+      bool invalid_pos = i > 0 && j % input_shape[i - 1] == 0;
+      if (invalid_pos) {
         tmp_pos.push_back(item - paddings[i * PADDING_SIZE] * block_size);
       }
-      ++count;
     }
     output_pos.clear();
     output_pos.resize(tmp_pos.size());

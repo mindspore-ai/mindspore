@@ -171,30 +171,18 @@ bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
         ComputeNHWC<T>(src_addr, bias_addr, output_addr, num_value, num_bias);
       } else {
         size_t c_size = input_shape_[kIndex1];
-        for (size_t n = 0; n < input_shape_[kIndex0]; ++n) {
-          for (size_t c = 0; c < c_size; ++c) {
-            size_t offset = n * c_size * hw_size + c * hw_size;
-            size_t hw = 0;
-#ifdef ENABLE_AVX
-            constexpr size_t C8NUM = 8;
-            size_t hw8 = hw_size / C8NUM * C8NUM;
-            const float *in_ptr = src_addr + offset;
-            float *out_ptr = output_addr + offset;
-            for (; hw < hw8; hw += C8NUM) {
-              __m256 src_r1 = _mm256_loadu_ps(in_ptr);
-              __m256 bias_r2 = _mm256_set1_ps(bias_addr[c]);
-              __m256 dst_r3 = _mm256_add_ps(src_r1, bias_r2);
-              _mm256_storeu_ps(out_ptr, dst_r3);
-
-              in_ptr += C8NUM;
-              out_ptr += C8NUM;
-            }
-#endif
-            for (; hw < LongToSize(hw_size); ++hw) {
-              output_addr[offset + hw] = src_addr[offset + hw] + bias_addr[c];
+        auto task = [&](size_t start, size_t end) {
+          for (size_t n = start; n < end; ++n) {
+            for (size_t c = 0; c < c_size; ++c) {
+              size_t offset = LongToSize(n * c_size * hw_size + c * hw_size);
+              size_t hw = 0;
+              for (; hw < LongToSize(hw_size); ++hw) {
+                output_addr[offset + hw] = src_addr[offset + hw] + bias_addr[c];
+              }
             }
           }
-        }
+        };
+        ParallelLaunchAutoSearch(task, LongToSize(input_shape_[0]), this, &parallel_search_info_);
       }
     } else {
       auto task = [&](size_t start, size_t end) {

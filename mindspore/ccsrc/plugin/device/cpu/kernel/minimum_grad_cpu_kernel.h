@@ -52,6 +52,21 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  template <typename T>
+  void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, const size_t dim, const size_t x_index,
+                          const size_t y_index, const size_t dout_index, const std::vector<size_t> &x_cargo,
+                          const std::vector<size_t> &y_cargo, const std::vector<size_t> &dout_cargo,
+                          const std::vector<size_t> &x_shape, const std::vector<size_t> &y_shape,
+                          const std::vector<size_t> &dout_shape);
+
+  template <typename T>
+  void MinimumGradRecTaskSerialized(const T *x, const T *y, const T *dout, T *dx, T *dy, const size_t dim,
+                                    const size_t x_index, const size_t y_index, const size_t dout_index,
+                                    const std::vector<size_t> &x_cargo, const std::vector<size_t> &y_cargo,
+                                    const std::vector<size_t> &dout_cargo, const std::vector<size_t> &x_shape,
+                                    const std::vector<size_t> &y_shape, const std::vector<size_t> &dout_shape,
+                                    bool paralleled);
+
   ShapeVector x_shape_;
   ShapeVector y_shape_;
   ShapeVector dout_shape;

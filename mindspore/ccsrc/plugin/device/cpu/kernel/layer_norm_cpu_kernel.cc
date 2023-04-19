@@ -32,7 +32,16 @@ constexpr size_t kLayerNormInputBetaIndex = 2;
 constexpr size_t kLayerNormOutputYIndex = 0;
 constexpr size_t kLayerNormOutputMeanIndex = 1;
 constexpr size_t kLayerNormOutputVarIndex = 2;
+constexpr size_t kLayerNormOneDnnMinDim = 2;
+constexpr size_t kLayerNormOneDnnMaxDim = 5;
 }  // namespace
+
+void LayerNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+  size_t type_size = sizeof(float);
+  size_t tensor_size = static_cast<size_t>(param_num_) * 2 * type_size;  // [2, c] to store scale and bias
+  (void)workspace_size_list_.emplace_back(tensor_size);
+}
+
 bool LayerNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
@@ -68,6 +77,7 @@ int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(EXCEPTION) << "Invalid LayerNormCpuKernelMod input size!";
   }
   auto x_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
+  auto x_type = inputs[kLayerNormInputXIndex]->GetDtype();
   auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
   auto begin_params_axis = kernel_ptr->get_begin_params_axis();
   if (begin_norm_axis < 0) {
@@ -92,14 +102,54 @@ int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
   }
+  if (begin_norm_axis == static_cast<int64_t>(x_shape.size() - 1) &&
+      begin_params_axis == static_cast<int64_t>(x_shape.size() - 1) && x_shape.size() >= kLayerNormOneDnnMinDim &&
+      x_shape.size() <= kLayerNormOneDnnMaxDim && x_type == kNumberTypeFloat32) {
+    use_onednn_ = true;
+    dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
+    dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc(std::vector<int64_t>{2, static_cast<int64_t>(param_num_)});
+    auto prop_kind = dnnl::prop_kind::forward_training;
+    auto normalization_flags = dnnl::normalization_flags::use_scale_shift;
+    auto desc = CreateDesc<dnnl::layer_normalization_forward::desc>(prop_kind, x_desc, eps_, normalization_flags);
+    auto forward_prim_desc = CreateDesc<dnnl::layer_normalization_forward::primitive_desc>(desc, engine_);
+    auto wksp_desc = GetWorkspaceDesc(forward_prim_desc);
+    auto mean = GetMeanDesc(forward_prim_desc);
+    auto variance = GetVarianceDesc(forward_prim_desc);
+    primitive_ = CreatePrimitive<dnnl::layer_normalization_forward>(forward_prim_desc);
+    AddArgument(DNNL_ARG_SRC, x_desc);
+    AddArgument(DNNL_ARG_MEAN, mean);
+    AddArgument(DNNL_ARG_VARIANCE, variance);
+    AddArgument(DNNL_ARG_SCALE_SHIFT, scale_bias_desc);
+    AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
+    AddArgument(DNNL_ARG_DST, x_desc);
+
+    InitWorkspaceSize(inputs);
+  }
   return ret;
 }
 
 bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &workspace,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormOutputsNum, kernel_name_);
+  if (use_onednn_) {
+    auto wksp = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
+    auto scale_ret = memcpy_s(wksp, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
+    auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
+    auto bias_ret =
+      memcpy_s(wksp + (inputs[SCALE]->size / sizeof(float)), max_size, inputs[BIAS]->addr, inputs[BIAS]->size);
+    if (scale_ret != EOK || bias_ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy_s error.";
+    }
+    SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->addr);
+    SetArgumentHandle(DNNL_ARG_MEAN, outputs[SAVE_MEAN]->addr);
+    SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[SAVE_VARIANCE]->addr);
+    SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->addr);
+    SetArgumentHandle(DNNL_ARG_DST, outputs[Y]->addr);
+    ExecutePrimitive();
+    return true;
+  }
   kernel_func_(this, inputs, outputs);
   return true;
 }

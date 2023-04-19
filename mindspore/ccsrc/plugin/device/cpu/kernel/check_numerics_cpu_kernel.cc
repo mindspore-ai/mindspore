@@ -64,22 +64,25 @@ void CheckNumericsCpuKernelMod::CheckNanOrInf(T value) const {
 
 template <typename T>
 void CheckNumericsCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) const {
+                                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);
 
-  for (size_t i = 0; i < elem_num; i++) {
-    if constexpr (std::is_same_v<T, float16>) {
-      auto value = static_cast<float>(input[i]);
-      CheckNanOrInf(value);
-      output[i] = input[i];
-    } else {
-      auto value = input[i];
-      CheckNanOrInf(value);
-      output[i] = input[i];
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      if constexpr (std::is_same_v<T, float16>) {
+        auto value = static_cast<float>(input[i]);
+        CheckNanOrInf(value);
+        output[i] = input[i];
+      } else {
+        auto value = input[i];
+        CheckNanOrInf(value);
+        output[i] = input[i];
+      }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CheckNumerics, CheckNumericsCpuKernelMod);
