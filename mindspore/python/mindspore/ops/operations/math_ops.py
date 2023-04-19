@@ -5270,10 +5270,10 @@ class Round(Primitive):
     Refer to :func:`mindspore.ops.round` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, has the same shape and type as the `input_x`.
+        Tensor, has the same shape and type as the `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7572,7 +7572,7 @@ class Bernoulli(Primitive):
     Inputs:
         - **x** (Tensor) - Input Tensor.
           Data type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
-        -**p** (Union[Tensor, float], optional) - Success probability, representing the probability of
+        - **p** (Union[Tensor, float], optional) - Success probability, representing the probability of
           setting 1 for the corresponding position of the current Tensor. It has the same shape as `x`,
           the value of `p` must be in the range `[0, 1]`. Default: 0.5.
 
