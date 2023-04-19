@@ -152,6 +152,14 @@ class Ger(Primitive):
 
     Refer to :func:`mindspore.ops.ger` for more details.
 
+    Inputs:
+        - **x1** - (Tensor) - 1-D input Tensor.
+        - **x2** - (Tensor) - 1-D input Tensor, has the same dtype as `x1`.
+
+    Outputs:
+        Tensor, output matrix with the same dtype as inputs.With `x1` shape :math:`(m,)` and
+        `x2` shape of :math:`(n,)`,the `output` has shape :math:`(m * n)`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1882,6 +1890,12 @@ class Neg(Primitive):
 
     Refer to :func:`mindspore.ops.neg` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor whose dtype is Number.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1907,6 +1921,17 @@ class InplaceUpdateV2(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.inplace_update` for more details.
+
+    Inputs:
+        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+          float32, float16 and int32.
+        - **indices** (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
+          the first dimension, which must be the same as the size of `indices`.
+
+    Outputs:
+        Tensor, with the same type and shape as the input `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1963,6 +1988,19 @@ class InplaceAdd(Primitive):
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
     Refer to :func:`mindspore.ops.inplace_add` for more details.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
+
+    Inputs:
+        - **x** (Tensor) - The tensor to be added. It has shape :math:`(N,*)` where :math:`*` means
+          any number of additional dimensions.
+        - **input_v** (Tensor) - The value tensor add to `x`. It has the same dimension sizes as `x` except
+          the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2053,6 +2091,19 @@ class InplaceSub(Primitive):
 
     Refer to :func:`mindspore.ops.inplace_sub` for more details.
 
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to subtract by `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
+
+    Inputs:
+        - **x** (Tensor) - The tensor to be subtracted. It has shape :math:`(N,*)` where :math:`*` means
+          any number of additional dimensions.
+        - **input_v** (Tensor) - The value tensor subtract from `x`. It has the same dimension sizes as `x` except
+          the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2130,6 +2181,19 @@ class Mul(_MathBinaryOp):
     Multiplies two tensors element-wise.
 
     Refer to :func:`mindspore.ops.mul` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2454,6 +2518,12 @@ class Exp(Primitive):
 
     Refer to :func:`mindspore.ops.exp` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2739,6 +2809,12 @@ class Expm1(Primitive):
 
     Refer to :func:`mindspore.ops.expm1` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2857,6 +2933,12 @@ class Log(Primitive):
 
     Refer to :func:`mindspore.ops.log` for more details.
 
+    Inputs:
+        - **x** (Tensor) - Input Tensor of any dimension. The value must be greater than 0.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2883,6 +2965,13 @@ class Log1p(Primitive):
     Returns the natural logarithm of one plus the input tensor element-wise.
 
     Refer to :func:`mindspore.ops.log1p` for more details.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. The value must be greater than -1.
+          With float16 or float32 data type.
+
+    Outputs:
+        Tensor, has the same shape as the `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3083,6 +3172,16 @@ class Maximum(_MathBinaryOp):
     Computes the maximum of input tensors element-wise.
 
     Refer to :func:`mindspore.ops.maximum` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3360,6 +3459,16 @@ class FloorDiv(Primitive):
 
     Refer to :func:`mindspore.ops.floor_div` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a Number or
+          a bool or a tensor whose data type is Number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a Number or
+          a bool when the first input is a tensor or a tensor whose data type is Number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3541,6 +3650,12 @@ class Floor(Primitive):
     Rounds a tensor down to the closest integer element-wise.
 
     Refer to :func:`mindspore.ops.floor` for more details.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4133,6 +4248,18 @@ class Greater(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.gt` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4168,6 +4295,15 @@ class GreaterEqual(PrimitiveWithCheck):
     Tensor is greater than or equal to the corresponding element in the second Tensor.
 
     Refer to :func:`mindspore.ops.ge` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4305,6 +4441,18 @@ class LessEqual(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.le` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4425,6 +4573,13 @@ class IsNan(Primitive):
 
     Refer to :func:`mindspore.ops.isnan` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, has the same shape of input, and the dtype is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4447,6 +4602,13 @@ class IsInf(Primitive):
     Determines which elements are inf or -inf for each position.
 
     Refer to :func:`mindspore.ops.isinf` for more details.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, has the same shape of input, and the dtype is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5801,6 +5963,12 @@ class Inv(Primitive):
 
     Refer to :func:`mindspore.ops.inv` for more details.
 
+    Inputs:
+        - **x** (Tensor) - Input tensor, it must be one of the following types: float16, float32 or int32.
+
+    Outputs:
+        Tensor, has the same shape and data type as `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -5898,6 +6066,14 @@ class LinSpace(Primitive):
     `stop`), and the length of the output Tensor is `num`.
 
     Refer to :func:`mindspore.ops.linspace` for more details.
+
+    Inputs:
+        - **start** (Tensor) -  Start value of interval, 0-D Tensor with dtype float32.
+        - **stop** (Tensor) - Last value of interval, 0-D Tensor with dtype float32.
+        - **num** (int) - Number of ticks in the interval, inclusive of `start` and `stop`.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `start`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6016,6 +6192,13 @@ class MatrixDeterminant(Primitive):
 
     Refer to :func:`mindspore.ops.det` for more details.
 
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size.
+
+    Outputs:
+        Tensor, the shape is `x_shape[:-2]`, the dtype is same as `x`.
+
     Supported Platforms:
 
 
@@ -6039,6 +6222,15 @@ class LogMatrixDeterminant(Primitive):
     Calculates the sign and logarithm of the determinant of one or more square matrices.
 
     Refer to :func:`mindspore.ops.slogdet` for more details.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size. Supported dtypes: loat32, float64, complex64 and complex128.
+
+    Outputs:
+        - **sign** (Tensor) - The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        - **y** (Tensor) - The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
+          as `x`.
 
     Supported Platforms:
 
@@ -6510,6 +6702,13 @@ class Igamma(Primitive):
 
     Refer to :func:`mindspore.ops.igamma` for more details.
 
+    Inputs:
+        - **a** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor. It should have the same dtype with `a`.
+
+    Outputs:
+        Tensor, has the same dtype as `a` and `x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -6533,6 +6732,13 @@ class Igammac(Primitive):
     Compute the upper regularized incomplete Gamma function Q(a, x).
 
     Refer to :func:`mindspore.ops.igammac` for more details.
+
+    Inputs:
+        - **a** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor. It should have the same dtype with `a`.
+
+    Outputs:
+        Tensor, has the same dtype as `a` and `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6558,6 +6764,18 @@ class IsClose(Primitive):
     are element-wise equal within a given tolerance.
 
     Refer to :func:`mindspore.ops.isclose` for more details.
+
+    Args:
+        rtol(float): Relative tolerance. Default: 1e-05.
+        atol(float): Absolute tolerance. Default: 1e-08.
+        equal_nan(bool): If True, then two NaNs will be considered equal. Default: True.
+
+    Inputs:
+        -**input**(Tensor) – First tensor to compare, with data type belongs to float32, float16, int32.
+        -**other**(Tensor) – Second tensor to compare, with data type belongs to float32, float16, int32.
+
+    Outputs:
+        Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6592,6 +6810,13 @@ class MatrixExp(Primitive):
     Computes the matrix exponential of a square matrix. Supports batched inputs.
 
     Refer to :func:`mindspore.ops.matrix_exp` for more details.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
+          Supported dtypes: float64, float32, float16, complex64, complex128.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
 
     Supported Platforms:
 
@@ -6827,6 +7052,25 @@ class LuUnpack(Primitive):
 
     Refer to :func:`mindspore.ops.lu_unpack` for more details.
 
+    Args:
+        unpack_data (bool, optional): A flag indicating if the LU_data should be unpacked.
+            If False, then the returned L and U are None. Default: True.
+        unpack_pivots (bool, optional): A flag indicating if the LU_pivots should be unpacked
+            into a permutation matrix P. If False, then the returned P is None. Default: True.
+
+    Inputs:
+        - **LU_data** (Tensor) - The packed LU factorization data. A tensor of size `[*, M, N]`,
+          where * is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
+          float32, float64. The dims of LU_data must be equal to or greater than 2.
+        - **LU_pivots** (Tensor) - The packed LU factorization pivots. A tensor of size `[*, min(M, N)]`,
+          where * is batch dimensions, with data type int8, uint8, int16, int32, int64.
+
+    Outputs:
+        - **pivots** (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`,
+          the dtype is same as `LU_data`.
+        - **L** (Tensor) - The L matrix  of LU factorization. The dtype is the same as `LU_data`.
+        - **U** (Tensor) - The U matrix  of LU factorization. The dtype is the same as `LU_data`.
+
     Supported Platforms:
         ``GPU`` ``CPU``
 
@@ -6879,6 +7123,12 @@ class Lgamma(Primitive):
     Computes the natural logarithm of the absolute value of the gamma function on input.
 
     Refer to :func:`mindspore.ops.lgamma` for more details.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. The dtype can be float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same dtype as `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7965,6 +8215,21 @@ class NanToNum(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.nan_to_num` for more details.
+
+    Args:
+        nan (float, optional): The value to replace `NaN`. Default value is 0.0.
+        posinf (float, optional): If a Number, the value to replace positive infinity values with. If None, positive
+          infinity values are replaced with the greatest finite value representable by `x`'s dtype.
+          Default value is None.
+        neginf (float, optional): if a Number, the value to replace negative infinity values with. If None, negative
+          infinity values are replaced with the lowest finite value representable by `x`'s dtype.
+          Default value is None.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -6,3 +6,9 @@
     确定输入Tensor每个位置上的元素是否为无穷大或无穷小。
 
     更多参考详见 :func:`mindspore.ops.isinf`。
+
+    输入：
+        - **x** (Tensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+
+    输出：
+        Tensor，shape与相同的输入，数据的类型为bool。

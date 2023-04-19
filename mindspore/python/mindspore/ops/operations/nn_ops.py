@@ -136,6 +136,13 @@ class Flatten(Primitive):
 
     Refer to :func:`mindspore.ops.flatten` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
+
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
+        the product of the remaining dimension.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -444,6 +451,16 @@ class LogSoftmax(Primitive):
     Log Softmax activation function.
 
     Refer to :func:`mindspore.ops.log_softmax` for more details.
+
+    Args:
+        axis (int, optional): The axis to perform the Log softmax operation. Default: -1.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the `logits`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -830,6 +847,13 @@ class HSwish(Primitive):
 
     Refer to :func:`mindspore.ops.hardswish` for more details.
 
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -880,6 +904,13 @@ class HSigmoid(Primitive):
     Hard sigmoid activation function.
 
     Refer to :func:`mindspore.ops.hardsigmoid` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7546,6 +7577,20 @@ class InTopK(Primitive):
 
     Refer to :func:`mindspore.ops.intopk` for more details.
 
+    Args:
+        k (int): Specifies the number of top elements to be used for computing precision along the last dimension.
+
+    Inputs:
+        - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32
+          data type.
+        - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of `x2`
+          must be equal to the first dimension of `x1`. The values of `x2` can not be negative and
+          must be equal to or less than index of x1's second dimension.
+
+    Outputs:
+        Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
+        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -8197,7 +8242,7 @@ class CTCLossV2(Primitive):
         ValueError: If the shape of `input_lengths` does not match batch_size :math:`N`.
         ValueError: If the shape of `target_lengths` does not match batch_size :math:`N`.
         TypeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
-        ValueError: If the value of `blank` is not in range [0, num_labels|C).
+        ValueError: If the value of `blank` is not in range [0, C).
         RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
         RuntimeError: If any `target_lengths[i]` is not in range [0, `input_length[i]`].
 
@@ -8633,6 +8678,15 @@ class HShrink(Primitive):
     Hard Shrink activation function.
 
     Refer to :func:`mindspore.ops.hardshrink` for more details.
+
+    Args:
+        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of HardShrink.
+
+    Outputs:
+        Tensor, the same shape and data type as the input.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9103,6 +9157,26 @@ class MultilabelMarginLoss(Primitive):
 
     Refer to :func:`mindspore.ops.multilabel_margin_loss` for more details.
 
+    Args:
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
+            'sum'. Default: 'mean'.
+
+            - 'none': no reduction will be applied.
+            - 'mean': the sum of the output will be divided by the number of elements in the output.
+            - 'sum': the output will be summed.
+
+    Inputs:
+        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `input`, data type must be int32 and
+          label targets padded by -1.
+
+    Outputs:
+        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+          is :math:`(N)`. Otherwise, a scalar value will be returned.
+        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
+          data type must be int32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -9230,6 +9304,26 @@ class GridSampler3D(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.grid_sample` for more details.
+
+    Args:
+        interpolation_mode (str, optional): An optional string specifying the interpolation method.
+            The optional values are "bilinear" or "nearest". Default: "bilinear".
+        padding_mode (str, optional): An optional string specifying the pad method.
+            The optional values are "zeros", "border" or "reflection". Default: "zeros".
+        align_corners (bool, optional): An optional bool specifying alignment method. If set to `True`,
+            the extrema (-1 and 1) are considered as referring to
+            the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
+            to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
+            `False`.
+
+    Inputs:
+        - **input_x** (Tensor) - A 5-D tensor with dtype of float32 or float64 and shape of :math:`(N, C, D_{in},
+          H_{in}, W_{in})`.
+        - **grid** (Tensor) - A 5-D tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, D_{out},
+          H_{out}, W_{out}, 3)`.
+
+    Outputs:
+        A 5-D Tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -10366,6 +10460,17 @@ class GLU(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.glu` for more details.
+
+    Args:
+        axis (int): Axis on which to split the input.
+            The value of `axis` must be an int within range [-rank(`x`), rank(`x`)).
+            Default: -1, specifying the last dimension.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor. `x.shape[axis]` must be even.
+
+    Outputs:
+        Tensor, has the same data type with `x`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
