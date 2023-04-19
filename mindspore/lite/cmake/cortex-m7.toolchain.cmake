@@ -20,8 +20,10 @@ endif()
 set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 
-set(CMAKE_CXX_FLAGS "-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -specs=nosys.specs -specs=nano.specs")
-set(CMAKE_C_FLAGS "-mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -specs=nosys.specs -specs=nano.specs")
+set(CMAKE_CXX_FLAGS "-mcpu=cortex-m7 -fstack-protector-strong -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard \
+    -specs=nosys.specs -specs=nano.specs")
+set(CMAKE_C_FLAGS "-mcpu=cortex-m7 -fstack-protector-strong -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard \
+    -specs=nosys.specs -specs=nano.specs")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
