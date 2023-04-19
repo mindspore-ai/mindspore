@@ -21,6 +21,7 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
+from mindspore._c_expression import typing
 
 
 class Assign(Primitive):
@@ -859,8 +860,9 @@ class PyFunc(PrimitiveWithInfer):
 
     def infer_dtype(self, *args):
         if self.out_shapes:
-            return tuple(self.out_types)
+            dtype_list = tuple([typing.TensorType(dtype) for dtype in self.out_types])
+            return dtype_list
 
         logger.warning("The function output are empty tuple. Add a placeholder instead. "
                        "Do not use it as it could be any uninitialized data.")
-        return (mstype.int32,)
+        return (typing.TensorType(mstype.int32),)
