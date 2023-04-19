@@ -201,7 +201,7 @@ void EllipsisInferShapeV2(const PrimitivePtr &primitive, const std::vector<int64
     int64_t start = begin_v[j];
     int64_t finish = end_v[j];
     int64_t strides = strides_v[j];
-    if (j < begin_pos.size() || begin_pos[j] == 1) {
+    if (j < begin_pos.size() && begin_pos[j] == 1) {
       start = strides_v[j] < 0 ? -1 : 0;
     }
     if (j < end_pos.size() && end_pos[j] == 1) {
