@@ -21,6 +21,9 @@
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
@@ -68,6 +71,82 @@ void ReduceFusion::Init(const bool keep_dims, const ReduceMode mode, const bool 
   this->set_reduce_to_end(reduce_to_end);
   this->set_coeff(coeff);
 }
-REGISTER_PRIMITIVE_C(kNameReduceFusion, ReduceFusion);
+
+namespace {
+abstract::ShapePtr ReduceFusionInferShape(const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(primitive->name(), input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto x_shape = shape_ptr->shape();
+
+  auto keep_dims_value_ptr = primitive->GetAttr(kKeepDims);
+  MS_EXCEPTION_IF_NULL(keep_dims_value_ptr);
+  if (!keep_dims_value_ptr->isa<BoolImm>()) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'keep_dims' must be Bool.";
+  }
+  bool keep_dims = GetValue<bool>(keep_dims_value_ptr);
+
+  std::vector<int64_t> axis_value;
+  int64_t axis_shape = 1;
+  bool axis_is_dynamic = CheckAndGetAxisValue(input_args, &axis_value, &axis_shape, primitive);
+  auto reduce_to_end_ptr = primitive->GetAttr(kReduceToEnd);
+  bool reduce_to_end = reduce_to_end_ptr && GetValue<bool>(reduce_to_end_ptr);
+  if (reduce_to_end) {
+    if (axis_value.size() != 1) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', if 'reduce_to_end' is Bool, the axis num should 1";
+    }
+    int64_t begin_axis = axis_value[0];
+    for (int64_t i = begin_axis + 1; i < SizeToLong(x_shape.size()); ++i) {
+      axis_value.push_back(i);
+    }
+    axis_shape = SizeToLong(x_shape.size()) - begin_axis;
+    keep_dims = false;
+  }
+
+  ShapeVector out_shape = {};
+  constexpr int dynamic_rank_value = -2;
+  if (IsDynamicRank(x_shape)) {
+    if (axis_shape == 0 && !keep_dims) {
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    out_shape.push_back(dynamic_rank_value);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  if (axis_shape == -1 && !keep_dims) {
+    out_shape.push_back(dynamic_rank_value);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  ReduceFuncCheckAxisInferImpl(primitive, &axis_value, x_shape.size());
+
+  if (axis_is_dynamic) {
+    out_shape = ReduceFuncCalShapeAxisDyn(x_shape, keep_dims);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, axis_value, keep_dims);
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+}  // namespace
+
+class ReduceFusionInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 1;
+    MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                       primitive->name());
+    return ReduceFusionInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    auto x_type = input_args[0]->BuildType();
+    return x_type;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReduceFusion, prim::kPrimReduceFusion, ReduceFusionInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -384,7 +384,7 @@ function Run_Benchmark() {
       if [[ ${input_data_mode} == "opengl" ]]; then
         enableGLTexture="true"
       fi
-      
+
       if [[ $6 == "arm64" && ${extra_info} =~ "need_loop" ]]; then
         benchmark_mode="calib+loop"
       fi

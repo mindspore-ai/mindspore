@@ -175,6 +175,12 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
       continue;
     }
     if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+      if (utils::isa<abstract::AbstractScalar>(abstract)) {
+        continue;
+      }
+      if (utils::isa<abstract::AbstractSequence>(abstract)) {
+        continue;
+      }
       MS_LOG(ERROR) << "abstract is not a AbstractTensor";
       return RET_ERROR;
     }
