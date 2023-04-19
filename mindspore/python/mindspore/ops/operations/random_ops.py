@@ -935,15 +935,16 @@ class UniformCandidateSampler(Primitive):
         remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: False.
 
     Inputs:
-        - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of (batch_size, num_true).
+        - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of
+          :math:`(batch_size, num_true)`.
 
     Outputs:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          Shape: (num_sampled, ).
+          Shape: :math:`(num_sampled, )`.
         - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. Shape: (batch_size, num_true).
+          of true_classes. Shape: :math:`(batch_size, num_true)`.
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. Shape: (num_sampled, ).
+          each of sampled_candidates. Shape: :math:`(num_sampled, )`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

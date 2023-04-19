@@ -8,7 +8,7 @@ mindspore.ops.Slice
     更多参考详见 :func:`mindspore.ops.slice`。
 
     输入：
-        - **input_x** (Tensor) - Slice的输入，任意维度的Tensor。
+        - **input_x** (Tensor) - Slice的输入，任意维度的Tensor。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **begin** (Union[tuple, list]) - 切片的起始位置。只支持常量值（>=0）。
         - **size** (Union[tuple, list]) - 切片的大小。只支持常量值。
 
