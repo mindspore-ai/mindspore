@@ -325,7 +325,7 @@ def _parallel_predict_check():
         dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
         is_shard_dataset_mp = (dataset_strategy and dataset_strategy not in ("data_parallel", "full_batch"))
         if not context.get_auto_parallel_context("full_batch") and not is_shard_dataset_mp:
-            raise RuntimeError('Model prediction only supports full batch dataset. Please set "full_batch" with True.')
+            logger.warning('Using non full-batch dataset in model prediction may lead to incorrect data.')
 
 
 def _check_similar_layout(tensor_layout1, tensor_layout2):

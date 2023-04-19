@@ -67,7 +67,7 @@ def test_edge_case():
     with pytest.raises(RuntimeError):
         model.infer_predict_layout(inputs)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         model.infer_predict_layout(inputs)
 
 
