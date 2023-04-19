@@ -3120,7 +3120,7 @@ class Slice(Primitive):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
@@ -5071,7 +5071,7 @@ class ScatterNdAdd(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do add operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
@@ -5145,7 +5145,7 @@ class ScatterNdSub(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do sub operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
