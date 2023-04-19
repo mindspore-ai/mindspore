@@ -48,6 +48,7 @@ class GraphSinkSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
+  Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) override;
   Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
@@ -65,6 +66,7 @@ class GraphSinkSession : public InferSession {
 
  private:
   Status GeDeviceContextInit();
+  Status InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id);
   Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
   Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);
   void UpdateDataFlowGraphInputsOutputs(DelegateGraphInfo *graph_info_ptr, const std::vector<tensor::Tensor> &inputs,

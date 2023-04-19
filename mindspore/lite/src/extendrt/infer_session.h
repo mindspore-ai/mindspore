@@ -62,6 +62,14 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                               uint32_t *graph_id = nullptr) = 0;
 
+  /// \brief Compile Model Graph.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] data_size Define bytes number of model buffer.
+  ///
+  /// \return Status.
+  virtual Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) { return kLiteNotSupport; }
+
   /// \brief Run Model Graph to inference.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.

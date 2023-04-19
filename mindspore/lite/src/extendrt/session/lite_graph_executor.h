@@ -35,6 +35,12 @@ class LiteGraphExecutor : public device::GraphExecutor {
                             uint32_t *graph_id) {
     return false;
   }
+
+  virtual bool CompileGraph(const void *model_data, size_t data_size, const std::map<string, string> &compile_options,
+                            uint32_t *graph_id) {
+    return false;
+  }
+
   virtual bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                         std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
     (void)graph_id;

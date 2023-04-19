@@ -69,6 +69,25 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   return kSuccess;
 }
 
+Status GraphSinkSession::CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) {
+  MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
+  // This lock can be removed when LiteRT supports concurrent multithreading compilation.
+  std::lock_guard<std::mutex> lock(g_build_graph_mutex);
+  auto ret = graph_executor_->CompileGraph(model_data, data_size, options_, graph_id);
+  if (!ret) {
+    MS_LOG(ERROR) << "GraphSinkSession::CompileGraph compile graph failed";
+    return kCoreFailed;
+  }
+  DelegateGraphInfo graph_info;
+  auto status = InitGraphInfo(&graph_info, *graph_id);
+  if (!status.IsOk()) {
+    MS_LOG(ERROR) << "Failed to get inputs and outputs info from graph";
+    return status;
+  }
+  graph_infos_[*graph_id] = graph_info;
+  return kSuccess;
+}
+
 Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *graph_id) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
   // This lock can be removed when LiteRT supports concurrent multithreading compilation.
@@ -101,6 +120,42 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
     return status;
   }
   graph_infos_[*graph_id] = graph_info;
+  return kSuccess;
+}
+
+Status GraphSinkSession::InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id) {
+  auto &info = *graph_info_ptr;
+
+  auto new_inputs = graph_executor_->GetInputInfos(graph_id);
+  if (new_inputs.empty()) {
+    MS_LOG(ERROR) << "Input is empty.";
+    return kCoreFailed;
+  }
+  info.inputs.clear();
+  info.input_names.clear();
+  for (size_t i = 0; i < new_inputs.size(); i++) {
+    auto &input = new_inputs[i];
+    info.input_names.push_back(input.name());
+    auto data_type = static_cast<enum DataType>(input.data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input.shape_c());
+    info.inputs.push_back(impl);
+  }
+
+  auto new_outputs = graph_executor_->GetOutputInfos(graph_id);
+  if (new_outputs.empty()) {
+    MS_LOG(ERROR) << "Output is empty.";
+    return kCoreFailed;
+  }
+
+  info.outputs.clear();
+  info.output_names.clear();
+  for (size_t i = 0; i < new_outputs.size(); i++) {
+    auto &output = new_outputs[i];
+    info.output_names.push_back(output.name());
+    auto data_type = static_cast<enum DataType>(output.data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output.shape_c());
+    info.outputs.push_back(impl);
+  }
   return kSuccess;
 }
 
