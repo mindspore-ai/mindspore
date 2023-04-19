@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(Micro)
-set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-strict-aliasing")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fstack-protector-strong -Wno-strict-aliasing")
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(MICRO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
