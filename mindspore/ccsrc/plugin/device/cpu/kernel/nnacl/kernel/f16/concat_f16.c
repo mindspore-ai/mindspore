@@ -17,6 +17,7 @@
 #include "nnacl/kernel/f16/concat_f16.h"
 #include "nnacl/kernel/concat.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/utils_fp16.h"
 
 typedef struct ConcatF16Struct {
   ConcatStruct concat_;
@@ -36,40 +37,21 @@ int ConcatEnsureFp16InputsAndOutput(ConcatF16Struct *concat_f16) {
       continue;
     }
 
-    TensorC *t = concat->base_.in_[i];
-    NNACL_CHECK_NULL_RETURN_ERR(t);
-    NNACL_CHECK_NULL_RETURN_ERR(t->data_);
-
-    if (concat->base_.in_[i]->data_type_ == kNumberTypeFloat16) {
-      concat->inputs_ptr_[i] = t->data_;
-      continue;
+    concat->inputs_ptr_[i] = GetOrAllocFp16Data(concat->base_.in_[i], concat->base_.env_, true);
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(concat->inputs_ptr_[i]);
+    if (concat->base_.in_[i]->data_type_ == kNumberTypeFloat32 ||
+        concat->base_.in_[i]->data_type_ == kNumberTypeFloat) {
+      concat_f16->tmp_buffer_[i] = concat->inputs_ptr_[i];
     }
-
-    if (t->data_type_ == kNumberTypeFloat32 || t->data_type_ == kNumberTypeFloat) {
-      void *tmp = concat->base_.env_->alloc(concat->base_.env_->allocator_, GetElementNum(t) * sizeof(float16_t));
-      NNACL_CHECK_NULL_RETURN_ERR(t);
-
-      concat->inputs_ptr_[i] = tmp;
-      concat_f16->tmp_buffer_[i] = tmp;
-      Float32ToFloat16((float *)(t->data_), (float16_t *)(tmp), GetElementNum(t));
-      continue;
-    }
-    return NNACL_CONCAT_F16_INVALID_DATA_TYPE;
   }
 
-  TensorC *t = concat->base_.out_[0];
-  if (t->data_type_ == kNumberTypeFloat16) {
-    concat->output_ = t->data_;
-    return NNACL_OK;
-  }
-
-  if (t->data_type_ == kNumberTypeFloat32 || t->data_type_ == kNumberTypeFloat) {
-    concat->output_ = concat->base_.env_->alloc(concat->base_.env_->allocator_, GetElementNum(t) * sizeof(float16_t));
-    NNACL_CHECK_NULL_RETURN_ERR(concat->output_);
+  concat->output_ = GetOrAllocFp16Data(concat->base_.out_[OUTPUT_INDEX], concat->base_.env_, false);
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(concat->output_);
+  if (concat->base_.out_[OUTPUT_INDEX]->data_type_ == kNumberTypeFloat32 ||
+      concat->base_.out_[OUTPUT_INDEX]->data_type_ == kNumberTypeFloat) {
     concat_f16->tmp_buffer_[concat->base_.in_size_] = concat->output_;
-    return NNACL_OK;
   }
-  return NNACL_CONCAT_F16_INVALID_DATA_TYPE;
+  return NNACL_OK;
 }
 
 int ConcatFp16Run(void *cdata, int task_id, float l, float r) {
