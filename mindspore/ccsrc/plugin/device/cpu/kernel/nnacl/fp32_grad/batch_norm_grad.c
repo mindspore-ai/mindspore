@@ -15,7 +15,7 @@
  */
 #include <math.h>
 #include <string.h>
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_grad.h"
 
 void var2Invar(float *save_var, int size, float eps) {
   for (int i = 0; i < size; i++) {

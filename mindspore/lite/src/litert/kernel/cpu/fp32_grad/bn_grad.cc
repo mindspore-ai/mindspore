@@ -23,7 +23,7 @@
 
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_grad.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

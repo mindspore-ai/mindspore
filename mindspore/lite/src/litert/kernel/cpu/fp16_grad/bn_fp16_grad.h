@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/executor/kernel_exec.h"
-#include "nnacl/fp32_grad/batch_norm.h"
+#include "nnacl/fp32_grad/batch_norm_grad.h"
 
 namespace mindspore::kernel {
 
