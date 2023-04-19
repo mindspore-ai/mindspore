@@ -46,16 +46,14 @@ def _ones_like_scalar(x):
 @ones_like_leaf.register("Tensor")
 def _ones_like_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 1."""
-    return P.Fill()(P.DType()(x), P.Shape()(x), 1.0)
+    return P.OnesLike()(x)
 
 
 @ones_like_leaf.register("COOTensor")
 def _ones_like_coo_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 1."""
     values_ = F.coo_tensor_get_values(x)
-    values = P.Fill()(P.DType()(values_),
-                      P.Shape()(values_),
-                      1.0)
+    values = P.OnesLike()(values_)
     return F.make_coo_tensor(F.coo_tensor_get_indices(x), values, F.coo_tensor_get_dense_shape(x))
 
 
