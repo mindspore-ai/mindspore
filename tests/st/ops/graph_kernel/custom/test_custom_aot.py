@@ -236,6 +236,19 @@ add_cpu_info_attr_only = CustomRegOp("add_with_attr_kernel_cpu_2") \
     .get_op_info()
 
 
+def aot_reduce_dyn_shape(source_name):
+    shape = (4, 5)
+    axis = 1
+    keep_dim = False
+    input_x = np.random.normal(0, 1, shape).astype(np.float32)
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    func_path = dir_path + "/aot_test_files/" + source_name
+
+    test = ReduceDynNet(func_path + ":CustomReduce", mstype.float32, axis, keep_dim)
+    output = test(Tensor(input_x))
+    assert np.allclose(np.sum(input_x, axis, keepdims=keep_dim), output.asnumpy(), 0.001, 0.001)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -253,6 +266,8 @@ def test_aot_single_output_cpu():
         aot_single_output(get_file_path_cpu, "add.cc", "add.so", add_cpu_info)
         aot_single_output_with_attr("add_with_attr.cc", add_with_attr_cpu_info)
         aot_single_output_with_attr_only("add_with_attr.cc", add_cpu_info_attr_only)
+        aot_single_output_dyn_shape("add.cc", add_cpu_info)
+        aot_reduce_dyn_shape("reduce.cc")
 
 
 class ReduceDynNet(Cell):
@@ -273,37 +288,6 @@ class ReduceDynNet(Cell):
     def construct(self, x):
         x = self.convert_to_dynamic(x)
         return self.program(x)
-
-
-def aot_reduce_dyn_shape(source_name):
-    shape = (4, 5)
-    axis = 1
-    keep_dim = False
-    input_x = np.random.normal(0, 1, shape).astype(np.float32)
-    dir_path = os.path.dirname(os.path.abspath(__file__))
-    func_path = dir_path + "/aot_test_files/" + source_name
-
-    test = ReduceDynNet(func_path + ":CustomReduce", mstype.float32, axis, keep_dim)
-    output = test(Tensor(input_x))
-    assert np.allclose(np.sum(input_x, axis, keepdims=keep_dim), output.asnumpy(), 0.001, 0.001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_aot_single_output_cpu_dyn_shape():
-    """
-    Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE
-    Description: pre-compile xxx.cc to xxx.so, custom operator launches xxx.so
-    Expectation: nn result matches numpy result
-    """
-    sys = platform.system()
-    if sys.lower() in {"windows", "darwin"}:
-        pass
-    else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-        aot_single_output_dyn_shape("add.cc", add_cpu_info)
-        aot_reduce_dyn_shape("reduce.cc")
 
 
 @pytest.mark.level0

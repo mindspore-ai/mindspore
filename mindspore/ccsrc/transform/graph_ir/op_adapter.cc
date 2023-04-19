@@ -603,6 +603,8 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
   for (auto item : prim->attrs()) {
     if (item.second->isa<Int32Imm>()) {
       (void)op->SetAttr(item.first, GetValue<int64_t>(item.second));
+    } else if (item.second->isa<Int64Imm>()) {
+      (void)op->SetAttr(item.first, GetValue<int64_t>(item.second));
     } else if (item.second->isa<StringImm>()) {
       (void)op->SetAttr(item.first, GetValue<std::string>(item.second));
     } else if (item.second->isa<BoolImm>()) {
