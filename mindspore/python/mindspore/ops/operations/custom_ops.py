@@ -757,7 +757,7 @@ class Custom(ops.PrimitiveWithInfer):
             self.uniq_name = reg_info["op_name"]
             self.add_prim_attr("uniq_name", self.uniq_name)
 
-        if self.func_type == "aot":
+        if self.func_type in ["aot", "aicpu"]:
             if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
                 for item in reg_info["attr"]:
                     if isinstance(item, dict) and item.get("value") is not None:
@@ -925,10 +925,18 @@ class Custom(ops.PrimitiveWithInfer):
         for item in tensor_inputs:
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
-        has_input_name = bool(input_names)
+        # attr is converted from inputs only when graph mode or when inputs name is also in reg info
+        attr_to_input_safe = bool(input_names) or context.get_context("mode") == ms.GRAPH_MODE
         for item in attr:
             if isinstance(item, dict) and item.get("name") is not None:
-                if has_input_name or context.get_context("mode") != ms.PYNATIVE_MODE:
+                # for custom op with function tbe, we always add attrs to inputs as we don't
+                # deal with attr value here and leave them to the backend process to fit the
+                # usual process of tbe op compiling in mindspore
+                # for the rest cases, namely aot and aicpu, if we find values for attrs, we
+                # have already add them as prim attr of the op in the fun _update_reg_attrs
+                # add attr name to input name only when the value of attr is None in reg info
+                # as we need to get values of attrs from inputs
+                if attr_to_input_safe and (self.func_type == "tbe" or item.get("value", None) is None):
                     input_names.append(item["name"])
                 attr_names.append(item["name"])
         cur_attr = {"input_names": input_names, "attr_names": attr_names}
