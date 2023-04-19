@@ -44,6 +44,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_runtime_info.h"
+#include "runtime/pynative/op_compiler.h"
 #include "include/common/utils/config_manager.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -795,7 +796,8 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     // Get OpRunInfo and GraphInfo
     GraphInfo graph_info;
     BackendOpRunInfoPtr op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info, op_run_info);
+    graph_info =
+      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
     op_run_info->base_op_run_info.graph_info = graph_info;
     const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
     if (single_op_graph_iter != run_op_graphs_.end()) {
@@ -810,7 +812,8 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     opt::HideNopNode(single_op_graph.get());
     // The graph info could have been changed in PreBuildOp
     GraphInfo new_graph_info;
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &new_graph_info, op_run_info);
+    new_graph_info =
+      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
     single_op_graphs.emplace(single_op_graph, new_graph_info);
     const auto &execution_order = single_op_graph->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));

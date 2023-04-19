@@ -29,6 +29,8 @@ namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
+constexpr size_t kGraphInfoReserveLen = 128;
+
 void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
   // So need to get ref info to generate output addr, before create kernel.
@@ -81,8 +83,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
                                       device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(device_context);
-  auto graph_info = op_run_info->base_op_run_info.graph_info;
-  auto iter = op_compiler_infos_.find(graph_info);
+  const auto &graph_info = op_run_info->base_op_run_info.graph_info;
+  const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != op_compiler_infos_.end() && op_executor.BuildQueueEmpty()) {
@@ -154,6 +156,73 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
     // Need to execute after PreprocessBeforeRunSingleOpGraph
     runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
   }
+}
+
+std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  if (op_info.input_tensor.size() != op_info.input_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << op_info.input_tensor.size()
+                      << " should be equal to tensors mask size " << op_info.input_mask.size();
+  }
+  std::string graph_info = op_info.device_target;
+  graph_info.reserve(kGraphInfoReserveLen);
+
+  if (op_info.use_dynamic_shape_process) {
+    graph_info += "_1_";
+  } else {
+    graph_info += "_0_";
+  }
+  graph_info.append(op_prim->name()).append("_");
+  bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
+  for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
+    const auto &input_tensor = op_info.input_tensor[index];
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    if (op_info.use_dynamic_shape_process) {
+      graph_info += std::to_string(input_tensor->shape().size());
+    } else {
+      if (input_tensor->base_shape_ptr() != nullptr) {
+        graph_info += input_tensor->base_shape_ptr()->ToString();
+      } else {
+        if (!input_tensor->shape().empty()) {
+          const auto &shape_str =
+            std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
+                            std::to_string(input_tensor->shape()[0]),
+                            [](std::string cur, size_t n) { return cur.append("-").append(std::to_string(n)); });
+          graph_info += shape_str;
+        }
+      }
+    }
+    graph_info += std::to_string(input_tensor->data_type());
+    graph_info += input_tensor->padding_type();
+    // In the case of the same shape, but dtype and format are inconsistent
+    auto tensor_addr = input_tensor->device_address();
+    if (tensor_addr != nullptr && !has_hidden_side_effect) {
+      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
+      MS_EXCEPTION_IF_NULL(p_address);
+      graph_info += std::to_string(p_address->type_id());
+      graph_info += p_address->format();
+    }
+    // For constant input
+    if (op_info.input_mask[index] == kValueNodeTensorMask) {
+      graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
+    }
+    graph_info += "_";
+  }
+
+  // Operator with hidden side effect.
+  if (has_hidden_side_effect) {
+    graph_info.append(std::to_string(op_prim->id())).append("_");
+  }
+  // The value of the attribute affects the operator selection
+  const auto &attr_map = op_prim->attrs();
+  (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
+    if (element.first == kAttrInputNames || element.first == kAttrOutputNames) {
+      return;
+    }
+    graph_info.append(element.second->ToString());
+  });
+
+  return graph_info;
 }
 
 void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { (void)op_compiler_infos_.erase(graph_info); }

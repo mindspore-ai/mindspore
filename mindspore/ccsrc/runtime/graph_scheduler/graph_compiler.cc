@@ -26,6 +26,7 @@
 #include "include/backend/device_address.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
+#include "runtime/pynative/op_compiler.h"
 #include "include/common/utils/convert_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
@@ -712,7 +713,8 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
   MS_EXCEPTION_IF_NULL(graph_info);
   *op_run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
   (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
-  session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info, *op_run_info);
+  *graph_info =
+    pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo((*op_run_info)->base_op_run_info, (*op_run_info)->op_prim);
   MS_EXCEPTION_IF_NULL(*op_run_info);
   (*op_run_info)->base_op_run_info.graph_info = *graph_info;
 }

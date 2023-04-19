@@ -90,61 +90,6 @@ MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
   return backend_policy;
 }
 
-void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::string &cur_target) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const std::vector<tensor::TensorPtr> &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  const std::vector<int64_t> &tensors_mask = op_run_info->base_op_run_info.input_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  std::ostringstream buf;
-  buf << cur_target << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
-  buf << op_run_info->base_op_run_info.op_name << "_";
-  const auto &op_prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(op_prim);
-  bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
-  for (size_t index = 0; index < input_tensors.size(); ++index) {
-    const auto &input_tensor = input_tensors[index];
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-    if (use_dynamic_shape_process) {
-      buf << input_tensor->shape().size() << "_";
-    } else {
-      if (input_tensor->base_shape_ptr() != nullptr) {
-        buf << input_tensor->base_shape_ptr()->ToString();
-      } else {
-        buf << input_tensor->shape();
-      }
-    }
-    buf << input_tensor->data_type();
-    buf << input_tensor->padding_type();
-    // In the case of the same shape, but dtype and format are inconsistent
-    auto tensor_addr = input_tensor->device_address();
-    if (tensor_addr != nullptr && !has_hidden_side_effect) {
-      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
-      MS_EXCEPTION_IF_NULL(p_address);
-      buf << p_address->type_id();
-      buf << p_address->format();
-    }
-    // For constant input
-    if (tensors_mask[index] == kValueNodeTensorMask) {
-      buf << common::AnfAlgo::GetTensorValueString(input_tensor);
-    }
-    buf << "_";
-  }
-  // The value of the attribute affects the operator selection
-  const auto &attr_map = op_prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(),
-                      [&buf](const auto &element) { buf << element.second->ToString(); });
-
-  // Operator with hidden side effect.
-  if (has_hidden_side_effect) {
-    buf << "_" << std::to_string(op_prim->id());
-  }
-  op_run_info->base_op_run_info.graph_info = buf.str();
-}
-
 void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
   const auto &abs = op_run_info->base_op_run_info.abstract;
   MS_EXCEPTION_IF_NULL(op_run_info->stub_output);
@@ -556,7 +501,8 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   CheckIfNeedSyncForHeterogeneous(cur_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, cur_target);
   // get graph info for checking it whether existing in the cache
-  GetSingleOpGraphInfo(op_run_info, cur_target);
+  op_run_info->base_op_run_info.graph_info =
+    pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
   auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
     op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_prim), true, false);
 

@@ -39,6 +39,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/pynative/op_compiler.h"
 #include "utils/ms_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
@@ -445,61 +446,6 @@ void SessionBasic::InitExecutor(const std::string &device_name, uint32_t device_
   device_id_ = device_id;
   context_ = std::make_shared<Context>(device_name, device_id);
   executor_ = ExecutorManager::Instance().GetExecutor(device_name, device_id);
-}
-
-void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
-                                        GraphInfo *graph_info, const BackendOpRunInfoPtr &op_run_info) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(graph_info);
-  // Get input tensor info
-  const auto &input_tensors = tensor_info.input_tensors;
-  const auto &input_tensors_mask = tensor_info.input_tensors_mask;
-  if (input_tensors.size() != input_tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << input_tensors_mask.size();
-  }
-
-  std::ostringstream buf;
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
-  MS_EXCEPTION_IF_NULL(prim);
-  buf << GetOpRunDeviceTarget(prim) << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
-  buf << prim->name() << "_";
-  for (size_t i = 0; i < input_tensors.size(); ++i) {
-    auto &tensor = input_tensors[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-    if (use_dynamic_shape_process) {
-      buf << tensor->shape().size() << "_";
-    } else {
-      if (tensor->base_shape_ptr() != nullptr) {
-        buf << tensor->base_shape_ptr()->ToString();
-      } else {
-        buf << tensor->shape();
-      }
-    }
-
-    buf << tensor->data_type();
-    buf << tensor->padding_type();
-    // In the case of the same shape, but dtype and format are inconsistent
-    if (tensor->device_address() != nullptr) {
-      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-      MS_EXCEPTION_IF_NULL(p_address);
-      buf << p_address->type_id();
-      buf << p_address->format();
-    }
-    // For constant input
-    if (input_tensors_mask[i] == kValueNodeTensorMask) {
-      buf << common::AnfAlgo::GetTensorValueString(tensor);
-    }
-    buf << "_";
-  }
-
-  // Get attr info
-  const auto &attr_map = prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(),
-                      [&buf](const auto &element) { buf << element.second->ToString(); });
-
-  *graph_info = buf.str();
 }
 
 BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
@@ -1448,7 +1394,8 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     // Get OpRunInfo and GraphInfo
     BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
     MS_EXCEPTION_IF_NULL(run_info);
-    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info, run_info);
+    graph_info =
+      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(run_info->base_op_run_info, run_info->op_prim);
     run_info->base_op_run_info.graph_info = graph_info;
 
     // Build and run current single op

@@ -265,9 +265,6 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
 #endif
   // create graph output for RunOp
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const;
-  // Generate graph info for a single op graph
-  void GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, GraphInfo *graph_info,
-                            const BackendOpRunInfoPtr &op_run_info) const;
 
   BackendOpRunInfoPtr GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
                                          const InputTensorInfo &tensor_info,
