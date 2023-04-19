@@ -18,5 +18,5 @@ mindspore.ops.Bernoulli
         - **x** (Tensor) - Tensor的输入，其数据类型为int8、uint8、int16、int32、int64、bool、float32或float64。
         - **p** (Union[Tensor, float], 可选) - 成功概率。 `p` 中每个值代表输出Tensor中对应位置为1的概率，如果是Tensor，其shape必须与 `input` 一致，数值范围在0到1之间。默认值：0.5。
 
-    输出
+    输出：
         - **y** (Tensor) - shape和数据类型与 `x` 相同。
