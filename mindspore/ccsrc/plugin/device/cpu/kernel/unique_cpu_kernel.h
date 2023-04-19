@@ -123,6 +123,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     kernel_name_ = base_operator->name();
     dtype_ = inputs[0]->GetDtype();
     outputs_ = outputs;
+    is_need_retrieve_output_shape_ = true;
     auto batch_rank = base_operator->get_batch_rank();
     if (batch_rank < 0) {
       return false;
@@ -135,11 +136,9 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
     auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
     if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
-      MS_LOG(ERROR) << kernel_name_ << " Resize failed.";
       return ret;
     }
     outputs_ = outputs;
-    is_need_retrieve_output_shape_ = true;
     if (inputs.size() < 1) {
       MS_LOG(EXCEPTION) << kernel_name_ << " requires not less than 1 inputs, but got " << inputs.size() << ".";
     }
