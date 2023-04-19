@@ -4022,6 +4022,14 @@ def cholesky_inverse(input_x, upper=False):
     return F.cholesky_inverse(input_x, upper=upper)
 
 
+def cholesky_solve(input, input2, upper=False):
+    r"""
+    Computes the solution of a set of linear equations with a positive definite matrix,
+    according to its Cholesky decomposition factor `input2` .
+    """
+    return F.cholesky_solve(input, input2, upper=upper)
+
+
 def map_tensor_get(map_tensor, key_tensor, insert_default_value=True):
     r"""
     Get or create value according the key tensor from a map tensor.

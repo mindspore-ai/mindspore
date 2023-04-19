@@ -383,6 +383,7 @@ Reduction函数
     mindspore.ops.addr
     mindspore.ops.adjoint
     mindspore.ops.cholesky
+    mindspore.ops.cholesky_solve
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
