@@ -762,15 +762,20 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
       } else {
+        auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, true, &op_run_info, &graph_info,
-                                                        &graph_output_info);
-        op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
-        AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
-        RunOpDynamic(op_run_info, &op_outputs);
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, is_dynamic, &op_run_info,
+                                                        &graph_info, &graph_output_info);
+        if (is_dynamic) {
+          op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
+          AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
+          RunOpDynamic(op_run_info, &op_outputs);
+        } else {
+          RunOp(op_run_info, &op_outputs);
+        }
       }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
