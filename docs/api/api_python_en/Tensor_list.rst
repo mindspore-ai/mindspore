@@ -76,6 +76,7 @@
     mindspore.Tensor.bmm
     mindspore.Tensor.bool
     mindspore.Tensor.broadcast_to
+    mindspore.Tensor.cauchy
     mindspore.Tensor.ceil
     mindspore.Tensor.cholesky
     mindspore.Tensor.cholesky_solve
@@ -192,6 +193,7 @@
     mindspore.Tensor.logical_xor
     mindspore.Tensor.logit
     mindspore.Tensor.logsumexp
+    mindspore.Tensor.log_normal
     mindspore.Tensor.long
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill

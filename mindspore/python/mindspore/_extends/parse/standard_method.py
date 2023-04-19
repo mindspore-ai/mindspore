@@ -315,6 +315,52 @@ def slogdet(x):
     return F.slogdet(x)
 
 
+def cauchy(x, median=0.0, sigma=1.0):
+    r"""
+    Fills the tensor with numbers drawn from the Cauchy distribution. It is
+    defined as follows:
+
+    .. math::
+        f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}
+
+    Args:
+        x (Tensor): Input tensor.
+        median (float, optional): the location parameter, specifying the location
+            of the peak of the distribution. Default: 0.0.
+        sigma (float, optional): the scale parameter which specifies the half-width
+            at half-maximum. Default: 1.0.
+
+    Returns:
+        Tensor. A Tensor with the same type and shape of input.
+    """
+    out = P.Cauchy(list(x.shape), median, sigma)()
+    return F.cast(out, x.dtype)
+
+
+def log_normal(x, mean=1.0, std=2.0):
+    r"""
+    Fills the elements of the input tensor with log normal values initialized by
+    given mean and std:
+
+    .. math::
+        \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
+
+    where \mu, \delta is mean and standard deviation of log normal distribution respectively.
+
+    Args:
+        x (Tensor): Input tensor.
+        mean (float, optional): the mean of normal distribution. With float data type.
+            Default: 1.0.
+        std (float, optional): the std of normal distribution. With float data type.
+            Default: 2.0.
+
+    Returns:
+        Tensor. A Tensor with the same type and shape of input.
+    """
+    log_normal = P.LogNormalReverse(mean, std)
+    return log_normal(x)
+
+
 def chunk(x, chunks, axis=0):
     r"""
     For details, please refer to :func:`mindspore.ops.chunk`.

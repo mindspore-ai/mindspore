@@ -8562,10 +8562,10 @@ class Cauchy(Primitive):
 
     Args:
         size (list[int]): The size of tensor.
-        sigma (float, optional): the location parameter, specifying the location
-            of the peak of the distribution. Default: ``1.0`` .
-        median (float, optional): the scale parameter which specifies the half-width
-            at half-maximum. Default: ``0.0`` .
+        median (float, optional): the location parameter, specifying the location
+            of the peak of the distribution. Default: 0.0.
+        sigma (float, optional): the scale parameter which specifies the half-width
+            at half-maximum. Default: 1.0.
 
     Outputs:
         Tensor with cauchy distribution data. Tensor shape is size, and data type is float32.
