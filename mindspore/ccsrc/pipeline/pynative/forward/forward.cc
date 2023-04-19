@@ -291,6 +291,29 @@ ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_
   return result;
 }
 
+namespace {
+ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    // This constructor will make a tensor with the new id
+    auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
+    new_tensor->set_device_address(tensor->device_address());
+    new_tensor->set_sync_status(tensor->sync_status());
+    return new_tensor;
+  } else if (v->isa<ValueSequence>()) {
+    const auto &v_seq = v->cast<ValueSequencePtr>();
+    ValuePtrList v_list;
+    for (const auto &ele : v_seq->value()) {
+      (void)v_list.emplace_back(CopyTensorValueWithNewId(ele));
+    }
+    return std::make_shared<ValueTuple>(v_list);
+  } else {
+    return v;
+  }
+}
+}  // namespace
+
 ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_LOG(DEBUG) << "RunOpInVM start";
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -303,19 +326,17 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       op_run_info->base_op_run_info.op_name == prim::kPrimCellBackwardHook->name()) {
     std::vector<ValuePtr> result(op_inputs.size());
     for (size_t i = 0; i < op_inputs.size(); i++) {
-      auto tensor = op_inputs[i]->cast<TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
       if (op_run_info->base_op_run_info.op_name == prim::kPrimHookBackward->name() ||
           op_run_info->base_op_run_info.op_name == prim::kPrimCellBackwardHook->name()) {
         // the input object is not a output of forward cnode, eg: parameter
-        result[i] = tensor;
+        result[i] = op_inputs[i];
       } else {
-        // the input object is a output of forward cnode
-        auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
-        new_tensor->set_device_address(tensor->device_address());
-        new_tensor->set_sync_status(tensor->sync_status());
-        result[i] = new_tensor;
+        result[i] = CopyTensorValueWithNewId(op_inputs[i]);
       }
+    }
+    // If input is tuple or list, just return origin input format of tuple or list
+    if (op_inputs.size() == 1 && !(op_run_info->input_value[kIndex0]->isa<tensor::Tensor>())) {
+      return result[kIndex0];
     }
     auto result_v = std::make_shared<ValueTuple>(result);
     dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
