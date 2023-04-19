@@ -70,6 +70,10 @@
         返回：
             Dict，key是用户定义的评价指标名称，value是以推理模式运行的评估结果。
 
+        教程样例：
+            - `高阶封装：Model - 训练及保存模型
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
+
     .. py:method:: eval_network
         :property:
 
@@ -96,6 +100,10 @@
             - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值：False。
             - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
             - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。
+
+        教程样例：
+            - `高阶封装：Model - 训练及保存模型
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/model.html#训练及保存模型>`_
 
     .. py:method:: infer_predict_layout(*predict_data)
 

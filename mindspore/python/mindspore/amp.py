@@ -95,6 +95,10 @@ def all_finite(inputs):
     Examples:
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
         >>> output = amp.all_finite(x)
+
+    Tutorial Examples:
+        - `Automatic Mix Precision - Loss Scaling
+          <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
     """
     if _ascend_target():
         status = Tensor([0] * 8, mstype.int32)
@@ -279,8 +283,8 @@ class DynamicLossScaler(LossScaler):
             Union(Tensor, tuple(Tensor)), the scaled value.
 
         Tutorial Examples:
-            - `Automatic Mix Precision
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
+            - `Automatic Mix Precision - Loss Scaling
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_scale_map(self.scale_value, inputs)
@@ -296,8 +300,8 @@ class DynamicLossScaler(LossScaler):
             Union(Tensor, tuple(Tensor)), the unscaled value.
 
         Tutorial Examples:
-            - `Automatic Mix Precision
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
+            - `Automatic Mix Precision - Loss Scaling
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_unscale_map(self.scale_value, inputs)
@@ -310,8 +314,8 @@ class DynamicLossScaler(LossScaler):
             grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
 
         Tutorial Examples:
-            - `Automatic Mix Precision
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html>`_
+            - `Automatic Mix Precision - Loss Scaling
+              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor

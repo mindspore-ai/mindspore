@@ -24,3 +24,7 @@ mindspore.load
     异常：
         - **ValueError** - MindIR文件名不存在或 `file_name` 不是string类型。
         - **RuntimeError** - 解析MindIR文件失败。
+
+    教程样例：
+        - `保存与加载 - 保存和加载MindIR
+          <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载mindir>`_

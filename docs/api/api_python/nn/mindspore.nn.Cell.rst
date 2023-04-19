@@ -52,6 +52,10 @@
 
         在图模式下使用，用于标识是否使用自定义的反向传播函数。
 
+        教程样例：
+            - `Cell与参数 - 自定义Cell反向
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/modules/layer.html#自定义cell反向>`_
+
     .. py:method:: cast_inputs(inputs, dst_type)
 
         将输入转换为指定类型。
@@ -282,6 +286,9 @@
 
         返回：
             迭代器，Cell的名称和Cell本身。
+
+        教程样例：
+            - `网络构建 - 模型参数 <https://mindspore.cn/tutorials/zh-CN/master/beginner/model.html#模型参数>`_
 
     .. py:method:: parameters_broadcast_dict(recurse=True)
 
@@ -525,6 +532,9 @@
         返回：
             Cell类型，Cell本身。
 
+        教程样例：
+            - `模型训练 - 训练与评估实现 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#训练与评估实现>`_
+
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
         指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
@@ -574,6 +584,9 @@
 
         返回：
             List类型，可训练参数列表。
+
+        教程样例：
+            - `模型训练 - 优化器 <https://mindspore.cn/tutorials/zh-CN/master/beginner/train.html#优化器>`_
 
     .. py:method:: untrainable_params(recurse=True)
 

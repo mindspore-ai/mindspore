@@ -3038,7 +3038,7 @@ class SmoothL1Loss(Primitive):
     Args:
         beta (float, optional): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: 1.0.
-        reduction (float, optional): Apply specific reduction method to the output: 'none', 'mean',
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
             'sum'. Default: 'mean'.
 
     Inputs:
@@ -8643,7 +8643,7 @@ class SoftShrink(Primitive):
     Refer to :func:`mindspore.ops.softshrink` for more details.
 
     Args:
-        lambd(Float, optional): The :math:`\lambda` must be no less than zero. Default: 0.5.
+        lambd(float, optional): The :math:`\lambda` must be no less than zero. Default: 0.5.
 
     Inputs:
         - **input_x** (Tensor) - The input of soft shrink with data type of float16 or float32.
@@ -10579,7 +10579,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
 
 class ChannelShuffle(Primitive):
     r"""
-    Divide the channels in a tensor of shape :math:`(*, C, H, W)` into :math:`g` groups and
+    Divide the channels in a tensor of shape :math:`(*, C, H, W)` into :math:`g` group and
     rearrange them as :math:`(*, \frac C g, g, H*W)`, while keeping the original tensor shapes.
 
     .. warning::
@@ -10588,7 +10588,7 @@ class ChannelShuffle(Primitive):
     Refer to :func:`mindspore.ops.channel_shuffle` for more detail.
 
     Args:
-        groups (int): Number of groups to divide channels in.
+        group (int): Number of group to divide channels in.
 
     Inputs:
         - **x** (Tensor) - Tensor to be divided, it has shape :math:`(*, C, H, W)`,

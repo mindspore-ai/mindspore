@@ -16,3 +16,6 @@ mindspore.load_param_into_net
 
     异常：
         - **TypeError** - 如果参数不是Cell，或者 `parameter_dict` 不是Parameter类型的字典。
+
+    教程样例：
+        - `保存与加载 - 保存和加载模型权重 <https://mindspore.cn/tutorials/zh-CN/master/beginner/save_load.html#保存和加载模型权重>`_

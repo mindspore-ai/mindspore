@@ -23,3 +23,7 @@ mindspore.ParameterTuple
 
         返回：
             新的参数元组。
+
+        教程样例：
+            - `Cell与参数 - Parameter Tuple
+              <https://mindspore.cn/tutorials/zh-CN/master/advanced/modules/layer.html#parameter-tuple>`_

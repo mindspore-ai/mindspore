@@ -190,6 +190,10 @@ class Cell(Cell_):
     def bprop_debug(self):
         """
         Get whether cell custom bprop debug is enabled.
+
+        Tutorial Examples:
+            - `Cell and Parameter - Custom Cell Reverse
+              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#custom-cell-reverse>`_
         """
         return self._bprop_debug
 
@@ -1212,6 +1216,10 @@ class Cell(Cell_):
 
         Returns:
             List, the list of trainable parameters.
+
+        Tutorial Examples:
+            - `Model Training - Optimizer
+              <https://mindspore.cn/tutorials/en/master/beginner/train.html#optimizer>`_
         """
         return list(filter(lambda x: x.requires_grad, self.get_parameters(expand=recurse)))
 
@@ -1286,6 +1294,10 @@ class Cell(Cell_):
             >>> for m in n.parameters_and_names():
             ...     if m[0]:
             ...         names.append(m[0])
+
+        Tutorial Examples:
+            - `Building a Network - Model Parameters
+              <https://mindspore.cn/tutorials/en/master/beginner/model.html#model-parameters>`_
         """
         cells = []
         if expand:
@@ -1608,6 +1620,10 @@ class Cell(Cell_):
 
         Returns:
             Cell, the cell itself.
+
+        Tutorial Examples:
+            - `Model Training - Implementing Training and Evaluation
+              <https://mindspore.cn/tutorials/en/master/beginner/train.html#implementing-training-and-evaluation>`_
         """
         if mode is False:
             self._phase = 'predict'

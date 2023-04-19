@@ -5224,9 +5224,9 @@ class ScatterNdMul(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index to do mul operation whose data type must be int32 or int64.
-            The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
+          The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to do the mul operation with `input_x`.
-            The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+          The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -8587,7 +8587,7 @@ class PopulationCount(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of any dimension. The data type must be int16 or uint16 (Ascend).
-            The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
+          The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
 
     Outputs:
         Tensor, with the same shape as the input, and the data type is uint8.

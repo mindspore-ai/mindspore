@@ -842,9 +842,12 @@ class ParameterTuple(tuple):
                   the `Initializer`.
                 - If `init` is 'same', the new Parameter has the same value with the original Parameter.
 
-
         Returns:
             Tuple, the new Parameter tuple.
+
+        Tutorial Examples:
+            - `Cell and Parameter - Parameter Tuple
+              <https://mindspore.cn/tutorials/en/master/advanced/modules/layer.html#parameter-tuple>`_
         """
         Validator.check_str_by_regular(prefix)
         new = []
