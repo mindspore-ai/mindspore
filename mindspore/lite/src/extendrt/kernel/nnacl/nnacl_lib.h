@@ -31,9 +31,9 @@ class NNAclLib : public KernelLib {
  public:
   NNAclLib() : KernelLib(kNNAclName, "CPU") {}
 
-  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const Format &format) override;
+  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const Format &format) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) override;
+                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 };
 }  // namespace kernel
 }  // namespace mindspore

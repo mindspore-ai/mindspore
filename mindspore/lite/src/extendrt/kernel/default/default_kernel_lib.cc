@@ -22,7 +22,7 @@
 namespace mindspore::kernel {
 std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType &op_type, const KernelAttr &attr,
                                                              const Format &format) {
-  if (format != Format::NCHW) {
+  if (!MatchFormat(format, Format::NCHW)) {
     MS_LOG(INFO) << "DefaultKernelLib only support NCHW layout, but got " << FormatEnumToString(format);
     return nullptr;
   }
@@ -39,13 +39,13 @@ std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType
   return kernel_mod;
 }
 
-bool DefaultKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) {
-  return CreateKernelMod(op_type, attr, format) != nullptr;
+bool DefaultKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const {
+  return DefaultKernelLib::CreateKernelMod(op_type, attr, format) != nullptr;
 }
 
 LiteKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) {
-  auto kernel_mod = CreateKernelMod(spec.op_type, spec.attr, spec.format);
+                                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
+  auto kernel_mod = DefaultKernelLib::CreateKernelMod(spec.op_type, spec.attr, spec.format);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type.PBType();
     return nullptr;

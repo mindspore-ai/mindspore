@@ -43,15 +43,17 @@ struct KernelSpec {
   KernelAttr attr;
   Format format;
   BaseOperatorPtr primitive;
+  std::string backend;
 };
 
 class KernelLib {
  public:
   KernelLib(std::string name, std::string backend) : name_(std::move(name)), backend_(std::move(backend)) {}
   virtual ~KernelLib() = default;
-  virtual bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) = 0;
+  virtual bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const = 0;
   virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                                   const std::vector<InferTensor *> &outputs, const InferContext *ctx) = 0;
+                                   const std::vector<InferTensor *> &outputs, const InferContext *ctx) const = 0;
+
   KernelExec *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                const std::vector<InferTensor *> &outputs, const InferContext *ctx) {
     auto *lite_kernel = this->CreateKernel(spec, inputs, outputs, ctx);
@@ -61,7 +63,7 @@ class KernelLib {
     }
     auto *kernel_exec = new (std::nothrow) KernelExec(std::shared_ptr<LiteKernel>(lite_kernel));
     if (kernel_exec == nullptr) {
-      MS_LOG(ERROR) << "Create kernel exec failed. kernel: " << spec.op_type.PBType();
+      MS_LOG(ERROR) << "Create kernel exec failed. kernel: " << spec.op_type;
       return nullptr;
     }
     auto desc = kernel_exec->desc();
@@ -70,10 +72,19 @@ class KernelLib {
     kernel_exec->set_context(ctx);
     return kernel_exec;
   }
+
   std::string Name() const { return name_; }
   std::string Backend() const { return backend_; }
 
- private:
+ protected:
+  static bool MatchFormat(const Format &format1, const Format &format2) {
+    if (format1 == Format::DEFAULT_FORMAT || format2 == Format::DEFAULT_FORMAT) {
+      return true;
+    }
+    return format1 == format2;
+  }
+
+ protected:
   std::string name_;  //  provider
   std::string backend_;
 };
@@ -94,7 +105,7 @@ class KernelLibRegister {
 
   bool RegKernelLib(const std::string &provider, const KernelLib *lib) {
     auto iter = kernel_libs_.find(provider);
-    if (MS_LIKELY(iter == kernel_libs_.end())) {
+    if (MS_LIKELY(iter != kernel_libs_.end())) {
       MS_LOG(ERROR) << "KernelLib " << provider << " is already exist.";
       return false;
     }
@@ -110,6 +121,8 @@ class KernelLibRegister {
     }
     return const_cast<KernelLib *>(iter->second);
   }
+
+  const std::unordered_map<std::string, const KernelLib *> &GetAllLibs() { return kernel_libs_; }
 
  private:
   KernelLibRegister() = default;

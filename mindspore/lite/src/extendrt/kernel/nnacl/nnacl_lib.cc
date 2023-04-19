@@ -44,8 +44,8 @@ TypeId GetFirstFp32Fp16OrInt8Type(const KernelAttr &attr) {
 }
 }  // namespace
 
-bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) {
-  if (format != NHWC) {
+bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const {
+  if (!MatchFormat(format, NHWC)) {
     MS_LOG(INFO) << "NNACL not support NHWC layout.";
     return false;
   }
@@ -62,8 +62,8 @@ bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, con
 }
 
 LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                                   const std::vector<InferTensor *> &outputs, const InferContext *ctx) {
-  if (spec.format != NHWC) {
+                                   const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
+  if (!MatchFormat(spec.format, NHWC)) {
     MS_LOG(INFO) << "NNACL only support NHWC layout, but got " << FormatEnumToString(spec.format);
     return nullptr;
   }
@@ -77,6 +77,7 @@ LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
     MS_LOG(INFO) << "Populate op-parameter for kernel failed, kernel-type: " << spec.op_type.PBType();
     return nullptr;
   }
+  op_parameter->thread_num_ = ctx->thread_num_;
   auto creator = nnacl::KernelRegistry::GetInstance()->Creator({spec.op_type.FBType(), data_type});
   nnacl::NnaclKernel *kernel = nullptr;
   if (creator != nullptr) {
