@@ -70,10 +70,18 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   transpose_x1_ = kernel_ptr->get_transpose_a() ? CUBLAS_OP_T : CUBLAS_OP_N;
   transpose_x2_ = kernel_ptr->get_transpose_b() ? CUBLAS_OP_T : CUBLAS_OP_N;
   if (transpose_x1_ != CUBLAS_OP_N && IsComplex(dtype_a_)) {
-    transpose_x1_ = CUBLAS_OP_C;
+    if (kernel_name_ == kBatchMatMulOpName) {
+      transpose_x1_ = CUBLAS_OP_C;
+    } else {
+      transpose_x1_ = CUBLAS_OP_T;
+    }
   }
   if (transpose_x2_ != CUBLAS_OP_N && IsComplex(dtype_b_)) {
-    transpose_x2_ = CUBLAS_OP_C;
+    if (kernel_name_ == kBatchMatMulOpName) {
+      transpose_x2_ = CUBLAS_OP_C;
+    } else {
+      transpose_x2_ = CUBLAS_OP_T;
+    }
   }
   if (kernel_name_ == kFusedMatMulBiasAddName) {
     is_fused_matmul_biasadd_ = true;
@@ -213,6 +221,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatM
          .AddInputAttr(kNumberTypeComplex64)
          .AddOutputAttr(kNumberTypeComplex64),
        &MatMulGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &MatMulGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &MatMulGpuKernelMod::LaunchKernel<double, double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
