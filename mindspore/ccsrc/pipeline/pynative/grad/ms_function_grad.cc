@@ -417,6 +417,11 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   auto new_make_tuple = clone_ms_func_graph->output()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(new_make_tuple);
   clone_ms_func_graph->set_output(new_make_tuple->input(1));
+  if (common::AnfAlgo::IsDynamicShape(clone_ms_func_graph->output())) {
+    MS_LOG(EXCEPTION)
+      << "Jit does not support dynamic shape input yet, please remove the jit decorator for running pure PyNative";
+  }
+
   // Make Adjoint for grad graph
   const auto &ms_function_cnode =
     MakeAdjointForMsFunction(op_run_info, grad_executor, clone_ms_func_graph, clone_grad_graph);
