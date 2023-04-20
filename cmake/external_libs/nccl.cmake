@@ -7,14 +7,13 @@ else()
 endif()
 
 find_package(CUDA REQUIRED)
-set(nccl_CFLAGS "-D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong")
+set(nccl_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 
 # without -I$ENV{CUDA_HOME}/targets/x86_64-linux/include, cuda_runtime.h will not be found
 # "include_directories($ENV{CUDA_HOME}/targets/x86_64-linux/include)" does not help.
 # without -fPIC, ld relocation error will be reported.
-set(nccl_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong \
+set(nccl_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 \
                     -I$ENV{CUDA_HOME}/targets/x86_64-linux/include -fPIC")
-set(nccl_LDFLAGS "-Wl,-z,now")
 
 if(NOT BUILD_LITE)
     enable_language(CUDA)
