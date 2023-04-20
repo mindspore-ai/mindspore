@@ -125,6 +125,7 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
 
   if (need_tensor_move_async) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
+    new_hccl_node->CloneUserData(hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);

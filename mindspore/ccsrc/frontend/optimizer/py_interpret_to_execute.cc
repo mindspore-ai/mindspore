@@ -82,6 +82,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     const auto &cnode = node->cast<CNodePtr>();
     MS_LOG(DEBUG) << "cnode: " << cnode->DebugString();
     auto new_cnode = std::make_shared<CNode>(*cnode);
+    new_cnode->CloneUserData(cnode);
     new_cnode->set_input(0, NewValueNode(prim::kPrimPyExecute));
 
     if (!IsValueNode<parse::Script>(cnode->input(input_index_one))) {

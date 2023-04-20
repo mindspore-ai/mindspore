@@ -162,6 +162,7 @@ PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterP
     AddBackwardHookFn(elem.first, elem.second);
   }
   set_instance_name(adapter->instance_name_);
+  CloneUserData(adapter->user_data_);
 }
 PrimitivePy::~PrimitivePy() {}
 
@@ -731,6 +732,32 @@ void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
   attached_primitive_ = prim;
 }
 
+void PrimitivePyAdapter::SetUserData(const py::str &key, const py::object &value) {
+  const std::string name = std::string("__primitive_user_data_") + key.cast<std::string>();
+  const auto &primitive_data = std::make_shared<PrimitiveUserData>();
+  primitive_data->obj = value;
+  // Set into primitive adapter.
+  set_user_data<PrimitiveUserData>(name, primitive_data);
+  // Set in primitive.
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_user_data<PrimitiveUserData>(name, primitive_data);
+  }
+}
+
+py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
+  const std::string name = std::string("__primitive_user_data_") + key.cast<std::string>();
+  // Get from primitive.
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    const auto primitive_data = prim->user_data<PrimitiveUserData>(name);
+    return primitive_data->obj;
+  }
+  // Get from primtive adapter.
+  const auto primitive_data = user_data<PrimitiveUserData>(name);
+  return primitive_data->obj;
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
@@ -751,6 +778,8 @@ void RegPrimitive(const py::module *m) {
     .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
     .def("remove_backward_hook_fn", &PrimitivePyAdapter::RemoveBackwardHookFn,
          "Remove primitive backward hook function.")
-    .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.");
+    .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.")
+    .def("set_user_data", &PrimitivePyAdapter::SetUserData, "Set primitive user data.")
+    .def("get_user_data", &PrimitivePyAdapter::GetUserData, "Get primitive user data.");
 }
 }  // namespace mindspore

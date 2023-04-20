@@ -101,6 +101,7 @@ AnfNodePtr InsertTensorMoveForCascade::InsertTensorMove(const FuncGraphPtr &grap
 
   if (!tensor_move_list.empty()) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
+    new_hccl_node->CloneUserData(hccl_node);
     MS_EXCEPTION_IF_NULL(new_hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     return new_hccl_node;

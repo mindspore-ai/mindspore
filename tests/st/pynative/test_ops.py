@@ -80,3 +80,25 @@ def test_shape_raise():
     tensor1 = Tensor(np.ndarray([1, 448, 448]), dtype=dtype.float32)
     with pytest.raises(TypeError):
         ops.shape([tensor0, tensor1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_primitive_user_data():
+    """
+    Feature: Primitive user data.
+    Description: Test primitive user data.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    tensor = Tensor(np.ndarray([1, 2, 3]), dtype=dtype.float64)
+    cast = ops.Cast()
+    type_dst = ms.float32
+    cast.set_user_data("__user_data__", tensor)
+    user_data = cast.get_user_data("__user_data__")
+    cast(tensor, type_dst)  # Run in PyNative.
+    np.testing.assert_almost_equal(user_data.asnumpy(), tensor.asnumpy())

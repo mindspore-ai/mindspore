@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 
+#include "base/user_data.h"
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"
@@ -110,10 +111,28 @@ class PrimitivePyAdapter {
   PrimitivePyPtr attached_primitive() const { return attached_primitive_.lock(); }
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
+
+  struct PrimitiveUserData {
+    py::object obj;
+  };
+
+  void SetUserData(const py::str &key, const py::object &value);
+  py::object GetUserData(const py::str &key) const;
+
   const bool parse_info_ = true;
 
  private:
   friend PrimitivePy;
+
+  template <typename T>
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+  template <typename T>
+  std::shared_ptr<T> user_data(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
   bool is_const_prim_{false};
   int backward_hook_fn_key_{-1};
   std::string name_;
@@ -124,6 +143,7 @@ class PrimitivePyAdapter {
   std::vector<size_t> const_input_indexes_;
   std::vector<Signature> signatures_;
   std::map<int, py::function> backward_hook_fn_;
+  UserData user_data_;
 };
 
 /// \brief OpPrimPyRegister defines the singleton to save primitivepy which has no attrs.

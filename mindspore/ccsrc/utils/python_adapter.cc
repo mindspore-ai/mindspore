@@ -91,6 +91,5 @@ py::object GetPyFn(const std::string &module, const std::string &name) {
   }
   return py::none();
 }
-
 }  // namespace python_adapter
 }  // namespace mindspore
