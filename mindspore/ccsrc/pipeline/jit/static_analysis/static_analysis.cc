@@ -32,6 +32,7 @@
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/debug/trace.h"
+#include "include/common/fallback.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
@@ -523,6 +524,10 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   auto out = ToAbstract(value_node->value(), conf->context(), conf);
   if (value_node->has_new_value() && out->isa<AbstractTensor>()) {
     out = out->Broaden();
+  }
+  if (value_node->has_user_data(kPyObject)) {
+    MS_LOG(DEBUG) << "Move python object to abstract. node: " << value_node->DebugString();
+    out->set_user_data<PyExecObject>(kPyObject, value_node->user_data<PyExecObject>(kPyObject));
   }
   return out;
 }

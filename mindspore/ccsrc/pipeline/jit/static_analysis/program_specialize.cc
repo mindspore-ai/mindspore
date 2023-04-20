@@ -28,6 +28,8 @@
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/debug/trace.h"
+#include "include/common/fallback.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace abstract {
@@ -1500,7 +1502,13 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     if (IsPrimitiveCNode(origin_node, prim::kPrimDepend)) {
       return nullptr;
     }
-    return BuildValueNode(val, ival);
+
+    auto ret = BuildValueNode(val, ival);
+    if (ival->has_user_data(kPyObject)) {
+      MS_LOG(DEBUG) << "When build possible value node, the origin has python object, attach it to new node abs.";
+      ret->abstract()->set_user_data<PyExecObject>(kPyObject, ival->user_data<PyExecObject>(kPyObject));
+    }
+    return ret;
   }
 }
 

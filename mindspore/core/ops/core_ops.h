@@ -200,6 +200,8 @@ constexpr auto kMakeList = "MakeList";
 constexpr auto kMakeListNew = "make_list";
 constexpr auto kListGetItem = "list_getitem";
 constexpr auto kListSetItem = "list_setitem";
+// Attribute
+constexpr auto kSetAttr = "setattr";
 
 constexpr auto kSliceGetItem = "SliceGetItem";
 constexpr auto kGeLU = "GeLU";
@@ -1681,6 +1683,9 @@ GVAR_DEF(PrimitivePtr, kPrimPyExecute,
          std::make_shared<Primitive>("PyExecute", mindspore::HashMap<std::string, ValuePtr>(
                                                     {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)},
                                                      {std::string("primitive_target"), MakeValue("CPU")}})));
+GVAR_DEF(PrimitivePtr, kPrimSetAttr,
+         std::make_shared<Primitive>(kSetAttr, mindspore::HashMap<std::string, ValuePtr>(
+                                                 {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));

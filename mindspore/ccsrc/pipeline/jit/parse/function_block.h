@@ -83,6 +83,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
   const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_args() const { return phi_args_; }
   void FindIsolatedNodes();
+  void ConvertUnusedNodesToIsolated(const std::pair<std::string, std::pair<AnfNodePtr, bool>> var);
   void AddIsolatedNode(const AnfNodePtr &target);
   void AttachIsolatedNodesBeforeReturn();
   const std::vector<FunctionBlock *> &prev_blocks() const { return prev_blocks_; }
@@ -158,6 +159,18 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
+  void set_changed_non_param_attrs(const std::string &attr, const AnfNodePtr &node, bool used) {
+    changed_non_param_attrs_[attr] = std::pair<AnfNodePtr, bool>(node, used);
+  }
+
+  std::pair<AnfNodePtr, bool> get_changed_non_param_attr(const std::string &attr) {
+    auto iter = changed_non_param_attrs_.find(attr);
+    if (iter == changed_non_param_attrs_.end()) {
+      return std::pair(nullptr, false);
+    }
+    return iter->second;
+  }
+
  private:
   // Block graph
   FuncGraphPtr func_graph_;
@@ -174,6 +187,9 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // Store args and variable's node, use a bool flag to indicate if the variable is used.
   std::map<std::string, std::pair<AnfNodePtr, bool>> assigned_vars_;
+
+  // Store the attribute that has been changed.
+  std::map<std::string, std::pair<AnfNodePtr, bool>> changed_non_param_attrs_;
 
   // Map the parameter node to variable, it can be resolved if the block's predecessors are processed
   std::map<ParameterPtr, std::string> phi_nodes_;

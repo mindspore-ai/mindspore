@@ -300,6 +300,10 @@ class Parser {
   // Assign value to class member
   void HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
+  // Assign value to class non-param member
+  void HandleAssignClassNonParamMember(const FunctionBlockPtr &block, const AnfNodePtr &assigned_node,
+                                       const std::string &attr_name);
+
   // Assign value to subscript
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 

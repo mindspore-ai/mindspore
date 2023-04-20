@@ -34,6 +34,7 @@
 #include "utils/interpret_node_recorder.h"
 #include "pipeline/jit/debug/trace.h"
 #include "mindspore/core/ir/cell.h"
+#include "include/common/fallback.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
 
@@ -1413,6 +1414,14 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
 AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const {
   std::string var_name = "self.";
   std::string attr_name = node.attr("attr").cast<std::string>();
+  auto changed_non_param_attr = block->get_changed_non_param_attr(attr_name);
+  auto attr_node = changed_non_param_attr.first;
+  if (attr_node != nullptr) {
+    if (!changed_non_param_attr.second) {
+      block->set_changed_non_param_attrs(attr_name, attr_node, true);
+    }
+    return attr_node;
+  }
   (void)var_name.append(attr_name);
   auto attr_obj = ast()->obj().attr(attr_name.c_str());
   MS_EXCEPTION_IF_NULL(block);
@@ -2720,16 +2729,38 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
-    MS_EXCEPTION(TypeError) << "'" << var_name
-                            << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
-                            << py::str(obj).cast<std::string>() << "' with type '"
-                            << py::str(obj_type).cast<std::string>() << ".\n\n"
-                            << trace::GetDebugInfo(target_node->debug_info());
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_EXCEPTION(TypeError) << "'" << var_name
+                              << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
+                              << py::str(obj).cast<std::string>() << "' with type '"
+                              << py::str(obj_type).cast<std::string>() << ".\n\n"
+                              << trace::GetDebugInfo(target_node->debug_info());
+    }
+    HandleAssignClassNonParamMember(block, assigned_node, attr_name);
+    return;
   }
 
   MS_EXCEPTION_IF_NULL(block);
   MS_LOG(DEBUG) << "SetState write " << var_name << " : " << target_node->ToString();
   block->SetStateAssign(target_node, assigned_node);
+}
+
+void Parser::HandleAssignClassNonParamMember(const FunctionBlockPtr &block, const AnfNodePtr &assigned_node,
+                                             const std::string &attr_name) {
+  auto fg = block->func_graph();
+  std::vector<AnfNodePtr> setattr_node_inputs{NewValueNode(prim::kPrimSetAttr)};
+  auto class_node = NewValueNode(std::make_shared<StringImm>("class_obj"));
+  auto class_obj = ast()->obj();
+  auto py_class_object = std::make_shared<PyExecObject>();
+  py_class_object->obj = class_obj;
+  class_node->set_user_data<PyExecObject>(kPyObject, py_class_object);
+  (void)setattr_node_inputs.emplace_back(class_node);
+  (void)setattr_node_inputs.emplace_back(NewValueNode(attr_name));
+  (void)setattr_node_inputs.emplace_back(assigned_node);
+  auto setattr_node = fg->NewCNodeInOrder(setattr_node_inputs);
+  MS_LOG(DEBUG) << "Create setattr node: " << setattr_node->DebugString();
+  block->set_changed_non_param_attrs(attr_name, setattr_node, false);
 }
 
 void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ,

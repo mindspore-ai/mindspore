@@ -146,7 +146,10 @@ class PyExecuteInitializer {
       const auto &tuple_abs = values_tuple_abs->cast<abstract::AbstractSequencePtr>();
       const auto &value_abs = (*tuple_abs)[i];
 
-      if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
+      if (value_abs->has_user_data(kPyObject)) {
+        auto obj = *(value_abs->user_data<py::object>(kPyObject));
+        local_dict[py::str(key_str->value())] = obj;
+      } else if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
         auto obj = output_data->obj;
         MS_LOG(DEBUG) << "input[" << i << "] convert value from user data, obj: " << obj;
