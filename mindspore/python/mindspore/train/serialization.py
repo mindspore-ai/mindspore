@@ -218,16 +218,18 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                     plain_data = BytesIO()
 
                 for name, value in data_list.items():
+                    if name == "random_op":
+                        _write_random_seed(name, value, f)
+                        continue
                     if value[0] == "mapparameter":
                         _write_mapparameter(name, value, f)
                         continue
-                    elif value[0] == "offload_parameter":
+                    if value[0] == "offload_parameter":
                         new_value = value[1:]
                         new_value[2] = value[3].asnumpy().reshape(-1)
                         _write_parameter_data(name, new_value, f, enc_key, plain_data)
                         _offload_if_config(value[3])
                         continue
-
                     if isinstance(value[2], Tensor):
                         _write_hugeparameter(name, value, f)
                         continue
@@ -248,6 +250,18 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         logger.critical("Failed to save the checkpoint file %s. Maybe don't have the permission to write files, "
                         "or the disk space is insufficient and so on.", ckpt_file_name)
         raise e
+
+
+def _write_random_seed(name, value, f):
+    """Write random op into protobuf file."""
+    checkpoint_list = Checkpoint()
+    param_value = checkpoint_list.value.add()
+    param_value.tag = name
+    param_tensor = param_value.tensor
+    param_tensor.dims.extend(0)
+    param_tensor.tensor_type = "random_op"
+    param_tensor.tensor_content = value
+    f.write(checkpoint_list.SerializeToString())
 
 
 def _write_parameter_data(name, value, f, enc_key, plain_data):
@@ -380,6 +394,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         for _, param in save_obj.parameters_and_names():
             param_dict[param.name] = param
         param_list = []
+        if append_dict and "random_op" in append_dict:
+            phase = 'train' + '.' + str(save_obj.create_time) + '.' + str(id(save_obj)) + '.' + save_obj.arguments_key
+            if phase in save_obj.compile_cache and _executor.has_compiled(phase):
+                random_byte = _executor._graph_executor.get_random_status(phase)
+                param_list.append({"name": "random_op", "data": random_byte})
+            append_dict.pop("random_op")
         for (key, value) in param_dict.items():
             each_param = {"name": key}
             if isinstance(value, MapParameter):
@@ -432,6 +452,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     data_list = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
+            if param["name"] == "random_op":
+                data_list["random_op"] = param["data"]
+                continue
             key = param["name"]
             data_list[key] = []
             if isinstance(param["data"], list):
@@ -879,6 +902,9 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
                            "please use `choice_func` instead.")
         for element_id, element in enumerate(checkpoint_list.value):
+            if element.tag == "random_op":
+                parameter_dict["random_op"] = element.tensor.tensor_content
+                continue
             if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
                 continue
             if specify_prefix is None and filter_prefix is None and \
@@ -1065,12 +1091,14 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         logger.critical("Failed to combine the net and the parameters.")
         msg = ("For 'load_param_into_net', the argument 'net' should be a Cell, but got {}.".format(type(net)))
         raise TypeError(msg)
-
     if not isinstance(parameter_dict, dict):
         logger.critical("Failed to combine the net and the parameters.")
         msg = ("For 'load_param_into_net', the argument 'parameter_dict' should be a dict, "
                "but got {}.".format(type(parameter_dict)))
         raise TypeError(msg)
+    if "random_op" in parameter_dict.keys():
+        net._add_attr("random_op_snapshot", parameter_dict["random_op"])
+        parameter_dict.pop("random_op")
     for key, value in parameter_dict.items():
         if not isinstance(key, str) or not isinstance(value, (Parameter, str)):
             logger.critical("Load parameters into net failed.")
