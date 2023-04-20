@@ -32,6 +32,12 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
     return false;
   }
+  if (common::UseHcclCM()) {
+    // If using hccl CM envs to launch distributed job, no need to call HcclCommInitRootInfo. The group will be
+    // initialized in rank table way.
+    initialized_ = true;
+    return true;
+  }
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
@@ -48,6 +54,12 @@ bool AscendCommunicationGroup::Finalize() {
   if (!initialized_) {
     return false;
   }
+  if (common::UseHcclCM()) {
+    // If using hccl CM envs to launch distributed job, comm_ is not initialized. So directly return.
+    initialized_ = false;
+    return true;
+  }
+
   RETURN_IF_FALSE_WITH_LOG(HcclCommDestroy(comm_) == static_cast<int32_t>(HCCL_SUCCESS),
                            "Failed to destroy HCCL communicator.");
   initialized_ = false;
@@ -59,7 +71,15 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   *root_info_size = sizeof(unique_id_);
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (group_rank == 0) {
-    CHECK_RET(HcclGetRootInfo(&unique_id_), static_cast<int32_t>(HCCL_SUCCESS), "Failed to get HCCL unique id.");
+    if (common::UseHcclCM()) {
+      // If using hccl CM envs to launch distributed job, no need to call HcclGetRootInfo.
+      return &unique_id_;
+    }
+    if (HcclGetRootInfo(&unique_id_) != static_cast<int32_t>(HCCL_SUCCESS)) {
+      const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+      MS_LOG(ERROR) << "Failed to get HCCL unique id: " + error_message;
+      return nullptr;
+    }
   }
   return &unique_id_;
 }

@@ -21,6 +21,7 @@ message RegistrationMessage {
   string node_id = 1;
   string host_name = 2;
   string role = 3;
+  string host_ip = 4;
 }
 
 message RegistrationRespMessage {

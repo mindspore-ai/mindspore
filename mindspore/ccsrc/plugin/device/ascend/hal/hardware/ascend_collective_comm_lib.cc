@@ -104,10 +104,19 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   }
   try {
     if (!common::UseHostCollective()) {
+      // Use rank table to launch distribtued job.
+      MS_LOG(INFO) << "Launch Ascend distributed job using rank table.";
       return InitializeHccl();
+    } else if (common::UseHcclCM() && MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      // Use dynamic cluster and hccl's CM envs to launch distributed job. This method is similar to rank table. It only
+      // supports to run in graph mode.
+      MS_LOG(INFO) << "Launch Ascend distributed job using hccl CM envs.";
+      std::string rank_id_str = std::to_string(global_rank);
+      (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+    } else {
+      std::string rank_id_str = std::to_string(global_rank);
+      (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
     }
-    std::string rank_id_str = std::to_string(global_rank);
-    (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "Ascend collective communication initialization failed.#dmsg#Framework Error Message:#dmsg#"
                       << e.what();
@@ -146,6 +155,21 @@ bool AscendCollectiveCommLib::DestroyDeviceCommunicationGroup(const std::string 
   return true;
 }
 
+bool AscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &group_name) {
+  // If using hccl CM, we reuse rank table launching interfaces.
+  if (common::UseHcclCM()) {
+    return DestroyDeviceCommunicationGroup(group_name);
+  }
+
+  HCCL_GROUP_CHECK_EMPTY(group_name);
+  CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not exist.");
+
+  if (!groups_[group_name]->Finalize()) {
+    return false;
+  }
+  return true;
+}
+
 bool AscendCollectiveCommLib::CreateDeviceCommunicationGroup(const std::string &group_name,
                                                              const std::vector<uint32_t> &group_ranks) {
   HCCL_GROUP_CHECK_EMPTY(group_name);
@@ -166,11 +190,17 @@ bool AscendCollectiveCommLib::CreateCommunicationGroup(const std::string &group_
     group_name, group_ranks, global_rank_id_, local_group_rank, local_group_size);
   CHECK_IF_NULL(group);
   groups_[group_name] = group;
+
+  // If using hccl CM, we reuse rank table launching interfaces.
+  // It does not support to create hccl_world_group.
+  if (common::UseHcclCM() && group_name != kHCCLGlobalGroupName) {
+    return CreateDeviceCommunicationGroup(group_name, group_ranks);
+  }
   return true;
 }
 
 HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name) {
-  if (!common::UseHostCollective()) {
+  if (!common::UseHostCollective() || common::UseHcclCM()) {
     return hccl::HcclAdapter::GetInstance().get_hccl_comm();
   }
   CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not existed.");

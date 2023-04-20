@@ -127,6 +127,8 @@ MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t
 }
 
 bool TCPClient::Flush(const std::string &dst_url) { return tcp_comm_->Flush(dst_url); }
+
+std::string TCPClient::GetClientIp(const std::string &dst_url) const { return tcp_comm_->GetSrcIp(dst_url); }
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

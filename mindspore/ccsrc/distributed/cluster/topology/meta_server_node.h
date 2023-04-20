@@ -53,6 +53,9 @@ struct NodeInfo {
   // The local host name of this cluster node.
   std::string host_name;
 
+  // The host ip of this cluster node used for registry.
+  std::string host_ip;
+
   // The role name of this cluster node.
   std::string role;
 
@@ -65,6 +68,47 @@ struct NodeInfo {
 
   // Maintain the state of the node.
   NodeState state{NodeState::kNew};
+};
+
+inline uint32_t ReorderIpNum(uint32_t ip_num) {
+  uint32_t ret = 0;
+  size_t uint32_byte_num = 4;
+  size_t bit_num_each_byte = 8;
+  for (size_t i = 0; i < uint32_byte_num; i++) {
+    uint32_t tmp = 0;
+    tmp = ((ip_num >> ((uint32_byte_num - 1 - i) * bit_num_each_byte)) & 0xFF);
+    ret = ret | (tmp << (i * bit_num_each_byte));
+  }
+  return ret;
+}
+
+// The key of nodes consists of node's ip and id.
+struct NodeKey {
+  std::string host_ip;
+  std::string node_id;
+
+  bool operator<(const NodeKey &node_key) const {
+    uint32_t this_host_ip_num;
+    uint32_t host_ip_num;
+    (void)inet_pton(AF_INET, host_ip.c_str(), &this_host_ip_num);
+    (void)inet_pton(AF_INET, node_key.host_ip.c_str(), &host_ip_num);
+    this_host_ip_num = ReorderIpNum(this_host_ip_num);
+    host_ip_num = ReorderIpNum(host_ip_num);
+    if (this_host_ip_num < host_ip_num) {
+      return true;
+    } else if (this_host_ip_num > host_ip_num) {
+      return false;
+    } else {
+      if (node_id < node_key.node_id) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+  bool operator==(const NodeKey &node_key) const {
+    return (node_id == node_key.node_id) && (host_ip == node_key.host_ip);
+  }
 };
 
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status
@@ -130,6 +174,10 @@ class MetaServerNode : public NodeBase {
 
   // Allocate a new valid rank id for new registered compute graph node.
   uint32_t AllocateRankId(const std::string &role);
+
+  // Reassign node ranks. This method should be called only after cluster is successfully built. It sorts all nodes with
+  // their node ip and node id, then assign their rank ids.
+  void ReassignNodeRank();
 
   // Persist the required metadata of cluster into storage through configuration.
   bool Persist();

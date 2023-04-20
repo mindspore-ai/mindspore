@@ -80,6 +80,8 @@ class BACKEND_EXPORT ClusterContext {
   void set_cluster_exit_with_exception();
   bool cluster_exit_with_exception() const;
 
+  const std::string &client_ip_in_cluster() const { return client_ip_in_cluster_; }
+
  private:
   ClusterContext();
 
@@ -94,6 +96,10 @@ class BACKEND_EXPORT ClusterContext {
   void InitNodeRole();
   void InitSchedulerIp();
   void InitSchedulerPort();
+
+  // After cluster is built, some post process for ComputeGraphNodes should be done. For example, port range assignment
+  // and client ip set, etc.
+  void PostProcessForCGN();
 
   // The flag that whether this cluster context instance is already initialized.
   std::atomic_bool inited_;
@@ -117,6 +123,9 @@ class BACKEND_EXPORT ClusterContext {
   // The compute graph node or meta server node according to the configuration of this process.
   std::shared_ptr<topology::NodeBase> node_base_;
 
+  // Node id of this process.
+  std::string node_id_;
+
   // The role of this process in the cluster.
   std::string node_role_;
 
@@ -125,6 +134,9 @@ class BACKEND_EXPORT ClusterContext {
 
   // The actor route table proxy. It only created in abstract nodes because scheduler does not use proxy.
   ActorRouteTableProxyPtr actor_route_table_proxy_;
+
+  // This node's client ip address used in this cluster.
+  std::string client_ip_in_cluster_;
 };
 }  // namespace cluster
 }  // namespace distributed

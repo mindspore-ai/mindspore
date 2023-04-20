@@ -157,6 +157,7 @@ struct Connection {
 
   // The socket address(ip:port) of client and server of this connection.
   std::string source;
+  std::string src_ip;
   std::string destination;
 
   // Peer address.

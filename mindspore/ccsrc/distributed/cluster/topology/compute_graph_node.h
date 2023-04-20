@@ -69,6 +69,8 @@ class BACKEND_EXPORT ComputeGraphNode : public NodeBase {
 
   void set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) override;
 
+  std::string client_ip();
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();

@@ -90,6 +90,8 @@ class AscendKernelExecutor : public DeprecatedKernelExecutor {
   mutable std::mutex launch_mutex_;
   AscendDeviceResManager *res_manager_{nullptr};
   AscendGraphExecutor *graph_executor_{nullptr};
+
+  bool initialized_{false};
 };
 }  // namespace ascend
 }  // namespace device
