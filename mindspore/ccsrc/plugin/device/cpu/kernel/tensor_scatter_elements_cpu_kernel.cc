@@ -154,11 +154,15 @@ bool TensorScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   auto buffer_size = outputs[kIndex0]->size;
-  auto ret = memcpy_s(output, buffer_size, input, input_size_ * sizeof(T));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
-    return false;
-  }
+  auto memcpy_task = [&](size_t start, size_t end) {
+    size_t size = (end - start) * sizeof(T);
+    auto ret = memcpy_s(output + start, size, input + start, size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
+    }
+  };
+  ParallelLaunchAutoSearch(memcpy_task, buffer_size / sizeof(T), this, &parallel_search_info_);
+
   switch (reduction_type_) {
     case REDUCTION_ASSIGNMENT:
       return Scatter(ReductionAssignment<T>(), output, indices, updates);
