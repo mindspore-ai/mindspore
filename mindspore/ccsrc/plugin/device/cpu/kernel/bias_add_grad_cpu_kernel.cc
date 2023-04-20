@@ -95,15 +95,33 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     }
 
     size_t c_size = input_shape_[kIndex1];
-    for (size_t c = 0; c < c_size; ++c) {
-      output_addr[c] = static_cast<T>(0);
-      for (size_t n = 0; n < input_shape_[kIndex0]; ++n) {
+    size_t n_size = LongToSize(input_shape_[0]);
+    std::vector<T> tmp_res(n_size * c_size, 0);
+    for (size_t n = 0; n < n_size; ++n) {
+      for (size_t c = 0; c < c_size; ++c) {
         size_t offset = n * c_size * hw_size + c * hw_size;
-        for (size_t hw = 0; hw < hw_size; ++hw) {
-          output_addr[c] += input_addr[offset + hw];
+        size_t nc_offset = n * c_size + c;
+        const T *inner_src = input_addr + offset;
+        T *inner_dst = tmp_res.data() + nc_offset;
+        T tmp = static_cast<T>(0);
+        for (size_t i = 0; i < hw_size; i++) {
+          tmp += inner_src[i];
         }
+        *inner_dst = tmp;
       }
     }
+    auto task = [this, input_addr, output_addr, &tmp_res, c_size, n_size](size_t start, size_t end) {
+      for (size_t k = 0; k < end - start; k++) {
+        const T *inner_src = tmp_res.data() + start + k;
+        T *inner_dst = output_addr + start + k;
+        T tmp = static_cast<T>(0);
+        for (size_t i = 0; i < n_size; i++) {
+          tmp += inner_src[i * c_size];
+        }
+        *inner_dst = tmp;
+      }
+    };
+    ParallelLaunchAutoSearch(task, c_size, this, &parallel_search_info_);
   } else if (input_shape_.size() == k2Dims) {
     auto task = [this, input_addr, output_addr](size_t start, size_t end) {
       for (size_t k = 0; k < end - start; k++) {

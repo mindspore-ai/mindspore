@@ -87,16 +87,16 @@ class MirrorPadGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   void slice(std::vector<int64_t> extents, std::vector<int64_t> rhs_offsets, std::vector<int64_t> input_strides,
-             std::vector<T> inputs_addr, const std::vector<AddressPtr> &outputs) const;
+             std::vector<T> inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
   std::vector<std::pair<int64_t, int64_t>> extract_paddings(const T *paddings_arg) const;
 
   template <typename T1, typename T2>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  void paddings_type(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  void paddings_type(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   TypeId pad_dtype_{kTypeUnknown};

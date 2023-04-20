@@ -53,20 +53,19 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
                             const int64_t l5, const int64_t l6, const int64_t r0, const int64_t r1, const int64_t r2,
                             const int64_t r3, const int64_t r4, const int64_t r5, const int64_t r6, const int64_t d0,
                             const int64_t d1, const int64_t d2, const int64_t d3, const int64_t d4, const int64_t d5,
-                            const int64_t d6, const T *input_x, const T *input_y, T *output) const;
+                            const int64_t d6, const T *input_x, const T *input_y, T *output);
   template <typename T>
   T MinimumFunc(const T &lhs, const T &rhs) const {
     return lhs < rhs ? lhs : rhs;
   }
   template <typename T>
-  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArith(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                    const std::vector<kernel::AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   using MinimumLaunchFunc = std::function<bool(MinimumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;
