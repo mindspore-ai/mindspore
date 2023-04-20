@@ -10,6 +10,7 @@ if(ENABLE_GPU)
                 SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         add_library(nvidia_collective SHARED ${NVIDIA_COLLECTIVE_SRCS})
         target_link_libraries(nvidia_collective PRIVATE mindspore::nccl)
+        target_link_libraries(nvidia_collective PRIVATE ${CUDA_PATH}/lib64/libcudart.so)
     endif()
 
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
