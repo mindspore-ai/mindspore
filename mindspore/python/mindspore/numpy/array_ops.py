@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import operator
 
 from mindspore.common import dtype as mstype
-from mindspore.common import Tensor, mutable
+from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -1115,7 +1115,7 @@ def _get_moved_perm(ndim, source, destination):
     from source to destination.
     """
     dest_sorted_idx = [i for i, _ in sorted(enumerate(destination), key=operator.itemgetter(1))]
-    axes_orig = mutable([], True)
+    axes_orig = []
     for i in range(ndim):
         if i not in source:
             axes_orig = axes_orig + [i]

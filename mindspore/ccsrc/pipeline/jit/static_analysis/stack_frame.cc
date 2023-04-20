@@ -122,6 +122,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
     auto result = std::make_shared<EvalResult>(arg_abs, nullptr);
     MS_LOG(DEBUG) << "Save argument[" << i << "] result, NodeConfig: " << conf->ToString()
                   << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
+    result = engine->CheckAndTransToDynamicLen(result, node);
     engine->SaveEvalResultInCache(conf, result);
   }
   fg_evaluator->PushAlwaysEvalFlag(always_eval_flag);

@@ -935,6 +935,11 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Check and convert the sequence to dynamic length sequence.
   void CheckAndConvertToDynamicLenSequence(bool raise_exception = true);
 
+  std::shared_ptr<AbstractSequence> BroadenToDynamicLenSequence();
+
+  void set_as_arg_of_dyn_len_param() { is_arg_of_dyn_len_param_ = true; }
+  bool is_arg_of_dyn_len_param() { return is_arg_of_dyn_len_param_; }
+
  protected:
   AbstractBasePtrList elements_;
   // Since there're not too many nodes, we just use vector here.
@@ -943,6 +948,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   bool dynamic_len_ = false;
   size_t space_num_{0};
   AbstractBasePtr dynamic_len_element_abs_ = nullptr;
+  bool is_arg_of_dyn_len_param_ = false;
 
   std::shared_ptr<AbstractSequence> DynamicLenSequenceJoin(const std::shared_ptr<AbstractSequence> &other);
 };
