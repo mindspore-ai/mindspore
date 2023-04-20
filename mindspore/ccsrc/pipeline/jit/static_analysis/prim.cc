@@ -2068,15 +2068,23 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   const std::string &script = script_obj->value();
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
-
+  // Make abstract by type and shape.
   AbstractBasePtr res = nullptr;
-  if (current_interpret_node->has_user_data("__py_execute_tensor_type__") &&
-      current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
-    const auto &type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
-    MS_LOG(DEBUG) << "type: " << type->ToString();
+  // Support Tensor annotation type. Add list and tuple here later.
+  const auto &type = GetJitAnnotationTypeFromComment(current_interpret_node);
+  TypePtr dtype = nullptr;
+  if (type != nullptr && type->isa<TensorType>()) {
+    dtype = type->cast<TensorTypePtr>()->element();
+  }
+  if (dtype != nullptr) {
+    res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
+  } else if (current_interpret_node->has_user_data("__py_execute_tensor_type__") &&
+             current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
+    const auto &preset_type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
+    MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
     const auto &shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
-    res = std::make_shared<AbstractTensor>(type, shape);
+    res = std::make_shared<AbstractTensor>(preset_type, shape);
   } else {
     res = std::make_shared<AbstractAny>();
   }

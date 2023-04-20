@@ -883,6 +883,12 @@ def get_local_variable(name):
     return _local_value_nodes.get(name)
 
 
+def get_dtype(name: str):
+    if not hasattr(mstype, name):
+        return None
+    return getattr(mstype, name)
+
+
 class Parser:
     """
     Parser python code to ast tree.
@@ -962,26 +968,26 @@ class Parser:
            type(self.fn).__name__ == 'cython_function_or_method':
             attr = 'source'
             try:
-                source = inspect.getsourcelines(self.fn)
+                source_lines = inspect.getsourcelines(self.fn)
                 if context.get_context('support_binary') and \
                    '/mindspore/' not in self.filename and '\\mindspore\\' not in self.filename and \
-                   (not hasattr(self.fn, attr) or getattr(self.fn, attr) != source):
+                   (not hasattr(self.fn, attr) or getattr(self.fn, attr) != source_lines):
                     if not os.access(self.filename, os.W_OK):
                         raise PermissionError(f"Don't have the write permission on the file {self.filename}.")
                     with open(self.filename, 'a') as f:
                         f.write(f"\n# Set source attribute for function {self.function_name} "
                                 f"to support run so or pyc file in Graph Mode."
-                                f"\nsetattr({self.function_name}, '{attr}', {source})\n")
-                        setattr(self.fn, attr, source)
+                                f"\nsetattr({self.function_name}, '{attr}', {source_lines})\n")
+                        setattr(self.fn, attr, source_lines)
             except (OSError, TypeError) as e:
                 if hasattr(self.fn, attr):
-                    source = getattr(self.fn, attr)
+                    source_lines = getattr(self.fn, attr)
                 else:
                     if e.__str__() == "could not get source code":
                         raise OSError(f"Mindspore can not compile temporary source code in terminal. "
                                       f"Please write source code to a python file and run the file.")
                     raise e
-            self.lines, self.line_offset = source
+            self.lines, self.line_offset = source_lines
             original_src = ''.join(self.lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
             ast_tokens_cache = Parser.ast_cache.get(hexstr)
@@ -1083,6 +1089,42 @@ class Parser:
                              f"but got {subclass_instance}.")
         return super(target_father_class, subclass_instance)
 
+    def get_jit_comments(self, start_lineno, end_lineno):
+        """
+        Get the comments at the location, starting with '# @jit'.
+
+        Args:
+            start_lineno: The start line no.
+            end_lineno: The end line no.
+
+        Returns:
+            list[str], the comment strings.
+        """
+        comments = []
+        # Ignore if to fetch the whole lines's comments.
+        if start_lineno == 1 and end_lineno == len(self.lines):
+            return comments
+
+        # Add previous line comment.
+        if start_lineno > 1:
+            previous_lineno = start_lineno - 1
+            previous_line = self.lines[previous_lineno - 1]
+            striped_previous_line = previous_line.strip(' \t')
+            result = re.search(r'^#\s*@jit[^\'\"]*?(?=\n|$)', striped_previous_line)
+            if result:
+                comments.append(result.group())
+
+        # Add line ending comments.
+        if start_lineno >= 1:
+            while start_lineno <= end_lineno:
+                line = self.lines[start_lineno - 1]
+                result = re.search(r'#\s*@jit[^\'\"]*?(?=\n|$)', line)
+                if result:
+                    comments.append(result.group())
+                start_lineno += 1
+        return comments
+
+
     def get_source_code(self, start_lineno, start_colno, end_lineno, end_colno):
         """
         Get the script source at the location.
@@ -1142,11 +1184,12 @@ class Parser:
                 start_lineno, start_colno = start_node.first_token.start
                 end_lineno, end_colno = end_node.last_token.end
                 expr_src = self.get_source_code(start_lineno, start_colno, end_lineno, end_colno)
+                comments = self.get_jit_comments(start_lineno, end_lineno)
                 start_lineno += self.line_offset - 1
                 start_colno += self.col_offset
                 end_lineno += self.line_offset - 1
                 end_colno += self.col_offset
-                res = res + [start_lineno, start_colno, end_lineno, end_colno, expr_src]
+                res = res + [start_lineno, start_colno, end_lineno, end_colno, expr_src, comments]
             else:
-                res = res + [0, 0, 0, 0, '']
+                res = res + [0, 0, 0, 0, '', []]
         return res

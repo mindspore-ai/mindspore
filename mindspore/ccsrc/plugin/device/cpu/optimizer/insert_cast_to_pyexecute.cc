@@ -28,6 +28,9 @@ const BaseRef InsertCastToPyExecute::DefinePattern() const {
 const AnfNodePtr InsertCastToPyExecute::Process(const FuncGraphPtr &fg, const AnfNodePtr &node,
                                                 const EquivPtr &) const {
   auto cnode = node->cast<CNodePtr>();
+  if (cnode->abstract() == nullptr || !cnode->abstract()->isa<abstract::AbstractAny>()) {
+    return nullptr;
+  }
   if (!common::AnfAlgo::HasNodeAttr(kAttrNeedCast, cnode)) {
     return nullptr;
   }
