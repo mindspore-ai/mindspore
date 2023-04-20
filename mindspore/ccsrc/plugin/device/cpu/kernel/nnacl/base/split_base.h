@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_NNACL_SPLIT_BASE_H_
-#define MINDSPORE_NNACL_NNACL_SPLIT_BASE_H_
+#ifndef NNACL_NNACL_SPLIT_BASE_H_
+#define NNACL_NNACL_SPLIT_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"

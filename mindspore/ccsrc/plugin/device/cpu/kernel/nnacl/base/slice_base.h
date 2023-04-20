@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_BASE_SLICE_BASE_H_
-#define MINDSPORE_NNACL_BASE_SLICE_BASE_H_
+#ifndef NNACL_BASE_SLICE_BASE_H_
+#define NNACL_BASE_SLICE_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"

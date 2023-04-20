@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_SCATTER_ND_BINARY_H_
-#define MINDSPORE_NNACL_BASE_SCATTER_ND_BINARY_H_
+#ifndef NNACL_BASE_SCATTER_ND_BINARY_H_
+#define NNACL_BASE_SCATTER_ND_BINARY_H_
 
 #include "nnacl/scatter_nd_parameter.h"
 

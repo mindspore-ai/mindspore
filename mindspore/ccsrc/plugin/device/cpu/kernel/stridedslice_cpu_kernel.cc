@@ -134,7 +134,7 @@ void StridedSliceCpuKernelMod::InitParallelParam() {
     thread_num = std::min(outer_, max_thread_num);
     cal_num_per_thread_ = UP_DIV(outer_, thread_num);
   }
-  slice_param_.op_parameter_.thread_num_ = thread_num;
+  slice_struct_.base_.thread_nr_ = thread_num;
 }
 
 void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
@@ -160,7 +160,7 @@ void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operat
                       << ", which is not supported.";
   }
   data_size_ = type_pair->second.second;
-  slice_param_.data_type = type_pair->second.first;
+  slice_struct_.data_type_ = type_pair->second.first;
   auto input_shape_pad = input_shape_;
   FillEmptyDims(base_operator, begin, end, stride, &input_shape_pad);
   ParseStrideSliceMasks(base_operator, begin, end, stride, input_shape_pad);
@@ -169,19 +169,17 @@ void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operat
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   for (size_t i = 0; i < DIMENSION_8D; i++) {
-    slice_param_.in_shape_[i] = LongToInt(input_shape_pad[i]);
-    slice_param_.begins_[i] = LongToInt(_begin[i]);
-    slice_param_.ends_[i] = LongToInt(_end[i]);
-    slice_param_.strides_[i] = LongToInt(_stride[i]);
+    slice_struct_.in_shape_[i] = LongToInt(input_shape_pad[i]);
+    slice_struct_.begins_[i] = LongToInt(_begin[i]);
+    slice_struct_.ends_[i] = LongToInt(_end[i]);
+    slice_struct_.strides_[i] = LongToInt(_stride[i]);
   }
-  slice_param_.in_shape_length_ = DIMENSION_8D;
-  slice_param_.num_axes_ = DIMENSION_8D;
 }
 
 common::Status StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr,
                                                         int start_pos) {
   auto idx = IntToSize(split_axis_);
-  int begin_index = slice_param_.begins_[idx];
+  int begin_index = slice_struct_.begins_[idx];
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr =
     input_addr + IntToSize((start_pos * LongToInt(input_shape_[idx]) + begin_index) * inner_size);
@@ -191,7 +189,7 @@ common::Status StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_add
     return common::SUCCESS;
   }
   cur_outer = cur_outer > cal_num_per_thread_ ? cal_num_per_thread_ : cur_outer;
-  FastStride(cur_in_ptr, cur_out_ptr, LongToInt(output_shape_[idx]), slice_param_.strides_[idx], cur_outer, inner_size,
+  FastStride(cur_in_ptr, cur_out_ptr, LongToInt(output_shape_[idx]), slice_struct_.strides_[idx], cur_outer, inner_size,
              LongToSize(input_shape_[idx]) * inner_size);
   return common::SUCCESS;
 }
@@ -199,16 +197,16 @@ common::Status StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_add
 common::Status StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr,
                                                             int start_pos) {
   auto idx = IntToSize(split_axis_);
-  int begin_index = slice_param_.begins_[idx];
+  int begin_index = slice_struct_.begins_[idx];
   int inner_size = inner_ * data_size_;
-  const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[idx] + begin_index) * inner_size;
+  const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_struct_.strides_[idx] + begin_index) * inner_size;
   uint8_t *cur_out_ptr = output_addr + start_pos * inner_size;
   int cal_axis_num = LongToInt(output_shape_[idx]) - start_pos;
   if (cal_axis_num <= 0) {
     return common::SUCCESS;
   }
   cal_axis_num = cal_axis_num > cal_num_per_thread_ ? cal_num_per_thread_ : cal_axis_num;
-  FastStride(cur_in_ptr, cur_out_ptr, cal_axis_num, slice_param_.strides_[idx], 1, inner_size, 0);
+  FastStride(cur_in_ptr, cur_out_ptr, cal_axis_num, slice_struct_.strides_[idx], 1, inner_size, 0);
   return common::SUCCESS;
 }
 
@@ -262,11 +260,11 @@ bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   InitSliceParam(base_operator_, &begin, &end, &stride);
 
-  int thread_num = slice_param_.op_parameter_.thread_num_;
+  int thread_num = slice_struct_.base_.thread_nr_;
   if (parallel_ && thread_num >= 2) {
     ParallelRun(input_addr, output_addr, thread_num);
   } else {
-    (void)DoStridedSlice(input_addr, output_addr, &slice_param_);
+    (void)DoStridedSliceIn8D(input_addr, output_addr, &slice_struct_);
   }
   return true;
 }

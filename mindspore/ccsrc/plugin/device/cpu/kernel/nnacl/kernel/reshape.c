@@ -17,15 +17,8 @@
 #include "nnacl/kernel/reshape.h"
 
 int kMinCostPerThread = 16384;
-typedef struct ReshapeStruct {
-  KernelBase base_;
-  int block_size_;
-  int total_size_;
-} ReshapeStruct;
 
-int reshape_prepare(struct KernelBase *self) { return NNACL_OK; }
-int reshape_release(struct KernelBase *self) { return NNACL_OK; }
-int reshape_do_compute(void *param, int task_id, float lhs_scale, float rhs_scale) {
+int ParallelReshape(void *param, int task_id, float l, float r) {
   NNACL_CHECK_NULL_RETURN_ERR(param);
   ReshapeStruct *reshape = (ReshapeStruct *)param;
 
@@ -39,6 +32,8 @@ int reshape_do_compute(void *param, int task_id, float lhs_scale, float rhs_scal
   return NNACL_OK;
 }
 
+int reshape_prepare(struct KernelBase *self) { return NNACL_OK; }
+int reshape_release(struct KernelBase *self) { return NNACL_OK; }
 int reshape_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReshapeStruct *reshape = (ReshapeStruct *)self;
@@ -60,7 +55,7 @@ int reshape_resize(struct KernelBase *self) {
 }
 
 int reshape_compute(struct KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, reshape_do_compute, self, self->thread_nr_);
+  return self->env_->parallel_launch(self->env_->thread_pool_, ParallelReshape, self, self->thread_nr_);
 }
 
 KernelBase *CreateReshape(OpParameter *param, int data_type) {

@@ -78,7 +78,7 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector begin_shape_;
   ShapeVector end_shape_;
   ShapeVector stride_shape_;
-  StridedSliceParameter slice_param_;
+  StridedSliceStruct slice_struct_;
 };
 }  // namespace kernel
 }  // namespace mindspore

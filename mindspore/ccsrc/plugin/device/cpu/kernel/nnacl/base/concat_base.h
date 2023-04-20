@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_CONCAT_BASE_H_
-#define MINDSPORE_NNACL_FP32_CONCAT_BASE_H_
+#ifndef NNACL_FP32_CONCAT_BASE_H_
+#define NNACL_FP32_CONCAT_BASE_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
