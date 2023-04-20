@@ -35,10 +35,10 @@ class Exponential(Distribution):
     where :math:`\lambda` is the rate of the distribution.
 
     Args:
-        rate (int, float, list, numpy.ndarray, Tensor): The inverse scale. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
-        name (str): The name of the distribution. Default: 'Exponential'.
+        rate (int, float, list, numpy.ndarray, Tensor): The inverse scale. Default: ``None`` .
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.float32`` .
+        name (str): The name of the distribution. Default: ``'Exponential'`` .
 
     Note:
         `rate` must be strictly greater than 0.

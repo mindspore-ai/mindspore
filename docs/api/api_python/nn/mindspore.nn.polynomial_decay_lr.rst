@@ -22,7 +22,7 @@ mindspore.nn.polynomial_decay_lr
     .. math::
         tmp\_decay\_epoch = decay\_epoch
 
-    如果 `update_decay_epoch` 为True，则每个epoch更新 `tmp_decay_epoch` 的值。公式为：
+    如果 `update_decay_epoch` 为 ``True`` ，则每个epoch更新 `tmp_decay_epoch` 的值。公式为：
 
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
@@ -34,7 +34,7 @@ mindspore.nn.polynomial_decay_lr
         - **step_per_epoch** (int) - 每个epoch的step数。
         - **decay_epoch** (int) - 进行衰减的epoch数。
         - **power** (float) - 多项式的幂，必须大于0。
-        - **update_decay_epoch** (bool) - 如果为True，则更新 `decay_epoch` 。默认值：False。
+        - **update_decay_epoch** (bool) - 如果为 ``True`` ，则更新 `decay_epoch` 。默认值： ``False`` 。
 
     返回：
         list[float]。列表的大小为 `total_step`。

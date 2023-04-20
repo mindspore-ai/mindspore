@@ -37,12 +37,13 @@ class LogNormal(msd.TransformedDistribution):
     It is constructed as the exponential transformation of a Normal distribution.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution. Default: None.
+        loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution.
+          Default: ``None`` .
         scale (int, float, list, numpy.ndarray, Tensor): The standard deviation of the underlying
-          Normal distribution. Default: None.
-        seed (int): the seed used in sampling. The global seed is used if it is None. Default: 0.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
-        name (str): the name of the distribution. Default: 'LogNormal'.
+          Normal distribution. Default: ``None`` .
+        seed (int): the seed used in sampling. The global seed is used if it is None. Default: ``0`` .
+        dtype (mindspore.dtype): type of the distribution. Default: ``mstype.float32`` .
+        name (str): the name of the distribution. Default: ``'LogNormal'`` .
 
     Note:
         `scale` must be greater than zero.

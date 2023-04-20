@@ -43,16 +43,16 @@ mindspore.nn.FTRL
 
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **initial_accum** (float) - 累加器 `m` 的初始值，必须大于等于零。默认值：0.1。
-        - **learning_rate** (float) - 学习速率值必须为零或正数，当前不支持动态学习率。默认值：0.001。
-        - **lr_power** (float) - 学习率的幂值，控制训练期间学习率的下降方式，必须小于或等于零。如果lr_power为零，则使用固定的学习率。默认值：-0.5。
-        - **l1** (float) - l1正则化强度，必须大于等于零。默认值：0.0。
-        - **l2** (float) - l2正则化强度，必须大于等于零。默认值：0.0。
-        - **use_locking** (bool) - 如果为True，则更新操作使用锁保护。默认值：False。
+        - **initial_accum** (float) - 累加器 `m` 的初始值，必须大于等于零。默认值： ``0.1`` 。
+        - **learning_rate** (float) - 学习速率值必须为零或正数，当前不支持动态学习率。默认值： ``0.001`` 。
+        - **lr_power** (float) - 学习率的幂值，控制训练期间学习率的下降方式，必须小于或等于零。如果lr_power为零，则使用固定的学习率。默认值： ``-0.5`` 。
+        - **l1** (float) - l1正则化强度，必须大于等于零。默认值： ``0.0`` 。
+        - **l2** (float) - l2正则化强度，必须大于等于零。默认值： ``0.0`` 。
+        - **use_locking** (bool) - 如果为True，则更新操作使用锁保护。默认值： ``False`` 。
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 

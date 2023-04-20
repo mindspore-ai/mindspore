@@ -29,9 +29,9 @@ class ScalarAffine(Bijector):
     where a is the scale factor and b is the shift factor.
 
     Args:
-        scale (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
-        shift (float, list, numpy.ndarray, Tensor): The shift factor. Default: 0.0.
-        name (str): The name of the bijector. Default: 'ScalarAffine'.
+        scale (float, list, numpy.ndarray, Tensor): The scale factor. Default: ``1.0`` .
+        shift (float, list, numpy.ndarray, Tensor): The shift factor. Default: ``0.0`` .
+        name (str): The name of the bijector. Default: ``'ScalarAffine'`` .
 
     Note:
         The dtype of `shift` and `scale` must be float.

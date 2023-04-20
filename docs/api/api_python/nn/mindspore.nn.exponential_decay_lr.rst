@@ -18,7 +18,7 @@ mindspore.nn.exponential_decay_lr
         - **total_step** (int) - step总数。
         - **step_per_epoch** (int) - 每个 epoch的step数。
         - **decay_epoch** (int) - 进行衰减的epoch数。
-        - **is_stair** (bool) - 如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值：False。
+        - **is_stair** (bool) - 如果为True，则学习率每 `decay_epoch` 次衰减一次。默认值： ``False`` 。
 
     返回：
         list[float]。列表的大小为 `total_step`。

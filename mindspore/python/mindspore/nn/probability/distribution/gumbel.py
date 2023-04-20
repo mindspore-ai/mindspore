@@ -39,9 +39,9 @@ class Gumbel(TransformedDistribution):
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location of Gumbel distribution.
         scale (int, float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution.
-        seed (int): the seed used in sampling. The global seed is used if it is None. Default: 0.
-        dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
-        name (str): the name of the distribution. Default: 'Gumbel'.
+        seed (int): the seed used in sampling. The global seed is used if it is None. Default: ``0`` .
+        dtype (mindspore.dtype): type of the distribution. Default: ``mstype.float32`` .
+        name (str): the name of the distribution. Default: ``'Gumbel'`` .
 
     Note:
         `scale` must be greater than zero.

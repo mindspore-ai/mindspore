@@ -21,20 +21,20 @@ mindspore.nn.Conv3d
         - **in_channels** (int) - Conv3d层输入Tensor的空间维度。
         - **out_channels** (int) - Conv3d层输出Tensor的空间维度。
         - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。数据类型为int或包含三个整数的tuple。一个整数表示卷积核的深度、高度和宽度均为该值。包含三个整数的tuple分别表示卷积核的深度、高度和宽度。
-        - **stride** (Union[int, tuple[int]]) - 三维卷积核的移动步长。数据类型为整型或三个整型的tuple。一个整数表示在深度、高度和宽度方向的移动步长均为该值。三个整数的tuple分别表示在深度、高度和宽度方向的移动步长。默认值：1。
-        - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值："same"。
+        - **stride** (Union[int, tuple[int]]) - 三维卷积核的移动步长。数据类型为整型或三个整型的tuple。一个整数表示在深度、高度和宽度方向的移动步长均为该值。三个整数的tuple分别表示在深度、高度和宽度方向的移动步长。默认值： ``1`` 。
+        - **pad_mode** (str) - 指定填充模式。可选值为 ``"same"`` 、 ``"valid"`` 、 ``"pad"`` 。默认值： ``"same"`` 。
 
-          - same：输出的深度、高度和宽度分别与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
-          - valid：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
-          - pad：对输入进行填充。在输入的深度、高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
+          - ``"same"``：输出的深度、高度和宽度分别与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
+          - ``"valid"``：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
+          - ``"pad"``：对输入进行填充。在输入的深度、高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
-        - **padding** (Union(int, tuple[int])) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int或包含6个整数的tuple。如果 `padding` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `padding` 。如果 `padding` 是6个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充padding[0]、padding[1]、padding[2]、padding[3]、padding[4]和padding[5]。值应该要大于等于0，默认值：0。
-        - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若取值 :math:`k > 1`，则kernel对每k个元素进行采样。在深度、高度和宽度方向上的取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。当前Ascend后端的深度维度只支持为1。 
-        - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：1。
-        - **has_bias** (bool) - Conv3d层是否添加偏置参数。默认值：False。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选"TruncatedNormal"，"Normal"，"Uniform"，"HeUniform"和"XavierUniform"分布以及常量"One"和"Zero"分布的值，可接受别名"xavier_uniform"，"he_uniform"，"ones"和"zeros"。上述字符串大小写均可。更多细节请参考Initializer的值。默认值："normal"。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值："zeros"。
-        - **data_format** (str) - 数据格式的可选值。目前仅支持"NCDHW"。
+        - **padding** (Union(int, tuple[int])) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int或包含6个整数的tuple。如果 `padding` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `padding` 。如果 `padding` 是6个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充padding[0]、padding[1]、padding[2]、padding[3]、padding[4]和padding[5]。值应该要大于等于0，默认值： ``0`` 。
+        - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若取值 :math:`k > 1`，则kernel对每k个元素进行采样。在深度、高度和宽度方向上的取值范围分别为[1, D]、[1, H]和[1, W]。默认值： ``1`` 。当前Ascend后端的深度维度只支持为1。 
+        - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值： ``1`` 。
+        - **has_bias** (bool) - Conv3d层是否添加偏置参数。默认值： ``False`` 。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ，"Normal"， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``"normal"`` 。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``"zeros"`` 。
+        - **data_format** (str) - 数据格式的可选值。目前仅支持 ``"NCDHW"`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。目前输入数据类型只支持float16和float32。
@@ -42,7 +42,7 @@ mindspore.nn.Conv3d
     输出：
         Tensor，shape为 :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})` 。
 
-        pad_mode为"same"时：
+        pad_mode为 ``"same"`` 时：
 
         .. math::
             \begin{array}{ll} \\
@@ -51,7 +51,7 @@ mindspore.nn.Conv3d
                 W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
-        pad_mode为"valid"时：
+        pad_mode为 ``"valid"`` 时：
 
         .. math::
             \begin{array}{ll} \\
@@ -63,7 +63,7 @@ mindspore.nn.Conv3d
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-        pad_mode为"pad"时：
+        pad_mode为 ``"pad"`` 时：
 
         .. math::
             \begin{array}{ll} \\

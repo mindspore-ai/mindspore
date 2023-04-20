@@ -39,14 +39,14 @@ class StudentT(Distribution):
 
     Args:
         df (Union[int, float, list, numpy.ndarray, Tensor], optional): The degrees of freedom.
-            If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
+            If this arg is ``None`` , then the df of the distribution will be passed in runtime. Default: ``None`` .
         mean (Union[int, float, list, numpy.ndarray, Tensor], optional): The mean of the distribution.
-            If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
+            If this arg is ``None`` , then the df of the distribution will be passed in runtime. Default: ``None`` .
         sd (Union[int, float, list, numpy.ndarray, Tensor], optional): The standard deviation of the distribution.
-            If this arg is None, then the sd of the distribution will be passed in runtime. Default: None.
-        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype, optional): The type of the event samples. Default: mstype.float32.
-        name (str, optional): The name of the distribution. Default: 'StudentT'.
+            If this arg is ``None`` , then the sd of the distribution will be passed in runtime. Default: ``None`` .
+        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype, optional): The type of the event samples. Default: ``mstype.float32`` .
+        name (str, optional): The name of the distribution. Default: ``'StudentT'`` .
 
     Note:
         - `df` must be greater than zero.

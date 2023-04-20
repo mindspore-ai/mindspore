@@ -31,8 +31,8 @@ class Softplus(Bijector):
     where k is the sharpness factor.
 
     Args:
-        sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
-        name (str): The name of the Bijector. Default: 'Softplus'.
+        sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: ``1.0`` .
+        name (str): The name of the Bijector. Default: ``'Softplus'`` .
 
     Note:
         The dtype of `sharpness` must be float.

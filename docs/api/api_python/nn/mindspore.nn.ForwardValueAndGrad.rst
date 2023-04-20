@@ -11,9 +11,9 @@ mindspore.nn.ForwardValueAndGrad
     参数：
         - **network** (Cell) - 训练网络。
         - **weights** (ParameterTuple) - 训练网络中需要计算梯度的的参数。
-        - **get_all** (bool) - 如果为True，则计算网络输入对应的梯度。默认值：False。
-        - **get_by_list** (bool) - 如果为True，则计算参数变量对应的梯度。如果 `get_all` 和 `get_by_list` 都为False，则计算第一个输入对应的梯度。如果 `get_all` 和 `get_by_list` 都为True，则以（（输入的梯度）,（参数的梯度））的形式同时获取输入和参数变量的梯度。默认值：False。
-        - **sens_param** (bool) - 是否将sens作为输入。如果 `sens_param` 为False，则sens默认为'ones_like(outputs)'。默认值：False。如果 `sens_param` 为True，则需要指定sens的值。
+        - **get_all** (bool) - 如果为 ``True`` ，则计算网络输入对应的梯度。默认值： ``False`` 。
+        - **get_by_list** (bool) - 如果为 ``True`` ，则计算参数变量对应的梯度。如果 `get_all` 和 `get_by_list` 都为 ``False`` ，则计算第一个输入对应的梯度。如果 `get_all` 和 `get_by_list` 都为True，则以（（输入的梯度）,（参数的梯度））的形式同时获取输入和参数变量的梯度。默认值： ``False`` 。
+        - **sens_param** (bool) - 是否将sens作为输入。如果 `sens_param` 为False，则sens默认为'ones_like(outputs)'。默认值： ``False`` 。如果 `sens_param` 为 ``True`` ，则需要指定sens的值。
 
     输入：
         - **\*inputs** (Tuple(Tensor...)) - shape为 :math:`(N, \ldots)` 的输入tuple。

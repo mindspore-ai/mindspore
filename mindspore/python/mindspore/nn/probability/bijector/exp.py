@@ -25,7 +25,7 @@ class Exp(PowerTransform):
         Y = \exp(x).
 
     Args:
-        name (str): The name of the Bijector. Default: 'Exp'.
+        name (str): The name of the Bijector. Default: ``'Exp'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU``

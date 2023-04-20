@@ -141,10 +141,10 @@ class WithGradCell(Cell):
 
     Args:
         network (Cell): The target network to wrap. The network only supports single output.
-        loss_fn (Cell): Primitive loss function used to compute gradients. Default: None.
+        loss_fn (Cell): Primitive loss function used to compute gradients. Default: ``None`` .
         sens (Union[None, Tensor, Scalar, Tuple ...]): The sensitive for backpropagation, the type and shape
-            must be same as the `network` output. If None, we will fill one to a same type shape of
-            output value. Default: None.
+            must be same as the `network` output. If ``None`` , we will fill one to a same type shape of
+            output value. Default: ``None`` .
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
@@ -204,18 +204,18 @@ class ForwardValueAndGrad(Cell):
     Args:
         network (Cell): The training network.
         weights (ParameterTuple): The parameters of the training network that need to calculate the gradient.
-            Default: None.
-        get_all (bool): If True, get all the gradients with respect to inputs. Default: False.
-        get_by_list (bool): If True, get all the gradients with respect to Parameter variables.
-            If get_all and get_by_list are both False, get the gradient with respect to first input.
-            If get_all and get_by_list are both True, get the gradients with respect to inputs and Parameter variables
-            at the same time in the form of ((gradients with respect to inputs),
-            (gradients with respect to parameters)). Default: False.
+            Default: ``None`` .
+        get_all (bool): If ``True`` , get all the gradients with respect to inputs. Default: ``False`` .
+        get_by_list (bool): If ``True`` s, get all the gradients with respect to Parameter variables.
+            If get_all and get_by_list are both ``False`` , get the gradient with respect to first input.
+            If get_all and get_by_list are both ``True`` , get the gradients with respect to inputs and Parameter
+            variables  at the same time in the form of ((gradients with respect to inputs),
+            (gradients with respect to parameters)). Default: ``False`` .
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
-            If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically.
-            Default: False.
-            If the sens_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
-            the input parameter.
+            If sens_param is ``False`` , a 'ones_like(outputs)' sensitivity will be attached automatically.
+            Default: ``False`` .
+            If the sens_param is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
+            through the input parameter.
 
     Inputs:
         - **\*inputs** (Tuple(Tensor...)) - Tuple of inputs with shape :math:`(N, \ldots)`.
@@ -310,7 +310,8 @@ class TrainOneStepCell(Cell):
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Union[Cell]): Optimizer for updating the network parameters.
-        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
+        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is
+            ``1.0`` .
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
@@ -520,7 +521,7 @@ class MicroBatchInterleaved(Cell):
 
     Args:
         network (Cell): The target network to wrap.
-        interleave_num (int, optional): split num of batch size. Default: 2.
+        interleave_num (int, optional): split num of batch size. Default: ``2`` .
 
     Inputs:
         tuple[Tensor]. It's the same with the input of the `network` .
@@ -681,7 +682,7 @@ class WithEvalCell(Cell):
     Args:
         network (Cell): The forward network.
         loss_fn (Cell): The loss function.
-        add_cast_fp32 (bool): Whether to adjust the data type to float32. Default: False.
+        add_cast_fp32 (bool): Whether to adjust the data type to float32. Default: ``False`` .
 
     Inputs:
         - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.

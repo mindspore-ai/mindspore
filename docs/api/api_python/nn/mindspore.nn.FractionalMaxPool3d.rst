@@ -11,10 +11,10 @@ mindspore.nn.FractionalMaxPool3d
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为正整数，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。
-        - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是正整数，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个正整数值分别表示目标输出的深、高和宽。为None时，输出大小由 `output_ratio` 决定。默认值：None。
-        - **output_ratio** (Union[float, tuple[float]]，可选) - 目标输出shape与输入shape的比率。通过输入shape和 `output_ratio` 确定输出shape。支持数据类型：float16、float32、float64，数值介于0到1之间。为None时，输出大小由 `output_size` 决定。默认值：None。
-        - **return_indices** (bool，可选) - 是否返回最大值的的索引值。默认值：False。
-        - **_random_samples** (Tensor，可选) - 分数最大池化的随机步长。数值范围为 :math:`(0, 1)` ，shape为 :math:`(N, C, 3)` 支持的数据类型：float16、float32、float64。为None时，不设置随机步长。默认值：None。
+        - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是正整数，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个正整数值分别表示目标输出的深、高和宽。为 ``None`` 时，输出大小由 `output_ratio` 决定。默认值： ``None`` 。
+        - **output_ratio** (Union[float, tuple[float]]，可选) - 目标输出shape与输入shape的比率。通过输入shape和 `output_ratio` 确定输出shape。支持数据类型：float16、float32、float64，数值介于0到1之间。为None时，输出大小由 `output_size` 决定。默认值： ``None`` 。
+        - **return_indices** (bool，可选) - 是否返回最大值的的索引值。默认值： ``False`` 。
+        - **_random_samples** (Tensor，可选) - 分数最大池化的随机步长。数值范围为 :math:`(0, 1)` ，shape为 :math:`(N, C, 3)` 支持的数据类型：float16、float32、float64。为None时，不设置随机步长。默认值： ``None`` 。
 
     输入：
         - **input** (Tensor) - 四维或五维的张量，支持的数据类型：float16、float32、float64、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 。

@@ -32,9 +32,9 @@ class TensorArray(Cell):
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
         element_shape (tuple[int]): the shape of each tensor in a TensorArray.
-        dynamic_size (bool): if true, the size of TensorArray can be increased. Default: True.
+        dynamic_size (bool): if ``true`` , the size of TensorArray can be increased. Default: ``True`` .
         size (int): if dynamic_size=False, `size` means the max_size of the TensorArray.
-        name (string): the name of this TensorArray. Default: "TA".
+        name (string): the name of this TensorArray. Default: ``"TA"`` .
 
     Supported Platforms:
         ``GPU`` ``CPU``

@@ -157,11 +157,11 @@ class ConvReparam(_ConvVariational):
         stride(Union[int, tuple[int]]): The distance of kernel moving,
             an integer number represents that the height and width of movement
             are both strides, or a tuple of two integers numbers represents that
-            height and width of movement respectively. Default: 1.
+            height and width of movement respectively. Default: ``1`` .
         pad_mode (str): Specifies the padding mode. The optional values are
-            "same", "valid", and "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , and ``"pad"`` . Default: ``"same"`` .
 
-            - same: Adopts the way of completion. Output height and width
+            - ``"same"``: Adopts the way of completion. Output height and width
               will be the same as the input.
               The total number of padding will be calculated for in horizontal and
               vertical directions and evenly distributed to top and bottom,
@@ -169,43 +169,43 @@ class ConvReparam(_ConvVariational):
               will be done from the bottom and the right side. If this mode
               is set, `padding` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest
+            - ``"valid"``: Adopts the way of discarding. The possible largest
               height and width of the output will be returned without padding.
               Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input. The number
+            - ``"pad"``: Implicit paddings on both sides of the input. The number
               of `padding` will be padded to the input Tensor borders.
               `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of
-            the input. Default: 0.
+            the input. Default: ``0`` .
         dilation (Union[int, tuple[int]]): The data type is an integer or a tuple
             of 2 integers. This parameter specifies the dilation rate of the
             dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling
             location. Its value must be greater or equal to 1 and bounded
-            by the height and width of the input. Default: 1.
+            by the height and width of the input. Default: ``1`` .
         group (int): Splits filter into groups, `in_ channels` and
             `out_channels` must be divisible by the number of groups.
-            Default: 1.
+            Default: ``1`` .
         has_bias (bool): Specifies whether the layer uses a bias vector.
-            Default: False.
+            Default: ``False`` .
         weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
-            Default: NormalPrior. (which creates an instance of standard
+            Default: ``NormalPrior`` . (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
         bias_prior_fn (Cell): The prior distribution for bias vector. It must return
-            a mindspore distribution. Default: NormalPrior(which creates an
+            a mindspore distribution. Default: ``NormalPrior`` (which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
         bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
 
     Inputs:

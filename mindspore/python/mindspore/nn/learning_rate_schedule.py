@@ -79,7 +79,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): Number of steps to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: ``False`` .
 
     Inputs:
         - **global_step** (Tensor) - The current step number.
@@ -149,7 +149,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): Number of steps to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
+        is_stair (bool): If ``true`` , learning rate is decayed once every `decay_steps` time. Default: ``False`` .
 
     Inputs:
         - **global_step** (Tensor) - The current step number.
@@ -220,7 +220,7 @@ class InverseDecayLR(LearningRateSchedule):
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         decay_steps (int): Number of steps to decay over.
-        is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
+        is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: ``False`` .
 
     Inputs:
         - **global_step** (Tensor) - The current step number.
@@ -361,7 +361,8 @@ class PolynomialDecayLR(LearningRateSchedule):
         end_learning_rate (float): The end value of learning rate.
         decay_steps (int): Number of steps to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_steps (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
+        update_decay_steps (bool): If ``true`` , learning rate is decayed once every `decay_steps` time.
+            Default: ``False`` .
 
     Inputs:
         - **global_step** (Tensor) - The current step number.

@@ -90,8 +90,8 @@ class SparseTensorDenseMatmul(Cell):
     The rank of sparse matrix and dense matrix must be equal to `2`.
 
     Args:
-        adjoint_st (bool): If true, sparse tensor is transposed before multiplication. Default: False.
-        adjoint_dt (bool): If true, dense tensor is transposed before multiplication. Default: False.
+        adjoint_st (bool): If ``true`` , sparse tensor is transposed before multiplication. Default: ``False`` .
+        adjoint_dt (bool): If ``true`` , dense tensor is transposed before multiplication. Default: ``False`` .
 
     Inputs:
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
@@ -101,15 +101,15 @@ class SparseTensorDenseMatmul(Cell):
         - **sparse_shape** (tuple) - A positive int tuple which specifies the shape of sparse tensor,
           should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
         - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
-          If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
-          If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
-          If `adjoint_st` is True and `adjoint_dt` is False, the shape must be :math:`(N, M)`.
-          If `adjoint_st` is True and `adjoint_dt` is True, the shape must be :math:`(M, N)`.
+          If `adjoint_st` is ``False`` and `adjoint_dt` is ``False`` , the shape must be :math:`(C, M)`.
+          If `adjoint_st` is ``False`` and `adjoint_dt` is ``True`` , the shape must be :math:`(M, C)`.
+          If `adjoint_st` is ``True`` and `adjoint_dt` is ``False`` , the shape must be :math:`(N, M)`.
+          If `adjoint_st` is ``True`` and `adjoint_dt` is ``True`` , the shape must be :math:`(M, N)`.
 
     Outputs:
         Tensor, the dtype is the same as `values`.
-        If `adjoint_st` is False, the shape is :math:`(N, M)`.
-        If `adjoint_st` is True, the shape is :math:`(C, M)`.
+        If `adjoint_st` is ``False`` , the shape is :math:`(N, M)`.
+        If `adjoint_st` is ``True`` , the shape is :math:`(C, M)`.
 
     Raises:
         TypeError: If the type of `adjoint_st` or `adjoint_dt` is not bool, or the dtype of `indices`,

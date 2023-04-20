@@ -10,12 +10,12 @@ mindspore.nn.Momentum
     .. math::
         v_{t+1} = v_{t} \ast u + grad
 
-    如果 `use_nesterov` 为True：
+    如果 `use_nesterov` 为 ``True`` ：
 
     .. math::
         p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
 
-    如果 `use_nesterov` 为False：
+    如果 `use_nesterov` 为 ``False`` ：
 
     .. math::
         p_{t+1} = p_{t} - lr \ast v_{t+1}
@@ -39,19 +39,19 @@ mindspore.nn.Momentum
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
         - **momentum** (float) - 浮点数类型的超参，表示移动平均的动量。必须等于或大于0.0。
-        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-        - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。默认值：False。
+        - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。默认值： ``False`` 。
 
     输入：
         - **gradients** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同。
 
     输出：
-        tuple[bool]，所有元素都为True。
+        tuple[bool]，所有元素都为 ``True`` 。
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。

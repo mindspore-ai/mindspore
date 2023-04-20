@@ -63,13 +63,14 @@ class Cell(Cell_):
 
     Args:
         auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its child cells. It also
-                      affects the names of parameters in the `Cell`. If set to True, the parameter name will be
-                      automatically prefixed, otherwise not. In general, the backbone network should be set to True,
-                      otherwise the duplicate name problem will appear. The cell to train the backbone network, such as
-                      optimizer and :class:`mindspore.nn.TrainOneStepCell`, should be set to False, otherwise the
-                      parameter name in backbone will be changed by mistake. Default: True.
+                      affects the names of parameters in the `Cell`. If set to ``True`` , the parameter name will be
+                      automatically prefixed, otherwise not. In general, the backbone network should be set to
+                      ``True`` , otherwise the duplicate name problem will appear. The cell to train the backbone
+                      network, such as optimizer and :class:`mindspore.nn.TrainOneStepCell`, should be set to
+                      ``False`` , otherwise the parameter name in backbone will be changed by mistake.
+                      Default: ``True`` .
         flags (dict, optional): Network configuration information, currently it is used for the binding of network
-                      and dataset. Users can also customize network attributes by this parameter. Default: None.
+                      and dataset. Users can also customize network attributes by this parameter. Default: ``None`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -208,7 +209,7 @@ class Cell(Cell_):
             and add to graph when bprop debug is false.
 
         Args:
-            value (bool): Specifies whether to enable bprop debug. Default: False.
+            value (bool): Specifies whether to enable bprop debug. Default: ``False``.
         """
         if not isinstance(value, bool):
             raise TypeError(f"For 'Cell', the property 'bprop_debug' must be bool type, but got type {type(value)}.")
@@ -534,19 +535,19 @@ class Cell(Cell_):
             in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None. Tuple
                              defines the layout of the corresponding input and None represents a data parallel strategy.
             out_strategy (Union[None, tuple]): Define the layout of outputs similar with in_strategy.
-                                               It is not in use right now. Default: None.
+                                               It is not in use right now. Default: ``None`` .
             parameter_plan (Union[dict, None]): Define the layout for the specified parameters. Each element in dict
                                                 defines the layout of the parameter like "param_name: layout".
                                                 The key is a parameter name of type 'str'.
                                                 The value is a 1-D integer tuple, indicating the corresponding layout.
                                                 If the parameter name is incorrect or the corresponding parameter
                                                 has been set, the parameter setting will be ignored.
-                                                Default: None.
+                                                Default: ``None`` .
             device (string): Select a certain device target. It is not in use right now.
-                             Support ["CPU", "GPU", "Ascend"]. Default: "Ascend".
+                             Support [ ``"CPU"`` , ``"GPU"`` , ``"Ascend"`` ]. Default: ``"Ascend"`` .
             level (int): Option for parallel strategy infer algorithm, namely the object function, maximize computation
                          over communication ratio, maximize speed performance, minimize memory usage etc. It is not in
-                         use right now. Support ["0", "1", "2"]. Default: "0".
+                         use right now. Support [ ``"0"`` , ``"1"`` , ``"2"`` ]. Default: ``"0"`` .
 
         Returns:
             Cell, the cell itself.
@@ -970,7 +971,7 @@ class Cell(Cell_):
         Args:
             param_name (str): Name of the parameter.
             param (Parameter): Parameter to be inserted to the cell.
-            check_name_contain_dot (bool): Determines whether the name input is compatible. Default: True.
+            check_name_contain_dot (bool): Determines whether the name input is compatible. Default: ``True`` .
 
         Raises:
             KeyError: If the name of parameter is null or contains dot.
@@ -1095,7 +1096,7 @@ class Cell(Cell_):
             `init_parameters_data`, do not save these results.
 
         Args:
-            auto_parallel_mode (bool): If running in auto_parallel_mode. Default: False.
+            auto_parallel_mode (bool): If running in auto_parallel_mode. Default: ``False`` .
 
         Returns:
             Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.
@@ -1140,7 +1141,7 @@ class Cell(Cell_):
         Gets the parameters dictionary of this cell.
 
         Args:
-            recurse (bool): Whether contains the parameters of subcells. Default: True.
+            recurse (bool): Whether contains the parameters of subcells. Default: ``True`` .
 
         Returns:
             OrderedDict, return parameters dictionary.
@@ -1155,7 +1156,7 @@ class Cell(Cell_):
         Gets the parameters broadcast dictionary of this cell.
 
         Args:
-            recurse (bool): Whether contains the parameters of subcells. Default: True.
+            recurse (bool): Whether contains the parameters of subcells. Default: ``True`` .
 
         Returns:
             OrderedDict, return parameters broadcast dictionary.
@@ -1173,8 +1174,8 @@ class Cell(Cell_):
         Adds the `prefix` string to the names of parameters.
 
         Args:
-            prefix (str): The prefix string. Default: ''.
-            recurse (bool): Whether contains the parameters of subcells. Default: True.
+            prefix (str): The prefix string. Default: ``''`` .
+            recurse (bool): Whether contains the parameters of subcells. Default: ``True`` .
         """
 
         Validator.check_str_by_regular(prefix)
@@ -1212,7 +1213,7 @@ class Cell(Cell_):
         Returns a list of all trainable parameters.
 
         Args:
-            recurse (bool): Whether contains the trainable parameters of subcells. Default: True.
+            recurse (bool): Whether contains the trainable parameters of subcells. Default: ``True`` .
 
         Returns:
             List, the list of trainable parameters.
@@ -1231,7 +1232,7 @@ class Cell(Cell_):
         Returns a list of all untrainable parameters.
 
         Args:
-            recurse (bool): Whether contains the untrainable parameters of subcells. Default: True.
+            recurse (bool): Whether contains the untrainable parameters of subcells. Default: ``True`` .
 
         Returns:
             List, the list of untrainable parameters.
@@ -1243,11 +1244,11 @@ class Cell(Cell_):
         """
         Returns an iterator over cell parameters.
 
-        Yields parameters of this cell. If `expand` is true, yield parameters of this cell and all subcells.
+        Yields parameters of this cell. If `expand` is ``true`` , yield parameters of this cell and all subcells.
 
         Args:
-            expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
-                           that are direct members of this cell. Default: True.
+            expand (bool): If ``true`` , yields parameters of this cell and all subcells. Otherwise, only yield
+                           parameters that are direct members of this cell. Default: ``True`` .
 
         Returns:
             Iteration, all parameters at the cell.
@@ -1280,9 +1281,9 @@ class Cell(Cell_):
         Includes the parameter's name and itself.
 
         Args:
-            name_prefix (str): Namespace. Default: ''.
+            name_prefix (str): Namespace. Default: ``''`` .
             expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
-                           that are direct members of this cell. Default: True.
+                           that are direct members of this cell. Default: ``True`` .
 
         Returns:
             Iteration, all the names and corresponding parameters in the cell.
@@ -1324,8 +1325,8 @@ class Cell(Cell_):
         Returns an iterator over all cells in the network, including the cell's name and itself.
 
         Args:
-            cells (str): Cells to iterate over. Default: None.
-            name_prefix (str): Namespace. Default: ''.
+            cells (str): Cells to iterate over. Default: ``None`` .
+            name_prefix (str): Namespace. Default: ``''`` .
 
         Returns:
             Iteration, all the child cells and corresponding names in the cell.
@@ -1474,7 +1475,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter. Default: ``None`` .
         """
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
@@ -1489,7 +1490,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter. Default: ``None`` .
         """
         self.add_flags(**flags)
         self._add_mixed_precision_flag_recursive(**flags)
@@ -1590,12 +1591,12 @@ class Cell(Cell_):
     def set_grad(self, requires_grad=True):
         """
         Sets the cell flag for gradient. In pynative mode, this parameter specifies whether the network requires
-        gradients. If true, the backward network needed to compute the gradients will be generated when the forward
+        gradients. If ``true`` , the backward network needed to compute the gradients will be generated when the forward
         network is executed.
 
         Args:
             requires_grad (bool): Specifies if the net need to grad, if it is
-                true, the cell will construct backward network in pynative mode. Default: True.
+                ``true`` , the cell will construct backward network in pynative mode. Default: ``True`` .
 
         Returns:
             Cell, the cell itself.
@@ -1616,7 +1617,7 @@ class Cell(Cell_):
             When execute function Model.eval(), framework will call Cell.set_train(False).
 
         Args:
-            mode (bool): Specifies whether the model is training. Default: True.
+            mode (bool): Specifies whether the model is training. Default: ``True`` .
 
         Returns:
             Cell, the cell itself.
@@ -1637,7 +1638,7 @@ class Cell(Cell_):
         Set parameter broadcast mode for this cell.
 
         Args:
-            mode (bool): Specifies whether the mode is parameter broadcast. Default: True.
+            mode (bool): Specifies whether the mode is parameter broadcast. Default: ``True`` .
         """
         self.add_flags_recursive(broadcast_flag=mode)
         return self
@@ -1679,7 +1680,7 @@ class Cell(Cell_):
             to limit the maximum memory chunk size.
 
         Args:
-            fusion_size (int): Maximum memory chunk size in bytes, 0 for unlimited. Default: 0.
+            fusion_size (int): Maximum memory chunk size in bytes, ``0`` for unlimited. Default: ``0`` .
         """
         if fusion_size < 0:
             raise ValueError(f"Negative 'fusion_size' {fusion_size} is invalid.")
@@ -2000,9 +2001,9 @@ class Cell(Cell_):
             It is only supported in graph mode.
 
         Args:
-            recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+            recurse (bool): Whether sets the trainable parameters of subcells. Default: ``True`` .
             init_in_server (bool): Whether trainable parameters updated by parameter server are
-                initialized on server. Default: False.
+                initialized on server. Default: ``False`` .
         """
         params = self.trainable_params(recurse)
         for param in params:
@@ -2013,9 +2014,9 @@ class Cell(Cell_):
         Set the way of parameter and server interaction.
 
         Args:
-            push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
-            pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
-            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: True.
+            push_to_server (bool): Whether the parameter should be pushed to server. Default: ``False`` .
+            pull_from_server (bool): Whether the parameter should be pulled from server. Default: ``False`` .
+            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: ``True`` .
         """
         params = self.parameters_and_names()
         for param in params:
@@ -2031,7 +2032,7 @@ class Cell(Cell_):
 
         Args:
             fusion_type (int): The value of `comm_fusion`.
-            recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+            recurse (bool): Whether sets the trainable parameters of subcells. Default: ``True`` .
         """
         Validator.check_non_negative_int(fusion_type)
         for param in self.trainable_params(recurse):
@@ -2118,10 +2119,10 @@ class Cell(Cell_):
 
         Args:
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
-                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
+                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: ``True`` .
             parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
                 introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
-                Default: False.
+                Default: ``False`` .
         """
         self._recompute()
         if 'mp_comm_recompute' in kwargs.keys():
@@ -2280,11 +2281,11 @@ class GraphCell(Cell):
         params_init (dict): Parameters need to be inited in the graph.
             The key is the parameter name whose type is str, and the value is a Tensor or Parameter.
             If the parameter exists in the graph according to the name, update it's value.
-            If the parameter does not exist, ignore it. Default: None.
+            If the parameter does not exist, ignore it. Default: ``None`` .
         obf_random_seed (Union[int, None]): The random seed used for dynamic obfuscation. "dynamic obfuscation" is
             used for model protection, which can refer to :func:`mindspore.obfuscate_model`. If the input `graph` is
             a func_graph loaded from a mindir file obfuscated with `obf_random_seed` , then `obf_random_seed` should be
-            provided. `obf_random_seed` should be in (0, 9223372036854775807]. default: None.
+            provided. `obf_random_seed` should be in (0, 9223372036854775807]. default: ``None`` .
 
     Raises:
         TypeError: If the `graph` is not a FuncGraph.

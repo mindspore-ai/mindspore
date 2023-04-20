@@ -35,11 +35,11 @@ class Logistic(Distribution):
     where :math:`a, b` are loc and scale parameter respectively.
 
     Args:
-        loc (float, list, numpy.ndarray, Tensor): The location of the Logistic distribution. Default: None.
-        scale (float, list, numpy.ndarray, Tensor): The scale of the Logistic distribution. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
-        name (str): The name of the distribution. Default: 'Logistic'.
+        loc (float, list, numpy.ndarray, Tensor): The location of the Logistic distribution. Default: ``None`` .
+        scale (float, list, numpy.ndarray, Tensor): The scale of the Logistic distribution. Default: ``None`` .
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.float32`` .
+        name (str): The name of the distribution. Default: ``'Logistic'`` .
 
     Note:
         `scale` must be greater than zero.

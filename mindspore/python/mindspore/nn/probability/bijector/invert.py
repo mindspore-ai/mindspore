@@ -25,7 +25,7 @@ class Invert(Bijector):
 
     Args:
         bijector (Bijector): Base Bijector.
-        name (str): The name of the Bijector. Default: "". When name is set to "", it is actually
+        name (str): The name of the Bijector. Default: ``""`` . When name is set to "", it is actually
             'Invert' + bijector.name.
 
     Supported Platforms:

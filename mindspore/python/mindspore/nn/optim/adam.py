@@ -1008,7 +1008,7 @@ class AdamWeightDecay(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 1e-3.
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -1022,14 +1022,14 @@ class AdamWeightDecay(Optimizer):
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
-        beta1 (float): The exponential decay rate for the 1st moment estimations. Default: 0.9.
+        beta1 (float): The exponential decay rate for the 1st moment estimations. Default: ``0.9`` .
             Should be in range (0.0, 1.0).
-        beta2 (float): The exponential decay rate for the 2nd moment estimations. Default: 0.999.
+        beta2 (float): The exponential decay rate for the 2nd moment estimations. Default: ``0.999`` .
             Should be in range (0.0, 1.0).
-        eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
+        eps (float): Term added to the denominator to improve numerical stability. Default: ``1e-6`` .
             Should be greater than 0.
 
-        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 
             - float: The fixed weight decay value. Must be equal to or greater than 0.
 
@@ -1228,7 +1228,7 @@ class AdamOffload(Optimizer):
                        Default: ``1e-8`` .
         use_locking (bool): Whether to enable a lock to protect the updating process of variable tensors.
             If ``true`` , updates of the `w`, `m`, and `v` tensors will be protected by a lock.
-            If ``false`` , the result is unpredictable. Default: False.
+            If ``false`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If ``true`` , update the gradients using NAG.
             If ``false`` , update the gradients without using NAG. Default: ``False`` .
@@ -1244,9 +1244,9 @@ class AdamOffload(Optimizer):
 
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
-            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager` is set to ``False`` , then this value needs to be the same as the `loss_scale` in
             `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
-            Default: 1.0.
+            Default: ``1.0`` .
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.

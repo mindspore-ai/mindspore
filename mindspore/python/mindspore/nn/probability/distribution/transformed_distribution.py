@@ -35,10 +35,10 @@ class TransformedDistribution(Distribution):
     Args:
         bijector (Bijector): The transformation to perform.
         distribution (Distribution): The original distribution. Must be a float dtype.
-        seed (int): The seed is used in sampling. The global seed is used if it is None. Default: None.
+        seed (int): The seed is used in sampling. The global seed is used if it is None. Default: ``None`` .
           If this seed is given when a TransformedDistribution object is initialized, the object's sampling function
           will use this seed; elsewise, the underlying distribution's seed will be used.
-        name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
+        name (str): The name of the transformed distribution. Default: ``'transformed_distribution'`` .
 
     Note:
         The arguments used to initialize the original distribution cannot be None.

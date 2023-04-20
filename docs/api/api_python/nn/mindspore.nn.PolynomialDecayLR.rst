@@ -17,7 +17,7 @@ mindspore.nn.PolynomialDecayLR
     .. math::
         tmp\_step=min(current\_step, decay\_steps)
 
-    如果 `update_decay_steps` 为true，则每 `decay_steps` 更新 `tmp_decay_step` 的值。公式为：
+    如果 `update_decay_steps` 为 ``true`` ，则每 `decay_steps` 更新 `tmp_decay_step` 的值。公式为：
 
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
@@ -27,7 +27,7 @@ mindspore.nn.PolynomialDecayLR
         - **end_learning_rate** (float) - 学习率的最终值。
         - **decay_steps** (int) - 进行衰减的step数。
         - **power** (float) - 多项式的幂，必须大于0。
-        - **update_decay_steps** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
+        - **update_decay_steps** (bool) - 如果为 ``True`` ，则学习率每 `decay_steps` 次衰减一次。默认值： ``False`` 。
 
     输入：
         - **global_step** (Tensor) - 当前step数，即current_step，shape为 :math:`()`。

@@ -109,7 +109,7 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -164,7 +164,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -220,7 +220,7 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: False.
+        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -356,7 +356,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_epoch (bool): If true, update `decay_epoch`. Default: False.
+        update_decay_epoch (bool): If true, update `decay_epoch`. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.

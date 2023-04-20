@@ -75,7 +75,7 @@ class CELU(Cell):
     The picture about CELU looks like this `CELU <https://arxiv.org/abs/1704.07483>`_.
 
     Args:
-        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
     Inputs:
         - **x** (Tensor) - The input of CELU. The required dtype is float16 or float32.
@@ -127,7 +127,7 @@ class Softmin(Cell):
 
     Args:
         axis (Union[int, tuple[int]]): The axis to apply Softmin operation, if the dimension of input `x` is x.ndim,
-            the range of axis is `[-x.ndim, x.ndim)`. -1 means the last dimension. Default: -1.
+            the range of axis is `[-x.ndim, x.ndim)`. -1 means the last dimension. Default: ``-1`` .
 
     Inputs:
         - **x** (Tensor) - Tensor for computing Softmin functions with data type of float16 or float32.
@@ -226,7 +226,7 @@ class Softmax(Cell):
 
     Args:
         axis (Union[int, tuple[int]]): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
-            the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: -1.
+            the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: ``-1`` .
 
     Inputs:
         - **x** (Tensor) - The input of Softmax with data type of float16 or float32.
@@ -275,7 +275,7 @@ class LogSoftmax(Cell):
         \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right),
 
     Args:
-        axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: -1.
+        axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: ``-1`` .
 
     Inputs:
         - **x** (Tensor) - The input of LogSoftmax, with float16 or float32 data type.
@@ -329,7 +329,7 @@ class ELU(Cell):
     Activation_function#/media/File:Activation_elu.svg>`_.
 
     Args:
-        alpha (float): The alpha value of ELU, the data type is float. Default: 1.0.
+        alpha (float): The alpha value of ELU, the data type is float. Default: ``1.0`` .
 
     Inputs:
         - **x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
@@ -465,7 +465,7 @@ class LeakyReLU(Cell):
     <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
 
     Args:
-        alpha (Union[int, float]): Slope of the activation function at x < 0. Default: 0.2.
+        alpha (Union[int, float]): Slope of the activation function at x < 0. Default: ``0.2`` .
 
     Inputs:
         - **x** (Tensor) - The input of LeakyReLU is a Tensor of any dimension.
@@ -522,8 +522,8 @@ class RReLU(Cell):
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     Args:
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
-        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1/8`` .
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: ``1/3`` .
 
     Inputs:
         - **x** (Tensor) - The input of RReLU is a Tensor of any dimension.
@@ -756,8 +756,8 @@ class Hardtanh(Cell):
         On Ascend, data type of float16 might lead to accidental accuracy problem.
 
     Args:
-        min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
-        max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
+        min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
+        max_val (Union[int, float]): Maximum value of the linear region range. Default: ``1.0`` .
 
     Inputs:
         - **x** (Tensor) - Input Tensor with data type of float16 or float32.
@@ -819,7 +819,7 @@ class GELU(Cell):
     Activation_function#/media/File:Activation_gelu.png>`_.
 
     Args:
-        approximate (bool): Whether to enable approximation. Default: True.
+        approximate (bool): Whether to enable approximation. Default: ``True`` .
 
             If approximate is True, The gaussian error linear activation is:
 
@@ -1021,9 +1021,9 @@ class PReLU(Cell):
 
     Args:
         channel (int): The elements number of parameter :math:`w`.
-          It could be an int, and the value is 1 or the channels number of input tensor `x`. Default: 1.
+          It could be an int, and the value is 1 or the channels number of input tensor `x`. Default: ``1`` .
         w (Union[float, list, Tensor]): The initial value of parameter. It could be a float, a float list or
-          a tensor has the same dtype as the input tensor `x`. Default: 0.25.
+          a tensor has the same dtype as the input tensor `x`. Default: ``0.25`` .
 
     Inputs:
         - **x** (Tensor) - The input of PReLU with data type of float16 or float32.
@@ -1259,7 +1259,7 @@ class SoftShrink(Cell):
 
     Args:
         lambd (float): the :math:`\lambda` must be no less than zero for the SoftShrink formulation.
-            Default: 0.5.
+            Default: ``0.5`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.
@@ -1310,7 +1310,7 @@ class HShrink(Cell):
         \end{cases}
 
     Args:
-        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
@@ -1433,7 +1433,7 @@ class GLU(Cell):
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
 
     Args:
-        axis (int): the axis to split the input. Default: -1, the last axis in `x`.
+        axis (int): the axis to split the input. Default: ``-1`` , the last axis in `x`.
 
     Inputs:
         - **x** (Tensor) - :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions.
@@ -1501,7 +1501,7 @@ def get_activation(name, prim_name=None):
 
     Args:
         name (str): The name of the activation function.
-        prim_name (Union[str, None]): The name of primitive. Default: None.
+        prim_name (Union[str, None]): The name of primitive. Default: ``None`` .
 
     Returns:
         Function, the activation function.

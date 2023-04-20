@@ -181,8 +181,8 @@ class RNNCell(RNNCellBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        nonlinearity (str): The non-linearity to use. Can be either `tanh` or `relu`. Default: `tanh`.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        nonlinearity (str): The non-linearity to use. Can be either ``tanh`` or ``relu`` . Default: ``tanh`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
@@ -263,7 +263,7 @@ class LSTMCell(RNNCellBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
@@ -343,7 +343,7 @@ class GRUCell(RNNCellBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: True.
+        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .

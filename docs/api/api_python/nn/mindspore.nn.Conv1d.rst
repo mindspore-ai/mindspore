@@ -22,19 +22,19 @@ mindspore.nn.Conv1d
         - **in_channels** (int) - Conv1d层输入Tensor的空间维度。
         - **out_channels** (int) - Conv1d层输出Tensor的空间维度。
         - **kernel_size** (int) - 指定一维卷积核的宽度。
-        - **stride** (int) - 一维卷积核的移动步长，默认值：1。
-        - **pad_mode** (str) - 指定填充模式。可选值为 "same"，"valid"，"pad"。默认值："same"。
+        - **stride** (int) - 一维卷积核的移动步长，默认值： ``1`` 。
+        - **pad_mode** (str) - 指定填充模式。可选值为 ``"same"`` ，``"valid"`` ，``"pad"`` 。默认值：``"same"`` 。
 
-          - same：输出的宽度与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
-          - valid：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
-          - pad：对输入进行填充。在输入对两侧填充 `padding` 大小的0。如果设置此模式， `padding` 的值必须大于或等于0。
+          - ``"same"``：输出的宽度与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
+          - ``"valid"``：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
+          - ``"pad"``：对输入进行填充。在输入对两侧填充 `padding` 大小的0。如果设置此模式， `padding` 的值必须大于或等于0。
 
-        - **padding** (int) - 输入两侧填充的数量。值应该要大于等于0，默认值：0。
-        - **dilation** (int) - 一维卷积核膨胀尺寸。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。 `k` 取值范围为[1, L]。默认值：1。
-        - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：1。
-        - **has_bias** (bool) - Conv1d层是否添加偏置参数。默认值：False。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选"TruncatedNormal"，"Normal"，"Uniform"，"HeUniform"和"XavierUniform"分布以及常量"One"和"Zero"分布的值，可接受别名"xavier_uniform"，"he_uniform"，"ones"和"zeros"。上述字符串大小写均可。更多细节请参考Initializer的值。默认值："normal"。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值："zeros"。
+        - **padding** (int) - 输入两侧填充的数量。值应该要大于等于0，默认值：``0`` 。
+        - **dilation** (int) - 一维卷积核膨胀尺寸。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。 `k` 取值范围为[1, L]。默认值：``1`` 。
+        - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：``1`` 。
+        - **has_bias** (bool) - Conv1d层是否添加偏置参数。默认值： ``False`` 。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``"normal"`` 。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``"zeros"`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。
@@ -42,18 +42,18 @@ mindspore.nn.Conv1d
     输出：
         Tensor，shape为 :math:`(N, C_{out}, L_{out})` 。
 
-        pad_mode为"same"时：
+        pad_mode为 ``"same"`` 时：
 
         .. math::
             L_{out} = \left \lceil{\frac{L_{in}}{\text{stride}}} \right \rceil
 
-        pad_mode为"valid"时：
+        pad_mode为 ``"valid"`` 时：
 
         .. math::
             L_{out} = \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
             {\text{stride}}} \right \rceil
 
-        pad_mode为"pad"时：
+        pad_mode为 ``"pad"`` 时：
 
         .. math::
             L_{out} = \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times

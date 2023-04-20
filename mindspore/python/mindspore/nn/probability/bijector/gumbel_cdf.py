@@ -28,9 +28,9 @@ class GumbelCDF(Bijector):
         Y = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
     Args:
-        loc (float, list, numpy.ndarray, Tensor): The location. Default: 0.0.
-        scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
-        name (str): The name of the Bijector. Default: 'GumbelCDF'.
+        loc (float, list, numpy.ndarray, Tensor): The location. Default: ``0.0`` .
+        scale (float, list, numpy.ndarray, Tensor): The scale. Default: ``1.0`` .
+        name (str): The name of the Bijector. Default: ``'GumbelCDF'`` .
 
     Note:
         `scale` must be greater than zero.

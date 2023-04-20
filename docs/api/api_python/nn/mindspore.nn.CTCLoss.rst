@@ -8,9 +8,9 @@ mindspore.nn.CTCLoss
     关于CTCLoss算法详细介绍，请参考 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data withRecurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 。
 
     参数：
-        - **blank** (int，可选) - 空白标签。默认值：0。
-        - **reduction** (str，可选) - 对输出应用归约方法。可选值为"none"、"mean"或"sum"。默认值："mean"。
-        - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值：False。
+        - **blank** (int，可选) - 空白标签。默认值：``0`` 。
+        - **reduction** (str，可选) - 对输出应用归约方法。可选值为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` 。默认值： ``"mean"`` 。
+        - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值： ``False`` 。
 
     输入：
         - **log_probs** (Tensor) - 预测值，shape :math:`(T, N, C)` 或 :math:`(T, C)` 。其中T表示输入长度，N表示批次大小，C是分类数。T，N，C均为正整数。

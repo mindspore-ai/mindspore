@@ -21,11 +21,11 @@ mindspore.nn.InstanceNorm1d
 
     参数：
         - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N, C, L)` 中的 `C` 。
-        - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值：1e-5。
-        - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.1。
-        - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值：True。
-        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值：'ones'。
-        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值：'zeros'。
+        - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值： ``1e-5`` 。
+        - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值： ``0.1`` 。
+        - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值： ``True`` 。
+        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值： ``'ones'`` 。
+        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 等。使用Tensor作为初始化参数时，shape必须为 :math:`(C)` 。默认值： ``'zeros'`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C, L)` 的Tensor。数据类型为float16或float32。

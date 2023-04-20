@@ -216,27 +216,29 @@ class AdaFactor(Optimizer):
 
         learning_rate (Union[float, Tensor]): A value or a graph for the learning rate.
             When the learning_rate is a Tensor in a 1D dimension.
-            If the type of `learning_rate` is int, it will be converted to float. Default: None.
+            If the type of `learning_rate` is int, it will be converted to float. Default: ``None`` .
         eps (tuple): The regularization constans for square gradient and parameter scale respectively.
-            default: (1e-30, 1e-3)
-        clip_threshold (Union[float, Tensor]): The threshold of root mean square of final gradient update. default: 1.0
+            default: ``(1e-30, 1e-3)`` .
+        clip_threshold (Union[float, Tensor]): The threshold of root mean square of final gradient update.
+            default: ``1.0``.
         decay_rate (Union[float, Tensor]): The coefficient used to compute running averages of square gradient.
-            default: 0.8
+            default: ``0.8`` .
         beta1 (float): The coefficient to computing running averages of gradient. Should be in range (0.0, 1.0).
-               Default: None.
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
-        scale_parameter (bool): If True, learning rate is scaled by root mean square of parameter. default: True
+            Default: ``None`` .
+        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: ``0.0`` .
+        scale_parameter (bool): If True, learning rate is scaled by root mean square of parameter.
+            default: ``True`` .
         relative_step (bool): If True, time-dependent learning rate is computed instead of external learning rate.
-            default: True
+            default: ``True`` .
         warmup_init (bool): The time-dependent learning rate computation depends on whether warm-up
-            initialization is being used. default: False
+            initialization is being used. default: ``False`` .
         compression (bool): If True, the data type of the running averages exponent will be compression to float16.
-            default: False
+            default: ``False`` .
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
-            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager` is set to ``False`` , then this value needs to be the same as the `loss_scale` in
             `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
-            Default: 1.0.
+            Default: ``1.0`` .
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.

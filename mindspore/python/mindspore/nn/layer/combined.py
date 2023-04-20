@@ -43,34 +43,35 @@ class Conv2dBnAct(Cell):
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
         stride (int): Specifies stride for all spatial dimensions with the same value. The value of stride must be
-            greater than or equal to 1 and lower than any one of the height and width of the `x`. Default: 1.
-        pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the `x`. Default: 0.
+            greater than or equal to 1 and lower than any one of the height and width of the `x`. Default: ``1`` .
+        pad_mode (str): Specifies padding mode. The optional values are ``"same"`` , ``"valid"`` , ``"pad"`` .
+            Default: ``"same"`` .
+        padding (int): Implicit paddings on both sides of the `x`. Default: ``0`` .
         dilation (int): Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than
-            or equal to 1 and lower than any one of the height and width of the `x`. Default: 1.
+            or equal to 1 and lower than any one of the height and width of the `x`. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by the number of groups. Default: 1.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+            divisible by the number of groups. Default: ``1`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             It can be a Tensor, a string, an Initializer or a number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Possible
             Initializer and string are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
-        has_bn (bool): Specifies to used batchnorm or not. Default: False.
-        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.997
+            Initializer for more details. Default: ``'zeros'`` .
+        has_bn (bool): Specifies to used batchnorm or not. Default: ``False`` .
+        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default: ``0.997`` .
         eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater
-            than 0. Default: 1e-5.
+            than 0. Default: ``1e-5`` .
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
-            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
-        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
+            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: ``None`` .
+        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: ``0.2`` .
         after_fake(bool): Determine whether there must be a fake quantization operation after Cond2dBnAct.
-            Default: True.
+            Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`. The data type is float32.
@@ -160,20 +161,20 @@ class DenseBnAct(Cell):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        has_bn (bool): Specifies to use batchnorm or not. Default: False.
-        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
+            same as `x`. The values of str refer to the function `initializer`. Default: ``'zeros'`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``True`` .
+        has_bn (bool): Specifies to use batchnorm or not. Default: ``False`` .
+        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default: ``0.9`` .
         eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater
-            than 0. Default: 1e-5.
+            than 0. Default: ``1e-5`` .
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
-            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
-        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
+            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default:  ``None`` .
+        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: ``0.2`` .
         after_fake(bool): Determine whether there must be a fake quantization operation after DenseBnAct.
-            Default: True.
+            Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, in\_channels)`. The data type is float32.

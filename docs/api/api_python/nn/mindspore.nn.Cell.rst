@@ -8,8 +8,8 @@
     `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d` 、 :class:`mindspore.nn.ReLU` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
 
     参数：
-        - **auto_prefix** (bool，可选) - 是否自动为Cell及其子Cell生成NameSpace。该参数同时会影响 `Cell` 中权重参数的名称。如果设置为True，则自动给权重参数的名称添加前缀，否则不添加前缀。通常情况下，骨干网络应设置为True，否则会产生重名问题。用于训练骨干网络的优化器、 :class:`mindspore.nn.TrainOneStepCell` 等，应设置为False，否则骨干网络的权重参数名会被误改。默认值：True。
-        - **flags** (dict，可选) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
+        - **auto_prefix** (bool，可选) - 是否自动为Cell及其子Cell生成NameSpace。该参数同时会影响 `Cell` 中权重参数的名称。如果设置为 ``True`` ，则自动给权重参数的名称添加前缀，否则不添加前缀。通常情况下，骨干网络应设置为 ``True`` ，否则会产生重名问题。用于训练骨干网络的优化器、 :class:`mindspore.nn.TrainOneStepCell` 等，应设置为 ``False`` ，否则骨干网络的权重参数名会被误改。默认值： ``True`` 。
+        - **flags** (dict，可选) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。
 
     .. py:method:: add_flags(**flags)
 
@@ -18,14 +18,14 @@
         在实例化Cell类时，如果入参flags不为空，会调用此方法。
 
         参数：
-            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
+            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。
 
     .. py:method:: add_flags_recursive(**flags)
 
         如果Cell含有多个子Cell，此方法会递归得给所有子Cell添加自定义属性。
 
         参数：
-            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
+            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。
 
     .. py:method:: apply(fn)
 
@@ -91,8 +91,8 @@
         递归地获取当前Cell及输入 `cells` 的所有子Cell的迭代器，包括Cell的名称及其本身。
 
         参数：
-            - **cells** (str) - 需要进行迭代的Cell。默认值：None。
-            - **name_prefix** (str) - 作用域。默认值： ''。
+            - **cells** (str) - 需要进行迭代的Cell。默认值： ``None`` 。
+            - **name_prefix** (str) - 作用域。默认值： ``''`` 。
 
         返回：
             Iteration类型，当前Cell及输入 `cells` 的所有子Cell和相对应的名称。
@@ -131,8 +131,8 @@
             当前不支持inputs同时输入tuple类型和非tuple类型。
 
         参数：
-            - **args** (tuple) - 可变参数列表，默认值：()。
-            - **kwargs** (dict) - 可变的关键字参数的字典，默认值：{}。
+            - **args** (tuple) - 可变参数列表，默认值： ``()`` 。
+            - **kwargs** (dict) - 可变的关键字参数的字典，默认值： ``{}`` 。
 
         返回：
             Tensor类型，返回计算结果。
@@ -157,7 +157,7 @@
             可以通过 `fusion_size` 参数来限制最大连续内存块的的大小。
 
         参数：
-            - **fusion_size** (int) - 最大连续内存块的大小（以字节为单位），0表示不限制大小。默认值：0。
+            - **fusion_size** (int) - 最大连续内存块的大小（以字节为单位）， ``0`` 表示不限制大小。默认值： ``0`` 。
 
     .. py:method:: generate_scope()
 
@@ -185,10 +185,10 @@
 
         返回Cell中parameter的迭代器。
 
-        获取Cell的参数。如果 `expand` 为true，获取此cell和所有subcells的参数。
+        获取Cell的参数。如果 `expand` 为 ``true`` ，获取此cell和所有subcells的参数。
 
         参数：
-            - **expand** (bool) - 如果为True，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值：True。
+            - **expand** (bool) - 如果为 ``True`` ，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值： ``True`` 。
 
         返回：
             Iteration类型，Cell的parameter。
@@ -222,7 +222,7 @@
             在调用 `init_parameters_data` 后，`trainable_params()` 或其他相似的接口可能返回不同的参数对象，不要保存这些结果。
 
         参数：
-            - **auto_parallel_mode** (bool) - 是否在自动并行模式下执行。默认值：False。
+            - **auto_parallel_mode** (bool) - 是否在自动并行模式下执行。默认值： ``False`` 。
 
         返回：
             Dict[Parameter, Parameter]，返回一个原始参数和替换参数的字典。
@@ -249,7 +249,7 @@
         参数：
             - **param_name** (str) - 参数名称。
             - **param** (Parameter) - 要插入到Cell的参数。
-            - **check_name_contain_dot** (bool) - 是否对 `param_name` 中的"."进行检查。默认值：True。
+            - **check_name_contain_dot** (bool) - 是否对 `param_name` 中的"."进行检查。默认值： ``True`` 。
 
         异常：
             - **KeyError** - 如果参数名称为空或包含"."。
@@ -281,8 +281,8 @@
         包含参数名称和参数本身。
 
         参数：
-            - **name_prefix** (str) - 作用域。默认值： ''。
-            - **expand** (bool) - 如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为False，只生成当前Cell的子Cell的参数及名称。默认值：True。
+            - **name_prefix** (str) - 作用域。默认值： ``''`` 。
+            - **expand** (bool) - 如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为 ``False`` ，只生成当前Cell的子Cell的参数及名称。默认值： ``True`` 。
 
         返回：
             迭代器，Cell的名称和Cell本身。
@@ -295,7 +295,7 @@
         获取这个Cell的参数广播字典。
 
         参数：
-            - **recurse** (bool) - 是否包含子Cell的参数。默认值：True。
+            - **recurse** (bool) - 是否包含子Cell的参数。默认值： ``True`` 。
 
         返回：
             OrderedDict，返回参数广播字典。
@@ -305,7 +305,7 @@
         获取此Cell的parameter字典。
 
         参数：
-            - **recurse** (bool) - 是否递归得包含所有子Cell的parameter。默认值：True。
+            - **recurse** (bool) - 是否递归得包含所有子Cell的parameter。默认值： ``True`` 。
 
         返回：
             OrderedDict类型，返回参数字典。
@@ -335,8 +335,8 @@
             - 当应用了重计算但内存不足时，可以配置'parallel_optimizer_comm_recompute=True'来节省内存。有相同融合group的Cell应该配置相同的parallel_optimizer_comm_recompute。
 
         参数：
-            - **mp_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值：True。
-            - **parallel_optimizer_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值：False。
+            - **mp_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值： ``True`` 。
+            - **parallel_optimizer_comm_recompute** (bool) - 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值： ``False`` 。
 
     .. py:method:: register_backward_hook(hook_fn)
 
@@ -441,7 +441,7 @@
         设置该Cell的参数广播模式。
 
         参数：
-            - **mode** (bool) - 指定当前模式是否进行参数广播。默认值：True。
+            - **mode** (bool) - 指定当前模式是否进行参数广播。默认值： ``True`` 。
 
     .. py:method:: set_comm_fusion(fusion_type, recurse=True)
 
@@ -451,7 +451,7 @@
 
         参数：
             - **fusion_type** (int) - Parameter的 `comm_fusion` 属性的设置值。
-            - **recurse** (bool) - 是否递归地设置子Cell的可训练参数。默认值：True。
+            - **recurse** (bool) - 是否递归地设置子Cell的可训练参数。默认值： ``True`` 。
 
     .. py:method:: set_data_parallel()
 
@@ -461,10 +461,10 @@
 
     .. py:method:: set_grad(requires_grad=True)
 
-        Cell的梯度设置。在PyNative模式下，该参数指定Cell是否需要梯度。如果为True，则在执行正向网络时，将生成需要计算梯度的反向网络。
+        Cell的梯度设置。在PyNative模式下，该参数指定Cell是否需要梯度。如果为 ``True`` ，则在执行正向网络时，将生成需要计算梯度的反向网络。
 
         参数：
-            - **requires_grad** (bool) - 指定网络是否需要梯度，如果为True，PyNative模式下Cell将构建反向网络。默认值：True。
+            - **requires_grad** (bool) - 指定网络是否需要梯度，如果为 ``True`` ，PyNative模式下Cell将构建反向网络。默认值： ``True`` 。
 
         返回：
             Cell类型，Cell本身。
@@ -487,22 +487,22 @@
         参数：
             - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
 
-              - **jit_level** (str) - 用于设置优化图的'level'参数。取值范围['O0'、'O1'、'O2']。默认值：'O1'。
+              - **jit_level** (str) - 用于设置优化图的'level'参数。取值范围[ ``'O0'``、 ``'O1'`` 、 ``'O2'`` ]。默认值： ``'O1'`` 。
 
-                - O0：基本优化。
-                - O1：手动优化。
-                - O2：手动优化和图算融合。
+                - ``'O0'``：基本优化。
+                - ``'O1'``：手动优化。
+                - ``'O2'``：手动优化和图算融合。
 
-              - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值：True。
+              - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值： ``True`` 。
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
         设置参数与服务器交互的方式。
 
         参数：
-            - **push_to_server** (bool) - 是否将参数推送到服务器。默认值：False。
-            - **pull_from_server** (bool) - 是否从服务器提取参数。默认值：False。
-            - **requires_aggr** (bool) - 是否在服务器中聚合参数。默认值：True。
+            - **push_to_server** (bool) - 是否将参数推送到服务器。默认值： ``False`` 。
+            - **pull_from_server** (bool) - 是否从服务器提取参数。默认值： ``False`` 。
+            - **requires_aggr** (bool) - 是否在服务器中聚合参数。默认值： ``True`` 。
 
     .. py:method:: set_param_ps(recurse=True, init_in_server=False)
 
@@ -513,8 +513,8 @@
             只支持在图模式下调用。
 
         参数：
-            - **recurse** (bool) - 是否设置子网络的可训练参数。默认值：True。
-            - **init_in_server** (bool) - 是否在服务器上初始化由参数服务器更新的可训练参数。默认值：False。
+            - **recurse** (bool) - 是否设置子网络的可训练参数。默认值： ``True`` 。
+            - **init_in_server** (bool) - 是否在服务器上初始化由参数服务器更新的可训练参数。默认值： ``False`` 。
 
     .. py:method:: set_train(mode=True)
 
@@ -527,7 +527,7 @@
             当执行Model.eval()的时候，框架会默认调用Cell.set_train(False)。
 
         参数：
-            - **mode** (bool) - 指定模型是否为训练模式。默认值：True。
+            - **mode** (bool) - 指定模型是否为训练模式。默认值： ``True`` 。
 
         返回：
             Cell类型，Cell本身。
@@ -547,11 +547,11 @@
 
         参数：
             - **in_strategy** (tuple) - 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
-            - **out_strategy** (Union[None, tuple]) - 指定各输出的切分策略，用法同in_strategy，目前未使能。默认值：None。
+            - **out_strategy** (Union[None, tuple]) - 指定各输出的切分策略，用法同in_strategy，目前未使能。默认值： ``None`` 。
             - **parameter_plan** (Union[dict, None]) - 指定各参数的切分策略，传入字典时，键是str类型的参数名，值是一维整数tuple表示相应的切分策略，
-              如果参数名错误或对应参数已经设置了切分策略，该参数的设置会被跳过。默认值：None。
-            - **device** (string) - 指定执行设备，可以为["CPU", "GPU", "Ascend"]中任意一个，目前未使能。默认值："Ascend"。
-            - **level** (int) - 指定搜索切分策略的目标函数，即是最大化计算通信比、最小化内存消耗、最大化执行速度等。可以为[0, 1, 2]中任意一个，默认值：0。目前仅支持最大化计算通信比，其余模式未使能。
+              如果参数名错误或对应参数已经设置了切分策略，该参数的设置会被跳过。默认值： ``None`` 。
+            - **device** (string) - 指定执行设备，可以为[ ``"CPU"`` , ``"GPU"`` , ``"Ascend"`` ]中任意一个，目前未使能。默认值： ``"Ascend"`` 。
+            - **level** (int) - 指定搜索切分策略的目标函数，即是最大化计算通信比、最小化内存消耗、最大化执行速度等。可以为[ ``0`` , ``1`` , ``2`` ]中任意一个，默认值： ``0`` 。目前仅支持最大化计算通信比，其余模式未使能。
 
         返回：
             Cell类型，Cell本身。
@@ -580,7 +580,7 @@
         返回一个可训练参数的列表。
 
         参数：
-            - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的可训练参数。默认值：True。
+            - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的可训练参数。默认值： ``True`` 。
 
         返回：
             List类型，可训练参数列表。
@@ -595,7 +595,7 @@
         返回一个不可训练参数的列表。
 
         参数：
-            - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的不可训练参数。默认值：True。
+            - **recurse** (bool) - 是否递归地包含当前Cell的所有子Cell的不可训练参数。默认值： ``True`` 。
 
         返回：
             List类型，不可训练参数列表。
@@ -620,5 +620,5 @@
         给网络参数名称添加 `prefix` 前缀字符串。
 
         参数：
-            - **prefix** (str) - 前缀字符串。默认值： ''。
-            - **recurse** (bool) - 是否递归地包含所有子Cell的参数。默认值：True。
+            - **prefix** (str) - 前缀字符串。默认值： ``''`` 。
+            - **recurse** (bool) - 是否递归地包含所有子Cell的参数。默认值： ``True`` 。
