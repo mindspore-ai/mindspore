@@ -88,42 +88,6 @@ class SolveTriangular(Primitive):
         self.init_prim_io_names(inputs=['a', 'b'], outputs=['output'])
 
 
-class Eigh(PrimitiveWithInfer):
-    """
-    Eigh decomposition(Symmetric matrix)
-    Ax = lambda * x
-    """
-
-    @prim_attr_register
-    def __init__(self, compute_eigenvectors=True, lower=True):
-        super().__init__(name="Eigh")
-        self.init_prim_io_names(inputs=['A'], outputs=['output_w', 'output_v'])
-        self.compute_eigenvectors = validator.check_value_type(
-            "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
-        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
-        self.add_prim_attr('lower', self.lower)
-        self.add_prim_attr('compute_eigenvectors', self.compute_eigenvectors)
-
-    def __infer__(self, A):
-        validator.check_scalar_or_tensor_types_same({"A_dtype": A['dtype']},
-                                                    [mstype.float32, mstype.float64, mstype.complex64,
-                                                     mstype.complex128], self.name, True)
-        output = None
-        if self.compute_eigenvectors:
-            output = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (A['dtype'], A['dtype']),
-                'value': None
-            }
-        else:
-            output = {
-                'shape': (A['shape'][0],),
-                'dtype': A['dtype'],
-                'value': None
-            }
-        return output
-
-
 class Eig(PrimitiveWithInfer):
     """
     Eig decomposition,(generic matrix)

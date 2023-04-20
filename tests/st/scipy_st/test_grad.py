@@ -19,7 +19,8 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import context, Tensor
 from mindspore.scipy.linalg import cho_factor
-from mindspore.scipy.ops import Eigh, SolveTriangular
+from mindspore.ops.operations.linalg_ops import Eigh
+from mindspore.scipy.ops import SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, gradient_check
 
 
