@@ -238,6 +238,32 @@ AnfNodePtr ConvertAllTupleInputsToTensor(const FuncGraphPtr &graph, const CNodeP
   return new_cnode;
 }
 
+void KernelQueryAllDetail(const CNodePtr &select_cnode,
+                          std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+  TbeMetadataInfo(select_cnode, kernel_info_list);
+  CheckKernelInfoListEmpty(kernel_info_list, "TBE_Kernel");
+
+  if (kernel_info_list->empty()) {
+    GetRtKelInfo(select_cnode, kernel_info_list);
+    CheckKernelInfoListEmpty(kernel_info_list, "RT_Kernel");
+  }
+  if (kernel_info_list->empty()) {
+    HcclMetadataInfo(select_cnode, kernel_info_list);
+    CheckKernelInfoListEmpty(kernel_info_list, "HCCL_Kernel");
+  }
+  if (SelectAicpuReshapeInTaskSink(select_cnode)) {
+    return;
+  }
+  if (kernel_info_list->empty()) {
+    HostMetadataInfo(select_cnode, kernel_info_list);
+    CheckKernelInfoListEmpty(kernel_info_list, "HOST_Kernel");
+  }
+  if (kernel_info_list->empty()) {
+    BiShengMetadataInfo(select_cnode, kernel_info_list);
+    CheckKernelInfoListEmpty(kernel_info_list, "BISHENG_Kernel");
+  }
+}
+
 void KernelQueryAll(const CNodePtr &kernel_node,
                     std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -260,7 +286,7 @@ void KernelQueryAll(const CNodePtr &kernel_node,
                  << ", debug string [" << kernel_node->DebugString() << "].";
   }
 
-  TbeMetadataInfo(select_cnode, kernel_info_list);
+  KernelQueryAllDetail(select_cnode, kernel_info_list);
 
   if (kernel_info_list->empty()) {
     // convert all tuple inputs to tensor and select
@@ -268,34 +294,15 @@ void KernelQueryAll(const CNodePtr &kernel_node,
     if (tensor_input_node != nullptr) {
       auto tensor_input_cnode = tensor_input_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(tensor_input_cnode);
-      auto select_cnode2 = tensor_input_cnode;
-      select_cnode2->set_fullname_with_scope(kernel_node->fullname_with_scope());
+      select_cnode = tensor_input_cnode;
+      select_cnode->set_fullname_with_scope(kernel_node->fullname_with_scope());
       MS_LOG(INFO) << "Create all tensor inputs node " << tensor_input_cnode->fullname_with_scope()
                    << ", debug string [" << tensor_input_cnode->DebugString() << "] from "
                    << kernel_node->fullname_with_scope() << ", debug string [" << kernel_node->DebugString() << "].";
-      TbeMetadataInfo(select_cnode2, kernel_info_list);
-      CheckKernelInfoListEmpty(kernel_info_list, "TBE_Kernel");
     }
+    KernelQueryAllDetail(select_cnode, kernel_info_list);
   }
-  if (kernel_info_list->empty()) {
-    GetRtKelInfo(select_cnode, kernel_info_list);
-    CheckKernelInfoListEmpty(kernel_info_list, "RT_Kernel");
-  }
-  if (kernel_info_list->empty()) {
-    HcclMetadataInfo(select_cnode, kernel_info_list);
-    CheckKernelInfoListEmpty(kernel_info_list, "HCCL_Kernel");
-  }
-  if (SelectAicpuReshapeInTaskSink(select_cnode)) {
-    return;
-  }
-  if (kernel_info_list->empty()) {
-    HostMetadataInfo(select_cnode, kernel_info_list);
-    CheckKernelInfoListEmpty(kernel_info_list, "HOST_Kernel");
-  }
-  if (kernel_info_list->empty()) {
-    BiShengMetadataInfo(select_cnode, kernel_info_list);
-    CheckKernelInfoListEmpty(kernel_info_list, "BISHENG_Kernel");
-  }
+
   if (!kernel_info_list->empty()) {
     common::AnfAlgo::CopyNodeAttrs(select_cnode, kernel_node);
   }
