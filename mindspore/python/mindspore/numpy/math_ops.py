@@ -488,7 +488,7 @@ def power(x1, x2, dtype=None):
     if x1.dtype not in int_list or x2.dtype not in int_list:
         return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
     if x2.min() < 0:
-        _raise_value_error("Integers to negative integer powers are not allowed.")
+        raise ValueError("Integers to negative integer powers are not allowed.")
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
 
