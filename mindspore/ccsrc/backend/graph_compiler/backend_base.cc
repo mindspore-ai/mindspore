@@ -422,6 +422,8 @@ constexpr size_t kPartialFuncGraphPos = 1;
 constexpr size_t kPartialInputStartPos = 2;
 
 bool CheckAbstractUnify(const abstract::AbstractBasePtr abs1, const abstract::AbstractBasePtr abs2) {
+  MS_EXCEPTION_IF_NULL(abs1);
+  MS_EXCEPTION_IF_NULL(abs2);
   if ((!abs1->isa<abstract::AbstractSequence>()) && (!abs2->isa<abstract::AbstractSequence>())) {
     return true;
   }
