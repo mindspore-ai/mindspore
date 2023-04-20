@@ -125,6 +125,28 @@
 #define TWO_TENSOR 2
 #define THREE_TENSOR 3
 
+#define Index0 0
+#define Index1 1
+#define Index2 2
+#define Index3 3
+#define Index4 4
+#define Index5 5
+#define Index6 6
+#define Index7 7
+#define Index8 8
+#define Index9 9
+
+#define Num0 0
+#define Num1 1
+#define Num2 2
+#define Num3 3
+#define Num4 4
+#define Num5 5
+#define Num6 6
+#define Num7 7
+#define Num8 8
+#define Num9 9
+
 #define DIMENSION_0D 0
 #define DIMENSION_1D 1
 #define DIMENSION_2D 2
