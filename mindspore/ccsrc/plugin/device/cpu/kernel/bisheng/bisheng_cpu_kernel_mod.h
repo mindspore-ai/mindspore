@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include <utility>
 #include <unordered_map>
 #include <mutex>
@@ -49,8 +50,16 @@ class BishengCpuKernelMod : public CpuKernelMod {
   explicit BishengCpuKernelMod(const std::string &kernel_name);
   ~BishengCpuKernelMod() = default;
 
+  bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
+
+  enum KernelModType GetKernelModType() const override { return KernelModType::BiShengCpuKernelMod; }
 
   std::vector<KernelAttr> GetOpSupport() { return {}; }
 
@@ -58,6 +67,10 @@ class BishengCpuKernelMod : public CpuKernelMod {
 
  private:
   void *launch_func_;
+  bool is_dynamic_{false};
+
+  std::vector<std::vector<int64_t>> shape_list_;
+  std::vector<size_t> ndims_;
 };
 
 using BishengCpuKernelModPtr = std::shared_ptr<BishengCpuKernelMod>;

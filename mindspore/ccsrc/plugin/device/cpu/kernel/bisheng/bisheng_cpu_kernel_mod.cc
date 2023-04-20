@@ -17,6 +17,7 @@
 #include <dlfcn.h>
 #include <omp.h>
 #include <thread>
+#include <map>
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -128,6 +129,34 @@ BishengCpuKernelMod::BishengCpuKernelMod(const std::string &kernel_name) {
   launch_func_ = kernel_manager_->GetFunction(kernel_name_);
 }
 
+bool BishengCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  this->inputs_ = inputs;
+  this->outputs_ = outputs;
+  MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
+  return true;
+}
+
+int BishengCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  ndims_.clear();
+  shape_list_.clear();
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto in_shape = inputs[i]->GetShapeVector();
+    (void)shape_list_.emplace_back(in_shape);
+    ndims_.push_back(SizeToInt(in_shape.size()));
+  }
+
+  for (size_t i = 0; i < outputs.size(); i++) {
+    auto out_shape = outputs[i]->GetShapeVector();
+    (void)shape_list_.emplace_back(out_shape);
+    ndims_.push_back(SizeToInt(out_shape.size()));
+  }
+  return ret;
+}
+
 bool BishengCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                  const std::vector<AddressPtr> &outputs, void *) {
   if (launch_func_ == nullptr) {
@@ -142,8 +171,34 @@ bool BishengCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) { return output->addr; });
 
-  using BishengCpuKernelFunction = void (*)(void *);
-  reinterpret_cast<BishengCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
+  if (is_dynamic_) {
+    MS_LOG(INFO) << "The kernel mod deals with dynamic shape inputs.";
+    std::vector<std::vector<int64_t>> arg_size_vec;
+    arg_size_vec.reserve(ndims_.size());
+    for (size_t i = 0; i < ndims_.size(); i++) {
+      std::vector<int64_t> arg_size;
+      arg_size.push_back(0);
+      arg_size.insert(arg_size.end(), shape_list_[i].begin(), shape_list_[i].end());
+      std::vector<int64_t> strides_(ndims_[i], 1);
+      for (int j = SizeToInt(ndims_[i]) - 2; j >= 0; j--) {
+        strides_[j] = strides_[j + 1] * shape_list_[i][j + 1];
+      }
+      arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
+      arg_size_vec.push_back(arg_size);
+    }
+
+    std::vector<void *> arg_size_list;
+    (void)std::transform(std::begin(arg_size_vec), std::end(arg_size_vec), std::back_inserter(arg_size_list),
+                         [](auto &v) { return reinterpret_cast<void *>(&v[0]); });
+
+    using BishengCpuDynKernelFunction = void (*)(void *, void *);
+    reinterpret_cast<BishengCpuDynKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()),
+                                                                reinterpret_cast<void *>(arg_size_list.data()));
+  } else {
+    MS_LOG(INFO) << "The kernel mod deals with static shape inputs.";
+    using BishengCpuKernelFunction = void (*)(void *);
+    reinterpret_cast<BishengCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
+  }
 
   return true;
 }

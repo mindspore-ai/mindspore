@@ -32,6 +32,14 @@ void BishengCpuKernelBuilder::BishengSetKernelMod(const string &kernel_name,
   auto kernel_mod_ptr = std::make_shared<BishengCpuKernelMod>(kernel_name);
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto args = kernel::AbstractArgsFromCNode(cnode, true);
+  bool is_dynamic_kernel =
+    std::any_of(args.inputs.begin(), args.inputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); }) ||
+    std::any_of(args.outputs.begin(), args.outputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); });
+  kernel_mod_ptr->SetKernelDynamicStatus(is_dynamic_kernel);
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 

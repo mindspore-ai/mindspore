@@ -283,7 +283,9 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
   }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(primitive);
+  if (primitive == nullptr) {
+    return {};
+  }
   auto prim_name = primitive->name();
 
   auto ms_context = MsContext::GetInstance();
