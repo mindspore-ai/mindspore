@@ -122,7 +122,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     auto v_int64_shape = inputs[kVIndex]->GetShapeVector();
     auto gradient_int64_shape = inputs[kGradIndex]->GetShapeVector();
     if (AnfAlgo::IsShapesDynamic({variable_int64_shape, m_int64_shape, v_int64_shape, gradient_int64_shape})) {
-      return true;
+      return 0;
     }
 
     is_null_input_ = CHECK_SHAPE_NULL(variable_int64_shape, kernel_name_, "var") ||
