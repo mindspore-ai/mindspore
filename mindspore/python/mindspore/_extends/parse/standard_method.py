@@ -3248,23 +3248,6 @@ def check_is_const_int(x, op_name, arg_name):
     return True
 
 
-@_primexpr
-def check_is_tensor_bool_cond(shp):
-    """check if tensor is a bool condition"""
-    if F.is_sequence_shape_unknown(shp):
-        return True
-    # when shp is ()
-    if not shp:
-        return True
-    if len(shp) == 1:
-        if F.is_sequence_value_unknown(shp) or shp[0] == 1:
-            return True
-    if None in shp:
-        raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is "
-                         f"None")
-    raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {shp}")
-
-
 @constexpr
 def const_tensor_to_bool(x):
     """convert bool tensor to bool condition
@@ -3320,7 +3303,7 @@ def empty_compile(dtype, shape):
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""
-    is_cond = check_is_tensor_bool_cond(F.shape(x))
+    is_cond = F.is_tensor_bool_cond(x)
     if is_cond and F.isconstant(x):
         return const_tensor_to_bool(x)
     return F.cast(x, mstype.bool_)
