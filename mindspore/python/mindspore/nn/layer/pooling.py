@@ -105,7 +105,7 @@ class LPPool1d(Cell):
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents
             the width of movement is stride, if the value is None, the default value `kernel_size` is used;
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
@@ -183,7 +183,7 @@ class LPPool2d(Cell):
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively, if the value is None,
             the default value `kernel_size` is used;
-        ceil_mode(bool): Whether to use ceil or floor to calculate output shape. Default: False.
+        ceil_mode(bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
@@ -295,24 +295,24 @@ class MaxPool3d(_PoolNd):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number or a single element tuple that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. Default: 1.
+            The value must be a positive integer. Default: ``1`` .
         stride (Union[int, tuple[int]]): The moving stride of pooling operation, an int number or a single element tuple
             that represents the moving stride of pooling kernel in the directions of depth, height and the width,
             or a tuple of three int numbers that represent depth, height and width of movement respectively.
             The value must be a positive integer. If the value is None, the default value `kernel_size` is used.
-            Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same", "valid" or "pad", not case sensitive.
-            Default: "valid".
+            Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
+            Default: ``"valid"`` .
 
-            - same: The output shape is the same as the input shape evenly divided by `stride`.
+            - ``"same"``: The output shape is the same as the input shape evenly divided by `stride`.
 
-            - valid: The possible largest height and width of output
+            - ``"valid"``: The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - pad: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number of
-              zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
+              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Pooling padding value. Default: 0.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value. Default: ``0`` .
             `padding` can only be an integer or a tuple/list containing one or three integers.
             If `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
             front, back, top, bottom, left and right of the input. If `padding` is a tuple/list containing three
@@ -320,10 +320,10 @@ class MaxPool3d(_PoolNd):
             times, and left and right of the input `padding[2]` times.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
             used to increase the receptive field of the pooling operation. If it is a tuple, it must contain one or
-            three integers. Default: 1.
-        return_indices (bool): If True, output is a Tuple of 2 Tensors, representing the maxpool result and where
-            the max values are generated. Otherwise, only the maxpool result is returned. Default: False.
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+            three integers. Default: ``1`` .
+        return_indices (bool): If ``True`` , output is a Tuple of 2 Tensors, representing the maxpool result and where
+            the max values are generated. Otherwise, only the maxpool result is returned. Default: ``False`` .
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` or
@@ -437,34 +437,35 @@ class MaxPool2d(_PoolNd):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
             is an int number or a single element tuple that represents height and width are both kernel_size,
             or a tuple of two int numbers that represent height and width respectively.
-            Default: 1.
+            Default: ``1`` .
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
             represents the height and width of movement are both stride, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same", "valid" or "pad", not case sensitive.
-            Default: "valid".
+            represent height and width of movement respectively. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
+            Default: ``"valid"`` .
 
-            - same: The output shape is the same as the input shape evenly divided by `stride`.
+            - ``"same"``: The output shape is the same as the input shape evenly divided by `stride`.
 
-            - valid: The possible largest height and width of output
+            - ``"valid"``: The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - pad: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number of
-              zeros. If this mode is set, `padding` must be greater than or equal to 0.
+            - ``"pad"``: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number
+              of zeros. If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Specifies the padding value of the pooling operation. Default: 0.
-            `padding` can only be an integer or a tuple/list containing one or two integers. If `padding` is an integer
-            or a tuple/list containing one integer, it will be padded `padding` times in the four directions of the
-            input. If `padding` is a tuple/list containing two integers, it will be padded `padding[0]` times in the
-            up-down direction of the input and `padding[1]` times in the left-right direction of the input.
+        padding (Union(int, tuple[int], list[int])): Specifies the padding value of the pooling operation.
+            Default: ``0`` . `padding` can only be an integer or a tuple/list containing one or two integers. If
+            `padding` is an integer or a tuple/list containing one integer, it will be padded `padding` times in the
+            four directions of the input. If `padding` is a tuple/list containing two integers, it will be padded
+            `padding[0]` times in the up-down direction of the input and `padding[1]` times in the left-right direction
+            of the input.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
             used to increase the receptive field of the pooling operation. If it is a tuple, it must contain one or two
-            integers. Default: 1.
-        return_indices (bool): If True, the function will return both the result of max pooling and the indices of the
-            max elements. Default: False.
-        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+            integers. Default: ``1`` .
+        return_indices (bool): If ``True`` , the function will return both the result of max pooling and the indices of
+            the max elements. Default: ``False`` .
+        ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N,C_{in},H_{in},W_{in})` or :math:`(C_{in},H_{in},W_{in})`.
@@ -594,20 +595,20 @@ class MaxPool1d(_PoolNd):
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     Args:
-        kernel_size (int): The size of kernel used to take the max value, Default: 1.
+        kernel_size (int): The size of kernel used to take the max value, Default: ``1`` .
         stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is stride, Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same", "valid" or "pad", not case sensitive.
-            Default: "valid".
+            the width of movement is stride, Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` or ``"pad"`` , not case sensitive.
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The total number of padding will be calculated in horizontal
+            - ``"same"``: Adopts the way of completion. The total number of padding will be calculated in horizontal
               and vertical directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - pad: Performs padding on the input. Adds padding size of zeros to both ends of the input.
+            - ``"pad"``: Performs padding on the input. Adds padding size of zeros to both ends of the input.
               If this mode is set, padding must be greater than or equal to 0.
 
         padding (Union(int, tuple[int], list[int])): Padding value for the pooling. Default value is 0.
@@ -615,10 +616,10 @@ class MaxPool1d(_PoolNd):
             padding[0] times are padded on both sides of the input.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
             used to increase the receptive field of the pooling operation. If it is a tuple, its length can only be 1.
-            Default: 1.
-        return_indices (bool): If True, the function will return both the result of max pooling and the indices of the
-            max elements. Default: False.
-        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
+            Default: ``1`` .
+        return_indices (bool): If ``True`` , the function will return both the result of max pooling and the indices of
+            the max elements. Default: ``False`` .
+        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
@@ -1663,15 +1664,15 @@ class FractionalMaxPool2d(Cell):
         output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
             is a positive int that represents height and width, or a tuple of two positive integers that represent
             height and width respectively. The value must be a positive integer. If None, the shape of the target will
-            be determined by `output_ratio`. Default: None.
+            be determined by `output_ratio`. Default: ``None`` .
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type : float16, float32, float64, and value is between (0, 1). If None, the shape of the target will be
-            determined by `output_size`. Default: None.
-        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
+            determined by `output_size`. Default: ``None`` .
+        return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 2)`
             whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
-            If None, no random step will be set. Default: None.
+            If ``None`` , no random step will be set. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
@@ -1761,16 +1762,16 @@ class FractionalMaxPool3d(Cell):
             depth, height and width respectively.
         output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
             is an int number that represents depth, height and width, or a tuple of three positive integers that
-            represents depth, height and width respectively. If None, the shape of the target will be determined by
-            `output_ratio`. Default: None.
+            represents depth, height and width respectively. If ``None`` , the shape of the target will be determined
+            by `output_ratio`. Default: ``None`` .
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, float64, and value is between (0, 1). If None, the shape of the target will be
-            determined by `output_size`.Default: None.
-        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
+            Data type : float16, float32, float64, and value is between (0, 1). If ``None`` , the shape of the target
+            will be determined by `output_size`.Default: ``None`` .
+        return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 3)`
             whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
-            If None, no random step will be set. Default: None.
+            If None, no random step will be set. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
@@ -1857,8 +1858,8 @@ class MaxUnpool1d(Cell):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
+            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -1867,7 +1868,7 @@ class MaxUnpool1d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, H_{in} - 1]`.
           Data type must be in int32 or int64.
-        - **output_size** (tuple[int], optional) - The output size. Default: None.
+        - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
           If output_size is None, then the shape of output computed by kernel_size, stride and padding.
           If output_size is not None, then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
           :math:`(H)` and output_size must belong to
@@ -1942,8 +1943,8 @@ class MaxUnpool2d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
+            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
 
@@ -1954,7 +1955,7 @@ class MaxUnpool2d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
-        - **output_size** (tuple[int], optional) - The output size. Default: None.
+        - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
           If output_size is None, then the shape of output computed by kernel_size, stride and padding.
           If output_size is not None, then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
           :math:`(H, W)` and output_size must belong to
@@ -2033,8 +2034,8 @@ class MaxUnpool3d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
+            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
             correspondingly.
@@ -2046,7 +2047,7 @@ class MaxUnpool3d(Cell):
           Tensor of shape must be same with input 'x'.
           Values of indices must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
-        - **output_size** (tuple[int], optional) - The output size. Default: None.
+        - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
           If output_size is None, then the shape of output computed by kernel_size, stride and padding.
           If output_size is not None, then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
           :math:`(D, H, W)` and output_size must belong to

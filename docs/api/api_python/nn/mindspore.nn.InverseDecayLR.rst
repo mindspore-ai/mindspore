@@ -24,7 +24,7 @@ mindspore.nn.InverseDecayLR
         - **learning_rate** (float) - 学习率的初始值。
         - **decay_rate** (float) - 衰减率。
         - **decay_steps** (int) - 进行衰减的step数。
-        - **is_stair** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值：False。
+        - **is_stair** (bool) - 如果为True，则学习率每 `decay_steps` 次衰减一次。默认值： ``False`` 。
 
     输入：
         - **global_step** (Tensor) - 当前step数，即current_step。

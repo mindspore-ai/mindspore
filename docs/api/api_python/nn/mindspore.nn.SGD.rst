@@ -12,12 +12,12 @@ mindspore.nn.SGD
     .. math::
             v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
-    如果nesterov为True：
+    如果nesterov为 ``True`` ：
 
     .. math::
             p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
-    如果nesterov为False：
+    如果nesterov为 ``False`` ：
 
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
@@ -39,14 +39,14 @@ mindspore.nn.SGD
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.1。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值： ``0.1`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-        - **momentum** (float) - 浮点动量，必须大于等于0.0。默认值：0.0。
-        - **dampening** (float) - 浮点动量阻尼值，必须大于等于0.0。默认值：0.0。
-        - **weight_decay** (float) - 权重衰减（L2 penalty），必须大于等于0。默认值：0.0。
-        - **nesterov** (bool) - 启用Nesterov动量。如果使用Nesterov，动量必须为正，阻尼必须等于0.0。默认值：False。
+        - **momentum** (float) - 浮点动量，必须大于等于0.0。默认值： ``0.0`` 。
+        - **dampening** (float) - 浮点动量阻尼值，必须大于等于0.0。默认值： ``0.0`` 。
+        - **weight_decay** (float) - 权重衰减（L2 penalty），必须大于等于0。默认值： ``0.0`` 。
+        - **nesterov** (bool) - 启用Nesterov动量。如果使用Nesterov，动量必须为正，阻尼必须等于0.0。默认值： ``False`` 。
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
@@ -54,7 +54,7 @@ mindspore.nn.SGD
         - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。
 
     输出：
-        Tensor[bool]，值为True。
+        Tensor[bool]，值为 ``True`` 。
 
     异常：
         - **ValueError** - 动量、阻尼或重量衰减值小于0.0。

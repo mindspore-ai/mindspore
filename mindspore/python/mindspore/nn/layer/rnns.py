@@ -596,14 +596,14 @@ class RNN(_RNNBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        num_layers (int): Number of layers of stacked RNN. Default: 1.
+        num_layers (int): Number of layers of stacked RNN. Default: ``1`` .
         nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
-            RNN layer except the last layer. Default 0.0. The range of dropout is [0.0, 1.0).
+            RNN layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional RNN,
-            num_directions=2 if bidirectional=True otherwise 1. Default: False.
+            num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
@@ -612,7 +612,7 @@ class RNN(_RNNBase):
           shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` .
           The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
-          Tensor of shape :math:`(batch\_size)` . Default: None.
+          Tensor of shape :math:`(batch\_size)` . Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
           have been used to compute hidden state and affect the final output. It is recommended to
           use this input when `x` has padding elements.
@@ -696,13 +696,13 @@ class GRU(_RNNBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        num_layers (int): Number of layers of stacked GRU. Default: 1.
-        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: True.
-        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
+        num_layers (int): Number of layers of stacked GRU. Default: ``1`` .
+        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: ``True`` .
+        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
-            GRU layer except the last layer. Default 0.0. The range of dropout is [0.0, 1.0).
+            GRU layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional GRU,
-            num_directions=2 if bidirectional=True otherwise 1. Default: False.
+            num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
@@ -711,7 +711,7 @@ class GRU(_RNNBase):
           shape (num_directions * `num_layers`, batch_size, `hidden_size`). The data type of `hx` must be the same as
           `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
-          Tensor of shape :math:`(\text{batch_size})`. Default: None.
+          Tensor of shape :math:`(\text{batch_size})`. Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
           have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.
@@ -794,13 +794,13 @@ class LSTM(_RNNBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        num_layers (int): Number of layers of stacked LSTM . Default: 1.
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
+        num_layers (int): Number of layers of stacked LSTM . Default: ``1`` .
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
-            LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0).
+            LSTM layer except the last layer. Default ``0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional LSTM,
-            num_directions=2 if bidirectional=True otherwise 1. Default: False.
+            num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
@@ -809,7 +809,7 @@ class LSTM(_RNNBase):
           or mindspore.float16 and shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` .
           The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
-          Tensor of shape :math:`(batch\_size)`. Default: None.
+          Tensor of shape :math:`(batch\_size)`. Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
           have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.

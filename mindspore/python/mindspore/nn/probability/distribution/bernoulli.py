@@ -29,10 +29,10 @@ class Bernoulli(Distribution):
     and the probability mass function as :math:`P(X = 0) = p, P(X = 1) = 1-p`.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
-        name (str): The name of the distribution. Default: 'Bernoulli'.
+        probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1. Default: ``None`` .
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.int32`` .
+        name (str): The name of the distribution. Default: ``'Bernoulli'`` .
 
     Note:
         `probs` must be a proper probability (0 < p < 1).

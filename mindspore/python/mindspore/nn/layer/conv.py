@@ -171,17 +171,17 @@ class Conv2d(_Conv):
         stride (Union[int, tuple[int]]): The movement stride of the 2D convolution kernel.
             The data type is an integer or a tuple of two integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
-            and width directions respectively. Default: 1.
+            and width directions respectively. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the input.
@@ -189,26 +189,26 @@ class Conv2d(_Conv):
             then the top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of 4 integers, then the top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, and `padding[3]` respectively.
-            The value should be greater than or equal to 0. Default: 0.
+            The value should be greater than or equal to 0. Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
             The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: 1.
+            and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. If the group is equal to `in_channels` and `out_channels`,
-            this 2D convolution layer also can be called 2D depthwise convolution layer. Default: 1.
-        has_bias (bool): Whether the Conv2d layer has a bias parameter. Default: False.
+            this 2D convolution layer also can be called 2D depthwise convolution layer. Default: ``1`` .
+        has_bias (bool): Whether the Conv2d layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+            Initializer for more details. Default: ``'zeros'`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
@@ -217,7 +217,7 @@ class Conv2d(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(N, H_{out}, W_{out}, C_{out})`.
 
-        pad_mode is 'same':
+        pad_mode is ``'same'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -225,7 +225,7 @@ class Conv2d(_Conv):
                 W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
             \end{array}
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -235,7 +235,7 @@ class Conv2d(_Conv):
                 {\text{stride[1]}}} \right \rceil \\
             \end{array}
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -353,35 +353,35 @@ class Conv1d(_Conv):
         in_channels (int): The channel number of the input tensor of the Conv1d layer.
         out_channels (int): The channel number of the output tensor of the Conv1d layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
-        stride (int): The movement stride of the 1D convolution kernel. Default: 1.
+        stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (int): The number of padding on both sides of input.
-            The value should be greater than or equal to 0. Default: 0.
+            The value should be greater than or equal to 0. Default: ``0`` .
         dilation (int): Dilation size of 1D convolution kernel. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` is in range of [1, L]. Default: 1.
+            every `k` elements. The value of `k` is in range of [1, L]. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: 1.
-        has_bias (bool): Whether the Conv1d layer has a bias parameter. Default: False.
+            divisible by `group`. Default: ``1`` .
+        has_bias (bool): Whether the Conv1d layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
+            ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
+            Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
+            Initializer for more details. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -389,18 +389,18 @@ class Conv1d(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
-        pad_mode is 'same':
+        pad_mode is ``'same'``:
 
         .. math::
             L_{out} = \left \lceil{\frac{L_{in}}{\text{stride}}} \right \rceil
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'``:
 
         .. math::
             L_{out} = \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
             {\text{stride}}} \right \rceil
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'``:
 
         .. math::
             L_{out} = \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
@@ -545,17 +545,17 @@ class Conv3d(_Conv):
         stride (Union[int, tuple[int]]): The movement stride of the 3D convolution kernel.
             The data type is an integer or a tuple of three integers. An integer represents the movement step size
             in depth, height and width directions. A tuple of three integers represents the movement step size
-            in the depth, height and width directions respectively. Default: 1.
+            in the depth, height and width directions respectively. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of the input.
@@ -563,23 +563,23 @@ class Conv3d(_Conv):
             then the head, tail, top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
-            respectively. The value should be greater than or equal to 0. Default: 0.
+            respectively. The value should be greater than or equal to 0. Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
             The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the depth, height and width directions is in range of
-            [1, D], [1, H] and [1, W] respectively. Default: 1.
+            [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: 1. Only 1 is currently supported.
-        has_bias (bool): Whether the Conv3d layer has a bias parameter. Default: False.
+            divisible by `group`. Default: ``1`` . Only 1 is currently supported.
+        has_bias (bool): Whether the Conv3d layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
+            Initializer for more details. Default: ``'zeros'`` .
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
@@ -589,7 +589,7 @@ class Conv3d(_Conv):
     Outputs:
         Tensor of shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
-        pad_mode is 'same':
+        pad_mode is ``'same'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -599,7 +599,7 @@ class Conv3d(_Conv):
             \end{array}
 
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -611,7 +611,7 @@ class Conv3d(_Conv):
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -745,17 +745,17 @@ class Conv3dTranspose(_Conv):
         stride (Union[int, tuple[int]]): The movement stride of the 3D convolution kernel.
             The data type is an integer or a tuple of three integers. An integer represents the movement step size
             in depth, height and width directions. A tuple of three integers represents the movement step size
-            in the depth, height and width directions respectively. Default: 1.
+            in the depth, height and width directions respectively. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"``  .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of the input.
@@ -763,31 +763,31 @@ class Conv3dTranspose(_Conv):
             then the head, tail, top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
-            respectively. The value should be greater than or equal to 0. Default: 0.
+            respectively. The value should be greater than or equal to 0. Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
             The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the depth, height and width directions is in range of
-            [1, D], [1, H] and [1, W] respectively. Default: 1.
+            [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. Default: 1. Only 1 is currently supported.
+            divisible by `group`. Default: ``1`` . Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
             the output. The data type is an integer or a tuple of six integers. If `output_padding` is an integer,
             then the head, tail, top, bottom, left, and right padding are all equal to `output_padding`.
             If `output_padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `output_padding[0]`, `output_padding[1]`, `output_padding[2]`, `output_padding[3]`,
             `output_padding[4]` and `output_padding[5]` respectively. The value should be greater than or equal to 0.
-            Default: 0.
-        has_bias (bool): Whether the Conv3dTranspose layer has a bias parameter. Default: False.
+            Default: ``0`` .
+        has_bias (bool): Whether the Conv3dTranspose layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
-        data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+            Initializer for more details. Default: ``'zeros'`` .
+        data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -796,7 +796,7 @@ class Conv3dTranspose(_Conv):
     Outputs:
         Tensor, the shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
-        pad_mode is 'same':
+        pad_mode is ``'same'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -806,7 +806,7 @@ class Conv3dTranspose(_Conv):
             \end{array}
 
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -818,7 +818,7 @@ class Conv3dTranspose(_Conv):
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'`` :
 
         .. math::
             \begin{array}{ll} \\
@@ -956,17 +956,17 @@ class Conv2dTranspose(_Conv):
         stride (Union[int, tuple[int]]): The movement stride of the 2D convolution kernel.
             The data type is an integer or a tuple of two integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
-            and width directions respectively. Default: 1.
+            and width directions respectively. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the input.
@@ -974,29 +974,29 @@ class Conv2dTranspose(_Conv):
             then the top, bottom, left, and right padding are all equal to `padding`.
             If `padding` is a tuple of 4 integers, then the top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, and `padding[3]` respectively.
-            The value should be greater than or equal to 0. Default: 0.
+            The value should be greater than or equal to 0. Default: ``0`` .
         output_padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the output.
             The data type is an integer or a tuple of two integers. If `output_padding` is an integer,
             then the bottom and right padding are all equal to `output_padding`. If `output_padding` is a tuple of
             2 integers, then the bottom and right padding is equal to `output_padding[0]`, `output_padding[1]`
             respectively. If `output_padding` is not equal to 0, `pad_mode` must be `pad`.
-            The value should be in range of `[0, max(stride, dilation))` . Default: 0.
+            The value should be in range of `[0, max(stride, dilation))` . Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
             The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: 1.
+            and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be divisible by `group`.
-            Default: 1.
-        has_bias (bool): Whether the Conv2dTranspose layer has a bias parameter. Default: False.
+            Default: ``1`` .
+        has_bias (bool): Whether the Conv2dTranspose layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
+            Initializer for more details. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1004,7 +1004,7 @@ class Conv2dTranspose(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
-        pad_mode is 'same':
+        pad_mode is ``'same'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -1012,7 +1012,7 @@ class Conv2dTranspose(_Conv):
                 W_{out} = \text W_{in}\times \text {stride[1]} \\
             \end{array}
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -1022,7 +1022,7 @@ class Conv2dTranspose(_Conv):
                 (\text{kernel_size[1]} - 1) - \text {stride[1]}, 0 \} \\
             \end{array}
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'``:
 
         .. math::
             \begin{array}{ll} \\
@@ -1177,35 +1177,35 @@ class Conv1dTranspose(_Conv):
         in_channels (int): The channel number of the input tensor of the Conv1dTranspose layer.
         out_channels (int): The channel number of the output tensor of the Conv1dTranspose layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
-        stride (int): The movement stride of the 1D convolution kernel. Default: 1.
+        stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: The width of the output is the same as the value of the input divided by `stride`.
+            - ``"same"``: The width of the output is the same as the value of the input divided by `stride`.
               If this mode is set, the value of `padding` must be 0.
 
-            - valid: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
+            - ``"valid"``: Returns a valid calculated output without padding. Excess pixels that do not satisfy the
               calculation will be discarded. If this mode is set, the value of `padding` must be 0.
 
-            - pad: Pads the input. Padding `padding` size of zero on both sides of the input.
+            - ``"pad"``: Pads the input. Padding `padding` size of zero on both sides of the input.
               If this mode is set, the value of `padding` must be greater than or equal to 0.
 
         padding (int): The number of padding on both sides of input.
-            The value should be greater than or equal to 0. Default: 0.
+            The value should be greater than or equal to 0. Default: ``0`` .
         dilation (int): Dilation size of 1D convolution kernel. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` is in range of [1, L]. Default: 1.
+            every `k` elements. The value of `k` is in range of [1, L]. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by `group`. When `group` > 1, the Ascend platform is not supported yet. Default: 1.
-        has_bias (bool): Whether the Conv1dTranspose layer has a bias parameter. Default: False.
+            divisible by `group`. When `group` > 1, the Ascend platform is not supported yet. Default: ``1`` .
+        has_bias (bool): Whether the Conv1dTranspose layer has a bias parameter. Default: ``False``.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'``, ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase
+            are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
+            Initializer for more details. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -1213,12 +1213,12 @@ class Conv1dTranspose(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
-        pad_mode is 'same': :math:`L_{out} = \frac{ L_{in} + \text{stride} - 1 }{ \text{stride} }`
+        pad_mode is ``'same'``: :math:`L_{out} = \frac{ L_{in} + \text{stride} - 1 }{ \text{stride} }`
 
-        pad_mode is 'valid':
+        pad_mode is ``'valid'``:
         :math:`L_{out} = (L_{in} - 1) \times \text{stride} + \text{dilation} \times (\text{kernel_size} - 1) + 1`
 
-        pad_mode is 'pad':
+        pad_mode is ``'pad'``:
         :math:`L_{out} = (L_{in} - 1) \times \text{stride} - 2 \times \text{padding}
         + \text{dilation} \times (\text{kernel_size} - 1) + 1`
 

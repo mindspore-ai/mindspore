@@ -29,11 +29,11 @@ mindspore.nn.LSTM
     参数：
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
-        - **num_layers** (int) - 网络层数。默认值：1。
-        - **has_bias** (bool) - Cell是否有偏置项 `b_{ih}` 和 `b_{fh}`。默认值：True。
-        - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值：False。
-        - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值：0。dropout的范围为[0.0, 1.0)。
-        - **bidirectional** (bool) - 是否为双向LSTM。默认值：False。
+        - **num_layers** (int) - 网络层数。默认值： ``1`` 。
+        - **has_bias** (bool) - Cell是否有偏置项 `b_{ih}` 和 `b_{fh}`。默认值： ``True`` 。
+        - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
+        - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值： ``0`` 。dropout的范围为[0.0, 1.0)。
+        - **bidirectional** (bool) - 是否为双向LSTM。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(seq\_len, batch\_size, input\_size)` 或 :math:`(batch\_size, seq\_len, input\_size)` 的Tensor。

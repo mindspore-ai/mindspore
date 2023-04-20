@@ -250,20 +250,21 @@ class FTRL(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        initial_accum (float): The starting value for accumulators `m`, must be zero or positive values. Default: 0.1.
+        initial_accum (float): The starting value for accumulators `m`, must be zero or positive values.
+            Default: ``0.1`` .
         learning_rate (float): The learning rate value, must be zero or positive, dynamic learning rate is currently
-            not supported. Default: 0.001.
+            not supported. Default: ``0.001`` .
         lr_power (float): Learning rate power controls how the learning rate decreases during training, must be less
-            than or equal to zero. Use fixed learning rate if lr_power is zero. Default: -0.5.
-        l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
-        l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
-        use_locking (bool): If true, use locks for updating operation. Default: False.
+            than or equal to zero. Use fixed learning rate if lr_power is zero. Default: ``-0.5`` .
+        l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: ``0.0`` .
+        l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: ``0.0`` .
+        use_locking (bool): If true, use locks for updating operation. Default: ``False`` .
         loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
             Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
-            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager` is set to ``False`` , then this value needs to be the same as the `loss_scale` in
             `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
-            Default: 1.0.
-        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+            Default: ``1.0`` .
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 
             - float: The fixed weight decay value. Must be equal to or greater than 0.
 

@@ -36,12 +36,12 @@ class Beta(Distribution):
 
     Args:
         concentration1 (int, float, list, numpy.ndarray, Tensor): The concentration1,
-          also know as alpha of the Beta distribution. Default: None.
+          also know as alpha of the Beta distribution. Default: ``None`` .
         concentration0 (int, float, list, numpy.ndarray, Tensor): The concentration0, also know as
-          beta of the Beta distribution. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
-        name (str): The name of the distribution. Default: 'Beta'.
+          beta of the Beta distribution. Default: ``None`` .
+        seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.float32`` .
+        name (str): The name of the distribution. Default: ``'Beta'`` .
 
     Note:
         - `concentration1` and `concentration0` must be greater than zero.

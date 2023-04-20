@@ -30,9 +30,9 @@ class NormalPrior(Cell):
 
     Args:
         dtype (mindspore.dtype): The argument is used to define the data type of the output tensor.
-            Default: mindspore.float32.
-        mean (int, float): Mean of normal distribution. Default: 0.
-        std (int, float): Standard deviation of normal distribution. Default: 0.1.
+            Default: ``mindspore.float32`` .
+        mean (int, float): Mean of normal distribution. Default: ``0`` .
+        std (int, float): Standard deviation of normal distribution. Default: ``0.1`` .
 
     Returns:
         Cell, a normal distribution.
@@ -56,12 +56,13 @@ class NormalPosterior(Cell):
         name (str): Name prepended to trainable parameter.
         shape (list, tuple): Shape of the mean and standard deviation.
         dtype (mindspore.dtype): The argument is used to define the data type of the output tensor.
-            Default: mindspore.float32.
-        loc_mean (int, float): Mean of distribution to initialize trainable parameters. Default: 0.
-        loc_std (int, float): Standard deviation of distribution to initialize trainable parameters. Default: 0.1.
-        untransformed_scale_mean (int, float): Mean of distribution to initialize trainable parameters. Default: -5.
+            Default: ``mindspore.float32`` .
+        loc_mean (int, float): Mean of distribution to initialize trainable parameters. Default: ``0`` .
+        loc_std (int, float): Standard deviation of distribution to initialize trainable parameters. Default: ``0.1`` .
+        untransformed_scale_mean (int, float): Mean of distribution to initialize trainable parameters.
+            Default: ``-5`` .
         untransformed_scale_std (int, float): Standard deviation of distribution to initialize trainable parameters.
-            Default: 0.1.
+            Default: ``0.1`` .
 
     Returns:
         Cell, a normal distribution.

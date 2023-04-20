@@ -33,11 +33,11 @@ class Bijector(Cell):
     then :math:`Y = g(X)` is the random variable following the transformed distribution.
 
     Args:
-        is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: False.
-        is_injective (bool): Whether the Bijector is a one-to-one mapping. Default: True.
-        name (str): The name of the Bijector. Default: None.
-        dtype (mindspore.dtype): The type of the distributions that the Bijector can operate on. Default: None.
-        param (dict): The parameters used to initialize the Bijector. Default: None.
+        is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: ``False`` .
+        is_injective (bool): Whether the Bijector is a one-to-one mapping. Default: ``True`` .
+        name (str): The name of the Bijector. Default: ``None`` .
+        dtype (mindspore.dtype): The type of the distributions that the Bijector can operate on. Default: ``None`` .
+        param (dict): The parameters used to initialize the Bijector. Default: ``None`` .
 
     Note:
         `dtype` of bijector represents the type of the distributions that the bijector could operate on.

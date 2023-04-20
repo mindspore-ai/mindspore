@@ -18,7 +18,7 @@ mindspore.nn.GELU
     GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_  。
 
     参数：
-        - **approximate** (bool) - 是否启用approximation，默认值：True。如果approximate的值为True，则高斯误差线性激活函数为：
+        - **approximate** (bool) - 是否启用approximation，默认值： ``True`` 。如果approximate的值为 ``True`` ，则高斯误差线性激活函数为：
 
           :math:`0.5 * x * (1 + tanh(\sqrt(2 / \pi) * (x + 0.044715 * x^3)))` ，
 

@@ -136,23 +136,23 @@ class DenseReparam(_DenseVariational):
         activation (str, Cell): A regularization function applied to the output of the layer.
             The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
             Note that if the type of activation is Cell, it must be instantiated beforehand.
-            Default: None.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+            Default: ``None`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``False`` .
         weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
-            Default: NormalPrior. (which creates an instance of standard
+            Default: ``NormalPrior`` . (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
         bias_prior_fn (Cell): The prior distribution for bias vector. It must return
-            a mindspore distribution. Default: NormalPrior(which creates an
+            a mindspore distribution. Default: ``NormalPrior`` (which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
         bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
 
     Inputs:
@@ -230,23 +230,23 @@ class DenseLocalReparam(_DenseVariational):
         activation (str, Cell): A regularization function applied to the output of the layer.
             The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
             Note that if the type of activation is Cell, it must be instantiated beforehand.
-            Default: None.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+            Default: ``None`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``False`` .
         weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
-            Default: NormalPrior. (which creates an instance of standard
+            Default: ``NormalPrior`` . (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
         bias_prior_fn (Cell): The prior distribution for bias vector. It must return
-            a mindspore distribution. Default: NormalPrior(which creates an
+            a mindspore distribution. Default: ``NormalPrior`` (which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
         bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: normal_post_fn.
+            distribution instance. Default: ``normal_post_fn`` .
             The current version only supports normal distribution.
 
     Inputs:

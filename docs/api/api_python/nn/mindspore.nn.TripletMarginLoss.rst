@@ -22,17 +22,17 @@ mindspore.nn.TripletMarginLoss
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
     参数：
-        - **p** (int，可选) - 成对距离的范数。默认值：2。
-        - **swap** (bool，可选) - 距离交换。默认值：False。
-        - **eps** (float，可选) - 防止除数为 0。默认值：1e-06。
-        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为"mean"、"sum"或"none"。默认值："mean"。
-        - **margin** (Union[Tensor, float]) - 用于拉进 `x` 和 `positive` 之间的距离，拉远 `x` 和 `negative` 之间的距离。默认值：1.0。
+        - **p** (int，可选) - 成对距离的范数。默认值： ``2`` 。
+        - **swap** (bool，可选) - 距离交换。默认值： ``False`` 。
+        - **eps** (float，可选) - 防止除数为 0。默认值： ``1e-06`` 。
+        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **margin** (Union[Tensor, float]) - 用于拉进 `x` 和 `positive` 之间的距离，拉远 `x` 和 `negative` 之间的距离。默认值： ``1.0`` 。
 
     输入：
         - **x** (Tensor) - 从训练集随机选取的样本。数据类型为BasicType。即上述公式中的 :math:`a` 。
         - **positive** (Tensor) - 与 `x` 为同一类的样本，数据类型与shape与 `x` 一致。即上述公式中的 :math:`p` 。
         - **negative** (Tensor) - 与 `x` 为异类的样本，数据类型与shape与 `x` 一致。即上述公式中的 :math:`n` 。
-        - **margin** (Union[Tensor, float]) - 用于拉进 `x` 和 `positive` 之间的距离，拉远 `x` 和 `negative` 之间的距离。默认值：1.0。
+        - **margin** (Union[Tensor, float]) - 用于拉进 `x` 和 `positive` 之间的距离，拉远 `x` 和 `negative` 之间的距离。默认值： ``1.0`` 。
 
     输出：
         Tensor。如果 `reduction` 为"none"，其shape为 :math:`(N)`。否则，将返回Scalar。

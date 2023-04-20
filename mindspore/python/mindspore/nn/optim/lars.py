@@ -88,9 +88,9 @@ class LARS(Optimizer):
 
     Args:
         optimizer (Optimizer): MindSpore optimizer for which to wrap and modify gradients.
-        epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
-        coefficient (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
-        use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
+        epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .
+        coefficient (float): Trust coefficient for calculating the local learning rate. Default: ``0.001`` .
+        use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: ``False`` .
         lars_filter (Function): A function to determine which of the network parameters to use LARS algorithm. Default:
                                 lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 

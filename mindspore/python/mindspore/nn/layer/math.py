@@ -66,7 +66,7 @@ class ReduceLogSumExp(Cell):
         ReduceLogSumExp(x) = \log(\sum(e^x))
 
     Args:
-        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all dimensions.
             Only constant value is allowed.
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
             If False, don't keep these dimensions.
@@ -887,8 +887,8 @@ class CosineSimilarity(Cell):
     the lower bound of :math:`\parallel \textbf{x} \parallel \parallel \textbf{y} \parallel` is set to `eps`.
 
     Args:
-        dim (int, optional): Dimension. Default: 1.
-        eps (float, optional): Small value. Default: 1e-08.
+        dim (int, optional): Dimension. Default: ``1`` .
+        eps (float, optional): Small value. Default: ``1e-08`` .
 
     Inputs:
         - **x1** (Tensor) - The first tensor :math:`\textbf{x}`.

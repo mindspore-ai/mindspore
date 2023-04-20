@@ -55,18 +55,18 @@ class DenseThor(Cell):
 
     where :math:`\text{activation}` is the activation function , :math:`\text{kernel}` is a weight matrix with the same
     data type as the inputs created by the layer, and :math:`\text{bias}` is a bias vector
-    with the same data type as the inputs created by the layer (only if has_bias is True).
+    with the same data type as the inputs created by the layer (only if has_bias is ``True`` ).
 
     Args:
         in_channels (int): The number of the input channels.
         out_channels (int): The number of the output channels.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+            same as `x`. The values of str refer to the function `initializer`. Default: ``'zeros'`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``True`` .
         activation (str): activate function applied to the output of the fully connected layer, eg. 'ReLU'.
-            Default: None.
+            Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
@@ -318,44 +318,44 @@ class Conv2dThor(_ConvThor):
             the width of the kernel. A tuple of 2 integers means the height and the width of the kernel respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number represents the height and width
              of movement, or a tuple of two int numbers that represent height and width of movement, respectively.
-             Default: 1.
+             Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "same".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"same"`` .
 
-            - same: Adopts the way of completion. The shape of the output will be the same as
+            - ``"same"``: Adopts the way of completion. The shape of the output will be the same as
               the `x`. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be
+              returned without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
-              Tensor borders. `padding` must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to
+              the input Tensor borders. `padding` must be greater than or equal to 0.
 
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input `x`. If `padding` is an integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
-                    padding[1], padding[2], and padding[3] accordingly. Default: 0.
+                    padding[1], padding[2], and padding[3] accordingly. Default: ``0`` .
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the height and width of the  input `x`.
-                                      Default: 1.
+                                      Default: ``1`` .
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. If the group is equal to `in_channels` and `out_channels`,
-            this 2D convolution layer also can be called 2D depthwise convolution layer. Default: 1.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+            this 2D convolution layer also can be called 2D depthwise convolution layer. Default: ``1`` .
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializes the convolution kernel.
             It can be a Tensor, a string, an Initializer or a number. When a string is specified,
-            values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
-            as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
-            and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
-            Initializer for more details. Default: 'normal'.
+            values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
+            distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
+            ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializes the bias vector. Possible
             Initializer and string are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: 'zeros'.
+            Initializer for more details. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -548,12 +548,12 @@ class EmbeddingThor(Cell):
     Args:
         vocab_size (int): The size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
-        use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: False.
+        use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: ``False`` .
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializes the embedding_table.
-            Refer to class `initializer` for the values of string when a string is specified. Default: 'normal'.
-        dtype (:class:`mindspore.dtype`): Data type of input `x`. Default: mindspore.float32.
+            Refer to class `initializer` for the values of string when a string is specified. Default: ``'normal'`` .
+        dtype (:class:`mindspore.dtype`): Data type of input `x`. Default: ``mindspore.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
-                                 will be initialized to zero. Default: None. The feature is inactivated.
+                                 will be initialized to zero. Default: ``None`` . The feature is inactivated.
     Inputs:
         - **x** (Tensor) - Tensor of input shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
@@ -679,17 +679,17 @@ class EmbeddingLookupThor(Cell):
         embedding_size (int): The size of each embedding vector.
         param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string is specified.
-            Default: 'normal'.
+            Default: ``'normal'`` .
         target (str): Specifies the target where the op is executed. The value must in
-            ['DEVICE', 'CPU']. Default: 'CPU'.
+            [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             nn.EmbeddingLookup. Default: nn.EmbeddingLookup.BATCH_SLICE.
         manual_shapes (tuple): The accompaniment array in field slice mode.
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32 or None.
-                                       Default: None
-        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true.
-                       Default: True.
-        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: 0. It is valid only in
+                                       Default: ``None`` .
+        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be ``true`` .
+                       Default: ``True`` .
+        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: ``0`` . It is valid only in
             'DEVICE' target. And the moment parameter of corresponding optimizer will also be set to the cache size.
             In addition, it should be noted that it will cost the 'DEVICE' memory, so suggests setting a reasonable
             value to avoid insufficient memory.

@@ -62,13 +62,13 @@ class Embedding(Cell):
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
-        use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: False.
+        use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: ``False`` .
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
-            is specified. Default: 'normal'.
-        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: mindspore.float32.
+            is specified. Default: ``'normal'`` .
+        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mindspore.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
-                                 will be initialized to zero. Default: None. The feature is inactivated.
+                                 will be initialized to zero. Default: ``None`` . The feature is inactivated.
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
@@ -177,16 +177,16 @@ class EmbeddingLookup(Cell):
         embedding_size (int): The size of each embedding vector.
         param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
-            is specified. Default: 'normal'.
+            is specified. Default: ``'normal'`` .
         target (str): Specifies the target where the op is executed. The value must in
-            ['DEVICE', 'CPU']. Default: 'CPU'.
+            [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             :class:`mindspore.nn.EmbeddingLookup`. Default: 'nn.EmbeddingLookup.BATCH_SLICE'.
-        manual_shapes (tuple): The accompaniment array in field slice mode. Default: None.
+        manual_shapes (tuple): The accompaniment array in field slice mode. Default: ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
-                                       or None. Default: None
-        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
-        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: 0. It is valid only in
+                                       or None. Default: ``None`` .
+        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: ``True`` .
+        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: ``0`` . It is valid only in
             parameter server trainning mode and 'DEVICE' target. And the moment parameter of corresponding
             optimizer will also be set to the cache size. In addition, it should be noted that it will cost the 'DEVICE'
             memory, so suggests setting a reasonable value to avoid insufficient memory.
@@ -495,17 +495,19 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         field_size (int): The field size of the final outputs.
         param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
-            is specified. Default: 'normal'.
+            is specified. Default: ``'normal'`` .
         target (str): Specifies the target where the op is executed. The value must in
-            ['DEVICE', 'CPU']. Default: 'CPU'.
+            [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             :class:`mindspore.nn.EmbeddingLookup`. Default: 'nn.EmbeddingLookup.BATCH_SLICE'.
-        feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently. Default: None.
+        feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
+            Default:  ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
-                                       or None. Default: None
-        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
-        operator (str): The pooling method for the features in one field. Support 'SUM', 'MEAN' and 'MAX'.
-            Default: 'SUM'.
+                                       or None. Default: ``None`` .
+        sparse (bool): Using sparse mode. When 'target' is set to ``'CPU'`` , 'sparse' has to be true.
+            Default: ``True`` .
+        operator (str): The pooling method for the features in one field. Support ``'SUM'`` , ``'MEAN'`` and
+            ``'MAX'`` . Default: ``'SUM'`` .
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.

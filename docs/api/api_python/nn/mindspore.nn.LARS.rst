@@ -36,9 +36,9 @@ mindspore.nn.LARS
 
     参数：
         - **optimizer** (Optimizer) - 待封装和修改梯度的MindSpore优化器。
-        - **epsilon** (float) - 将添加到分母中，提高数值稳定性。默认值：1e-05。
-        - **coefficient** (float) - 计算局部学习速率的信任系数。默认值：0.001。
-        - **use_clip** (bool) - 计算局部学习速率时是否裁剪。默认值：False。
+        - **epsilon** (float) - 将添加到分母中，提高数值稳定性。默认值： ``1e-05`` 。
+        - **coefficient** (float) - 计算局部学习速率的信任系数。默认值： ``0.001`` 。
+        - **use_clip** (bool) - 计算局部学习速率时是否裁剪。默认值： ``False`` 。
         - **lars_filter** (Function) - 用于指定使用LARS算法的网络参数。默认值：lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name。
 
     输入：

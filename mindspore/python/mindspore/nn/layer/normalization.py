@@ -481,31 +481,31 @@ class SyncBatchNorm(_BatchNorm):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
-        eps (float): :math:`\epsilon`, a value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): :math:`\epsilon`, a value added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.9.
-        affine (bool): A bool value. When set to True, :math:`\gamma` and :math:`\beta` can be learned.
-            Default: True.
+            running_mean and running_var computation. Default: ``0.9`` .
+        affine (bool): A bool value. When set to ``True`` , :math:`\gamma` and :math:`\beta` can be learned.
+            Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
-        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
-            use the mean value and variance value of specified value. If None, training process will use the mean and
-            variance of current batch data and track the running mean and variance, eval process will use the running
-            mean and variance. Default: None.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
+        use_batch_statistics (bool): If ``true`` , use the mean value and variance value of current batch data. If
+            ``false`` , use the mean value and variance value of specified value. If ``None`` , training process will
+            use the mean and variance of current batch data and track the running mean and variance, eval process will
+            use the running mean and variance. Default: ``None`` .
         process_groups (list): A list to divide devices into different sync groups, containing N subtraction lists.
             Each subtraction list contains int numbers identifying rank ids which need to be synchronized in the same
-            group. All int values must be in [0, rank_size) and different from each other. Default: None, indicating
-            synchronization across all devices.
+            group. All int values must be in [0, rank_size) and different from each other. Default: ``None`` ,
+            indicating synchronization across all devices.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -666,17 +666,17 @@ class LayerNorm(Cell):
         normalized_shape (Union(tuple[int], list[int])): The normalization is performed over axis
             `begin_norm_axis ... R - 1`.
         begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
-            `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: -1.
+            `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: ``-1`` .
         begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters
             will have dimensions `begin_params_axis: rank(inputs)` and will be broadcast with
-            the normalized inputs accordingly, the value should be in [-1, rank(input)). Default: -1.
+            the normalized inputs accordingly, the value should be in [-1, rank(input)). Default: ``-1`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
-        epsilon (float): :math:`\epsilon` added to the denominator for numerical stability. Default: 1e-7.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
+        epsilon (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-7`` .
 
     Inputs:
         - **x** (Tensor) - The shape of `x` is :math:`(x_1, x_2, ..., x_R)`,
@@ -821,16 +821,16 @@ class InstanceNorm1d(_InstanceNorm):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, L)`.
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.1.
-        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.1`` .
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, L)`. Data type: float16 or float32.
@@ -900,16 +900,16 @@ class InstanceNorm2d(_InstanceNorm):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.1.
-        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.1`` .
+        affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
@@ -978,16 +978,16 @@ class InstanceNorm3d(_InstanceNorm):
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, D, H, W)`.
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
         momentum (float): A floating hyperparameter of the momentum for the
-            running_mean and running_var computation. Default: 0.1.
-        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+            running_mean and running_var computation. Default: ``0.1`` .
+        affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: 'zeros'.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D, H, W)`. Data type: float16 or float32.
@@ -1047,14 +1047,17 @@ class GroupNorm(Cell):
     Args:
         num_groups (int): The number of groups to be divided along the channel dimension.
         num_channels (int): The number of input channels.
-        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
-        affine (bool): A bool value, this layer will have learnable affine parameters when set to true. Default: True.
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
+        affine (bool): A bool value, this layer will have learnable affine parameters when set to ``true`` .
+            Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'. If gamma_init is a Tensor, the shape must be :math:`(num\_channels)`.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` . If gamma_init is a Tensor, the shape
+            must be :math:`(num\_channels)`.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'. If beta_init is a Tensor, the shape must be :math:`(num\_channels)`.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` . If beta_init is a Tensor, the shape
+            must be :math:`(num\_channels)`.
 
     Inputs:
         - **x** (Tensor) - The input feature with shape :math:`(N, C, H, W)` .

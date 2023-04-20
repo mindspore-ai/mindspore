@@ -34,8 +34,8 @@ class PowerTransform(Bijector):
     This Bijector is equivalent to the :class:`mindspore.nn.probability.bijector.Exp` bijector when `c=0`.
 
     Args:
-        power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
-        name (str): The name of the bijector. Default: 'PowerTransform'.
+        power (float, list, numpy.ndarray, Tensor): The scale factor. Default: ``0`` .
+        name (str): The name of the bijector. Default: ``'PowerTransform'`` .
 
     Note:
         The dtype of `power` must be float.

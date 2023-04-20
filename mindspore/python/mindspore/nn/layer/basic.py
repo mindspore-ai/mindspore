@@ -126,10 +126,10 @@ class Dropout(Cell):
 
     Args:
         keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
-            E.g. rate=0.9, dropping out 10% of input neurons. Default: 0.5.
+            E.g. rate=0.9, dropping out 10% of input neurons. Default: ``0.5`` .
         p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
-            E.g. rate=0.9, dropping out 90% of input neurons. Default: None.
-        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: mindspore.float32.
+            E.g. rate=0.9, dropping out 90% of input neurons. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: ``mindspore.float32`` .
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
@@ -216,7 +216,7 @@ class Dropout1d(Cell):
 
     Args:
         p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means an 80% chance of being set to 0. Default: 0.5.
+            which means an 80% chance of being set to 0. Default: ``0.5`` .
 
     Inputs:
         - **x** (Tensor) - A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size,
@@ -401,8 +401,8 @@ class Flatten(Cell):
     Flatten the input Tensor along dimensions from `start_dim` to `end_dim`.
 
     Args:
-        start_dim (int, optional): The first dimension to flatten. Default: 1.
-        end_dim (int, optional): The last dimension to flatten. Default: -1.
+        start_dim (int, optional): The first dimension to flatten. Default: ``1`` .
+        end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to be flattened.
@@ -509,13 +509,13 @@ class Dense(Cell):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as `x`. The values of str refer to the function `initializer`. Default: ``'zeros'`` .
         has_bias (bool): Specifies whether the layer uses a bias vector :math:`\text{bias}`. Default: True.
         activation (Union[str, Cell, Primitive, None]): activate function applied to the output of the fully connected
             layer. Both activation name, e.g. 'relu', and mindspore activation function, e.g. mindspore.ops.ReLU(),
-            are supported. Default: None.
+            are supported. Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -660,7 +660,7 @@ class ClipByNorm(Cell):
 
     Args:
         axis (Union[None, int, tuple(int)]): Compute the L2-norm along the Specific dimension.
-                                            Default: None, all dimensions to calculate.
+                                            Default: ``None`` , all dimensions to calculate.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
@@ -769,8 +769,8 @@ class Pad(Cell):
                 # 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
                 # So the shape of output is (5, 7).
 
-        mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
-            Default: "CONSTANT".
+        mode (str): Specifies padding mode. The optional values are ``"CONSTANT"`` , ``"REFLECT"`` , ``"SYMMETRIC"`` .
+            Default: ``"CONSTANT"`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -988,12 +988,13 @@ class Unfold(Cell):
             must be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
         rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
             pixel positions, must be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid", not case sensitive.
-            Default: "valid".
+        padding (str): The type of padding algorithm, is a string whose value is ``"same"`` or ``"valid"`` , not case
+            sensitive. Default: ``"valid"`` .
 
-            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+            - ``"same"``: Means that the patch can take the part beyond the original image, and this part is filled
+              with 0.
 
-            - valid: Means that the taken patch area must be completely covered in the original image.
+            - ``"valid"``: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and

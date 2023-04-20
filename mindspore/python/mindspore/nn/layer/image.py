@@ -227,12 +227,12 @@ class SSIM(Cell):
 
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
-          Default: 1.0.
+          Default: ``1.0`` .
         filter_size (int): The size of the Gaussian filter. Default: 11. The value must be greater than or equal to 1.
-        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.
+        filter_sigma (float): The standard deviation of Gaussian kernel. Default: ``1.5`` .
           The value must be greater than 0.
-        k1 (float): The constant used to generate c1 in the luminance comparison function. Default: 0.01.
-        k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
+        k1 (float): The constant used to generate c1 in the luminance comparison function. Default: ``0.01`` .
+        k2 (float): The constant used to generate c2 in the contrast comparison function. Default: ``0.03`` .
 
     Inputs:
         - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.
@@ -319,13 +319,13 @@ class MSSSIM(Cell):
 
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
-          Default: 1.0.
+          Default: ``1.0`` .
         power_factors (Union[tuple, list]): Iterable of weights for each scale.
           Default: (0.0448, 0.2856, 0.3001, 0.2363, 0.1333). Default values obtained by Wang et al.
-        filter_size (int): The size of the Gaussian filter. Default: 11.
-        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.
-        k1 (float): The constant used to generate c1 in the luminance comparison function. Default: 0.01.
-        k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
+        filter_size (int): The size of the Gaussian filter. Default: ``11`` .
+        filter_sigma (float): The standard deviation of Gaussian kernel. Default: ``1.5`` .
+        k1 (float): The constant used to generate c1 in the luminance comparison function. Default: ``0.01`` .
+        k2 (float): The constant used to generate c2 in the contrast comparison function. Default: ``0.03`` .
 
     Inputs:
         - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.
@@ -432,7 +432,7 @@ class PSNR(Cell):
 
     Args:
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
-          The value must be greater than 0. Default: 1.0.
+          The value must be greater than 0. Default: ``1.0`` .
 
     Inputs:
         - **img1** (Tensor) - The first image batch with format 'NCHW'. It must be the same shape and dtype as img2.

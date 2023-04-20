@@ -27,8 +27,10 @@ class WithBNNLossCell(Cell):
     Args:
         backbone (Cell): The target network.
         loss_fn (Cell): The loss function used to compute loss.
-        dnn_factor(int, float): The coefficient of backbone's loss, which is computed by the loss function. Default: 1.
-        bnn_factor(int, float): The coefficient of KL loss, which is the KL divergence of Bayesian layer. Default: 1.
+        dnn_factor(int, float): The coefficient of backbone's loss, which is computed by the loss function.
+            Default: ``1`` .
+        bnn_factor(int, float): The coefficient of KL loss, which is the KL divergence of Bayesian layer.
+            Default: ``1`` .
 
     Inputs:
         - **data** (Tensor) - Tensor of shape :math:`(N, \ldots)`.

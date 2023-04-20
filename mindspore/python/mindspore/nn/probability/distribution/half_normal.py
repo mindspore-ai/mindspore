@@ -37,12 +37,12 @@ class HalfNormal(Distribution):
 
     Args:
         mean (Union[int, float, list, numpy.ndarray, Tensor], optional): The mean of the distribution.
-            If this arg is None, then the mean of the distribution will be passed in runtime. Default: None.
+            If this arg is ``None`` , then the mean of the distribution will be passed in runtime. Default: ``None`` .
         sd (Union[int, float, list, numpy.ndarray, Tensor], optional): The standard deviation of the distribution.
-            If this arg is None, then the sd of the distribution will be passed in runtime. Default: None.
-        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype, optional): The type of the event samples. Default: mstype.float32.
-        name (str, optional): The name of the distribution. Default: 'HalfNormal'.
+            If this arg is ``None`` , then the sd of the distribution will be passed in runtime. Default: ``None`` .
+        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
+        dtype (mindspore.dtype, optional): The type of the event samples. Default: ``mstype.float32`` .
+        name (str, optional): The name of the distribution. Default: ``'HalfNormal'`` .
 
     Note:
         - `sd` must be greater than zero.

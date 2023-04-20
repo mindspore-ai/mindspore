@@ -23,10 +23,10 @@ mindspore.nn.PoissonNLLLoss
         在Ascend下计算负数的对数或大正数的指数将具有与GPU和CPU下不同的返回值和结果范围。
 
     参数：
-        - **log_input** (bool，可选) - 是否使用对数输入。默认值：True。
-        - **full** (bool，可选) - 是否在损失计算中包括斯特林近似项。默认值：False。
-        - **eps** (float，可选) - 算对数时 `input` 的下界。默认值：1e-08。
-        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为'none'、'mean'或'sum'。默认值：'mean'。
+        - **log_input** (bool，可选) - 是否使用对数输入。默认值： ``True`` 。
+        - **full** (bool，可选) - 是否在损失计算中包括斯特林近似项。默认值： ``False`` 。
+        - **eps** (float，可选) - 算对数时 `input` 的下界。默认值： ``1e-08`` 。
+        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
 
     输入：
         - **input** (Tensor) - 输入Tensor。shape可以是任意维。
