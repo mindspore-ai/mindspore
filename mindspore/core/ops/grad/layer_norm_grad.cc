@@ -39,49 +39,6 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(LayerNormGrad, BaseOperator);
-AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  // Inputs: five tensors(y_backprob, x, variance, mean, gamma).
-  // Outputs: x_backprob, gamma_backprob, beta_backprob
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto op_name = primitive->name();
-  const int64_t input_num = 5;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  auto x_backprob = input_args[kInputIndex0]->Broaden();
-  auto gamma_backprob = input_args[kInputIndex4]->Broaden();
-  auto beta_backprob = input_args[kInputIndex4]->Broaden();
-  MS_EXCEPTION_IF_NULL(x_backprob);
-  MS_EXCEPTION_IF_NULL(gamma_backprob);
-  MS_EXCEPTION_IF_NULL(beta_backprob);
-
-  auto types = std::make_shared<Tuple>(
-    std::vector<TypePtr>{x_backprob->BuildType(), gamma_backprob->BuildType(), beta_backprob->BuildType()});
-
-  auto input_shape = dyn_cast<abstract::Shape>(x_backprob->BuildShape());
-  auto gamma_shape = dyn_cast<abstract::Shape>(gamma_backprob->BuildShape());
-  auto beta_shape = dyn_cast<abstract::Shape>(beta_backprob->BuildShape());
-  MS_EXCEPTION_IF_NULL(input_shape);
-  MS_EXCEPTION_IF_NULL(gamma_shape);
-  MS_EXCEPTION_IF_NULL(beta_shape);
-  auto const &input_shape_list = input_shape->shape();
-  auto const &gamma_shape_list = gamma_shape->shape();
-  auto const &beta_shape_list = beta_shape->shape();
-
-  if (IsDynamicRank(input_shape_list) || IsDynamicRank(gamma_shape_list) || IsDynamicRank(beta_shape_list)) {
-    auto any_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-    std::vector<BaseShapePtr> shapes_list = {any_shape, any_shape, any_shape};
-    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list), types);
-  }
-
-  auto shapes =
-    std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape, gamma_shape, beta_shape});
-
-  return abstract::MakeAbstract(shapes, types);
-}
 void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis) {
   this->set_begin_norm_axis(begin_norm_axis);
   this->set_begin_params_axis(begin_params_axis);
@@ -102,6 +59,35 @@ int64_t LayerNormGrad::get_begin_params_axis() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormGrad, prim::kPrimLayerNormGrad, LayerNormGradInfer, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(LayerNormGrad, BaseOperator);
+class MIND_API LayerNormGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    auto gamma_shape_ptr = input_args[kInputIndex4]->BuildShape()->cast<abstract::ShapePtr>();
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{x_shape_ptr, gamma_shape_ptr, gamma_shape_ptr});
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    // Inputs: five tensors(y_backprob, x, variance, mean, gamma).
+    // Outputs: x_backprob, gamma_backprob, beta_backprob
+    MS_EXCEPTION_IF_NULL(primitive);
+    for (auto item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    auto op_name = primitive->name();
+    const int64_t input_num = 5;
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                             op_name);
+    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto gamma_type = input_args[kInputIndex4]->BuildType();
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, gamma_type, gamma_type});
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(LayerNormGrad, prim::kPrimLayerNormGrad, LayerNormGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

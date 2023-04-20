@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EYE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EYE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_EYE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_EYE_GPU_KERNEL_H_
 
-#include <complex>
-#include <map>
-#include <utility>
 #include <vector>
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/factory/ms_factory.h"
-
+#include <string>
+#include <memory>
+#include <utility>
+#include <map>
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {
 namespace kernel {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
-class EyeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EyeCpuKernelMod> {
+class EyeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<EyeGpuKernelMod> {
  public:
-  EyeCpuKernelMod() = default;
-  ~EyeCpuKernelMod() override = default;
+  EyeGpuKernelMod() = default;
+  ~EyeGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -40,7 +37,8 @@ class EyeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EyeC
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    stream_ptr_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -50,13 +48,15 @@ class EyeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EyeC
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename S, typename T>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
+
+  void *stream_ptr_{nullptr};
   int64_t num_n_ = 0;
   int64_t num_m_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EYE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_EYE_GPU_KERNEL_H_

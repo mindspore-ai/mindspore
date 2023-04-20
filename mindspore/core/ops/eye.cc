@@ -37,6 +37,7 @@
 #include "ir/tensor.h"
 #include "mindapi/base/type_id.h"
 #include "ops/core_ops.h"
+#include "ops/op_utils.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 
@@ -189,7 +190,6 @@ ValuePtr EyeInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Eye, BaseOperator);
 AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -201,6 +201,28 @@ AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Eye, prim::kPrimEye, EyeInfer, EyeInferValue, false);
+MIND_API_OPERATOR_IMPL(Eye, BaseOperator);
+class MIND_API AGEyeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return EyeInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EyeInferType(primitive, input_args);
+  }
+
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return EyeInferValue(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return EyeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Eye, prim::kPrimEye, AGEyeInfer, true);
 }  // namespace ops
 }  // namespace mindspore

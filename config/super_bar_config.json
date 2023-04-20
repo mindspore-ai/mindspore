@@ -112,6 +112,11 @@
     "ExtractVolumePatches": {
       "ksizes": "kernel_size"
     },
+    "Eye": {
+      "num_rows": "n",
+      "num_columns": "m",
+      "dtype": "t"
+    },
     "L2Normalize": {
       "eps": "epsilon"
     },
@@ -265,6 +270,9 @@
     }
   },
   "AttrDefaultValue": {
+    "Eye": {
+      "batch_shape": "[]"
+    },
     "Log": {
       "base": "-1.0",
       "scale": "1.0",
@@ -505,7 +513,8 @@
     "PadV3",
     "BNInferGrad",
     "AvgPool",
-    "GatherNd"
+    "GatherNd",
+    "Eye"
   ],
   "FallbackOps": {
     "DeformableOffsets": [

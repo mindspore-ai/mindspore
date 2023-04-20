@@ -54,9 +54,6 @@ class MIND_API DeformableOffsetsGrad : public BaseOperator {
   int64_t get_deformable_groups() const;
   bool get_modulated() const;
 };
-MIND_API abstract::AbstractBasePtr DeformableOffsetsGradInfer(const abstract::AnalysisEnginePtr &,
-                                                              const PrimitivePtr &primitive,
-                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif

@@ -641,6 +641,7 @@ void TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vec
                                             nlohmann::json *attrs_json) const {
   tbe::TbeAdapter::CastAttrJsonPrePass(anf_node, attrs_ptr, attrs_json);
 }
+
 void TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);

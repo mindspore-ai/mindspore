@@ -188,6 +188,7 @@ bool TbeAdapter::IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &i
     MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << " doesn't has attribute placeholder_index.";
   }
 }
+
 void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *op_info_attrs,
                                      nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);

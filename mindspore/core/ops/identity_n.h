@@ -38,9 +38,6 @@ class MIND_API IdentityN : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr IdentityNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args);
-
 using PrimIdentityNPtr = std::shared_ptr<IdentityN>;
 }  // namespace ops
 }  // namespace mindspore

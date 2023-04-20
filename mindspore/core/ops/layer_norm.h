@@ -56,8 +56,6 @@ class MIND_API LayerNorm : public BaseOperator {
   float get_epsilon() const;
 };
 
-MIND_API abstract::AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLayerNormPtr = std::shared_ptr<LayerNorm>;
 }  // namespace ops
 }  // namespace mindspore

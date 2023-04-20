@@ -39,38 +39,51 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(DType, BaseOperator);
-ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("dtype infer", int64_t(input_args.size()), kEqual, 1, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  if (type->isa<TensorType>()) {
-    const std::set<TypePtr> valid_types = {kTensorType};
-    return CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, valid_types, op_name);
+class MIND_API DTypeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto value = InferValue(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(value);
+    return value->ToAbstract()->GetShapeTrack();
   }
-  if (type->isa<SparseTensorType>()) {
-    const std::set<TypePtr> valid_types = {kCSRTensorType, kCOOTensorType};
-    return CheckAndConvertUtils::CheckSparseTensorTypeValid("input_x", type, valid_types, op_name);
-  }
-  if (type->isa<Number>()) {
-    return type;
-  }
-  MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input argument[input_x] "
-                          << "must be a Tensor, CSRTensor or COOTensor, but got " << type->ToString() << ".";
-}
 
-AbstractBasePtr DTypeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args) {
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto value = InferValue(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(value);
+    return value->ToAbstract()->GetTypeTrack();
   }
-  auto value = DTypeInferValue(primitive, input_args);
-  MS_EXCEPTION_IF_NULL(value);
-  return value->ToAbstract();
-}
 
-REGISTER_PRIMITIVE_EVAL_IMPL(DType, prim::kPrimDType, DTypeInfer, DTypeInferValue, false);
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("dtype infer", int64_t(input_args.size()), kEqual, 1, op_name);
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    auto type = input_args[0]->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->isa<TensorType>()) {
+      const std::set<TypePtr> valid_types = {kTensorType};
+      return CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, valid_types, op_name);
+    }
+    if (type->isa<SparseTensorType>()) {
+      const std::set<TypePtr> valid_types = {kCSRTensorType, kCOOTensorType};
+      return CheckAndConvertUtils::CheckSparseTensorTypeValid("input_x", type, valid_types, op_name);
+    }
+    if (type->isa<Number>()) {
+      return type;
+    }
+    MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input argument[input_x] "
+                            << "must be a Tensor, CSRTensor or COOTensor, but got " << type->ToString() << ".";
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    auto value = InferValue(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(value);
+    return value->ToAbstract();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DType, prim::kPrimDType, DTypeInfer, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -175,7 +175,7 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       h_array_[i] = d_batch_input_addr + i * lda_ * m_;
       h_identity_[i] = output_addr + i * ldb_ * m_;
     }
-    Eye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    BatchEye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,

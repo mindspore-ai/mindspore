@@ -26,12 +26,9 @@
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
-#include "ops/dropout.h"
 
 namespace mindspore {
 namespace abstract {
-using ops::InferImplDropout;
-
 PrimShapeDependMap &GetInferDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
   // should be registered by the GetValueDependArgIndices

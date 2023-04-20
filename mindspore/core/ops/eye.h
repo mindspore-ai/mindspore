@@ -36,9 +36,6 @@ class MIND_API Eye : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorDiv for the inputs.
   void Init() const {}
 };
-
-MIND_API abstract::AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
