@@ -39,7 +39,6 @@
 #include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
 #include "tools/graph_kernel/converter/callback_impl.h"
 #include "tools/graph_kernel/converter/split_umonad.h"
-#include "tools/graph_kernel/converter/eliminate_redundant_op.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -65,9 +64,6 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Assign(p, a, U) --> Depend(Assign(p, a), U)
   pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_ascend);
-
-  // Eliminate redundant op, such as Reshape
-  pm->Add(std::make_shared<EliminateRedundantOp>(), OptLevel_1, is_ascend);
 
   // Recognize the formats for all CNodes
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
