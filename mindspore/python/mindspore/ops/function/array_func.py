@@ -6809,7 +6809,7 @@ def _cal_repeat_dims(x_rank, rep, expand_axis):
     return tuple(rep_dims)
 
 
-@constexpr
+@_primexpr
 def _cal_reshape(x_shape, rep, axis):
     x_reshape = list(x_shape)
     x_reshape[axis] *= rep
