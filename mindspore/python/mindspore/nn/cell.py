@@ -42,6 +42,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.common._decorator import deprecated
 
 
 def _check_args(args):
@@ -2009,15 +2010,8 @@ class Cell(Cell_):
         for param in params:
             param.set_param_ps(init_in_server)
 
+    @deprecated("1.8", "set_param_fl")
     def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
-        """
-        Set the way of parameter and server interaction.
-
-        Args:
-            push_to_server (bool): Whether the parameter should be pushed to server. Default: ``False`` .
-            pull_from_server (bool): Whether the parameter should be pulled from server. Default: ``False`` .
-            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: ``True`` .
-        """
         params = self.parameters_and_names()
         for param in params:
             param[1].set_param_fl(push_to_server, pull_from_server, requires_aggr)
