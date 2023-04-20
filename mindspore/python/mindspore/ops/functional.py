@@ -282,6 +282,7 @@ tensor_operator_registry.register('igamma', igamma)
 tensor_operator_registry.register('igammac', igammac)
 tensor_operator_registry.register('nextafter', nextafter)
 tensor_operator_registry.register('qr', qr)
+tensor_operator_registry.register('ormqr', ormqr)
 tensor_operator_registry.register('masked_scatter', array_ops.MaskedScatter)
 tensor_operator_registry.register('index_put', array_ops.IndexPut)
 # ms cannot support Tensor(True) compare

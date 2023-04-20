@@ -483,6 +483,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"movedim", std::string("movedim")},                                // movedim()
        {"nextafter", std::string("nextafter")},                            // nextafter()
        {"qr", std::string("qr")},                                          // qr()
+       {"ormqr", std::string("ormqr")},                                    // ormqr()
        {"amax", std::string("amax")},                                      // amax()
        {"amin", std::string("amin")},                                      // amin()
        {"masked_scatter", std::string("masked_scatter")},                  // masked_scatter()

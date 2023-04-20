@@ -400,6 +400,7 @@ from .math_func import (
     imag,
     roll,
     orgqr,
+    ormqr,
     sum,
     matrix_power,
     matrix_exp,
