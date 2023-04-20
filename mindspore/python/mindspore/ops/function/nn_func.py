@@ -1661,6 +1661,8 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     if _random_samples is None:
         n = 1 if input.ndim == 4 else input.shape[0]
         _random_samples = ops.rand(n, input.shape[-4], 3, dtype=input.dtype)
+    if input.ndim == 4:
+        _random_samples = _random_samples.transpose(1, 0, 2)
     if output_ratio is not None:
         if isinstance(output_ratio, (float, int)):
             _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool3d")
