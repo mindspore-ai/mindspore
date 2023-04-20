@@ -31,8 +31,10 @@ template <>
 __global__ void SoftMarginLossGradReductionNoneKernel(const half *prediction, const half *target, const half *dout,
                                                       const size_t input_size, const half norm, half *gradient) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    gradient[i] = norm * target[i] * hexp(-target[i] * prediction[i]) /
-                  (__float2half(1) + hexp(-target[i] * prediction[i])) * dout[i];
+    half multiply = (target[i] * prediction[i]);
+    gradient[i] = (multiply > __float2half(0))
+                    ? (norm * target[i] * hexp(-multiply) / (__float2half(1) + hexp(-multiply)) * dout[i])
+                    : (norm * target[i] / (__float2half(1) + hexp(multiply)) * dout[i]);
   }
   return;
 }
@@ -51,8 +53,10 @@ template <>
 __global__ void SoftMarginLossGradReductionOtherKernel(const half *prediction, const half *target, const half *dout,
                                                        const size_t input_size, const half norm, half *gradient) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    gradient[i] = norm * target[i] * hexp(-target[i] * prediction[i]) /
-                  (__float2half(1) + hexp(-target[i] * prediction[i])) * dout[0];
+    half multiply = (target[i] * prediction[i]);
+    gradient[i] = (multiply > __float2half(0))
+                    ? (norm * target[i] * hexp(-multiply) / (__float2half(1) + hexp(-multiply)) * dout[0])
+                    : (norm * target[i] / (__float2half(1) + hexp(multiply)) * dout[0]);
   }
   return;
 }
