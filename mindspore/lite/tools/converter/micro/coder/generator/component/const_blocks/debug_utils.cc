@@ -105,8 +105,7 @@ const char debug_utils_c[] = R"RAW(
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 
 static const unsigned int kPrintNums = 20;
-static const unsigned int kLineSplitNum = 44;
-static const unsigned int kLineNum = 45;
+
 unsigned int GetTensorElementSize(const MicroTensor *tensor) {
   unsigned int ans = 1;
   if (tensor->format == Format_NC4HW4) {
