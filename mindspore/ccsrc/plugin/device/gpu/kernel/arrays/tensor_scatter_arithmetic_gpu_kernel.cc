@@ -295,6 +295,7 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
                               reinterpret_cast<cudaStream_t>(stream_ptr_));
 
       (void)CheckIndicesValid(has_error, indices);
+      cudaFree(has_error);
       return true;
     }
   } else {
@@ -303,6 +304,7 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
                             reinterpret_cast<S *>(work_shape_), device_id_,
                             reinterpret_cast<cudaStream_t>(stream_ptr_));
     (void)CheckIndicesValid(has_error, indices);
+    cudaFree(has_error);
   }
   return true;
 }
