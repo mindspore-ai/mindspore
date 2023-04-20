@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -101,14 +101,14 @@ class TargetInfoSetter {
   bool has_info_{true};
 };
 
-class AkgKernelJsonGenerator {
+class GraphKernelJsonGenerator {
  public:
-  AkgKernelJsonGenerator() : cb_(Callback::Instance()) {}
-  explicit AkgKernelJsonGenerator(DumpOption dump_option)
+  GraphKernelJsonGenerator() : cb_(Callback::Instance()) {}
+  explicit GraphKernelJsonGenerator(DumpOption dump_option)
       : dump_option_(std::move(dump_option)), cb_(Callback::Instance()) {}
-  AkgKernelJsonGenerator(DumpOption dump_option, const CallbackPtr &cb)
+  GraphKernelJsonGenerator(DumpOption dump_option, const CallbackPtr &cb)
       : dump_option_(std::move(dump_option)), cb_(cb) {}
-  ~AkgKernelJsonGenerator() = default;
+  ~GraphKernelJsonGenerator() = default;
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -175,4 +175,4 @@ class AkgKernelJsonGenerator {
   CallbackPtr cb_;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GRAPH_KERNEL_JSON_GENERATOR_H_

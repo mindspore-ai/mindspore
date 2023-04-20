@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 
 #include <set>
 #include <functional>
@@ -162,7 +162,15 @@ class OpInfoExtractor {
     MS_EXCEPTION_IF_NULL(cnode_);
     auto op_info = std::make_shared<OpInfo>();
     op_info->set_op_name(AnfUtils::GetCNodeName(cnode_));
-    op_info->set_imply_type(OpImplyType::kImplyAKG);
+    const auto &flags = GraphKernelFlags::GetInstance();
+    if (flags.kernel_generator == "AKG") {
+      op_info->set_imply_type(OpImplyType::kImplyAKG);
+    } else if (flags.kernel_generator == "MLIR") {
+      op_info->set_imply_type(OpImplyType::kImplyMLIR);
+    } else {
+      MS_LOG(EXCEPTION) << "For the operator " << anf_node->fullname_with_scope() << ", the kernel generator "
+                        << flags.kernel_generator << " is not supported!";
+    }
     ExtractInputs(op_info);
     ExtractOutputs(op_info);
     ExtractAttrs(op_info);
@@ -249,8 +257,8 @@ class OpInfoExtractor {
 };
 }  // namespace
 
-bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
-                                                 nlohmann::json *node_json) const {
+bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx,
+                                                   nlohmann::json *node_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(node_json);
   auto cnode = anf_node->cast<CNodePtr>();
@@ -315,8 +323,8 @@ bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, siz
   return true;
 }
 
-bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
-                                                 nlohmann::json *inputs_json) {
+bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
+                                                   nlohmann::json *inputs_json) {
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   auto inputs_ptr = op_info->inputs_ptr();
   if (inputs_ptr.empty()) {
@@ -367,8 +375,8 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
   return true;
 }
 
-bool AkgKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
-                                                  nlohmann::json *outputs_json) {
+bool GraphKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
+                                                    nlohmann::json *outputs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(outputs_json);
@@ -399,9 +407,9 @@ bool AkgKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, co
   return true;
 }
 
-void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int64_t> &dyn_input_sizes,
-                                         const OpAttrPtr &op_attr, nlohmann::json *attr_json,
-                                         const ValuePtr &attr_value) {
+void GraphKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int64_t> &dyn_input_sizes,
+                                           const OpAttrPtr &op_attr, nlohmann::json *attr_json,
+                                           const ValuePtr &attr_value) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_attr);
   MS_EXCEPTION_IF_NULL(attr_json);
@@ -448,8 +456,8 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
   }
 }
 
-bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
-                                                nlohmann::json *attrs_json) {
+bool GraphKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
+                                                  nlohmann::json *attrs_json) {
   auto attrs = op_info->attrs_ptr();
   if (attrs.empty()) {
     MS_LOG(DEBUG) << "Apply kernel [" << anf_node->fullname_with_scope() << "] op info attrs is empty";
@@ -507,7 +515,7 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
   return true;
 }
 
-size_t AkgKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx) {
+size_t GraphKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -525,13 +533,13 @@ size_t AkgKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node, 
   return input_tensor_idx_[input_node];
 }
 
-size_t AkgKernelJsonGenerator::GetOutputTensorIdxInc() {
+size_t GraphKernelJsonGenerator::GetOutputTensorIdxInc() {
   size_t idx = output_tensor_idx_++;
   return idx;
 }
 
-std::string AkgKernelJsonGenerator::GetTensorName(const nlohmann::json &node_json, const std::string &tag,
-                                                  const std::pair<size_t, size_t> &position) const {
+std::string GraphKernelJsonGenerator::GetTensorName(const nlohmann::json &node_json, const std::string &tag,
+                                                    const std::pair<size_t, size_t> &position) const {
   if (node_json.count(tag) == 0) {
     MS_LOG(ERROR) << "Node [" << node_json.dump() << "] has no key [" << tag << "].";
     return "";
@@ -563,8 +571,9 @@ std::string AkgKernelJsonGenerator::GetTensorName(const nlohmann::json &node_jso
   return second_index[kJsonKeyTensorName];
 }
 
-void AkgKernelJsonGenerator::SetTensorName(const std::string &tag, const std::string &new_name,
-                                           const std::pair<size_t, size_t> &position, nlohmann::json *node_json) const {
+void GraphKernelJsonGenerator::SetTensorName(const std::string &tag, const std::string &new_name,
+                                             const std::pair<size_t, size_t> &position,
+                                             nlohmann::json *node_json) const {
   MS_EXCEPTION_IF_NULL(node_json);
   if (node_json->count(tag) == 0) {
     MS_LOG(ERROR) << "Node [" << node_json->dump() << "] has no key [" << tag << "].";
@@ -597,7 +606,7 @@ void AkgKernelJsonGenerator::SetTensorName(const std::string &tag, const std::st
   return;
 }
 
-void AkgKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json) {
+void GraphKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json) {
   if (dump_option_.save_ptr_address) {
     std::ostringstream get_the_address;
     get_the_address << anf_node.get();
@@ -607,7 +616,7 @@ void AkgKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohman
   }
 }
 
-OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) const {
+OpInfoPtr GraphKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) const {
   if (dump_option_.extract_opinfo_from_anfnode) {
     OpInfoExtractor e;
     return e.Run(anf_node);
@@ -615,12 +624,23 @@ OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) cons
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
     MS_LOG(EXCEPTION) << "OpLib is not supported.";
 #else
-    return kernel::OpLib::FindOp(AnfUtils::GetCNodeName(anf_node), OpImplyType::kImplyAKG);
+    OpImplyType imply_type;
+    const auto &flags = GraphKernelFlags::GetInstance();
+
+    if (flags.kernel_generator == "AKG") {
+      imply_type = OpImplyType::kImplyAKG;
+    } else if (flags.kernel_generator == "MLIR") {
+      imply_type = OpImplyType::kImplyMLIR;
+    } else {
+      MS_LOG(EXCEPTION) << "For the operator " << anf_node->fullname_with_scope() << ", the kernel generator "
+                        << flags.kernel_generator << " is not supported!";
+    }
+    return kernel::OpLib::FindOp(AnfUtils::GetCNodeName(anf_node), imply_type);
 #endif
   }
 }
 
-std::string AkgKernelJsonGenerator::GetProcessorByTarget() const {
+std::string GraphKernelJsonGenerator::GetProcessorByTarget() const {
   auto target = cb_->GetTargetFromContext();
   if (target == kGPUDevice) {
     return "cuda";
@@ -631,7 +651,7 @@ std::string AkgKernelJsonGenerator::GetProcessorByTarget() const {
   return "cpu";
 }
 
-bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json) {
+bool GraphKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(node_json);
   OpInfoPtr op_info = ExtractOpInfo(anf_node);
@@ -662,7 +682,7 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
     return false;
   }
   (*node_json)[kJsonKeyInputDesc] = inputs_json;
-  MS_LOG(DEBUG) << "Akg create input desc json success.";
+  MS_LOG(DEBUG) << "The kernel compiler create input desc json success.";
 
   // output desc
   nlohmann::json outputs_json;
@@ -671,7 +691,7 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
     return false;
   }
   (*node_json)[kJsonKeyOutputDesc] = outputs_json;
-  MS_LOG(DEBUG) << "Akg create output desc json success.";
+  MS_LOG(DEBUG) << "The kernel compiler create output desc json success.";
 
   // attribute desc
   nlohmann::json attrs_json;
@@ -683,7 +703,7 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
   return true;
 }
 
-size_t AkgKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) const {
+size_t GraphKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) const {
   const ShapeVector &shape = node_json[kJsonKeyShape];
   const std::string &dtype = node_json[kJsonKeyDataType];
   auto type_ptr = StringToType(dtype);
@@ -694,8 +714,8 @@ size_t AkgKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) co
   return std::accumulate(shape.begin(), shape.end(), nbyte, std::multiplies<size_t>());
 }
 
-void AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
-                                       std::vector<size_t> *output_size) const {
+void GraphKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
+                                         std::vector<size_t> *output_size) const {
   input_size->clear();
   output_size->clear();
   for (size_t i = 0; i < node_json[kJsonKeyInputDesc].size(); i++) {
@@ -708,7 +728,7 @@ void AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vec
   }
 }
 
-size_t AkgKernelJsonGenerator::GenHashId(const std::string &info) const {
+size_t GraphKernelJsonGenerator::GenHashId(const std::string &info) const {
   if (!dump_option_.save_ptr_address) {
     return std::hash<std::string>()(info);
   }
@@ -729,11 +749,12 @@ size_t AkgKernelJsonGenerator::GenHashId(const std::string &info) const {
   return std::hash<std::string>()(result.str());
 }
 
-bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
+bool GraphKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_json);
   std::string op_name = AnfUtils::GetCNodeName(anf_node);
-  MS_LOG(DEBUG) << "Akg start generate kernel json desc, full scope name is : " << anf_node->fullname_with_scope();
+  MS_LOG(DEBUG) << "The kernel compiler start generate kernel json desc, full scope name is : "
+                << anf_node->fullname_with_scope();
   is_basic_op_ = true;
   if (!GenerateSingleKernelJson(anf_node, kernel_json)) {
     MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
@@ -759,14 +780,14 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
 
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
-  MS_LOG(DEBUG) << "Akg create kernel json desc success, full scope name is : " << anf_node->fullname_with_scope()
-                << ", json info name is : " << kernel_name_;
+  MS_LOG(DEBUG) << "The kernel compiler create kernel json desc success, full scope name is : "
+                << anf_node->fullname_with_scope() << ", json info name is : " << kernel_name_;
   return true;
 }
 
-void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                           std::map<AnfNodePtr, nlohmann::json> *node_json_map,
-                                           nlohmann::json *kernel_json) const {
+void GraphKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                             std::map<AnfNodePtr, nlohmann::json> *node_json_map,
+                                             nlohmann::json *kernel_json) const {
   std::vector<std::string> stitchs;
   for (auto const &anf_node : anf_nodes) {
     auto prim = GetCNodePrimitive(anf_node);
@@ -791,7 +812,7 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
   }
 }
 
-void AkgKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json) {
+void GraphKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(fg);
   // the final kernel name has a hash_id, and may has a "_more" suffix.
   // total len is up to about 105, file name (with ".info") is up to 110.
@@ -813,9 +834,10 @@ void AkgKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash_i
   (void)kernel_name_.append(std::to_string(hash_id));
 }
 
-bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                              const std::vector<AnfNodePtr> &input_list,
-                                              const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
+bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                const std::vector<AnfNodePtr> &input_list,
+                                                const std::vector<AnfNodePtr> &output_list,
+                                                nlohmann::json *kernel_json) {
   if (anf_nodes.empty()) {
     MS_LOG(ERROR) << "anf_nodes list is empty";
     return false;
@@ -876,8 +898,8 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   return true;
 }
 
-bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes,
-                                            std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
+bool GraphKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes,
+                                              std::map<AnfNodePtr, nlohmann::json> *node_json_map) {
   for (auto const &anf_node : anf_nodes) {
     nlohmann::json node_json;
     if (!GenerateSingleKernelJson(anf_node, &node_json)) {
@@ -893,8 +915,8 @@ bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_n
   return true;
 }
 
-void AkgKernelJsonGenerator::UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes,
-                                              std::map<AnfNodePtr, nlohmann::json> *node_json_map) const {
+void GraphKernelJsonGenerator::UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes,
+                                                std::map<AnfNodePtr, nlohmann::json> *node_json_map) const {
   for (auto const &anf_node : anf_nodes) {
     auto dyn_input_sizes = GetDynInputSizes(anf_node);
     bool is_dynamic_input = !dyn_input_sizes.empty();
@@ -925,9 +947,9 @@ void AkgKernelJsonGenerator::UpdateTensorName(const std::vector<AnfNodePtr> &anf
   }
 }
 
-nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                                        const std::vector<AnfNodePtr> &input_list,
-                                                        const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
+nlohmann::json GraphKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
   nlohmann::json inputs_json;
   auto input_index = GetInputIndex(anf_nodes, input_list);
   for (size_t i = 0; i < input_index.size(); ++i) {
@@ -949,11 +971,11 @@ nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNod
   return inputs_json;
 }
 
-void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                             const std::vector<AnfNodePtr> &input_list,
-                                             const std::vector<AnfNodePtr> &output_list,
-                                             const std::map<AnfNodePtr, nlohmann::json> &node_json_map,
-                                             nlohmann::json *kernel_json) const {
+void GraphKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                               const std::vector<AnfNodePtr> &input_list,
+                                               const std::vector<AnfNodePtr> &output_list,
+                                               const std::map<AnfNodePtr, nlohmann::json> &node_json_map,
+                                               nlohmann::json *kernel_json) const {
   std::map<size_t, std::pair<size_t, std::vector<std::string>>> sub_graphs_info;
   std::string fusion_type;
   std::vector<std::vector<int>> type_info;
@@ -1015,11 +1037,11 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
   }
 }
 
-nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                                         const std::vector<AnfNodePtr> &input_list,
-                                                         const std::vector<AnfNodePtr> &output_list,
-                                                         const nlohmann::json &inputs_json,
-                                                         const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
+nlohmann::json GraphKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                           const std::vector<AnfNodePtr> &input_list,
+                                                           const std::vector<AnfNodePtr> &output_list,
+                                                           const nlohmann::json &inputs_json,
+                                                           const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
   nlohmann::json outputs_json;
   auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
   for (size_t i = 0; i < output_index.size(); ++i) {
@@ -1051,19 +1073,19 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
   return outputs_json;
 }
 
-bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node) {
+bool GraphKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node) {
   kernel_json_ = nlohmann::json();
   return CollectJson(anf_node, &kernel_json_);
 }
 
-bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
-                                              const std::vector<AnfNodePtr> &input_list,
-                                              const std::vector<AnfNodePtr> &output_list) {
+bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                                const std::vector<AnfNodePtr> &input_list,
+                                                const std::vector<AnfNodePtr> &output_list) {
   kernel_json_ = nlohmann::json();
   return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_);
 }
 
-bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_node) {
+bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_node) {
   kernel_json_ = nlohmann::json();
   std::vector<AnfNodePtr> node_list, input_list, output_list;
   FuncGraphPtr fg = std::get<0>(BuildGraphFromNodes({c_node}));

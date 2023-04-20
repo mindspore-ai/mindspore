@@ -23,7 +23,7 @@
 #include <memory>
 #include <utility>
 #include "include/common/utils/python_adapter.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include "backend/common/graph_kernel/split_umonad.h"
 #include "backend/common/graph_kernel/substitute_dropout.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
@@ -264,7 +264,7 @@ AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
 bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
-  AkgKernelJsonGenerator json_generator(dump_option, cb_);
+  GraphKernelJsonGenerator json_generator(dump_option, cb_);
   return json_generator.CollectJson(node, kernel_json);
 }
 

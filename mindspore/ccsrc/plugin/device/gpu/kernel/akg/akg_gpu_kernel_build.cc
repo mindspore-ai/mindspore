@@ -28,7 +28,7 @@ namespace kernel {
 constexpr int32_t ARGS_SIZE = 1;
 
 void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
-                                          const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
+                                          const GraphKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   const auto &flags = graphkernel::GraphKernelFlags::GetInstance();
   auto kernel_mod_ptr = flags.enable_debug_mode ? std::make_shared<AkgGpuKernelModDebug>(kernel_pack)
                                                 : std::make_shared<AkgGpuKernelMod>(kernel_pack);

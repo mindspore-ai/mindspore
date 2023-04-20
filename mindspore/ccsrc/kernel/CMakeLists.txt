@@ -16,13 +16,13 @@ if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     file(GLOB_RECURSE AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/akg_kernel_build.cc"
         "akg/akg_kernel_build_manager.cc"
-        "akg/akg_kernel_json_generator.cc"
+        "akg/graph_kernel_json_generator.cc"
         "akg/akg_kernel_json_decoder.cc"
     )
     list(APPEND KERNEL_SRC_LIST "${AKG_SRC_LIST}")
 else()
     file(GLOB_RECURSE AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "akg/akg_kernel_json_generator.cc"
+        "akg/graph_kernel_json_generator.cc"
         "akg/akg_kernel_json_decoder.cc"
     )
     list(APPEND KERNEL_SRC_LIST "${AKG_SRC_LIST}")

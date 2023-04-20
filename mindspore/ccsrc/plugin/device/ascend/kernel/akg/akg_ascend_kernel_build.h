@@ -33,7 +33,7 @@ class AkgAscendKernelBuilder : public AkgKernelBuilder {
   void LoadCache() override { return; }
   KernelPackPtr AkgSearchCache(const std::string &kernel_name) override;
   KernelPackPtr AkgInsertCache(const std::string &kernel_name) override;
-  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
+  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
                        const AnfNodePtr &anf_node) override;
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };

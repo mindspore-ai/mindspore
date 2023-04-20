@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -177,11 +177,11 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   kernel::GetValidKernelNodes(sub_func_graph, &node_list, &input_list, &output_list);
   DumpOption option;
   option.get_target_info = true;
-  AkgKernelJsonGenerator akg_kernel_json_generator(option);
-  if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
+  GraphKernelJsonGenerator graph_kernel_json_generator(option);
+  if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";
   }
-  return std::make_pair(akg_kernel_json_generator, node);
+  return std::make_pair(graph_kernel_json_generator, node);
 }
 
 void GraphKernelBuild::CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes) const {

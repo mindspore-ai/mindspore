@@ -87,7 +87,7 @@ void SignTunedGraphs(const FuncGraphPtr &func_graph) {
     if (fs->FileExist(kernel_obj)) {
       // sign the funcgraph with its current kernel name, the tuned result can be used if
       // its kernel name is the same as the signature when building kernels.
-      AkgKernelJsonGenerator json_generator(option);
+      GraphKernelJsonGenerator json_generator(option);
       std::vector<AnfNodePtr> node_list, input_list, output_list;
       GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
       (void)json_generator.CollectFusedJson(node_list, input_list, output_list);

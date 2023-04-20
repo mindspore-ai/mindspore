@@ -20,7 +20,7 @@
 #include <map>
 #include <set>
 #include "utils/anf_utils.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 
 namespace mindspore::graphkernel {
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,

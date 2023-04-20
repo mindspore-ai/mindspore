@@ -30,7 +30,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include <nlohmann/json.hpp>
 #include "backend/common/graph_kernel/model/lite_graph.h"
 

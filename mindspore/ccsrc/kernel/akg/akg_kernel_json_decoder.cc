@@ -16,7 +16,7 @@
 #include "kernel/akg/akg_kernel_json_decoder.h"
 
 #include <memory>
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "include/backend/anf_runtime_algorithm.h"
