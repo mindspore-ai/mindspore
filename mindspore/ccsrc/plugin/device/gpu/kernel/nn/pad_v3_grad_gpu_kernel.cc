@@ -52,6 +52,8 @@ const std::vector<std::pair<KernelAttr, PadV3GradPtrCreatorFunc>> kernel_attr = 
    CreatePadV3GradKernelPtr<uint8_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
    CreatePadV3GradKernelPtr<Complex<float>, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreatePadV3GradKernelPtr<Complex<double>, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
    CreatePadV3GradKernelPtr<double, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
@@ -76,6 +78,8 @@ const std::vector<std::pair<KernelAttr, PadV3GradPtrCreatorFunc>> kernel_attr = 
    CreatePadV3GradKernelPtr<uint8_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
    CreatePadV3GradKernelPtr<Complex<float>, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+   CreatePadV3GradKernelPtr<Complex<double>, int64_t>},
 };
 }  // namespace
 
