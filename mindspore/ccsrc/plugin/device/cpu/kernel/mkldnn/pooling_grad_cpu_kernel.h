@@ -126,7 +126,8 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
   std::string kernel_type_{kUnknown};
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
 };
