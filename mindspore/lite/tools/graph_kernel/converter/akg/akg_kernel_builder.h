@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_KERNEL_BUILDER_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_KERNEL_BUILDER_H_
 #include <string>
 #include <map>
 #include <set>
-#include <vector>
+#include <memory>
+#include "ops/custom.h"
 #include "utils/anf_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 
@@ -33,15 +34,10 @@ constexpr auto kAddAkgPath =
   "p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)\n"
   "sys.path.insert(0, p.communicate()[-2].decode().strip())\n";
 
-constexpr size_t PROCESS_LIMIT = 8;
-constexpr size_t TIME_OUT = 100;
-
 class AkgKernelBuilder {
  public:
-  AkgKernelBuilder() = default;
-  ~AkgKernelBuilder() = default;
-
-  bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list);
+  virtual bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) = 0;
+  virtual AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) = 0;
 
   static DumpOption json_option() {
     DumpOption dump_json_option;
@@ -49,8 +45,9 @@ class AkgKernelBuilder {
     return dump_json_option;
   }
 };
+using AkgKernelBuilderPtr = std::shared_ptr<AkgKernelBuilder>;
 
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
                           std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names);
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_KERNEL_BUILDER_H_

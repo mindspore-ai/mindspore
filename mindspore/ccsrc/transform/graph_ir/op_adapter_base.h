@@ -44,6 +44,8 @@ class CustomOperator : public Operator {
 
   void CustomOutputRegister(const string &name) { Operator::OutputRegister(name); }
 
+  void CustomRequiredAttrRegister(const string &name) { Operator::RequiredAttrRegister(name); }
+
   void CustomInferFuncRegister(const std::function<graphStatus(Operator &)> &func) {
     Operator::InferFuncRegister(func);
   }
@@ -153,7 +155,7 @@ class BaseOpAdapter {
   virtual std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) = 0;
   virtual bool IsDynInputOp(uint64_t index) = 0;
   virtual bool IsDyOutputOp(uint64_t index) = 0;
-  virtual bool IsMultipleOutputOp() = 0;
+  virtual bool IsMultipleOutputOp(const AnfNodePtr &anf) = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }

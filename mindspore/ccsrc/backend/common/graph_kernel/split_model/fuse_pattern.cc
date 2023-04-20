@@ -184,4 +184,24 @@ bool FuseVirtualNode::Match(const AreaPtr &area) {
   fused_areas_ = area->inputs();
   return true;
 }
+
+namespace ascend {
+bool FuseMatMul::Match(const AreaPtr &dom) {
+  auto dom_name = dom->dom()->op();
+  for (auto &a : dom->users()) {
+    if (!a->IsAlive()) {
+      continue;
+    }
+    auto user_name = a->dom()->op();
+    if ((dom_name == kMatMulOpName &&
+         (user_name == kTensorAddOpName || user_name == kCastOpName || user_name == kFastGeLUOpName)) ||
+        (dom_name == kBatchMatMulOpName && a->pattern() == NodePattern::ELEMWISE)) {
+      if (!HasCircle(dom, a)) {
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+  }
+  return !fused_areas_.empty();
+}
+}  // namespace ascend
 }  // namespace mindspore::graphkernel::inner

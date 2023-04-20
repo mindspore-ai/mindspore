@@ -68,7 +68,7 @@ constexpr auto kJsonKeyTargetInfo = "target_info";
 constexpr auto kJsonKeyComputeCapability = "compute_capability";
 constexpr auto kJsonKeySmCount = "sm_count";
 constexpr auto kJsonKeySystem = "system";
-constexpr auto kJsonKeyCpuArch = "arch";
+constexpr auto kJsonKeyArch = "arch";
 constexpr auto kJsonKeyCpuFeature = "feature";
 constexpr auto kJsonKeyCpuType = "cpu";
 constexpr auto kJsonKeyNodeName = "node_name";
@@ -98,7 +98,7 @@ class TargetInfoSetter {
   void GetTargetInfo();
   void SetTargetInfo(nlohmann::json *kernel_info) const;
   nlohmann::json target_info_;
-  bool has_info_{false};
+  bool has_info_{true};
 };
 
 class AkgKernelJsonGenerator {

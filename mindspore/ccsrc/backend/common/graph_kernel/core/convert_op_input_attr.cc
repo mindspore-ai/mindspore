@@ -73,6 +73,8 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   AnfNodePtrList new_inputs;
   auto primitive = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
+  primitive = primitive->Clone();
+  MS_EXCEPTION_IF_NULL(primitive);
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     if (op_idx_info_.find(primitive->name()) == op_idx_info_.end()) {
@@ -94,7 +96,7 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
-  new_inputs.push_back(inputs[0]);
+  new_inputs.push_back(NewValueNode(primitive));
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
@@ -112,6 +114,10 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
         value = parameter_node->abstract()->BuildValue();
       }
       if (value != nullptr) {
+        if (!value->isa<tensor::Tensor>()) {
+          primitive->set_attr(input_names_vec[i], value);
+          continue;
+        }
         auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_names_vec[i], value, primitive->name());
         auto tensor = value->cast<tensor::TensorPtr>();
         auto tensor_shape = tensor->shape_c();
@@ -138,9 +144,11 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   return true;
 }
 void ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
     return;
   }
+#endif
   auto cnode = dyn_cast<CNode>(node);
   auto primitive = GetCNodePrimitive(cnode);
   if (primitive == nullptr) {

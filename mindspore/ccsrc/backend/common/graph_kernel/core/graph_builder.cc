@@ -282,6 +282,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
     TraceGuard tg(std::make_shared<TraceSegmentTransform>(node->debug_info()));
     eqv[node] = fg->NewCNode(new_args);
     eqv[node]->cast<CNodePtr>()->CloneCNodeInfo(node->cast<CNodePtr>());
+    eqv[node]->cast<CNodePtr>()->set_fullname_with_scope(node->fullname_with_scope());
   }
   auto outputs = FindOutputs(nodes, eqv);
   AnfNodePtr fg_output;

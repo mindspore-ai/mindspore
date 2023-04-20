@@ -198,16 +198,25 @@ using NodeWithIndex = std::pair<NodePtr, int>;
 TransformOp::TransformOp(const NodePtr &node)
     : op_(node->As<PrimOp>()->op()), format_a_(node->input(0)->format), format_b_(node->format) {}
 
+std::string TransformOp::GetFormat(const NodePtr &node) const { return node->format; }
+
 bool TransformOp::IsTransformOp(const NodePtr &node) {
   if (node->NodeType() != NType::Primitive || node->As<PrimOp>()->op() != op_) {
     return false;
   }
-  if (node->input(0)->format == format_a_ && node->format == format_b_) {
+  auto format_in = GetFormat(node->input(0));
+  auto format_out = GetFormat(node);
+  if (format_in == format_a_ && format_out == format_b_) {
     return true;
-  } else if (node->input(0)->format == format_b_ && node->format == format_a_) {
+  } else if (format_in == format_b_ && format_out == format_a_) {
     return true;
   }
   return false;
+}
+
+bool TransformOp::NeedInsert(const NodePtr &input_node) const {
+  // a trick, if the node's size of 1, it's not need to insert transform op.
+  return input_node->tensor_size() > 1;
 }
 
 FormatType TransformOp::GetFormatType(const std::string &fmt) {
@@ -269,21 +278,56 @@ class LayoutTransformHandle : public TransformOp {
   }
 };
 
-bool IsFlexibleOp(const NodePtr &node) {
-  if (node->NodeType() != NType::Primitive) {
-    return false;
+class ReshapeHandle : public TransformOp {
+ public:
+  explicit ReshapeHandle(const NodePtr &node) : TransformOp(node) {
+    format_a_ = EncodeShape(node->input(0)->shape);
+    format_b_ = EncodeShape(node->shape);
   }
-  if (node->As<PrimOp>()->compute_type() != PrimOp::ComputeType::ELEMWISE) {
-    return false;
+  virtual ~ReshapeHandle() = default;
+
+  std::string GetFormat(const NodePtr &node) const override {
+    // Reshape op uses shape as format
+    return EncodeShape(node->shape);
   }
-  // check the input and output formats are all the same, except ConstValue.
-  for (auto &inp : node->inputs()) {
-    if (inp->NodeType() != NType::Value && inp->format != node->format) {
-      return false;
+
+  bool NeedInsert(const NodePtr &) const override {
+    // Reshape op must be inserted, otherwise the out shape of a node may changed and users may need infer shape again.
+    return true;
+  }
+
+  NodePtr GenTransformOp(const NodePtr &, TransOpType trans_type) override {
+    auto op = inner::OpRegistry::Instance().NewOp(op_);
+    auto out_format = trans_type == TransOpType::kTransAB ? format_b_ : format_a_;
+    auto out_shape = DecodeShape(out_format);
+    op->SetAttr("shape", MakeValue(out_shape));
+    return op;
+  }
+
+ private:
+  std::string EncodeShape(const ShapeVector &shape) const {
+    std::string res;
+    for (const auto &s : shape) {
+      res += std::to_string(s) + "_";
     }
+    return res;
   }
-  return true;
-}
+
+  ShapeVector DecodeShape(const std::string &shape) const {
+    ShapeVector res;
+    size_t l = 0;
+    for (size_t i = 0; i < shape.size(); ++i) {
+      if (shape[i] == '_' && i > l) {
+        std::istringstream iss(shape.substr(l, i));
+        l = i + 1;
+        int64_t s;
+        iss >> s;
+        res.push_back(s);
+      }
+    }
+    return res;
+  }
+};
 
 constexpr int kOutputIndex = -1;
 class Mutator {
@@ -318,14 +362,14 @@ class Mutator {
       (void)trans_ops_.insert(node);
     } else if (!IsFlexibleOp(node)) {
       if (node->NodeType() != NType::Output) {
-        fmt_type[{node, kOutputIndex}] = op_handle_->GetFormatType(node->format);
+        fmt_type[{node, kOutputIndex}] = op_handle_->GetFormatType(op_handle_->GetFormat(node));
       }
       if (node->NodeType() != NType::Parameter) {
         for (size_t i = 0; i < node->inputs().size(); i++) {
           if (node->input(i)->NodeType() == NType::Value) {
             continue;
           }
-          fmt_type[{node, i}] = op_handle_->GetFormatType(node->input(i)->format);
+          fmt_type[{node, i}] = op_handle_->GetFormatType(op_handle_->GetFormat(node->input(i)));
         }
       }
       return;
@@ -379,8 +423,7 @@ class Mutator {
 
   std::pair<bool, NodePtr> NewTransOp(const NodePtr &input, TransOpType trans_type, std::set<NodePtr> *changed_nodes) {
     NodePtr trans_op = nullptr;
-    // a trick, if the node's size of 1, it's not need to insert transform op.
-    if (input->tensor_size() <= 1) {
+    if (!op_handle_->NeedInsert(input)) {
       return std::make_pair(true, trans_op);
     }
     trans_op = op_handle_->GenTransformOp(input, trans_type);
@@ -458,6 +501,22 @@ class Mutator {
     return id;
   }
 
+  bool IsFlexibleOp(const NodePtr &node) const {
+    if (node->NodeType() != NType::Primitive) {
+      return false;
+    }
+    if (node->As<PrimOp>()->compute_type() != PrimOp::ComputeType::ELEMWISE) {
+      return false;
+    }
+    // check the input and output formats are all the same, except ConstValue.
+    for (auto &inp : node->inputs()) {
+      if (inp->NodeType() != NType::Value && op_handle_->GetFormat(inp) != op_handle_->GetFormat(node)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   TransformOpPtr op_handle_;
   NodePtr basenode_;
   std::set<NodePtr> flexible_ops_;
@@ -478,13 +537,16 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
   auto ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
   std::set<NodePtr> nodes_may_change;
   for (auto &op : ops) {
-    if (check_is_trans_op(op) && !op->inputs().empty() && op->input(0)->format != op->format) {
-      auto mutator = Mutator(op, creator.CreateHandle(op));
-      auto ret = mutator.Run(&nodes_may_change);
-      if (ret == Mutator::ResultStatus::kRollback) {
-        return false;
+    if (check_is_trans_op(op) && !op->inputs().empty()) {
+      auto op_handle = creator.CreateHandle(op);
+      if (op_handle->GetFormat(op->input(0)) != op_handle->GetFormat(op)) {
+        auto mutator = Mutator(op, op_handle);
+        auto ret = mutator.Run(&nodes_may_change);
+        if (ret == Mutator::ResultStatus::kRollback) {
+          return false;
+        }
+        changed = changed || (ret == Mutator::ResultStatus::kChanged);
       }
-      changed = changed || (ret == Mutator::ResultStatus::kChanged);
     }
   }
   if (!changed) {
@@ -506,6 +568,7 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
 void TransformOpOptimizer::Init() {
   (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Transpose", TransposeHandle));
   (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("LayoutTransform", LayoutTransformHandle));
+  (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Reshape", ReshapeHandle));
 }
 
 bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {

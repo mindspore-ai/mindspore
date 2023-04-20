@@ -19,10 +19,98 @@
 #include <map>
 #include "utils/check_convert_utils.h"
 #include "ops/split_combination_ops.h"
+#include "graph/operator_factory_impl.h"
 
 namespace mindspore {
 namespace transform {
 static uint32_t CustomInferFunc(const Operator &) { return 0; }
+
+static ge::graphStatus CustomAkgOpInferFunc(Operator &op) {
+  // output_names
+  std::vector<std::string> output_names;
+  auto status = op.GetAttr("output_names", output_names);
+  if (status != 0) {
+    return status;
+  }
+
+  // output_shapes
+  std::vector<std::vector<int64_t>> output_shapes;
+  status = op.GetAttr("output_shapes", output_shapes);
+  if (status != 0) {
+    return status;
+  }
+  if (output_shapes.size() != output_names.size()) {
+    return 1;
+  }
+
+  // output_formats
+  std::vector<int32_t> output_formats;
+  status = op.GetAttr("output_formats", output_formats);
+  if (status != 0) {
+    return status;
+  }
+  if (output_formats.size() != output_names.size()) {
+    return 1;
+  }
+
+  // output_types
+  std::vector<int32_t> output_types;
+  status = op.GetAttr("output_types", output_types);
+  if (status != 0) {
+    return status;
+  }
+  if (output_types.size() != output_names.size()) {
+    return 1;
+  }
+
+  // Update output tensor desc
+  for (size_t i = 0; i < output_names.size(); ++i) {
+    ge::TensorDesc output_desc(ge::Shape(output_shapes[i]), static_cast<ge::Format>(output_formats[i]),
+                               static_cast<ge::DataType>(output_types[i]));
+    op.UpdateOutputDesc(output_names[i], output_desc);
+  }
+
+  return 0;
+}
+
+// check a Custom node is an akg kernel, it should be called in the case of node is a Custom node.
+bool IsAkgOp(const AnfNodePtr &node) {
+  auto prim = GetCNodePrimitive(node);
+  if (prim == nullptr) {
+    return false;
+  }
+  auto type = prim->GetAttr("type");
+  return (type != nullptr && GetValue<std::string>(type) == "GraphKernel");
+}
+
+void RegisterAkgOp(const PrimitivePtr &prim, const std::string &op_type) {
+  if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(prim);
+  auto input_names_v = prim->GetAttr("input_names");
+  MS_EXCEPTION_IF_NULL(input_names_v);
+  auto input_names = GetValue<std::vector<std::string>>(input_names_v);
+  auto output_names_v = prim->GetAttr("output_names");
+  MS_EXCEPTION_IF_NULL(output_names_v);
+  auto output_names = GetValue<std::vector<std::string>>(output_names_v);
+  // Register op create function, which describes how to create a custom akg op
+  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(op_type,
+                                                         [op_type, input_names, output_names](const std::string &name) {
+                                                           auto op = ge::CustomOperator(name, op_type);
+                                                           for (const auto &in_name : input_names) {
+                                                             op.CustomInputRegister(in_name);
+                                                           }
+                                                           for (const auto &out_name : output_names) {
+                                                             op.CustomOutputRegister(out_name);
+                                                           }
+                                                           op.CustomRequiredAttrRegister("info_path");
+                                                           op.CustomInferFuncRegister(CustomAkgOpInferFunc);
+                                                           return op;
+                                                         });
+  // Register op infer shape function
+  (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+}
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
   MS_EXCEPTION_IF_NULL(op);
@@ -118,7 +206,13 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
     MS_LOG(WARNING) << "Custom op node has no output_names, op[" << prim->name() << "].";
   }
 
-  op->CustomInferFuncRegister(CustomInferFunc);
+  if (IsAkgOp(anf)) {
+    op->CustomRequiredAttrRegister("info_path");
+    op->CustomInferFuncRegister(CustomAkgOpInferFunc);
+    RegisterAkgOp(prim, op_type);
+  } else {
+    op->CustomInferFuncRegister(CustomInferFunc);
+  }
 
   return op;
 }
@@ -368,6 +462,12 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     MS_EXCEPTION_IF_NULL(cus_op);
     std::map<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
     (void)cus_op->UpdateOutputDesc(output_map[0], *desc);
+    std::vector<std::vector<int64_t>> out_shapes{desc->GetShape().GetDims()};
+    std::vector<int32_t> out_formats{static_cast<int32_t>(desc->GetFormat())};
+    std::vector<int32_t> out_types{static_cast<int32_t>(desc->GetDataType())};
+    cus_op->SetAttr("output_shapes", out_shapes);
+    cus_op->SetAttr("output_formats", out_formats);
+    cus_op->SetAttr("output_types", out_types);
   } else {
     if (!output_map_.empty()) {
       output_map_.begin()->second.update_out_desc(op, *desc);
@@ -433,6 +533,9 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     return FAILED;
   }
 
+  std::vector<std::vector<int64_t>> out_shapes;
+  std::vector<int32_t> out_formats;
+  std::vector<int32_t> out_types;
   for (size_t i = 0; i < tuple_shp->shape().size(); ++i) {
     auto tuple_type = dyn_cast<Tuple>(type);
     MS_EXCEPTION_IF_NULL(tuple_type);
@@ -447,6 +550,9 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     if (is_custom_op) {
       (void)std::dynamic_pointer_cast<CustomOperator>(op)->UpdateOutputDesc((*cus_output_map_)[op->GetOpType()][i],
                                                                             *desc);
+      out_shapes.push_back(desc->GetShape().GetDims());
+      out_formats.push_back(static_cast<int32_t>(desc->GetFormat()));
+      out_types.push_back(static_cast<int32_t>(desc->GetDataType()));
     } else {
       auto it = output_map_.find(i);
       if (it != output_map_.end()) {
@@ -455,6 +561,11 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
         dyn_output_map_.begin()->second.update_dyn_output_desc(op, static_cast<unsigned int>(i), *desc);
       }
     }
+  }
+  if (is_custom_op) {
+    op->SetAttr("output_shapes", out_shapes);
+    op->SetAttr("output_formats", out_formats);
+    op->SetAttr("output_types", out_types);
   }
   return SUCCESS;
 }

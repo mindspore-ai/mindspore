@@ -102,6 +102,8 @@ Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, const std::shared
   return SUCCESS;
 }
 
+std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const { return ""; }
+
 bool IsCustomCNode(const mindspore::AnfNodePtr &node) { return true; }
 std::string TransformUtil::NormOpName(const std::string &anf_name) { return ""; }
 }  // namespace transform

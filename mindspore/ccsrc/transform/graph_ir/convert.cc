@@ -1889,7 +1889,7 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
     MS_EXCEPTION_IF_NULL(pred_adpt);
     // When node's output is dynamic or node has multiple output, it need to get all handles.
     // TupleGetItem's input is dynamic output(eg:MakeTuple), but it only need to get one handle.
-    if ((pred_adpt->IsDyOutputOp(0) || pred_adpt->IsMultipleOutputOp())) {
+    if ((pred_adpt->IsDyOutputOp(0) || pred_adpt->IsMultipleOutputOp(input))) {
       MS_EXCEPTION_IF_NULL(Convert(input));
       handles = pred_adpt->getOutputs(Convert(input));
     } else {

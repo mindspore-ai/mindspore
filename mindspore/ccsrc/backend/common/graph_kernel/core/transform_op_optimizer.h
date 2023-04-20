@@ -34,8 +34,11 @@ class TransformOp {
   explicit TransformOp(const NodePtr &node);
   virtual ~TransformOp() = default;
 
+  virtual std::string GetFormat(const NodePtr &node) const;
   // check the node is TransAB or TransBA
   virtual bool IsTransformOp(const NodePtr &node);
+  // check whether need to insert a new transform op or not
+  virtual bool NeedInsert(const NodePtr &input_node) const;
   // gen a new transform op of the trans_type
   virtual NodePtr GenTransformOp(const NodePtr &input_node, TransOpType trans_type) = 0;
   // check the input format is kFormatA or kFormatB

@@ -27,6 +27,9 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "src/common/common.h"
 #include "src/common/file_utils.h"
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
+#endif
 
 namespace mindspore {
 namespace {
@@ -294,6 +297,12 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     MS_LOG(ERROR) << "Dynamic cast kernel graph failed.";
     return false;
   }
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (GraphKernelOptimize(graph, nullptr) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+    return false;
+  }
+#endif
   // opt::GeOptimization(origin_graph);
   (void)BuildDFGraph(kg, context_, GetParams(kg), false, config_infos_);
   kg->set_run_mode(device::RunMode::kGraphMode);

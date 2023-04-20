@@ -21,6 +21,7 @@
 #include <functional>
 #include <set>
 #include <vector>
+#include <utility>
 
 #include "ir/anf.h"
 #include "utils/hash_map.h"
@@ -461,6 +462,68 @@ class LayoutTransform2PatternTree : public PatternTree {
   }
 };
 
+// Transpose(A)=Reshape(A)
+class TransposePatternTree : public PatternTree {
+ public:
+  explicit TransposePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~TransposePatternTree() = default;
+
+ protected:
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    auto input_shape = origin_root->input(0)->shape;
+    auto perm = GetValue<std::vector<int64_t>>(origin_root->attrs().find(kAttrPerm)->second);
+    if (perm.size() != input_shape.size()) {
+      MS_LOG(DEBUG) << "The length of input shape " << input_shape << " and perm " << perm << " is not same";
+      return false;
+    }
+    std::vector<std::pair<int64_t, int64_t>> exchange_axes;
+    auto rank = SizeToLong(input_shape.size());
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      if (perm[i] < -rank || perm[i] >= rank) {
+        MS_LOG(DEBUG) << "perm[" << i << "] is " << perm[i] << ", which is out of range[-" << rank << ", " << rank
+                      << ")";
+        return false;
+      }
+      auto perm_i = perm[i] < 0 ? (perm[i] + rank) : perm[i];
+      auto i_v = static_cast<int64_t>(i);
+      if (perm_i != i_v) {
+        exchange_axes.emplace_back(i_v, perm_i);
+      }
+    }
+    // if there is only 1 non-one shape value within the perm indices, then Transpose --> Reshape is ok
+    for (const auto &axes : exchange_axes) {
+      auto l = axes.first < axes.second ? axes.first : axes.second;
+      auto r = axes.first < axes.second ? axes.second : axes.first;
+      if (std::count_if(input_shape.begin() + l, input_shape.begin() + r + 1, [](int64_t s) { return s > 1; }) > 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    auto out_shape = origin_root->shape;
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    return attrs_map;
+  }
+};
+
+// Reshape(Reshape(A))=Reshape(A)
+class ReshapePatternTree : public PatternTree {
+ public:
+  explicit ReshapePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~ReshapePatternTree() = default;
+
+ protected:
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    auto out_shape = origin_root->shape;
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    return attrs_map;
+  }
+};
+
 /*       A
         /
        Neg
@@ -571,6 +634,10 @@ static std::vector<Expression> expressions = {
   // lite only
   {63, "LayoutTransform(LayoutTransform(A))=A", EXPR_PATTERN(LayoutTransform1PatternTree)},
   {64, "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)", EXPR_PATTERN(LayoutTransform2PatternTree)},
+  // transpose
+  {65, "Transpose(A)=Reshape(A)", EXPR_PATTERN(TransposePatternTree)},
+  // reshape
+  {66, "Reshape(Reshape(A))=Reshape(A)", EXPR_PATTERN(ReshapePatternTree)},
 };
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {

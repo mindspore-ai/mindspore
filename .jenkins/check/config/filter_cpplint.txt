@@ -20,6 +20,7 @@
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
+"mindspore/mindspore/ccsrc/transform/graph_ir/op_adapter.cc"                                        "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/gather_grad_kernels.cc"      "build/include"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/drop_out_gen_mask_kernels.cc"      "build/include"
 "mindspore/mindspore/ccsrc/include/backend/optimizer/op_adaptation_info_factory.h"                   "runtime/explicit"

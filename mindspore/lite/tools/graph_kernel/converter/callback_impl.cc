@@ -28,11 +28,6 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
-// register the callback object
-#ifndef ENABLE_CLOUD_FUSION_INFERENCE
-GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
-#endif
-
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) { return GetInputInferShape(node, i); }
 
 ShapeVector CallbackImpl::GetOutputShape(const AnfNodePtr &node, size_t i) { return GetOutputInferShape(node, i); }
@@ -140,9 +135,24 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
   }
 }
 
-std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return "cpu"; }
+std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) {
+  if (GetTargetFromContextImpl(false) == "Ascend") {
+    return "aicore";
+  }
+  return "cpu";
+}
 
-std::string CallbackImpl::GetTargetFromContext() { return "CPU"; }
+std::string CallbackImpl::GetTargetFromContextImpl(bool detail) {
+  const auto &target = converter_param_->device;
+  if (target.find("Ascend") != std::string::npos) {
+    // target is Ascend/Ascend310/Ascend310P
+    if (!detail) {
+      return "Ascend";
+    }
+    return target == "Ascend" ? "Ascend910" : target;
+  }
+  return "CPU";
+}
 
 void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   std::vector<std::string> graph_output_format;
