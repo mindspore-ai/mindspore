@@ -120,7 +120,8 @@
       "padding": "pad_mode"
     },
     "MaxPoolWithArgmaxV2": {
-      "ksize": "kernel_size"
+      "ksize": "kernel_size",
+      "dtype": "argmax_type"
     },
     "MaxPoolGradWithArgmaxV2": {
       "ksize": "kernel_size"

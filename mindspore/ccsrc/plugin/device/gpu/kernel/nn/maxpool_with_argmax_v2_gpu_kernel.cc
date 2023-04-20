@@ -27,18 +27,17 @@ constexpr size_t kInputDimLowerLimit = 4;
 constexpr size_t kOutputDimLowerLimit = 4;
 constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 2;
-const size_t DIM_SIZE_1 = 1;
-const size_t DIM_SIZE_4 = 4;
+constexpr int64_t kIndexBatch = 0;
+constexpr int64_t kIndexChannel = 1;
+constexpr int64_t kIndexHeight = 2;
+constexpr int64_t kIndexWidth = 3;
 
 template <typename T, typename S>
 bool MaxPoolWithArgmaxV2FwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (is_null_input_) {
-    return true;
-  }
-  T *input_addr = GetDeviceAddress<T>(inputs, 0);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  S *index_addr = GetDeviceAddress<S>(outputs, 1);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  S *index_addr = GetDeviceAddress<S>(outputs, kIndex1);
 
   CalMaxPoolWithArgmaxV2(input_addr, in_n_, in_c_, in_h_, in_w_, ksize_h_, ksize_w_, strides_h_, strides_w_, pads_h_,
                          pads_w_, dilation_h_, dilation_w_, out_h_, out_w_, output_addr, index_addr, device_id_,
@@ -47,12 +46,12 @@ bool MaxPoolWithArgmaxV2FwdGpuKernelMod::LaunchKernel(const std::vector<kernel::
 }
 
 std::vector<int> GetAttrFromOpsPrim(const std::vector<int64_t> &attr) {
-  if (attr.size() == DIM_SIZE_1) {
-    return {LongToInt(attr[kIndex0]), LongToInt(attr[kIndex0])};
-  } else if (attr.size() == DIM_SIZE_4) {
-    return {LongToInt(attr[kIndex2]), LongToInt(attr[kIndex3])};
+  if (attr.size() == kShape1dDims) {
+    return {LongToInt(attr[kDim0]), LongToInt(attr[kDim0])};
+  } else if (attr.size() == kShape4dDims) {
+    return {LongToInt(attr[kDim2]), LongToInt(attr[kDim3])};
   } else {
-    return {LongToInt(attr[kIndex0]), LongToInt(attr[kIndex1])};
+    return {LongToInt(attr[kDim0]), LongToInt(attr[kDim1])};
   }
 }
 
@@ -60,27 +59,27 @@ bool MaxPoolWithArgmaxV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operat
                                               const std::vector<KernelTensorPtr> &inputs,
                                               const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::MaxPoolWithArgmaxV2>(base_operator->GetPrim());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmaxV2>(base_operator);
   auto ksize = kernel_ptr->get_kernel_size();
   auto strides = kernel_ptr->get_strides();
   auto pads = kernel_ptr->get_pads();
   auto dilation = kernel_ptr->get_dilation();
 
   auto ksize_v = GetAttrFromOpsPrim(ksize);
-  ksize_h_ = ksize_v[0];
-  ksize_w_ = ksize_v[1];
+  ksize_h_ = ksize_v[kDim0];
+  ksize_w_ = ksize_v[kDim1];
 
   auto strides_v = GetAttrFromOpsPrim(strides);
-  strides_h_ = strides_v[0];
-  strides_w_ = strides_v[1];
+  strides_h_ = strides_v[kDim0];
+  strides_w_ = strides_v[kDim1];
 
   auto pads_v = GetAttrFromOpsPrim(pads);
-  pads_h_ = pads_v[0];
-  pads_w_ = pads_v[1];
+  pads_h_ = pads_v[kDim0];
+  pads_w_ = pads_v[kDim1];
 
   auto dilation_v = GetAttrFromOpsPrim(dilation);
-  dilation_h_ = dilation_v[0];
-  dilation_w_ = dilation_v[1];
+  dilation_h_ = dilation_v[kDim0];
+  dilation_w_ = dilation_v[kDim1];
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -125,13 +124,13 @@ int MaxPoolWithArgmaxV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
     return KRET_RESIZE_FAILED;
   }
 
-  in_n_ = LongToInt(input_shape[kIndex0]);
-  in_c_ = LongToInt(input_shape[kIndex1]);
-  in_h_ = LongToInt(input_shape[kIndex2]);
-  in_w_ = LongToInt(input_shape[kIndex3]);
+  in_n_ = LongToInt(input_shape[kIndexBatch]);
+  in_c_ = LongToInt(input_shape[kIndexChannel]);
+  in_h_ = LongToInt(input_shape[kIndexHeight]);
+  in_w_ = LongToInt(input_shape[kIndexWidth]);
 
-  out_h_ = LongToInt(output_shape[kIndex2]);
-  out_w_ = LongToInt(output_shape[kIndex3]);
+  out_h_ = LongToInt(output_shape[kIndexHeight]);
+  out_w_ = LongToInt(output_shape[kIndexWidth]);
 
   return KRET_OK;
 }
