@@ -47,13 +47,23 @@ AbstractActor *GetEntranceActorByKernelGraph(const ControlNodeParserPtr &parser,
   return FetchActor(entrance_actor_name);
 }
 
-AbstractActor *GetExitActorByKernelGraph(const ControlNodeParserPtr &parser, const KernelGraph *graph) {
+AbstractActor *GetExitActorByKernelGraph(const ControlNodeParserPtr &parser, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(parser);
-  const auto func_graph = parser->FetchFuncGraphByKernelGraph(graph);
+  std::string exit_actor_name;
+  if (parser->IsInited()) {
+    exit_actor_name = parser->FetchGroupNameByKernelGraph(graph) + kExitActorNameSuffix;
+  } else {
+    exit_actor_name = graph->ToString() + kExitActorNameSuffix;
+  }
+  const auto &kernel_graph_exit_actor = FetchActor(exit_actor_name);
+  if (kernel_graph_exit_actor != nullptr) {
+    return kernel_graph_exit_actor;
+  }
+  const auto &func_graph = parser->FetchFuncGraphByKernelGraph(graph.get());
   if (func_graph == nullptr) {
     return nullptr;
   }
-  const std::string exit_actor_name = func_graph->ToString() + kExitActorNameSuffix;
+  exit_actor_name = func_graph->ToString() + kExitActorNameSuffix;
   return FetchActor(exit_actor_name);
 }
 
@@ -88,7 +98,7 @@ AbstractActor *GetNextKernelActor(const KernelGraphPtr &graph, size_t index, con
     next_actor = GetKernelActor(next_kernel, graph, actor_set_name);
     next_index += 1;
   }
-  return next_actor == nullptr ? GetExitActorByKernelGraph(parser, graph.get()) : next_actor;
+  return next_actor == nullptr ? GetExitActorByKernelGraph(parser, graph) : next_actor;
 }
 }  // namespace
 std::vector<std::vector<MemSwapActorPtr>> MemorySwapNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
