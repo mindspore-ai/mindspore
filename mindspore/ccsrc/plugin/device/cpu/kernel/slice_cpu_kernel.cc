@@ -130,6 +130,11 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
                       << "', the dimension of input tensor must be in range [1D, 8D], but got " << input_shape.size()
                       << "D.";
   }
+  auto input_size = IntToLong(data_size_) * SizeOf(input_shape);
+  if (input_size > INT_MAX) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input size can not larger than " << INT_MAX
+                      << "(INT_MAX) bytes, but got " << input_size;
+  }
 
   std::vector<int64_t> begin;
   std::vector<int64_t> size;

@@ -46,9 +46,13 @@ void LaunchStandardNormal(RandomCpuKernelMod *content, unsigned int seed, const 
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
+  if (lens == 0) {
+    return;
+  }
   auto thread_pool = GetActorMgrInnerThreadPool();
   size_t max_thread_num = thread_pool->GetKernelThreadNum();
   size_t thread_num = lens < kRandomBlockSize * max_thread_num ? std::ceil(lens / kRandomBlockSize) : max_thread_num;
+  MS_EXCEPTION_IF_ZERO("thread num", thread_num);
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
   std::normal_distribution<float> distribution;
   auto task = [&](size_t start, size_t end) {
