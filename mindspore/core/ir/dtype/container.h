@@ -82,7 +82,7 @@ class MS_CORE_API List final : public Object {
   /// \return The elements of List object.
   TypePtrList elements() const { return elements_; }
 
-  /// \brief Set the elements of Tuple object.
+  /// \brief Set the elements of List object.
   ///
   /// \param[in] elements Define the element types to be set.
   void set_elements(TypePtrList &&elements) { elements_ = std::move(elements); }

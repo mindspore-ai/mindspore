@@ -126,14 +126,16 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node) {
     if (container_type->isa<TensorType>()) {  // Handle tensor type.
       if (!dtype->isa<Number>()) {
         MS_LOG(EXCEPTION) << "Cannot get dtype for by input string: '" << dtype_str << "', for '" << container_type_str
-                          << "'";
+                          << "'\n"
+                          << trace::GetDebugInfo(node->debug_info());
       }
       container_type->cast<TensorTypePtr>()->set_element(dtype);
     } else if (container_type->isa<Tuple>() || container_type->isa<List>()) {  // Handle list_/tuple_ type.
       // To handle nested sequence later.
       if (!dtype->isa<Number>() && !dtype->isa<TensorType>()) {
         MS_LOG(EXCEPTION) << "Cannot get element type for by input string: '" << dtype_str << "', for '"
-                          << container_type_str << "'";
+                          << container_type_str << "'\n"
+                          << trace::GetDebugInfo(node->debug_info());
       }
       if (container_type->isa<Tuple>()) {
         container_type->cast<TuplePtr>()->set_elements(TypePtrList({dtype}));
