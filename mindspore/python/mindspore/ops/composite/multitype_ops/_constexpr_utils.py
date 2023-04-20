@@ -725,7 +725,7 @@ def unpack(x):
     return x
 
 
-@constexpr
+@_primexpr
 def normalize_start(start, dim_size):
     """
     Normalize `start` according to the number of dimensions (`dim_size`).
@@ -766,7 +766,7 @@ def get_step_from_slice(input_slice):
     return step
 
 
-@_primexpr
+@constexpr
 def normalize_slice(input_slice, dim_size):
     """Normalizes start, stop, step in a slice."""
     step = input_slice.step

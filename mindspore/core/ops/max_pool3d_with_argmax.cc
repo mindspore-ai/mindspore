@@ -169,7 +169,7 @@ void CheckKsizeAndPads(const std::vector<int64_t> &ksize, const std::vector<int6
   const size_t kAttrH = 1;
   const size_t kAttrW = 2;
   if (ksize[kAttrD] / kTwo < pads[kAttrD] || ksize[kAttrH] / kTwo < pads[kAttrH] ||
-      ksize[kAttrW] / kTwo < pads[kAttrH]) {
+      ksize[kAttrW] / kTwo < pads[kAttrW]) {
     MS_EXCEPTION(ValueError)
       << "For Maxpool3DWithArgmax, pads should be less equal to the half of ksize, but got ksize is[" << ksize
       << "], pads is[" << pads << "].";
