@@ -244,7 +244,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     else:
         atol = Tensor(0.0)
         if rtol is None:
-            rtol = max(ops.shape(x)) * ops.Eps()(Tensor(1.0, x.dtype))
+            rtol = max(ops.Shape()(x)) * ops.Eps()(Tensor(1.0, x_dtype))
 
     if not inner.IsInstance()(rtol, mstype.tensor):
         rtol = Tensor(rtol, mstype.float32)
@@ -252,23 +252,23 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         atol = Tensor(atol, mstype.float32)
 
     if not hermitian:
-        s, u, v = x.svd()
-        max_singular_val = ops.narrow(s, -1, 0, 1)
-        threshold = ops.maximum(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
+        s, u, v = linalg_ops.Svd()(x)
+        max_singular_val = _narrow(s, -1, 0, 1)
+        threshold = ops.Maximum()(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
         condition = s > threshold
-        reciprocal_s_before = Tensor(ops.Reciprocal()(s)).broadcast_to(condition.shape)
+        reciprocal_s_before = ops.Reciprocal()(s).broadcast_to(condition.shape)
         zero = ops.Zeros()(condition.shape, s.dtype)
-        s_pseudoinv = ops.select(condition, reciprocal_s_before, zero)
+        s_pseudoinv = ops.Select()(condition, reciprocal_s_before, zero)
         output = ops.matmul(v * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
     else:
-        s, u = _compare_eigh(x)
-        s_abs = s.abs()
+        s, u = linalg_ops.Eigh()(x)
+        s_abs = ops.Abs()(s)
         max_singular_val = ops.amax(s_abs, -1, True)
-        threshold = ops.maximum(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
+        threshold = ops.Maximum()(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
         condition = s_abs > threshold
-        reciprocal_s_before = Tensor(ops.Reciprocal()(s))
+        reciprocal_s_before = ops.Reciprocal()(s)
         zero = ops.Zeros()(condition.shape, s.dtype)
-        s_pseudoinv = ops.select(condition, reciprocal_s_before, zero)
+        s_pseudoinv = ops.Select()(condition, reciprocal_s_before, zero)
         output = ops.matmul(u * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
     return output
 
@@ -319,13 +319,12 @@ def qr(input, mode='reduced'):
     return qr_(input)
 
 
-def _compare_eigh(x):
-    """
-    compare eigh
-    """
-    from mindspore.scipy.ops import Eigh
-    s, u = Eigh()(x)
-    return s, u
+def _narrow(input, axis, start, length):
+    begins = [0] * input.ndim
+    begins[axis] = start
+    sizes = list(input.shape)
+    sizes[axis] = length
+    return P.Slice()(input, begins, sizes)
 
 
 def _nd_transpose(a):

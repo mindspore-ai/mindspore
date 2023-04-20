@@ -17,8 +17,9 @@
 
 from __future__ import absolute_import
 from mindspore import _checkparam as Validator
-from mindspore.ops.primitive import Primitive
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
 from mindspore.ops.primitive import prim_attr_register
+import mindspore.common.dtype as mstype
 
 
 class Geqrf(Primitive):
@@ -122,3 +123,39 @@ class Svd(Primitive):
         self.compute_uv = Validator.check_value_type("compute_uv", compute_uv, [bool], self.name)
         self.add_prim_attr('full_matrices', self.full_matrices)
         self.add_prim_attr('compute_uv', self.compute_uv)
+
+
+class Eigh(PrimitiveWithInfer):
+    """
+    Eigh decomposition(Symmetric matrix)
+    Ax = lambda * x
+    """
+
+    @prim_attr_register
+    def __init__(self, compute_eigenvectors=True, lower=True):
+        super().__init__(name="Eigh")
+        self.init_prim_io_names(inputs=['A'], outputs=['output_w', 'output_v'])
+        self.compute_eigenvectors = Validator.check_value_type(
+            "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
+        self.lower = Validator.check_value_type("lower", lower, [bool], self.lower)
+        self.add_prim_attr('lower', self.lower)
+        self.add_prim_attr('compute_eigenvectors', self.compute_eigenvectors)
+
+    def __infer__(self, A):
+        Validator.check_scalar_or_tensor_types_same({"A_dtype": A['dtype']},
+                                                    [mstype.float32, mstype.float64, mstype.complex64,
+                                                     mstype.complex128], self.name, True)
+        output = None
+        if self.compute_eigenvectors:
+            output = {
+                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
+                'dtype': (A['dtype'], A['dtype']),
+                'value': None
+            }
+        else:
+            output = {
+                'shape': (A['shape'][0],),
+                'dtype': A['dtype'],
+                'value': None
+            }
+        return output
