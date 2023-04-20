@@ -7,16 +7,16 @@
 
     参数：
         - **clip_boxes** (bool, 可选) - 确定是否应用边界框归一化，以确保坐标在[0,1]范围内。
-          默认值：True。
+          默认值： ``True`` 。
 
-          - 如果为True，则剪裁超出此范围的框。
-          - 如果为False，则返回框坐标，而不进行任何修改。
+          - 如果为 ``True`` ，则剪裁超出此范围的框。
+          - 如果为 ``False`` ，则返回框坐标，而不进行任何修改。
 
         - **pad_per_class** (bool, 可选) - 确定是否需要对非极大值抑制（NMS）算法的输出进行填充或剪裁，以满足最大尺寸的限制。
-          默认值：False。
+          默认值： ``False`` 。
 
-          - 如果为False，则将输出剪裁到最大尺寸 `max_total_size` 。
-          - 如果为True，则将输出填充到 `max_size_per_class` * `num_classes` 的最大长度，如果超 `过max_total_size` 则剪裁。
+          - 如果为 ``False`` ，则将输出剪裁到最大尺寸 `max_total_size` 。
+          - 如果为 ``True`` ，则将输出填充到 `max_size_per_class` * `num_classes` 的最大长度，如果超 `过max_total_size` 则剪裁。
 
     输入：
         - **boxes** (Tensor) - 边界框坐标，是一个float32类型的Tensor，shape为 :math:`(batch\_size, num\_boxes, q, 4)` 。其中 `q` 决定边框和类的对应关系。如果 `q` 为1，则所有类别都使用相同的边界框。否则，如果 `q` 等于类的数量，则对于每一类都使用特定的边界框。

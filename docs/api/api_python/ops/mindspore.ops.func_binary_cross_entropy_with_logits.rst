@@ -45,7 +45,7 @@ mindspore.ops.binary_cross_entropy_with_logits
         - **label** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
         - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
         - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
-        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
+        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` ，不区分大小写。如果 ``'none'`` ，则不执行 `reduction` 。默认值： ``'mean'`` 。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。

@@ -24,15 +24,15 @@ mindspore.ops.BinaryCrossEntropy
         - :math:`x` 的值必须在0到1之间。
 
     参数：
-        - **reduction** (str) - 指定输出的计算方式。取值为'none'、'mean'或'sum'。默认值：'mean'。
+        - **reduction** (str) - 指定输出的计算方式。取值为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。默认值： ``'mean'`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **labels** (Tensor) - 输入目标值，其shape和数据类型与 `logits` 相同。
-        - **weight** (Tensor, 可选) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值：None。
+        - **weight** (Tensor, 可选) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值： ``None`` 。
 
     输出：
-        Tensor，与 `logits` 有相同的数据类型。如果 `reduction` 为'none'，则shape与 `logits` 相同。否则，输出为Scalar Tensor。
+        Tensor，与 `logits` 有相同的数据类型。如果 `reduction` 为 ``'none'`` ，则shape与 `logits` 相同。否则，输出为Scalar Tensor。
 
     异常：
         - **TypeError** - `logits` 、 `labels` 及 `weight` 的数据类型既不是float16，也不是float32。

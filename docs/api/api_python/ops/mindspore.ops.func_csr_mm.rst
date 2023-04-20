@@ -12,10 +12,10 @@ mindspore.ops.csr_mm
     参数：
         - **a** (CSRTensor) - 稀疏的 CSRTensor。
         - **b** (CSRTensor) - 稀疏的 CSRTensor或稠密矩阵。
-        - **trans_a** (bool, 可选) - 是否对矩阵a进行转置。默认值：False。
-        - **trans_b** (bool, 可选) - 是否对矩阵b进行转置。默认值：False。
-        - **adjoint_a** (bool, 可选) - 是否对矩阵a进行共轭。默认值：False。
-        - **adjoint_b** (bool, 可选) - 是否对矩阵b进行共轭。默认值：False。
+        - **trans_a** (bool, 可选) - 是否对矩阵a进行转置。默认值： ``False`` 。
+        - **trans_b** (bool, 可选) - 是否对矩阵b进行转置。默认值： ``False`` 。
+        - **adjoint_a** (bool, 可选) - 是否对矩阵a进行共轭。默认值： ``False`` 。
+        - **adjoint_b** (bool, 可选) - 是否对矩阵b进行共轭。默认值： ``False`` 。
 
     返回：
         返回稀疏矩阵，类型为CSRTensor。

@@ -25,7 +25,7 @@ mindspore.ops.ApplyRMSProp
         在该算法的稠密实现版本中，"mean_square"和"momemt"即使"grad"为零将仍被更新。但在该稀疏实现版本中，在"grad"为零的迭代"mean_squre"和"moment"将不被更新。
 
     参数：
-        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值: False。
+        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值:  ``False`` 。
 
     输入：
         - **var** (Parameter) - 待更新的网络参数。

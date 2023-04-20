@@ -11,18 +11,18 @@ mindspore.ops.grid_sample
 
     `grid` 指定由 `input` 归一化的采样像素位置。因此，它应该在 :math:`[-1, 1]` 范围内的值最多。
 
-    如果 `grid` 的值在 :math:`[-1, 1]` 范围之外，则相应的输出将按照定义的 `padding_mode` 方式处理。如果 `padding_mode` 设置为 `0`，则使用 :math:`0` 来表示出界的网格位置。
-    如果 `padding_mode` 设置为 `border`，对于出界网格位置，则使用border值。如果 `padding_mode` 设置为 `reflection`，请使用边界所反映的位置的值用于指定出界网格位置。对于
+    如果 `grid` 的值在 :math:`[-1, 1]` 范围之外，则相应的输出将按照定义的 `padding_mode` 方式处理。如果 `padding_mode` 设置为 ``0`` ，则使用 :math:`0` 来表示出界的网格位置。
+    如果 `padding_mode` 设置为 ``border``，对于出界网格位置，则使用border值。如果 `padding_mode` 设置为 ``reflection`` ，请使用边界所反映的位置的值用于指定出界网格位置。对于
     远离边界的位置，它会一直被反射，直到在边界内。
 
     参数：
         - **input** (Tensor) - 4-D场景下，shape为 :math:`(N, C, H_{in}, W_{in})`，5-D场景下，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float32或float64。
         - **grid** (Tensor) - 4-D场景下，shape为 :math:`(N, H_{out}, W_{out}, 2)`，5-D场景下，shape为 :math:`(N, D_{out}, H_{out}, W_{out}, 3)`。数据类型与 `input` 保持一致。
-        - **mode** (str) - 插值方法。可选方法为 `bilinear`，`nearest` 或 `bicubic`。默认值：`bilinear`。需要注意的是 `bicubic` 只支持4-D输入。当 `mode`
-          为 `bilinear`，且输入为5-D，则 `mode` 为 `trilinear`。但是，当输入为4-D，则 `mode` 为 `bilinear`。
-        - **padding_mode** (str) - 填充方法。可选方法为 `zeros`，`border` 和 `reflection`。默认值为 `zeros`。
-        - **align_corners** (bool) - 布尔值。如果设置成 `True`，-1和1被视为引用输入角像素的中心点。如果设置为 `False`，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。
-          默认值为 `False`。
+        - **mode** (str) - 插值方法。可选方法为 ``bilinear`` ，``nearest`` 或 ``bicubic``。默认值：``bilinear`` 。需要注意的是 ``bicubic`` 只支持4-D输入。当 `mode`
+          为 ``bilinear`` ，且输入为5-D，则 `mode` 为 ``trilinear`` 。但是，当输入为4-D，则 `mode` 为 ``bilinear`` 。
+        - **padding_mode** (str) - 填充方法。可选方法为 ``zeros`` ，``border`` 和 ``reflection``。默认值为 ``zeros``。
+        - **align_corners** (bool) - 布尔值。如果设置成 ``True`` ，-1和1被视为引用输入角像素的中心点。如果设置为 ``False`` ，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。
+          默认值为 ``False`` 。
 
     返回：
         Tensor，数据类型与 `input` 相同，4-D场景下，shape为 :math:`(N, C, H_{out}, W_{out})`，5-D场景下，shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})`。

@@ -28,7 +28,7 @@ mindspore.ops.AdamWeightDecay
     :math:`m` 代表第一个矩向量，:math:`v` 代表第二个矩向量，:math:`g` 代表 `gradient` ，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ，:math:`lr` 代表 `learning_rate` ，:math:`w` 代表 `var` ，:math:`decay` 代表 `weight_decay` ， :math:`\epsilon` 代表 `epsilon` 。
 
     参数：
-        - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `var` 、 `m` 和 `v` 张量的更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
+        - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `var` 、 `m` 和 `v` 张量的更新将受到锁的保护。如果为False，则结果不可预测。默认值： ``False`` 。
 
     输入：
         - **var** (Parameter) - 需要更新的权重。shape为 :math:`(N, *)` 其中 :math:`*` 表示任何数量的附加维度，数据类型可以是float16或float32。
@@ -38,7 +38,7 @@ mindspore.ops.AdamWeightDecay
         - **beta1** (float) - 第一个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.9` 。
         - **beta2** (float) - 第二个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.999` 。
         - **epsilon** (float) - 添加到分母中的值，以提高数值稳定性，数据类型应为float32。
-        - **decay** (float) - 权重衰减值，必须是具有float32数据类型的标量张量。默认值：0.0。
+        - **decay** (float) - 权重衰减值，必须是具有float32数据类型的标量张量。默认值：``0.0`` 。
         - **gradient** (Tensor) - 梯度，shape和数据类型与 `var` 相同。
 
     输出：

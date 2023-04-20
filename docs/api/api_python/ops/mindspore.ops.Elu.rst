@@ -18,7 +18,7 @@ mindspore.ops.Elu
     ELU相关图参见 `ELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_elu.svg>`_  。
 
     参数：
-        - **alpha** (float) - Elu的alpha值，数据类型为浮点数。目前只支持alpha等于1.0，默认值：1.0。
+        - **alpha** (float) - Elu的alpha值，数据类型为浮点数。目前只支持alpha等于1.0，默认值： ``1.0`` 。
 
     输入：
         - **input_x** (Tensor) - 用于计算Elu的任意维度的Tensor，数据类型为float16,float32或float64。

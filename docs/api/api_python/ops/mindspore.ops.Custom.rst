@@ -23,11 +23,11 @@ mindspore.ops.Custom
 
     参数：
         - **func** (Union[function, str]) - 自定义算子的函数表达。
-        - **out_shape** (Union[function, list, tuple]) - 自定义算子的输入的形状或者输出形状的推导函数。默认值：None。
-        - **out_dtype** (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]) - 自定义算子的输入的数据类型或者输出数据类型的推导函数。默认值：None。
-        - **func_type** (str) - 自定义算子的函数类型，必须是["hybrid", "akg", "tbe", "aot", "pyfunc", "julia", "aicpu"]中之一。默认值："hybrid"。
-        - **bprop** (function) - 自定义算子的反向函数。默认值：None。
-        - **reg_info** (Union[str, dict, list, tuple]) - 自定义算子的算子注册信息。默认值：None。
+        - **out_shape** (Union[function, list, tuple]) - 自定义算子的输入的形状或者输出形状的推导函数。默认值： ``None`` 。
+        - **out_dtype** (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]) - 自定义算子的输入的数据类型或者输出数据类型的推导函数。默认值： ``None`` 。
+        - **func_type** (str) - 自定义算子的函数类型，必须是[ ``"hybrid"`` , ``"akg"`` , ``"tbe"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"`` , ``"aicpu"`` ]中之一。默认值： ``"hybrid"`` 。
+        - **bprop** (function) - 自定义算子的反向函数。默认值： ``None``。
+        - **reg_info** (Union[str, dict, list, tuple]) - 自定义算子的算子注册信息。默认值： ``None`` 。
 
     输入：
         - **input** (Union(tuple, list)) - 输入要计算的Tensor。

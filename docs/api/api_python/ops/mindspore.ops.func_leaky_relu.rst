@@ -17,7 +17,7 @@ mindspore.ops.leaky_relu
 
    参数：
        - **input** (Tensor) - 计算leaky_relu的任意维度的Tensor。
-       - **alpha** (Union[int, float]) - `input` 的元素小于0时激活函数的斜率，默认值：0.2。
+       - **alpha** (Union[int, float]) - `input` 的元素小于0时激活函数的斜率，默认值： ``0.2`` 。
 
    返回：
        Tensor，数据类型和shape与 `input` 相同。

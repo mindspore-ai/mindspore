@@ -14,8 +14,8 @@ mindspore.ops.index_add
         - **y** (Tensor) - 与 `x` 加的Tensor。
         - **axis** (int) - 指定沿哪根轴相加。
         - **use_lock** (bool) - 是否对参数更新过程加锁保护。如果为True，在更新参数 `x` 的值时使用原子操作以实现加锁保护，如果为
-          False， `x` 的值可能会不可预测。默认值：True。
-        - **check_index_bound** (bool) - True表示检查 `indices` 边界，False表示不检查。默认值：True。
+          False， `x` 的值可能会不可预测。默认值： ``True`` 。
+        - **check_index_bound** (bool) - True表示检查 `indices` 边界，False表示不检查。默认值： ``True`` 。
 
     返回：
         相加后的Tensor。shape和数据类型与输入 `x` 相同。

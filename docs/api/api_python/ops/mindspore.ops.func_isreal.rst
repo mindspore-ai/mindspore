@@ -10,7 +10,7 @@ mindspore.ops.isreal
         - **input** (Tensor) - 输入Tensor。
 
     返回：
-        Tensor，对应 `input` 元素为实数的位置是true，反之为false。
+        Tensor，对应 `input` 元素为实数的位置是 ``true`` ，反之为 ``false`` 。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

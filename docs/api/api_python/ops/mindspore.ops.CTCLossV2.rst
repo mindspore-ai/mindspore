@@ -11,9 +11,9 @@ mindspore.ops.CTCLossV2
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **blank** (int，可选) - 空白标签。默认值：0。
-        - **reduction** (str，可选) - 对输出应用特定的缩减方法。目前仅支持“none”，不区分大小写。默认值：“none”。
-        - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值：False。
+        - **blank** (int，可选) - 空白标签。默认值： ``0`` 。
+        - **reduction** (str，可选) - 对输出应用特定的缩减方法。目前仅支持 ``"none"`` ，不区分大小写。默认值：``"none"`` 。
+        - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值： ``False`` 。
 
     输入：
         - **log_probs** (Tensor) - 输入Tensor，其shape为 :math:`(T, C, N)` 的三维Tensor。 :math:`T` 表示输入长度， :math:`N` 表示批大小， :math:`C` 表示类别数，包含空白标签。

@@ -6,7 +6,7 @@
     计算Tensor沿指定轴的欧几里得范数（又称L2范数）。默认情况下会移除axis中指定的维度。
 
     参数：
-        - **keep_dims** (bool，可选) - 如果为True，被规约的轴保留为1，如果为False，不保留给定的这些轴，默认值：False。
+        - **keep_dims** (bool，可选) - 如果为 ``True`` ，被规约的轴保留为1，如果为 ``False`` ，不保留给定的这些轴，默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - 参与规约计算的输入Tensor。

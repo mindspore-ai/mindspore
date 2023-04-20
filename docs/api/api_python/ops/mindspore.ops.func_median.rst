@@ -10,8 +10,8 @@ mindspore.ops.median
 
     参数：
         - **input** (Tensor) - median的输入，任意维度的Tensor。数据类型支持int16、int32、int64、float32或float64。
-        - **axis** (int，可选) - 指定计算维度。默认值：-1。取值范围为[-dims, dims - 1]，`dims` 表示 `input` 的维度长度。
-        - **keepdims** (bool，可选) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。默认值：False。
+        - **axis** (int，可选) - 指定计算维度。默认值： ``-1`` 。取值范围为[-dims, dims - 1]，`dims` 表示 `input` 的维度长度。
+        - **keepdims** (bool，可选) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 
     返回：
         - **y** (Tensor) - 返回指定维度上的中值，数据类型与 `input` 相同。

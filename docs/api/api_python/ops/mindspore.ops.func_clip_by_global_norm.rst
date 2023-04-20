@@ -11,8 +11,8 @@
 
     参数：
         - **x** (Union(tuple[Tensor], list[Tensor])) - 要被剪裁的数据。
-        - **clip_norm** (Union(float, int)) - 表示裁剪比率，应大于0。默认值：1.0。
-        - **use_norm** (None) - 表示全局范数。目前只支持None，默认值：None。
+        - **clip_norm** (Union(float, int)) - 表示裁剪比率，应大于0。默认值： ``1.0`` 。
+        - **use_norm** (None) - 表示全局范数。目前只支持None，默认值： ``None`` 。
 
     返回：
         tuple[Tensor]，表示裁剪后的Tensor。其数据类型与 `x` 相同，输出tuple中的每个Tensor与输入shape相同。

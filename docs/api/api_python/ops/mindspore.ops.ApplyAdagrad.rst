@@ -16,7 +16,7 @@ mindspore.ops.ApplyAdagrad
     `var` 、 `accum` 和 `grad` 的输入遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，较低精度的数据类型将转换为相对最高精度的数据类型。
 
     参数：
-        - **update_slots** (bool) - 是否更新 `accum` 参数，如果为True， `accum` 将更新。默认值为：True。
+        - **update_slots** (bool) - 是否更新 `accum` 参数，如果为 ``True`` ， `accum` 将更新。默认值为： ``True`` 。
 
     输入：
         - **var** (Parameter) - 要更新的权重。数据类型为float32或float16。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

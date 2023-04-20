@@ -20,7 +20,7 @@ mindspore.ops.huber_loss
 
     其中， :math:`N` 为batch size。
 
-    如果 `reduction` 是"mean"或"sum"，则：
+    如果 `reduction` 是 ``"mean"`` 或 ``"sum"`` ，则：
 
     .. math::
         \ell(x, y) =
@@ -32,8 +32,8 @@ mindspore.ops.huber_loss
     参数：
         - **input** (Tensor) - 输入预测值，任意维度的Tensor。
         - **target** (Tensor) - 目标值，通常情况下与 `input` 的shape和dtype相同。但是当 `target` 和 `x` 的shape不同时，需要保证他们之间可以互相广播。
-        - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"或"none"。默认值："mean"。
-        - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须大于零。默认值：1.0。
+        - **reduction** (str) - 应用于loss的reduction类型。取值为 ``"mean"`` ， ``"sum"`` 或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须大于零。默认值： ``1.0`` 。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 `none` ，则返回与 `input` 具有相同shape和dtype的Tensor。否则，将返回Scalar。

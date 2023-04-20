@@ -11,7 +11,7 @@ mindspore.ops.dist
     参数：
         - **input** (Tensor) - 第一个输入Tensor，数据类型需为float16或float32。
         - **other** (Tensor) - 第二个输入Tensor，数据类型需为float16或float32。
-        - **p** (int，可选) - 范数的次数。 `p` 大于或等于0。默认值：2。
+        - **p** (int，可选) - 范数的次数。 `p` 大于或等于0。默认值： ``2`` 。
 
     返回：
         Tensor，具有与 `input` 相同的dtype，其shape为：:math:`(1)` 。

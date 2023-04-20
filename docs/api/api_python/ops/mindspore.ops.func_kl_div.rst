@@ -26,12 +26,12 @@ mindspore.ops.kl_div
 
     .. note::
         - 目前Ascend平台不支持数据类型float64。
-        - 仅当 `reduction` 设置为"batchmean"时输出才与Kullback-Leibler散度的数学定义一致。
+        - 仅当 `reduction` 设置为 ``"batchmean"`` 时输出才与Kullback-Leibler散度的数学定义一致。
 
     参数：
         - **logits** (Tensor) - 数据类型支持float16、float32或float64。
         - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
-        - **reduction** (str) - 指定输出结果的计算方式，可选值为"mean"、"batchmean"、"none"或"sum"。默认值："mean"。
+        - **reduction** (str) - 指定输出结果的计算方式，可选值为 ``"mean"`` 、 ``"batchmean"`` 、 ``"none"`` 或 ``"sum"`` 。默认值： ``"mean"`` 。
 
     返回：
         Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。

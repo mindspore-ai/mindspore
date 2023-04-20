@@ -11,8 +11,8 @@ mindspore.ops.Cauchy
 
     参数：
         - **size** (list[int]) - 描述输出Tensor的shape。
-        - **sigma** (float，可选) - 位置参数，指定分布峰值的位置。默认值：1.0。
-        - **median** (float，可选) - 尺度参数，指定半宽半最大值处的scale参数。默认值：0.0。
+        - **sigma** (float，可选) - 位置参数，指定分布峰值的位置。默认值： ``1.0`` 。
+        - **median** (float，可选) - 尺度参数，指定半宽半最大值处的scale参数。默认值： ``0.0`` 。
 
     输出：
         Tensor，数据类型为float32，shape由 `size` 决定的Tensor。Tensor中的数值符合柯西分布。

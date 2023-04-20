@@ -22,7 +22,7 @@ mindspore.ops.ApplyAdagradV2
 
     参数：
         - **epsilon** (float) - 添加到分母上的较小值，以确保数值的稳定性。
-        - **update_slots** (bool) - 如果为True，则将更新 `accum` 。默认值：True。
+        - **update_slots** (bool) - 如果为 ``True`` ，则将更新 `accum` 。默认值： ``True`` 。
 
     输入：
         - **var** (Parameter) - 要更新的变量。为任意维度，其数据类型为float16或float32。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。

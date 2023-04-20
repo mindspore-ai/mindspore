@@ -15,7 +15,7 @@ mindspore.ops.FractionalMaxPool3DWithFixedKsize
     参数：
         - **ksize** (Union[float, tuple]) - 池化窗口大小。可以是一个三元组，表示shape为 :math:`(k_D, k_H, k_W)` ，或者是一个单独的 `K` 表示shape为 :math:`(K, K, K)` 。
         - **output_shape** (Union[int, tuple]) - 目标输出shape，可以是一个三元组，表示shape为 :math:`(D_{out}, H_{out}, W_{out})` ，或者是一个单独的 `S` 表示shape为 :math:`(S, S, S)` 。
-        - **data_format** (str，可选) - 可选的数据格式值，当前支持 "NCDHW" 和 "NHDWC"，默认为 "NCDHW"。
+        - **data_format** (str，可选) - 可选的数据格式值，当前支持 ``"NCDHW"`` 和 ``"NHDWC"`` ，默认为 ``"NCDHW"`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor，是一个4-D或者5-D的Tensor。数据类型为：float16、float32、double、int32、int64。

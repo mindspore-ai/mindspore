@@ -9,4 +9,4 @@ mindspore.ops.is_floating_point
         - **input** (Tensor) - 输入Tensor。
 
     返回：
-        Bool，如果 `input` 的dtype是浮点数据类型，则返回True，否则返回False。
+        Bool，如果 `input` 的dtype是浮点数据类型，则返回 ``True`` ，否则返回 ``False`` 。

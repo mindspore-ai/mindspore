@@ -17,7 +17,7 @@ mindspore.ops.cholesky
 
     参数：
         - **input_x** (Tensor) - shape大小为 :math:`(*, N, N)` ，其中 :math:`*` 是零个或多个由对称正定矩阵组成的批处理维，数据类型为float32或float64。
-        - **upper** (bool) - 是否返回上三角矩阵还是下三角矩阵的标志。默认值：False。
+        - **upper** (bool) - 是否返回上三角矩阵还是下三角矩阵的标志。默认值：``False`` 。
 
     返回：
         Tensor，shape和数据类型与 `input_x` 相同。

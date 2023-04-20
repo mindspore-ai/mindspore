@@ -10,7 +10,7 @@
         - 目前仅支持图模式且需要在Cell下调用。
 
     参数：
-        - **group** (str) - 工作的通信组，默认值："GlobalComm.WORLD_COMM_GROUP"（即Ascend平台为"hccl_world_group"，GPU平台为"nccl_world_group" ）。
+        - **group** (str) - 工作的通信组，默认值： ``"GlobalComm.WORLD_COMM_GROUP"`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
 
     输入：
         - **input_x** (Tensor) - AllGather的输入，shape为 :math:`(x_1, x_2, ..., x_R)` 的Tensor。

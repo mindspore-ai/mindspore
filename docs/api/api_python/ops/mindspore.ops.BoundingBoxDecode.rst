@@ -9,9 +9,9 @@ mindspore.ops.BoundingBoxDecode
 
     参数：
         - **max_shape** (tuple) - 解码框计算的上限值。
-        - **means** (tuple) - 计算 `deltas` 的均值。默认值：（0.0, 0.0, 0.0, 0.0）。
-        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值：（1.0, 1.0, 1.0, 1.0）。
-        - **wh_ratio_clip** (float) - 解码框计算的宽高比限制。默认值：0.016。
+        - **means** (tuple) - 计算 `deltas` 的均值。默认值：``(0.0, 0.0, 0.0, 0.0)`` 。
+        - **stds** (tuple) - 计算 `deltas` 的标准差。默认值： ``(1.0, 1.0, 1.0, 1.0)`` 。
+        - **wh_ratio_clip** (float) - 解码框计算的宽高比限制。默认值： ``0.016`` 。
 
     输入：
         - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。

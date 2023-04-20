@@ -5,18 +5,18 @@ mindspore.ops.CholeskySolve
 
     根据 Cholesky 分解因子 `u` ，计算正定矩阵线性方程组的解。结果表示为 `c` 。
 
-    如果 `upper` 是True， `u` 是上三角形矩阵，可以通过下面公式得到 `c` ：
+    如果 `upper` 是 ``True`` ， `u` 是上三角形矩阵，可以通过下面公式得到 `c` ：
 
     .. math::
         c = (u^{T}u)^{{-1}}b
 
-    如果 `upper` 是False， `u` 是下三角形矩阵，可以通过下面公式得到 `c` ：
+    如果 `upper` 是 ``False`` ， `u` 是下三角形矩阵，可以通过下面公式得到 `c` ：
 
     .. math::
         c = (uu^{T})^{{-1}}b
 
     参数：
-        - **upper** (bool，可选) - 将Cholesky因子视为下三角矩阵或上三角矩阵的标志。若为True，视为上三角矩阵，反之则为下三角。默认值：False。
+        - **upper** (bool，可选) - 将Cholesky因子视为下三角矩阵或上三角矩阵的标志。若为True，视为上三角矩阵，反之则为下三角。默认值： ``False`` 。
 
     输入：
         - **x1** (Tensor) - 表示二维或三维矩阵的Tensor。Shape为： :math:`(*, N, M)` ，数据类型为float32或float64。

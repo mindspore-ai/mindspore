@@ -12,8 +12,8 @@ mindspore.ops.bincount
 
     参数：
         - **input** (Tensor) - 一维的Tensor。
-        - **weights** (Tensor, 可选) - 权重，与 `input` shape相同。默认值：None。
-        - **minlength** (int, 可选) - 输出Tensor的最小长度。默认值：0。
+        - **weights** (Tensor, 可选) - 权重，与 `input` shape相同。默认值： ``None`` 。
+        - **minlength** (int, 可选) - 输出Tensor的最小长度。默认值： ``0`` 。
 
     返回：
         Tensor，如果输入为非空，输出shape为[max(input)+1]的Tensor，否则shape为[0]。

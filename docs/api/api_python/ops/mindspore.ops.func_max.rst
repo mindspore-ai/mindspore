@@ -15,12 +15,12 @@ mindspore.ops.max
 
     参数：
         - **input** (Tensor) - 输入任意维度的Tensor。不支持复数类型。
-        - **axis** (int) - 指定计算维度。默认值：None。
-        - **keepdims** (bool) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。默认值：False。
+        - **axis** (int) - 指定计算维度。默认值： ``None`` 。
+        - **keepdims** (bool) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 
     关键字参数：
-        - **initial** (scalar, 可选) - 输出元素的最小值。如果 `input` 为空，则该参数必须设置。默认值：None。
-        - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为True则不替换，若为False则替换。`where` 中为False的位置，必须提供对应的 `initial` 值。默认值：None，表示默认为True。
+        - **initial** (scalar, 可选) - 输出元素的最小值。如果 `input` 为空，则该参数必须设置。默认值： ``None`` 。
+        - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为 ``True`` 则不替换，若为 ``False`` 则替换。`where` 中为 ``False`` 的位置，必须提供对应的 `initial` 值。默认值： ``None`` ，表示默认为 ``True`` 。
 
     返回：
         tuple (Tensor)，表示2个Tensor组成的tuple，包含对应的索引和输入Tensor的最大值。

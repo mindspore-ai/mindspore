@@ -11,7 +11,7 @@ mindspore.ops.chunk
     参数：
         - **input** (Tensor) - 被切分的Tensor。
         - **chunks** (int) - 要切分的sub-tensor数量。
-        - **axis** (int，可选) - 指定需要分割的维度。默认值：0。
+        - **axis** (int，可选) - 指定需要分割的维度。默认值： ``0`` 。
 
     返回：
         tuple[Tensor]。

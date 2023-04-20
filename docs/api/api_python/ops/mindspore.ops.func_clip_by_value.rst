@@ -24,8 +24,8 @@
 
     参数：
         - **x** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clip_by_value` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。
-        - **clip_value_min** (Union(Tensor, float, int)) - 指定最小值。默认值为None。
-        - **clip_value_max** (Union(Tensor, float, int)) - 指定最大值。默认值为None。
+        - **clip_value_min** (Union(Tensor, float, int)) - 指定最小值。默认值为 ``None`` 。
+        - **clip_value_max** (Union(Tensor, float, int)) - 指定最大值。默认值为 ``None`` 。
 
     返回：
         Tensor、Tensor的列表或元组，表示裁剪后的Tensor。其shape和数据类型和 `x` 相同。

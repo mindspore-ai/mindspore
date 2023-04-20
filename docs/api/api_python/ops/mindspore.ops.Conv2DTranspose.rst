@@ -8,14 +8,14 @@ mindspore.ops.Conv2DTranspose
     参数：
         - **out_channel** (int) - 输出的通道数。
         - **kernel_size** (Union[int, tuple[int]]) - 卷积核的大小。
-        - **pad_mode** (str) - 填充的模式。它可以是"valid"、"same"或"pad"。默认值："valid"。请参考 :class:`mindspore.nn.Conv2dTranspose` 了解更多 `pad_mode` 的使用规则。
-        - **pad** (Union[int, tuple[int]]) - 指定要填充的填充值。默认值：0。如果 `pad` 是整数，则顶部、底部、左侧和右侧的填充都等于 `pad` 。如果 `pad` 是四个整数的tuple，则顶部、底部、左侧和右侧的填充分别等于pad[0]、pad[1]、pad[2]和pad[3]。
-        - **pad_list** (Union[str, None]) - 卷积填充方式，如（顶部、底部、左、右）。默认值：None，表示不使用此参数。
-        - **mode** (int) - 指定不同的卷积模式。当前未使用该值。默认值：1。
-        - **stride** (Union[int, tuple[int]]) - 卷积核移动的步长。默认值：1。
-        - **dilation** (Union[int, tuple[int]]) - 卷积核膨胀尺寸。默认值：1。
-        - **group** (int) - 将过滤器拆分为组。默认值：1。
-        - **data_format** (str) - 输入和输出的数据格式。它应该是'NHWC'或'NCHW'，默认值是'NCHW'。
+        - **pad_mode** (str) - 填充的模式。它可以是 ``"valid"`` 、 ``"same"`` 或 ``"pad"`` 。默认值："valid"。请参考 :class:`mindspore.nn.Conv2dTranspose` 了解更多 `pad_mode` 的使用规则。
+        - **pad** (Union[int, tuple[int]]) - 指定要填充的填充值。默认值： ``0`` 。如果 `pad` 是整数，则顶部、底部、左侧和右侧的填充都等于 `pad` 。如果 `pad` 是四个整数的tuple，则顶部、底部、左侧和右侧的填充分别等于pad[0]、pad[1]、pad[2]和pad[3]。
+        - **pad_list** (Union[str, None]) - 卷积填充方式，如（顶部、底部、左、右）。默认值： ``None`` ，表示不使用此参数。
+        - **mode** (int) - 指定不同的卷积模式。当前未使用该值。默认值： ``1`` 。
+        - **stride** (Union[int, tuple[int]]) - 卷积核移动的步长。默认值： ``1`` 。
+        - **dilation** (Union[int, tuple[int]]) - 卷积核膨胀尺寸。默认值： ``1`` 。
+        - **group** (int) - 将过滤器拆分为组。默认值： ``1`` 。
+        - **data_format** (str) - 输入和输出的数据格式。它应该是 ``'NHWC'`` 或 ``'NCHW'`` ，默认值是 ``'NCHW'`` 。
 
     输入：
         - **dout** (Tensor) - 卷积操作的输出的梯度Tensor。shape： :math:`(N, C_{out}, H_{out}, W_{out})` 。

@@ -6,8 +6,8 @@
     将输入Tensor的数据格式从 `src_format` 转换为 `dst_format` ，通过重新排列其维度来实现。
 
     参数：
-        - **src_format** (str, 可选) - 初始数据排列格式，可以为'NHWC'和'NCHW'之一。默认值：'NHWC'。
-        - **dst_format** (str, 可选) - 目标数据排列格式，可以为'NHWC'和'NCHW'之一。默认值：'NCHW'。
+        - **src_format** (str, 可选) - 初始数据排列格式，可以为 ``'NHWC'`` 和 ``'NCHW'`` 之一。默认值： ``'NHWC'`` 。
+        - **dst_format** (str, 可选) - 目标数据排列格式，可以为 ``'NHWC'`` 和 ``'NCHW'`` 之一。默认值： ``'NCHW'`` 。
 
     输入：
         - **input_x** (Tensor) - shape为 :math:`(4, )` 或 :math:`(4, 2)` 的输入Tensor。数据类型为int32或int64。

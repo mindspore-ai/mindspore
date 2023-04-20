@@ -23,18 +23,18 @@ mindspore.ops.Conv2D
     参数：
         - **out_channel** (int) - :math:`C_{out}` 为输出通道数。
         - **kernel_size** (Union[int, tuple[int]]) - 数据类型为int或一个包含2个int组成的元组。指定二维卷积核的高度和宽度。单个整数表示该值同时适用于内核的高度和宽度。包含2个整数的元组表示第一个值用于高度，另一个值用于内核的宽度。
-        - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。
-        - **pad_mode** (str) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
+        - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值： ``1`` 。
+        - **pad_mode** (str) - 指定填充模式。取值为 ``"same"`` ， ``"valid"`` ，或 ``"pad"`` 。默认值： ``"valid"`` 。
 
           - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。若设置该模式，`pad` 的值必须为0。
           - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。
           - **pad**: 对输入 `x` 进行填充。在输入的高度和宽度方向上填充 `pad` 大小的0。如果设置此模式， `pad` 必须大于或等于0。
 
-        - **pad** (Union(int, tuple[int])) - 输入 `x` 的高度和宽度方向上填充的数量。数据类型为int或包含4个int组成的tuple。如果 `pad` 是一个int，那么上、下、左、右的填充都等于 `pad` 。如果 `pad` 是一个有4个int组成的tuple，那么上、下、左、右的填充分别等于 `pad[0]` 、 `pad[1]` 、 `pad[2]` 和 `pad[3]` 。值应该要大于等于0，默认值：0。
-        - **stride** (Union(int, tuple[int])) - 卷积核移动的步长，数据类型为int或两个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值：1。
-        - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
-        - **group** (int) - 将过滤器拆分为组。默认值：1。
-        - **data_format** (str) - 数据格式的可选值有"NHWC"，"NCHW"。默认值："NCHW"。
+        - **pad** (Union(int, tuple[int])) - 输入 `x` 的高度和宽度方向上填充的数量。数据类型为int或包含4个int组成的tuple。如果 `pad` 是一个int，那么上、下、左、右的填充都等于 `pad` 。如果 `pad` 是一个有4个int组成的tuple，那么上、下、左、右的填充分别等于 `pad[0]` 、 `pad[1]` 、 `pad[2]` 和 `pad[3]` 。值应该要大于等于0，默认值： ``0`` 。
+        - **stride** (Union(int, tuple[int])) - 卷积核移动的步长，数据类型为int或两个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
+        - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
+        - **group** (int) - 将过滤器拆分为组。默认值： ``1`` 。
+        - **data_format** (str) - 数据格式的可选值有 ``"NHWC"`` ， ``"NCHW"`` 。默认值： ``"NCHW"`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。

@@ -27,17 +27,17 @@
         - **stride** (Union(int，tuple[int])) - kernel移动的距离。
           如果为一个int整数，则表示了height和width共同的步长。
           如果为两个int整数的元组，则分别表示height和width的步长。
-          如果为四个int整数的元组，则说明数据格式为 `NCHW` ，表示 `[1, 1, stride_height, stride_width]` 。
+          如果为四个int整数的元组，则说明数据格式为 ``NCHW`` ，表示 `[1, 1, stride_height, stride_width]` 。
         - **dilation** (Union(int，tuple[int])) - 数据类型为int，或者包含2个整数的元组，或者包含4个整数的元组，指定用于扩张卷积的膨胀速率。
           如果设置为 :math:`k > 1` ，则每次抽样点跳过 :math:`k - 1` 个像素点。
           其值必须大于等于1，并且以输入的宽度和高度为边界。
-        - **pad_mode** (str，可选) - 指定填充模式，可选模式有"same"、"valid"，默认值："same"。大小写均支持。
+        - **pad_mode** (str，可选) - 指定填充模式，可选模式有 ``"same"`` 、 ``"valid"`` ，默认值： ``"same"`` 。大小写均支持。
 
-          - same：采用完全方式。输出的宽度和高度和输入的一样。
+          - ``"same"``：采用完全方式。输出的宽度和高度和输入的一样。
 
-          - valid：采用丢弃的方式。没有填充时候输出为最大的高度和宽度。额外的像素点将被丢弃。
+          - ``"valid"``：采用丢弃的方式。没有填充时候输出为最大的高度和宽度。额外的像素点将被丢弃。
 
-        - **data_format** (str，可选) - 数据格式的值。目前只支持 `NCHW` ，默认值： `NCHW` 。
+        - **data_format** (str，可选) - 数据格式的值。目前只支持 ``NCHW`` ，默认值： ``NCHW`` 。
 
     输入：
         - **x** (Tensor) - 输入数据。一个四维Tensor，shape必须为

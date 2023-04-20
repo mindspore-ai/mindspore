@@ -7,9 +7,9 @@ mindspore.ops.gumbel_softmax
 
     参数：
         - **logits** (Tensor) - 输入，是一个非标准化的对数概率分布。只支持float16和float32。
-        - **tau** (float) - 标量温度，正数。默认值：1.0。
-        - **hard** (bool) - 为True时返回one-hot离散型Tensor，可反向求导。默认值：False。
-        - **dim** (int) - 给softmax使用的参数，在dim维上做softmax操作。默认值：-1。
+        - **tau** (float) - 标量温度，正数。默认值： ``1.0`` 。
+        - **hard** (bool) - 为True时返回one-hot离散型Tensor，可反向求导。默认值： ``False`` 。
+        - **dim** (int) - 给softmax使用的参数，在dim维上做softmax操作。默认值： ``-1`` 。
 
     返回：
         Tensor，shape与dtype和输入 `logits` 相同。

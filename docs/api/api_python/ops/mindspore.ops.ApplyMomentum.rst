@@ -12,9 +12,9 @@
     有关公式和用法的更多详细信息，请参阅 :class:`mindspore.nn.Momentum` 。
 
     参数：    
-        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
-        - **use_nesterov** (bool) - 是否使用nesterov动量。默认值：False。
-        - **gradient_scale** (float) - 梯度的缩放比例。默认值：1.0。
+        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值： ``False`` 。
+        - **use_nesterov** (bool) - 是否使用nesterov动量。默认值： ``False`` 。
+        - **gradient_scale** (float) - 梯度的缩放比例。默认值： ``1.0`` 。
 
     输入：
         - **variable** (Parameter) - 要更新的权重。数据类型必须为float。
