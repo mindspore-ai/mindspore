@@ -18,6 +18,7 @@
 #include "nnacl/kernel/activation.h"
 #include "nnacl/kernel/arithmetic.h"
 #include "nnacl/kernel/biasadd.h"
+#include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
 #include "nnacl/kernel/exp.h"
 #include "nnacl/kernel/fullconnection.h"
@@ -75,6 +76,10 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_BiasAdd][REGIST_DT(kNumberTypeFloat32)] = CreateBiasAdd;
+  creators[PrimType_Clip][REGIST_DT(kNumberTypeFloat)] = CreateClip;
+  creators[PrimType_Clip][REGIST_DT(kNumberTypeFloat32)] = CreateClip;
+  creators[PrimType_Clip][REGIST_DT(kNumberTypeInt)] = CreateClip;
+  creators[PrimType_Clip][REGIST_DT(kNumberTypeInt32)] = CreateClip;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeBool)] = CreateConcat;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeInt32)] = CreateConcat;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat32)] = CreateConcat;
