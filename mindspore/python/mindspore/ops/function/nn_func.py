@@ -6458,11 +6458,11 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
     return attn_output, attn_output_weights
 
 
-def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False):
     r"""
     Performs a 2D max pooling on the input Tensor.
 
-    Typically the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs
+    Typically, the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given `kernel_size`
     :math:`ks = (h_{ker}, w_{ker})` and `stride` :math:`s = (s_0, s_1)`, the operation is as follows:
 
@@ -6473,27 +6473,38 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
 
     Args:
         x (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,
-            int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+            int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 in CPU or GPU
+            while that of uint16 in Ascend.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: `kernel_size`.
+            represent height and width of movement respectively.
+            Default: None, meaning that the value of `kernel_size` is used here.
         padding (Union[int, tuple[int]]): An int number that represents the height and width of movement are both
             strides, or a tuple of two int numbers that represent height and width of movement respectively.
             Default: 0.
         dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: 1.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
         return_indices (bool): Whether to output the indices of max value. Default: False.
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
 
     Returns:
         If `return_indices` is False, return a Tensor `output`, else return a tuple (`output`, `argmax`).
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
-        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
-          only when `return_indices` is True.
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{padding[0]} - \text{dilation[0]}
+                \times (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{padding[1]} - \text{dilation[1]}
+                \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
+
+        - **argmax** (Tensor) - Index corresponding to the maximum value. In CPU and GPU, data type is int64
+          while that is uint16 in Ascend. It will be return only when `return_indices` is True.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6501,7 +6512,8 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is not int or tuple.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
-        TypeError: If `ceil_mode` is not bool
+        ValueError: If `padding` is more than half of `kernel_size`.
+        TypeError: If `ceil_mode` is not bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
