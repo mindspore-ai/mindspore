@@ -405,6 +405,7 @@ Reduction函数
     mindspore.ops.mv
     mindspore.ops.outer
     mindspore.ops.orgqr
+    mindspore.ops.ormqr
     mindspore.ops.pinv
     mindspore.ops.svd
     mindspore.ops.tensor_dot

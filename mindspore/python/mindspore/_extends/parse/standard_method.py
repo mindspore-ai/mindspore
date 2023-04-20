@@ -4408,6 +4408,13 @@ def qr(input, some=True):
     return F.qr(input, 'reduced' if some else 'complete')
 
 
+def ormqr(input, input2, input3, left=True, transpose=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.ormqr`.
+    """
+    return F.ormqr(input, input2, input3, left, transpose)
+
+
 def amax(input, axis=None, keep_dims=False):
     r"""
     For details, please refer to :func:`mindspore.ops.amax`.

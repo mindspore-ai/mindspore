@@ -232,6 +232,7 @@
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
     mindspore.Tensor.not_equal
+    mindspore.Tensor.ormqr
     mindspore.Tensor.permute
     mindspore.Tensor.positive
     mindspore.Tensor.pow

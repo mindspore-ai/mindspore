@@ -31,6 +31,7 @@ from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
+from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -4562,6 +4563,60 @@ def orgqr(input, input2):
 
     orgqr_ = Orgqr()
     return orgqr_(input, input2)
+
+
+def ormqr(input, tau, other, left=True, transpose=False):
+    r"""
+    Calculates two matrices multiplication of a product of a general matrix with Householder matrices.
+    Calculates the product of a matrix C(given by `other`) with dimensions (m, n) and a matrix Q which is represented
+    using Householder reflectors (`input`, `tau`). Returns a Tensor.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
+            otherwise, mn equals to n. And `*` is zero or more batch dimensions.
+        tau (Tensor): Tensor of shape :math:`(*, min(mn, k))` where `*` is zero or more batch dimensions,
+            and its type is the same as `input`.
+        other (Tensor): Tensor of shape :math:`(*, m, n)` where `*` is zero or more batch dimensions,
+            and its type is the same as `input`.
+        left (bool, optional): determines the order of multiplication. If True, computes op(Q)* `other` , otherwise,
+            compute `other` *op(Q). Default: True.
+        transpose (bool, optional): If True, the matrix Q is conjugate transposed,
+            otherwise, not conjugate transposing matrix Q. Default: False.
+
+    Returns:
+        Tensor, with the same type and shape as `other`.
+
+    Raises:
+        TypeError: If `input` or `tau` or `other` is not Tensor.
+        TypeError: If dtype of `input` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
+        ValueError: If the dimension of `input` or `other` is less than 2D.
+        ValueError: If rank(`input`) - rank(`tau`) != 1.
+        ValueError: If tau.shape[:-2] != input.shape[:-2]
+        ValueError: If other.shape[:-2] != input.shape[:-2]
+        ValueError: If left == true, other.shape[-2] < tau.shape[-1].
+        ValueError: If left == true, other.shape[-2] != input.shape[-2].
+        ValueError: If left == false, other.shape[-1] < tau.shape[-1].
+        ValueError: If left == false, other.shape[-1] != input.shape[-2].
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62]]),
+        >>>                mindspore.float32)
+        >>> tau = Tensor(np.array([1.55, 1.94, 3.0]), mindspore.float32)
+        >>> other = Tensor(np.array([[-114.6, 10.9, 1.1],
+        >>>                          [-0.304, 38.07, 69.38],
+        >>>                          [-0.45, -0.17, 62]]), mindspore.float32)
+        >>> output = ops.ormqr(input, tau, other)
+        >>> print(output)
+        [[  63.82713   -13.823125 -116.28614 ]
+         [ -53.659264  -28.157839  -70.42702 ]
+         [ -79.54292    24.00183   -41.34253 ]]
+    """
+
+    ormqr_ = _get_cache_prim(Ormqr)(left, transpose)
+    return ormqr_(input, tau, other)
 
 
 def hypot(input, other):
@@ -10969,6 +11024,7 @@ __all__ = [
     'matrix_exp',
     'matrix_power',
     'orgqr',
+    'ormqr',
     'diag_embed',
     'fmax',
     'fmin',
