@@ -339,10 +339,11 @@ def tensor_dot(x1, x2, axes):
 
 @_primexpr
 def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    msg_prefix = f"For \\\'{prim_name}\\\', the" if prim_name else "The"
     if len(x1_shape) < 2 or len(x2_shape) < 2:
-        raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2',"
-                         f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
+        raise ValueError(f"{msg_prefix} inputs x1, x2 should have \\\'dimension >= 2\\\',"
+                         f"but got \\\'len(x1_shape)\\\': ({len(x1_shape)})"
+                         f" and \\\'len(x2_shape)\\\': ({len(x2_shape)}).")
 
 
 @constexpr
@@ -350,7 +351,7 @@ def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type for dot and batch dot ops.
     """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    msg_prefix = f"For \\\'{prim_name}\\\', the" if prim_name else "The"
     const_utils.check_type_valid(x1_type, [mstype.float16, mstype.float32], 'x1')
     const_utils.check_type_valid(x2_type, [mstype.float16, mstype.float32], 'x2')
     if x1_type != x2_type:
