@@ -69,6 +69,7 @@ Neural Network
     mindspore.ops.MaxPool3D
     mindspore.ops.MaxPool3DWithArgmax
     mindspore.ops.MaxPoolWithArgmax
+    mindspore.ops.MaxPoolWithArgmaxV2
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
