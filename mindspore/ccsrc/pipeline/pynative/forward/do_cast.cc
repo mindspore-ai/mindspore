@@ -108,6 +108,11 @@ void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   SetImplicitCast(op_run_info);
 }
 
+void CastOperation::ClearRes() {
+  cast_prim_ = nullptr;
+  implicit_cast_map_.clear();
+}
+
 bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
   return !v->isa<tensor::Tensor>() && !v->isa<tensor::CSRTensor>() && !v->isa<IntegerImm>() && !v->isa<FloatImm>() &&

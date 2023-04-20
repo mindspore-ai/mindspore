@@ -163,7 +163,12 @@ PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterP
   }
   set_instance_name(adapter->instance_name_);
 }
-PrimitivePy::~PrimitivePy() {}
+PrimitivePy::~PrimitivePy() {
+  py::gil_scoped_acquire gil;
+  py::object temp = py::none();
+  std::swap(python_obj_, temp);
+  backward_hook_fn_.clear();
+}
 
 void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   signatures_ = signatures;
