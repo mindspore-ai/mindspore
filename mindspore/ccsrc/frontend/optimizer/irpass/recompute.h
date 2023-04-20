@@ -33,9 +33,9 @@ constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kHandledNotRecomputeNodeFlag = "handled_not_recompute_node";
 
 bool EnableGraphReuse() {
-  static const auto graph_reuse_env = common::GetEnv("MS_DEV_GRAPH_REUSE");
-  static const auto graph_reuse_enable = graph_reuse_env == "1" || graph_reuse_env == "2";
-  return graph_reuse_enable;
+  static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
+  return cell_reuse_enable;
 }
 
 bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller) {
