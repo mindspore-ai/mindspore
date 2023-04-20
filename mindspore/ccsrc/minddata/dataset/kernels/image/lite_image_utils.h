@@ -65,7 +65,7 @@ struct JpegErrorManagerCustom {
   jmp_buf setjmp_buffer;
 };
 
-#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
+#if defined(ENABLE_MINDDATA_PYTHON)
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input);
 
 /// \brief Returns Rescaled image
