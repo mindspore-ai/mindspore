@@ -141,7 +141,7 @@ class Model(BaseModel):
 
         Args:
             model_path0 (str): file path of the first model.
-            model_path0 (str): file path of the second model.
+            model_path1 (str): file path of the second model.
             model_type (ModelType): Define The type of input model file. only ModelType.MINDIR is supported currently.
             context (Context, optional): Define the context used to transfer options during execution.
             config_path (str, optional): Define the config file path. the config file is used to transfer user defined
