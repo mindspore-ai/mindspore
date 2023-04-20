@@ -10447,7 +10447,7 @@ class GLU(Primitive):
     Refer to :func:`mindspore.ops.glu` for more details.
 
     Args:
-        axis (int): Axis on which to split the input.
+        axis (int, optional): Axis on which to split the input.
             The value of `axis` must be an int within range [-rank(`x`), rank(`x`)).
             Default: -1, specifying the last dimension.
 

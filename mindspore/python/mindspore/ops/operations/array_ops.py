@@ -182,11 +182,11 @@ class Expand(Primitive):
     Refer to :func:`mindspore.ops.expand` for more details.
 
     Inputs:
-         - **x** (Tensor) - The input tensor.
-         - **shape** (Tensor) - The new shape of x.
+        - **x** (Tensor) - The input tensor.
+        - **shape** (Tensor) - The new shape of x.
 
     Outputs:
-         - **y** (Tensor) - Tensor after expansion.
+        - **y** (Tensor) - Tensor after expansion.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1409,7 +1409,7 @@ class MatrixDiagPartV3(Primitive):
     Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
 
     Args:
-        align (string, optional): An optional string from: "RIGHT_LEFT"(default),
+        align (str, optional): An optional string from: "RIGHT_LEFT"(default),
             "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
             It specifies how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
             aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
