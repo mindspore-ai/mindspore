@@ -96,7 +96,7 @@ int CropOpenCLKernel::Prepare() {
 }
 
 void CropOpenCLKernel::RightShiftOffsetByAxis() {
-  bzero(offset_, sizeof(int) * COMM_SHAPE_SIZE);
+  (void)memset(offset_, 0, sizeof(int) * COMM_SHAPE_SIZE);
   for (int i = 0; i < crop_param_->offset_size_; i++) {
     int index = i + crop_param_->axis_;
     if ((index < 0) || (index >= COMM_SHAPE_SIZE)) {

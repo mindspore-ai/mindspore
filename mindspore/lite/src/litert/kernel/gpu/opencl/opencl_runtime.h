@@ -160,7 +160,7 @@ class OpenCLRuntime {
   void SetProfiling(bool profiling) { profiling_ = profiling; }
   bool isExtensionEnable(std::string ext) { return supported_extensions_.find(ext) != std::string::npos; }
   cl::Buffer *CreateSharedMemoryBuffer(size_t size, void *host_ptr);
-  uint GetCacheLineSize() const { return cache_line_size_; }
+  size_t GetCacheLineSize() const { return cache_line_size_; }
 
  private:
   static OpenCLRuntime *GetInstance();
@@ -210,7 +210,7 @@ class OpenCLRuntime {
 #else
   bool profiling_{false};
   std::string supported_extensions_{""};
-  uint cache_line_size_{1};
+  size_t cache_line_size_{1};
 #endif
   // for cache
  private:
