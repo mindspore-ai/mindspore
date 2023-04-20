@@ -134,10 +134,12 @@ bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   auto *input0 = static_cast<T *>(inputs[0]->addr);
   auto *output0 = static_cast<T *>(outputs[0]->addr);
+  auto *output1 = static_cast<T *>(outputs[1]->addr);
   output_num_elements_ = 1;
   int64_t median_pos = static_cast<int64_t>((input_num_elements_ - 1) / kHalf);
   std::nth_element(input0, input0 + median_pos, input0 + static_cast<int64_t>(input_num_elements_));
   *output0 = *(input0 + median_pos);
+  *output1 = 0;
   return true;
 }
 
