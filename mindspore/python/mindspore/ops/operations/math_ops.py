@@ -1925,7 +1925,7 @@ class InplaceUpdateV2(Primitive):
         - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
           float32, float16 and int32.
         - **indices** (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+          to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
         - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
           the first dimension, which must be the same as the size of `indices`.
 
@@ -6766,13 +6766,13 @@ class IsClose(Primitive):
     Refer to :func:`mindspore.ops.isclose` for more details.
 
     Args:
-        rtol(float): Relative tolerance. Default: 1e-05.
-        atol(float): Absolute tolerance. Default: 1e-08.
-        equal_nan(bool): If True, then two NaNs will be considered equal. Default: True.
+        rtol(float, optional): Relative tolerance. Default: 1e-05.
+        atol(float, optional): Absolute tolerance. Default: 1e-08.
+        equal_nan(bool, optional): If True, then two NaNs will be considered equal. Default: True.
 
     Inputs:
-        -**input**(Tensor) – First tensor to compare, with data type belongs to float32, float16, int32.
-        -**other**(Tensor) – Second tensor to compare, with data type belongs to float32, float16, int32.
+        - **input**(Tensor) - First tensor to compare, with data type belongs to float32, float16, int32.
+        - **other**(Tensor) - Second tensor to compare, with data type belongs to float32, float16, int32.
 
     Outputs:
         Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
@@ -7577,7 +7577,7 @@ class Bernoulli(Primitive):
           the value of `p` must be in the range `[0, 1]`. Default: 0.5.
 
     Outputs:
-        output (Tensor), with the same shape and type as `x` .
+        - **y** (Tensor) - with the same shape and type as `x` .
 
     Supported Platforms:
         ``GPU`` ``CPU``

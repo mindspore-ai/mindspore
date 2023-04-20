@@ -5,15 +5,15 @@ mindspore.ops.cholesky_solve
 
     根据Cholesky分解因子 `input2` 计算一组具有正定矩阵的线性方程组的解。
 
-     如果 `upper` 为 ``True``， `input2` 是上三角矩阵，输出的结果：
+    如果 `upper` 为 ``True``， `input2` 是上三角矩阵，输出的结果：
 
-     .. math::
-         output = (input2^{T} * input2)^{{-1}}input
+    .. math::
+        output = (input2^{T} * input2)^{{-1}}input
 
-     如果 `upper` 为 ``False``， `input2` 是下三角矩阵，输出的结果：
+    如果 `upper` 为 ``False``， `input2` 是下三角矩阵，输出的结果：
 
-     .. math::
-         output = (input2 * input2^{T})^{{-1}}input
+    .. math::
+        output = (input2 * input2^{T})^{{-1}}input
 
     参数：
         - **input** (Tensor) - shape为 :math:`(*, N, M)` 的Tensor，表示2D或3D矩阵，数据类型是float32或float64。
