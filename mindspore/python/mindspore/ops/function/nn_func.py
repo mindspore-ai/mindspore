@@ -2028,10 +2028,12 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
             :math:`(N, C, [optional D], [optional H], W)` , with data type of float.
         size (Union[int, tuple[int], list[int]], optional): The target size.
-            If size is a tuple or list, size must have the same dimensions as input.
+            If size is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: None.
         scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
-            If size is a tuple or list, size must have the same dimensions as input.
+            If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: None.
         mode (str): The sampling algorithm.
             One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
@@ -2065,17 +2067,17 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    | linear        | 3         | √             | ×            | GPU,CPU        |
+    | linear        | 3         | √             | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
     | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    | bicubic       | 4         | √             | ×            | GPU,CPU        |
+    | bicubic       | 4         | √             | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
     | area          | 3         | \-            | √            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    |               | 4         | \-            | √            | GPU            |
+    |               | 4         | \-            | √            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    |               | 5         | \-            | √            | GPU,CPU        |
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
     | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
     +---------------+-----------+---------------+--------------+----------------+
