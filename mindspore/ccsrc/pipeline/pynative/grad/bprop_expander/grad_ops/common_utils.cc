@@ -345,16 +345,21 @@ NodePtrList BinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr &x,
   auto reduce_dx = dx;
   auto reduce_dy = dy;
 
-  if (!IsDynamic(shape_x) && !IsDynamic(shape_y)) {
-    std::vector<int64_t> broadcast_shape_of_x;
-    std::vector<int64_t> broadcast_shape_of_y;
+  std::vector<int64_t> broadcast_shape_of_x;
+  std::vector<int64_t> broadcast_shape_of_y;
+  if (!IsDynamicRank(shape_x) && !IsDynamicRank(shape_y)) {
     for (size_t i = 0; i < shape_x.size() - shift; i++) {
       broadcast_shape_of_x.push_back(shape_x[i]);
     }
     for (size_t i = 0; i < shape_y.size() - shift; i++) {
       broadcast_shape_of_y.push_back(shape_y[i]);
     }
+  } else {
+    broadcast_shape_of_x = shape_x;
+    broadcast_shape_of_y = shape_y;
+  }
 
+  if (!IsDynamic(broadcast_shape_of_x) && !IsDynamic(broadcast_shape_of_y)) {
     std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
     if (!bc_axis[0].empty()) {
       reduce_dx = ReduceSumWithCast(ib, reduce_dx, bc_axis[0], shape_x);
