@@ -42,8 +42,8 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 class GradExecutor;
-using OpInfoWithTensorId = mindspore::HashMap<std::string, std::vector<std::string>>;
-using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
+using TensorIdWithOpInfo = mindspore::HashMap<std::string, std::pair<std::string, size_t>>;
+using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::TensorPtr>>>;
 using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<AnfNodePtr>>;
 
 struct GraphInfo {
@@ -117,11 +117,12 @@ class TopCellInfo {
   void set_auto_grad_cell_ptr(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr) {
     auto_grad_cell_ptr_ = auto_grad_cell_ptr;
   }
-  inline const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
-  void set_opinfo_with_tensor_id(const std::string &op_info, const std::vector<tensor::TensorPtr> &op_out_tensors);
-  inline const TensorIdWithTensorObject &tensor_id_with_tensor_object() const { return tensor_id_with_tensor_object_; }
-  inline void set_tensor_id_with_tensor_object(const std::string &id, const tensor::TensorPtr &tensor) {
-    (void)tensor_id_with_tensor_object_[id].emplace_back(tensor);
+  inline const TensorIdWithOpInfo &id_with_op_info() const { return id_with_op_info_; }
+  void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index);
+  inline const OpInfoWithTensorObject &op_info_with_tensor_object() const { return op_info_with_tensor_object_; }
+  inline void set_opinfo_with_tensor_object(const std::string &op_info, size_t out_index,
+                                            const tensor::TensorPtr &tensor) {
+    (void)op_info_with_tensor_object_[op_info].emplace_back(std::make_pair(out_index, tensor));
   }
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
@@ -184,8 +185,8 @@ class TopCellInfo {
   // Record backward hook ops for each cell object.
   // Each cell object has two backward hook ops.
   CellIdWithBackwardHookOp cell_backward_hook_op_;
-  OpInfoWithTensorId op_info_with_tensor_id_;
-  TensorIdWithTensorObject tensor_id_with_tensor_object_;
+  TensorIdWithOpInfo id_with_op_info_;
+  OpInfoWithTensorObject op_info_with_tensor_object_;
   mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
   bool use_dynamic_shape_process_{false};
 };

@@ -74,35 +74,8 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const 
 
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  std::string input_args_info;
-  // Record input args info (weight or data)
-  // self.p = Parameter();
-  // def construct(x, y)
-  //   if y:
-  //        x = x + x
-  //   else:
-  //        x = x + self.p
-  //   return x
-  for (auto &t : op_run_info->base_op_run_info.input_tensor) {
-    MS_EXCEPTION_IF_NULL(t);
-    if (t->is_parameter() && t->param_info() != nullptr && t->param_info()->requires_grad()) {
-      input_args_info += "w";
-    } else {
-      input_args_info += "d";
-    }
-  }
-  // Record op name and index
   op_run_info->op_info.clear();
-  op_run_info->op_info +=
-    op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_) + "-" + input_args_info;
-  const auto &out_abs = op_run_info->base_op_run_info.abstract;
-  MS_EXCEPTION_IF_NULL(out_abs);
-  auto shape = out_abs->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (!shape->isa<abstract::NoShape>() && !shape->IsDimZero()) {
-    op_run_info->op_info += "-" + shape->ToString();
-  }
-  op_run_info->op_index = op_index_;
+  op_run_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_);
 }
 
 void TopCellInfo::UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile) {
@@ -162,8 +135,8 @@ void TopCellInfo::Clear() {
   resource_ = nullptr;
   fg_ = nullptr;
   graph_info_map_.clear();
-  op_info_with_tensor_id_.clear();
-  tensor_id_with_tensor_object_.clear();
+  id_with_op_info_.clear();
+  op_info_with_tensor_object_.clear();
   cnode_hash_with_op_index_.clear();
 }
 
@@ -244,15 +217,18 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
   graph_info->node_map[id] = std::make_pair(node, index);
 }
 
-void TopCellInfo::set_opinfo_with_tensor_id(const std::string &op_info,
-                                            const std::vector<tensor::TensorPtr> &op_out_tensors) {
-  if (op_info_with_tensor_id_.find(op_info) != op_info_with_tensor_id_.end()) {
-    MS_LOG(EXCEPTION) << "Top cell: " << cell_id_ << " records op info with tensor id, but get op info " << op_info
-                      << " in op_info_with_tensor_id map";
-  }
-  // Record the relationship between the forward op and its output tensor id
-  for (const auto &tensor : op_out_tensors) {
-    (void)op_info_with_tensor_id_[op_info].emplace_back(tensor->id());
+void TopCellInfo::SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    // Only one output, index will be 0
+    const auto t = v->cast<tensor::TensorPtr>();
+    id_with_op_info_[t->id()] = std::make_pair(op_info, out_index);
+  } else if (v->isa<ValueSequence>()) {
+    const auto &v_seq = v->cast<ValueSequencePtr>();
+    // Multi output, index will increase from 1
+    for (const auto &item : v_seq->value()) {
+      SetIdWithOpInfo(item, op_info, ++out_index);
+    }
   }
 }
 }  // namespace pynative

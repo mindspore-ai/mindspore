@@ -454,6 +454,21 @@ std::string GetWeightsObjIdsByWeights(const py::object &weights) {
 
   return weights_obj_id;
 }
+
+tensor::TensorPtr GetTensorFromOutValue(size_t index, const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  // Only one outpout
+  if (index == kIndex0) {
+    return v->cast<tensor::TensorPtr>();
+  }
+  // Multi output
+  const auto &v_seq = v->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(v_seq);
+  if (v_seq->size() < index) {
+    MS_LOG(EXCEPTION) << "Get wrong index " << index << " with multi output size " << v_seq->size();
+  }
+  return v_seq->value()[index - kIndex1]->cast<tensor::TensorPtr>();
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -714,7 +729,7 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   auto cloned_value = ShallowCopyTensorValue(v);
   ClearDeviceAddress(cloned_value);
-  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+  if (forward()->enable_async()) {
     AsyncUpdateOutputNodeOfTopCell(output_node, cloned_value);
   } else {
     auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(output_node, cloned_value);
@@ -1774,7 +1789,7 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
                                                           top_cell()->use_dynamic_shape_process());
   grad_param->out_used_in_bporp_graph = out_is_used;
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+  if (forward()->enable_async()) {
     AsyncGradPynativeOp(auto_grad_cell_ptr, grad_param);
   } else {
     GradPynativeOp(auto_grad_cell_ptr, grad_param);
@@ -1805,151 +1820,123 @@ void GradExecutor::AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node,
 }
 
 void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {
-  MS_LOG(DEBUG) << "Current op info: " << op_info;
-  std::vector<tensor::TensorPtr> op_output_tensors;
-  // Get output tensors
-  TensorValueToTensor(v, &op_output_tensors);
-  // Save all tensors info of current op
-  top_cell()->set_opinfo_with_tensor_id(op_info, op_output_tensors);
-
-  // First run top cell
   const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
   if (pre_top_cell == nullptr) {
+    // First run top cell, save op output info for replace
+    top_cell()->SetIdWithOpInfo(v, op_info, kIndex0);
     MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly";
     return;
   }
-  // Non-first run
-  if (pre_top_cell->op_info_with_tensor_id().find(op_info) == pre_top_cell->op_info_with_tensor_id().end()) {
-    MS_LOG(DEBUG) << "Can not find op info " << op_info << " in op info with tensor id map. Top cell "
-                  << top_cell_->already_run_cell_id();
-    return;
-  }
 
-  // Update new output tensor info in bprop graph
+  // In dynamic process, no need replace
   if (top_cell()->use_dynamic_shape_process()) {
     return;
   }
-  const auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_info);
-  if (pre_op_tensor_id.size() != op_output_tensors.size()) {
-    MS_LOG(EXCEPTION) << "The size of op pre output tensor size: " << pre_op_tensor_id.size()
-                      << " is not equal to current " << op_output_tensors.size();
+
+  // Not first run top cell
+  const auto &op_info_with_tensor_object = pre_top_cell->op_info_with_tensor_object();
+  const auto it = op_info_with_tensor_object.find(op_info);
+  if (it == op_info_with_tensor_object.end()) {
+    return;
   }
-  // For value node tensor in the bprop graph, take its id for tensor, and save in tensor_id_with_tensor_object;
-  // And then take the output of the op and find out if the output used by tensor_id_with_tensor_object,
-  // if there is a tensor need to replace it.
-  const auto &pre_tensor_id_with_tensor_object = pre_top_cell->tensor_id_with_tensor_object();
-  for (size_t i = 0; i < pre_op_tensor_id.size(); ++i) {
-    auto pre_id = pre_op_tensor_id[i];
-    if (pre_tensor_id_with_tensor_object.find(pre_id) == pre_tensor_id_with_tensor_object.end()) {
-      continue;
-    }
-    // Based on the output size of the op is fixed, so can use index.
-    const auto &new_tensor = op_output_tensors[i];
-    const auto &pre_tensor_object = pre_tensor_id_with_tensor_object.at(pre_id);
-    UpdatePreTensorInfo(new_tensor, pre_tensor_object);
+  for (const auto &elem : it->second) {
+    const auto &new_tensor = GetTensorFromOutValue(elem.first, v);
+    MS_EXCEPTION_IF_NULL(new_tensor);
+    UpdatePreTensorInfo(new_tensor, elem.second);
   }
 }
 
-void GradExecutor::UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor,
-                                       const std::vector<tensor::TensorPtr> &pre_tensors) const {
+void GradExecutor::UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::TensorPtr &old_tensor) const {
   MS_EXCEPTION_IF_NULL(new_tensor);
-  if (pre_tensors.empty() || new_tensor->device_address() == nullptr) {
-    MS_LOG(DEBUG) << "The number of pre tensors is zero or the device address of new tensor is nullptr.";
+  MS_EXCEPTION_IF_NULL(old_tensor);
+  MS_LOG(DEBUG) << "Replace Old tensor id " << old_tensor->id() << " device_address: " << old_tensor->device_address()
+                << " shape and type " << old_tensor->GetShapeAndDataTypeInfo() << " with New tensor id "
+                << new_tensor->id() << " device_address " << new_tensor->device_address() << " shape and dtype "
+                << new_tensor->GetShapeAndDataTypeInfo();
+  (void)old_tensor->set_shape(new_tensor->shape());
+  (void)old_tensor->set_data_type(new_tensor->data_type());
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (forward()->device_target() != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
+    old_tensor->set_device_address(new_tensor->device_address());
     return;
   }
-  const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  for (auto &pre_tensor : pre_tensors) {
-    MS_EXCEPTION_IF_NULL(pre_tensor);
-    MS_LOG(DEBUG) << "Replace Old tensor id " << pre_tensor->id() << " device_address: " << pre_tensor->device_address()
-                  << " shape and type " << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor id "
-                  << new_tensor->id() << " device_address " << new_tensor->device_address() << " shape and dtype "
-                  << new_tensor->GetShapeAndDataTypeInfo();
-    (void)pre_tensor->set_shape(new_tensor->shape());
-    (void)pre_tensor->set_data_type(new_tensor->data_type());
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (device_target != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
-      pre_tensor->set_device_address(new_tensor->device_address());
-      continue;
+  for (const auto &item : PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->mindrt_backend()) {
+    MS_EXCEPTION_IF_NULL(item.second);
+    item.second->WaitTaskFinish();
+  }
+  // Replace data in device address when run in CPU device.
+  if (old_tensor->device_address() != nullptr) {
+    // If tensor is dynamic shape, Just replace device address.
+    if (PyNativeAlgo::Common::ValueHasDynamicShape(old_tensor)) {
+      old_tensor->set_device_address(new_tensor->device_address());
+      return;
     }
-    for (const auto &item : PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->mindrt_backend()) {
-      MS_EXCEPTION_IF_NULL(item.second);
-      item.second->WaitTaskFinish();
+    auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(old_tensor->device_address());
+    MS_EXCEPTION_IF_NULL(old_device_address);
+    auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
+    MS_EXCEPTION_IF_NULL(new_device_address);
+
+    // CPU host tensor data_c is different from device address if the address is from mem_pool.
+    if (new_device_address->from_mem_pool()) {
+      old_tensor->set_device_address(new_device_address);
+      return;
     }
-    // Replace data in device address when run in CPU device.
-    if (pre_tensor->device_address() != nullptr) {
-      // If tensor is dynamic shape, Just replace device address.
-      if (PyNativeAlgo::Common::ValueHasDynamicShape(pre_tensor)) {
-        pre_tensor->set_device_address(new_tensor->device_address());
-        continue;
-      }
-      auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(pre_tensor->device_address());
-      MS_EXCEPTION_IF_NULL(old_device_address);
-      auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
-      MS_EXCEPTION_IF_NULL(new_device_address);
 
-      // CPU host tensor data_c is different from device address if the address is from mem_pool.
-      if (new_device_address->from_mem_pool()) {
-        pre_tensor->set_device_address(new_device_address);
-        continue;
-      }
-
-      auto old_ptr = old_device_address->GetMutablePtr();
-      MS_EXCEPTION_IF_NULL(old_ptr);
-      auto new_ptr = new_device_address->GetPtr();
-      MS_EXCEPTION_IF_NULL(new_ptr);
-      MS_EXCEPTION_IF_CHECK_FAIL(old_device_address->GetSize() == new_device_address->GetSize(), "Size not equal");
-      if (old_device_address->GetSize() < SECUREC_MEM_MAX_LEN) {
-        auto ret_code = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
-        MS_EXCEPTION_IF_CHECK_FAIL(ret_code == EOK, "Memory copy failed, ret code: " + std::to_string(ret_code));
-      } else {
-        auto ret_code = std::memcpy(old_ptr, new_ptr, old_device_address->GetSize());
-        MS_EXCEPTION_IF_CHECK_FAIL(ret_code == old_ptr, "Memory copy failed");
-      }
+    auto old_ptr = old_device_address->GetMutablePtr();
+    MS_EXCEPTION_IF_NULL(old_ptr);
+    auto new_ptr = new_device_address->GetPtr();
+    MS_EXCEPTION_IF_NULL(new_ptr);
+    MS_EXCEPTION_IF_CHECK_FAIL(old_device_address->GetSize() == new_device_address->GetSize(), "Size not equal");
+    if (old_device_address->GetSize() < SECUREC_MEM_MAX_LEN) {
+      auto ret_code = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
+      MS_EXCEPTION_IF_CHECK_FAIL(ret_code == EOK, "Memory copy failed, ret code: " + std::to_string(ret_code));
     } else {
-      pre_tensor->set_device_address(device_address);
-      pre_tensor->data_sync();
-      pre_tensor->set_device_address(nullptr);
-      pre_tensor->set_sync_status(kNeedSyncHostToDevice);
+      auto ret_code = std::memcpy(old_ptr, new_ptr, old_device_address->GetSize());
+      MS_EXCEPTION_IF_CHECK_FAIL(ret_code == old_ptr, "Memory copy failed");
+    }
+  } else {
+    old_tensor->set_device_address(device_address);
+    old_tensor->data_sync();
+    old_tensor->set_device_address(nullptr);
+    old_tensor->set_sync_status(kNeedSyncHostToDevice);
+  }
+}
+
+void GradExecutor::SaveForwardTensorForReplace(const ValuePtr &value) const {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    const auto it = top_cell()->id_with_op_info().find(tensor->id());
+    if (it != top_cell()->id_with_op_info().end() && tensor->device_address() != nullptr) {
+      // For release memory
+      tensor->set_is_forward_output(true);
+      if (top_cell()->use_dynamic_shape_process()) {
+        return;
+      }
+      top_cell()->set_opinfo_with_tensor_object(it->second.first, it->second.second, tensor);
+      MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
+                    << " device address: " << tensor->device_address() << " shape and dtype "
+                    << tensor->GetShapeAndDataTypeInfo();
+    }
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &v : value_seq->value()) {
+      SaveForwardTensorForReplace(v);
     }
   }
 }
 
 void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const {
-  // Get all tensors id of forward op
-  mindspore::HashSet<std::string> forward_op_tensor_id;
-  const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
-  for (const auto &record : op_info_with_tensor_id) {
-    (void)std::for_each(
-      record.second.begin(), record.second.end(),
-      [&forward_op_tensor_id](const std::string &tensor_id) { (void)forward_op_tensor_id.emplace(tensor_id); });
-  }
   // Get all tensors obj in value node of bprop graph
   MS_EXCEPTION_IF_NULL(resource);
   const auto &bprop_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(bprop_graph);
   const auto &value_node_list = bprop_graph->value_nodes();
-  std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
   for (const auto &elem : value_node_list) {
     auto value_node = elem.first->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    TensorValueToTensor(value_node->value(), &tensors_in_bprop_graph);
-  }
-
-  // Save tensor in value node of bprop graph
-  for (const auto &tensor : tensors_in_bprop_graph) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (forward_op_tensor_id.find(tensor->id()) == forward_op_tensor_id.end() || tensor->device_address() == nullptr) {
-      continue;
-    }
-    tensor->set_is_forward_output(true);
-    if (top_cell()->use_dynamic_shape_process()) {
-      continue;
-    }
-    top_cell()->set_tensor_id_with_tensor_object(tensor->id(), tensor);
-    MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
-                  << " device address: " << tensor->device_address() << " shape and dtype "
-                  << tensor->GetShapeAndDataTypeInfo();
+    SaveForwardTensorForReplace(value_node->value());
   }
 }
 
