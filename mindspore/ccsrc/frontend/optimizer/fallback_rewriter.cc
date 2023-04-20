@@ -939,80 +939,6 @@ class AfterOptARewriter : public BaseRewriter {
     return none_execute_node;
   }
 
-  AnfNodePtr ConvertNoneAndDictInSequence(const AnfNodePtr &input, const FuncGraphPtr &func) {
-    MS_EXCEPTION_IF_NULL(func);
-    auto sequence_value = GetValuePtr<ValueSequence>(input);
-    MS_EXCEPTION_IF_NULL(input->abstract());
-    auto abs_seq = input->abstract()->cast<AbstractSequencePtr>();
-    const auto &elements = abs_seq->elements();
-    std::vector<AnfNodePtr> new_inputs;
-    bool changed = false;
-    if (input->abstract()->isa<abstract::AbstractTuple>()) {
-      new_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
-    } else if (input->abstract()->isa<abstract::AbstractList>()) {
-      new_inputs.push_back(NewValueNode(prim::kPrimMakeList));
-    }
-    for (size_t pos = 0; pos < sequence_value->value().size(); ++pos) {
-      ValuePtr element_value = sequence_value->value()[pos];
-      if (element_value->isa<None>()) {
-        changed = true;
-        auto inner_none_py_execute = NoneConvertPyExecute(func);
-        new_inputs.push_back(inner_none_py_execute);
-      } else if (element_value->isa<ValueDictionary>()) {
-        changed = true;
-        auto value_dict_node = NewValueNode(element_value);
-        value_dict_node->set_debug_info(input->debug_info());
-        auto dict_py_execute = RebuildValueDict(value_dict_node, element_value->cast<ValueDictionaryPtr>());
-        new_inputs.push_back(dict_py_execute);
-      } else if (element_value->isa<ValueSequence>()) {
-        auto new_ele_node = NewValueNode(element_value);
-        MS_EXCEPTION_IF_NULL(elements[pos]);
-        new_ele_node->set_abstract(elements[pos]);
-        auto seq_node = ConvertNoneAndDictInSequence(new_ele_node, func);
-        if (seq_node != nullptr) {
-          new_inputs.push_back(seq_node);
-        } else {
-          new_inputs.push_back(new_ele_node);
-        }
-      } else {
-        new_inputs.push_back(NewValueNode(element_value));
-      }
-    }
-    if (changed) {
-      auto new_seq = func->NewCNode(new_inputs);
-      (void)manager_->Replace(input, new_seq);
-      return new_seq;
-    }
-    return nullptr;
-  }
-
-  void CheckCNodeInputsHasNoneOrDict(const CNodePtr &cnode) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
-      return;
-    }
-    if (AnfUtils::IsRealKernel(cnode)) {
-      return;
-    }
-    const auto &inputs = cnode->inputs();
-    const auto &cur_func = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(cur_func);
-    for (auto &input : inputs) {
-      if (IsValueNode<ValueSequence>(input)) {
-        auto seq_node = ConvertNoneAndDictInSequence(input, cur_func);
-        if (seq_node != nullptr) {
-          (void)manager_->Replace(input, seq_node);
-          set_need_renormalized(true);
-        }
-      } else if (IsValueNode<None>(input)) {
-        auto none_py_execute = NoneConvertPyExecute(cur_func);
-        (void)manager_->Replace(input, none_py_execute);
-        set_need_renormalized(true);
-      }
-    }
-  }
-
   // Convert ValueNode<ClassType> to PyExecute("type", ("None"), ("None")).
   AnfNodePtr ClassTypeConvertPyExecute(const FuncGraphPtr &func_graph, const ClassTypePtr &clt) {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -1034,6 +960,84 @@ class AfterOptARewriter : public BaseRewriter {
     MS_LOG(DEBUG) << "type_execute_node:" << type_execute_node->DebugString();
 
     return type_execute_node;
+  }
+
+  AnfNodePtr GetPyExecuteFromValueSequence(const FuncGraphPtr &fg, const ValueNodePtr &value_node,
+                                           const ValueSequencePtr &value_sequence, const PrimitivePtr &prim,
+                                           bool py_execute_input) {
+    std::vector<AnfNodePtr> new_inputs;
+    new_inputs.reserve(value_sequence->size());
+    (void)new_inputs.emplace_back(NewValueNode(prim));
+    bool changed = false;
+    for (const auto &v : value_sequence->value()) {
+      auto v_node = NewValueNode(v);
+      v_node->set_debug_info(value_node->debug_info());
+      auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
+      (void)new_inputs.emplace_back(new_node);
+      if (new_node != v_node) {
+        changed = true;
+      }
+    }
+    if (changed) {
+      return fg->NewCNode(new_inputs);
+    }
+    return value_node;
+  }
+
+  AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
+                                   bool py_execute_input) {
+    MS_EXCEPTION_IF_NULL(fg);
+    MS_EXCEPTION_IF_NULL(value_node);
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<None>()) {
+      return NoneConvertPyExecute(fg);
+    }
+    if (value->isa<parse::InterpretedObject>()) {
+      return ConvertInterpretedObjectToPyExecute(fg, value, value_node);
+    }
+    if (value->isa<ValueTuple>()) {
+      return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeTuple,
+                                           py_execute_input);
+    }
+    if (value->isa<ValueList>()) {
+      if (py_execute_input) {
+        return ValueListConvertPyExecute(fg, value_node, value);
+      } else {
+        return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeList,
+                                             py_execute_input);
+      }
+    }
+    if (value->isa<ValueDictionary>()) {
+      return RebuildValueDict(fg, value_node, value->cast<ValueDictionaryPtr>());
+    }
+    return value_node;
+  }
+
+  void ConvertValueInputToPyExecute(const CNodePtr &cnode) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return;
+    }
+    if (AnfUtils::IsRealKernel(cnode)) {
+      return;
+    }
+    const auto &inputs = cnode->inputs();
+    auto cur_func = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_func);
+
+    for (const auto &input : inputs) {
+      auto value_node = dyn_cast<ValueNode>(input);
+      if (value_node == nullptr) {
+        continue;
+      }
+      auto new_input = GetPyExecuteFromValue(cur_func, value_node, value_node->value(), false);
+      if (new_input == input) {
+        continue;
+      }
+      (void)manager_->Replace(input, new_input);
+      set_need_renormalized(true);
+    }
   }
 
   void CheckCNodeInputsHasClassType(const CNodePtr &cnode) {
@@ -1086,8 +1090,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
-    // Process None in CNode with JIT Fallback: convert ValueNode<None> to PyExecute("None", (), ()).
-    CheckCNodeInputsHasNoneOrDict(cnode);
+    ConvertValueInputToPyExecute(cnode);
     CheckCNodeInputsHasClassType(cnode);
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
@@ -1098,7 +1101,8 @@ class AfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  AnfNodePtr ValueListConvertPyExecute(const ValuePtr &value, const FuncGraphPtr &func_graph) {
+  AnfNodePtr ValueListConvertPyExecute(const FuncGraphPtr &func_graph, const ValueNodePtr &value_node,
+                                       const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
     MS_EXCEPTION_IF_NULL(func_graph);
     auto value_list = value->cast<ValueListPtr>();
@@ -1123,8 +1127,10 @@ class AfterOptARewriter : public BaseRewriter {
 
     // Pack the local parameters values, not support list, tuple, or dict.
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-    for (auto element : values) {
-      auto converted_element = ProcessValueSequence(element);
+    for (const auto &element : values) {
+      auto element_vnode = NewValueNode(element);
+      element_vnode->set_debug_info(value_node->debug_info());
+      auto converted_element = GetPyExecuteFromValue(func_graph, element_vnode, element, true);
       (void)key_value_list.emplace_back(converted_element);
     }
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
@@ -1136,34 +1142,13 @@ class AfterOptARewriter : public BaseRewriter {
     return list_value_node;
   }
 
-  AnfNodePtr ProcessValueSequence(const ValuePtr &value) {
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>()) {
-      auto value_seq = value->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(value_seq);
-      auto values = value_seq->value();
-      std::vector<AnfNodePtr> value_seq_inputs;
-      (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-      for (auto inner_value : values) {
-        auto inner_value_seq = ProcessValueSequence(inner_value);
-        (void)value_seq_inputs.emplace_back(inner_value_seq);
-      }
-      auto iter_value = root_graph_->NewCNode(value_seq_inputs);
-      return iter_value;
-    } else if (value->isa<ValueList>()) {
-      return ValueListConvertPyExecute(value, root_graph_);
-    }
-    if (value->isa<None>()) {
-      return NoneConvertPyExecute(root_graph_);
-    }
-    return NewValueNode(value);
-  }
-
-  AnfNodePtr PackDictValue(const ValueDictionaryPtr &dict) {
+  AnfNodePtr PackDictValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
     const auto &keys_values = dict->value();
     std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
     for (const auto &key_value : keys_values) {
-      auto iter_value = ProcessValueSequence(key_value.second);
+      auto new_vnode = NewValueNode(key_value.second);
+      new_vnode->set_debug_info(value_node->debug_info());
+      auto iter_value = GetPyExecuteFromValue(fg, new_vnode, key_value.second, true);
       (void)value_list.emplace_back(iter_value);
     }
     auto value_tuple_node = root_graph_->NewCNode(value_list);
@@ -1171,7 +1156,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
-  AnfNodePtr RebuildValueDict(const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
+  AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
     const auto &keys_values = dict->value();
 
     // Local parameters values.
@@ -1185,13 +1170,13 @@ class AfterOptARewriter : public BaseRewriter {
     auto key_tuple_node = NewValueNode(key_tuple);
 
     // Pack the value tuple.
-    auto value_tuple_node = PackDictValue(dict);
+    auto value_tuple_node = PackDictValue(fg, value_node, dict);
 
     // Generate Make Dict PyExecute Node value
-    auto make_key_tuple_node = ConstructInternalTupleKeysNode(root_graph_, key_tuple_node);
-    auto make_value_tuple_node = ConstructInternalTupleValueNode(root_graph_, value_tuple_node);
+    auto make_key_tuple_node = ConstructInternalTupleKeysNode(fg, key_tuple_node);
+    auto make_value_tuple_node = ConstructInternalTupleValueNode(fg, value_tuple_node);
 
-    auto make_dict_node = ConstructNewDictNode(root_graph_, make_key_tuple_node, make_value_tuple_node);
+    auto make_dict_node = ConstructNewDictNode(fg, make_key_tuple_node, make_value_tuple_node);
     make_dict_node->set_debug_info(value_node->debug_info());
     return make_dict_node;
   }
@@ -1205,7 +1190,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
       if (value->isa<ValueDictionary>()) {
-        return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
+        return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {
         return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
       }
