@@ -24,7 +24,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/tuning_splitter.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "tools/graph_kernel/converter/akg/akg_build.h"
+#include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
 
 namespace mindspore::graphkernel {
 SplitSchemerPtr GraphKernelSplitterWithTuning::GetSplitSchema(const std::string &processor) {
@@ -97,7 +97,8 @@ void SignTunedGraphs(const FuncGraphPtr &func_graph) {
 }
 
 bool GraphKernelSplitterWithTuning::Run(const FuncGraphPtr &func_graph) {
-  if (GraphKernelFlags::GetInstance().online_tuning == 0) {
+  if (Callback::Instance()->GetTargetFromContext() == kAscendDevice ||
+      GraphKernelFlags::GetInstance().online_tuning == 0) {
     tuning_flag_ = false;
     return GraphKernelSplitter::Run(func_graph);
   }

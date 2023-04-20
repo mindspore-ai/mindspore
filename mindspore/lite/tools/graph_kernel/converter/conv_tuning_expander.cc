@@ -24,7 +24,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "tools/graph_kernel/converter/akg/akg_build.h"
+#include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"
 #include "utils/hash_set.h"

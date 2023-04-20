@@ -21,7 +21,6 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/func_graph_utils.h"
 #include "tools/common/meta_graph_serializer.h"
-#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/common/string_util.h"
 #include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/optimizer_manager.h"
@@ -72,9 +71,6 @@ STATUS ConverterToMetaGraph::UnifyFuncGraphFormat(const std::shared_ptr<Converte
 }
 
 schema::MetaGraphT *ConverterToMetaGraph::Build(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-#ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  graphkernel::GraphKernelOptimize(func_graph, param);
-#endif
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "make func graph failed.";

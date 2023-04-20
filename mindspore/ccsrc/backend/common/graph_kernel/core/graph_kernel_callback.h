@@ -123,8 +123,10 @@ class BACKEND_EXPORT Callback {
 
   /**
    * @brief Get the backend target from context.
+   *
+   * @param detail if false(default), only "Ascend/GPU/CPU" is returned. otherwise target like "Ascend910" is returned.
    */
-  virtual std::string GetTargetFromContext() = 0;
+  std::string GetTargetFromContext(bool detail = false) { return GetTargetFromContextImpl(detail); }
 
   /**
    * @brief Set KernelInfo for a GraphKernel node, the info is extract from its inputs/outputs.
@@ -156,6 +158,9 @@ class BACKEND_EXPORT Callback {
   virtual void ResetKernelInfo(const AnfNodePtr &node) = 0;
 
  private:
+  // to avoid the default argument in virtual function.
+  virtual std::string GetTargetFromContextImpl(bool detail) = 0;
+
   friend class CallbackImplRegister;
   static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
 #ifndef _MSC_VER

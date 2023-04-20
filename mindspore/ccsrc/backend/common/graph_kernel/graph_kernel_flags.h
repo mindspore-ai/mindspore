@@ -45,7 +45,7 @@ class BACKEND_EXPORT GraphKernelFlags {
   // Dump all flags to json-format string
   std::string DumpAllFlags() const;
 
-#ifdef ENABLE_AKG
+#if defined(ENABLE_AKG) || defined(MSLITE_ENABLE_GRAPH_KERNEL)
   // Check whether graph_kernel is enabled
   bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
 #else
