@@ -629,9 +629,10 @@ Tensor::Tensor(const Tensor &tensor)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
-      user_data_(tensor.user_data_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {}
+      tensor_name_(tensor.tensor_name_) {
+  user_data_ = tensor.user_data_;
+}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -651,9 +652,10 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
-      user_data_(tensor.user_data_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {}
+      tensor_name_(tensor.tensor_name_) {
+  user_data_ = tensor.user_data_;
+}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}

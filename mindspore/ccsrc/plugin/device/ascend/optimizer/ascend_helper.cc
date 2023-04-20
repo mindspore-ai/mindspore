@@ -556,6 +556,7 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   if (kernel_graph == nullptr) {
     new_cnode = std::make_shared<CNode>(*cnode);
+    new_cnode->CloneUserData(cnode);
   } else {
     new_cnode = kernel_graph->NewCNode(cnode);
   }
@@ -622,6 +623,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   CNodePtr new_node = nullptr;
   if (kernel_graph == nullptr) {
     new_node = std::make_shared<CNode>(*cnode);
+    new_node->CloneUserData(cnode);
   } else {
     new_node = kernel_graph->NewCNode(cnode);
   }
