@@ -74,6 +74,7 @@ constexpr auto kScalarDiv = "ScalarDiv";
 constexpr auto kScalarFloordiv = "ScalarFloordiv";
 constexpr auto kScalarMod = "ScalarMod";
 constexpr auto kScalarPow = "ScalarPow";
+constexpr auto kScalarLog = "ScalarLog";
 constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
@@ -526,7 +527,7 @@ GVAR_DEF(PrimitivePtr, kPrimScalarUadd, std::make_shared<Primitive>(kScalarUadd)
 GVAR_DEF(PrimitivePtr, kPrimScalarUsub, std::make_shared<Primitive>(kScalarUsub));
 GVAR_DEF(PrimitivePtr, kPrimScalarCast, std::make_shared<Primitive>(kScalarCast));
 GVAR_DEF(PrimitivePtr, kPrimScalarExp, std::make_shared<Primitive>("scalar_exp"));
-GVAR_DEF(PrimitivePtr, kPrimScalarLog, std::make_shared<Primitive>("scalar_log"));
+GVAR_DEF(PrimitivePtr, kPrimScalarLog, std::make_shared<Primitive>(kScalarLog));
 GVAR_DEF(PrimitivePtr, kPrimScalarSin, std::make_shared<Primitive>("scalar_sin"));
 GVAR_DEF(PrimitivePtr, kPrimScalarCos, std::make_shared<Primitive>("scalar_cos"));
 GVAR_DEF(PrimitivePtr, kPrimScalarTan, std::make_shared<Primitive>("scalar_tan"));

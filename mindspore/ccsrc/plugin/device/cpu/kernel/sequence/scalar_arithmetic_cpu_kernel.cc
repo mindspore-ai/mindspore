@@ -36,6 +36,7 @@ constexpr auto kScalarMul = "ScalarMul";
 constexpr auto kScalarDiv = "ScalarDiv";
 constexpr auto kScalarFloordiv = "ScalarFloordiv";
 constexpr auto kScalarMod = "ScalarMod";
+constexpr auto kScalarPow = "ScalarPow";
 constexpr auto kScalarGt = "scalar_gt";
 constexpr auto kScalarGe = "scalar_ge";
 constexpr auto kScalarLt = "scalar_lt";
@@ -95,6 +96,15 @@ void MulImpl(const T *in_x, const S *in_y, N *out) {
 #endif
   auto res = static_cast<double>(x) * static_cast<double>(y);
   *out = static_cast<N>(res);
+}
+
+template <typename T, typename S, typename N>
+void PowImpl(const T *in_x, const S *in_y, N *out) {
+  N x = static_cast<N>(*in_x);
+  N y = static_cast<N>(*in_y);
+
+  auto res = static_cast<N>(std::pow(x, y));
+  *out = res;
 }
 
 template <typename T, typename S, typename N>
@@ -233,17 +243,11 @@ bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
   using MathImplFunc = std::function<void(const T *x, const S *y, N *out)>;
-  std::unordered_map<std::string, MathImplFunc> func_map = {{kScalarAdd, AddImpl<T, S, N>},
-                                                            {kScalarSub, SubImpl<T, S, N>},
-                                                            {kScalarMul, MulImpl<T, S, N>},
-                                                            {kScalarDiv, DivImpl<T, S, N>},
-                                                            {kScalarMod, ModImpl<T, S, N>},
-                                                            {kScalarEq, EqImpl<T, S, N>},
-                                                            {kScalarGt, GtImpl<T, S, N>},
-                                                            {kScalarLt, LtImpl<T, S, N>},
-                                                            {kScalarGe, GeImpl<T, S, N>},
-                                                            {kScalarLe, LeImpl<T, S, N>},
-                                                            {kScalarFloordiv, FloorDivImpl<T, S, N>}};
+  std::unordered_map<std::string, MathImplFunc> func_map = {
+    {kScalarAdd, AddImpl<T, S, N>}, {kScalarSub, SubImpl<T, S, N>}, {kScalarMul, MulImpl<T, S, N>},
+    {kScalarDiv, DivImpl<T, S, N>}, {kScalarMod, ModImpl<T, S, N>}, {kScalarEq, EqImpl<T, S, N>},
+    {kScalarGt, GtImpl<T, S, N>},   {kScalarLt, LtImpl<T, S, N>},   {kScalarGe, GeImpl<T, S, N>},
+    {kScalarLe, LeImpl<T, S, N>},   {kScalarPow, PowImpl<T, S, N>}, {kScalarFloordiv, FloorDivImpl<T, S, N>}};
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_
@@ -372,6 +376,8 @@ std::vector<KernelAttr> ScalarArithmeticCpuKernelMod::GetOpSupport() {
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarAdd,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarAdd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarPow,
+                                 []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarPow); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarSub,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarSub); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarMul,

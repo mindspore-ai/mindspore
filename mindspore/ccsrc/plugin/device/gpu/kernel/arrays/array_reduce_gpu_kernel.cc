@@ -333,6 +333,8 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
 }
 
 void ArrayReduceGpuKernelMod::InferArrayReduceType() {
+  std::stringstream ss;
+  ss << "For '" << kernel_name_ << "', cudnnSetReduceTensorDescriptor failed.";
   auto iter = kReduceTypeMap.find(kernel_name_);
   if (iter == kReduceTypeMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "Only support these array reduce kernel types: "
@@ -345,7 +347,7 @@ void ArrayReduceGpuKernelMod::InferArrayReduceType() {
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, reduce_tensor_op_, comp_type, nan_prop_, reduce_indices_,
                                    CUDNN_32BIT_INDICES),
-    "cudnnSetReduceTensorDescriptor failed");
+    ss.str());
   return;
 }
 template <typename T, typename S>
@@ -364,12 +366,14 @@ void ArrayReduceGpuKernelMod::LaunchIntKernel(const std::vector<AddressPtr> &inp
 
   const int input_num = input_size_ / sizeof(T);
   const int output_num = output_size_ / sizeof(S);
+  std::stringstream ss;
+  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
 
   Cast(input_num, input_addr, casted_input, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, casted_input, &beta, outputC_descriptor_, output_before_cast),
-    "cudnnReduceTensor failed.");
+    ss.str());
   Cast(output_num, output_before_cast, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(casted_input);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_before_cast);
@@ -396,14 +400,16 @@ void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
   int input_count = input_size_ / sizeof(S);
   Real(input_addr, input_real, input_count, reinterpret_cast<cudaStream_t>(stream_ptr));
   Imag(input_addr, input_imag, input_count, reinterpret_cast<cudaStream_t>(stream_ptr));
+  std::stringstream ss;
+  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, input_real, &beta, outputC_descriptor_, output_real),
-    "cudnnReduceTensor failed.");
+    ss.str());
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, input_imag, &beta, outputC_descriptor_, output_imag),
-    "cudnnReduceTensor failed.");
+    ss.str());
   ElewiseComplexArith(output_count, BinaryOpType::kComplex, output_real, output_imag, output_addr,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_real);
@@ -452,18 +458,20 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     LaunchIntKernel<float, int16_t>(inputs, workspace, outputs, stream_ptr);
     return true;
   }
+  std::stringstream ss;
+  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
   if (data_type_ == CUDNN_DATA_DOUBLE) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                         inputA_descriptor_, input_addr, &beta, outputC_descriptor_, output_addr),
-      "cudnnReduceTensor failed.");
+      ss.str());
   } else {
     const float alphaf = static_cast<float>(alpha);
     const float betaf = static_cast<float>(beta);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alphaf,
                         inputA_descriptor_, input_addr, &betaf, outputC_descriptor_, output_addr),
-      "cudnnReduceTensor failed.");
+      ss.str());
   }
   return true;
 }

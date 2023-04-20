@@ -91,7 +91,7 @@ TEST_F(TestOps, ScalarExpTest) {
 }
 
 TEST_F(TestOps, ScalarLogTest) {
-  auto prim = std::make_shared<Primitive>("scalar_log");
+  auto prim = std::make_shared<Primitive>("ScalarLog");
   ASSERT_EQ(prim->name(), kPrimScalarLog->name());
 }
 
