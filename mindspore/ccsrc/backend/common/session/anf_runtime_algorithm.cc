@@ -1575,6 +1575,13 @@ void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
     for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
       auto internal_parameter = internal_parameter_weakptr.lock();
       MS_EXCEPTION_IF_NULL(internal_parameter);
+      if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
+        const auto &shapes = BaseShapeToShapeVector(cnode->Shape());
+        std::vector<TypeId> types =
+          std::vector(shapes.size(), common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first));
+        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
+        continue;
+      }
       common::AnfAlgo::SetOutputInferTypeAndShape(
         {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
         {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());

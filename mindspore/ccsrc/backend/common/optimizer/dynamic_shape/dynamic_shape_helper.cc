@@ -225,6 +225,7 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     } else {
       MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
     }
+    new_abs->set_value(depended_value);
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto abstract_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abstract_seq);
