@@ -29,6 +29,10 @@ namespace {
 ValuePtr SetInputStructuralFromAbstract(const AbstractBasePtr &abs) {
   if (abs->isa<abstract::AbstractSequence>()) {
     auto seq_abs = abs->cast_ptr<abstract::AbstractSequence>();
+    if (seq_abs->dynamic_len()) {
+      // Dynamic length sequence will not be flatten, use single -1 to represent.
+      return MakeValue<int64_t>(-1);
+    }
     std::vector<ValuePtr> structural;
     for (size_t index = 0; index < seq_abs->size(); ++index) {
       (void)structural.emplace_back(SetInputStructuralFromAbstract((*seq_abs)[index]));
