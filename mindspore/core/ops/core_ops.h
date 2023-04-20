@@ -504,6 +504,8 @@ constexpr auto kTupleGreaterEqual = "tuple_greater_equal";
 constexpr auto kListGreaterThan = "list_greater_than";
 constexpr auto kListGreaterEqual = "list_greater_equal";
 
+constexpr auto kCond = "Cond";
+
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
 // Here list all primitives used in backend or some special primitives used by core.
@@ -1560,6 +1562,8 @@ GVAR_DEF(PrimitivePtr, kPrimScalarToTensor, std::make_shared<Primitive>(kScalarT
 GVAR_DEF(PrimitivePtr, kPrimTensorToTuple, std::make_shared<Primitive>(kTensorToTuple));
 GVAR_DEF(PrimitivePtr, kPrimTensorToList, std::make_shared<Primitive>(kTensorToList));
 GVAR_DEF(PrimitivePtr, kPrimTensorToScalar, std::make_shared<Primitive>(kTensorToScalar));
+
+GVAR_DEF(PrimitivePtr, kPrimCond, std::make_shared<Primitive>(kCond));
 
 // Debug ops
 GVAR_DEF(PrimitivePtr, kPrimAssert, std::make_shared<Primitive>("Assert"));

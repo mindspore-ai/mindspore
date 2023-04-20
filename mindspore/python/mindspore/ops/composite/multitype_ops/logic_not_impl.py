@@ -90,7 +90,7 @@ def _logical_not_tuple(x):
     Returns:
        bool, Return logical not operation result of x.
    """
-    return F.bool_not(x.__bool__())
+    return x.__len__() == 0
 
 
 @logical_not.register("List")
@@ -104,4 +104,4 @@ def _logical_not_list(x):
     Returns:
        bool, Return logical not operation result of x.
    """
-    return F.bool_not(x.__bool__())
+    return x.__len__() == 0

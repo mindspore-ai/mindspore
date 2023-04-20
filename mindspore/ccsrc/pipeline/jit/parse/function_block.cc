@@ -505,17 +505,17 @@ void FunctionBlock::Mature() {
   matured_ = true;
 }
 
-// Force the condition node to bool using bool operation
-CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
+// Get the truth value testing for cond node.
+CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond) {
   MS_EXCEPTION_IF_NULL(cond);
-  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
+  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimCond), cond});
   return op_apply_node;
 }
 
 CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
   MS_EXCEPTION_IF_NULL(cond);
   TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({MakeResolveOperation("while_cond"), cond});
+  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimCond), cond});
   return op_apply_node;
 }
 

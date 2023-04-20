@@ -1611,7 +1611,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     b1->func_graph()->set_output(rest_node);
     b2->func_graph()->set_output(test_node);
 
-    AnfNodePtr cond_node = block->ForceToBoolNode(test_node);
+    AnfNodePtr cond_node = block->ForceToCondNode(test_node);
     UpdateInterpretForUserNode(cond_node, test_node);
     cond_node = HandleInterpret(block, cond_node, first);
 
@@ -1939,7 +1939,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
   condition_node = HandleInterpret(block, condition_node, test_node);
 
-  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
   bool_node = HandleInterpret(block, bool_node, test_node);
 
@@ -2419,7 +2419,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
 
-  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
   bool_node = HandleInterpret(block, bool_node, test_node);
 
@@ -3093,7 +3093,7 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
 
-  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
   bool_node = HandleInterpret(block, bool_node, test_node);
 

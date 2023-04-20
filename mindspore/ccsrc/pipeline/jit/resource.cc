@@ -127,7 +127,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__ms_iter__", prim::kPrimIdentity},              // P.identity,
        {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
        {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-       {"__bool__", std::string("tuple_bool")},           // C.tuple_bool
        {"count", prim::kPrimSequenceCount},               // P.sequence_count
        {"index", std::string("sequence_index")},          // C.sequence_index
      }},
@@ -139,7 +138,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"__ms_iter__", prim::kPrimIdentity},             // P.identity
        {"__ms_next__", std::string("list_next")},        // C.list_next
        {"append", std::string("list_append")},           // C.list_append
-       {"__bool__", std::string("list_bool")},           // C.list_bool
        {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
        {"insert", std::string("list_insert")},           // C.list_insert
        {"pop", std::string("list_pop")},                 // C.list_pop
@@ -160,7 +158,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"keys", prim::kPrimDictGetKeys},                 // P.dict_getkeys,
        {"values", prim::kPrimDictGetValues},             // P.dict_getvalues,
        {"items", prim::kPrimDictItems},                  // P.dict_items
-       {"__bool__", std::string("dict_bool")},           // C.dict_bool
        {"get", std::string("dict_get")},                 // C.dict_get
        {"has_key", std::string("dict_haskey")},          // C.dict_haskey
        {"clear", std::string("dict_clear")},             // C.dict_clear

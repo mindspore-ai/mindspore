@@ -38,7 +38,7 @@ from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
-from ...ops.operations._inner_ops import Format, issubclass_
+from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr, _primexpr
@@ -2776,6 +2776,20 @@ def bool_(x):
     return x.__bool__()
 
 
+def check_len_(x):
+    """Check length is not 0"""
+    return x.__len__() != 0
+
+
+def real_bool_(x):
+    """bool function to get truth value"""
+    if hasattr(x, "__bool__"):
+        return x.__bool__()
+    if hasattr(x, "__len__"):
+        return x.__len__() != 0
+    return True
+
+
 def enumerate_(x, start=0):
     """Enumerate list or tuple or tensor."""
     x_type = F.typeof(x)
@@ -3014,15 +3028,6 @@ def gt(x, y):
 def ge(x, y):
     """Compare the value of the input parameters :math:`x >= y` element-wise."""
     return F.ge(x, y)
-
-
-def while_cond(x):
-    """For while condition, if the condition is a tensor, the loop will not be unrolled"""
-    if issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
-        is_cond = check_is_tensor_bool_cond(F.shape(x))
-        if is_cond:
-            return F.cast(x, mstype.bool_)
-    return x
 
 
 def tensor_scatter_add(x, indices, updates):
@@ -3438,21 +3443,6 @@ def sequence_index(sequence, target, start=None, end=None):
     if end is None:
         end = len(sequence)
     return SequenceIndex()(sequence, target, start, end)
-
-
-def list_bool(x):
-    """Implementation of `tuple_bool`."""
-    return len(x) != 0
-
-
-def tuple_bool(x):
-    """Implementation of `tuple_bool`."""
-    return len(x) != 0
-
-
-def dict_bool(x):
-    """Implementation of `dict_bool`."""
-    return len(x) != 0
 
 
 def none_bool(x):
