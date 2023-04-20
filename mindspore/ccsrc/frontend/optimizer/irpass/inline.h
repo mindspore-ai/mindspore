@@ -85,10 +85,10 @@ class ReplaceApplicator : public AnfVisitor {
     // Defer inlining for:
     // 1. The func_graph which is set recomputed.
     // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
-    static const auto graph_reuse_env = common::GetEnv("MS_DEV_GRAPH_REUSE");
-    static bool graph_reuse_enable = graph_reuse_env == "1" || graph_reuse_env == "2";
+    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    static bool cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
     return fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
-           (graph_reuse_enable &&
+           (cell_reuse_enable &&
             (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)));
   }
 };
@@ -192,10 +192,10 @@ class InlinerBase : public AnfVisitor {
     // Defer inlining for:
     // 1. The func_graph which is set recomputed.
     // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
-    static const auto graph_reuse_env = common::GetEnv("MS_DEV_GRAPH_REUSE");
-    static bool graph_reuse_enable = graph_reuse_env == "1" || graph_reuse_env == "2";
+    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    static bool cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
     if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
-        (graph_reuse_enable &&
+        (cell_reuse_enable &&
          (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)))) {
       return false;
     }
