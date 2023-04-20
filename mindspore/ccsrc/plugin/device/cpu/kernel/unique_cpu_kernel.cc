@@ -47,7 +47,7 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float, int32_t>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double, int32_t>(inputs, workspace, outputs);
+    LaunchKernel<double, int64_t>(inputs, workspace, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of input must be float16, 32, 64, (U)Int8, 16, Int 32 or Int 64, but got "
