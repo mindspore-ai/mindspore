@@ -211,6 +211,30 @@ int64_t GetDependValueSize(const ValuePtr &value) {
   return size;
 }
 
+bool CheckScalarValid(const AbstractBasePtr &input_abstract) {
+  // Now, only scalar with int/float/uint will be used as the output of operator, so only add them to list.
+  if (input_abstract->isa<abstract::AbstractScalar>()) {
+    auto scalar_id = NormalizeTypeId(input_abstract->BuildType()->type_id());
+    return (scalar_id == kNumberTypeInt || scalar_id == kNumberTypeFloat || scalar_id == kNumberTypeUInt);
+  }
+  return false;
+}
+
+bool CheckNeedAddToDependList(const AbstractBasePtr &input_abstract) {
+  auto is_tensor = input_abstract->isa<abstract::AbstractTensor>();
+  bool is_integer = false;
+  bool is_tuple_scalar_or_tensor = false;
+  is_integer = CheckScalarValid(input_abstract);
+  if (input_abstract->isa<abstract::AbstractTuple>()) {
+    auto tuple_abs = input_abstract->cast_ptr<abstract::AbstractTuple>();
+    auto elements = tuple_abs->elements();
+    is_tuple_scalar_or_tensor = std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
+      return (CheckScalarValid(element)) || element->isa<abstract::AbstractTensor>();
+    });
+  }
+  return is_tensor || is_integer || is_tuple_scalar_or_tensor;
+}
+
 std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, const PrimitivePtr &primitive,
                                                         const std::set<int64_t> &ori_depend_list) {
   std::set<int64_t> rec_depend_list = {};
@@ -220,14 +244,8 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
       const auto &input = cnode->inputs()[i];
       const auto &input_abstract = input->abstract();
       if (input_abstract != nullptr) {
-        auto is_tensor = input_abstract->isa<abstract::AbstractTensor>();
-        bool is_integer = false;
-        if (input_abstract->isa<abstract::AbstractScalar>()) {
-          // Now, only scalar with int32/int64 will be used as the output of operator, so only add them to list.
-          auto scalar_id = input_abstract->BuildType()->type_id();
-          is_integer = (scalar_id == kNumberTypeInt32 || scalar_id == kNumberTypeInt64);
-        }
-        if (is_tensor || is_integer) {
+        auto need_add_to_depend_list = CheckNeedAddToDependList(input_abstract);
+        if (need_add_to_depend_list) {
           (void)rec_depend_list.emplace(SizeToLong(i - 1));
         }
       }
