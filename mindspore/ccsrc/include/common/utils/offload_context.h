@@ -56,6 +56,14 @@ class COMMON_EXPORT OffloadContext {
   void set_enable_pinned_mem(bool enable_pinned_mem);
   bool enable_pinned_mem() const { return enable_pinned_mem_; }
 
+  void set_auto_offload(bool auto_offload);
+  bool auto_offload() const { return auto_offload_; }
+
+  void set_host_mem_block_size(size_t host_mem_block_size);
+  size_t host_mem_block_size() const { return host_mem_block_size_; }
+
+  bool ddr_size_configured() { return ddr_size_configured_; }
+
  private:
   OffloadContext();
   std::string offload_param_;
@@ -67,6 +75,9 @@ class COMMON_EXPORT OffloadContext {
   size_t aio_block_size_;
   size_t aio_queue_depth_;
   bool enable_pinned_mem_;
+  bool auto_offload_;
+  size_t host_mem_block_size_;
+  bool ddr_size_configured_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_OFFLOAD_CONTEXT_H_

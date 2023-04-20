@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_PIN_MEM_POOL_H_
 
 #include <memory>
+#include <mutex>
 #include "include/backend/visible.h"
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 
@@ -26,14 +27,19 @@ class BACKEND_EXPORT PinMemPool : public DynamicMemPoolBestFit {
  public:
   ~PinMemPool() = default;
   virtual void PinnedMemAlloc(DeviceMemPtr *addr, size_t size) = 0;
+  void *AllocPinMem(size_t size);
 
  protected:
   PinMemPool();
+  void Init();
   size_t free_mem_size() override;
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
+  void SetMemPoolBlockSize(size_t available_pin_mem_size) override;
   size_t max_size_{0};
   size_t total_used_memory_{0};
   bool pinned_mem_{false};
+  bool inited_{false};
+  std::mutex mutex_;
 };
 }  // namespace device
 }  // namespace mindspore

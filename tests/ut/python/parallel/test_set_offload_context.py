@@ -32,7 +32,6 @@ def test_set_offload_context():
     offload_param = offload_config_.get("offload_param", None)
     offload_path = offload_config_.get("offload_path", None)
     offload_checkpoint = offload_config_.get("offload_checkpoint", None)
-    offload_ddr_size = offload_config_.get("offload_ddr_size", None)
     offload_disk_size = offload_config_.get("offload_disk_size", None)
     enable_aio = offload_config_.get("enable_aio", None)
     aio_block_size = offload_config_.get("aio_block_size", None)
@@ -41,7 +40,6 @@ def test_set_offload_context():
     assert offload_param == "cpu"
     assert offload_path == "/tmp"
     assert offload_checkpoint == "cpu"
-    assert offload_ddr_size == 1 << 30
     assert offload_disk_size == 1 << 30
     assert not enable_aio
     assert aio_block_size == 1 << 29
