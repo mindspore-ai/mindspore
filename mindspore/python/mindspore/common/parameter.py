@@ -38,6 +38,7 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, \
                                            _is_ps_mode
 from mindspore.parallel._ps_context import _reinsert_hash_table_size, _insert_accumu_init_info, _cache_enable
+from mindspore.common._decorator import deprecated
 import mindspore.common._monad as monad
 
 __all__ = ['Parameter', 'ParameterTuple']
@@ -339,15 +340,8 @@ class Parameter(Tensor_):
         """
         return self.clone(init='same')
 
+    @deprecated("1.8", "set_param_fl")
     def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
-        """
-        Set the way of parameter and server interaction.
-
-        Args:
-            push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
-            pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
-            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: True.
-        """
         if push_to_server:
             self.push_weight_to_server = True
         if pull_from_server:
