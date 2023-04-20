@@ -1739,13 +1739,13 @@ def kl_div(logits, labels, reduction='mean'):
 
     if reduction == 'batchmean':
         kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
-        shape = P.TensorShape()(logits)
+        shape = P.Shape()(logits)
         batch_size = shape[0]
         return kl_div_sum / batch_size
 
     if reduction == 'mean':
         kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
-        shape = P.TensorShape()(logits)
+        shape = P.Shape()(logits)
         total_size = 1
         for dim in shape:
             total_size = total_size * dim
