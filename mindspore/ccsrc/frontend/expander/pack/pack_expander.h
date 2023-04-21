@@ -18,12 +18,12 @@
 
 #include <memory>
 #include "pybind11/pybind11.h"
+#include "pybind_api/ir/primitive_py.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
 namespace expander {
-constexpr auto PY_ATTR_PACK_NODE = "pack_node";
 class PackNode {
  public:
   explicit PackNode(AnfNodePtr node) : node_(node) {}
@@ -52,6 +52,7 @@ class PackExpander {
   FuncGraphPtr EndGraph(const py::object &output) const;
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
+  py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
 
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;

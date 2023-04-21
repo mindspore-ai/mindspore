@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "frontend/expander/pack/packfunc.h"
+
 #include <unordered_map>
 #include <vector>
 #include <memory>
 #include "ops/base_operator.h"
-#include "pybind_api/ir/primitive_py.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/expander/pack/pack_expander.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 
