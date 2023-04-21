@@ -717,3 +717,7 @@ elseif(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite_cv")
         target_link_libraries(minddata-lite ${LIBCLANG_RT_LIB})
     endif()
 endif()
+
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    target_link_libraries(minddata-lite ${PYTHON_LIBRARIES})
+endif()
