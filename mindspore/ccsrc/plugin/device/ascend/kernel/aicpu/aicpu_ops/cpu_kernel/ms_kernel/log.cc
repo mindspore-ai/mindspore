@@ -81,11 +81,6 @@ uint32_t LogCpuKernel::LogCheck(CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed")
   KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
-  size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size > 0), KERNEL_STATUS_PARAM_INVALID, "Input must be at least rank 1, got [%zu].",
-                     shape_x.size())
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input last dimension must be at least 1.")
   AttrValue *base_ptr = ctx.GetAttr("base");
   KERNEL_CHECK_NULLPTR(base_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr base failed.");
   float base_ = base_ptr->GetFloat();
