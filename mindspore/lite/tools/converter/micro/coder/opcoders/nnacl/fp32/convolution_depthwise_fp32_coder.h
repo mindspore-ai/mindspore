@@ -34,9 +34,15 @@ class ConvolutionDepthwiseFP32Coder final : public Conv2DBaseCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  int InitWeightBias();
+  int InitParameter();
+  int InitWeightBiasOffline();
+  int InitWeightBiasOnline();
+  void InitCodeOnline(CoderContext *const context);
+  size_t packed_weight_size_{0};
   float *packed_weight_{nullptr};
+  size_t packed_bias_size_{0};
   float *bias_{nullptr};
+  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONVOLUTION_DEPTHWISE_FP32_CODER_H_

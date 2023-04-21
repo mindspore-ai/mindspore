@@ -72,6 +72,25 @@ class CoderContext {
   void set_saved_weights(const std::map<std::string, Tensor *> &saved_weights) { saved_weights_ = saved_weights; }
   std::map<std::string, Tensor *> saved_weights() const { return saved_weights_; }
 
+  void set_origin_weights(const std::vector<Tensor *> &origin_weights) { origin_weights_ = origin_weights; }
+  const std::vector<Tensor *> &origin_weights() const { return origin_weights_; }
+
+  void set_auxiliary_weights(const std::map<Tensor *, std::pair<Tensor *, std::string>> &auxiliary_weights) {
+    auxiliary_weights_ = auxiliary_weights;
+  }
+  const std::map<Tensor *, std::pair<Tensor *, std::string>> &auxiliary_weights() const { return auxiliary_weights_; }
+
+  bool JudgeIsValid(bool keep_origin_weight) {
+    if (!keep_origin_weight) {
+      return true;
+    }
+    return std::all_of(saved_weights_.begin(), saved_weights_.end(),
+                       [this](const std::pair<std::string, Tensor *> &item) {
+                         return std::find(this->origin_weights_.begin(), this->origin_weights_.end(), item.second) !=
+                                this->origin_weights_.end();
+                       });
+  }
+
   void set_total_buffer_size(size_t size) {
     total_buffer_size_ = size;
     max_buffer_size_ = std::max(max_buffer_size_, size);
@@ -133,7 +152,11 @@ class CoderContext {
   std::vector<Tensor *> graph_outputs_;
   std::vector<Tensor *> graph_eval_outputs_;
   std::vector<Tensor *> graph_train_outputs_;
-  // primitive const tensors, parsed from model, without packed.
+  // primitive const tensors, parsed from model, without packed. Maybe exist tensor is not used.
+  std::vector<Tensor *> origin_weights_;
+  // assistant content for origin-weights if needed.
+  std::map<Tensor *, std::pair<Tensor *, std::string>> auxiliary_weights_;
+  // primitive const tensors, parsed from model, with packed. Tensors are all real used.
   std::map<std::string, Tensor *> saved_weights_;
   // all tensors, include parsed from model and packed tensors.
   std::map<Tensor *, std::string> tensors_map_;

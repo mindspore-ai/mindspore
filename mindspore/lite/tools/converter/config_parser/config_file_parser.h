@@ -103,6 +103,8 @@ struct MicroParamString {
   std::string enable_micro;
   std::string save_path;
   std::string project_name;
+  std::string keep_original_weight;
+  std::string changeable_weights_name;
 };
 
 struct CpuOptionCfgString {

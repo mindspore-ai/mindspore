@@ -110,8 +110,7 @@ bool Coder::InitPath(const std::string &output_path) {
 }
 
 int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path,
-                                     const std::string &codegen_mode, const std::string &device, bool support_parallel,
-                                     bool debug_mode, bool end_flag, bool enable_fp16) {
+                                     const MicroParam &param, bool enable_fp16) {
   flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
@@ -131,12 +130,12 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
     return RET_ERROR;
   }
   // codegeneration for micro
-  STATUS status = code_gen.Init(codegen_mode, device, support_parallel, debug_mode);
+  STATUS status = code_gen.Init(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen init Error";
     return RET_ERROR;
   }
-  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_, end_flag, enable_fp16);
+  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_, param.is_last_model, enable_fp16);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen Run Error";
     return RET_ERROR;
@@ -145,17 +144,17 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
   return RET_OK;
 }
 
-int Coder::Init(const std::string &code_mode, const std::string &target, bool support_parallel, bool debug_mode) const {
+int Coder::Init(const MicroParam &param) const {
   static const std::map<std::string, Target> kTargetMap = {
     {"x86", kX86}, {"Cortex-M", kCortex_M}, {"ARM32", kARM32}, {"ARM64", kARM64}, {"All", kAllTargets}};
   static const std::map<std::string, CodeMode> kCodeModeMap = {{"Inference", Inference}, {"Train", Train}};
   Configurator *config = Configurator::GetInstance();
 
-  auto target_item = kTargetMap.find(target);
+  auto target_item = kTargetMap.find(param.target);
   MS_CHECK_TRUE_MSG(target_item != kTargetMap.end(), RET_ERROR, "unsupported target: " + target);
   config->set_target(target_item->second);
 
-  auto code_item = kCodeModeMap.find(code_mode);
+  auto code_item = kCodeModeMap.find(param.codegen_mode);
   MS_CHECK_TRUE_MSG(code_item != kCodeModeMap.end(), RET_ERROR, "unsupported code mode: " + code_mode);
   config->set_code_mode(code_item->second);
   if (code_item->second == CodeMode::Train && config->target() == kCortex_M) {
@@ -163,16 +162,18 @@ int Coder::Init(const std::string &code_mode, const std::string &target, bool su
     return RET_ERROR;
   }
 
-  if (support_parallel && config->target() == kCortex_M) {
+  if (param.support_parallel && config->target() == kCortex_M) {
     MS_LOG(ERROR) << "Cortex-M cannot support parallel.";
     return RET_ERROR;
   }
-  config->set_support_parallel(support_parallel);
-  config->set_debug_mode(debug_mode);
+  config->set_support_parallel(param.support_parallel);
+  config->set_debug_mode(param.debug_mode);
 
   config->set_proj_dir(DirectoryGenerator::GetInstance()->project_name());
   config->set_code_path(DirectoryGenerator::GetInstance()->work_dir() +
                         DirectoryGenerator::GetInstance()->project_name());
+  config->set_keep_original_weight(param.keep_original_weight);
+  config->set_changeable_weights_name(param.changeable_weights_name);
 
   auto print_parameter = [](auto name, auto value) {
     MS_LOG(INFO) << std::setw(20) << std::left << name << "= " << value;

@@ -631,10 +631,12 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
     }
     ofs << "  void **allocated[] = {\n";
     size_t num = 0;
+    auto &w_auxiliary = ctx->auxiliary_weights();
     for (const auto &item : ctx->tensors_map()) {
       Tensor *tensor = item.first;
       std::string name = item.second;
-      if (tensor->data() != nullptr && !(CheckConstantTensor(tensor))) {
+      if (tensor->data() != nullptr &&
+          (!(CheckConstantTensor(tensor)) || w_auxiliary.find(tensor) != w_auxiliary.end())) {
         ofs << "    (void**)&" << name << ",\n";
         num++;
       }
