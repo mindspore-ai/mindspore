@@ -5944,6 +5944,7 @@ def narrow(input, axis, start, length):
          [ 5 6]
          [ 8 9]]
     """
+    validator.check_value_type("input", input, Tensor, "narrow")
     validator.check_axis_in_range(axis, input.ndim)
     validator.check_int_range(start, 0, input.shape[axis], validator.INC_LEFT)
     validator.check_int_range(length, 1, input.shape[axis] - start, validator.INC_BOTH)
