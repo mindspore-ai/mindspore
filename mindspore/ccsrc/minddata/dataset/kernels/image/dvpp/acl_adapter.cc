@@ -19,7 +19,6 @@
 #endif
 #include <algorithm>
 #include "utils/ms_context.h"
-#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -55,15 +54,10 @@ void AclAdapter::InitPlugin() {
   }
   std::string cur_so_path = dl_info.dli_fname;
   std::string acl_plugin_path = std::string(dirname(cur_so_path.data())) + "/" + kAclPluginRelatedPath;
-  auto realpath = FileUtils::GetRealPath(acl_plugin_path.c_str());
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file path, " << acl_plugin_path << " does not exist.";
-  }
-  std::string realpath_value = realpath.value();
 
-  plugin_handle_ = dlopen(realpath_value.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  plugin_handle_ = dlopen(acl_plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (plugin_handle_ == nullptr) {
-    MS_LOG(INFO) << "Cannot dlopen " << realpath_value << ", result = " << GetDlErrorMsg()
+    MS_LOG(INFO) << "Cannot dlopen " << acl_plugin_path << ", result = " << GetDlErrorMsg()
                  << ", it can be ignored if not running on ascend.";
     return;
   }
