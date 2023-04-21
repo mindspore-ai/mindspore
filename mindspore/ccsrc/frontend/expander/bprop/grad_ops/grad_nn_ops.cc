@@ -177,12 +177,11 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
-  auto format = GetValue<std::string>(ib->GetAttr("data_format"));
+  auto format = GetValue<std::string>(ib->GetAttr("format"));
   if (format == "NCDHW") {
     format = "NCHW";
   }
-  return {dout,
-          ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}, {"data_format", MakeValue(format)}})};
+  return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}})};
 });
 
 REG_BPROP_BUILDER("ReLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
