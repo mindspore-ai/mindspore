@@ -29,7 +29,9 @@ void CustomActor::Init() {
   if (base_node->isa<CNode>()) {
     const auto &cnode = base_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    input_device_tensors_.resize(common::AnfAlgo::GetInputNum(cnode));
+    auto input_num = common::AnfAlgo::GetInputNum(cnode);
+    input_device_tensors_.resize(input_num);
+    memory_free_list_.resize(input_num);
   }
 }
 
@@ -43,24 +45,24 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     // Collect the inputs from input data.
     const auto &data_iter = input_op_datas_.find(ctx->sequential_num_);
     if (data_iter != input_op_datas_.end()) {
-      memory_free_list_.clear();
       for (auto &input_data : data_iter->second) {
         MS_EXCEPTION_IF_NULL(input_data);
-        if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
+        size_t input_data_index = IntToSize(input_data->index_);
+        if ((input_data_index >= input_device_tensors_.size()) || (input_data_index >= memory_free_list_.size())) {
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(
             strategy_, (*ctx),
-            "The input index:" + std::to_string(input_data->index_) + " is out of vector size:" +
+            "The input index:" + std::to_string(input_data_index) + " is out of vector size:" +
               std::to_string(input_device_tensors_.size()) + " for node:" + node->DebugString());
           return;
         }
-        MS_LOG(DEBUG) << "Collect input data index:" << input_data->index_ << " for custom actor:" << GetAID();
-        input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
-        (void)memory_free_list_.emplace_back(input_data->data_);
+        MS_LOG(DEBUG) << "Collect input data index:" << input_data_index << " for custom actor:" << GetAID();
+        input_device_tensors_[input_data_index] = input_data->data_;
+        memory_free_list_[input_data_index] = input_data->data_;
       }
     }
 
     // Collect the inputs from device tensor store.
-    FetchInputByTensorStore(&input_device_tensors_, ctx);
+    FetchInputByTensorStore(&input_device_tensors_, &memory_free_list_, ctx);
 
     // Launch custom func
     MS_EXCEPTION_IF_NULL(node);

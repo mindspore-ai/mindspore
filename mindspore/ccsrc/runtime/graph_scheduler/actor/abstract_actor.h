@@ -112,6 +112,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Fetch input data from the device tensor store.
   void FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                               std::vector<DeviceTensor *> *const memory_free_tensors,
                                OpContext<DeviceTensor> *const context) const;
 
   // Init the member output_data_ and batch_output_data_ by output data arrows.

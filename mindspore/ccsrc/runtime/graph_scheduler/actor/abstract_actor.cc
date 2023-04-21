@@ -126,8 +126,10 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
 }
 
 void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
+                                            std::vector<DeviceTensor *> *const memory_free_tensors,
                                             OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(input_device_tensors);
+  MS_EXCEPTION_IF_NULL(memory_free_tensors);
   MS_EXCEPTION_IF_NULL(context);
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto device_tensor = DeviceTensorStore::GetInstance()
@@ -140,11 +142,13 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
-    if (device_tensor_store_key.first >= input_device_tensors->size()) {
+    if ((device_tensor_store_key.first >= input_device_tensors->size()) ||
+        (device_tensor_store_key.first >= memory_free_tensors->size())) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
     }
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
+      (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
     }
   }
 }
