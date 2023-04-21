@@ -271,25 +271,12 @@ bool HasVariableLenAttr(const py::object &obj) {
   return py::hasattr(obj, variable_len_attr) && py::cast<bool>(py::getattr(obj, variable_len_attr));
 }
 
-void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-
-  for (const auto &node : nodes) {
-    const auto &origin_scope_name = node->scope()->name();
-    if (node->isa<CNode>() && origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) != 0) {
-      std::stringstream scope_name_buffer;
-      scope_name_buffer << kAttrRecompute << "_" << origin_scope_name;
-      node->set_scope(std::make_shared<Scope>(scope_name_buffer.str()));
-    }
-  }
-}
-
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
   auto scope = origin_node->scope();
-  bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
+  bool has_recompute_scope =
+    (scope != nullptr && scope->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
   ValuePtr convert_result = nullptr;
   bool converted =
     ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);

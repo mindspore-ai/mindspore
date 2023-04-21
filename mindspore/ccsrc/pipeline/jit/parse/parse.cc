@@ -3607,6 +3607,20 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   return func_graph;
 }
 
+void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+
+  for (const auto &node : nodes) {
+    const auto &origin_scope_name = node->scope()->name();
+    if (node->isa<CNode>() && origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) != 0) {
+      std::stringstream scope_name_buffer;
+      scope_name_buffer << kAttrRecompute << "_" << origin_scope_name;
+      node->set_scope(std::make_shared<Scope>(scope_name_buffer.str()));
+    }
+  }
+}
+
 bool Parser::IsSubscriptReferenceType(const py::object &obj) {
   py::object slice_node = python_adapter::GetPyObjAttr(obj, "slice");
   auto node_type = ast_->GetNodeType(slice_node);
