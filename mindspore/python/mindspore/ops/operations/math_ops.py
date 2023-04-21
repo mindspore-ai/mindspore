@@ -158,7 +158,7 @@ class Ger(Primitive):
 
     Outputs:
         Tensor, output matrix with the same dtype as inputs.With `x1` shape :math:`(m,)` and
-        `x2` shape of :math:`(n,)`,the `output` has shape :math:`(m * n)`.
+        `x2` shape of :math:`(n,)`,the `output` has shape :math:`(m, n)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1411,7 +1411,6 @@ class Cdist(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.
-          Letter :math:`B` represents 0 or positive int number.
           When :math:`B` is equal to 0, it means this dimension can be ignored,
           i.e. shape of the tensor is :math:`(P, M)`.
         - **input_y** (Tensor) - Input tensor of shape :math:`(B, R, M)` with the same dtype as `input_x`.
@@ -4575,7 +4574,7 @@ class IsNan(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -4605,7 +4604,7 @@ class IsInf(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -7059,17 +7058,17 @@ class LuUnpack(Primitive):
             into a permutation matrix P. If False, then the returned P is None. Default: True.
 
     Inputs:
-        - **LU_data** (Tensor) - The packed LU factorization data. A tensor of size `[*, M, N]`,
-          where * is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
+        - **LU_data** (Tensor) - The packed LU factorization data. The shape of a tensor is :math:`(*, M, N)`,
+          where :math:`*` is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
           float32, float64. The dims of LU_data must be equal to or greater than 2.
-        - **LU_pivots** (Tensor) - The packed LU factorization pivots. A tensor of size `[*, min(M, N)]`,
+        - **LU_pivots** (Tensor) - The packed LU factorization pivots. The shape of a tensor is :math:`(*, min(M, N))`,
           where * is batch dimensions, with data type int8, uint8, int16, int32, int64.
 
     Outputs:
-        - **pivots** (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`,
+        - **pivots** (Tensor) - The permutation matrix of LU factorization. The shape is :math:`(*, M, M)`,
           the dtype is same as `LU_data`.
-        - **L** (Tensor) - The L matrix  of LU factorization. The dtype is the same as `LU_data`.
-        - **U** (Tensor) - The U matrix  of LU factorization. The dtype is the same as `LU_data`.
+        - **L** (Tensor) - The L matrix of LU factorization. The dtype is the same as `LU_data`.
+        - **U** (Tensor) - The U matrix of LU factorization. The dtype is the same as `LU_data`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -8226,7 +8225,7 @@ class NanToNum(Primitive):
           Default value is None.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
+        - **x** (Tensor) - Input Tensor of any dimensions. Supported data types: float32 or float16.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.

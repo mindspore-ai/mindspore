@@ -28,7 +28,7 @@ mindspore.nn.MultiMarginLoss
         - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。`target` 即上述公式中的 :math:`y` 。
 
     输出：
-        Tensor，当 `reduction` 为'none'时，类型为Tensor，shape和 `target` 相同。否则为标量Tensor。
+        Tensor，当 `reduction` 为'none'时，类型为Tensor，shape为 :math:`(N,)`，和 `target` 相同。否则为标量Tensor。
 
     异常：
         - **TypeError** - `p` 或者 `target` 数据类型不是int。

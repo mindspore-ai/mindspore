@@ -9,7 +9,7 @@ mindspore.ops.MaxPoolWithArgmaxV2
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 times\ w +n)
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 times\ w + n)
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。由一个整数或者两个整数组成的tuple，分别表示高和宽。

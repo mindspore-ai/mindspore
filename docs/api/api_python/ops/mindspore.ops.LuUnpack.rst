@@ -21,6 +21,6 @@ mindspore.ops.LuUnpack
           维度，数据类型为int8、uint8、int16、int32或int64。
 
     输出：
-        - **pivots** (Tensor) - LU分解的置换矩阵，shape为 :math:`[*, M, M]` ，数据类型与 `LU_data` 相同。
+        - **pivots** (Tensor) - LU分解的置换矩阵，shape为 :math:`(*, M, M)` ，数据类型与 `LU_data` 相同。
         - **L** (Tensor) - LU分解的L矩阵，数据类型与 `LU_data` 相同。
         - **U** (Tensor) - LU分解的U矩阵，数据类型与 `LU_data` 相同。
