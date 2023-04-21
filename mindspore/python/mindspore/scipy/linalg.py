@@ -14,7 +14,6 @@
 # ============================================================================
 """Linear algebra submodule"""
 from __future__ import absolute_import
-from .ops import Eigh
 from .ops import LU
 from .ops import SolveTriangular
 from .utils import _nd_transpose, _value_check, _type_check, _dtype_check, _mstype_check, _square_check, _solve_check
@@ -23,6 +22,7 @@ from .. import numpy as mnp
 from .. import ops
 from ..common import dtype as mstype
 from ..ops.operations.math_ops import Cholesky
+from ..ops.operations.linalg_ops import Eigh
 from ..ops import functional as F
 from ..ops import operations as P
 
