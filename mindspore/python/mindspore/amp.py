@@ -72,6 +72,23 @@ def _overflow(inputs):
 
 
 @jit
+def _all_finite(inputs):
+    """all finite check"""
+    if _ascend_target():
+        status = Tensor([0] * 8, mstype.int32)
+        status = ops.depend(status, inputs)
+        get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
+        status = ops.depend(status, get_status)
+        clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
+        get_status = ops.depend(get_status, clear_status)
+        status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
+        return status_finite
+    outputs = _hypermap(_partial(_overflow), inputs)
+    flag_sum = ops.addn(outputs).reshape(())
+    status_finite = ops.less(flag_sum, 1)
+    return status_finite
+
+
 def all_finite(inputs):
     r"""
     Returns a scalar Tensor indicating whether the inputs are finite.
@@ -96,19 +113,8 @@ def all_finite(inputs):
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
         >>> output = amp.all_finite(x)
     """
-    if _ascend_target():
-        status = Tensor([0] * 8, mstype.int32)
-        status = ops.depend(status, inputs)
-        get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
-        status = ops.depend(status, get_status)
-        clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
-        get_status = ops.depend(get_status, clear_status)
-        status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
-        return status_finite
-    outputs = _hypermap(_partial(_overflow), inputs)
-    flag_sum = ops.addn(outputs).reshape(())
-    _all_finite = ops.less(flag_sum, 1)
-    return _all_finite
+    inputs = mutable(inputs)
+    return _all_finite(inputs)
 
 
 @jit_class
