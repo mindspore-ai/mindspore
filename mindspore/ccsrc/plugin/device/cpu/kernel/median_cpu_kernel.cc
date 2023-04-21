@@ -162,6 +162,8 @@ bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inpu
   constexpr bool dtype_support_nan = std::is_same_v<T, float> || std::is_same_v<T, double>;
   auto *input0 = static_cast<T *>(inputs[0]->addr);
   auto *output0 = static_cast<T *>(outputs[0]->addr);
+  auto *output1 = static_cast<T *>(outputs[1]->addr);
+  *output1 = 0;
   output_num_elements_ = 1;
   if constexpr ((!dtype_support_nan)) {
     int64_t median_pos = static_cast<int64_t>((input_num_elements_ - 1) / kHalf);
