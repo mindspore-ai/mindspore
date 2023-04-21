@@ -292,6 +292,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"rot90", std::string("rot90")},                                    // rot90()
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
+       {"fill_diagonal", std::string("fill_diagonal")},                    // P.FillDiagonal()
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()
        {"clamp", std::string("clamp")},                                    // clamp()
        {"clip", std::string("clamp")},                                     // clamp()

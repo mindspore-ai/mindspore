@@ -1814,6 +1814,15 @@ def fills(x, value):
     return F.fills(x, value)
 
 
+def fill_diagonal(x, fill_value, wrap=False):
+    """
+    Fills the main diagonal of a Tensor with a specified value and returns the result. The input has at least
+    2 dimensions, and all dimensions of input must be equal in length when the dimension of input is greater than 2.
+    """
+
+    return P.FillDiagonal(fill_value, wrap)(x)
+
+
 def ptp(x, axis=None, keepdims=False):
     """
     The name of the function comes from the acronym for "peak to peak".
