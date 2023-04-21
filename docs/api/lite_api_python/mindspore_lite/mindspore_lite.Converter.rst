@@ -197,17 +197,6 @@ mindspore_lite.Converter
             - **TypeError** - `config_info` 是dict类型，但key不是str类型。
             - **TypeError** - `config_info` 是dict类型，key是str类型，但value不是str类型。
 
-    .. py:method:: train_model
-        :property:
-
-        获取模型是否将在设备上进行训练的状态。
-
-        .. note::
-            此属性不支持在MindSpore Lite云侧推理包上使用。
-
-        返回：
-            bool，模型是否将在设备上进行训练。
-
     .. py:method:: weight_fp16
         :property:
 

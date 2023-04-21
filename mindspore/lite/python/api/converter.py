@@ -92,7 +92,7 @@ class Converter:
         of MindSpore Lite's encryption exported models in version 1.6 and earlier.
 
     Examples:
-        >>> # testcase 1 based on cloud inference package without train_model.
+        >>> # testcase based on cloud inference package.
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter()
         >>> # The ms model may be generated only after converter.convert() is executed after the class is constructed.
@@ -129,13 +129,6 @@ class Converter:
         infer: True,
         optimize: general,
         device: Ascend.
-        >>> # testcase 2 based on lite inference package with train_model.
-        >>> import mindspore_lite as mslite
-        >>> converter = mslite.Converter()
-        >>> # The ms model may be generated only after converter.convert() is executed after the class is constructed.
-        >>> converter.train_model = True
-        >>> print(converter.train_model)
-        True
     """
 
     def __init__(self):
@@ -143,37 +136,20 @@ class Converter:
         self.optimize_user_defined = "general"
 
     def __str__(self):
-        if not hasattr(_c_lite_wrapper.ConverterBind, "get_train_model"):
-            res = f"config_info: {self.get_config_info()},\n" \
-                  f"weight_fp16: {self.weight_fp16},\n" \
-                  f"input_shape: {self.input_shape},\n" \
-                  f"input_format: {self.input_format},\n" \
-                  f"input_data_type: {self.input_data_type},\n" \
-                  f"output_data_type: {self.output_data_type},\n" \
-                  f"save_type: {self.save_type},\n" \
-                  f"decrypt_key: {self.decrypt_key},\n" \
-                  f"decrypt_mode: {self.decrypt_mode},\n" \
-                  f"enable_encryption: {self.enable_encryption},\n" \
-                  f"encrypt_key: {self.encrypt_key},\n" \
-                  f"infer: {self.infer},\n" \
-                  f"optimize: {self.optimize},\n" \
-                  f"device: {self.device}."
-        else:
-            res = f"config_info: {self.get_config_info()},\n" \
-                  f"weight_fp16: {self.weight_fp16},\n" \
-                  f"input_shape: {self.input_shape},\n" \
-                  f"input_format: {self.input_format},\n" \
-                  f"input_data_type: {self.input_data_type},\n" \
-                  f"output_data_type: {self.output_data_type},\n" \
-                  f"save_type: {self.save_type},\n" \
-                  f"decrypt_key: {self.decrypt_key},\n" \
-                  f"decrypt_mode: {self.decrypt_mode},\n" \
-                  f"enable_encryption: {self.enable_encryption},\n" \
-                  f"encrypt_key: {self.encrypt_key},\n" \
-                  f"infer: {self.infer},\n" \
-                  f"train_model: {self.train_model},\n" \
-                  f"optimize: {self.optimize},\n" \
-                  f"device: {self.device}."
+        res = f"config_info: {self.get_config_info()},\n" \
+              f"weight_fp16: {self.weight_fp16},\n" \
+              f"input_shape: {self.input_shape},\n" \
+              f"input_format: {self.input_format},\n" \
+              f"input_data_type: {self.input_data_type},\n" \
+              f"output_data_type: {self.output_data_type},\n" \
+              f"save_type: {self.save_type},\n" \
+              f"decrypt_key: {self.decrypt_key},\n" \
+              f"decrypt_mode: {self.decrypt_mode},\n" \
+              f"enable_encryption: {self.enable_encryption},\n" \
+              f"encrypt_key: {self.encrypt_key},\n" \
+              f"infer: {self.infer},\n" \
+              f"optimize: {self.optimize},\n" \
+              f"device: {self.device}."
         return res
 
     @property
@@ -626,40 +602,6 @@ class Converter:
         """
         check_isinstance("save_type", save_type, ModelType)
         self._converter.set_save_type(model_type_py_cxx_map.get(save_type))
-
-    @property
-    def train_model(self):
-        """
-        Get the status whether the model is going to be trained on device.
-
-        Note:
-            `train_model` is not supported to use on MindSpore Lite cloud inference package.
-
-        Returns:
-            bool, whether the model is going to be trained on device.
-        """
-        if not hasattr(_c_lite_wrapper.ConverterBind, "get_train_model"):
-            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
-        return self._converter.get_train_model()
-
-    @train_model.setter
-    def train_model(self, train_model):
-        """
-        Set whether the model is going to be trained on device.
-
-        Note:
-            `train_model` is not supported to use on MindSpore Lite cloud inference package.
-
-        Args:
-            train_model (bool):   Whether the model is going to be trained on device.
-
-        Raises:
-            TypeError: `train_model` is not a bool.
-        """
-        if not hasattr(_c_lite_wrapper.ConverterBind, "set_train_model"):
-            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
-        check_isinstance("train_model", train_model, bool)
-        self._converter.set_train_model(train_model)
 
     @property
     def weight_fp16(self):

@@ -37,7 +37,8 @@ if(Python3_FOUND)
               -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
     endif()
     if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
-      target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--no-as-needed mindspore::glog)
+      target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--no-as-needed mindspore::glog
+              -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
     endif()
     if(MSLITE_ENABLE_RUNTIME_GLOG AND NOT MSLITE_ENABLE_CONVERTER)
       target_link_options(_c_lite_wrapper PRIVATE -Wl,-init,mindspore_log_init)
@@ -53,12 +54,12 @@ if(Python3_FOUND)
               mindspore_converter
               )
     else()
-    if(MSLITE_ENABLE_CLOUD_INFERENCE)
-      target_link_libraries(_c_lite_wrapper PRIVATE
-              -Wl,-no-as-need
-              mindspore_infer_shared_lib_obj
-              )
-    endif()
+      if(MSLITE_ENABLE_CLOUD_INFERENCE)
+        target_link_libraries(_c_lite_wrapper PRIVATE
+                -Wl,-no-as-need
+                mindspore_infer_shared_lib_obj
+                )
+      endif()
       if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static
                 -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)

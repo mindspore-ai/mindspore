@@ -332,7 +332,7 @@ class Model(BaseModel):
             >>> model.build_from_file("mobilenetv2.mindir", mslite.ModelType.MINDIR)
             >>> inputs = model.get_inputs()
             >>> for input in inputs:
-            ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
+            ...     in_data = np.arange(1 * 3 * 224 * 224, dtype=np.float32).reshape((1, 3, 224, 224))
             ...     input.set_data_from_numpy(in_data)
             ...
             >>> outputs = model.predict(inputs)
@@ -354,7 +354,7 @@ class Model(BaseModel):
             ...     input_tensor.shape = input.shape
             ...     input_tensor.format = input.format
             ...     input_tensor.name = input.name
-            ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
+            ...     in_data = np.arange(1 * 3 * 224 * 224, dtype=np.float32).reshape((1, 3, 224, 224))
             ...     input_tensor.set_data_from_numpy(in_data)
             ...     input_tensors.append(input_tensor)
             ...
@@ -402,10 +402,10 @@ class Model(BaseModel):
             >>> model.build_from_file("mobilenetv2.mindir", mslite.ModelType.MINDIR)
             >>> inputs = model.get_inputs()
             >>> print("Before resize, the first input shape: ", inputs[0].shape)
-            Before resize, the first input shape: [1, 224, 224, 3]
-            >>> model.resize(inputs, [[1, 112, 112, 3]])
+            Before resize, the first input shape: [1, 3, 224, 224]
+            >>> model.resize(inputs, [[1, 3, 112, 112]])
             >>> print("After resize, the first input shape: ", inputs[0].shape)
-            After resize, the first input shape: [1, 112, 112, 3]
+            After resize, the first input shape: [1, 3, 112, 112]
         """
         # pylint: disable=useless-super-delegation
         super(Model, self).resize(inputs, dims)
