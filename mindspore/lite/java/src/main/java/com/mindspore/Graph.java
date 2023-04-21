@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.mindspore;
+
+import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
 
 import com.mindspore.config.MindsporeLite;
 
@@ -34,7 +36,7 @@ public class Graph {
      * Construct function.
      */
     public Graph() {
-        this.graphPtr = 0;
+        this.graphPtr = POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -48,7 +50,7 @@ public class Graph {
             return false;
         }
         this.graphPtr = loadModel(file);
-        return this.graphPtr != 0L;
+        return this.graphPtr != POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -65,7 +67,7 @@ public class Graph {
      */
     public void free() {
         this.free(graphPtr);
-        graphPtr = 0;
+        graphPtr = POINTER_DEFAULT_VALUE;
     }
 
     private native long loadModel(String file);

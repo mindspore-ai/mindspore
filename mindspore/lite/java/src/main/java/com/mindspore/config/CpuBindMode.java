@@ -22,7 +22,6 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class CpuBindMode {
-
     // bind mind cpu
     public static final int MID_CPU = 2;
 

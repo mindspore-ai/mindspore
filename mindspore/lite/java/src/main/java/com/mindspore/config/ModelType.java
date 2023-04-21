@@ -22,7 +22,6 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class ModelType {
-
     // mindir type
     public static final int MT_MINDIR = 0;
 

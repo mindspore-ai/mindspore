@@ -27,15 +27,19 @@ public final class MindsporeLite {
     private static final Logger LOGGER = Logger.getLogger(MindsporeLite.class.toString());
 
     /**
+     * default pointer value
+     * */
+    public static final long POINTER_DEFAULT_VALUE = 0L;
+
+    /**
      * Init function.
      */
     public static void init() {
         LOGGER.info("MindsporeLite init load ...");
         try {
             NativeLibrary.load();
-        } catch (Exception e) {
+        } catch (UnsatisfiedLinkError e) {
             LOGGER.severe("Failed to load MindSporLite native library.");
-            throw e;
         }
     }
 

@@ -43,7 +43,6 @@ public class NativeLibrary {
     private static final String DNNL_LIBNAME = "dnnl";
     private static final String LITE_UNIFIED_EXECUTOR_LIBNAME = "lite-unified-executor";
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
-    private static final String MINDSPORE_LITE_TRAIN_LIBNAME = "mindspore-lite-train";
     private static final String MINDSPORE_LITE_TRAIN_JNI_LIBNAME = "mindspore-lite-train-jni";
     private static final String ASCEND_KERNEL_PLUGIN_LIBNAME = "ascend_kernel_plugin";
     private static final String ASCEND_GE_PLUGIN_LIBNAME = "ascend_ge_plugin";
@@ -138,11 +137,9 @@ public class NativeLibrary {
         try {
             final File tmpDir = mkTmpDir();
             String libName = libResourceName.substring(libResourceName.lastIndexOf('/') + 1);
-            tmpDir.deleteOnExit();
 
             // copy file to tmpFile
             final File tmpFile = new File(tmpDir.getCanonicalPath(), libName);
-            tmpFile.deleteOnExit();
             LOGGER.info(String.format(Locale.ENGLISH,"extract %d bytes to %s", copyLib(libResource, tmpFile),
                     tmpFile));
             if (("lib" + MINDSPORE_LITE_LIBNAME + ".so").equals(libName)) {
@@ -157,6 +154,8 @@ public class NativeLibrary {
                 extractLib(makeResourceName("lib" + ASCEND_PASS_PLUGIN_LIBNAME + ".so"), tmpDir);
             }
             System.load(tmpFile.toString());
+            deleteFile(tmpFile);
+            deleteFile(tmpDir);
         } catch (IOException e) {
             throw new UnsatisfiedLinkError(
                     String.format(Locale.ENGLISH,"extract library into tmp file (%s) failed.", e));
@@ -183,6 +182,7 @@ public class NativeLibrary {
     private static File mkTmpDir() {
         Long timestamp = System.currentTimeMillis();
         String dirName = "mindspore_lite_libs-" + timestamp + "-";
+        // try maximum 10 times
         for (int i = 0; i < 10; i++) {
             File tmpDir = new File(new File(System.getProperty("java.io.tmpdir")), dirName + i);
             if (tmpDir.mkdir()) {
@@ -220,6 +220,19 @@ public class NativeLibrary {
             LOGGER.info(String.format("extract %d bytes to %s", copyLib(dependLibRes, tmpDependFile), tmpDependFile));
         } catch (IOException e) {
             LOGGER.warning(String.format("extract library into tmp file (%s) failed.", e.toString()));
+        }
+    }
+
+    private static void deleteFile(File tmpFile) {
+        if (tmpFile.exists()) {
+            boolean isSuccess = tmpFile.delete();
+            if (!isSuccess) {
+                LOGGER.severe(String.format(Locale.ENGLISH, "delete tmp file : %s fail.", tmpFile));
+            } else {
+                LOGGER.severe(String.format(Locale.ENGLISH, "delete tmp file : %s success.", tmpFile));
+            }
+        } else {
+            LOGGER.severe(String.format(Locale.ENGLISH, "delete tmp file : %s not exist.", tmpFile));
         }
     }
 }

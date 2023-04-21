@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 
 package com.mindspore;
 
+import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
+
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.DataType;
+
 import java.nio.ByteBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 /**
  * The MSTensor class defines a tensor in MindSpore.
@@ -28,6 +32,8 @@ import java.util.HashMap;
  * @since v1.0
  */
 public class MSTensor {
+    private static final Logger LOGGER = Logger.getLogger(MSTensor.class.toString());
+
     static {
         MindsporeLite.init();
     }
@@ -38,7 +44,7 @@ public class MSTensor {
      * MSTensor construct function.
      */
     public MSTensor() {
-        this.tensorPtr = 0;
+        this.tensorPtr = POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -59,6 +65,7 @@ public class MSTensor {
     public static MSTensor createTensor(String tensorName, int dataType, int[] tensorShape, ByteBuffer buffer) {
         if (tensorName == null || tensorShape == null || buffer == null || dataType < DataType.kNumberTypeBool ||
             dataType > DataType.kNumberTypeFloat64) {
+            LOGGER.severe("input params null.");
             return null;
         }
         long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
@@ -73,14 +80,17 @@ public class MSTensor {
      */
     public static MSTensor createTensor(String tensorName, Object obj) {
         if (tensorName == null || obj == null) {
+            LOGGER.severe("input params null.");
             return null;
         }
         int dType = ParseDataType(obj);
         if (dType == 0) {
+            LOGGER.severe("input param dtype invalid.");
             return null;
         }
         int[] shape = ParseShape(obj);
         if (shape == null) {
+            LOGGER.severe("input param shape null.");
             return null;
         }
         long tensorPtr = createTensorByObject(tensorName, dType, shape, obj);
@@ -144,11 +154,12 @@ public class MSTensor {
     /**
      * Set the shape of MSTensor.
      *
-     * @param shape of int[] type.
+     * @param tensorShape of int[] type.
      * @return whether set shape success.
      */
     public boolean setShape(int[] tensorShape) {
         if (tensorShape == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setShape(this.tensorPtr, tensorShape);
@@ -162,6 +173,7 @@ public class MSTensor {
      */
     public boolean setData(byte[] data) {
         if (data == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setByteData(this.tensorPtr, data, data.length);
@@ -175,6 +187,7 @@ public class MSTensor {
      */
     public boolean setData(float[] data) {
         if (data == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setFloatData(this.tensorPtr, data, data.length);
@@ -188,6 +201,7 @@ public class MSTensor {
      */
     public boolean setData(int[] data) {
         if (data == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setIntData(this.tensorPtr, data, data.length);
@@ -201,6 +215,7 @@ public class MSTensor {
      */
     public boolean setData(long[] data) {
         if (data == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setLongData(this.tensorPtr, data, data.length);
@@ -214,6 +229,7 @@ public class MSTensor {
      */
     public boolean setData(ByteBuffer data) {
         if (data == null) {
+            LOGGER.severe("input param null.");
             return false;
         }
         return this.setByteBufferData(this.tensorPtr, data);
@@ -242,7 +258,7 @@ public class MSTensor {
      */
     public void free() {
         this.free(this.tensorPtr);
-        this.tensorPtr = 0;
+        this.tensorPtr = POINTER_DEFAULT_VALUE;
     }
 
     /**
