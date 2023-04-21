@@ -457,9 +457,4 @@ if(NOT WIN32)
     target_link_libraries(mindspore_converter dl)
 endif()
 
-if(MSLITE_ENABLE_MODEL_OBF)
-    target_link_libraries(mindspore_converter
-            ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
-endif()
-
 add_subdirectory(converter_lite)
