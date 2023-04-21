@@ -18,6 +18,7 @@ target_link_libraries(
         mindspore_quick_start_cpp
         -Wl,--whole-archive mindspore-lite -Wl,--no-whole-archive
         pthread
+        mindspore_glog
 )
 
 # Due to the increased compilation options for stack protection,
