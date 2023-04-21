@@ -111,6 +111,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv 
     jchar *key_array = env->GetCharArrayElements(key_str, NULL);
     if (key_array == nullptr) {
       MS_LOG(ERROR) << "key_array is nullptr.";
+      delete[] dec_key_data;
       return false;
     }
     for (size_t i = 0; i < key_len; i++) {
@@ -120,7 +121,8 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv 
     mindspore::Key dec_key{dec_key_data, key_len};
     if (cropto_lib_path == nullptr || dec_mod == nullptr) {
       MS_LOG(ERROR) << "cropto_lib_path or dec_mod from java is nullptr.";
-      return jlong(nullptr);
+      delete[] dec_key_data;
+      return false;
     }
     auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
     auto c_cropto_lib_path = env->GetStringUTFChars(cropto_lib_path, JNI_FALSE);
@@ -175,6 +177,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
     jchar *key_array = env->GetCharArrayElements(key_str, NULL);
     if (key_array == nullptr) {
       MS_LOG(ERROR) << "GetCharArrayElements failed.";
+      delete[] dec_key_data;
       env->ReleaseStringUTFChars(model_path, c_model_path);
       return jlong(nullptr);
     }
@@ -186,6 +189,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
 
     if (dec_mod == nullptr || cropto_lib_path == nullptr) {
       MS_LOG(ERROR) << "dec_mod, cropto_lib_path from java is nullptr.";
+      delete[] dec_key_data;
       env->ReleaseStringUTFChars(model_path, c_model_path);
       return jlong(nullptr);
     }

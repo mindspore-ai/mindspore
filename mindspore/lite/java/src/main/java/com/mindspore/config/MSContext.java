@@ -33,6 +33,7 @@ public class MSContext {
 
     private static final long EMPTY_CONTEXT_PTR_VALUE = 0L;
     private static final int ERROR_VALUE = -1;
+    private static final int NPU_FREQUENCY_VALUE = 3;
     private static final String NULLPTR_ERROR_MESSAGE="Context pointer from java is nullptr.";
 
     private long msContextPtr;
@@ -64,7 +65,7 @@ public class MSContext {
      * @return add status.
      */
     public boolean addDeviceInfo(int deviceType, boolean isEnableFloat16) {
-        return addDeviceInfo(msContextPtr, deviceType, isEnableFloat16, 3);
+        return addDeviceInfo(msContextPtr, deviceType, isEnableFloat16, NPU_FREQUENCY_VALUE);
     }
 
     /**

@@ -21,7 +21,6 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class DeviceType {
-
     // support cpu
     public static final int DT_CPU = 0;
 
