@@ -12,4 +12,4 @@ mindspore.ops.deepcopy
         Tensor，`input_x` 的深拷贝。
 
     异常：
-        - **TypeError** - 如果`input_x`不是Tensor。
+        - **TypeError** - 如果 `input_x` 不是Tensor。

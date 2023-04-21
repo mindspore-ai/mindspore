@@ -9639,9 +9639,9 @@ def cholesky_solve(input, input2, upper=False):
         output = (input2 * input2^{T})^{{-1}}input
 
     Args:
-        input (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
+        input (Tensor): Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
             with float32 or float64 data type.
-        input2 (Tensor) - Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
+        input2 (Tensor): Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
             upper or lower triangular Cholesky factor, with float32 or float64 data type.
             `input` and `input2` must have the same type.
         upper (bool, optional): A flag indicates whether to treat the Cholesky factor
