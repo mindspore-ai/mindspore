@@ -701,6 +701,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
+  top_cell_->set_input_args_info(top_input_args_info_);
   PushHighOrderGraphStack(top_cell_);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
 }
@@ -1067,6 +1068,7 @@ void GradExecutor::GetPreRunTopCell(const prim::GradOperationPtr &grad, const py
   MS_LOG(DEBUG) << "Get pre run top cell cell id:" << cell_id;
   const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
   top_cell_ = GetTopCell(check_already_run_cell_id);
+  top_input_args_info_ = top_cell_->input_args_info();
 }
 
 void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,

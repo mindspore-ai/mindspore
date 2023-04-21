@@ -125,7 +125,6 @@ class TopCellInfo {
   }
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
-
   inline void set_cnode_hash_with_op_index(const size_t &node_hash, const size_t &op_index) {
     cnode_hash_with_op_index_[node_hash] = op_index;
   }
@@ -137,7 +136,8 @@ class TopCellInfo {
     }
     return iter->second;
   }
-
+  inline const InputArgsInfoPtr input_args_info() { return input_args_info_; }
+  inline void set_input_args_info(const InputArgsInfoPtr &input_args_info) { input_args_info_ = input_args_info; }
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const;
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
@@ -187,6 +187,7 @@ class TopCellInfo {
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
+  InputArgsInfoPtr input_args_info_;
   bool use_dynamic_shape_process_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
