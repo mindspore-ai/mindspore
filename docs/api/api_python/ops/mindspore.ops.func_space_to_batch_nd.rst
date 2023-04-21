@@ -13,7 +13,7 @@ mindspore.ops.space_to_batch_nd
 
     .. math::
         \begin{array}{ll} \\
-            n' = n*(block\_shape[0] * ... * block\_size[M]) \\
+            n' = n*(block\_size[0] * ... * block\_size[M]) \\
             w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_size[i]
         \end{array}
 
