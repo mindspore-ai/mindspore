@@ -16,11 +16,11 @@ mindspore.ops.GeLU
     其中  :math:`P` 是标准高斯分布的累积分布函数， :math:`x_i` 是输入的元素。
 
     输入：
-        - **x** (Tensor) - 激活函数GeLU的输入，数据类型为float16或float32。
+        - **x** (Tensor) - 激活函数GeLU的输入，数据类型为float16、float32或float64。
 
     输出：
         Tensor，数据类型和shape与 `x` 的相同。
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `x` 的数据类型不是float16、float32或float64。

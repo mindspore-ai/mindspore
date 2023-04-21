@@ -52,7 +52,7 @@ TypePtr GeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return x_type;
 }
 }  // namespace
