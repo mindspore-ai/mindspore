@@ -3150,7 +3150,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.bernoulli`.
         """
         self._init_check()
-        validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
 
     def random_categorical(self, num_sample, seed=0, dtype=mstype.int64):
