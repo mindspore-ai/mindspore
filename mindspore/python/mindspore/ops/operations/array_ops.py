@@ -2425,7 +2425,7 @@ class Tile(PrimitiveWithInfer):
         multiples_v = multiples['value']
         if multiples_v is None or None in multiples_v:
             if 'max_value' not in multiples or 'min_value' not in multiples:
-                if isinstance(multiples['shape'], (list, tuple)):
+                if multiples_v is not None:
                     shape = [len(multiples['shape'])]
                 else:
                     shape = multiples['shape']
