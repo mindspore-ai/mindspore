@@ -1,0 +1,32 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Compile akg info"""
+import sys
+from akg.ms import compilewithjson
+
+
+def run_compiler(info_path, compile_attr=None):
+    """invoke akg to compile the info"""
+    with open(info_path, 'r') as f:
+        info_str = f.read()
+        compilewithjson(info_str, compile_attr)
+
+
+# pylint: disable=too-many-function-args
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        run_compiler(sys.argv[1], *sys.argv[2:])
+    else:
+        run_compiler(sys.argv[1])
