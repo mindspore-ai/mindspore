@@ -113,7 +113,7 @@ std::vector<int64_t> GetOutShape(const string &op_name, const std::vector<int64_
     channel = in_shape[kMaxPoolIdx3];
   }
   int64_t out_h = abstract::Shape::SHP_ANY, out_w = abstract::Shape::SHP_ANY;
-  if (pad_mode == PadMode::VALID) {
+  if (pad_mode == PadMode::VALID && in_h != abstract::Shape::SHP_ANY) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
   }
   if (pad_mode == VALID && in_w != abstract::Shape::SHP_ANY) {
