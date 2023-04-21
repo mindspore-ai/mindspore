@@ -2465,7 +2465,7 @@ def scatter_max(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+            The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         indices (Tensor): The index to do max operation whose data type must be mindspore.int32.
         updates (Tensor): The tensor doing the max operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.

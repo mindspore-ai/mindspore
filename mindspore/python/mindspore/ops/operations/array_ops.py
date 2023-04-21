@@ -1319,7 +1319,7 @@ class Size(Primitive):
 
 
 class MatrixDiagV3(Primitive):
-    """
+    r"""
     Constructs a diagonal matrix or a batch of diagonal matrices from a given input Tensor.
 
     .. warning::
@@ -1355,13 +1355,13 @@ class MatrixDiagV3(Primitive):
           A Tensor of type int32 with only one value. If `num_rows` is -1, indicating that the innermost
           matrix of the output Tensor is a square
           matrix, and the real number of rows will be derivated by other inputs. That is
-          num_rows = :math:`x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
+          :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
           :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
         - **num_cols** (Union[int, Tensor], optional) - The number of columns of
           the output Tensor. A Tensor of type int32 with only one value.
           If `num_cols` is -1, indicating that the innermost matrix of the output
           Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
-          That is num_cols = :math:`x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
+          That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
           greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
         - **padding_value** (Union[int, float, Tensor], optional) - The number to fill the area outside the specified
           diagonal band. A Tensor with only one value. Have the same dtype as x. Default: 0.
@@ -3985,7 +3985,7 @@ class Mvlgamma(Primitive):
         - **x** (Tensor) - The tensor to compute the multivariate log-gamma function,
           which must be one of the following types: float32, float64.
           The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
-          And the value of any element in `x` must be greater than (p - 1) / 2.
+          And the value of any element in `x` must be greater than :math:`(p - 1) / 2`.
 
     Outputs:
         Tensor, has the same shape and type as `x`.
