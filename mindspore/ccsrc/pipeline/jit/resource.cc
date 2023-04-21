@@ -345,7 +345,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"sum_to_size", std::string("sum_to_size")},                        // sum_to_size()
        {"exp", std::string("exp")},                                        // P.Exp()
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
-       {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
+       {"bernoulli", std::string("bernoulli")},                            // P.Bernoulli()
        {"ceil", std::string("ceil")},                                      // P.Ceil
        {"floor", std::string("floor")},                                    // P.floor
        {"flip", std::string("flip")},                                      // flip
