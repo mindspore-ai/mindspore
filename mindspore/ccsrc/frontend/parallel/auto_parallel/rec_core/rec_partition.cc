@@ -209,6 +209,14 @@ StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str,
     }
   }
 
+  if (old_str.outputTensor.str_n > EPS && old_str.outputTensor.str_c > EPS && old_str.outputTensor.str_h > EPS &&
+      old_str.outputTensor.str_w > EPS) {
+    new_str.outputTensor.str_n = new_str.outputTensor.str_n / old_str.outputTensor.str_n;
+    new_str.outputTensor.str_c = new_str.outputTensor.str_c / old_str.outputTensor.str_c;
+    new_str.outputTensor.str_h = new_str.outputTensor.str_h / old_str.outputTensor.str_h;
+    new_str.outputTensor.str_w = new_str.outputTensor.str_w / old_str.outputTensor.str_w;
+  }
+
   return new_str;
 }
 

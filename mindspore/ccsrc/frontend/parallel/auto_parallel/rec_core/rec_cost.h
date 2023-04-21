@@ -33,7 +33,7 @@ namespace parallel {
 #define DOUBLE_LOWEST (std::numeric_limits<double>::lowest)()
 #define DOUBLE_MIN (std::numeric_limits<double>::min)()
 
-constexpr double MATMUL_MEM_COEF = 0.25;
+constexpr double MATMUL_MEM_COEF = 1;
 constexpr size_t REDIS_COEF = 16;
 
 double CostRedis(const Graph::NodeType &node,

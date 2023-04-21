@@ -145,7 +145,9 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
 
   std::vector<double> cost_op;
 
-  if (edge_i < 2 || edge_i % 2 != 0) {
+  MS_LOG(INFO) << "graph_batch" << graph.batch_size;
+  if (edge_i < 2 || edge_i % 2 != 0 ||
+      (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
@@ -153,14 +155,14 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   }
 
   // Do not partition the J-axis and K-axis for the same MatMul
-  if (edge_j < 2 || edge_j % 2 != 0) {
+  if (edge_j < 2 || edge_j % 2 != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
     cost_op.push_back(StrConcatDimJ(edge_i, edge_k) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_k < 2 || edge_k % 2 != 0) {
+  if (edge_k < 2 || edge_k % 2 != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
