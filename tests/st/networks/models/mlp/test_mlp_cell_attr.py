@@ -100,7 +100,7 @@ def get_pynative_mlp_cell_reuse_loss():
 
 def get_mlp_cell_reuse_loss(reuse):
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_GRAPH_REUSE'] = reuse
+    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -110,7 +110,7 @@ def get_mlp_cell_reuse_loss(reuse):
     # cell reuse
     net = MLP()
     loss_list = train(net, data, label)
-    del os.environ['MS_DEV_GRAPH_REUSE']
+    del os.environ['MS_DEV_CELL_REUSE']
 
     return loss_list
 
@@ -208,7 +208,7 @@ def get_pynative_mlp_cell_reuse_loss_2():
 
 def get_mlp_cell_reuse_loss_2(reuse):
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_GRAPH_REUSE'] = reuse
+    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -218,7 +218,7 @@ def get_mlp_cell_reuse_loss_2(reuse):
     # cell reuse
     net = MLP2()
     loss_list = train(net, data, label)
-    del os.environ['MS_DEV_GRAPH_REUSE']
+    del os.environ['MS_DEV_CELL_REUSE']
     return loss_list
 
 
@@ -317,7 +317,7 @@ def get_pynative_mlp_cell_reuse_infer():
 
 def get_mlp_cell_reuse_infer(reuse):
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_GRAPH_REUSE'] = reuse
+    os.environ['MS_DEV_CELL_REUSE'] = reuse
 
     # gen data
     seed_set()
@@ -326,7 +326,7 @@ def get_mlp_cell_reuse_infer(reuse):
     # cell reuse
     net = MLPWithControlFlow()
     ret = net(data)
-    del os.environ['MS_DEV_GRAPH_REUSE']
+    del os.environ['MS_DEV_CELL_REUSE']
     return ret.asnumpy()
 
 
@@ -419,7 +419,7 @@ def test_mlp_drop_cell_reuse():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_GRAPH_REUSE'] = str(1)
+    os.environ['MS_DEV_CELL_REUSE'] = str(1)
 
     # gen data
     seed_set()
@@ -429,4 +429,4 @@ def test_mlp_drop_cell_reuse():
     # cell reuse
     net = DropMLP()
     train(net, data, label)
-    del os.environ['MS_DEV_GRAPH_REUSE']
+    del os.environ['MS_DEV_CELL_REUSE']

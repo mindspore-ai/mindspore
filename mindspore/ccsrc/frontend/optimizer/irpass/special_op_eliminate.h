@@ -261,9 +261,9 @@ class ResetDeferInline : public AnfVisitor {
     if (IsValueNode<FuncGraph>(node)) {
       auto fg = GetValueNode<FuncGraphPtr>(node);
       fg->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
-      static const auto graph_reuse_env = common::GetEnv("MS_DEV_GRAPH_REUSE");
-      static const auto graph_reuse_enable = graph_reuse_env == "1" || graph_reuse_env == "2";
-      if (graph_reuse_enable) {
+      static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+      static const auto cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
+      if (cell_reuse_enable) {
         fg->erase_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
         fg->erase_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH);
         fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
