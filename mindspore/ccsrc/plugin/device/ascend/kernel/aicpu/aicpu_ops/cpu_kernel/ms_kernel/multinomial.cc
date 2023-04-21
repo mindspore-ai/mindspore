@@ -46,8 +46,8 @@ bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
 }  // namespace
 
 namespace aicpu {
-int64_t GetSeed(const CpuKernelContext &ctx, uint64_t count, int64_t state) {
-  int64_t final_seed = 0;
+uint64_t GetSeed(const CpuKernelContext &ctx, uint64_t count, uint64_t state) {
+  uint64_t final_seed = 0;
   auto attr_seed = ctx.GetAttr("seed");
   auto attr_seed2 = ctx.GetAttr("seed2");
   if (count != 0) {
@@ -74,7 +74,7 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *input_count, Tensor 
   // count the execution times of the op
   uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
   // seed of the op, passed between executions, which make op stateful
-  int64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
+  uint64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
 
   // setup random engine
   RNG_Engine rng;
@@ -85,8 +85,8 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *input_count, Tensor 
   if (count_ptr[0] == 0) {
     ++count_ptr[0];
   }
-  auto state_ptr = reinterpret_cast<int64_t *>(input_state->GetData());
-  state_ptr[0] = static_cast<int64_t>(rng());
+  auto state_ptr = reinterpret_cast<uint64_t *>(input_state->GetData());
+  state_ptr[0] = static_cast<uint64_t>(rng());
 
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
   auto output_data = reinterpret_cast<T_out *>(output->GetData());

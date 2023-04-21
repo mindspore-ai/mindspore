@@ -109,6 +109,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
                    char *key = nullptr);
 
   py::dict GetParams(const std::string &phase);
+  py::bytes GetRandomStatus(const std::string &phase) const;
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params_value);
   void PyExePath(const py::object &py_exe_path) const;

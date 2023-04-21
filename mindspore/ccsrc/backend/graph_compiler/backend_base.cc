@@ -874,6 +874,25 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
+std::string MindRTBackendBase::GetRandomStatus(const ActorInfo &actor_info) {
+  auto iter = actor_to_graph_compiler_info_.find(actor_info);
+  if (iter == actor_to_graph_compiler_info_.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find actor info " << actor_info;
+  }
+  MS_EXCEPTION_IF_NULL(iter->second);
+
+  auto device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (device_context->graph_executor_ == nullptr) {
+    return "";
+  }
+  std::vector<FuncGraphPtr> graphs;
+  std::transform(iter->second->graphs_.begin(), iter->second->graphs_.end(), std::back_inserter(graphs),
+                 [](const auto &g) -> FuncGraphPtr { return g; });
+  return device_context->graph_executor_->GetRandomStatus(graphs);
+}
+
 BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                                      const std::vector<tensor::TensorPtr> &output_tensors,
                                                      size_t *output_position,

@@ -44,6 +44,7 @@ class AscendGraphExecutor : public GraphExecutor {
 
   // Adjust kernel graph before run graph, used in Graph Mode.
   void PreprocessBeforeRun(const KernelGraphPtr &graph) const;
+  std::string GetRandomStatus(const std::vector<FuncGraphPtr> &graphs) override;
 
  private:
   // compile graph interface

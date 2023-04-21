@@ -27,17 +27,17 @@ multinomial_op_info = AiCPURegOp("Multinomial") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I32_Default) \
+                  DataType.U64_Default, DataType.I32_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I32_Default) \
+                  DataType.U64_Default, DataType.I32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I32_Default) \
+                  DataType.U64_Default, DataType.I32_Default) \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I64_Default) \
+                  DataType.U64_Default, DataType.I64_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I64_Default) \
+                  DataType.U64_Default, DataType.I64_Default) \
     .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.U64_Default,
-                  DataType.I64_Default, DataType.I64_Default) \
+                  DataType.U64_Default, DataType.I64_Default) \
     .get_op_info()
 
 
