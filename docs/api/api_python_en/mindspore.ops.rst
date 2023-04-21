@@ -299,6 +299,7 @@ Element-wise Operations
     mindspore.ops.truncate_mod
     mindspore.ops.xdivy
     mindspore.ops.xlogy
+    mindspore.ops.zeta
 
 Reduction Functions
 ^^^^^^^^^^^^^^^^^^^

@@ -1445,7 +1445,7 @@ def inplace_add(x, v, indices):
     return inplace_add_inner(x, v)
 
 
-def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-outer-name
+def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined-outer-name
     """
     Adds Tensor `updates` to specified axis and indices of Tensor `var` element-wise.
 
@@ -6050,11 +6050,13 @@ def frac(x):
 @_primexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
+
     def _check(axis, len_axis):
         if not isinstance(axis, int):
             raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
         if axis < -len_axis or axis > len_axis:
             raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
+
     len_axis = len(x_shape)
     _check(axis, len_axis)
     prem = [i for i in range(len_axis)]
@@ -8240,6 +8242,7 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
             raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
                              f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
                              f"shape2[-2]: {shape2[-2]}.")
+
     _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
@@ -9324,6 +9327,7 @@ def _check_dim_in_range(dim, ndim):
             raise TypeError(f'axes should be integers, not {type(dim)}')
         if -ndim > dim or dim >= ndim:
             raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
+
     _check(dim, ndim)
     return dim % ndim
 
@@ -10641,6 +10645,53 @@ def tanhshrink(input):
     return input - tanh_op(input)
 
 
+def zeta(input, other):
+    r"""
+    Elemental-wise compute the Hurwitz zeta output.
+
+    .. math::
+
+        \zeta(x, q) = \sum_{k=0}^{\infty} \frac{1}{(k + q)^x}
+
+    Args:
+        input (Union([Tensor, int, float]): Input Tensor. Represented as :math:`x` in the formula. If it's a Tensor, its
+            dtype must be either float32 or float64.
+        other (Union([Tensor, int, float]): Input Tensor must have the same dtype as `input`.
+            Represented as :math:`q` in the formula.
+
+    Returns:
+        Tensor, The result of Hurwitz zeta function.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is not tensor.
+        TypeError: If dtype of `input` is neither float32 nor float64.
+        TypeError: If dtype of `other` is neither float32 nor float64.
+
+    Examples:
+        >>> x = Tensor(np.array([10.]), mindspore.float32)
+        >>> q = Tensor(np.array([1.]), mindspore.float32)
+        >>> z = ops.zeta(x, q)
+        >>> print(z)
+        [1.0009946]
+    """
+    if isinstance(input, (int, float)):
+        if not isinstance(other, Tensor):
+            raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
+        _dtype = other.dtype
+        input = _get_cache_prim(P.Cast)()(input, _dtype)
+    if isinstance(other, (int, float)):
+        if not isinstance(input, Tensor):
+            raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
+        _dtype = input.dtype
+        other = _get_cache_prim(P.Cast)()(other, _dtype)
+    if input.size() < other.size():
+        input = _get_cache_prim(P.BroadcastTo)(other.shape)(input)
+    elif input.size() > other.size():
+        other = _get_cache_prim(P.BroadcastTo)(input.shape)(other)
+    output = _get_cache_prim(P.Zeta)()(input, other)
+    return output
+
+
 def matrix_power(input, n):
     """
     Raises a square matrix to the (integer) power `n` .
@@ -10930,6 +10981,7 @@ __all__ = [
     'tril_indices',
     'histc',
     'nextafter',
-    'triu_indices'
+    'triu_indices',
+    'zeta'
 ]
 __all__.sort()
