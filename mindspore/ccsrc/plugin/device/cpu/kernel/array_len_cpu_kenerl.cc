@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/array_length_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/array_len_cpu_kernel.h"
 
 #include <iostream>
 #include <cmath>
