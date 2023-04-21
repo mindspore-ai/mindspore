@@ -59,15 +59,15 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
   // Check input/output/workspace
   auto input_addrs = TaskGenerator::GetTaskInput(node);
   auto output_addrs = TaskGenerator::GetTaskOutput(node);
-  auto workspace_addrs = TaskGenerator::GetTaskWorkspace(node);
 
   std::vector<AddressPtr> node_addresses;
+  // Only need to check input and output.
+  // The overflow addr was additionally added to workspace.
   std::move(input_addrs.begin(), input_addrs.end(), std::back_inserter(node_addresses));
   std::move(output_addrs.begin(), output_addrs.end(), std::back_inserter(node_addresses));
-  std::move(workspace_addrs.begin(), workspace_addrs.end(), std::back_inserter(node_addresses));
 
-  if (node_addresses.size() != args_datas.size()) {
-    MS_LOG(ERROR) << "Check failed, Node " << node->UniqueName() << " total addr size " << node_addresses.size()
+  if (node_addresses.size() > args_datas.size()) {
+    MS_LOG(ERROR) << "Node " << node->UniqueName() << " total addr size " << node_addresses.size()
                   << " is not equal to " << args_datas.size();
     return false;
   }
@@ -76,8 +76,8 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
     auto node_address = node_addresses[i];
     MS_EXCEPTION_IF_NULL(node_address);
     if (node_address->addr != args_datas[i]) {
-      MS_LOG(ERROR) << "Node " << node->UniqueName() << " addr " << node_address->addr << " not equal to addr of task "
-                    << args_datas[i] << " index:" << i;
+      MS_LOG(WARNING) << "Node " << node->UniqueName() << " addr " << node_address->addr
+                      << " not equal to addr of task " << args_datas[i] << " index:" << i;
       task_valid = false;
     }
   }
@@ -559,8 +559,8 @@ bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
   std::vector<ZeroCopyTaskPtr> zero_copy_tasks;
   auto task_lists = ge::model_runner::ModelRunner::Instance().GetTaskList(graph.graph_id());
   std::map<std::string, TaskPtr> op_name_to_task;
-  std::transform(task_lists.begin(), task_lists.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
-                 [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
+  (void)std::transform(task_lists.begin(), task_lists.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
+                       [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
 
   auto nodes = graph.execution_order();
   for (const auto &node : nodes) {
@@ -640,8 +640,8 @@ bool RtModelZeroCopy::CheckRtModelValid(const session::KernelGraph &graph) {
   auto graph_id = graph.graph_id();
   auto tasks = ge::model_runner::ModelRunner::Instance().GetTaskList(graph_id);
   std::map<std::string, TaskPtr> op_name_to_task;
-  std::transform(tasks.begin(), tasks.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
-                 [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
+  (void)std::transform(tasks.begin(), tasks.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
+                       [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
 
   auto nodes = graph.execution_order();
   bool task_valid = true;
@@ -670,7 +670,7 @@ bool RtModelZeroCopy::CheckRtModelValid(const session::KernelGraph &graph) {
     }
     std::vector<void *> args_datas(task_size / sizeof(void *), nullptr);
     if (aclrtMemcpy(args_datas.data(), task_size, task_args, task_size, ACL_MEMCPY_DEVICE_TO_HOST) != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "aclrtMemcpy failed, task " << task->task_name() << " task_size " << task_size;
+      MS_LOG(WARNING) << "aclrtMemcpy failed, task " << task->task_name() << " task_size " << task_size;
       return false;
     }
 

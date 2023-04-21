@@ -125,8 +125,8 @@ struct FlexArray {
 };
 
 struct GlobalWorkspace {
-  size_t size;
-  size_t type;
+  size_t size{0};
+  size_t type{0};
   bool is_overflow = false;
 };
 
@@ -149,7 +149,7 @@ struct KernelJsonInfo {
   uint32_t task_ration{0};
   std::string core_type;
   std::vector<std::vector<size_t>> args_remap;
-  KernelJsonInfo() {}
+  KernelJsonInfo() = default;
 };
 
 class BACKEND_EXPORT KernelPack {

@@ -1386,14 +1386,14 @@ def test_tensor_flatten():
 def test_tensor_reshape():
     lst = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
     tensor_list = to_tensor(lst)
+    assert tensor_list.reshape([-1, 4]).shape == (2, 4)
+    assert tensor_list.reshape(1, -1, 4).shape == (1, 2, 4)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.reshape({0, 1, 2})
         _pynative_executor.sync()
     with pytest.raises(ValueError):
         tensor_list = tensor_list.reshape(1, 2, 3)
         _pynative_executor.sync()
-    assert tensor_list.reshape([-1, 4]).shape == (2, 4)
-    assert tensor_list.reshape(1, -1, 4).shape == (1, 2, 4)
 
 
 @pytest.mark.level1
@@ -1405,12 +1405,12 @@ def test_tensor_reshape():
 def test_tensor_squeeze():
     lst = [[[1.0], [2.0], [3.0]]]
     tensor_list = to_tensor(lst)
+    assert tensor_list.squeeze().shape == (3,)
+    assert tensor_list.squeeze(axis=2).shape == (1, 3)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.squeeze(1.2)
     with pytest.raises(ValueError):
         tensor_list = tensor_list.squeeze(4)
-    assert tensor_list.squeeze().shape == (3,)
-    assert tensor_list.squeeze(axis=2).shape == (1, 3)
 
 
 @pytest.mark.level1

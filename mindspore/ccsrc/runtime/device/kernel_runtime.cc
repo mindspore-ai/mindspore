@@ -249,7 +249,7 @@ void KernelRuntime::GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *t
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
     *total_size += align_size;
-    align_size_list->emplace_back(align_size);
+    (void)align_size_list->emplace_back(align_size);
     (void)address_list->emplace_back(address);
   }
 }
@@ -615,9 +615,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       // If kernel has flag kFlagEnableZeroCopyInGraph, the internal parameter and the corresponding
       // cnode cannot use the same device address.
       DeviceAddressPtr device_address =
-        ((graph.has_flag(kFlagEnableZeroCopyInGraph) || graph.has_flag(kFlagPyNativeRunInGraph))
-           ? nullptr
-           : GetInternalDeviceAddress(graph, item));
+        (graph.has_flag(kFlagEnableZeroCopyInGraph) ? nullptr : GetInternalDeviceAddress(graph, item));
       GetDeviceAddress(item, shadow_backend_node_map, index, graph, &device_address);
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }

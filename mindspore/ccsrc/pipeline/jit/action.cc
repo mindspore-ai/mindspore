@@ -1164,8 +1164,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     return;
   }
 
+  bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   // GRAPH | Single Op : KernelByKernel path in MindRT.
-  if (common::GetEnv(kGraphOpRun) == "1") {
+  if (common::GetEnv(kGraphOpRun) == "1" || (pynative_mode && jit_level != "O2")) {
     MS_LOG(INFO) << "Run graph mode with kernel by kernel because env value GRAPH_OP_RUN is set to 1.";
     set_ctx(false, false, false);
     return;
@@ -1184,8 +1185,6 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     set_ctx(false, false, false);
     return;
   }
-
-  bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
 
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();

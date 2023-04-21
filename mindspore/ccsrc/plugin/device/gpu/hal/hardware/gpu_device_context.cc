@@ -812,6 +812,10 @@ bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
 }
 
 bool GPUDeviceResManager::SyncAllStreams() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Fail to bind device to current thread";
+    return false;
+  }
   bool result = GPUDeviceManager::GetInstance().SyncAllStreams();
 #ifdef ENABLE_DUMP_IR
   if (!result) {

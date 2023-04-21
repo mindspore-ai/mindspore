@@ -125,6 +125,7 @@ class AGCustomInfer : public abstract::OpInferBase {
     if (!primitive->isa<PrimitivePy>()) {
       MS_LOG(EXCEPTION) << "The prim is not a PrimitivePy. Prim name: " << primitive->name();
     }
+    // cppcheck-suppress unreadVariable
     py::gil_scoped_acquire acquire;
     auto prim_py = dyn_cast<PrimitivePy>(primitive);
     auto py_args = PreparePyInputs(input_args);

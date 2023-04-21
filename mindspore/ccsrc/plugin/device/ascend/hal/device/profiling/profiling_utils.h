@@ -35,7 +35,7 @@ struct ProfilingTraceInfo {
   std::set<std::string> trace_bp_end;
   std::set<std::string> trace_iter_end;
 
-  // profiling specific op, such as AllReduce;
+  // profiling specific op, such as AllReduce
   std::set<std::string> trace_custom_node;
 
   bool IsValid() const { return !(trace_begin.empty() || trace_iter_end.empty()); }

@@ -55,6 +55,8 @@ class BACKEND_EXPORT AsyncQueue {
  private:
   void WorkerLoop();
 
+  void ClearTaskWithException();
+
   std::queue<std::shared_ptr<AsyncTask>> tasks_;
   std::shared_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;

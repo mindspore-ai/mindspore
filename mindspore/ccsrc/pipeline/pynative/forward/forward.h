@@ -91,6 +91,7 @@ class ForwardExecutor {
   bool is_ms_function_compiling() const { return is_ms_function_compiling_; }
 
   void WorkerJoin() { forward_queue_->WorkerJoin(); }
+  void ClearForwardTask();
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
   std::string GetCurrentCellObjId() const;
