@@ -24,10 +24,10 @@
 #   - Install MindSpore Lite within new installed python by pip.
 #
 # Augments:
-#   - MINDSPORE_LITE_VERSION: MindSpore Lite version to install, >=1.8.0, required
+#   - MINDSPORE_LITE_VERSION: MindSpore Lite cloud-side inference version to install, >=2.0.0, required
 #
 # Usage:
-#   Run script like `MINDSPORE_LITE_VERSION=1.9.0 bash ./lite-server-cpu-pip.sh`.
+#   Run script like `MINDSPORE_LITE_VERSION=2.0.0 bash ./lite-server-cpu-pip.sh`.
 
 set -e
 
@@ -38,8 +38,8 @@ version_less() {
     test "$(echo "$@" | tr ' ' '\n' | sort -rV | head -n 1)" != "$1";
 }
 
-if version_less "${MINDSPORE_LITE_VERSION}" "1.8.0"; then
-    echo "MINDSPORE_LITE_VERSION should be >=1.8.0, please check available versions at https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html."
+if version_less "${MINDSPORE_LITE_VERSION}" "2.0.0"; then
+    echo "MINDSPORE_LITE_VERSION should be >=2.0.0, please check available versions at https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html."
     exit 1
 fi
 

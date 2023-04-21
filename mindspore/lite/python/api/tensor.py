@@ -241,9 +241,9 @@ class Tensor:
         >>> tensor.dtype = mslite.DataType.FLOAT32
         >>> print(tensor.dtype)
         DataType.FLOAT32
-        >>> tensor.shape = [1, 2, 2, 3]
+        >>> tensor.shape = [1, 3, 2, 2]
         >>> print(tensor.shape)
-        [1, 2, 2, 3]
+        [1, 3, 2, 2]
         >>> tensor.format = mslite.Format.NCHW
         >>> print(tensor.format)
         Format.NCHW
@@ -254,7 +254,7 @@ class Tensor:
         >>> print(tensor)
         name: tensor1,
         dtype: DataType.FLOAT32,
-        shape: [1, 2, 2, 3],
+        shape: [1, 3, 2, 2],
         format: Format.NCHW,
         element_num: 12,
         data_size: 48.
@@ -417,16 +417,18 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.shape = [1, 2, 2, 3]
+            >>> tensor.shape = [1, 3, 2, 2]
             >>> tensor.dtype = mslite.DataType.FLOAT32
-            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> in_data = np.arange(1 * 3 * 2 * 2, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> data = tensor.get_data_to_numpy()
             >>> print(data)
-            [[[[ 0.  1.  2.]
-               [ 3.  4.  5.]]
-              [[ 6.  7.  8.]
-               [ 9. 10. 11.]]]]
+            [[[[ 0.  1.]
+               [ 2.  3.]]
+              [[ 4.  5.]
+               [ 6.  7.]]
+              [[ 8.  9.]
+               [ 10. 11.]]]]
         """
         return self._tensor.get_data_to_numpy()
 
@@ -447,14 +449,14 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.shape = [1, 224, 224, 3]
+            >>> tensor.shape = [1, 3, 224, 224]
             >>> tensor.dtype = mslite.DataType.FLOAT32
             >>> in_data = np.fromfile("input.bin", dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> print(tensor)
             name: ,
             dtype: DataType.FLOAT32,
-            shape: [1, 224, 224, 3],
+            shape: [1, 3, 224, 224],
             format: Format.NCHW,
             element_num: 150528,
             data_size: 602112.
@@ -462,14 +464,14 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.shape = [1, 2, 2, 3]
+            >>> tensor.shape = [1, 3, 2, 2]
             >>> tensor.dtype = mslite.DataType.FLOAT32
-            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> in_data = np.arange(1 * 3 * 2 * 2, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> print(tensor)
             name: ,
             dtype: DataType.FLOAT32,
-            shape: [1, 2, 2, 3],
+            shape: [1, 3, 2, 2],
             format: Format.NCHW,
             element_num: 12,
             data_size: 48.
