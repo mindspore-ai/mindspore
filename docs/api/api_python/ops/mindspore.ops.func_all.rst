@@ -6,7 +6,7 @@ mindspore.ops.all
     默认情况下，通过对维度中所有元素进行“逻辑与”来减少 `input` 的维度。也可以沿轴减少 `input` 的维度。通过控制 `keep_dim` 来确定输出和输入的维度是否相同。
 
     参数：
-        - **input** (Tensor[bool]) - 输入Tensor，shape是 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input** (Tensor) - 输入Tensor，shape是 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **axis** (Union[int, tuple(int), list(int)], 可选) - 要减少的维度。假设 `input` 的秩为r，取值范围[-r,r)。默认值：None，缩小所有维度。
         - **keep_dims** (bool, 可选) - 如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
