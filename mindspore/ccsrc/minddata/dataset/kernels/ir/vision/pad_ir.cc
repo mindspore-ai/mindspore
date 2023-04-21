@@ -17,7 +17,7 @@
 
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 
-#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_MINDDATA_PYTHON)
 #include "minddata/dataset/kernels/image/pad_op.h"
 #endif
 
@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-#if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
+#if !defined(ENABLE_ANDROID) || defined(ENABLE_MINDDATA_PYTHON)
 // PadOperation
 PadOperation::PadOperation(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value,
                            BorderType padding_mode)
