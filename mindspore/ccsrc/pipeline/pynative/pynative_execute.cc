@@ -266,7 +266,7 @@ void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::
 
 void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
   grad_executor()->SaveDynamicInputsCells(cell);
-  MS_LOG(DEBUG) << "Set dynamic shape by set inputs";
+  MS_LOG(INFO) << "Set dynamic shape by set inputs";
 }
 
 void RegPyNativeExecutor(const py::module *m) {
