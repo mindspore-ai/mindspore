@@ -45,7 +45,7 @@ def _send_data_no_flag(dataset, epoch_num):
     exec_dataset.send(epoch_num)
 
 
-def _dynamic_sink_data(dataset, dataset_iter):
+def _dynamic_sink_data(dataset, dataset_iter, network):
     """Special scenario for dataset with sink_size=1."""
     _, dataset_shapes = dataset_iter.types_shapes()
     if hasattr(dataset_iter, "sink_size") and \
@@ -54,7 +54,7 @@ def _dynamic_sink_data(dataset, dataset_iter):
        hasattr(dataset_iter, "sink_count") and \
        dataset_iter.sink_count == 1 and \
        not _has_dynamic_shape(dataset_shapes) and \
-       not ds.config.get_dynamic_shape():
+       not network.get_inputs():
         return True
     return False
 
@@ -68,10 +68,10 @@ def _dynamic_sink_exception_scenario(dataset_iter):
     return False
 
 
-def _dynamic_sink_scenario(dataset, dataset_iter):
+def _dynamic_sink_scenario(dataset, dataset_iter, network):
     """Special scenario with dynamic shape and sink_size=1."""
     flag = False
-    if _dynamic_sink_data(dataset, dataset_iter) and not _dynamic_sink_exception_scenario(dataset_iter):
+    if _dynamic_sink_data(dataset, dataset_iter, network) and not _dynamic_sink_exception_scenario(dataset_iter):
         flag = True
 
     return flag
@@ -229,7 +229,7 @@ def connect_network_with_dataset(network, dataset_helper):
             "The dataset has been connected to other network, please check the code.")
 
     queue_name = dataset.__transfer_dataset__.queue_name
-    if _dynamic_sink_scenario(dataset, dataset_iter) and not context.get_context("enable_ge"):
+    if _dynamic_sink_scenario(dataset, dataset_iter, network) and not context.get_context("enable_ge"):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
 
@@ -260,7 +260,7 @@ def connect_network_with_dataset(network, dataset_helper):
                 network, dataset_helper, queue_name)
             aux.__sink_network__ = network
 
-    if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter):
+    if _dynamic_sink_data(dataset, dataset_iter, network) and _dynamic_sink_exception_scenario(dataset_iter):
         dataset_helper.get_data_info()
 
     return network
@@ -416,8 +416,6 @@ class _DatasetIter:
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(
             dataset)
         self.dynamic_shape = _has_dynamic_shape(self.dataset_shapes) or ds.config.get_dynamic_shape()
-        if self.dynamic_shape:
-            ds.config.set_dynamic_shape(True)
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
