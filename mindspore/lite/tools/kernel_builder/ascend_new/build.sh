@@ -192,4 +192,11 @@ if [ $? -ne 0 ]; then
   log "[ERROR] Please check make result."
   exit 1
 fi
+
+log "[INFO] Generate akg custom op files."
+ai_core_dir=${project_path}/build_out/makepkg/packages/vendors/${vendor_name}/op_impl/ai_core
+config_dir=${ai_core_dir}/tbe/config
+dsl_dir=${ai_core_dir}/tbe/${vendor_name}_impl
+python3 $project_path/akg/gen_custom_op_files.py ${config_dir} ${dsl_dir}
+
 log "[INFO] Build successfully, the target is in $project_path/build_out."
