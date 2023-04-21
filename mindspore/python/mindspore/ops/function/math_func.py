@@ -1300,7 +1300,7 @@ def logdet(input):
         TypeError: If dtype of `input` is not float32, float64, Complex64 or Complex128.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> a = Tensor([[[8, 9], [1, 2]], [[5, 6], [3, 4]]], mindspore.float32)
