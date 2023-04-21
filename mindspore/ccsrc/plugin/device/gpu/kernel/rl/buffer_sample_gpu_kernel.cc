@@ -35,8 +35,6 @@ BufferSampleKernelMod::~BufferSampleKernelMod() {
   }
 }
 
-void BufferSampleKernelMod::ReleaseResource() {}
-
 bool BufferSampleKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;

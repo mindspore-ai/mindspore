@@ -345,7 +345,6 @@ class BACKEND_EXPORT KernelMod {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
   virtual std::vector<size_t> GenParameters() { return {}; }
-  virtual void ReleaseResource() {}
   // Initialization for the kernel mod.
   virtual bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
                     const std::vector<KernelTensorPtr> &outputs) {

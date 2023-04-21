@@ -664,20 +664,6 @@ void WaitCommunicationFinish(const std::vector<tensor::TensorPtr> &input_tensors
     }
   }
 }
-
-void ReleaseKernelResource(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &kernels = graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (IsOneOfCacheBlackList(common::AnfAlgo::GetCNodeName(kernel))) {
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-      if (kernel_mod) {
-        kernel_mod->ReleaseResource();
-      }
-    }
-  }
-}
 }  // namespace
 
 // Determine the address of the graph and do not change the address in subsequent executions
@@ -697,7 +683,6 @@ void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::Ten
   WaitCommunicationFinish(input_tensors);
   CopyDataToDevice(graph, input_tensors, device_context);
   LaunchKernels(graph, device_context);
-  ReleaseKernelResource(graph);
 }
 
 void RunSingleOpGraphDynamic(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -705,6 +690,5 @@ void RunSingleOpGraphDynamic(const KernelGraphPtr &graph, const std::vector<tens
   WaitCommunicationFinish(input_tensors);
   CopyDataToDevice(graph, input_tensors, device_context);
   LaunchKernelsDynamic(graph, device_context, is_gradient_out);
-  ReleaseKernelResource(graph);
 }
 }  // namespace mindspore::runtime
