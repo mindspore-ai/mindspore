@@ -18,14 +18,13 @@
     如果给定的segment_ids :math:`i` 的和为空，则 :math:`\text{output}[i] = 0` 。如果 `segment_ids` 元素为负数，将忽略该值。 `num_segments` 必须等于不同segment_id的数量。
 
     参数：
-        - **input_x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。
-        - **segment_ids** (Tensor) - 将shape设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
-        - **num_segments** (Union[int, Tensor], 可选) - 分段数量 :math:`z` ，数据类型为int或零维的Tensor。
+        - **input_x** (Tensor) - 待进行分段求和的Tensor，shape： :math:`(x_1, x_2, ..., x_R)` 。
+        - **segment_ids** (Tensor) - 用于指示每个元素所属段的标签，将shape设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
+        - **num_segments** (Union[int, Tensor], 可选) - 分段数量 :math:`z` ，可以为int或零维的Tensor。
 
     返回：
-        Tensor，shape： :math:`(z, x_{N+1}, ..., x_R)` 。
+        Tensor, shape为 :math:`(z, x_{N+1}, ..., x_R)`.
 
     异常：
         - **TypeError** - `num_segments` 不是int类型或者零维Tensor。
         - **ValueError** - `segment_ids` 的维度不等于1。
-
