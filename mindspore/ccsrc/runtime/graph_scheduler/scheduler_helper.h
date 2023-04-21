@@ -45,6 +45,7 @@ class SchedulerHelper {
 
   // Judge whether need ignore the input address that is not used in the kernel launch.
   static bool IsIgnoredInputAddress(AbstractActor *const to_actor, size_t to_input_index);
+  static size_t GetIgnoredInputAddressCount(const AnfNodePtr &node);
 
   // Add the arrow between from actor and to actor.
   static void AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_output_index,

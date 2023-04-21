@@ -362,7 +362,6 @@ class BACKEND_EXPORT KernelAttr {
   KernelAttr &AddSkipCheckAttr(const bool &skip_check);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
   KernelAttr &AddAllOutInRef(const bool &all_out_in_ref);
-  KernelAttr &AddIgnoredInputAddress(size_t input_index);
 
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
@@ -373,7 +372,6 @@ class BACKEND_EXPORT KernelAttr {
   size_t GetOutputSize() const { return output_type_.size(); }
   const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
   const bool &GetAllOutInRef() const { return all_out_in_ref_; }
-  const std::vector<size_t> &ignored_input_addresses() const { return ignored_input_addresses_; }
 
   void SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
   void SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
@@ -394,9 +392,6 @@ class BACKEND_EXPORT KernelAttr {
 
   // The reference for all outputs and inputs of the same index.
   bool all_out_in_ref_{false};
-
-  // The input addresses that are not used in the op calculation.
-  std::vector<size_t> ignored_input_addresses_;
 };
 BACKEND_EXPORT std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 

@@ -90,7 +90,15 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
   auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+
   for (size_t j = 0; j < input_size; ++j) {
+    // Ignore the input address that is not used in the kernel launch.
+    if ((kernel_mod != nullptr) && kernel_mod->IsLaunchIgnoredInputAddress(j)) {
+      MS_LOG(INFO) << "Ignore dump input data for kernel:" << node->fullname_with_scope() << " with input index:" << j;
+      continue;
+    }
+
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, j);
     auto input = kernel_with_index.first;
     auto index = kernel_with_index.second;

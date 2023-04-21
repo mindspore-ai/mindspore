@@ -70,8 +70,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(launch_info);
   MS_EXCEPTION_IF_NULL(device_context);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
 
   // get inputs
   auto kernel_inputs = launch_info->inputs_;
@@ -80,7 +79,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto addr = kernel_inputs[j];
     MS_EXCEPTION_IF_NULL(addr);
     // Ignore the input address that is not used in the kernel launch.
-    if ((addr->addr == nullptr) && kernel_info->IsIgnoredInputAddress(j)) {
+    if ((kernel_mod != nullptr) && kernel_mod->IsLaunchIgnoredInputAddress(j)) {
+      MS_LOG(INFO) << "Ignore dump input data for kernel:" << cnode->fullname_with_scope() << " with input index:" << j;
       continue;
     }
     auto input_kernel = cnode->input(j + 1);

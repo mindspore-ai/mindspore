@@ -294,14 +294,6 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
     kernel::SetDynamicInputSizeAttr(kernel_node);
   }
-
-  // Set the kernel info of ignored_input_address.
-  const auto &ignored_input_addresses = selected_kernel_attr.ignored_input_addresses();
-  if (!ignored_input_addresses.empty()) {
-    auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    kernel_info->set_ignored_input_addresses(ignored_input_addresses);
-  }
 }
 
 std::string GetSupportedTypesStr(const CNodePtr &kernel_node) {

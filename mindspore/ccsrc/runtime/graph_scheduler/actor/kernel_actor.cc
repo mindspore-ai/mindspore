@@ -606,7 +606,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     // May be the ignored input address that is not used in the kernel launch.
-    if (!kernel_info_->ignored_input_addresses().empty() && kernel_info_->IsIgnoredInputAddress(i)) {
+    if (kernel_mod_->IsLaunchIgnoredInputAddress(i)) {
       MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << i;
       continue;
     }

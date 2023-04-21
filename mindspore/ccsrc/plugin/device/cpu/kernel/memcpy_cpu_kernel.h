@@ -40,6 +40,10 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  // The input addresses that are not used in the kernel launch.
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+  bool IsLaunchIgnoredInputAddress(size_t input_index) const override { return input_index == kIndex1; }
+
  private:
   std::string kernel_type_{"Unknown"};
   static std::vector<KernelAttr> common_valid_types_with_bool_complex_;

@@ -191,18 +191,30 @@ bool SchedulerHelper::IsIgnoredInputAddress(AbstractActor *const to_actor, size_
   auto kernel_actor = dynamic_cast<KernelActor *>(to_actor);
   auto &to_kernel = kernel_actor->kernel();
   MS_EXCEPTION_IF_NULL(to_kernel);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(to_kernel->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  if (kernel_info->ignored_input_addresses().empty()) {
-    return false;
-  }
-  if (kernel_info->IsIgnoredInputAddress(to_input_index)) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(to_kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (kernel_mod->IsLaunchIgnoredInputAddress(to_input_index)) {
     MS_LOG(INFO) << "Ignore the input address for kernel: " << to_kernel->fullname_with_scope()
                  << " with input index: " << to_input_index;
     return true;
   }
 
   return false;
+}
+
+size_t SchedulerHelper::GetIgnoredInputAddressCount(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  const auto &ignored_input_addresses = kernel_mod->GetLaunchIgnoredInputAddressIdx();
+  if (ignored_input_addresses.empty()) {
+    return 0;
+  }
+
+  auto count = std::count_if(ignored_input_addresses.begin(), ignored_input_addresses.end(),
+                             [input_num](size_t index) { return index < input_num; });
+  return static_cast<size_t>(count);
 }
 
 void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
@@ -898,24 +910,22 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
 
     // Check the input of kernel actors and copy actors.
     if ((actor->type_ == KernelTransformType::kKernelActor) || (actor->type_ == KernelTransformType::kCopyActor)) {
-      size_t expect_toal_input_num = 1;
+      size_t expect_input_num = 1;
       if (actor->type_ == KernelTransformType::kKernelActor) {
         auto kernel_actor = dynamic_cast<KernelActor *>(actor.get());
         MS_EXCEPTION_IF_NULL(kernel_actor);
         auto &kernel = kernel_actor->kernel();
         MS_EXCEPTION_IF_NULL(kernel);
-        size_t toal_input_num = common::AnfAlgo::GetInputTensorNum(kernel_actor->kernel());
-        auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
-        MS_EXCEPTION_IF_NULL(kernel_info);
-        expect_toal_input_num = toal_input_num - kernel_info->ignored_input_addresses().size();
+        size_t total_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+        expect_input_num = total_input_num - GetIgnoredInputAddressCount(kernel);
       }
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();
-      if (input_data_num + device_tensor_store_num != expect_toal_input_num) {
+      if (input_data_num + device_tensor_store_num != expect_input_num) {
         MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The input building of " << actor->GetAID().Name()
                           << " is wrong, input data num: " << input_data_num
                           << ", device tensor store num: " << device_tensor_store_num
-                          << ", total input num: " << expect_toal_input_num;
+                          << ", total input num: " << expect_input_num;
       }
     }
   }

@@ -550,12 +550,6 @@ void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr>
                    << ", node attr: " << attr_info;
     }
 
-    // Set the kernel info of ignored_input_address.
-    MS_EXCEPTION_IF_CHECK_FAIL((match_result.second < supported_kernel_attrs.size()), "Match index is out of range.");
-    auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    kernel_info->set_ignored_input_addresses(supported_kernel_attrs[match_result.second].ignored_input_addresses());
-
     CreateKernel({node});
   }
 }
