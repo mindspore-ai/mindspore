@@ -27,6 +27,7 @@ constexpr size_t kScaleAndTranslateInputsNum = 4;
 constexpr size_t kScaleAndTranslateOutputsNum = 1;
 constexpr size_t kScaleAndTranslateGradInputsNum = 4;
 constexpr size_t kScaleAndTranslateGradOutputsNum = 1;
+constexpr float kScaleAndTranslateBlock = 1000.0f;
 }  // namespace
 
 bool ScaleAndTranslateCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -276,7 +277,11 @@ void ScaleAndTranslateGradCpuKernelMod::ComputeGradSpansCore(const Spans *spans,
       }
     }
   };
-  ParallelLaunchAutoSearch(shard_grad_output, forward_output_size, this, &parallel_search_info_);
+  if (forward_input_size < kScaleAndTranslateBlock) {
+    ParallelLaunch(shard_grad_output, forward_output_size, kScaleAndTranslateBlock);
+  } else {
+    ParallelLaunchAutoSearch(shard_grad_output, forward_output_size, this, &parallel_search_info_);
+  }
   int64_t max_size = 0;
   for (std::vector<GradComponent> &gc : grad_components) {
     if (!gc.empty()) {
