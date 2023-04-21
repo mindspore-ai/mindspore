@@ -142,17 +142,31 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
   auto updates = GetDeviceAddress<T>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
 
+  if (inputs[kIndex0]->size > SECUREC_MEM_MAX_LEN) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input data size[" << inputs[kIndex0]->size
+                      << " bytes] is larger than memcpy_s cache limit[" << SECUREC_MEM_MAX_LEN << " bytes].";
+  }
+
   // ScatterNd* operations need to write input data and copy into output data,
   // while TensorScatter* operations need to copy input data and write into output data.
-  auto ret = memcpy_s(output, outputs[kIndex0]->size, input, inputs[kIndex0]->size);
-  if (ret == ERANGE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input data size[" << inputs[kIndex0]->size
-                      << " bytes] is larger than memcpy_s cache limit[" << SECUREC_MEM_MAX_LEN
-                      << " bytes]. Error no: " << ret;
+  const size_t big_mem_limit = 1 << 20;
+  if (outputs[kIndex0]->size <= big_mem_limit) {
+    auto ret = memcpy_s(output, outputs[kIndex0]->size, input, inputs[kIndex0]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
+    }
+  } else {
+    // memcpy big data by a parallel way
+    auto memcpy_task = [&](size_t start, size_t end) {
+      size_t size = (end - start) * sizeof(T);
+      auto ret = memcpy_s(output + start, size, input + start, size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
+      }
+    };
+    ParallelLaunchAutoSearch(memcpy_task, outputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_);
   }
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
-  }
+
   int64_t invalid_index_pos = -1;
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_update(updates, batch_size_,
                                                                                              inner_size_);
