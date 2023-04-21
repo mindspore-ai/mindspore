@@ -407,11 +407,21 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
     if (vnode == nullptr) {
       return -1;
     }
-    auto index = GetValue<int64_t>(vnode->value());
+    auto value = vnode->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto int64_imm_value = value->cast_ptr<Int64Imm>();
+    // If index is AnyValue or other not int64 type value, should not optimize the tuple_getitem.
+    if (int64_imm_value == nullptr) {
+      return -1;
+    }
+    auto index = int64_imm_value->value();
     if (index < 0) {
       MS_EXCEPTION_IF_NULL(set_item_tuple_->abstract());
       auto sequence_abstract = set_item_tuple_->abstract()->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abstract);
+      if (sequence_abstract->dynamic_len()) {
+        return -1;
+      }
       index = index + SizeToLong(sequence_abstract->size());
     }
     if (index < 0) {
