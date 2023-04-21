@@ -47,6 +47,17 @@ AbstractBasePtr InSequenceInferInner(const PrimitivePtr &primitive, const std::v
   constexpr size_t element_index = 0;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
   auto second_abs = input_args[seq_index];
+  if (second_abs->isa<abstract::AbstractTensor>()) {
+    auto shape = second_abs->BuildShape()->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->shape().size() > 1) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', the rank must be less than 1 when the second input is a Tensor, "
+                               << "but got: " << second_abs->ToString();
+    }
+
+    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+  }
   if (!second_abs->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', the second input should be tuple or list but got: " << second_abs->ToString();
