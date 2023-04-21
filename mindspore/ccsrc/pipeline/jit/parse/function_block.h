@@ -60,7 +60,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // A block is matured if all its predecessors is generated
   void Mature();
   CNodePtr ForceToCondNode(const AnfNodePtr &cond);
-  CNodePtr ForceToWhileCond(const AnfNodePtr &cond);
   void Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args);
   std::set<AnfNodePtr> SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi);
   CNodePtr ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
@@ -159,11 +158,11 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
-  void set_changed_non_param_attrs(const std::string &attr, const AnfNodePtr &node, bool used) {
+  void SetChangedNonParamAttrs(const std::string &attr, const AnfNodePtr &node, bool used) {
     changed_non_param_attrs_[attr] = std::pair<AnfNodePtr, bool>(node, used);
   }
 
-  std::pair<AnfNodePtr, bool> get_changed_non_param_attr(const std::string &attr) {
+  std::pair<AnfNodePtr, bool> GetChangedNonParamAttr(const std::string &attr) {
     auto iter = changed_non_param_attrs_.find(attr);
     if (iter == changed_non_param_attrs_.end()) {
       return std::pair(nullptr, false);

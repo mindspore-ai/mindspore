@@ -512,13 +512,6 @@ CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond) {
   return op_apply_node;
 }
 
-CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
-  MS_EXCEPTION_IF_NULL(cond);
-  TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimCond), cond});
-  return op_apply_node;
-}
-
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
   MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();

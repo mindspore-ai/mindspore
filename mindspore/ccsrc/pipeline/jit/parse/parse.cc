@@ -1414,11 +1414,11 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
 AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const {
   std::string var_name = "self.";
   std::string attr_name = node.attr("attr").cast<std::string>();
-  auto changed_non_param_attr = block->get_changed_non_param_attr(attr_name);
+  auto changed_non_param_attr = block->GetChangedNonParamAttr(attr_name);
   auto attr_node = changed_non_param_attr.first;
   if (attr_node != nullptr) {
     if (!changed_non_param_attr.second) {
-      block->set_changed_non_param_attrs(attr_name, attr_node, true);
+      block->SetChangedNonParamAttrs(attr_name, attr_node, true);
     }
     return attr_node;
   }
@@ -2083,7 +2083,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   }
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
   condition_node = HandleInterpret(header_block, condition_node, test_node);
-  AnfNodePtr while_condition_node = header_block->ForceToWhileCond(condition_node);
+  AnfNodePtr while_condition_node = nullptr;
+  {
+    TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(condition_node->debug_info()));
+    while_condition_node = header_block->ForceToCondNode(condition_node);
+  }
   UpdateInterpretForUserNode(while_condition_node, condition_node);
   while_condition_node = HandleInterpret(header_block, while_condition_node, test_node);
   (void)header_block->ConditionalJump(while_condition_node, body_block, after_block);
@@ -2760,7 +2764,7 @@ void Parser::HandleAssignClassNonParamMember(const FunctionBlockPtr &block, cons
   (void)setattr_node_inputs.emplace_back(assigned_node);
   auto setattr_node = fg->NewCNodeInOrder(setattr_node_inputs);
   MS_LOG(DEBUG) << "Create setattr node: " << setattr_node->DebugString();
-  block->set_changed_non_param_attrs(attr_name, setattr_node, false);
+  block->SetChangedNonParamAttrs(attr_name, setattr_node, false);
 }
 
 void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ,
