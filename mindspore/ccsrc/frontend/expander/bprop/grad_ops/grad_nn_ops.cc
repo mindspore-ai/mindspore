@@ -403,7 +403,7 @@ REG_BPROP_BUILDER("LSTM").SetBody(BODYFUNC(ib) {
   return {dx, dhx, dcx, dw};
 });
 
-REG_BPROP_BUILDER("CudnnGRU").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CudnnGRU.NotReady").SetBody(BODYFUNC(ib) {
   auto input_size = ib->GetAttr("input_size");
   auto hidden_size = ib->GetAttr("hidden_size");
   auto num_layers = ib->GetAttr("num_layers");
@@ -1769,33 +1769,6 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
     grad = grad + (ib->TupleGetItem(dout, 1) - ib->Squeeze(matmul_tmp, MakeValue(ShapeVector{1}))) * softmax;
   }
   return {grad, ib->ZerosLike(labels)};
-});
-
-REG_BPROP_BUILDER("DepthwiseConv2dNative").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto w = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("DepthwiseConv2dNativeBackpropInput", {ib->Value<ShapeVector>(ib->GetShape(x)), w, dout},
-                     {{"channel_multiplier", ib->GetAttr("channel_multiplier")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")},
-                      {"mode", ib->GetAttr("mode")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"group", ib->GetAttr("group")}});
-  auto dw = ib->Emit("DepthwiseConv2dNativeBackpropFilter", {x, ib->Value<ShapeVector>(ib->GetShape(w)), dout},
-                     {{"channel_multiplier", ib->GetAttr("channel_multiplier")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")},
-                      {"mode", ib->GetAttr("mode")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"group", ib->GetAttr("group")}});
-  return {dx, dw};
 });
 
 REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {

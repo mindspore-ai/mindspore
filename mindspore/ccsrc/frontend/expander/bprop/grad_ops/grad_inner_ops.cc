@@ -20,94 +20,8 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const NodePtr &x) {
-  auto x_dtype = ib->GetDtype(x);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto x_shape = inputs.at(0);
-    ShapeVector shape2(x_shape.begin(), x_shape.end() - 1);
-    auto shape3 = x_shape;
-    shape3.push_back(x_shape.back());
-    return {{x_shape.back()}, shape2, shape3};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    auto rank1 = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 1;
-    auto rank2 = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 1;
-    return {1, rank1, rank2};
-  };
-  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
-  auto eye = ib->Emit("Eye", {res[0], res[0], ib->EmitValue(x_dtype)});
-  auto base_eye = ib->Reshape(eye, {-1});
-  auto tile = ib->Tile(base_eye, res[1]);
-  return ib->Reshape(tile, res[kIndex2]);
-}
-
-static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const NodePtr &x) {
-  auto x_dtype = ib->GetDtype(x);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto x_shape = inputs.at(0);
-    constexpr int c2 = 2;
-    ShapeVector shape2(x_shape.begin(), x_shape.end() - c2);
-    return {{x_shape[x_shape.size() - kDim2]}, {x_shape.back()}, shape2};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    return {1, 1, IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size() - kDim2)};
-  };
-  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
-  auto eye = ib->Emit("Eye", {res[0], res[1], ib->EmitValue(x_dtype)});
-  auto base_eye = ib->Reshape(eye, {-1});
-  auto tile = ib->Tile(base_eye, res[kIndex2]);
-  return ib->Reshape(tile, ib->Shape(x));
-}
-
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
-REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
-  auto y = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto assist = GetMatrixDiagPartAssist(ib, dout);
-  auto dx = ib->Emit("MatrixDiagPart", {dout, assist});
-  return {dx, ib->ZerosLike(y)};
-});
-
-REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto shape = ib->GetShape(x);
-  if (shape[shape.size() - kDim2] == shape.back()) {
-    auto assist = GetMatrixDiagAssist(ib, dout);
-    return {ib->Emit("MatrixDiag", {dout, assist}), ib->ZerosLike(y)};
-  }
-  auto assist1 = GetMatrixDiagPartAssist(ib, x);
-  return {ib->Emit("MatrixSetDiag", {ib->ZerosLike(x), dout, assist1}), ib->ZerosLike(y)};
-});
-
-REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto z = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto input_shape = inputs.at(0);
-    constexpr int c2 = 2;
-    auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - c2);
-    diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - 1]));
-    return {diag_shape};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 1};
-  };
-  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {})[0];
-  auto grad_dtype = ib->GetDtype(dout);
-  auto assist = GetMatrixDiagPartAssist(ib, dout);
-  auto dx = ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {res, ib->EmitValue(grad_dtype)}), assist});
-  auto dy = ib->Emit("MatrixDiagPart", {dout, assist});
-  auto dz = ib->ZerosLike(z);
-  return {dx, dy, dz};
-});
-
-REG_BPROP_BUILDER("DSDMatmul").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DSDMatmul.NotReady").SetBody(BODYFUNC(ib) {
   auto w1_gm = ib->GetInput(kIndex0);
   auto w2_gm = ib->GetInput(kIndex1);
   auto v_gm = ib->GetInput(kIndex2);
@@ -120,7 +34,7 @@ REG_BPROP_BUILDER("DSDMatmul").SetBody(BODYFUNC(ib) {
   return {d_w1_gm, d_w2_gm, d_v_gm};
 });
 
-REG_BPROP_BUILDER("MatmulDDS").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("MatmulDDS.NotReady").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
   auto q = ib->GetInput(kIndex0);
   auto k = ib->GetInput(kIndex1);
   auto local_mask = ib->GetInput(kIndex2);
@@ -138,35 +52,6 @@ REG_BPROP_BUILDER("MatmulDDS").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib
   return {dq, dk, ib->ZerosLike(local_mask), ib->ZerosLike(global_mask)};
 });
 
-REG_BPROP_BUILDER("PsROIPooling").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto pooled_height = GetValue<int64_t>(ib->GetAttr("pooled_height"));
-  auto pooled_width = GetValue<int64_t>(ib->GetAttr("pooled_width"));
-  auto spatial_scale = GetValue<float>(ib->GetAttr("spatial_scale"));
-  auto out_dim = GetValue<int64_t>(ib->GetAttr("out_dim"));
-  auto num_rois = GetValue<int64_t>(ib->GetAttr("num_rois"));
-  auto inputs = ib->GetInput(kIndex0);
-  auto rois = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto mapping_channel = ib->TupleGetItem(out, kIndex1);
-  auto inputs_shape = ib->GetShape(inputs);
-  auto batch_size = inputs_shape[kIndex0];
-  auto channels = inputs_shape[kIndex1];
-  auto height = inputs_shape[kIndex2];
-  auto width = inputs_shape[kIndex3];
-  auto dx = ib->Emit("PsROIPoolingGrad", {ib->TupleGetItem(dout, 0), rois, mapping_channel},
-                     {{"batch_size", MakeValue(batch_size)},
-                      {"channels", MakeValue(channels)},
-                      {"height", MakeValue(height)},
-                      {"width", MakeValue(width)},
-                      {"num_rois", MakeValue(num_rois)},
-                      {"pooled_height", MakeValue(pooled_height)},
-                      {"pooled_width", MakeValue(pooled_width)},
-                      {"spatial_scale", MakeValue(spatial_scale)},
-                      {"out_dim", MakeValue(out_dim)}});
-  return {dx, ib->ZerosLike(rois)};
-});
-
 REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
@@ -182,7 +67,7 @@ REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC
   return {dout};
 });
 
-REG_BPROP_BUILDER("_VirtualPipelineEnd").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("_VirtualPipelineEnd.NotReady").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("_VirtualPipelineEnd", {dout});
   return {dx};
