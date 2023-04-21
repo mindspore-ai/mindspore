@@ -495,15 +495,6 @@
 
               - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值： ``True`` 。
 
-    .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
-
-        设置参数与服务器交互的方式。
-
-        参数：
-            - **push_to_server** (bool) - 是否将参数推送到服务器。默认值： ``False`` 。
-            - **pull_from_server** (bool) - 是否从服务器提取参数。默认值： ``False`` 。
-            - **requires_aggr** (bool) - 是否在服务器中聚合参数。默认值： ``True`` 。
-
     .. py:method:: set_param_ps(recurse=True, init_in_server=False)
 
         设置可训练参数是否由参数服务器更新，以及是否在服务器上初始化可训练参数。
