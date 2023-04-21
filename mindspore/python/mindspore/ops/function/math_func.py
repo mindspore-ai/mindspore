@@ -2742,6 +2742,7 @@ def bitwise_left_shift(input, other):
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        ValueError: If `input` and `other` could not be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2798,6 +2799,7 @@ def bitwise_right_shift(input, other):
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        ValueError: If `input` and `other` could not be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
