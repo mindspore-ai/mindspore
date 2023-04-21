@@ -17,7 +17,7 @@ mindspore.ops.scatter_nd_sub
         - **input_x** (Parameter) - scatter_nd_sub的输入，任意维度的Parameter。
         - **indices** (Tensor) - 指定减法操作的索引，数据类型为mindspore.int32或mindspore.int64。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
         - **updates** (Tensor) - 指定与 `input_x` 相减操作的Tensor，数据类型与输入相同。shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
-        - **use_locking** (bool) - 是否启用锁保护。默认值：False。
+        - **use_locking** (bool) - 是否启用锁保护。默认值： ``False`` 。
 
     返回：
         Tensor，shape和数据类型与输入 `input_x` 相同。

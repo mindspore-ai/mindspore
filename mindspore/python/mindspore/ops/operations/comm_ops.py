@@ -117,8 +117,8 @@ class AllReduce(Primitive):
 
     Args:
         op (str): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
-                  On the CPU, only 'sum' is supported. Default: ReduceOp.SUM.
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+                  On the CPU, only 'sum' is supported. Default: ``ReduceOp.SUM`` .
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -197,7 +197,7 @@ class AllGather(PrimitiveWithInfer):
         - Currently only supports GRAPH_MODE and it should be called in Cell.
 
     Args:
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -285,8 +285,8 @@ class _MiniStepAllGather(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     Args:
-        group (str): The communication group to work on. Default: None.
-        grad_accumulation_step (int): The grad accumulation step. Default: None.
+        group (str): The communication group to work on. Default: ``None`` .
+        grad_accumulation_step (int): The grad accumulation step. Default: ``None`` .
     """
 
     @prim_attr_register
@@ -321,7 +321,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     Args:
-        group (str): The communication group to work on. Default: None.
+        group (str): The communication group to work on. Default: ``None`` .
     """
 
     @prim_attr_register
@@ -361,7 +361,7 @@ class _HostAllGather(PrimitiveWithInfer):
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_all_gather.py
 
     Args:
-        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: None.
+        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: ``None`` .
 
     Raises:
         TypeError: If group is not a list nor tuple, or elements of group are not int.
@@ -415,8 +415,8 @@ class ReduceScatter(Primitive):
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
-                  like SUM and MAX. Default: ReduceOp.SUM.
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+                  like SUM and MAX. Default: ``ReduceOp.SUM`` .
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (Tensor) - Input Tensor, suppose it has a shape :math:`(N, *)`, where `*`
@@ -500,8 +500,8 @@ class _HostReduceScatter(PrimitiveWithInfer):
 
     Args:
         op (str): Specifies an operation used for element-wise reductions,
-                  like sum, max, avg. Default: ReduceOp.SUM.
-        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: None.
+                  like sum, max, avg. Default: ``ReduceOp.SUM`` .
+        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: ``None`` .
 
     Raises:
         TypeError: If op is not a string and group is not a list nor tuple,
@@ -552,7 +552,7 @@ class Broadcast(PrimitiveWithInfer):
     Args:
         root_rank (int): Source rank. Required in all processes except the one
                    that is sending the data.
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -705,7 +705,7 @@ class NeighborExchange(Primitive):
         recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
         send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (tuple[Tensor]) - Shapes are same as args of send_shapes.
@@ -779,7 +779,7 @@ class AlltoAll(PrimitiveWithInfer):
         split_count (int): On each process, divide blocks into split_count number.
         split_dim (int): On each process, split blocks along the split_dim.
         concat_dim (int): On each process, gather the received blocks along the concat_dimension.
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -896,8 +896,8 @@ class NeighborExchangeV2(Primitive):
         recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
                                [recv_top, recv_bottom, recv_left, recv_right].
         data_format (str): Data format, only support NCHW now.
-        group (str, optional): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP", which means
-                     "hccl_world_group" in Ascend, and "nccl_world_group" in GPU.
+        group (str, optional): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` , which
+                     means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:
         - **input_x** (Tensor) - The Tensor before being exchanged. It has a shape of :math:`(N, C, H, W)`.
@@ -981,9 +981,9 @@ class _MirrorOperator(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     Args:
-        group (str): The communication group to work on. Default: None.
-        dev_num (int): The device number of the group. Default: None.
-        mean_flag (bool): Whether use mean in backward. Default: None.
+        group (str): The communication group to work on. Default: ``None`` .
+        dev_num (int): The device number of the group. Default: ``None`` .
+        mean_flag (bool): Whether use mean in backward. Default: ``None`` .
     """
 
     @prim_attr_register
@@ -1011,10 +1011,10 @@ class _MirrorMiniStepOperator(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     Args:
-        group (str): The communication group to work on. Default: None.
-        dev_num (int): The device number of the group. Default: None.
-        mean_flag (bool): Whether use mean in backward. Default: None.
-        grad_accumulation_step (int): The grad accumulation step. Default: None.
+        group (str): The communication group to work on. Default: ``None`` .
+        dev_num (int): The device number of the group. Default: ``None`` .
+        mean_flag (bool): Whether use mean in backward. Default: ``None`` .
+        grad_accumulation_step (int): The grad accumulation step. Default: ``None`` .
     """
 
     @prim_attr_register
@@ -1170,9 +1170,9 @@ class _MirrorMicroStepOperator(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     Args:
-        group (str): The communication group to work on. Default: None.
-        dev_num (int): The device number of the group. Default: None.
-        mean_flag (bool): Whether use mean in backward. Default: None.
+        group (str): The communication group to work on. Default: ``None`` .
+        dev_num (int): The device number of the group. Default: ``None`` .
+        mean_flag (bool): Whether use mean in backward. Default: ``None`` .
     """
 
     @prim_attr_register

@@ -12,10 +12,10 @@ mindspore.ops.softmax
 
     参数：
         - **x** (Tensor) - Softmax的输入，shape为 :math:`(N, *)` ，其中 :math:`*` 为任意额外维度。其数据类型为float16或float32。
-        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmax操作的轴。默认值：-1。
+        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmax操作的轴。默认值： ``-1`` 。
     
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值： ``None`` 。
 
     返回：
         Tensor，数据类型和shape与 `x` 相同。

@@ -11,7 +11,7 @@
 
     参数：
         - **tensors** (Union[tuple, list]) - 输入多个Tensor对象组成的tuple或list，每个Tensor具有相同shape和数据类型。
-        - **axis** (int) - 指定堆叠运算的轴。取值范围为[-(R+1), R+1)。默认值：0。
+        - **axis** (int) - 指定堆叠运算的轴。取值范围为[-(R+1), R+1)。默认值： ``0`` 。
 
     返回：
         堆叠运算后的Tensor，数据类型和 `tensors` 的相同。

@@ -13,7 +13,7 @@
         - **other** (Union[Tensor, number.Number]) - 参与减法的Tensor或者Number。
 
     关键字参数：
-        - **alpha** (Number) - :math:`other` 的乘数。默认值：1。
+        - **alpha** (Number) - :math:`other` 的乘数。默认值： ``1`` 。
 
     返回：
         Tensor，shape与广播后的shape相同，数据类型为输入中精度较高的类型。

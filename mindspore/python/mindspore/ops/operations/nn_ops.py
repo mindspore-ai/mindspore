@@ -102,7 +102,7 @@ class CeLU(Primitive):
     Refer to :func:`mindspore.ops.celu` for more details.
 
     Args:
-        alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+        alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
     Inputs:
         - **input_x** (Tensor) - Input Tensor.
@@ -415,7 +415,7 @@ class Softmax(Primitive):
     Refer to :func:`mindspore.ops.softmax` for more details.
 
     Args:
-        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: -1.
+        axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: ``-1`` .
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -453,7 +453,7 @@ class LogSoftmax(Primitive):
     Refer to :func:`mindspore.ops.log_softmax` for more details.
 
     Args:
-        axis (int, optional): The axis to perform the Log softmax operation. Default: -1.
+        axis (int, optional): The axis to perform the Log softmax operation. Default: ``-1`` .
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -807,7 +807,7 @@ class Elu(Primitive):
     Activation_function#/media/File:Activation_elu.svg>`_ .
 
     Args:
-        alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: 1.0.
+        alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: ``1.0`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of
@@ -992,10 +992,10 @@ class InstanceNorm(PrimitiveWithInfer):
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
 
     Args:
-        epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        epsilon (float): A small value added for numerical stability. Default: ``1e-5`` .
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.1.
+            Momentum value must be [0, 1]. Default: ``0.1`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of InstanceNorm, Tensor of shape :math:`(N, C)`,
@@ -1092,9 +1092,9 @@ class InstanceNormV2(Primitive):
             statistics in both training and eval modes.
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.1.
+            Momentum value must be [0, 1]. Default: ``0.1`` .
         epsilon (float): A small value added to the denominator for numerical stability.
-            Epsilon value must be [0, 1). Default: 1e-5.
+            Epsilon value must be [0, 1). Default: ``1e-5`` .
 
     Inputs:
         - **x** (Tensor) - The input of InstanceNormV2, Tensor of shape :math:`(N, C, H, W)`
@@ -1242,17 +1242,17 @@ class BatchNorm(PrimitiveWithInfer):
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Args:
-        is_training (bool): If `is_training` is True, `mean` and `variance` are computed during training.
-            If `is_training` is False, they're loaded from checkpoint during inference. Default: False.
-        epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        is_training (bool): If `is_training` is ``True`` , `mean` and `variance` are computed during training.
+            If `is_training` is ``False`` , they're loaded from checkpoint during inference. Default: ``False`` .
+        epsilon (float): A small value added for numerical stability. Default: ``1e-5`` .
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.1.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW', and the 'NHWC' format
-            is only supported in GPU target. Default: "NCHW".
+            Momentum value must be [0, 1]. Default: ``0.1`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'``, and the ``'NHWC'`` format
+            is only supported in GPU target. Default: ``"NCHW"`` .
 
     Inputs:
-        If `is_training` is False, inputs are Tensors.
+        If `is_training` is ``False`` , inputs are Tensors.
 
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
@@ -1260,7 +1260,7 @@ class BatchNorm(PrimitiveWithInfer):
         - **mean** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
         - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
 
-        If `is_training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
+        If `is_training` is ``True`` , `scale`, `bias`, `mean` and `variance` are Parameters.
 
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
@@ -1389,35 +1389,35 @@ class Conv2D(Primitive):
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
+        mode (int): Modes for different convolutions. The value is currently not used. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of the output will be equal to
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
               left and right possiblily.
               Otherwise, the last extra padding will be calculated from the bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be
+              returned without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
 
-            - pad: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the input
-              Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the
+              input Tensor borders. `pad` must be greater than or equal to 0.
         pad (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
                     the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
-                    pad[1], pad[2], and pad[3] accordingly. Default: 0.
+                    pad[1], pad[2], and pad[3] accordingly. Default: ``0`` .
         stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+            represent height and width of movement respectively. Default: ``1`` .
         dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater than or equal to 1 and bounded by the height and width of the
-                                      input `x`. Default: 1.
-        group (int): Splits input into groups. Default: 1.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
+                                      input `x`. Default: ``1`` .
+        group (int): Splits input into groups. Default: ``1`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` . Default: ``"NCHW"`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1500,8 +1500,10 @@ class DataFormatVecPermute(Primitive):
     Converts the input tensor from the `src_format` to the `dst_format` by permuting its dimensions.
 
     Args:
-        src_format (str, optional): the source data format, which can be 'NHWC' and 'NCHW'. Default: 'NHWC'.
-        dst_format (str, optional): the target data format, which can be 'NHWC' and 'NCHW'. Default: 'NCHW'.
+        src_format (str, optional): the source data format, which can be ``'NHWC'`` and ``'NCHW'`` .
+          Default: ``'NHWC'`` .
+        dst_format (str, optional): the target data format, which can be ``'NHWC'`` and ``'NCHW'`` .
+          Default: ``'NCHW'`` .
 
     Inputs:
         - **input_x** (Tensor) - A Tensor of shape :math:`(4, )` or :math:`(4, 2)` in source data format.
@@ -1655,13 +1657,13 @@ class _Pool(PrimitiveWithInfer):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of the kernel, that must be a tuple
-           of two `int` for height and width. Default: 1.
+           of two `int` for height and width. Default: ``1`` .
         strides (Union[int, tuple[int]]): The stride of the window, that must be
-            a tuple of two `int` for height and width. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
-            Default: "valid".
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: "NCHW".
+            a tuple of two `int` for height and width. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` or ``"valid"`` .
+            Default: ``"valid"`` .
+        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``"NCHW"`` .
     """
 
     @prim_attr_register
@@ -1755,22 +1757,22 @@ class MaxPool(_Pool):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents height and width of the kernel, or a tuple
-            of two int numbers that represent height and width respectively. Default: 1.
+            of two int numbers that represent height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value of pad mode is "same" or "valid".
-            Default: "valid".
+            represent height and width of movement respectively. Default: ``1`` .
+        pad_mode (str): The optional value of pad mode is ``"same"`` or ``"valid"`` .
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
+              as the input. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
-        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+        data_format (str) : The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1824,22 +1826,22 @@ class MaxPoolV1(Primitive):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
             is an integer that represents height and width of the kernel, or a tuple
-            of two integers that represent height and width respectively. Default: 1.
+            of two integers that represent height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
             the height and width of movement are both strides, or a tuple of two integers that
-            represent height and width of movement, respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
-            Default: "valid".
+            represent height and width of movement, respectively. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` or ``"valid"`` .
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The number of padding will be calculated in horizontal and vertical
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
+              as the input. The number of padding will be calculated in horizontal and vertical
               directions, and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of the
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of the
               output will be returned without padding. Extra pixels will be discarded.
-        data_format (str) : The optional value for data format, is 'NCHW' or 'NHWC'.
-            Default: 'NCHW'.
+        data_format (str) : The optional value for data format, is ``'NCHW'`` or ``'NHWC'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1960,32 +1962,34 @@ class MaxPool3D(Primitive):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
-            of three int numbers that represent depth, height and width respectively. Default: 1.
+            of three int numbers that represent depth, height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the depth, height of movement but also the width of movement,, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value of pad mode is "same", "valid" or "pad".
-            Default: "valid".
+            represent depth, height and width of movement respectively. Default: ``1`` .
+        pad_mode (str): The optional value of pad mode is ``"same"`` , ``"valid"`` or ``"pad"`` .
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
+              as the input. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of "pad" will
-              be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of
+              ``"pad"`` will be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
 
-        pad_list (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
-            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+        pad_list (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the
+            paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
             integers, the padding of head, tail, top, bottom, left and right equals to pad[0], pad[1], pad[2],
             pad[3], pad[4] and pad[5] correspondingly.
         ceil_mode (Union[bool, None]): Whether to use ceil instead of floor to calculate output shape.
             Only effective in "pad" mode.
-            When "pad_mode" is "pad" and "ceil_mode" is "None", "ceil_mode" will be set as "False". Default: None.
-        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
+            When "pad_mode" is ``"pad"`` and "ceil_mode" is ``"None"`` , "ceil_mode" will be set as ``"False"``.
+            Default: ``None`` .
+        data_format (str) : The optional value for data format. Currently only support ``'NCDHW'`` .
+            Default: ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
@@ -2081,18 +2085,18 @@ class MaxUnpool2D(Primitive):
             is an int number that represents height and width of the kernel, or a tuple
             of two int numbers that represent height and width respectively.
         strides (Union[int, tuple[int]], optional): The strides of kernel moving.
-            If `strides` is 0 or (0, 0), then `strides` equal to `ksize` . Default: 0.
+            If `strides` is 0 or (0, 0), then `strides` equal to `ksize` . Default: ``0`` .
 
             - An int number that represents the height and width of movement are both `strides` .
             - A tuple of two int numbers that represent height and width of movement respectively.
 
-        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0.
+        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: ``0`` .
 
             - If `pads` is an integer, the paddings of height and width are the same, equal to pads.
             - If `pads` is a tuple of two integers, the padding of height and width equal to pads[0]
               and pads[1] correspondingly.
 
-        output_shape (tuple[int], optional): The target output size is an optional input. Default: ().
+        output_shape (tuple[int], optional): The target output size is an optional input. Default: ``()`` .
 
             - If :math:`output\_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
             - If :math:`output\_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
@@ -2100,7 +2104,7 @@ class MaxUnpool2D(Primitive):
               (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
 
         data_format (str, optional): The optional value for data format.
-            Currently support 'NCHW' and 'NHWC'. Default: 'NCHW'.
+            Currently support ``'NCHW'`` and ``'NHWC'`` . Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -2184,26 +2188,26 @@ class MaxUnpool3D(Primitive):
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
-        strides (Union[int, tuple[int]], optional): The distance of kernel moving. Default: 0.
+        strides (Union[int, tuple[int]], optional): The distance of kernel moving. Default: ``0`` .
 
             - If it is an int number, the depth, height and width of movement are all equal to `strides`.
             - If it is a tuple of three int numbers, they represent depth, height and width of movement respectively.
             - If strides is 0 or (0, 0, 0), then `strides` equal to `ksize`.
 
-        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0.
+        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: ``0`` .
 
             - If `pads` is an integer, the paddings of depth, height and width are the same, equal to pads.
             - If `pads` is a tuple of three integers, the padding of depth, height and width equal to pads[0],
               pads[1] and pads[2] correspondingly.
 
-        output_shape (tuple[int], optional) : The target output size. Default: ().
+        output_shape (tuple[int], optional) : The target output size. Default: ``()`` .
             If :math:`output\_shape == ()`, then the shape of output computed by kszie, strides and pads shown above.
             If :math:`output\_shape != ()`, then output_shape format must be :math:`(N, C, D, H, W)` or
             :math:`(N, D, H, W, C)` and output_shape must be in range
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.
         data_format (str, optional) : The optional value for data format. Currently
-            support 'NCDHW' and 'NDHWC'. Default: 'NCDHW'.
+            support ``'NCDHW'`` and ``'NDHWC'`` . Default: ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -2272,20 +2276,20 @@ class AvgPool(Primitive):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
             is an int number that represents height and width of the kernel, or a tuple
-            of two int numbers that represent height and width respectively. Default: 1.
+            of two int numbers that represent height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
-            Default: 'valid'.
+            represent height and width of movement respectively. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``'same'`` or ``'valid'`` .
+            Default: ``'valid'`` .
 
-            - same: The height and width of the output are the same as the input divided by 'strides'
+            - ``'same'``: The height and width of the output are the same as the input divided by 'strides'
               and rounded up.
 
-            - valid: Returns the output of the valid calculation without filling. Redundant pixels that
+            - ``'valid'``: Returns the output of the valid calculation without filling. Redundant pixels that
               do not satisfy the calculation will be discarded.
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+        data_format (str): The format of input and output data. It should be ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -2371,22 +2375,22 @@ class AvgPoolV1(Primitive):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of the kernel used to take the average value,
             is an integer that represents height and width of the kernel, or a tuple
-            of two integers that represent height and width respectively. Default: 1.
+            of two integers that represent height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
             the height and width of movement are both strides, or a tuple of two integers that
-            represent height and width of movement, respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, should be one of "same" or "valid".
-            Default: "valid".
+            represent height and width of movement, respectively. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, should be one of ``"same"`` or ``"valid"`` .
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The height and width of output will be the same as
+            - ``"same"``: Adopts the way of completion. The height and width of output will be the same as
               the input. The total number of padding will be calculated horizontally and vertically,
               and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from bottom and right.
 
-            - valid: Adopts the way of discarding. The largest possible height and width of output
+            - ``"valid"``: Adopts the way of discarding. The largest possible height and width of output
               will be returned without padding. Extra pixels will be discarded.
-        data_format (str): The format of input and output data. Should be 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+        data_format (str): The format of input and output data. Should be ``'NHWC'`` or ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -2538,10 +2542,11 @@ class MaxPool3DWithArgmax(Primitive):
             represent depth, height and width of movement respectively.
         pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Default: '(1, 1, 1)'.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
-        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64.
+        dilation (Union[int, tuple[int]]): Default: ``'(1, 1, 1)'`` .
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        data_format (str) : The optional value for data format. Currently only support ``'NCDHW'`` .
+            Default: ``'NCDHW'`` .
+        argmax_type (mindspore.dtype) : The dtype for argmax. Default: ``mstype.int64`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8,
@@ -2615,19 +2620,21 @@ class Conv2DTranspose(Conv2DBackpropInput):
     Args:
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad_mode (str): Modes to fill padding. It could be ``"valid"`` , ``"same"`` , or ``"pad"`` .
+            Default: ``"valid"`` .
             Please refer to :class:`mindspore.nn.Conv2dTranspose` for more specifications about `pad_mode`.
-        pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
-                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
-        pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
-        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
-        stride (Union[int, tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
+        pad (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
+                    of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers,
+                    the padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3]
+                    correspondingly.
+        pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: ``None`` .
+        mode (int): Modes for different convolutions. The value is currently not used. Default: ``1`` .
+        stride (Union[int, tuple[int]]): The stride to be applied to the convolution filter. Default: ``1`` .
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
-            Default: 1.
-        group (int): Splits input into groups. Default: 1.
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
-            Default is 'NCHW'.
+            Default: ``1`` .
+        group (int): Splits input into groups. Default: ``1`` .
+        data_format (str): The format of input and output data. It should be ``'NHWC'`` or ``'NCHW'`` .
+            Default is ``'NCHW'`` .
 
     Inputs:
         - **dout** (Tensor) - the gradients with respect to the output of the convolution.
@@ -2676,8 +2683,8 @@ class BiasAdd(Primitive):
     consistent with the shape of the input Tensor.
 
     Args:
-        data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'.
-            Default is 'NCHW'.
+        data_format (str): The format of input and output data. It should be ``'NHWC'`` , ``'NCHW'`` or ``'NCDHW'`` .
+            Default is ``'NCHW'`` .
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
@@ -2730,7 +2737,7 @@ class NLLLoss(Primitive):
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
     N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
-    If reduction is not 'none' (default 'mean'), then
+    If reduction is not ``'none'`` (default ``'mean'`` ), then
 
     .. math::
 
@@ -2740,7 +2747,8 @@ class NLLLoss(Primitive):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
+          Default: ``'mean'`` .
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
@@ -2854,7 +2862,7 @@ class SparseSoftmaxCrossEntropyWithLogits(Primitive):
         \end{array}
 
     Args:
-        is_grad (bool): If true, this operation returns the computed gradient. Default: False.
+        is_grad (bool): If ``True`` , this operation returns the computed gradient. Default: ``False`` .
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type must be float16 or float32.
@@ -2863,7 +2871,7 @@ class SparseSoftmaxCrossEntropyWithLogits(Primitive):
 
     Outputs:
         Tensor, if `is_grad` is False, the output tensor is the value of loss which is a scalar tensor;
-        if `is_grad` is True, the output tensor is the gradient of input with the same shape as `logits`.
+        if `is_grad` is ``True`` , the output tensor is the gradient of input with the same shape as `logits`.
 
     Raises:
         TypeError: If `is_grad` is not a bool.
@@ -2960,9 +2968,9 @@ class ApplyMomentum(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
-                            from being updated. Default: False.
-        use_nesterov (bool): Enable Nesterov momentum. Default: False.
-        gradient_scale (float): The scale of the gradient. Default: 1.0.
+                            from being updated. Default: ``False`` .
+        use_nesterov (bool): Enable Nesterov momentum. Default: ``False`` .
+        gradient_scale (float): The scale of the gradient. Default: ``1.0`` .
 
     Inputs:
         - **variable** (Parameter) - Weights to be updated. Data type must be float64, int64, float, float16,
@@ -3037,9 +3045,9 @@ class SmoothL1Loss(Primitive):
 
     Args:
         beta (float, optional): A parameter used to control the point where the function will change between
-            L1 to L2 loss. The value should be greater than zero. Default: 1.0.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+            L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
@@ -3085,14 +3093,14 @@ class MultiMarginLoss(Primitive):
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
     Args:
-        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
-        margin (int, optional): A parameter to change pairwise distance. Default: 1.0.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: ``1`` .
+        margin (int, optional): A parameter to change pairwise distance. Default: ``1.0`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` ,
+            ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
 
-            - 'none': no reduction will be applied.
-            - 'mean': the sum of the output will be divided by the number of elements in the output.
-            - 'sum': the output will be summed.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: the sum of the output will be divided by the number of elements in the output.
+            - ``'sum'``: the output will be summed.
 
     Inputs:
         - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16
@@ -3143,7 +3151,8 @@ class SoftMarginLoss(Primitive):
     where :math:`x.nelement()` is the number of elements of x.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` or ``'sum'`` .
+          Default: ``"mean"`` .
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -3218,10 +3227,10 @@ class DataFormatDimMap(Primitive):
     Returns the dimension index in the destination data format given in the source data format.
 
     Args:
-        src_format (str): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
-            Default: 'NHWC'.
-        dst_format (str): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
-            Default: 'NCHW'.
+        src_format (str): An optional value for source data format. The format can be ``'NHWC'`` and ``'NCHW'`` .
+            Default: ``'NHWC'`` .
+        dst_format (str): An optional value for destination data format. The format can be ``'NHWC'`` and ``'NCHW'`` .
+            Default: ``'NCHW'`` .
 
     Inputs:
         - **input_x** (Tensor) - A Tensor, each element is used as a dimension index of the source data format.
@@ -3260,7 +3269,7 @@ class RNNTLoss(PrimitiveWithInfer):
     Computes the RNNTLoss and its gradient with respect to the softmax outputs.
 
     Args:
-        blank_label (int): blank label. Default: 0.
+        blank_label (int): blank label. Default: ``0`` .
 
     Inputs:
         - **acts** (Tensor) - Tensor of shape :math:`(B, T, U, V)`. Data type must be float16 or float32.
@@ -3341,9 +3350,9 @@ class SGD(PrimitiveWithCheck):
         For more details, please refer to :class:`mindspore.nn.SGD`.
 
     Args:
-        dampening (float): The dampening for momentum. Default: 0.0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        nesterov (bool): Enable Nesterov momentum. Default: False.
+        dampening (float): The dampening for momentum. Default: ``0.0`` .
+        weight_decay (float): Weight decay (L2 penalty). Default: ``0.0`` .
+        nesterov (bool): Enable Nesterov momentum. Default: ``False`` .
 
     Inputs:
         - **parameters** (Tensor) - Parameters to be updated. With float16 or float32 data type.
@@ -3435,7 +3444,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
-                            from being updated. Default: False.
+                            from being updated. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Weights to be updated.
@@ -3529,7 +3538,7 @@ class ApplyCenteredRMSProp(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
-                            from being updated. Default: False.
+                            from being updated. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Weights to be updated.
@@ -3600,10 +3609,10 @@ class LayerNorm(Primitive):
 
     Args:
         begin_norm_axis (int): The begin axis of the `input_x` to apply LayerNorm,
-            the value must be in [-1, rank(input)). Default: 1.
+            the value must be in [-1, rank(input)). Default: ``1`` .
         begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
-            apply LayerNorm, the value must be in [-1, rank(input)). Default: 1.
-        epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
+            apply LayerNorm, the value must be in [-1, rank(input)). Default: ``1`` .
+        epsilon (float): A value added to the denominator for numerical stability. Default: ``1e-7`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
@@ -3670,8 +3679,8 @@ class L2Normalize(Primitive):
         On Ascend, input data type of float64 is currently not supported.
 
     Args:
-        axis (Union[list(int), tuple(int), int]): Specify the axis for calculating the L2 norm. Default: 0.
-        epsilon (float): A small value added for numerical stability. Default: 1e-4.
+        axis (Union[list(int), tuple(int), int]): Specify the axis for calculating the L2 norm. Default: ``0`` .
+        epsilon (float): A small value added for numerical stability. Default: ``1e-4`` .
 
     Inputs:
         - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`,
@@ -3801,13 +3810,13 @@ class UpsampleTrilinear3D(Primitive):
     Args:
         output_size (Union[tuple[int], list[int]], optional):  A tuple or list of 3 int
             elements :math:`(output\_depth, output\_height, output\_width)`.
-            Defaults to None. Only one of `scales` and `output_size` can be specified.
+            Defaults to ``None`` . Only one of `scales` and `output_size` can be specified.
         scales (Union[tuple[float], list[float]], optional): A tuple or list of 3 float
-           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to None.
-        align_corners (bool, optional): An optional bool. Defaults to false.
-            If True, the input and output tensors are aligned by the center points of their corner pixels,
+           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to ``None`` .
+        align_corners (bool, optional): An optional bool. Defaults to ``False``.
+            If ``True`` , the input and output tensors are aligned by the center points of their corner pixels,
             preserving the values at the corner pixels.
-            If False, the input and output tensors are aligned by the corner points of their corner pixels,
+            If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
             and the interpolation use edge value padding for out of boundary values.
 
     Inputs:
@@ -3889,7 +3898,7 @@ class OneHot(Primitive):
     Args:
         axis (int): Position to insert the value. e.g. If shape of `indices` is :math:`(N, C)`, and `axis` is -1,
             the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
-            Default: -1.
+            Default: ``-1`` .
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
@@ -4320,8 +4329,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
-            not case sensitive. If 'none', do not perform reduction. Default: 'mean'.
+        reduction (str): Type of reduction to be applied to loss. The optional values are ``'mean'`` , ``'sum'`` , and
+            ``'none'`` , not case sensitive. If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
 
     Inputs:
         - **logits** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -4421,22 +4430,22 @@ class PadV3(Primitive):
 
     Args:
         mode (str, optional): An optional string indicates padding mode,
-            support "constant", "reflect", "edge", "circular". Default: "constant".
+            support ``"constant"`` , ``"reflect"`` , ``"edge"`` , ``"circular"`` . Default: ``"constant"`` .
             The effects of various padding modes are as follows:
 
-            - "constant": Pads the input Tensor with value specified by `constant_value`.
-            - "reflect": Pads the input Tensor by reflecting the values of the pixels at the
+            - ``"constant"``: Pads the input Tensor with value specified by `constant_value`.
+            - ``"reflect"``: Pads the input Tensor by reflecting the values of the pixels at the
               boundary of the Tensor.
-            - "edge": Pads the input Tensor with the values of the pixels on the border of the Tensor.
-            - "circular": Circular padding mode. In this mode, the pixels from one edge of the image
+            - ``"edge"``: Pads the input Tensor with the values of the pixels on the border of the Tensor.
+            - ``"circular"``: Circular padding mode. In this mode, the pixels from one edge of the image
               are wrapped around to the opposite edge, such that the pixel on the right edge of the
               image is replaced with the pixel on the left edge, and the pixel on the bottom edge
               is replaced with the pixel on the top edge.
 
         paddings_contiguous (bool, optional): An optional bool value indicates if the padding is paddings_contiguous.
-            If true, paddings is arranged as [begin0, end0, begin1, end1, ...]
-            If false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
-            Default:True.
+            If ``True`` , paddings is arranged as [begin0, end0, begin1, end1, ...]
+            If ``False`` , paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
+            Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Tensor to be padded. It has shape :math:`(N, *)`, where :math:`*` means
@@ -4517,8 +4526,8 @@ class MirrorPad(Primitive):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
-            Default: "REFLECT".
+        mode (str): Specifies the padding mode. The optional values are ``"REFLECT"`` and ``"SYMMETRIC"`` .
+            Default: ``"REFLECT"`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -4602,7 +4611,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
     the weight is FLOAT_MAX. FLOAT_MAX indicates the max value in the type of Float
 
     Args:
-        num_true (int): The number of target classes per training example. Default: 1.
+        num_true (int): The number of target classes per training example. Default: ``1`` .
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
@@ -4681,9 +4690,9 @@ class ROIAlign(Primitive):
         spatial_scale (float): A scaling factor that maps the raw image coordinates to the input
             feature map coordinates. Suppose the height of a RoI is `ori_h` in the raw image and `fea_h` in the
             input feature map, the `spatial_scale` must be `fea_h / ori_h`.
-        sample_num (int): Number of sampling points. Default: 2.
+        sample_num (int): Number of sampling points. Default: ``2`` .
         roi_end_mode (int): Number must be 0 or 1. If roi_end_mode=0, use the legacy implementation.
-            If roi_end_mode=1, end pixel of the roi_box will be shifted by +1*spatial_scale. Default: 1.
+            If roi_end_mode=1, end pixel of the roi_box will be shifted by +1*spatial_scale. Default: ``1`` .
 
 
     Inputs:
@@ -4759,11 +4768,11 @@ class Adam(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``True`` , update the gradients using NAG.
+            If ``False`` , update the gradients without using NAG. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
@@ -4870,8 +4879,8 @@ class AdamWeightDecay(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
@@ -4889,7 +4898,7 @@ class AdamWeightDecay(Primitive):
         - **epsilon** (float) - Term added to the denominator to improve numerical stability,
           the data type should be float32.
         - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
-          Default: 0.0.
+          Default: ``0.0`` .
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
 
     Outputs:
@@ -4977,11 +4986,11 @@ class AdamNoUpdateParam(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``True`` , update the gradients using NAG.
+            If ``False`` , update the gradients without using NAG. Default: ``False`` .
 
     Inputs:
         - **m** (Tensor) - The 1st moment vector in the updating formula. The shape is :math:`(N, *)`
@@ -5077,11 +5086,11 @@ class FusedSparseAdam(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``True`` , update the gradients using NAG.
+            If ``False`` , update the gradients without using NAG. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated with float32 data type. The shape is :math:`(N, *)`
@@ -5204,11 +5213,11 @@ class FusedSparseLazyAdam(Primitive):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
-            If true, update the gradients using NAG.
-            If false, update the gradients without using NAG. Default: False.
+            If ``True`` , update the gradients using NAG.
+            If ``False`` , update the gradients without using NAG. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Parameters to be updated with float32 data type. The shape is :math:`(N, *)`
@@ -5316,7 +5325,7 @@ class FusedSparseFtrl(Primitive):
         l2 (float): l2 regularization strength, must be greater than or equal to zero.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool): Use locks for updating operation if true . Default: False.
+        use_locking (bool): Use locks for updating operation if True . Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float32. The shape is :math:`(N, *)`
@@ -5412,8 +5421,8 @@ class FusedSparseProximalAdagrad(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If true, the variable and accumulation tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the variable and accumulation tensors will be protected from being updated.
+            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
@@ -5516,7 +5525,7 @@ class KLDivLoss(Primitive):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Default: 'mean'.
+            Default: ``'mean'`` .
 
             - On Ascend, the value of `reduction` must be one of 'batchmean', 'none' or 'sum'.
             - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
@@ -5600,14 +5609,14 @@ class BinaryCrossEntropy(Primitive):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
+            Its value must be one of ``'none'`` , ``'mean'`` or ``'sum'`` . Default: ``'mean'`` .
 
     Inputs:
         - **logits** (Tensor) - The predictive value whose data type must be float16 or float32,
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **labels** (Tensor) - The target value which has the same shape and data type as `logits`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
-          And it must have the same shape and data type as `logits`. Default: None.
+          And it must have the same shape and data type as `logits`. Default: ``None`` .
 
     Outputs:
         Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
@@ -5882,7 +5891,7 @@ class ApplyAdagrad(Primitive):
     the relatively highest priority data type.
 
     Args:
-        update_slots (bool): If `True`, `accum` will be updated. Default: True.
+        update_slots (bool): If ``True`` , `accum` will be updated. Default: ``True`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float or complex data type.
@@ -5966,7 +5975,7 @@ class ApplyAdagradV2(Primitive):
 
     Args:
         epsilon (float): A small value added for numerical stability.
-        update_slots (bool): If `True`, `accum` will be updated. Default: True.
+        update_slots (bool): If ``True`` , `accum` will be updated. Default: ``True`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
@@ -6072,9 +6081,9 @@ class SparseApplyAdagradV2(Primitive):
     Args:
         lr (float): Learning rate.
         epsilon (float): A small value added for numerical stability.
-        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
-            Default: False.
-        update_slots (bool): If `True`, the computation logic will be different to `False`. Default: True.
+        use_locking (bool): If ``True`` , the `var` and `accum` tensors will be protected from being updated.
+            Default: ``False`` .
+        update_slots (bool): If ``True`` , the computation logic will be different to `False`. Default: ``True`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
@@ -6159,8 +6168,8 @@ class ApplyProximalAdagrad(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the var and accumulation tensors will be protected from being updated.
+            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
@@ -6254,8 +6263,8 @@ class SparseApplyProximalAdagrad(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If true, the `var` and `accum` tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the `var` and `accum` tensors will be protected from being updated.
+            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
@@ -6674,9 +6683,9 @@ class LARSUpdate(PrimitiveWithInfer):
     For more details, please refer to :class:`mindspore.nn.LARS`.
 
     Args:
-        epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
-        hyperpara (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
-        use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
+        epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .
+        hyperpara (float): Trust coefficient for calculating the local learning rate. Default: ``0.001`` .
+        use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: ``False`` .
 
     Inputs:
         - **weight** (Tensor) - A tensor, representing the weight.
@@ -6741,7 +6750,7 @@ class ApplyFtrl(Primitive):
         and the calculation results for other scenarios are not defined.
 
     Args:
-        use_locking (bool): Use locks for updating operation if true . Default: False.
+        use_locking (bool): Use locks for updating operation if ``True`` . Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
@@ -6749,15 +6758,15 @@ class ApplyFtrl(Primitive):
         - **accum** (Parameter) - The accumulation to be updated, must be same shape and data type as `var`.
         - **linear** (Parameter) - The linear coefficient to be updated, must be same shape and data type as `var`.
         - **grad** (Tensor) - Gradient. The data type must be float16 or float32.
-        - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
+        - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: ``0.001`` .
           It must be a float number or a scalar tensor with float16 or float32 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be greater than or equal to zero.
-          Default: 0.0. It must be a float number or a scalar tensor with float16 or float32 data type.
+          Default: ``0.0`` . It must be a float number or a scalar tensor with float16 or float32 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be greater than or equal to zero.
-          Default: 0.0. It must be a float number or a scalar tensor with float16 or float32 data type.
+          Default: ``0.0`` . It must be a float number or a scalar tensor with float16 or float32 data type.
         - **lr_power** (Union[Number, Tensor]) - Learning rate power controls how the learning rate decreases
           during training, must be less than or equal to zero. Use fixed learning rate if lr_power is zero.
-          Default: -0.5. It must be a float number or a scalar tensor with float16 or float32 data type.
+          Default: ``-0.5`` . It must be a float number or a scalar tensor with float16 or float32 data type.
 
     Outputs:
         - **var** (Tensor) - Represents the updated `var`. As the input parameters has been updated in-place, this
@@ -6839,7 +6848,7 @@ class SparseApplyFtrl(Primitive):
         l2 (float): l2 regularization strength, must be greater than or equal to zero.
         lr_power (float): Learning rate power controls how the learning rate decreases during training,
             must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool, optional): Use locks for updating operation if true . Default: False.
+        use_locking (bool, optional): Use locks for updating operation if ``True`` . Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
@@ -6975,9 +6984,9 @@ class Dropout(PrimitiveWithCheck):
 
     Args:
         keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-            means dropping out 10% of input units. Default: 0.5.
-        Seed0 (int, optional): Seed0 value for random generating. Default: 0.
-        Seed1 (int, optional): Seed1 value for random generating. Default: 0.
+            means dropping out 10% of input units. Default: ``0.5`` .
+        Seed0 (int, optional): Seed0 value for random generating. Default: ``0`` .
+        Seed1 (int, optional): Seed1 value for random generating. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - The input of Dropout, a Tensor of any shape with data type of float16 or float32.
@@ -7026,7 +7035,7 @@ class Dropout2D(PrimitiveWithInfer):
 
     Args:
         keep_prob (float, optional): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            means dropping out 20% of channels. Default: 0.5.
+            means dropping out 20% of channels. Default: ``0.5`` .
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
@@ -7077,7 +7086,7 @@ class Dropout3D(PrimitiveWithInfer):
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            means dropping out 20% of channels. Default: 0.5.
+            means dropping out 20% of channels. Default: ``0.5`` .
 
     Inputs:
         - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
@@ -7126,13 +7135,13 @@ class CTCLoss(Primitive):
     such that the length of target series must be less than or equal to the length of input.
 
     Args:
-        preprocess_collapse_repeated (bool): If true, repeated labels will be collapsed prior to the CTC calculation.
-                                             Default: False.
-        ctc_merge_repeated (bool): If false, during CTC calculation, repeated non-blank labels will not be merged
+        preprocess_collapse_repeated (bool): If ``True`` , repeated labels will be collapsed prior to the CTC
+                                             calculation. Default: ``False`` .
+        ctc_merge_repeated (bool): If ``False`` , during CTC calculation, repeated non-blank labels will not be merged
                                    and these labels will be interpreted as individual ones. This is a simplified
-                                   version of CTC. Default: True.
-        ignore_longer_outputs_than_inputs (bool): If true, sequences with longer outputs than inputs will be ignored.
-                                                  Default: False.
+                                   version of CTC. Default: ``True`` .
+        ignore_longer_outputs_than_inputs (bool): If ``True`` , sequences with longer outputs than inputs will be
+                                                  ignored. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor must be a `3-D` tensor whose shape is
@@ -7205,7 +7214,7 @@ class CTCGreedyDecoder(Primitive):
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
 
     Args:
-        merge_repeated (bool, optional): If true, merge repeated classes in output. Default: True.
+        merge_repeated (bool, optional): If ``True`` , merge repeated classes in output. Default: ``True`` .
 
     Inputs:
         - **inputs** (Tensor) - The input Tensor must be a 3-D tensor whose shape is
@@ -7327,23 +7336,23 @@ class DynamicRNN(Primitive):
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
     Args:
-        cell_type (str): A string identifying the cell type in the operator. Default: 'LSTM'.
+        cell_type (str): A string identifying the cell type in the operator. Default: ``'LSTM'`` .
             Only 'LSTM' is currently supported.
-        direction (str): A string identifying the direction in the operator. Default: 'UNIDIRECTIONAL'.
+        direction (str): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
             Only 'UNIDIRECTIONAL' is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the operator. Default: 1.
-        use_peephole (bool): A bool identifying if use peephole in the operator. Default: False.
-        keep_prob (float): A float identifying the keep prob in the operator. Default: 1.0.
-        cell_clip (float): A float identifying the cell clip in the operator. Default: -1.0.
-        num_proj (int): An integer identifying the number projection in the operator. Default: 0.
-        time_major (bool): A bool specify the data format of `x`. If it is set to True, the format is
+        cell_depth (int): An integer identifying the cell depth in the operator. Default: ``1`` .
+        use_peephole (bool): A bool identifying if use peephole in the operator. Default: ``False`` .
+        keep_prob (float): A float identifying the keep prob in the operator. Default: ``1.0`` .
+        cell_clip (float): A float identifying the cell clip in the operator. Default: ``-1.0`` .
+        num_proj (int): An integer identifying the number projection in the operator. Default: ``0`` .
+        time_major (bool): A bool specify the data format of `x`. If it is set to ``True`` , the format is
             :math:`(num\_step, batch\_size, input\_size)`, if it is set to False, the format is
             :math:`(batch\_size, num\_step, input\_size)`.
-            Default: True. Only supports True at present.
-        activation (str): A string identifying the type of activation function in the operator. Default: 'tanh'.
-            Only 'tanh' is currently supported.
-        forget_bias (float): A float identifying the forget bias in the operator. Default: 0.0.
-        is_training (bool): A bool identifying is training in the operator. Default: True.
+            Default: ``True`` . Only supports ``True`` at present.
+        activation (str): A string identifying the type of activation function in the operator.
+            Default: ``'tanh'`` . Only 'tanh' is currently supported.
+        forget_bias (float): A float identifying the forget bias in the operator. Default: ``0.0`` .
+        is_training (bool): A bool identifying is training in the operator. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
@@ -7453,20 +7462,21 @@ class DynamicGRUV2(Primitive):
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:
-        direction (str): A string identifying the direction in the operator. Default: 'UNIDIRECTIONAL'.
-            Only 'UNIDIRECTIONAL' is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the operator. Default: 1.
-        keep_prob (float): A float identifying the keep prob in the operator. Default: 1.0.
-        cell_clip (float): A float identifying the cell clip in the operator. Default: -1.0.
-        num_proj (int): An integer identifying the number projection in the operator. Default: 0.
-        time_major (bool): A bool identifying the time major in the operator. Default: True.
-        activation (str) : A string identifying the type of activation function in the operator. Default: 'tanh'.
-            Only 'tanh' is currently supported.
-        gate_order (str): A string identifying the gate order in weight and bias. Default: 'rzh'.
-            'zrh' is another option. Here, 'rzh' means the gate order is: reset gate, update gate, hidden gate.
-            'zrh' means the gate order is: update gate, reset gate, hidden gate.
-        reset_after (bool): A bool identifying whether to apply reset gate after matrix multiplication. Default: True.
-        is_training (bool): A bool identifying is training in the operator. Default: True.
+        direction (str): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
+            Only ``'UNIDIRECTIONAL'`` is currently supported.
+        cell_depth (int): An integer identifying the cell depth in the operator. Default: ``1`` .
+        keep_prob (float): A float identifying the keep prob in the operator. Default: ``1.0`` .
+        cell_clip (float): A float identifying the cell clip in the operator. Default: ``-1.0`` .
+        num_proj (int): An integer identifying the number projection in the operator. Default: ``0`` .
+        time_major (bool): A bool identifying the time major in the operator. Default: ``True`` .
+        activation (str) : A string identifying the type of activation function in the operator.
+            Default: ``'tanh'`` . Only ``'tanh'`` is currently supported.
+        gate_order (str): A string identifying the gate order in weight and bias. Default: ``'rzh'`` .
+            ``'zrh'`` is another option. Here, ``'rzh'`` means the gate order is: reset gate, update gate, hidden gate.
+            ``'zrh'`` means the gate order is: update gate, reset gate, hidden gate.
+        reset_after (bool): A bool identifying whether to apply reset gate after matrix multiplication.
+            Default: ``True`` .
+        is_training (bool): A bool identifying is training in the operator. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Current words.
@@ -7589,7 +7599,8 @@ class InTopK(Primitive):
 
     Outputs:
         Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
-        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
+        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is ``True`` ,
+        otherwise ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7624,11 +7635,12 @@ class LRN(Primitive):
     where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
     Args:
-        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
-        bias (float): An offset (usually positive to avoid dividing by 0). Default: 1.0.
-        alpha (float): A scale factor, usually positive. Default: 1.0.
-        beta (float): An exponent. Default: 0.5.
-        norm_region (str): Specifies normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
+        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: ``5`` .
+        bias (float): An offset (usually positive to avoid dividing by 0). Default: ``1.0`` .
+        alpha (float): A scale factor, usually positive. Default: ``1.0`` .
+        beta (float): An exponent. Default: ``0.5`` .
+        norm_region (str): Specifies normalization region. Options: ``"ACROSS_CHANNELS"`` .
+            Default: ``"ACROSS_CHANNELS"`` .
 
     Inputs:
         - **x** (Tensor) - A 4-D Tensor with float16 or float32 data type.
@@ -7690,34 +7702,36 @@ class AvgPool3D(Primitive):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
             is an int number that represents depth, height and width are both kernel_size, or a tuple
-            of three int numbers that represent depth, height and width respectively. Default: 1.
+            of three int numbers that represent depth, height and width respectively. Default: ``1`` .
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same", "valid", "pad".
-            Default: "valid".
+            represent depth, height and width of movement respectively. Default: ``1`` .
+        pad_mode (str): The optional value for pad mode, is ``"same"`` , ``"valid"`` , ``"pad"`` .
+            Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
-              the input. The total number of padding will be calculated in depth, horizontal and vertical
+            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be the same
+              as the input. The total number of padding will be calculated in depth, horizontal and vertical
               directions and evenly distributed to head and tail, top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               must be 0.
 
             - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
-        pad (Union(int, tuple[int], list[int])): The pad value to be filled. Default: 0. If `pad` is an integer,
+        pad (Union(int, tuple[int], list[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
             If `pad` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
             pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
-        ceil_mode (bool): If True, ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        ceil_mode (bool): If ``True`` , ceil instead of floor to compute the output shape. Default: ``False`` .
+        count_include_pad (bool): If ``True`` , averaging calculation will include the zero-padding.
+            Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
-            otherwise kernel_size will be used. Default: 0.
-        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
+            otherwise kernel_size will be used. Default: ``0`` .
+        data_format (str) : The optional value for data format. Currently only support ``'NCDHW'`` .
+            Default: ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
@@ -7822,28 +7836,28 @@ class Conv3D(Primitive):
             and width of the 3D convolution window. It can be a single int or a tuple of 3 integers.
             Single int means the value is for the depth, height and width
             of the kernel. A tuple of 3 ints corresponds to the depth, height and width of the kernel respectively.
-        mode (int): Modes for different convolutions. It is currently not used. Default: 1.
+        mode (int): Modes for different convolutions. It is currently not used. Default: ``1`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, it can be an int number
             that represents the depth, height and width of movement or a tuple of three int numbers that
-            represent depth, height and width movement respectively. Default: 1.
+            represent depth, height and width movement respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
               left and right directions possiblily.
               Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
-              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
+              will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
+                    of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
@@ -7851,10 +7865,10 @@ class Conv3D(Primitive):
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
-            respectively. Default: 1.
+            respectively. Default: ``1`` .
         group (int, optional):The number of groups into which the filter is divided. `in_channels`
-            and `out_channels` must be divisible by `group`. Default: 1.
-        data_format (str): The optional value for data format. Currently only support "NCDHW".
+            and `out_channels` must be divisible by `group`. Default: ``1`` .
+        data_format (str): The optional value for data format. Currently only support ``"NCDHW"`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -7989,15 +8003,16 @@ class Conv3DBackpropInput(Primitive):
         out_channel (int): The dimension of the output.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
         mode (int): Modes for different convolutions. Not currently used.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four
-                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-                    pad[3], pad[4] and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
-        group (int): Splits input into groups. Default: 1.
-        data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+        pad_mode (str): Modes to fill padding. It could be ``"valid"`` , ``"same"`` , or ``"pad"`` .
+                    Default: ``"valid"`` .
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the
+                    paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a
+                    tuple of four integers, the padding of head, tail, top, bottom, left and right equal to pad[0],
+                    pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
+        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: ``1`` .
+        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
+        group (int): Splits input into groups. Default: ``1`` .
+        data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
 
     Inputs:
         - **weight** (Tensor) - Set size of kernel is :math:`(D_{in}, K_h, K_w)`, then the shape is
@@ -8116,8 +8131,8 @@ class SparseApplyAdadelta(Primitive):
 
     Args:
         epsilon (float): A small value added for numerical stability. Its value must be greater or equal to 0.
-        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the `var` and `accum` tensors will be protected from being updated.
+            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
@@ -8212,11 +8227,11 @@ class CTCLossV2(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        blank (int, optional): The blank label. Default: 0.
-        reduction (str, optional): Apply specific reduction method to the output. Currently only support 'none',
-            not case sensitive. Default: "none".
+        blank (int, optional): The blank label. Default: ``0`` .
+        reduction (str, optional): Apply specific reduction method to the output. Currently only support ``'none'`` ,
+            not case sensitive. Default: ``"none"`` .
         zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
-            and its correlated gradient to zero. Default: False.
+            and its correlated gradient to zero. Default: ``False`` .
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
@@ -8288,10 +8303,10 @@ class CTCLossV2Grad(Primitive):
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
 
     Args:
-        blank (int): The blank label. Default: 0.
+        blank (int): The blank label. Default: ``0`` .
         reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
-            Default: "none".
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+            Default: ``"none"`` .
+        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: ``False`` .
 
     Inputs:
         - **grad_out** (Tenosr) - Gradient renewal codfficient, A tensor for shape (N), where N is batch size.
@@ -8365,33 +8380,33 @@ class Conv3DTranspose(Primitive):
             Single int means the value is for the depth, height and width of the kernel.
             A tuple of 3 ints means the first value is for the depth, the second value is for the height and the
             other is for the width of the kernel.
-        mode (int): Modes for different convolutions. Default is 1. It is currently not used.
+        mode (int): Modes for different convolutions. Default is ``1`` . It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` , ``"pad"`` . Default: ``"valid"`` .
 
-            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+            - ``"same"``: Adopts the way of completion. The depth, height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
               left and right directions possiblily.
               Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+            - ``"valid"``: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               and `output_padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
-              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
+              will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-             head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
+             of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
              the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
              and pad[5] correspondingly.
         stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: 1.
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
-        group (int): Splits input into groups. Default: 1. Only 1 is currently supported.
-        output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
+            represent depth, height and width of movement respectively. Default: ``1`` .
+        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
+        group (int): Splits input into groups. Default: ``1`` . Only 1 is currently supported.
+        output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: ``0`` .
         data_format (str): The optional value for data format. Currently only 'NCDHW' is supported.
 
     Inputs:
@@ -8403,7 +8418,7 @@ class Conv3DTranspose(Primitive):
           :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter,
           :math:`//` is the symbol for integer division.
           Currently weight data type only supports float16 and float32.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none. Default: None.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none. Default: ``None`` .
 
     Outputs:
         Tensor, the gradients with respect to the input of convolution 3D.
@@ -8544,14 +8559,15 @@ class Dilation2D(Primitive):
                                       the height and width of the input `x`.
 
         pad_mode (str, optional): Specifies padding mode. The optional values are
-            "same", "valid". Default: "same". Both upper and lower case are supported.
+            ``"same"`` , ``"valid"`` . Default: ``"same"`` . Both upper and lower case are supported.
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
+            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same as
               the input `x`.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded.
-        data_format (str, optional): The value for data format, only 'NCHW' is supported at present. Default: "NCHW".
+            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be
+              returned without padding. Extra pixels will be discarded.
+        data_format (str, optional): The value for data format, only ``'NCHW'`` is supported at present.
+            Default: ``"NCHW"`` .
 
     Inputs:
         - **x** (Tensor) - Input data. A 4-D Tensor, its shape must be
@@ -8643,7 +8659,7 @@ class SoftShrink(Primitive):
     Refer to :func:`mindspore.ops.softshrink` for more details.
 
     Args:
-        lambd(float, optional): The :math:`\lambda` must be no less than zero. Default: 0.5.
+        lambd(float, optional): The :math:`\lambda` must be no less than zero. Default: ``0.5`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of soft shrink with data type of float16 or float32.
@@ -8680,7 +8696,7 @@ class HShrink(Primitive):
     Refer to :func:`mindspore.ops.hardshrink` for more details.
 
     Args:
-        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Inputs:
         - **input_x** (Tensor) - The input of HardShrink.
@@ -8740,8 +8756,8 @@ class ApplyAdagradDA(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
-                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+        use_locking (bool): If ``True`` , updating of the `var` and `accum` tensors will be protected by a lock.
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
@@ -8855,8 +8871,8 @@ class SparseApplyRMSProp(Primitive):
         momentum (float): Momentum. The value should be greater or equal to 0, otherwise the behavior is undefined.
         epsilon (float): A small value added for numerical stability. The value should be greater than 0,
                          otherwise the behavior is undefined.
-        use_locking (bool): If `True`, updating of the var, ms, and mom tensors are protected by a lock;
-                            otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+        use_locking (bool): If ``True`` , updating of the var, ms, and mom tensors are protected by a lock;
+                            otherwise the behavior is undefined, but may exhibit less contention. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
@@ -8971,8 +8987,9 @@ class SparseApplyCenteredRMSProp(Primitive):
         will not update in iterations during which the `grad` is zero.
 
     Args:
-        use_locking (bool): If `True`, updating of the `var`, `mg`, `ms`, and `mom` tensors will be protected by a lock.
-                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+        use_locking (bool): If ``True`` , updating of the `var`, `mg`, `ms`, and `mom` tensors will be protected by a
+                            lock. Otherwise the behavior is undefined, but may exhibit less contention.
+                            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
@@ -9077,10 +9094,10 @@ class ApplyKerasMomentum(Primitive):
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
-        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock;
-                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
-        use_nesterov (bool): If `True`, the tensor passed to compute grad will be var + momentum * accum,
-                            so in the end, the var you get is actually var + momentum * accum. Default: False.
+        use_locking (bool): If ``True`` , updating of the `var` and `accum` tensors will be protected by a lock;
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: ``False`` .
+        use_nesterov (bool): If ``True`` , the tensor passed to compute grad will be var + momentum * accum,
+                            so in the end, the var you get is actually var + momentum * accum. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
@@ -9158,12 +9175,12 @@ class MultilabelMarginLoss(Primitive):
     Refer to :func:`mindspore.ops.multilabel_margin_loss` for more details.
 
     Args:
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
 
-            - 'none': no reduction will be applied.
-            - 'mean': the sum of the output will be divided by the number of elements in the output.
-            - 'sum': the output will be summed.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: the sum of the output will be divided by the number of elements in the output.
+            - ``'sum'``: the output will be summed.
 
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
@@ -9214,9 +9231,9 @@ class ApplyAdamWithAmsgrad(Primitive):
         beta1 (float): A Tensor. Must have the same type as beta1_power. Momentum factor. Must be a scalar.
         beta2 (float): A Tensor. Must have the same type as beta1_power. Momentum factor. Must be a scalar.
         epsilon (float): A Tensor. Must have the same type as beta1_power. Ridge term. Must be a scalar.
-        use_locking (bool): use_locking: If True , updating of the `var`, `m`, and `v` tensors will
+        use_locking (bool): use_locking: If ``True`` , updating of the `var`, `m`, and `v` tensors will
           be protected by a lock; Otherwise the behavior is undefined, but may exhibit less contention.
-          Default: False.
+          Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type can be float16 or float32.
@@ -9307,14 +9324,14 @@ class GridSampler3D(Primitive):
 
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
-            The optional values are "bilinear" or "nearest". Default: "bilinear".
+            The optional values are ``"bilinear"`` or ``"nearest"`` . Default: ``"bilinear"`` .
         padding_mode (str, optional): An optional string specifying the pad method.
-            The optional values are "zeros", "border" or "reflection". Default: "zeros".
-        align_corners (bool, optional): An optional bool specifying alignment method. If set to `True`,
+            The optional values are ``"zeros"`` , ``"border"`` or ``"reflection"`` . Default: ``"zeros"`` .
+        align_corners (bool, optional): An optional bool specifying alignment method. If set to ``True`` ,
             the extrema (-1 and 1) are considered as referring to
-            the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
-            to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
-            `False`.
+            the center points of the input’s corner pixels. If set to ``False`` , they are instead considered as
+            referring to the corner points of the input’s corner pixels, making the sampling more resolution agnostic.
+            Default: ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - A 5-D tensor with dtype of float32 or float64 and shape of :math:`(N, C, D_{in},
@@ -9376,24 +9393,24 @@ class FractionalMaxPool(Primitive):
             Pooling ratio for each dimension of value should not be less than 0, currently only support
             for row and col dimension.
         pseudo_random(bool, optional): Generate the pooling sequence either randomly or pseudo-randomly.
-            If the pseudo_random parameter is set to True, the sequence will be generated in a
+            If the pseudo_random parameter is set to ``True`` , the sequence will be generated in a
             pseudo-random fashion, otherwise it will be generated randomly.
             Refer to `Fractional Max-Pooling  <https://arxiv.org/pdf/1412.6071>`_
             by Benjamin Graham to understand the distinction between the two.
-            Default: False.
-        overlapping(bool, optional): When set to True, the values at the boundary of adjacent pooling cells
-            will be shared by both cells during pooling process. When set to False, the values are not reused.
-            Default: False.
-        deterministic(bool, optional): If deterministic is set to True, a fixed pooling region will be used
+            Default: ``False`` .
+        overlapping(bool, optional): When set to ``True`` , the values at the boundary of adjacent pooling cells
+            will be shared by both cells during pooling process. When set to ``False`` , the values are not reused.
+            Default: ``False`` .
+        deterministic(bool, optional): If deterministic is set to ``True`` , a fixed pooling region will be used
             in the computation graph, ensuring that the FractionalMaxPool is deterministic.
-            This is often used in unit tests. When set to False, fixed pool regions will not be used.
-            Default: False.
+            This is often used in unit tests. When set to ``False`` , fixed pool regions will not be used.
+            Default: ``False`` .
         seed(int, optional): If either seed or seed2 are set to a non-zero value, the random number
             generator will be seeded using the specified seed. If neither seed nor seed2 are set,
             the generator will be seeded by a random seed.
-            Default: 0.
+            Default: ``0`` .
         seed2(int, optional): The second seed to avoid seed collision.
-            Default: 0.
+            Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
@@ -9463,7 +9480,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         output_shape (Union[int, tuple]): The target output shape. `output_shape` can be a tuple of three values
             specify a shape :math:`(D_{out}, H_{out}, W_{out})`, or a single float `S` for :math:`(S, S, S)`.
         data_format (str, optional): The optional value for data format.
-            Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
+            Currently support ``'NCDHW'`` and ``'NHDWC'`` . Default: ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - The input of FractionalMaxPool3DWithFixedKsize, which is a 4D or 5D tensor.
@@ -9551,24 +9568,24 @@ class FractionalAvgPool(Primitive):
             dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
             channels dimensions.
         pseudo_random(bool, optional): Generate the pooling sequence either randomly or pseudo-randomly.
-            If the pseudo_random parameter is set to True, the sequence will be generated in a
+            If the pseudo_random parameter is set to ``True`` , the sequence will be generated in a
             pseudo-random fashion, otherwise it will be generated randomly.
             Refer to `Fractional Max-Pooling  <https://arxiv.org/pdf/1412.6071>`_
             by Benjamin Graham to understand the distinction between the two.
-            Default: False.
-        overlapping(bool, optional): When set to True, the values at the boundary of adjacent pooling cells
-            will be shared by both cells during pooling process. When set to False, the values are not reused.
-            Default: False.
-        deterministic(bool, optional): If deterministic is set to True, a fixed pooling region will be used
+            Default: ``False`` .
+        overlapping(bool, optional): When set to ``True`` , the values at the boundary of adjacent pooling cells
+            will be shared by both cells during pooling process. When set to ``False`` , the values are not reused.
+            Default: ``False`` .
+        deterministic(bool, optional): If deterministic is set to ``True`` , a fixed pooling region will be used
             in the computation graph, ensuring that the FractionalAvgPool is deterministic.
-            This is often used in unit tests. When set to False, fixed pool regions will not be used.
-            Default: False.
+            This is often used in unit tests. When set to ``False`` , fixed pool regions will not be used.
+            Default: ``False`` .
         seed(int, optional): If either seed or seed2 are set to a non-zero value, the random number
             generator will be seeded using the specified seed. If neither seed nor seed2 are set,
             the generator will be seeded by a random seed.
-            Default: 0.
+            Default: ``0`` .
         seed2(int, optional): The second seed to avoid seed collision.
-            Default: 0.
+            Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
@@ -9630,8 +9647,8 @@ class NthElement(Primitive):
       these values in a Tensor with shape of `values.shape = input.shape[:-1]`.
 
     Args:
-        reverse (bool, optional): An optional bool. If set to True, it find the :math:`n`-th largest value
-          in the vector instead of the nth-smallest. Default: False.
+        reverse (bool, optional): An optional bool. If set to ``True`` , it find the :math:`n`-th largest value
+          in the vector instead of the nth-smallest. Default: ``False`` .
 
     Inputs:
         - **input** (Tensor) - Input Tensor with 1-D or higher dimension.
@@ -9784,11 +9801,11 @@ class TripletMarginLoss(Primitive):
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
     Args:
-        p (int, optional): The norm degree for pairwise distance. Default: 2.
-        eps (float, optional): Default: 1e-06.
-        swap (bool, optional): The distance swap. Default: False.
+        p (int, optional): The norm degree for pairwise distance. Default: ``2`` .
+        eps (float, optional): Default: ``1e-06`` .
+        swap (bool, optional): The distance swap. Default: ``False`` .
         reduction (str, optional): Apply specific reduction method to the
-            output: "none", "mean", "sum". Default: "mean".
+            output: ``"none"`` , ``"mean"`` , ``"sum"`` . Default: ``"mean"`` .
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
@@ -9906,19 +9923,19 @@ class GridSampler2D(Primitive):
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
             The optional values are
-            "bilinear" or "nearest". Default: "bilinear".
+            ``"bilinear"`` or ``"nearest"`` . Default: ``"bilinear"`` .
         padding_mode (str, optional): An optional string specifying the pad method.
-            The optional values are "zeros", "border" or "reflection". Default: "zeros".
+            The optional values are ``"zeros"`` , ``"border"`` or ``"reflection"`` . Default: ``"zeros"`` .
             When the sampling grid is outside input's bounds, effects of various padding modes are as follows:
 
-            - "zeros": Pads the input tensor with zeros.
-            - "border": Pads the input tensor with the values of the pixels on the border of the tensor.
-            - "reflection": Pads the input tensor by reflecting the values of the pixels at the
+            - ``"zeros"``: Pads the input tensor with zeros.
+            - ``"border"``: Pads the input tensor with the values of the pixels on the border of the tensor.
+            - ``"reflection"``: Pads the input tensor by reflecting the values of the pixels at the
               boundary of the tensor.
 
-        align_corners (bool, optional): An optional bool. When set to True,
+        align_corners (bool, optional): An optional bool. When set to ``True`` ,
             the centers of the corner pixels of the input
-            and output tensors are aligned. When set to False, it is not aligned. Defaults to False.
+            and output tensors are aligned. When set to ``False`` , it is not aligned. Defaults to ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of
@@ -9984,7 +10001,7 @@ class Pdist(Primitive):
     Refer to :func:`mindspore.ops.pdist` for more details.
 
     Args:
-        p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: 2.0.
+        p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
     Inputs:
         - **x** (Tensor) - Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size,
@@ -10027,10 +10044,10 @@ class UpsampleNearest3D(Primitive):
     Args:
         output_size (Union[tuple[int], list[int]], optional): A tuple or list of int
             specifying the output volumetric size.
-            Default: None.
+            Default: ``None`` .
         scales (Union[tuple[float], list[float]], optional): A tuple or list of float
             specifying the upsampling factors.
-            Default: None.
+            Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Must be one of the
@@ -10114,8 +10131,8 @@ class SparseApplyAdagradDA(Primitive):
     relatively highest priority data type.
 
     Args:
-        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
-                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+        use_locking (bool): If ``True`` , updating of the `var` and `accum` tensors will be protected by a lock.
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable to be updated.
@@ -10210,10 +10227,10 @@ class SparseApplyMomentum(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If `True`, the `var` and `accum` tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the `var` and `accum` tensors will be protected from being updated.
+            Default: ``False`` .
         use_nesterov (bool): If `True`, the tensor passed to compute grad will be var + momentum * accum,
-            so in the end, the var you get is actually var + momentum * accum. Default: False.
+            so in the end, the var you get is actually var + momentum * accum. Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
@@ -10296,8 +10313,8 @@ class SparseApplyProximalGradientDescent(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If `True`, the `var` tensors will be protected from being updated.
-            Default: False.
+        use_locking (bool): If ``True`` , the `var` tensors will be protected from being updated.
+            Default: ``False`` .
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
@@ -10385,8 +10402,8 @@ class NuclearNorm(Primitive):
             dimensions of `x` to calculate the matrix nuclear norm
             across. If `dim` is None, the nuclear norm will be calculated across all dimensions of `x`. The length of
             `dim` should be 2. The value in `dim` should be in this range:[-x_rank, x_rank). x_rank is the dimension of
-            Tensor `x`. The value of `dim[0]` or `dim[1]` can not point to the same dimension. Default: None.
-        keepdim (bool, optional): Whether the output Tensor have `dim` retained or not. Default: False.
+            Tensor `x`. The value of `dim[0]` or `dim[1]` can not point to the same dimension. Default: ``None`` .
+        keepdim (bool, optional): Whether the output Tensor have `dim` retained or not. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Input to compute the matrix nuclear norm. The dimension of `x` should be greater than or
@@ -10464,7 +10481,7 @@ class GLU(Primitive):
     Args:
         axis (int, optional): Axis on which to split the input.
             The value of `axis` must be an int within range [-rank(`x`), rank(`x`)).
-            Default: -1, specifying the last dimension.
+            Default: ``-1`` , specifying the last dimension.
 
     Inputs:
         - **x** (Tensor) - Input tensor. `x.shape[axis]` must be even.
@@ -10512,8 +10529,8 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
           specify a shape :math:`(k_H, k_W)`, or a single int `K` for :math:`(K, K)`.
         output_shape (Union[int, tuple[int]]): The target output shape. `output_shape` can be a
           tuple of two values specify a shape :math:`(H_{out}, W_{out})`, or a single float `S` for :math:`(S, S)`.
-        data_format (str, optional): The optional value for data format, is 'NCHW'.
-            Default: "NCHW".
+        data_format (str, optional): The optional value for data format, is ``'NCHW'`` .
+            Default: ``"NCHW"`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
@@ -10642,12 +10659,13 @@ class MaxPoolWithArgmaxV2(Primitive):
             two int numbers that represent height and width respectively.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: None, meaning that `strides = kernel_size`.
+            represent height and width of movement respectively. Default: ``None`` , meaning that
+            `strides = kernel_size`.
         pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Default: '(1, 1)'.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64. [Disabled in Ascend.]
+        dilation (Union[int, tuple[int]]): Default: ``'(1, 1)'`` .
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        argmax_type (mindspore.dtype) : The dtype for argmax. Default: ``mstype.int64`` . [Disabled in Ascend.]
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,

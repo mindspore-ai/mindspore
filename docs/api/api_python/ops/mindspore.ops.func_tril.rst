@@ -8,7 +8,7 @@ mindspore.ops.tril
     参数：
         - **input** (Tensor) - 输入Tensor。shape为 :math:`(x_1, x_2, ..., x_R)` ，其rank至少为2。
           支持的数据类型有包括所有数值型和bool类型。
-        - **diagonal** (int，可选) - 指定对角线位置，默认值：0，指定主对角线。
+        - **diagonal** (int，可选) - 指定对角线位置，默认值： ``0`` ，指定主对角线。
 
     返回：
         Tensor，其数据类型和shape维度与 `input` 相同。

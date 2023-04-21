@@ -20,9 +20,9 @@ mindspore.ops.topk
     参数：
         - **input** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
         - **k** (int) - 指定计算最大或最小元素的数量，必须为常量。
-        - **dim** (int, 可选) - 需要排序的维度。默认值：None。
-        - **largest** (bool, 可选) - 如果为False，则会返回前k个最小值。默认值：True。
-        - **sorted** (bool, 可选) - 如果为True，则获取的元素将按值降序排序。如果为False，则不对获取的元素进行排序。默认值：True。
+        - **dim** (int, 可选) - 需要排序的维度。默认值： ``None`` 。
+        - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认值： ``True`` 。
+        - **sorted** (bool, 可选) - 如果为 ``True`` ，则获取的元素将按值降序排序。如果为 ``False`` ，则不对获取的元素进行排序。默认值： ``True`` 。
 
     返回：
         由 `values` 和 `indices` 组成的tuple。

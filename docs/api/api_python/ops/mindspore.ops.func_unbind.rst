@@ -11,7 +11,7 @@ mindspore.ops.unbind
 
     参数：
         - **input** (Tensor) - 输入Tensor，其shape为 :math:`(n_1, n_2, ..., n_R)` 。rank必须大于0。
-        - **dim** (int) - 指定矩阵分解的轴。取值范围为[-R, R)，默认值：0。
+        - **dim** (int) - 指定矩阵分解的轴。取值范围为[-R, R)，默认值： ``0`` 。
 
     返回：
         Tensor对象组成的tuple。每个Tensor对象的shape相同。

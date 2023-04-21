@@ -25,8 +25,8 @@ class GeSwitch(PrimitiveWithInfer):
     """
     Adds control switch to data.
 
-    Switch data flows into false or true branch depending on the condition. If the condition is true,
-    the true branch will be activated, or vise verse.
+    Switch data flows into ``False`` or ``True`` branch depending on the condition. If the condition is ``True`` ,
+    the ``True`` branch will be activated, or vise verse.
 
     Inputs:
         - **data** (Union[Tensor, Number]) - The data to be used for switch control.

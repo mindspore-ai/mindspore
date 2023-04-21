@@ -8,8 +8,8 @@ mindspore.ops.qr
     参数：
         - **input** (Tensor) - 要进行分解的矩阵。矩阵必须至少为二维。数据类型：float16、float32、float64、complex64、complex128。
           将 `input` 的shape定义为 :math:`(..., m, n)` ，p定义为m和n的最小值。
-        - **mode** (Union['reduced', 'complete'], 可选) - 如果 `mode` 的值为'reduced', 则进行部分尺寸的QR分解，否则进行全尺寸的QR
-          分解。默认值：'reduced'。
+        - **mode** (Union['reduced', 'complete'], 可选) - 如果 `mode` 的值为 ``'reduced'`` , 则进行部分尺寸的QR分解，否则进行全尺寸的QR
+          分解。默认值： ``'reduced'`` 。
 
     返回：
         - **Q** (Tensor) - `input` 的正交矩阵。如果 `mode` 为'complete'，则shape为 :math:`(m, m)` ，

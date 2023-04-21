@@ -190,22 +190,23 @@ class ExtractGlimpse(Primitive):
     Args:
         centered (bool, optional): An optional `bool`. Indicates if the offset coordinates
             are centered relative to the image, in which case the (0, 0) offset is relative to the center of
-            the center of the input images. If false, the (0, 0) offset corresponds to the upper left corner
-            of the input images. Defaults to `True`.
+            the center of the input images. If ``False`` , the (0, 0) offset corresponds to the upper left corner
+            of the input images. Defaults to ``True`` .
         normalized (bool, optional): An optional `bool`. indicates if the offset
-            coordinates are normalized. Defaults to `True`.
+            coordinates are normalized. Defaults to ``True`` .
         uniform_noise (bool, optional): An optional `bool`. indicates if the noise should be
-            generated using a uniform distribution(aka. Gaussian distribution). Defaults to `True`.
+            generated using a uniform distribution(aka. Gaussian distribution). Defaults to ``True`` .
         noise (str, optional): An optional string specifies the type of noise to fill.
             The window is determined by size and offsets.
             When the window and input image tensor don't not overlap, random noise is filled.
-            The value can be 'uniform', 'gaussian' and 'zero'. Default: `uniform`.
+            The value can be ``'uniform'`` , ``'gaussian'`` and ``'zero'`` . Default: ``uniform`` .
 
-            - When `noise` is 'uniform' and 'gaussian', the result is variable.
-            - When `noise` is 'zero', the value of `uniform_noise` must be 'False' and the
+            - When `noise` is ``'uniform'`` and ``'gaussian'`` , the result is variable.
+            - When `noise` is ``'zero'`` , the value of `uniform_noise` must be ``'False'`` and the
               filling noise will be zero so that the result is fixed.
-            - When `uniform_noise` is 'True', the value of `noise` only can be 'uniform'.
-              When `uniform_noise` is 'False', the value of `noise` can be 'uniform', 'gaussian' and 'zero'.
+            - When `uniform_noise` is ``'True'`` , the value of `noise` only can be ``'uniform'`` .
+              When `uniform_noise` is ``'False'`` , the value of `noise` can be ``'uniform'`` , ``'gaussian'`` and
+              ``'zero'`` .
 
     Inputs:
         - **x** (Tensor) - A 4-D float tensor of shape :math:`(batch_size, height, width, channels)`.
@@ -276,9 +277,11 @@ class CropAndResize(Primitive):
 
     Args:
         method (str, optional): An optional string that specifies the sampling method for resizing.
-            It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
-            interpolation algorithm, while "bilinear_v2" may result in better result in some cases. Default: "bilinear"
-        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
+            It can be ``"bilinear"`` , ``"nearest"`` or ``"bilinear_v2"`` . The option "bilinear" stands for standard
+            ``"bilinear"`` interpolation algorithm, while ``"bilinear_v2"`` may result in better result in some cases.
+            Default: ``"bilinear"`` .
+        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
+            Default: ``0.0`` .
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape
@@ -547,8 +550,8 @@ class CropAndResizeGradBoxes(Primitive):
         Input images and grads must be a 4-D tensor.
 
     Args:
-        method (str): A string specifying the interpolation method. Only "bilinear" is supported for now.
-            Default: "bilinear".
+        method (str): A string specifying the interpolation method. Only ``"bilinear"`` is supported for now.
+            Default: ``"bilinear"`` .
 
     Inputs:
         - **grads** (Tensor) - A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth].
@@ -660,8 +663,8 @@ class ResizeLinear1D(Primitive):
         - Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
 
     Args:
-        coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
-            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.
+        coordinate_transformation_mode (str): Default is ``'align_corners'`` . Describes how to transform the
+            coordinate in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.
 
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
@@ -711,11 +714,11 @@ class ResizeBilinearV2(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
-                       which exactly aligns the 4 corners of images and resized images. If false,
-                       rescale by :math:`new\_height / height`. Default: False.
-        half_pixel_centers (bool, optional): Whether half pixel center. If set to True, `align_corners` should be False.
-                           Default: False.
+        align_corners (bool, optional): If ``True`` , rescale input by :math:`(new\_height - 1) / (height - 1)`,
+                       which exactly aligns the 4 corners of images and resized images. If ``False`` ,
+                       rescale by :math:`new\_height / height`. Default: ``False`` .
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` , `align_corners` should be
+                           ``False`` . Default: ``False`` .
 
     Inputs:
         - **x** (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
@@ -730,8 +733,8 @@ class ResizeBilinearV2(Primitive):
     Raises:
         TypeError: If `align_corners` is not a bool.
         TypeError: If `half_pixel_centers` is not a bool.
-        TypeError: If `align_corners` and `half_pixel_centers` are all True.
-        ValueError: If `half_pixel_centers` is True and device_target is CPU.
+        TypeError: If `align_corners` and `half_pixel_centers` are all ``True`` .
+        ValueError: If `half_pixel_centers` is ``True`` and device_target is CPU.
         ValueError: If dim of `x` is not 4.
         ValueError: If `size` is Tensor and its dim is not 1.
         ValueError: If `size` contains other than 2 elements.
@@ -767,10 +770,10 @@ class ResizeBicubic(Primitive):
     Resize images to size using bicubic interpolation.
 
     Args:
-        align_corners (bool, optional):If true, the centers of the 4 corner pixels of the input
-            and output tensors are aligned, preserving the values at the corner pixels.Default: False.
-        half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to True,
-            `align_corners` should be False. Default: False.
+        align_corners (bool, optional):If ``True`` , the centers of the 4 corner pixels of the input
+            and output tensors are aligned, preserving the values at the corner pixels.Default: ``False`` .
+        half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to ``True`` ,
+            `align_corners` should be False. Default: ``False`` .
 
     Inputs:
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
@@ -791,7 +794,7 @@ class ResizeBicubic(Primitive):
         ValueError: If `size` dim is not 1.
         ValueError: If `size` size is not 2.
         ValueError: If any `size` value is not positive.
-        ValueError: If `align_corners` and `half_pixel_centers` value are both True.
+        ValueError: If `align_corners` and `half_pixel_centers` value are both ``True`` .
 
 
     Supported Platforms:
@@ -873,9 +876,9 @@ class ResizeArea(Primitive):
     Args:
         align_corners (bool, optional): A boolean flag that specifies whether
             to align the centers of the four corner pixels of the input and output tensors.
-            When this flag is set to True, the corner pixels of the output tensor are aligned
+            When this flag is set to ``True`` , the corner pixels of the output tensor are aligned
             with the corner pixels of the input tensor, which preserves the values at the corner pixels.
-            Defaults: False.
+            Defaults: ``False`` .
 
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape
@@ -927,8 +930,8 @@ class CropAndResizeGradImage(Primitive):
         Input grads must be a 4-D tensor.
 
     Args:
-        method (str): A string specifying the interpolation method. "bilinear", "nearest" and "bilinear_v2" are
-            supported for now. "bilinear_v2" only supports GPU. Default: "bilinear".
+        method (str): A string specifying the interpolation method. ``"bilinear"`` , ``"nearest"`` and
+            ``"bilinear_v2"`` are supported for now. ``"bilinear_v2"`` only supports GPU. Default: ``"bilinear"`` .
         T (mindspore.dtype): T is a required attribute. The value range of T is {mindspore.float16, mindspore.float32,
             mindspore.float64}.
 
@@ -1029,9 +1032,9 @@ class ScaleAndTranslate(Primitive):
 
     Args:
         kernel_type (str, optional): Deciding which image filtering algorithm to choose. Valid options:
-            ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle", "keyscubic", "mitchellcubic"]
-            Default: "lanczos3".
-        antialias (bool, optional): Deciding whether to use the antialias. Default: True.
+            [ ``"lanczos1"`` , ``"lanczos3"`` , ``"lanczos5"`` , ``"gaussian"`` , ``"box"`` , ``"triangle"`` ,
+            ``"keyscubic"`` , ``"mitchellcubic"`` ]. Default: ``"lanczos3"`` .
+        antialias (bool, optional): Deciding whether to use the antialias. Default: ``True`` .
 
     Inputs:
         - **images** (Tensor) - A 4-D tensor of shape :math:`(batch, image\_height, image\_width, channel)`.
@@ -1093,16 +1096,16 @@ class CombinedNonMaxSuppression(Primitive):
 
     Args:
         clip_boxes (bool, optional): Determines whether to apply bounding box normalization to ensure the
-            coordinates are within [0, 1] range. Default: True.
+            coordinates are within [0, 1] range. Default: ``True`` .
 
-            - If True, clip the boxes that fall outside this range.
-            - If False, return the box coordinates as they are without any modifications.
+            - If ``True`` , clip the boxes that fall outside this range.
+            - If ``False`` , return the box coordinates as they are without any modifications.
 
         pad_per_class (bool, optional): Determines whether the output of the non-maximum suppression (NMS)
-            algorithm should be padded or clipped to meet the maximum size constraints. Default: False.
+            algorithm should be padded or clipped to meet the maximum size constraints. Default: ``False`` .
 
-            - If False, the output is clipped to the maximum size of `max_total_size`.
-            - If True, the output is padded up to `max_size_per_class` * `num_classes` and clipped if
+            - If ``False`` , the output is clipped to the maximum size of `max_total_size`.
+            - If ``True`` , the output is padded up to `max_size_per_class` * `num_classes` and clipped if
               it exceeds `max_total_size`.
 
     Inputs:
@@ -1187,10 +1190,10 @@ class ResizeV2(Primitive):
         Input x must be a 4-D tensor.
 
     Args:
-        coordinate_transformation_mode (str): Default is 'half_pixel'. Describes how to transform the
-            coordinate in the resized tensor to the coordinate in the original tensor. Other optional: 'align_corners'.
-            In 'nearest' mode, coordinate_transformation_mode must be 'half_pixel'.
-        mode (str): Defaults to 'nearest'. Other optional: 'linear' and 'cubic'.
+        coordinate_transformation_mode (str): Default is ``'half_pixel'`` . Describes how to transform the
+            coordinate in the resized tensor to the coordinate in the original tensor. Other optional:
+            ``'align_corners'`` . In ``'nearest'`` mode, coordinate_transformation_mode must be ``'half_pixel'`` .
+        mode (str): Defaults to ``'nearest'`` . Other optional: ``'linear'`` and ``'cubic'`` .
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor which to resize, with shape [batch, channel, width, height]. Must be one of the

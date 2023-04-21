@@ -9,7 +9,7 @@
 
     参数：
         - **lengths** (Tensor) - 用来计算掩码的Tensor，一般代表长度。此Tensor中的所有值都应小于或等于 `maxlen` 。大于 `maxlen` 的值将被视为 `maxlen` 。其数据类型为int32或int64。
-        - **maxlen** (int) - 指定返回Tensor的长度。其值为正数，且与 `lengths` 中的元素数据类型相同。默认为None。
+        - **maxlen** (int) - 指定返回Tensor的长度。其值为正数，且与 `lengths` 中的元素数据类型相同。默认为 ``None`` 。
 
     返回：
         返回一个Tensor，shape为 `lengths.shape + (maxlen,)` 。

@@ -7,7 +7,7 @@ mindspore.ops.triu
 
     参数：
         - **input** (Tensor) - shape是 :math:`(N,∗)` 的Tensor，其中*表示任意数量的维度。
-        - **diagonal** (int，可选) - 指定对角线位置，默认值：0，指定主对角线。
+        - **diagonal** (int，可选) - 指定对角线位置，默认值： ``0`` ，指定主对角线。
 
     返回：
         Tensor，其数据类型和shape与 `input` 相同。

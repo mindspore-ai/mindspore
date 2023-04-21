@@ -423,12 +423,12 @@ class Im2Col(Primitive):
         ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         strides (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         dilations (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
         pads (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be a tuple of
-            one or two `int` for height and width. Default: 0.
+            one or two `int` for height and width. Default: ``0`` .
 
             - If one int, :math:`pad\_height = pad\_width`.
             - If two int, :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]`.
@@ -521,11 +521,11 @@ class Col2Im(Primitive):
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two positive int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 0.
+            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
         stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two positive int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Inputs:
         - **x** (Tensor) - 4D tensor with data type float16 or float32.
@@ -755,7 +755,7 @@ class Squeeze(Primitive):
     Args:
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
             all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
-            Default: ().
+            Default: ``()`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -946,10 +946,10 @@ class UniqueConsecutive(Primitive):
 
     Args:
         return_idx (bool, optional): Whether to return the index of where the element in the original input
-            maps to the position in the output. Default: False.
-        return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
-        axis (int, optional): The dimension to apply unique. If None, the unique of the flattened input is
-            returned. If specified, it must be int32 or int64. Default: None.
+            maps to the position in the output. Default: ``False`` .
+        return_counts (bool, optional): Whether to return the counts of each unique element. Default: ``False`` .
+        axis (int, optional): The dimension to apply unique. If ``None`` , the unique of the flattened input is
+            returned. If specified, it must be int32 or int64. Default: ``None`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -1131,7 +1131,7 @@ class Padding(Primitive):
 
     Args:
         pad_dim_size (int, optional): The value of the last dimension of `x` to be
-            extended, which must be positive. Default: 8.
+            extended, which must be positive. Default: ``8`` .
 
     Inputs:
         - **x** (Tensor) - Input Tensor of 2D or higher-dimensional.
@@ -1207,8 +1207,8 @@ class Split(Primitive):
     Refer to :func:`mindspore.ops.split` for more details.
 
     Args:
-        axis (int): Index of the split position. Default: 0.
-        output_num (int): The number of output tensors. Must be positive int. Default: 1.
+        axis (int): Index of the split position. Default: ``0`` .
+        output_num (int): The number of output tensors. Must be positive int. Default: ``1`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -1329,18 +1329,18 @@ class MatrixDiagV3(Primitive):
 
     Args:
         align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
-            Default: "RIGHT_LEFT".
+            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
+            Default: ``"RIGHT_LEFT"`` .
 
-            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
+            - When set to ``"RIGHT_LEFT"`` , the alignment of superdiagonals will be towards the right side
               (padding the row on the left), while subdiagonals will be towards the left side
               (padding the row on the right)
-            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
+            - When set to ``"LEFT_RIGHT"`` , the alignment of superdiagonals will be towards the left side
               (padding the row on the right), while subdiagonals will be towards the right side
               (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+            - When set to ``"LEFT_LEFT"`` , the alignment of  both superdiagonals and subdiagonals will be towards
               the left side(padding the row on the right).
-            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
+            - When set to ``"RIGHT_RIGHT"`` , the alignment of both superdiagonals and subdiagonals will be towards
               the right side(padding the row on the left).
 
     Inputs:
@@ -1350,21 +1350,21 @@ class MatrixDiagV3(Primitive):
           0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
           (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band.
           k[0] must not be larger than k[1]. The value must be in the range of given or derivated `num_rows`
-          and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: 0.
+          and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: ``0`` .
         - **num_rows** (Union[int, Tensor], optional) - The number of rows of the output Tensor.
           A Tensor of type int32 with only one value. If `num_rows` is -1, indicating that the innermost
           matrix of the output Tensor is a square
           matrix, and the real number of rows will be derivated by other inputs. That is
-          num_rows = :math:`x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
+          :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
           :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
         - **num_cols** (Union[int, Tensor], optional) - The number of columns of
           the output Tensor. A Tensor of type int32 with only one value.
           If `num_cols` is -1, indicating that the innermost matrix of the output
           Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
-          That is num_cols = :math:`x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
+          That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
           greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
         - **padding_value** (Union[int, float, Tensor], optional) - The number to fill the area outside the specified
-          diagonal band. A Tensor with only one value. Have the same dtype as x. Default: 0.
+          diagonal band. A Tensor with only one value. Have the same dtype as x. Default: ``0`` .
 
     Outputs:
         A Tensor. Has the same type as `x`.
@@ -1486,18 +1486,18 @@ class MatrixSetDiagV3(Primitive):
 
     Args:
         align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
-            Default: "RIGHT_LEFT".
+            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"``, ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
+            Default: ``"RIGHT_LEFT"`` .
 
-            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
+            - When set to ``"RIGHT_LEFT"`` , the alignment of superdiagonals will be towards the right side
               (padding the row on the left), while subdiagonals will be towards the left side
               (padding the row on the right)
-            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
+            - When set to ``"LEFT_RIGHT"`` , the alignment of superdiagonals will be towards the left side
               (padding the row on the right), while subdiagonals will be towards the right side
               (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+            - When set to ``"LEFT_LEFT"`` , the alignment of  both superdiagonals and subdiagonals will be towards
               the left side(padding the row on the right).
-            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
+            - When set to ``"RIGHT_RIGHT"`` , the alignment of both superdiagonals and subdiagonals will be towards
               the right side(padding the row on the left).
 
     Inputs:
@@ -1941,7 +1941,7 @@ class ScalarToTensor(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
-        - **dtype** (mindspore.dtype) - The target data type. Default: mindspore.float32. Only
+        - **dtype** (mindspore.dtype) - The target data type. Default: ``mindspore.float32`` . Only
           constant value is allowed.
 
     Outputs:
@@ -2055,9 +2055,9 @@ class Argmax(Primitive):
     Refer to :func:`mindspore.ops.argmax` for more details.
 
     Args:
-        axis (int): Axis where the Argmax operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
-            Default: `mindspore.dtype.int32`.
+        axis (int): Axis where the Argmax operation applies to. Default: ``-1`` .
+        output_type (:class:`mindspore.dtype`): An optional data type of ``mindspore.dtype.int32`` .
+            Default: ``mindspore.dtype.int32``.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
@@ -2098,9 +2098,9 @@ class Argmin(Primitive):
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
-        axis (int): Axis where the Argmin operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
-            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
+        axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
+        output_type (:class:`mindspore.dtype`): An optional data type of ``mindspore.dtype.int32`` and
+            ``mindspore.dtype.int64`` . Default: ``mindspore.dtype.int32`` .
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
@@ -2149,7 +2149,7 @@ class ArgminV2(Primitive):
     Inputs:
         - **x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **axis** (int) - Axis where the Argmin operator applies to. Default: -1.
+        - **axis** (int) - Axis where the Argmin operator applies to. Default: ``-1`` .
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
@@ -2209,9 +2209,9 @@ class ArgMaxWithValue(Primitive):
     Also see: func: `mindspore.ops.max`.
 
     Args:
-        axis (int): The dimension to reduce. Default: 0.
-        keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-                          the output will reduce dimension if false. Default: False.
+        axis (int): The dimension to reduce. Default: ``0`` .
+        keep_dims (bool): Whether to reduce dimension, if ``True`` , the output will keep same dimension with the
+                          input, the output will reduce dimension if ``false`` . Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
@@ -2222,7 +2222,7 @@ class ArgMaxWithValue(Primitive):
         tensor.
 
         - **index** (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keep_dims`
-          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          is ``True`` , the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
         - **values** (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
 
@@ -2270,9 +2270,9 @@ class ArgMinWithValue(Primitive):
     Also see: func: `mindspore.ops.min`.
 
     Args:
-        axis (int): The dimension to reduce. Default: 0.
-        keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-                          the output will reduce dimension if false. Default: False.
+        axis (int): The dimension to reduce. Default: ``0`` .
+        keep_dims (bool): Whether to reduce dimension, if ``True`` the output will keep the same dimension as the
+                          input, the output will reduce dimension if ``false`` . Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
@@ -2283,7 +2283,7 @@ class ArgMinWithValue(Primitive):
         tensor.
 
         - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
-          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          is ``True`` , the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
         - **values** (Tensor) - The minimum value of input tensor, with the same
           shape as `index`, and same dtype as `x`.
@@ -2730,7 +2730,7 @@ class Concat(PrimitiveWithCheck):
     Refer to :func:`mindspore.ops.concat` for more details.
 
     Args:
-        axis (int, optional): The specified axis. Default: 0.
+        axis (int, optional): The specified axis. Default: ``0`` .
 
     Inputs:
         - **input_x** (Union[tuple, list]) - A tuple or a list of input tensors.
@@ -2958,7 +2958,7 @@ class Stack(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.stack` for more details.
 
     Args:
-        axis (int):  Dimension to stack. Default: 0.
+        axis (int):  Dimension to stack. Default: ``0`` .
             Negative values wrap around. The range is [-(R+1), R+1).
 
     Inputs:
@@ -3078,10 +3078,10 @@ class Unstack(Primitive):
     This is the opposite of pack.
 
     Args:
-        axis (int): Dimension along which to unpack. Default: 0.
+        axis (int): Dimension along which to unpack. Default: ``0`` .
             Negative values wrap around. The range is [-R, R).
         num (Union[None, int]): The number of output tensors.
-            Automatically inferred by input_x and axis if None. Default: None.
+            Automatically inferred by input_x and axis if ``None`` . Default: ``None`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -3358,11 +3358,11 @@ class StridedSliceV2(Primitive):
     Refer to class StridedSlice for more details.
 
     Args:
-        begin_mask (int): Starting index of the slice. Default: 0.
-        end_mask (int): Ending index of the slice. Default: 0.
-        ellipsis_mask (int): An int mask. Default: 0.
-        new_axis_mask (int): An int mask. Default: 0.
-        shrink_axis_mask (int): An int mask. Default: 0.
+        begin_mask (int): Starting index of the slice. Default: ``0`` .
+        end_mask (int): Ending index of the slice. Default: ``0`` .
+        ellipsis_mask (int): An int mask. Default: ``0`` .
+        new_axis_mask (int): An int mask. Default: ``0`` .
+        shrink_axis_mask (int): An int mask. Default: ``0`` .
 
     Inputs:
         - **input_x** (Tensor) - The input Tensor.
@@ -3413,11 +3413,11 @@ class StridedSlice(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.strided_slice` for more details.
 
     Args:
-        begin_mask (int, optional): Starting index of the slice. Default: 0.
-        end_mask (int, optional): Ending index of the slice. Default: 0.
-        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: 0.
-        new_axis_mask (int, optional): An int mask for adding new dims. Default: 0.
-        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: 0.
+        begin_mask (int, optional): Starting index of the slice. Default: ``0`` .
+        end_mask (int, optional): Ending index of the slice. Default: ``0`` .
+        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: ``0`` .
+        new_axis_mask (int, optional): An int mask for adding new dims. Default: ``0`` .
+        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: ``0`` .
 
     Inputs:
         - **input_x** (Tensor) - The input Tensor to be extracted from.
@@ -3446,7 +3446,7 @@ class StridedSlice(PrimitiveWithInfer):
         >>> #
         >>> #          [[5. 5. 5.]
         >>> #           [6. 6. 6.]]]
-        >>> # In order to visually view the multi-dimensional array, write the above as follows：
+        >>> # In order to visually view the multi-dimensional array, write the above as follows
         >>> #         [
         >>> #             [
         >>> #                 [1,1,1]
@@ -4021,7 +4021,7 @@ class Eye(Primitive):
         - **m** (int) - The number of columns of returned tensor. Constant value only.
         - **t** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
           The data type can be bool or Number.
-          Default: None, the data type of the returned tensor is mindspore.float32.
+          Default: ``None`` , the data type of the returned tensor is mindspore.float32.
 
     Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
@@ -4148,7 +4148,7 @@ class ResizeNearestNeighbor(Primitive):
     Args:
         size (Union[tuple, list]): The target size. The dimension of size must be 2.
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
-                              and output tensors are aligned. Default: False.
+                              and output tensors are aligned. Default: ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
@@ -4196,12 +4196,12 @@ class ResizeNearestNeighborV2(Primitive):
     values of neighboring points at all, yielding a piecewise-constant interpolant.
 
     Args:
-        align_corners (bool, optional): If true, the centers of the 4 corner pixels of the input and output
-            tensors are aligned, preserving the values at the corner pixels. Defaults: False.
-        half_pixel_centers (bool, optional): Whether half pixel center. If set to True,
-            `align_corners` should be False. Default: False.
+        align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input and output
+            tensors are aligned, preserving the values at the corner pixels. Defaults: ``False`` .
+        half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` ,
+            `align_corners` should be False. Default: ``False`` .
         data_format (str, optional): An optional `string` that describes the
-            format of the input `x`. Default: `NHWC`.
+            format of the input `x`. Default: ``NHWC`` .
 
     Inputs:
         - **x** (Tensor) - 4-D with shape :math:`(batch, height, width, channels)`
@@ -4305,7 +4305,7 @@ class ScatterUpdate(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``True`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4374,7 +4374,7 @@ class ScatterNdUpdate(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``True`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4441,7 +4441,7 @@ class ScatterMax(_ScatterOpDynamic):
     when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4499,7 +4499,7 @@ class ScatterMin(_ScatterOpDynamic):
     when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4559,8 +4559,8 @@ class ScatterAdd(Primitive):
 
     Args:
         use_locking (bool): Whether to protect the assignment by a lock.
-            If true, `input_x` will be protected by the lock.
-            Otherwise, the calculation result is undefined. Default: False.
+            If ``True`` , `input_x` will be protected by the lock.
+            Otherwise, the calculation result is undefined. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4676,7 +4676,7 @@ class ScatterSub(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4782,7 +4782,7 @@ class Triu(Primitive):
     elements present on and above the main diagonal.
 
     Args:
-        diagonal (int, optional): The index of diagonal. Default: 0, indicating the main diagonal.
+        diagonal (int, optional): The index of diagonal. Default: ``0`` , indicating the main diagonal.
 
     Inputs:
         - **x** (Tensor) -  The input tensor with shape :math:`(N, *)`
@@ -4861,7 +4861,7 @@ class ScatterMul(_ScatterOpDynamic):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4966,7 +4966,7 @@ class ScatterDiv(_ScatterOpDynamic):
     when `updates` does not support conversion to the data type required by `input_x`.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -5067,7 +5067,7 @@ class ScatterNdAdd(Primitive):
     Refer to :func:`mindspore.ops.scatter_nd_add` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -5141,7 +5141,7 @@ class ScatterNdSub(Primitive):
     Refer to :func:`mindspore.ops.scatter_nd_sub` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -5219,7 +5219,7 @@ class ScatterNdMul(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_mul` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -5281,7 +5281,7 @@ class ScatterNdDiv(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_div` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -5343,7 +5343,7 @@ class ScatterNdMax(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_max` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) -The target tensor, with data type of Parameter.
@@ -5407,7 +5407,7 @@ class ScatterNdMin(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_min` for more details.
 
     Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Inputs:
         - **input_x** (Parameter) -The target tensor, with data type of Parameter.
@@ -6105,7 +6105,7 @@ class ReverseSequence(PrimitiveWithInfer):
 
     Args:
         seq_dim (int): The dimension where reversal is performed. Required.
-        batch_dim (int): The input is sliced in this dimension. Default: 0.
+        batch_dim (int): The input is sliced in this dimension. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - The input to reverse, supporting all number types including bool.
@@ -6199,7 +6199,7 @@ class EditDistance(Primitive):
         calling this API.
 
     Args:
-        normalize (bool): If true, edit distances are normalized by length of truth. Default: True.
+        normalize (bool): If ``True`` , edit distances are normalized by length of truth. Default: ``True`` .
 
     Inputs:
         - **hypothesis_indices** (Tensor) - The indices of the hypothesis list SparseTensor. With int64 data type.
@@ -6295,9 +6295,9 @@ class Sort(Primitive):
         Using Float32 might cause loss of accuracy.
 
     Args:
-        axis (int): The dimension to sort along. Default: -1.
-        descending (bool): Controls the sort order. If descending is True then the elements
-            are sorted in descending order by value. Default: False.
+        axis (int): The dimension to sort along. Default: ``-1`` .
+        descending (bool): Controls the sort order. If descending is ``True`` then the elements
+            are sorted in descending order by value. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor of any dimension, with a type of float16 or float32.
@@ -6733,9 +6733,9 @@ class SearchSorted(Primitive):
 
     Args:
         dtype (:class:`mindspore.dtype`, optional): Output data type. An optional data type of
-            `mstype.int32` and `mstype.int64`. Default: `mstype.int64`.
-        right (bool, optional): Search Strategy. If True, return the last suitable index found;
-            if False, return the first such index. Default: False.
+            ``mstype.int32`` and ``mstype.int64``. Default: ``mstype.int64``.
+        right (bool, optional): Search Strategy. If ``True`` , return the last suitable index found;
+            if ``False`` , return the first such index. Default: ``False`` .
 
     Inputs:
         - **sorted_sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
@@ -7198,8 +7198,8 @@ class ListDiff(Primitive):
 
     Args:
         out_idx (:class:`mindspore.dtype`, optional): The dtype of `idx`,
-            an optioanal datatype of `mstype.int32` and `mstype.int64`.
-            Default: `mstype.int32`.
+            an optioanal datatype of ``mstype.int32`` and ``mstype.int64`` .
+            Default: ``mstype.int32`` .
 
     Inputs:
         - **x** - Values to keep. A 1-D `Tensor`.
@@ -7340,8 +7340,8 @@ class TensorScatterElements(Primitive):
         the value of that position in the output will be nondeterministic.
 
     Args:
-        axis (int, optional): Specify which axis to do scatter operation. Default: 0.
-        reduction (str, optional): Which reduction operation to scatter, default is "none". Other option: "add".
+        axis (int, optional): Specify which axis to do scatter operation. Default: ``0`` .
+        reduction (str, optional): Which reduction operation to scatter, default is ``"none"`` . Other option: "add".
 
     Inputs:
         - **data** (Tensor) - The target tensor. Its rank must be at least 1.
@@ -7529,14 +7529,14 @@ class Lstsq(Primitive):
        \end{array}
 
     Args:
-        fast (bool, optional): Solving algorithm. Default: True.
+        fast (bool, optional): Solving algorithm. Default: ``True`` .
 
             - If `fast` is True, then the solution is computed by solving
               the normal equations using Cholesky decomposition.
             - If `fast` is False, an algorithm based on numerically robust
               completed orthogonal decomposition is used.
 
-        l2_regularizer (float, optional): L2 regularization coefficient. Default: 0.0.
+        l2_regularizer (float, optional): L2 regularization coefficient. Default: ``0.0`` .
 
     Inputs:
         - **x** (Tensor) - :math:`(m \times n)` matrix `x`. The input tensor whose data type is
@@ -7585,8 +7585,8 @@ class LowerBound(Primitive):
 
     Args:
         out_type (:class:`mindspore.dtype`, optional): An optional data type of
-            `mindspore.dtype.int32` and `mindspore.dtype.int64`.
-            Default: `mindspore.dtype.int32`.
+            ``mindspore.dtype.int32`` and ``mindspore.dtype.int64`` .
+            Default: ``mindspore.dtype.int32`` .
 
     Inputs:
         - **sorted_x** (Tensor) - The input tensor whose dtype is real number and
@@ -7641,8 +7641,8 @@ class UpperBound(Primitive):
 
     Args:
         out_type (:class:`mindspore.dtype`, optional): Specified output type.
-            Supported types: `mindspore.dtype.int32` and `mindspore.dtype.int64`.
-            Default: `mindspore.dtype.int32`.
+            Supported types: ``mindspore.dtype.int32`` and ``mindspore.dtype.int64`` .
+            Default: ``mindspore.dtype.int32`` .
 
     Inputs:
         - **sorted_x** (Tensor) - The input tensor whose dtype is real number. The rank must be 2.
@@ -7796,10 +7796,10 @@ class LogSpace(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        steps (int, optional): The steps must be a non-negative integer. Default: 10.
-        base (int, optional): The base must be a non-negative integer. Default: 10.
-        dtype (mindspore.dtype, optional): The dtype of output, include mindspore.float16,
-            mindspore.float32 or mindspore.float64. Default: mindspore.float32.
+        steps (int, optional): The steps must be a non-negative integer. Default: ``10`` .
+        base (int, optional): The base must be a non-negative integer. Default: ``10`` .
+        dtype (mindspore.dtype, optional): The dtype of output, include ``mindspore.float16`` ,
+            ``mindspore.float32`` or ``mindspore.float64`` . Default: ``mindspore.float32`` .
 
     Inputs:
         - **start** (Tensor) - Start value of interval, with shape of 0-D,
@@ -7895,7 +7895,7 @@ class Tril(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
+        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: ``0`` ,
             indicating the main didiagonal.
 
     Inputs:
@@ -8004,7 +8004,7 @@ class IndexPut(Primitive):
 
     Args:
         accumulate (int): If accumulate is 1, the elements in x2 are added to x1,
-            else the elements in x2 replace the corresponding element in x1, should be 0 or 1. Default: 0.
+            else the elements in x2 replace the corresponding element in x1, should be 0 or 1. Default: ``0`` .
     Inputs:
         - **x1** (Tensor) - The assigned target tensor, 1-D or higher dimensional.
         - **x2** (Tensor) - 1-D Tensor of the same type as "x1". if size= 1 will be broadcast
@@ -8274,8 +8274,8 @@ class FillDiagonal(Primitive):
         fill_value (float): The value to fill the diagonal of `input_x`.
         wrap (bool, optional): Controls whether the diagonal elements continue onto the
             remaining rows in case of a tall matrix(A matrix has more rows than columns).
-            Examples blow demonstrates how it works on a tall matrix if `wrap` is set True.
-            Default: False.
+            Examples blow demonstrates how it works on a tall matrix if `wrap` is set ``True`` .
+            Default: ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -8352,16 +8352,16 @@ class HammingWindow(Primitive):
 
     Args:
         periodic (bool, optional): a flag determines whether the returned window trims off
-            the last duplicate value from the symmetric window. Default: True.
+            the last duplicate value from the symmetric window. Default: ``True`` .
 
             - If True, returns a window to be used as periodic function, in above formula,
               :math:`N = \text{length} + 1`.
             - If False, return a symmetric window, :math:`N = \text{length}`.
 
-        alpha (float, optional): The coefficient :math:`\alpha` in the equation above. Default: 0.54.
-        beta (float, optional): The coefficient :math:`\beta` in the equation above. Default: 0.46.
-        dtype (:class:`mindspore.dtype`, optional): An optional data type of `mstype.float16`,
-            `mstype.float32` and `mstype.float64`. Default: `mstype.float32`.
+        alpha (float, optional): The coefficient :math:`\alpha` in the equation above. Default: ``0.54`` .
+        beta (float, optional): The coefficient :math:`\beta` in the equation above. Default: ``0.46`` .
+        dtype (:class:`mindspore.dtype`, optional): An optional data type of ``mstype.float16`` ,
+            ``mstype.float32`` and ``mstype.float64`` . Default: ``mstype.float32``.
 
     Inputs:
         - **length** (Tensor) - a positive integer tensor controlling the returned window size, must be 1D.
@@ -8427,8 +8427,8 @@ class AffineGrid(Primitive):
     Args:
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
             If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
-            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
-            irrelevant to resolution of the image. Default: False.
+            The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            irrelevant to resolution of the image. Default: ``False`` .
 
     Inputs:
         - **theta** (Tensor) - The input tensor of flow field whose dtype is float16, float32.
@@ -8632,7 +8632,7 @@ class TopK(Primitive):
 
     Args:
         sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
-            If False, the obtained elements will not be sorted. Default: True.
+            If False, the obtained elements will not be sorted. Default: ``True`` .
 
     Inputs:
         - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32 on CPU,
@@ -8727,7 +8727,7 @@ class CountNonZero(Primitive):
 
     Args:
         dims (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Default: None, reduce over all dimensions.
+            Default: ``None`` , reduce over all dimensions.
 
     Inputs:
         - **x** (Tensor) - Input data is used to count non-zero numbers. With shape

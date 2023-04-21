@@ -317,9 +317,9 @@ class CpuRegOp(RegOp):
         Register Cpu op input information.
 
         Args:
-            index (int): Order of the input. Default: None.
-            name (str): Name of the input. Default: None.
-            param_type (str): Param type of the input. Default: None.
+            index (int): Order of the input. Default: ``None`` .
+            name (str): Name of the input. Default: ``None`` .
+            param_type (str): Param type of the input. Default: ``None`` .
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, param_type]
@@ -334,9 +334,9 @@ class CpuRegOp(RegOp):
         Register AiCPU op output information.
 
         Args:
-            index (int): Order of the output. Default: None.
-            name (str): Name of the output. Default: None.
-            param_type (str): Param type of the output. Default: None.
+            index (int): Order of the output. Default: ``None`` .
+            name (str): Name of the output. Default: ``None`` .
+            param_type (str): Param type of the output. Default: ``None`` .
             kwargs (dict): Other information of the output.
         """
         param_list = [index, name, param_type]
@@ -351,9 +351,9 @@ class CpuRegOp(RegOp):
         Register AiCPU op attribute information.
 
         Args:
-            name (str): Name of the attribute. Default: None.
-            value_type (str): Value type of the attribute. Default: None.
-            value (str): Value of the attribute. Default: None.
+            name (str): Name of the attribute. Default: ``None`` .
+            value_type (str): Value type of the attribute. Default: ``None`` .
+            value (str): Value of the attribute. Default: ``None`` .
             kwargs (dict): Other information of the attribute.
         """
         param_list = [name, value_type, value]
@@ -377,9 +377,9 @@ class AkgRegOp(RegOp):
         Register Akg op input information.
 
         Args:
-            index (int): Order of the input. Default: None.
-            name (str): Name of the input. Default: None.
-            param_type (str): Param type of the input. Default: None.
+            index (int): Order of the input. Default: ``None`` .
+            name (str): Name of the input. Default: ``None`` .
+            param_type (str): Param type of the input. Default: ``None`` .
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, param_type]
@@ -394,8 +394,8 @@ class AkgRegOp(RegOp):
         Register Akg op output information.
 
         Args:
-            index (int): Order of the output. Default: None.
-            name (str): Name of the output. Default: None.
+            index (int): Order of the output. Default: ``None`` .
+            name (str): Name of the output. Default: ``None`` .
             kwargs (dict): Other information of the output.
         """
         param_list = [index, name]
@@ -410,9 +410,9 @@ class AkgRegOp(RegOp):
         Register Akg op attribute information.
 
         Args:
-            name (str): Name of the attribute. Default: None.
-            param_type (str): Param type of the attribute. Default: None.
-            value_type (str): Value type of the attribute. Default: None.
+            name (str): Name of the attribute. Default: ``None`` .
+            param_type (str): Param type of the attribute. Default: ``None`` .
+            value_type (str): Value type of the attribute. Default: ``None`` .
             kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type]
@@ -545,7 +545,7 @@ class TBERegOp(RegOp):
                                          True: indicates that dynamic rank is supported, and the operator supports
                                          shape (- 2), which is used to determine whether dynamic is performed.
                                          False: indicates that the operator does not support dynamic rank.
-                                         Default: False.
+                                         Default: ``False`` .
         """
         self._is_bool(dynamic_rank_support)
         self.dynamic_rank_support_ = dynamic_rank_support
@@ -556,7 +556,7 @@ class TBERegOp(RegOp):
         Description operator front end and tbe operator input mapping.
 
         Args:
-            real_input_index (list): Value of real_input_index. Default: ().
+            real_input_index (list): Value of real_input_index. Default: ``()`` .
         """
         RegOp._is_list(real_input_index)
         self.real_input_index_ = real_input_index
@@ -567,7 +567,7 @@ class TBERegOp(RegOp):
         Description the index of input need to cast to attr.
 
         Args:
-            input_to_attr_index (list): Value of input_to_attr_index. Default: ().
+            input_to_attr_index (list): Value of input_to_attr_index. Default: ``()`` .
         """
         RegOp._is_list(input_to_attr_index)
         self.input_to_attr_index_ = input_to_attr_index
@@ -578,7 +578,7 @@ class TBERegOp(RegOp):
         Define the calculation efficiency of the operator, whether the asynchronous calculation is supported.
 
         Args:
-            async_flag (bool): Value of async flag. Default: false.
+            async_flag (bool): Value of async flag. Default: ``false`` .
         """
         self._is_bool(async_flag)
         self.async_flag_ = async_flag
@@ -601,7 +601,7 @@ class TBERegOp(RegOp):
         in the tiling module.
 
         Args:
-            compute_cost (int): Value of compute cost. Default: 10.
+            compute_cost (int): Value of compute cost. Default: ``10`` .
         """
         self._is_int(compute_cost)
         self.compute_cost_ = compute_cost
@@ -623,7 +623,7 @@ class TBERegOp(RegOp):
         Define the calculation efficiency of operator, whether the partial calculation is supported.
 
         Args:
-            partial_flag (bool): Value of partial flag. Default: true.
+            partial_flag (bool): Value of partial flag. Default: ``True`` .
         """
         self._is_bool(partial_flag)
         self.partial_flag_ = partial_flag
@@ -648,7 +648,7 @@ class TBERegOp(RegOp):
         Whether the operator supports dynamic shape.
 
         Args:
-            dynamic_shape (bool): Value of dynamic shape. Default: false.
+            dynamic_shape (bool): Value of dynamic shape. Default: ``false`` .
         """
         self._is_bool(dynamic_shape)
         self.dynamic_shape_support_ = dynamic_shape
@@ -659,7 +659,7 @@ class TBERegOp(RegOp):
         Whether the operator supports dynamic compile static.
 
         Args:
-            dynamic_compile_static (bool): Value of dynamic compile static. Default: false.
+            dynamic_compile_static (bool): Value of dynamic compile static. Default: ``false`` .
         """
         self._is_bool(dynamic_compile_static)
         self.dynamic_compile_static_ = dynamic_compile_static
@@ -670,7 +670,7 @@ class TBERegOp(RegOp):
         Whether the operator needs check supports.
 
         Args:
-            need_check_supported (bool): Value of need_check_supported. Default: false.
+            need_check_supported (bool): Value of need_check_supported. Default: ``false`` .
         """
         self._is_bool(need_check_supported)
         self.need_check_support_ = need_check_supported
@@ -681,7 +681,7 @@ class TBERegOp(RegOp):
         Whether the operator needs calop_select_format api.
 
         Args:
-            is_dynamic_format (bool): Value of is_dynamic_format. Default: false.
+            is_dynamic_format (bool): Value of is_dynamic_format. Default: ``false`` .
         """
         self._is_bool(is_dynamic_format)
         self.dynamic_format_ = is_dynamic_format
@@ -692,7 +692,7 @@ class TBERegOp(RegOp):
         The behavior type of operator, such as broadcast, reduce and so on.
 
         Args:
-            pattern (str): Value of op pattern, e.g. "broadcast", "reduce". Default: None.
+            pattern (str): Value of op pattern, e.g. "broadcast", "reduce". Default: ``None`` .
         """
         if pattern is not None and self._is_string(pattern):
             self.op_pattern_ = pattern
@@ -703,11 +703,11 @@ class TBERegOp(RegOp):
         Register TBE op attribute information.
 
         Args:
-            name (str): Name of the attribute. Default: None.
-            param_type (str): Param type of the attribute. Default: None.
-            value_type (str): Type of the attribute. Default: None.
-            value (str): Value of the attribute. Default: None.
-            default_value (str): Default value of attribute. Default: None.
+            name (str): Name of the attribute. Default: ``None`` .
+            param_type (str): Param type of the attribute. Default: ``None`` .
+            value_type (str): Type of the attribute. Default: ``None`` .
+            value (str): Value of the attribute. Default: ``None`` .
+            default_value (str): Default value of attribute. Default: ``None`` .
             kwargs (dict): Other information of the attribute.
         """
         param_list = [name, param_type, value_type, value, default_value]
@@ -722,12 +722,12 @@ class TBERegOp(RegOp):
         Register TBE op input information.
 
         Args:
-            index (int): Order of the input. Default: None.
-            name (str): Name of the input. Default: None.
-            need_compile (bool): Whether the input needs to be compiled or not. Default: None.
-            param_type (str): Type of the input. Default: None.
-            shape (str): Shape of the input. Default: None.
-            value_depend (str): Whether the input is constant value depend. Default: None.
+            index (int): Order of the input. Default: ``None`` .
+            name (str): Name of the input. Default: ``None`` .
+            need_compile (bool): Whether the input needs to be compiled or not. Default: ``None`` .
+            param_type (str): Type of the input. Default: ``None`` .
+            shape (str): Shape of the input. Default: ``None`` .
+            value_depend (str): Whether the input is constant value depend. Default: ``None`` .
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, need_compile, param_type, shape, value_depend]
@@ -746,11 +746,11 @@ class TBERegOp(RegOp):
         Register TBE op output information.
 
         Args:
-            index (int): Order of the output. Default: None.
-            name (str): Name of the output. Default: None.
-            need_compile (bool): Whether the output needs to be compiled or not. Default: None.
-            param_type (str): Type of the output. Default: None.
-            shape (str): Shape of the output. Default: None.
+            index (int): Order of the output. Default: ``None`` .
+            name (str): Name of the output. Default: ``None`` .
+            need_compile (bool): Whether the output needs to be compiled or not. Default: ``None`` .
+            param_type (str): Type of the output. Default: ``None`` .
+            shape (str): Shape of the output. Default: ``None`` .
             kwargs (dict): Other information of the output.
         """
         param_list = [index, name, need_compile, param_type, shape]
@@ -770,7 +770,7 @@ class CustomRegOp(RegOp):
     Args:
         op_name (str): kernel name. The name will be record in the reg_op_name attr of the kernel node.
             Besides, the operator will generate a unique name automatically to identify the reg info.
-            Default: "Custom".
+            Default: ``"Custom"`` .
 
     Examples:
         >>> from mindspore.ops import CustomRegOp, DataType
@@ -796,17 +796,18 @@ class CustomRegOp(RegOp):
 
         Args:
             index (int): Index of the input, starts from 0. 0 means the first input tensor, 1 means the second input
-                tensor and so on. If None, key "index" will not appear in the input tensor information dict.
-                Default: None.
-            name (str): Name of the `index` 'th input. If None, key "name" will not appear in the input tensor
-                information dict. Default: None.
+                tensor and so on. If ``None`` , key "index" will not appear in the input tensor information dict.
+                Default: ``None`` .
+            name (str): Name of the `index` 'th input. If ``None`` , key "name" will not appear in the input tensor
+                information dict. Default: ``None`` .
             param_type (str): Parameter type of the `index` 'th input, can be one of
-                ["required", "dynamic", "optional"]. If None, key "param_type" will not appear in the input tensor
-                information dict. Default: "required".
+                [``"required"`` , ``"dynamic"`` , ``"optional"`` ]. If ``None`` , key "param_type" will not appear in
+                the input tensor information dict. Default: ``"required"`` .
 
-                - "required": means the `index` 'th input exist and can only be a single tensor.
-                - "dynamic": means the `index` 'th input exist and may be multiple tensors, such as the input of AddN.
-                - "optional": means the `index` 'th input may exist and be a single tensor or may not exist.
+                - ``"required"``: means the `index` 'th input exist and can only be a single tensor.
+                - ``"dynamic":`` means the `index` 'th input exist and may be multiple tensors, such as the input of
+                  AddN.
+                - ``"optional"``: means the `index` 'th input may exist and be a single tensor or may not exist.
 
             kwargs (dict): Other information of the input, used for extension.
 
@@ -836,17 +837,17 @@ class CustomRegOp(RegOp):
 
         Args:
             index (int): Index of the output, starts from 0. 0 means the first output tensor, 1 means the second output
-                tensor and so on. If None, key "index" will not appear in the output tensor information dict.
-                Default: None.
-            name (str): Name of the `index` 'th output. If None, key "name" will not appear in the output tensor
-                information dict. Default: None.
+                tensor and so on. If ``None`` , key "index" will not appear in the output tensor information dict.
+                Default: ``None`` .
+            name (str): Name of the `index` 'th output. If ``None`` , key "name" will not appear in the output tensor
+                information dict. Default: ``None`` .
             param_type (str): Parameter type of the `index` 'th output, can be one of
-                ["required", "dynamic", "optional"]. If None, key "param_type" will not appear in the output tensor
-                information dict. Default: "required".
+                [ ``"required"`` , ``"dynamic"`` , ``"optional"`` ]. If ``None`` , key "param_type" will not appear in
+                the output tensor information dict. Default: ``"required"`` .
 
-                - "required": means the `index` 'th output exist and can only be a single tensor.
-                - "dynamic": means the `index` 'th output exist and may be multiple tensors.
-                - "optional": means the `index` 'th output may exist and be a single tensor or may not exist.
+                - ``"required"``: means the `index` 'th output exist and can only be a single tensor.
+                - ``"dynamic"``: means the `index` 'th output exist and may be multiple tensors.
+                - ``"optional"``: means the `index` 'th output may exist and be a single tensor or may not exist.
 
             kwargs (dict): Other information of the output, used for extension.
 
@@ -903,18 +904,18 @@ class CustomRegOp(RegOp):
         `default_value`}.
 
         Args:
-            name (str): Name of the attribute. If None, key "name" will not appear in the attributes tensor information
-                dict. Default: None.
-            param_type (str): Parameter type of the attribute, can be one of ["required", "optional"]. If None, key
-                "param_type" will not appear in the attributes tensor information dict. Default: None.
+            name (str): Name of the attribute. If ``None`` , key "name" will not appear in the attributes tensor
+                information dict. Default: ``None`` .
+            param_type (str): Parameter type of the attribute, can be one of ["required", "optional"]. If ``None`` ,
+                key "param_type" will not appear in the attributes tensor information dict. Default: ``None`` .
 
                 - "required": means must provide a value for this attribute either by setting a default value in the
                   registration information or providing an input value when calling the Custom operator.
                 - "optional": means does not have to provide a value for this attribute.
 
             value_type (str): Value type of the attribute, can be one of ["int", "str", "bool", "float", "listInt",
-                "listStr", "listBool", "listFloat"]. If None, key "value_type" will not appear in the attributes tensor
-                information dict. Default: None.
+                "listStr", "listBool", "listFloat"]. If ``None`` , key "value_type" will not appear in the attributes
+                tensor information dict. Default: ``None`` .
 
                 - "int": string representation of Python type int.
                 - "str": string representation of Python type str.
@@ -929,9 +930,9 @@ class CustomRegOp(RegOp):
                 If the real default value of the attribute is float type with value 1.0, then the `value_type` should be
                 "float" and `default_value` should be "1.0". If the real default value of the attribute is a list of int
                 with value [1, 2, 3], then the `value_type` should be "listInt" and `default_value` should be "1,2,3",
-                each item should split by ','. If None, means the attribute has no default value and key "default_value"
-                will not appear in the attributes tensor information dict. It is used for "akg", "aicpu" and "tbe"
-                Custom operators currently. Default: None.
+                each item should split by ','. If ``None`` , means the attribute has no default value and key
+                "default_value" will not appear in the attributes tensor information dict. It is used for "akg",
+                "aicpu" and "tbe" Custom operators currently. Default: ``None`` .
             kwargs (dict): Other information of the attribute, used for extension.
 
         Raises:
@@ -960,7 +961,8 @@ class CustomRegOp(RegOp):
             target (str): Device target for current operator information, should be one of ["Ascend", "GPU", "CPU"].
                 For the same `func` of :class:`mindspore.ops.Custom`, it may support different data types and formats
                 on different targets, use `target` to specify which target that this registration information is used
-                for. If None, it will be inferred automatically inside :class:`mindspore.ops.Custom`. Default: None.
+                for. If ``None`` , it will be inferred automatically inside :class:`mindspore.ops.Custom`.
+                Default: ``None`` .
 
         Raises:
             TypeError: If `target` is neither str nor None.

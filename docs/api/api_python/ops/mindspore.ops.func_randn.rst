@@ -9,8 +9,8 @@ mindspore.ops.randn
         - **size** (Union[int, tuple(int), list(int)]) - 输出的Tensor的shape，例如，:math:`(2, 3)` or :math:`2`。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`，可选) - 需求的输出Tensor的dtype，必须是float类型。如果是None，`mindspore.float32` 会被使用。默认值：None。
-        - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值：None，值将取0。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 需求的输出Tensor的dtype，必须是float类型。如果是None，`mindspore.float32` 会被使用。默认值： ``None`` 。
+        - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值： ``None`` ，值将取 ``0`` 。
 
     返回：
         Tensor，shape和dtype由输入决定其元素为服从标准正态分布的数字。
