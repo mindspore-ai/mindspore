@@ -25,10 +25,10 @@ namespace mindspore {
 namespace device {
 struct MemUsageTensorInfo {
   size_t tensor_id_{0};
-  size_t real_tensor_id_{0};
   size_t tensor_size_{0};
   AnfNodePtr node_{nullptr};
   size_t index_{0};
+  bool is_fused_{false};
   bool is_workspace_{false};
   bool is_graph_output_{false};
   bool is_graph_input_{false};
@@ -141,6 +141,7 @@ class SwapContext {
   size_t hbm_mem_size_{0};
   size_t ddr_mem_size_{0};
   size_t disk_mem_size_{0};
+  bool parallel_for_comm_{false};
   bool offload_param_to_ddr_{false};
   bool offload_param_to_disk_{false};
   bool offload_checkpoint_to_ddr_{false};

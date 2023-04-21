@@ -246,7 +246,7 @@ void MemSwapScheduler::AddSwappableTensors(const mindspore::device::DeviceContex
       continue;
     }
     // Continuous memory are not swappable.
-    if (tensor_info->real_tensor_id_ != tensor_info->tensor_id_ || !tensor_info->fused_tensor_ids_.empty()) {
+    if (tensor_info->is_fused_ || !tensor_info->fused_tensor_ids_.empty()) {
       continue;
     }
     const auto &anf_with_out_index = std::make_pair(tensor_info->node_, tensor_info->index_);

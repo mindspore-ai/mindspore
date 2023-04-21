@@ -18,6 +18,8 @@
 #include <memory>
 #include <vector>
 #include <queue>
+#include <map>
+#include <utility>
 #include "runtime/device/gsm/swap_strategy.h"
 #include "runtime/device/gsm/mem_usage_analyzer.h"
 #include "include/backend/visible.h"
@@ -48,6 +50,24 @@ class BACKEND_EXPORT SwapStrategyBuilder {
     }
   };
 
+  void ResetState(const KernelGraphPtr &graph, const std::shared_ptr<SwapContext> &context);
+  void AnalyzeGraph(const KernelGraphPtr &graph);
+  void BuildSpans();
+  void ClassifyOffloadSpanLevel(const std::vector<std::shared_ptr<Span>> &spans, bool offload_to_ddr);
+  void ClassifySpanLevel();
+
+  size_t PreAllocFusedTensor(const std::shared_ptr<MemUsageTensorInfo> &info, size_t kernel_index);
+  void AddFusedTensorSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t start_index,
+                          size_t current_kernel_id);
+  void HandleFusedTensor();
+  void SpanToTensorAction();
+  void RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t last_index, size_t current_index,
+                  bool output_span = false);
+  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
+                          size_t total_mem_size) const;
+  void AddTensorAction(SwapActionType action_type, size_t tensor_id, size_t kernel_id);
+  std::shared_ptr<SwapStrategy> BuildStrategy(const KernelGraphPtr &graph);
+
   std::shared_ptr<MemUsageAnalyzer> analyzer_{nullptr};
   std::shared_ptr<SwapContext> context_{nullptr};
   size_t kernel_num_{0};
@@ -61,22 +81,7 @@ class BACKEND_EXPORT SwapStrategyBuilder {
   size_t total_mem_level0_{0};
   size_t total_mem_level1_{0};
   std::vector<std::vector<std::shared_ptr<TensorAction>>> kernel_actions_;
-
-  void ResetState(const KernelGraphPtr &graph, const std::shared_ptr<SwapContext> &context);
-  void AnalyzeGraph(const KernelGraphPtr &graph);
-  void BuildSpans();
-  void ClassifyOffloadSpanLevel(const std::vector<std::shared_ptr<Span>> &spans, bool offload_to_ddr);
-  void ClassifySpanLevel();
-  void AddFusedTensorSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t start_index,
-                          size_t current_kernel_id);
-  void HandleFusedTensor();
-  void SpanToTensorAction();
-  void RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t last_index, size_t current_index,
-                  bool output_span = false);
-  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
-                          size_t total_mem_size) const;
-  void AddTensorAction(SwapActionType action_type, size_t tensor_id, size_t kernel_id);
-  std::shared_ptr<SwapStrategy> BuildStrategy(const KernelGraphPtr &graph);
+  std::map<size_t, std::pair<size_t, size_t>> parallel_comm_ids_;
 };
 }  // namespace device
 }  // namespace mindspore

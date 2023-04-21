@@ -50,7 +50,7 @@ size_t MemUsageAnalyzer::AddTensorInfo(const AnfNodePtr &node, size_t index, boo
     MS_EXCEPTION_IF_NULL(address);
     auto info = std::make_shared<MemUsageTensorInfo>();
     info->tensor_id_ = tensor_num_;
-    info->real_tensor_id_ = tensor_num_;
+    info->is_fused_ = false;
     info->tensor_size_ = address->GetSize();
     info->node_ = node;
     info->index_ = index;
@@ -114,26 +114,22 @@ bool MemUsageAnalyzer::IsGraphOutput(const AnfNodePtr &node, size_t index) {
 
 void MemUsageAnalyzer::AddFusedTensorInfo() {
   auto add_fused_tensor = [this](const std::vector<size_t> &tensors, size_t kernel_id) {
-    if (tensors.size() <= 1) {
-      return;
-    }
-
     auto info = std::make_shared<MemUsageTensorInfo>();
     info->tensor_id_ = tensor_num_;
-    info->real_tensor_id_ = tensor_num_;
+    info->is_fused_ = false;
     info->tensor_size_ = 0;
     info->node_ = nullptr;
     info->index_ = 0;
     (void)tensor_infos_.emplace_back(info);
     ++tensor_num_;
-
+    (void)info->used_by_kernels_.emplace_back(kernel_id);
     for (auto tensor_id : tensors) {
       auto tensor_info = GetMemUsageTensorInfo(tensor_id);
-      tensor_info->real_tensor_id_ = info->tensor_id_;
+      tensor_info->is_fused_ = true;
       info->tensor_size_ += tensor_info->tensor_size_;
       (void)info->fused_tensor_ids_.emplace_back(tensor_info->tensor_id_);
-      (void)info->used_by_kernels_.emplace_back(kernel_id);
     }
+    return info;
   };
 
   for (size_t i = 0; i < kernel_infos_.size(); ++i) {
@@ -142,8 +138,12 @@ void MemUsageAnalyzer::AddFusedTensorInfo() {
     if (!info->is_comm_) {
       continue;
     }
-    add_fused_tensor(info->input_tensors_, i);
-    add_fused_tensor(info->output_tensors_, i);
+    if (info->input_tensors_.empty()) {
+      continue;
+    }
+    auto input_info = add_fused_tensor(info->input_tensors_, i);
+    auto output_info = add_fused_tensor(info->output_tensors_, i);
+    input_info->index_ = output_info->tensor_id_;
   }
 }
 

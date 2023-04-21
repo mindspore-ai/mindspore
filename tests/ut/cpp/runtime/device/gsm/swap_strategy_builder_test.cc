@@ -135,14 +135,14 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_all_reduce_nodes) {
   EXPECT_EQ(strategy->kernel_num_, 9);
   EXPECT_EQ(strategy->virtual_node_num_, 2);
   EXPECT_EQ(strategy->nodes_.size(), 9);
-  EXPECT_EQ(strategy->actions_.size(), 5);
-  EXPECT_EQ(strategy->links_.size(), 19);
+  EXPECT_EQ(strategy->actions_.size(), 4);
+  EXPECT_EQ(strategy->links_.size(), 17);
   std::vector<std::shared_ptr<TensorAction>> all_actions;
   for (auto const &item : strategy->actions_) {
     for (auto const &action : item.second->actions_) {
       (void)all_actions.emplace_back(action);
     }
   }
-  EXPECT_EQ(all_actions.size(), 6);
+  EXPECT_EQ(all_actions.size(), 4);
 }
 }  // namespace mindspore::device

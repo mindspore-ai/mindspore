@@ -32,6 +32,52 @@ void CheckVectorIndex(const std::vector<T> &input, size_t index) {
     MS_LOG_EXCEPTION << "Invalid vector index " << index << ", vector size is " << input.size();
   }
 }
+
+size_t GetLastKernelIndex(const std::shared_ptr<MemUsageTensorInfo> &info,
+                          const std::shared_ptr<MemUsageAnalyzer> &analyzer) {
+  MS_EXCEPTION_IF_NULL(info);
+  MS_EXCEPTION_IF_NULL(analyzer);
+  if (info->used_by_kernels_.empty()) {
+    return 0;
+  }
+  size_t last = 0;
+  size_t kernel_id = info->used_by_kernels_[0];
+  for (auto sub_tensor_id : info->fused_tensor_ids_) {
+    auto sub_tensor_info = analyzer->GetMemUsageTensorInfo(sub_tensor_id);
+    for (auto kid : sub_tensor_info->used_by_kernels_) {
+      if (kid == kernel_id) {
+        continue;
+      }
+      if (kid > last) {
+        last = kid;
+      }
+    }
+  }
+  return last;
+}
+
+size_t GetFirstKernelIndex(const std::shared_ptr<MemUsageTensorInfo> &info,
+                           const std::shared_ptr<MemUsageAnalyzer> &analyzer) {
+  MS_EXCEPTION_IF_NULL(info);
+  MS_EXCEPTION_IF_NULL(analyzer);
+  if (info->used_by_kernels_.empty()) {
+    return 0;
+  }
+  size_t first = 0;
+  size_t kernel_id = info->used_by_kernels_[0];
+  for (auto sub_tensor_id : info->fused_tensor_ids_) {
+    auto sub_tensor_info = analyzer->GetMemUsageTensorInfo(sub_tensor_id);
+    for (auto kid : sub_tensor_info->used_by_kernels_) {
+      if (kid == kernel_id) {
+        continue;
+      }
+      if (kid < first || first == 0) {
+        first = kid;
+      }
+    }
+  }
+  return first;
+}
 }  // namespace
 const size_t kSwapVirtualNodeNum = 2;  // Mark graph start and end node as virtual node
 void SwapStrategyBuilder::ResetState(const KernelGraphPtr &graph, const std::shared_ptr<SwapContext> &context) {
@@ -114,7 +160,8 @@ void SwapStrategyBuilder::BuildSpans() {
   auto &tensor_infos = analyzer_->GetMemUsageTensorInfos();
   for (auto info : tensor_infos) {
     MS_EXCEPTION_IF_NULL(info);
-    if (info->tensor_id_ != info->real_tensor_id_) {
+    // Ignore fused tensor
+    if (info->node_ == nullptr || info->is_fused_) {
       continue;
     }
 
@@ -123,6 +170,7 @@ void SwapStrategyBuilder::BuildSpans() {
       continue;
     }
 
+    // Ignore inplace tensor
     if (info->is_inplace_tensor_) {
       for (size_t i = 0; i < used_by_kernels.size(); ++i) {
         size_t current_index = used_by_kernels[i];
@@ -218,6 +266,7 @@ void SwapStrategyBuilder::AddTensorAction(SwapActionType action_type, size_t ten
   action->tensor_id_ = tensor_id;
 
   if (kernel_id > 0 && (action_type == SwapActionType::kHBM2DDR || action_type == SwapActionType::kHBM2DISK)) {
+    // analyzer kernel_id = action kernel_id - 1
     auto kernel_info = analyzer_->GetMemUsageKernelInfo(kernel_id - 1);
     MS_EXCEPTION_IF_NULL(kernel_info);
     if (!kernel_info->update_input_) {
@@ -226,6 +275,7 @@ void SwapStrategyBuilder::AddTensorAction(SwapActionType action_type, size_t ten
   }
 
   CheckVectorIndex(kernel_actions_, kernel_id);
+  // Action after kernel run
   (void)kernel_actions_[kernel_id].emplace_back(action);
 }
 
@@ -285,55 +335,90 @@ void SwapStrategyBuilder::AddFusedTensorSpan(const std::shared_ptr<MemUsageTenso
   }
 }
 
+size_t SwapStrategyBuilder::PreAllocFusedTensor(const std::shared_ptr<MemUsageTensorInfo> &info, size_t kernel_index) {
+  std::set<size_t, std::greater<>> reference_kernels;
+  for (auto sub_tensor_id : info->fused_tensor_ids_) {
+    auto sub_tensor_info = analyzer_->GetMemUsageTensorInfo(sub_tensor_id);
+    for (auto kid : sub_tensor_info->used_by_kernels_) {
+      if (kid >= kernel_index) {
+        continue;
+      }
+      auto iter = reference_kernels.find(kid);
+      if (iter == reference_kernels.end()) {
+        (void)reference_kernels.insert(kid);
+      }
+    }
+  }
+
+  size_t last_index = kernel_index;
+  size_t start_index = kernel_index;
+
+  for (const auto &kid : reference_kernels) {
+    auto span = std::make_shared<Span>();
+    span->tensor_id_ = info->tensor_id_;
+    span->tensor_size_ = info->tensor_size_;
+    span->last_index_ = kid - 1;
+    span->current_index_ = last_index;
+    bool enough_space = EnoughSpaceForSpan(span, &mem_used_level0_, total_mem_level0_);
+    if (!enough_space) {
+      start_index = last_index;
+      break;
+    }
+    last_index = kid;
+    start_index = last_index;
+  }
+  return start_index;
+}
+
 void SwapStrategyBuilder::HandleFusedTensor() {
   MS_EXCEPTION_IF_NULL(analyzer_);
   auto &tensor_infos = analyzer_->GetMemUsageTensorInfos();
   for (const auto &info : tensor_infos) {
     MS_EXCEPTION_IF_NULL(info);
-    if (info->node_ != nullptr) {
+    // Handle fused input tensor
+    if (info->node_ != nullptr || info->index_ == 0 || info->used_by_kernels_.empty()) {
       continue;
     }
+    // Correspond output tensor
+    auto output_info = analyzer_->GetMemUsageTensorInfo(info->index_);
+    auto kernel_id = info->used_by_kernels_[0];
+    auto kernel_need_mem = info->tensor_size_ + output_info->tensor_size_;
+    auto start_index = kernel_id;
+    auto end_index = kernel_id;
 
-    auto &used_by_kernels = info->used_by_kernels_;
-    if (used_by_kernels.empty()) {
-      continue;
-    }
-
-    size_t current_kernel_id = used_by_kernels[0];
-    std::set<size_t, std::greater<size_t>> reference_kernels_before;
-    for (auto sub_tensor_id : info->fused_tensor_ids_) {
-      auto sub_tensor_info = analyzer_->GetMemUsageTensorInfo(sub_tensor_id);
-      for (auto kid : sub_tensor_info->used_by_kernels_) {
-        if (kid >= current_kernel_id) {
-          continue;
-        }
-        auto iter = reference_kernels_before.find(kid);
-        if (iter == reference_kernels_before.end()) {
-          (void)reference_kernels_before.insert(kid);
+    // Occupy memory for parallel
+    MS_EXCEPTION_IF_NULL(context_);
+    bool enable_parallel = context_->parallel_for_comm_;
+    if (enable_parallel) {
+      auto left_id = GetLastKernelIndex(info, analyzer_);
+      auto right_id = GetFirstKernelIndex(output_info, analyzer_);
+      if (left_id < kernel_id && right_id > kernel_id) {
+        start_index = left_id;
+        end_index = right_id;
+        auto span = std::make_shared<Span>();
+        span->tensor_size_ = kernel_need_mem;
+        span->last_index_ = start_index - 1;
+        span->current_index_ = end_index + 1;
+        enable_parallel = EnoughSpaceForSpan(span, &mem_used_level0_, total_mem_level0_);
+        if (enable_parallel) {
+          parallel_comm_ids_.emplace(kernel_id, std::make_pair(start_index, end_index));
         }
       }
     }
 
-    size_t last_index = current_kernel_id;
-    size_t start_index = current_kernel_id;
-    for (const auto &kid : reference_kernels_before) {
-      auto span = std::make_shared<Span>();
-      span->tensor_id_ = info->tensor_id_;
-      span->tensor_size_ = info->tensor_size_;
-      span->last_index_ = kid - 1;
-      span->current_index_ = last_index;
-      bool enough_space = EnoughSpaceForSpan(span, &mem_used_level0_, total_mem_level0_);
-      if (!enough_space) {
-        start_index = last_index;
-        break;
-      }
-      last_index = kid;
-      start_index = last_index;
+    if (!enable_parallel) {
+      CheckVectorIndex(mem_used_level0_, kernel_id);
+      mem_used_level0_[kernel_id] += kernel_need_mem;
     }
 
-    AddTensorAction(SwapActionType::kAllocHBM, info->tensor_id_, start_index);
+    // Pre alloc input tensor
+    auto pre_alloc_index = PreAllocFusedTensor(info, start_index);
 
-    AddFusedTensorSpan(info, start_index, current_kernel_id);
+    AddTensorAction(SwapActionType::kAllocHBM, info->tensor_id_, pre_alloc_index);
+    AddTensorAction(SwapActionType::kAllocHBM, output_info->tensor_id_, start_index);
+
+    AddFusedTensorSpan(info, pre_alloc_index, end_index);
+    AddFusedTensorSpan(output_info, start_index, end_index);
   }
 }
 
@@ -366,9 +451,17 @@ std::shared_ptr<SwapStrategy> SwapStrategyBuilder::BuildStrategy(const KernelGra
   auto strategy = std::make_shared<SwapStrategy>();
   strategy->kernel_num_ = kernel_num_;
   strategy->virtual_node_num_ = kSwapVirtualNodeNum;
+  size_t last_index = 0;
   for (size_t i = 0; i < kernel_num_; ++i) {
     strategy->nodes_[i + 1] = exec_order[i];
-    (void)strategy->links_.emplace_back(std::make_shared<SwapLink>(i, i + 1));
+    auto iter = parallel_comm_ids_.find(i);
+    if (iter != parallel_comm_ids_.end()) {
+      (void)strategy->links_.emplace_back(std::make_shared<SwapLink>(iter->second.first + 1, i + 1));
+      (void)strategy->links_.emplace_back(std::make_shared<SwapLink>(i + 1, iter->second.second + 1));
+    } else {
+      (void)strategy->links_.emplace_back(std::make_shared<SwapLink>(last_index, i + 1));
+      last_index = i + 1;
+    }
   }
 
   size_t logic_kernel_num = kernel_actions_.size();
