@@ -23,7 +23,7 @@ mindspore.export
 
         - **kwargs** (dict) - 配置选项字典。
 
-          - **enc_key** (str) - 用于加密的字节类型密钥，有效长度为16、24或者32。
+          - **enc_key** (byte) - 用于加密的字节类型密钥，有效长度为16、24或者32。
           - **enc_mode** (Union[str, function]) - 指定加密模式，当设置 `enc_key` 时启用。
 
             - 对于 'AIR'和 'ONNX'格式的模型，当前仅支持自定义加密导出。
