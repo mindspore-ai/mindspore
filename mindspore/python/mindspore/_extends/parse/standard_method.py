@@ -3712,7 +3712,6 @@ def bernoulli(input, p=0.5, seed=None):
     """
     Randomly draws binary numbers from a Bernoulli distribution.
     """
-    check_is_int(seed, 'bernoulli', 'seed')
     return F.bernoulli(input, p, seed)
 
 

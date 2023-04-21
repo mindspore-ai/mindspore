@@ -5810,6 +5810,7 @@ def bernoulli(input, p=0.5, seed=None):
     """
     if seed is None:
         seed = 0
+    validator.check_is_int(seed, 'seed', 'bernoulli')
     bernoulli_ = _get_cache_prim(Bernoulli)(seed)
     if not isinstance(p, Tensor):
         p = Tensor([p])
