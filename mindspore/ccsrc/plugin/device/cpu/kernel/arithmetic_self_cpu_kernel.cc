@@ -83,6 +83,7 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchLogicalEqual(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -126,6 +127,15 @@ void Neg(ArithmeticSelfCpuKernelFunc *, const T *in, T *out, size_t size) {
     }
   };
   ParallelLaunch(task, size, kMaxNegSerialSize);
+}
+
+void LogicalEqual(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i];
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 void LogicalNot(ArithmeticSelfCpuKernelFunc *content, const bool *in, bool *out, size_t size) {
@@ -671,7 +681,11 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
   } else if (dtype_ == kNumberTypeUInt64) {
     LaunchKernel<uint64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeBool) {
-    LaunchLogicalNot(inputs, outputs);
+    if (kernel_name_ == kAbsOpName) {
+      LaunchLogicalEqual(inputs, outputs);
+    } else {
+      LaunchLogicalNot(inputs, outputs);
+    }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'x' must be float16, float32, float64, complex64, complex128, int8, int16, "
@@ -679,6 +693,14 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
                       << TypeIdLabel(dtype_);
   }
   return true;
+}
+
+void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &outputs) {
+  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  size_t lens = outputs[0]->size / sizeof(bool);
+  LogicalEqual(this, input, output, lens);
 }
 
 void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
