@@ -16,7 +16,7 @@ mindspore.ops.NanToNum
         - **neginf** (float，可选) - 如果是一个数字，则为替换负无穷的值。如果为None，则将负无穷替换为 `input` 类型支持的下限。默认值为None。
 
     输入：
-        - **input** (Tensor) - shape为 :math:`(input_1, input_2, ..., input_R)` 的Tensor。类型必须为float32或float16。
+        - **input** (Tensor) - 任意维度的输入Tensor。类型必须为float32或float16。
 
     输出：
         Tensor，数据shape和类型与 `input` 相同。
