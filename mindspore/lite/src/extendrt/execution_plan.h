@@ -77,7 +77,7 @@ class ExecutionPlan : public abstract::ExecutionPlan {
 
   std::vector<abstract::Kernel *> ToKernelList() override;
 
-  bool BuildKernels();
+  bool PrepareKernels();
 
  private:
   bool MallocTensorData(abstract::Kernel *kernel);

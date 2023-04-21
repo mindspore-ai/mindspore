@@ -47,27 +47,27 @@ ExecutionPlan::~ExecutionPlan() {
 
 std::vector<abstract::Kernel *> ExecutionPlan::ToKernelList() { return kernel_list_; }
 
-bool ExecutionPlan::BuildKernels() {
+bool ExecutionPlan::PrepareKernels() {
   for (auto flow : execution_flows_) {
     if (flow == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::BuildKernels get nullptr execution flow.";
+      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels get nullptr execution flow.";
       return false;
     }
     auto kernel = flow->ConstructFusionKernel();
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::BuildKernels construct execution flow to Sub Graph Kernel failed.";
+      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels construct execution flow to Sub Graph Kernel failed.";
       return false;
     }
     auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
     for (auto &node : subgraph_kernel->nodes()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "ExecutionPlan::ToKernelList node: " << node->name() << " prepare failed.";
+        MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels node: " << node->name() << " prepare failed.";
         return false;
       }
     }
     if (!MallocTensorData(subgraph_kernel)) {
-      MS_LOG(ERROR) << "ExecutionPlan::ToKernelList malloc memory for kernel: " << subgraph_kernel->name()
+      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels malloc memory for kernel: " << subgraph_kernel->name()
                     << " failed.";
       return false;
     }

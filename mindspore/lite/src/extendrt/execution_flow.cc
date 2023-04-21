@@ -24,9 +24,6 @@
 
 namespace mindspore::infer {
 ExecutionFlow::~ExecutionFlow() {
-  for (auto tensor : tensors_) {
-    delete tensor;
-  }
   for (auto kernel : kernels_) {
     delete kernel;
   }

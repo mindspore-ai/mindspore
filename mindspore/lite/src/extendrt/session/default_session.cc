@@ -189,10 +189,42 @@ std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t graph_id) {
                  [](infer::abstract::Tensor *tensor) { return tensor->tensor_name(); });
   return input_names;
 }
+
 MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
+  auto runtime = this->GetGraphRuntime();
+  if (runtime_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultInferSession::GetOutputByTensorName Runtime in Infer Session is null";
+    return nullptr;
+  }
+  auto lite_outputs = runtime->GetOutputs();
+  auto it = std::find_if(lite_outputs.begin(), lite_outputs.end(), [tensorName](infer::abstract::Tensor *tensor) {
+    if (tensor->tensor_name() == tensorName) {
+      return true;
+    }
+    return false;
+  });
+  if (it != lite_outputs.end()) {
+    return std::make_shared<LiteTensorImpl>(*it);
+  }
   return nullptr;
 }
+
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t graph_id, const std::string &name) {
+  auto runtime = this->GetGraphRuntime();
+  if (runtime_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultInferSession::GetInputByTensorName Runtime in Infer Session is null";
+    return nullptr;
+  }
+  auto lite_inputs = runtime->GetInputs();
+  auto it = std::find_if(lite_inputs.begin(), lite_inputs.end(), [name](infer::abstract::Tensor *tensor) {
+    if (tensor->tensor_name() == name) {
+      return true;
+    }
+    return false;
+  });
+  if (it != lite_inputs.end()) {
+    return std::make_shared<LiteTensorImpl>(*it);
+  }
   return nullptr;
 }
 

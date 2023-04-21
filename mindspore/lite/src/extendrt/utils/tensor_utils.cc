@@ -210,4 +210,36 @@ std::vector<kernel::KernelTensorPtr> CloudTensorUtils::LiteTensorToKernelTensorP
 
   return kernel_tensor_list;
 }
+
+std::vector<std::vector<int64_t>> AbstractTensorUtils::GetTensorListShapes(
+  const std::vector<infer::abstract::Tensor *> &tensors) {
+  std::vector<std::vector<int64_t>> original_dims;
+  std::transform(tensors.begin(), tensors.end(), std::back_inserter(original_dims),
+                 [](infer::abstract::Tensor *tensor) {
+                   std::vector<int64_t> shape64;
+                   if (tensor != nullptr) {
+                     auto shape32 = tensor->shape();
+                     std::transform(shape32.begin(), shape32.end(), std::back_inserter(shape64),
+                                    [](int dim) { return static_cast<int64_t>(dim); });
+                   }
+                   return shape64;
+                 });
+  return original_dims;
+}
+
+bool AbstractTensorUtils::SetTensorListShapse(const std::vector<infer::abstract::Tensor *> &tensors,
+                                              const std::vector<std::vector<int64_t>> &shapes) {
+  for (size_t i = 0; i < tensors.size(); i++) {
+    auto tensor = tensors.at(i);
+    if (tensor == nullptr) {
+      continue;
+    }
+    auto shape64 = shapes.at(i);
+    std::vector<int> shape32;
+    std::transform(shape64.begin(), shape64.end(), std::back_inserter(shape32),
+                   [](int64_t dim) { return static_cast<int>(dim); });
+    tensor->set_shape(shape32);
+  }
+  return true;
+}
 }  // namespace mindspore

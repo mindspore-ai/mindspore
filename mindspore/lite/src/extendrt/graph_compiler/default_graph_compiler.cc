@@ -199,7 +199,7 @@ infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
       return nullptr;
     }
     if (utils::isa<abstract::AbstractTensorPtr>(abstract)) {
-      auto tensor = infer::TensorAdapter::Convert2Tensor(abstract);
+      auto tensor = infer::TensorAdapter::Convert2Tensor(abstract, node->fullname_with_scope());
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
         return nullptr;

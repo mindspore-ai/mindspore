@@ -41,7 +41,7 @@ bool MindRTGraphExecutor::Init() {
   } else {
     mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetOutputsMap(),
                                                                          infer_execution_plan->GetInputsMap());
-    if (!infer_execution_plan->BuildKernels()) {
+    if (!infer_execution_plan->PrepareKernels()) {
       MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Build kernels failed";
       return false;
     }

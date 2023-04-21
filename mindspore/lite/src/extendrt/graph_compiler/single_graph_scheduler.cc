@@ -40,6 +40,7 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
   MSLITE_CHECK_PTR_RETURN(execution_flow_, nullptr);
   execution_flow_->SetInputs(node_list->GetInputs());
   execution_flow_->SetOutputs(node_list->GetOutputs());
+  execution_flow_->SetTensors(node_list->GetTensors());
   graph_arch_ = kernel::kCPU;
   graph_data_type_ = kNumberTypeFloat32;
   // select kernel
