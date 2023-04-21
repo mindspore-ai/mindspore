@@ -19,7 +19,6 @@ from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
-from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 
@@ -738,7 +737,6 @@ class identity(Primitive):
         """Initialize identity."""
         self.add_prim_attr('side_effect_propagate', 1)
 
-    @deprecated('2.0', 'nn.Identity', False)
     def __call__(self, x):
         return x
 
