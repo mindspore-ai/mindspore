@@ -6,7 +6,7 @@ mindspore.ops.bmm
     基于batch维度的两个Tensor的矩阵乘法。
 
     .. math::
-        \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
+        \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
     `input_x` 的维度不能小于 `3` ， `mat2` 的维度不能小于 `2` 。
 

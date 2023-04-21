@@ -14,4 +14,5 @@ mindspore.ops.argmax
         Tensor，输出为指定轴上输入Tensor最大值的索引。
 
     异常：
+        - **TypeError** - 如果入参 `keepdim` 的类型不是布尔值。
         - **ValueError** - 如果入参 `dim` 的设定值超出了范围。
