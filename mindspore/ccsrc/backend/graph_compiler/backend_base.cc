@@ -436,6 +436,113 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   return actor_info;
 }
 
+namespace {
+constexpr size_t kPartialFuncGraphPos = 1;
+constexpr size_t kPartialInputStartPos = 2;
+
+bool CheckAbstractUnify(const abstract::AbstractBasePtr abs1, const abstract::AbstractBasePtr abs2) {
+  if (abs1 == nullptr || abs2 == nullptr) {
+    MS_LOG(WARNING) << "Invaliad check as abstract is null.";
+    return true;
+  }
+  if ((!abs1->isa<abstract::AbstractSequence>()) && (!abs2->isa<abstract::AbstractSequence>())) {
+    return true;
+  }
+  if ((abs1->isa<abstract::AbstractSequence>() && (!abs2->isa<abstract::AbstractSequence>())) ||
+      (abs2->isa<abstract::AbstractSequence>() && (!abs1->isa<abstract::AbstractSequence>()))) {
+    MS_LOG(ERROR) << "Abstract:" << abs1->ToString() << " and abstract:" << abs2->ToString() << " is inconsistent.";
+    return false;
+  }
+  const auto &sequence_abs1 = abs1->cast<abstract::AbstractSequencePtr>();
+  const auto &sequence_abs2 = abs2->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abs1);
+  MS_EXCEPTION_IF_NULL(sequence_abs2);
+  if (sequence_abs1->dynamic_len() != sequence_abs2->dynamic_len()) {
+    MS_LOG(ERROR) << "Abstract:" << abs1->ToString() << " and abstract:" << abs2->ToString() << " is inconsistent.";
+    return false;
+  }
+  if (sequence_abs1->dynamic_len()) {
+    return true;
+  }
+  for (size_t i = 0; i < sequence_abs1->size(); ++i) {
+    if (!CheckAbstractUnify(sequence_abs1->elements()[i], sequence_abs2->elements()[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckTupleDynamicLenUnify(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsCallNode(node)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
+    if (func_graphs.empty()) {
+      MS_LOG(EXCEPTION) << "Get func graphs from abstract failed.";
+    }
+    for (auto func_graph : func_graphs) {
+      MS_EXCEPTION_IF_NULL(func_graph);
+      // Check the consistency of return outputs and call outputs.
+      MS_EXCEPTION_IF_NULL(func_graph->return_node());
+      if (!CheckAbstractUnify(func_graph->return_node()->abstract(), node->abstract())) {
+        MS_LOG(ERROR) << "Invalid abs:" << func_graph->return_node()->abstract()->ToString()
+                      << " for node:" << func_graph->return_node()->DebugString()
+                      << " and:" << node->abstract()->ToString() << " for node:" << node->DebugString();
+        return false;
+      }
+      // Check the consistency of arguments and parameters.
+      size_t args_num = cnode->inputs().size() - 1;
+      size_t para_num = func_graph->parameters().size();
+      if (args_num > para_num) {
+        MS_LOG(EXCEPTION) << "Invalid args num:" << args_num << " for funcgraph:" << func_graph->ToString()
+                          << " parameters num:" << func_graph->parameters().size();
+      }
+      for (size_t i = 0; i < args_num; ++i) {
+        MS_EXCEPTION_IF_NULL(cnode->input(args_num - i));
+        MS_EXCEPTION_IF_NULL((func_graph->parameters())[para_num - 1 - i]);
+        if (!CheckAbstractUnify(cnode->input(args_num - i)->abstract(),
+                                (func_graph->parameters())[para_num - 1 - i]->abstract())) {
+          MS_LOG(ERROR) << "Invalid abs:" << cnode->input(args_num - i)->abstract()->ToString()
+                        << " for node:" << cnode->DebugString()
+                        << " and:" << (func_graph->parameters())[para_num - 1 - i]->ToString()
+                        << " for node:" << (func_graph->parameters())[para_num - 1 - i]->DebugString();
+          return false;
+        }
+      }
+    }
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    size_t input_num = cnode->inputs().size();
+    if (input_num <= kPartialFuncGraphPos || cnode->input(kPartialFuncGraphPos) == nullptr ||
+        (!cnode->input(kPartialFuncGraphPos)->isa<ValueNode>())) {
+      MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
+    }
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
+      MS_LOG(EXCEPTION) << "Invalid args num:" << input_num - kPartialInputStartPos
+                        << " in partial node:" << cnode->DebugString() << " for fungraph:" << func_graph->ToString()
+                        << " parameter num:" << func_graph->parameters().size();
+    }
+    for (size_t i = kPartialInputStartPos; i < input_num; ++i) {
+      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      MS_EXCEPTION_IF_NULL(func_graph->parameters()[i - kPartialInputStartPos]);
+      if (!CheckAbstractUnify(cnode->input(i)->abstract(),
+                              func_graph->parameters()[i - kPartialInputStartPos]->abstract())) {
+        MS_LOG(ERROR) << "Invalid abs:" << cnode->input(i)->abstract()->ToString()
+                      << " for node:" << cnode->input(i)->DebugString()
+                      << " and:" << func_graph->parameters()[i - kPartialInputStartPos]->ToString()
+                      << " for node:" << func_graph->parameters()[i - kPartialInputStartPos]->DebugString();
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
@@ -464,6 +571,12 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       if (node == nullptr || (!node->isa<CNode>())) {
         continue;
       }
+      // Check consistency of dynamic len flag in partial and call.
+      if ((common::AnfAlgo::IsCallNode(node) || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) &&
+          (!CheckTupleDynamicLenUnify(node))) {
+        MS_LOG(EXCEPTION) << "Invalid abs in node:" << node->DebugString();
+      }
+
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       // List name --> tuple name.

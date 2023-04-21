@@ -1006,30 +1006,36 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   internal_outputs_to_front_map_[new_node][dst_output_idx] = std::move(front_node_pair);
   SetInternalOutputAttr(new_node);
 }
+void KernelGraph::UpdateInternalParameter() {
+  for (const auto &internal_parameter_to_front_node : internal_parameter_to_front_node_map_) {
+    const auto &parameter = internal_parameter_to_front_node.first;
+    const auto &front_node_with_index = internal_parameter_to_front_node.second;
+    auto front_outputs = common::AnfAlgo::GetAllOutputWithIndex(front_node_with_index.first);
+    AnfWithOutIndex new_front_node_with_index;
+    if (front_node_with_index.second < front_outputs.size()) {
+      new_front_node_with_index = front_outputs[front_node_with_index.second];
+    } else {
+      new_front_node_with_index = front_node_with_index;
+    }
+
+    if (new_front_node_with_index.first == nullptr) {
+      return;
+    }
+    MS_LOG(INFO) << "Cache internal parameter: " << parameter->DebugString()
+                 << " to front node: " << new_front_node_with_index.first->DebugString()
+                 << " with index: " << new_front_node_with_index.second
+                 << ", from front node: " << front_node_with_index.first->DebugString()
+                 << " with index: " << front_node_with_index.second;
+    internal_parameter_to_front_node_map_[parameter] = new_front_node_with_index;
+  }
+}
 
 void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
                                                     const AnfWithOutIndex &front_node_with_index) {
   if ((parameter == nullptr) || (front_node_with_index.first == nullptr)) {
     return;
   }
-
-  auto front_outputs = common::AnfAlgo::GetAllOutputWithIndex(front_node_with_index.first);
-  AnfWithOutIndex new_front_node_with_index;
-  if (front_node_with_index.second < front_outputs.size()) {
-    new_front_node_with_index = front_outputs[front_node_with_index.second];
-  } else {
-    new_front_node_with_index = front_node_with_index;
-  }
-
-  if (new_front_node_with_index.first == nullptr) {
-    return;
-  }
-  MS_LOG(INFO) << "Cache internal parameter: " << parameter->DebugString()
-               << " to front node: " << new_front_node_with_index.first->DebugString()
-               << " with index: " << new_front_node_with_index.second
-               << ", from front node: " << front_node_with_index.first->DebugString()
-               << " with index: " << front_node_with_index.second;
-  internal_parameter_to_front_node_map_[parameter] = new_front_node_with_index;
+  internal_parameter_to_front_node_map_[parameter] = front_node_with_index;
 }
 
 AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {

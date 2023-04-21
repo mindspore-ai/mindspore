@@ -55,24 +55,24 @@ template <typename T>
 bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
-  const auto index = GetDeviceAddress<int64_t>(inputs, 1);
+  auto index = *(GetDeviceAddress<int64_t>(inputs, 1));
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len = static_cast<int64_t>(tuple_shape_[0]);
-  if (*index >= len || *index < -len) {
-    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " <= index < " << len << ", but got " << *index
+  if (index >= len || index < -len) {
+    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " <= index < " << len << ", but got " << index
                              << ".";
   }
-  if (*index < 0) {
-    *index += len;
+  if (index < 0) {
+    index += len;
   }
   if (tuple_shape_.size() == 1) {
-    *output_addr = input_addr[*index];
+    *output_addr = input_addr[index];
     return true;
   }
   auto output_size = output_size_list_[0];
   size_t element_index_size =
     static_cast<size_t>(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
-  size_t input_addr_offset = element_index_size * (*index);
+  size_t input_addr_offset = element_index_size * index;
   auto cp_ret = memcpy_s(output_addr, output_size, input_addr + input_addr_offset, element_index_size * sizeof(T));
   if (cp_ret != EOK) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
