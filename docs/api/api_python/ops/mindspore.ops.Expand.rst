@@ -15,4 +15,4 @@
         - **shape** (Tensor) - `x` 扩展后的shape。
 
     输出：
-        Tensor，其shape为 `size` 。
+        扩展后的Tensor，其shape由 `shape` 决定。
