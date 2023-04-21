@@ -8,7 +8,7 @@ mindspore.ops.Cdist
     更多参考详见 :func:`mindspore.ops.cdist`。
 
     参数：
-        - **p** (float，可选) - 计算向量对p-norm距离的P值，P∈[0，∞]。默认值：2.0。
+        - **p** (float，可选) - 计算向量对p-norm距离的P值，P∈[0，∞]。默认值： ``2.0`` 。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(B, P, M)` ， :math:`B` 维度为0时该维度被忽略，shape为 :math:`(P, M)` 。

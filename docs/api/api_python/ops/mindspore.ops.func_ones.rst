@@ -9,7 +9,7 @@ mindspore.ops.ones
 
     参数：
         - **shape** (Union[tuple[int], int]) - 指定输出Tensor的shape。
-        - **dtype** (:class:`mindspore.dtype`) - 用来描述所创建的Tensor的 `dtype`。如果为None，那么将会使用mindspore.float32。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`) - 用来描述所创建的Tensor的 `dtype`。如果为 ``None`` ，那么将会使用mindspore.float32。默认值： ``None`` 。
 
     返回：
         Tensor，shape和数据类型与输入相同。

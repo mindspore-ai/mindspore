@@ -11,7 +11,7 @@ mindspore.ops.intopk
         - **k** (int) - 指定在最后一维上参与比较的top元素的数量。
 
     返回：
-        一维的bool类型Tensor，与 `x2` shape相同。对于 `x2` 中的样本标签 `i`，如果它在 `x1` 的前 `k` 个预测值中，则输出值为True，否则为False。
+        一维的bool类型Tensor，与 `x2` shape相同。对于 `x2` 中的样本标签 `i`，如果它在 `x1` 的前 `k` 个预测值中，则输出值为 ``True`` ，否则为 ``False`` 。
 
     异常：
         - **TypeError** - `k` 不是int类型。

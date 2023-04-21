@@ -22,8 +22,8 @@ mindspore.ops.Adam
     其中， :math:`m` 表示第一个动量矩阵， :math:`v` 表示第二个动量矩阵， :math:`g` 表示 `gradient`， :math:`l` 表示缩放因子 `lr` ， :math:`\beta_1, \beta_2` 表示 `beta1` 和 `beta2` ， :math:`t` 表示更新步数， :math:`beta_1^t(\beta_1^{t})` 和 :math:`beta_2^t(\beta_2^{t})` 表示 `beta1_power` 和 `beta2_power` ， :math:`\alpha` 表示 `learning_rate` ， :math:`w` 表示 `var` ， :math:`\epsilon` 表示 `epsilon` 。
 
     参数：
-        - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、 `m` 和 `v` 的Tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
-        - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，则使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
+        - **use_locking** (bool) - 是否对参数更新加锁保护。如果为 ``True`` ，则 `w` 、 `m` 和 `v` 的Tensor更新将受到锁的保护。如果为 ``False`` ，则结果不可预测。默认值： ``False`` 。
+        - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为 ``True`` ，则使用NAG更新梯度。如果为 ``False`` ，则在不使用NAG的情况下更新梯度。默认值：``False`` 。
 
     输入：
         - **var** (Parameter) - 需更新的权重。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型可以是float16或float32。

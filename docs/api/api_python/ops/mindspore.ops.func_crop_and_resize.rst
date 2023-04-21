@@ -14,8 +14,8 @@ mindspore.ops.crop_and_resize
         - **boxes** (Tensor) - shape为 :math:`(num\_boxes, 4)` 的二维Tensor，表示归一化的边框坐标，坐标格式为 :math:`[y1, x1, y2, x2]` 。其中 :math:`(y1, x1)` 为第一个角点， :math:`(y2, x2)` 为第二个角点。如果 :math:`y1 > y2` ，就是对图像进行的上下翻转，当 :math:`x1 > x2` ，宽度方向操作类似。如果归一化的坐标值超出 :math:`[0, 1]` 的区间，采用 `extrapolation_value` 进行填充。数据类型：float32。
         - **box_indices** (Tensor) - shape为 :math:`(num\_boxes)` 的一维Tensor，表示每个方框的索引。数据类型：int32。
         - **crop_size** (Tuple[int]) - 2元组(crop_height, crop_width)，指定对裁剪出的图像进行调整时的输出大小，元素均为正值。数据类型：int32。
-        - **method** (str，可选) - 指定调整大小时的采样方法，取值为"bilinear"、"nearest"或"bilinear_v2"，其中，"bilinear"是标准的线性插值算法，而在某些情况下，"bilinear_v2"可能会得到更优的效果。"nearest"是最邻近插值算法。默认值："bilinear"。
-        - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值：0.0。
+        - **method** (str，可选) - 指定调整大小时的采样方法，取值为 ``"bilinear"`` 、 ``"nearest"`` 或 ``"bilinear_v2"`` ，其中， ``"bilinear"`` 是标准的线性插值算法，而在某些情况下， ``"bilinear_v2"`` 可能会得到更优的效果。 ``"nearest"`` 是最邻近插值算法。默认值： ``"bilinear"`` 。
+        - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值： ``0.0`` 。
 
     返回：
         Tensor，shape为 :math:`(num_boxes, crop_height, crop_width, depth)` ，数据类型：float32 。

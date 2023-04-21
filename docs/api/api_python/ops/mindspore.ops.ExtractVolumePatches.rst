@@ -9,14 +9,14 @@ mindspore.ops.ExtractVolumePatches
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 长度为3或5的int列表。输入每个维度表示滑动窗口大小。必须是： :math:`[1, 1, k_d, k_h, k_w]` 或 :math:`[k_d, k_h, k_w]` 。如果 :math:`k_d = k_h = k_w` ，则可以输入整数。
         - **strides** (Union[int, tuple[int], list[int]]) - 长度为3或5的int列表。
           两个连续色块的中心在输入中的距离。必须是： :math:`[1, 1, s_d, s_h, s_w]` 或 :math:`[s_d, s_h, s_w]` 。如果 :math:`s_d = s_h = s_w` ，则可以输入整数。
-        - **padding** (str) - 要使用的填充算法的类型。可选值有"SAME"和"VALID"。
+        - **padding** (str) - 要使用的填充算法的类型。可选值有 ``"SAME"`` 和 ``"VALID"`` 。
 
     输入：
         - **input_x** (Tensor) - 一个五维的输入Tensor。数据类型必须为float16、float32，shape为 :math:`(x_n, x_c, x_d, x_h, x_w)` 。
 
     输出：
-        Tensor，与输入的类型相同。如果填充为"VALID"，则shape为 :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
-        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)` ；如果填充"SAME"，则shape为 :math:`(
+        Tensor，与输入的类型相同。如果填充为 ``"VALID"`` ，则shape为 :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
+        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)` ；如果填充 ``"SAME"`` ，则shape为 :math:`(
         x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)` 。
 
     异常：

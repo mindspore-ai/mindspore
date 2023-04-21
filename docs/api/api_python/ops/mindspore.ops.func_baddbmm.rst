@@ -13,7 +13,7 @@ mindspore.ops.baddbmm
         - **input** (Tensor) - 输入Tensor，当batch1是 :math:`(C, W, T)` 的Tensor而且batch2是一个 :math:`(C, T, H)` 的Tensor时，输入必须为可以被广播为 :math:`(C, W, H)` 形状的Tensor。
         - **batch1** (Tensor) - 公式中的 :math:`batch1` 。必须为3-D的Tensor，类型与 `input` 一致。
         - **batch2** (Tensor) - 公式中的 :math:`batch2` 。必须为3-D的Tensor，类型与 `input` 一致。
-        - **beta** (Union[float, int], 可选) - 输入的乘数。默认值为1。
+        - **beta** (Union[float, int], 可选) - 输入的乘数。默认值为 ``1`` 。
         - **alpha** (Union[float, int]，可选) - :math:`batch1 @ batch2` 的系数，默认值为1。当输入的类型不是 `FloatTensor` 时，参数 `beta` 和 `alpha` 必须是整数，否则它们应该是实数。
 
     返回：

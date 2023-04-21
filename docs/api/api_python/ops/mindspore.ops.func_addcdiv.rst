@@ -12,7 +12,7 @@ mindspore.ops.addcdiv
         - **input** (Tensor) - 要添加的Tensor。
         - **tensor1** (Tensor) - 分子Tensor。
         - **tensor2** (Tensor) - 分母Tensor。
-        - **value** (Union[Tensor, Number]) - tensor1 / tensor2的乘数。默认值：1。
+        - **value** (Union[Tensor, Number]) - tensor1 / tensor2的乘数。默认值： ``1`` 。
         
     返回：
         Tensor，具有与tensor1/tensor2相同的shape和dtype。

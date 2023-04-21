@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.celu`。
 
     参数：
-        - **alpha** (float，可选) - celu公式定义的阈值 :math:`\alpha` 。默认值：1.0。
+        - **alpha** (float，可选) - celu公式定义的阈值 :math:`\alpha` 。默认值： ``1.0`` 。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。

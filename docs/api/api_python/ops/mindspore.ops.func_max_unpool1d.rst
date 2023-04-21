@@ -19,10 +19,10 @@ mindspore.ops.max_unpool1d
         - **indices** (Tensor) - 最大值的索引。shape必须与输入 `x` 相同。取值范围需满足 :math:`[0, H_{in} - 1]` 。
           数据类型必须是int32或int64。
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，若取值为 '0'， '(0)' 或 'None'， `stride` 值与 `kernel_size`
-          相同。默认值：None。
-        - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。
-        - **output_size** (tuple[int], 可选) - 输出shape。默认值：None。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，若取值为 '0'， '(0)' 或 ``None`` ， ``stride` 值与 ``kernel_size``
+          相同。默认值： ``None`` 。
+        - **padding** (Union[int, tuple[int]]) - 填充值。默认值： ``0`` 。
+        - **output_size** (tuple[int], 可选) - 输出shape。默认值： ``None`` 。
           如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
           如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H)` ， :math:`(C, H)` 或 :math:`(H)`，取值范围需满足：
           :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]` 。

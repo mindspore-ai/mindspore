@@ -15,7 +15,7 @@ mindspore.ops.FractionalMaxPoolWithFixedKsize
 
         - **output_shape** (Union[int, tuple[int]]) - 目标输出shape，可以是一个二元组，表示shape为 :math:`(H_{out}, W_{out})` ，或者是一个单独的 `S` 表示shape为 :math:`(S, S)` 。
 
-        - **data_format** (str，可选) - 可选的数据格式值，当前支持“NCHW”，默认值：“NCHW”。
+        - **data_format** (str，可选) - 可选的数据格式值，当前支持 ``"NCHW"`` ，默认值：``"NCHW"`` 。
 
     输入：
         - **input_x** (Tensor) - Tensor的shape :math:`(N, C, H_{in}, W_{in})` ，数据类型为：float16、float32、float64、int32、int64。

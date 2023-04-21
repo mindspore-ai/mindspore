@@ -7,9 +7,9 @@ mindspore.ops.dropout
 
     参数：
         - **input** (Tensor) - dropout的输入，任意维度的Tensor，其数据类型为float16或float32。
-        - **p** (float，可选) - 输入神经元丢弃概率，数值范围在0到1之间。例如，p=0.1，删除10%的神经元。默认值：0.5。
-        - **training** (bool) - 若为True则启用dropout功能。默认值：True。
-        - **seed** (int, 可选) - 随机数生成器的种子，必须是非负数，默认值：None，默认为0。
+        - **p** (float，可选) - 输入神经元丢弃概率，数值范围在0到1之间。例如，p=0.1，删除10%的神经元。默认值： ``0.5`` 。
+        - **training** (bool) - 若为True则启用dropout功能。默认值： ``True`` 。
+        - **seed** (int, 可选) - 随机数生成器的种子，必须是非负数，默认值： ``None`` ，默认为 ``0`` 。
 
     返回：
         - **output** (Tensor) - 归零后的Tensor，shape和数据类型与 `input` 相同。

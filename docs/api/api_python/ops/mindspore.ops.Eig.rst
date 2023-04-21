@@ -9,7 +9,7 @@ mindspore.ops.Eig
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **compute_v** (bool，可选) - 如果为True，同时计算特征值和特征向量，如果为False，只计算特征值，默认值：False。
+        - **compute_v** (bool，可选) - 如果为 ``True`` ，同时计算特征值和特征向量，如果为 ``False`` ，只计算特征值，默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - 方阵。shape为 :math:`(*, N, N)`，数据类型支持

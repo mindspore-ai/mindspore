@@ -6,8 +6,8 @@ mindspore.ops.DataFormatDimMap
     返回源数据格式中的目标数据格式的维度索引。
 
     参数：
-        - **src_format** (str) - 源数据格式中的可选值。格式可以是"NHWC"和"NCHW"。默认值："NHWC"。
-        - **dst_format** (str) - 目标数据格式中的可选值。格式可以是"NHWC"和"NCHW"。默认值："NCHW"。
+        - **src_format** (str) - 源数据格式中的可选值。格式可以是 ``"NHWC"`` 和 ``"NCHW"`` 。默认值： ``"NHWC"`` 。
+        - **dst_format** (str) - 目标数据格式中的可选值。格式可以是 ``"NHWC"`` 和 ``"NCHW"`` 。默认值： ``"NCHW"`` 。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor，每个元素都用作源数据格式的维度索引。建议值在[-4, 4)范围内，仅支持int32。

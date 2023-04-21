@@ -26,8 +26,8 @@ mindspore.ops.binary_cross_entropy
     参数：
         - **logits** (Tensor) - 输入预测值，其数据类型为float16或float32。
         - **labels** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。默认值：None。若为None，损失函数将不会考虑任何样本的权重，每个样本在计算损失时被视为具有相同的重要性。
-        - **reduction** (str, 可选) - 指定用于输出结果的规约计算方式。取值为 'mean' 、 'sum' 或 'none' ，分别表示不指定计算方式，使用均值进行计算，使用求和进行计算，不区分大小写。默认值：'mean' 。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。默认值： ``None`` 。若为 ``None`` ，损失函数将不会考虑任何样本的权重，每个样本在计算损失时被视为具有相同的重要性。
+        - **reduction** (str, 可选) - 指定用于输出结果的规约计算方式。取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` ，分别表示不指定计算方式，使用均值进行计算，使用求和进行计算，不区分大小写。默认值： ``'mean'`` 。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。

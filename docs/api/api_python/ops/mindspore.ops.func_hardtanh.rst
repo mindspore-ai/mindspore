@@ -16,8 +16,8 @@ mindspore.ops.hardtanh
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **min_val** (Union[int, float]) - 线性区域范围的最小值。默认值：-1.0。
-        - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值：1.0。
+        - **min_val** (Union[int, float]) - 线性区域范围的最小值。默认值： ``-1.0`` 。
+        - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值： ``1.0`` 。
 
     返回：
         Tensor，数据类型和shape与 `input` 的相同。

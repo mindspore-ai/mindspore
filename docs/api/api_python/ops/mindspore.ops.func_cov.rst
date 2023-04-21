@@ -31,9 +31,9 @@ mindspore.ops.cov
         - **input** (Tensor) - 一个二维矩阵，或单个变量的标量或一维向量。
 
     关键字参数：
-        - **correction** (int，可选) - 样本量和样本自由度之间的差异，默认为Bessel校正 `correction = 1`，即使指定了 `fweights` 和 `aweights` 的情况下它也会返回无偏估计。`correction = 0` 将返回简单平均值。默认值：1。
-        - **fweights** (Tensor, 可选) - 包含整数频率权重的标量或一维Tensor，表示每一个观测向量的重复次数。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值：None。
-        - **aweights** (Tensor, 可选) - 包含浮点观测权重的标量或一维Tensor，表示每一个观测向量的重要性，重要性越高对应值越大。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值：None。
+        - **correction** (int，可选) - 样本量和样本自由度之间的差异，默认为Bessel校正 `correction = 1`，即使指定了 `fweights` 和 `aweights` 的情况下它也会返回无偏估计。`correction = 0` 将返回简单平均值。默认值： ``1`` 。
+        - **fweights** (Tensor, 可选) - 包含整数频率权重的标量或一维Tensor，表示每一个观测向量的重复次数。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值： ``None`` 。
+        - **aweights** (Tensor, 可选) - 包含浮点观测权重的标量或一维Tensor，表示每一个观测向量的重要性，重要性越高对应值越大。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值： ``None`` 。
 
     返回：
         Tensor，输入 `input` 的协方差矩阵。

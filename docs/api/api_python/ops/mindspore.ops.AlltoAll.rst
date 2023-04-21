@@ -19,7 +19,7 @@ mindspore.ops.AlltoAll
         - **split_count** (int) - 在每个进程上，将块（blocks）拆分为 `split_count` 个。
         - **split_dim** (int) - 在每个进程上，沿着 `split_dim` 维度进行拆分。
         - **concat_dim** (int) - 在每个进程上，沿着 `concat_dimension` 拼接接收到的块（blocks）。
-        - **group** (str) - AlltoAll的通信域。默认值："GlobalComm.WORLD_COMM_GROUP"。
+        - **group** (str) - AlltoAll的通信域。默认值： ``"GlobalComm.WORLD_COMM_GROUP"`` 。
 
     输入：
         - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)`。

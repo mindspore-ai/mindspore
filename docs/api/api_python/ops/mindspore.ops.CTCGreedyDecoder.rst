@@ -8,7 +8,7 @@ mindspore.ops.CTCGreedyDecoder
     更多参考详见 :func:`mindspore.ops.ctc_greedy_decoder`。
 
     参数：
-        - **merge_repeated** (bool，可选) - 返回的结果中是否合并重复的类。默认值：True。
+        - **merge_repeated** (bool，可选) - 返回的结果中是否合并重复的类。默认值： ``True`` 。
 
     输入：
         - **inputs** (Tensor) - shape: :math:`(max\_time, batch\_size, num\_classes)`，数据类型必须是float32或者float64。`num_classes` 为 `num_labels + 1` classes，其中 `num_labels` 表示实际标签的个数，空标签默认使用 `num_classes - 1`。

@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.cholesky_inverse`。
 
     参数：
-        - **upper** (bool，可选) - 返回上三角矩阵还是下三角矩阵的标志。默认值：False。
+        - **upper** (bool，可选) - 返回上三角矩阵还是下三角矩阵的标志。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor，其rank为2，数据类型为float32或float64。

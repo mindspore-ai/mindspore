@@ -16,7 +16,7 @@ mindspore.ops.ApplyProximalAdagrad
     输入 `var` 、 `accum` 和 `grad` 之间必须遵守隐式类型转换规则以保证数据类型的统一。如果数据类型不同，低精度的数据类型将被自动转换到高精度的数据类型。
 
     参数：
-        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
+        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值： ``False`` 。
 
     输入：
         - **var** (Parameter) - 公式中的"var"。数据类型需为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任何数量的附加维度。

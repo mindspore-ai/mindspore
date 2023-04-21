@@ -15,8 +15,8 @@
         - **batch2** (Tensor) - 矩阵乘法中的第二个Tensor。
 
     关键字参数：
-        - **beta** (Union[int, float]，可选) - `input` 的乘数。默认值：1。
-        - **alpha** (Union[int, float]，可选) - `batch1` @ `batch2` 的乘数。默认值：1。
+        - **beta** (Union[int, float]，可选) - `input` 的乘数。默认值： ``1`` 。
+        - **alpha** (Union[int, float]，可选) - `batch1` @ `batch2` 的乘数。默认值： ``1`` 。
 
     返回：
         Tensor，和 `input` 具有相同的dtype。

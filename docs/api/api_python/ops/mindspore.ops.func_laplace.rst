@@ -14,7 +14,7 @@ mindspore.ops.laplace
         - **shape** (tuple) - 指定生成随机Tensor的shape。格式为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **mean** (Tensor) - 均值μ分布参数，指定峰值的位置。数据类型为float32。
         - **lambda_param** (Tensor) - 用于控制此随机分布方差的参数。拉普拉斯分布的方差等于 `lambda_param` 平方的两倍。数据类型为float32。
-        - **seed** (int，可选) - 随机种子，用作生成随机数。默认值：None，此时使用0作为seed。
+        - **seed** (int，可选) - 随机种子，用作生成随机数。默认值： ``None`` ，此时使用0作为seed。
 
     返回：
         Tensor。输出shape应该是使用输入 `shape` 、 `mean` 和 `lambda_param`  广播后的shape。数据类型为float32。

@@ -32,23 +32,23 @@ mindspore.ops.FFTWithSize
         - **signal_ndim** (int) - 表示每个信号中的维数，控制着傅里叶变换的维数，其值只能为1、2或3。
         - **inverse** (bool) - 表示该操作是否为逆变换，用以选择FFT、IFFT、RFFT和IRFFT。
 
-          - 如果为True，则为RFFT或IRFFT。
-          - 如果为False，则为FFT或IFFT。
+          - 如果为 ``True`` ，则为RFFT或IRFFT。
+          - 如果为 ``False`` ，则为FFT或IFFT。
 
         - **real** (bool) - 表示该操作是否为实变换，用以选择FFT、IFFT、RFFT和IRFFT。
 
-          - 如果为True，则为RFFT或IRFFT。
-          - 如果为False，则为FFT或IFFT。
+          - 如果为 ``True`` ，则为RFFT或IRFFT。
+          - 如果为 ``False`` ，则为FFT或IFFT。
   
-        - **norm** (str，可选) - 表示该操作的规范化方式，可选值：["backward", "forward", "ortho"]。默认值："backward"。
+        - **norm** (str，可选) - 表示该操作的规范化方式，可选值：[ ``"backward"`` , ``"forward"`` , ``"ortho"`` ]。默认值： ``"backward"`` 。
   
           - "backward"，正向变换不缩放，逆变换按 :math:`1/n` 缩放，其中 `n` 表示输入 `x` 的元素数量。。
           - "ortho"，正向变换与逆变换均按 :math:`1/\sqrt n` 缩放。
           - "forward"，正向变换按 :math:`1/n` 缩放，逆变换不缩放。
   
-        - **onesided** (bool，可选) - 控制输入是否减半以避免冗余。默认值：True。
+        - **onesided** (bool，可选) - 控制输入是否减半以避免冗余。默认值： ``True`` 。
         - **signal_sizes** (tuple，可选) - 原始信号的大小（RFFT变换之前的信号，不包含batch这一维），只有在IRFFT模式下和设置 `onesided` 为True时需要该参数，需要满足
-          以下条件。默认值：()。
+          以下条件。默认值： ``()`` 。
 
           - `signal_sizes` 的长度等于IRFFT的 `signal_ndim` ： :math:`len(signal_sizes)=signal_ndim` 。
           - `signal_sizes` 的最后一个维度除以2等于IRFFT输入的最后一个维度： :math:`signal_size[-1]/2+1=x.shape[-1]` 。

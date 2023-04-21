@@ -8,7 +8,7 @@
     当目标类与抽样类匹配时，我们称之为"accidental hit"。accidental hit的计算结果包含三部分(indices、ids、weights)，其中index代表目标类中的行号，id代表候选抽样中的位置，weight为float类型中的最大值。
 
     参数：
-        - **num_true** (int) - 每个训练样本的目标类数。默认值：1。
+        - **num_true** (int) - 每个训练样本的目标类数。默认值： ``1`` 。
 
     输入：
         - **true_classes** (Tensor) - 目标类。数据类型为int32或int64，shape为 :math:`(batch\_size, num\_true)` 。

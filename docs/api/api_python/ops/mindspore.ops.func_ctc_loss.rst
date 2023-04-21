@@ -17,9 +17,9 @@ mindspore.ops.ctc_loss
         - **targets** (Tensor) - 目标Tensor，shape :math:`(N, S)` 。其中S表示最大目标长度。
         - **input_lengths** (Union(tuple, Tensor)) - 输入长度，shape为N的Tensor或tuple。
         - **target_lengths** (Union(tuple, Tensor)) - 目标长度，shape为N的Tensor或tuple。
-        - **blank** (int，可选) - 空白标签。默认值：0。
-        - **reduction** (str，可选) - 对输出应用归约方法。可选值为"none"、"mean"或"sum"，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值："mean"。
-        - **zero_infinity** (bool，可选) - 是否设置无限损失和相关梯度为零。默认值：False。
+        - **blank** (int，可选) - 空白标签。默认值： ``0`` 。
+        - **reduction** (str，可选) - 对输出应用归约方法。可选值为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` ，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值： ``"mean"`` 。
+        - **zero_infinity** (bool，可选) - 是否设置无限损失和相关梯度为零。默认值： ``False`` 。
 
     返回：
         - **neg_log_likelihood** (Tensor) - 对每一个输入节点可微调的损失值，shape是 :math:`(N)`。

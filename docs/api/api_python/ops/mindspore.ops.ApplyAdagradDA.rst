@@ -25,7 +25,7 @@ mindspore.ops.ApplyAdagradDA
     如果它们具有不同的数据类型，则较低精度的数据类型将转换为相对最高精度的数据类型。
 
     参数：
-        - **use_locking** (bool) - 如果为True， `var` 和 `gradient_accumulator` 的更新将受到锁的保护。否则，行为为未定义，很可能出现较少的冲突。默认值为False。
+        - **use_locking** (bool) - 如果为 ``True`` ， `var` 和 `gradient_accumulator` 的更新将受到锁的保护。否则，行为为未定义，很可能出现较少的冲突。默认值为 ``False`` 。
 
     输入：
         - **var** (Parameter) - 要更新的变量。数据类型必须为float16或float32。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

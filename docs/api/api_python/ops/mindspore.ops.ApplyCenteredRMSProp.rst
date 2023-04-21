@@ -32,7 +32,7 @@
         在此算法的密集实现中， `mean_gradient` 、 `mean_square` 和 `moment` 在 `grad` 为零时仍将被更新。但在稀疏实现中， `mean_gradient` 、 `mean_square` 和 `moment` 不会在 `grad` 为零的迭代中被更新。
 
     参数：
-        - **use_locking** (bool) - 是否对参数更新增加锁保护。默认值：False。
+        - **use_locking** (bool) - 是否对参数更新增加锁保护。默认值： ``False`` 。
 
     输入：
         - **var** (Parameter) - 要更新的权重。

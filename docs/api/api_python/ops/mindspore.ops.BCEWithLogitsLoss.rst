@@ -41,7 +41,7 @@ mindspore.ops.BCEWithLogitsLoss
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
-        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
+        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` ，不区分大小写。如果 ``'none'`` ，则不执行 `reduction` 。默认值： ``'mean'`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。据类型必须为float16或float32。
@@ -50,7 +50,7 @@ mindspore.ops.BCEWithLogitsLoss
         - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
 
     异常：
         - **TypeError** - 所有的输入都不是Tensor。

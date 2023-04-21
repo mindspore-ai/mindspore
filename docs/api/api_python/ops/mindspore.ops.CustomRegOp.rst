@@ -6,20 +6,20 @@ mindspore.ops.CustomRegOp
     用于为 :class:`mindspore.ops.Custom` 的 `func` 参数生成算子注册信息的类。注册信息主要指定了 `func` 的输入和输出Tensor所支持的数据类型和数据格式、属性以及target信息。
 
     参数：
-        - **op_name** (str) - 表示kernel名称，算子会把这个记录在算子节点的 reg_op_name 属性中。此外，算子会自动生成唯一名称作为识别注册信息的标识。默认值："Custom"。
+        - **op_name** (str) - 表示kernel名称，算子会把这个记录在算子节点的 reg_op_name 属性中。此外，算子会自动生成唯一名称作为识别注册信息的标识。默认值： ``"Custom"`` 。
 
     .. py:method:: attr(name=None, param_type=None, value_type=None, default_value=None, **kwargs)
 
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的属性信息。每次调用该函数都会产生一个属性信息，也就是说，如果 `func` 有两个属性，那么这个函数应该被连续调用两次。属性信息将生成为一个字典：{"name": `name`, "param_type": `param_type`, "value_type": `value_type`, "default_value": `default_value`}。
 
         参数：
-            - **name** (str) - 表示属性的名称。如果该值为None，键"index"将不会出现在属性信息字典中。默认值：None。
-            - **param_type** (str) - 表示属性的参数类型，可以是["required", "optional"]之一。如果该值为None，键"param_type"将不会出现在属性信息字典中。默认值：None。
+            - **name** (str) - 表示属性的名称。如果该值为None，键"index"将不会出现在属性信息字典中。默认值： ``None`` 。
+            - **param_type** (str) - 表示属性的参数类型，可以是["required", "optional"]之一。如果该值为None，键"param_type"将不会出现在属性信息字典中。默认值： ``None`` 。
 
               - "required": 表示必须通过在注册信息中设置默认值的方式或者在调用自定义算子时提供输入值的方式来为此属性提供值。
               - "optional": 表示不强制为此属性提供值。
 
-            - **value_type** (str) - 表示属性的值的类型，可以是["int", "str", "bool", "float", "listInt", "listStr", "listBool", "listFloat"]之一。如果该值为None，键"value_type"将不会出现在属性信息字典中。默认值：None。
+            - **value_type** (str) - 表示属性的值的类型，可以是["int", "str", "bool", "float", "listInt", "listStr", "listBool", "listFloat"]之一。如果该值为None，键"value_type"将不会出现在属性信息字典中。默认值： ``None`` 。
 
               - "int": Python int类型的字符串表示。
               - "str": Python str类型的字符串表示。
@@ -30,7 +30,7 @@ mindspore.ops.CustomRegOp
               - "listBool": Python list of bool类型的字符串表示。
               - "listFloat": Python list of float类型的字符串表示。
 
-            - **default_value** (str) - 表示属性的默认值。 `default_value` 和 `value_type` 配合使用。如果属性实际的默认值为1.0，那么 `value_type` 是"float", `default_value` 是"1.0"。如果属性实际的默认值是[1, 2, 3]，那么 `value_type` 是"listInt", `default_value` 是"1,2,3"，其中数值通过','分割。如果该值为None，键"default_value"将不会出现在属性信息字典中。目前用于"akg"、"aicpu"和"tbe"类型的自定义算子。默认值：None。
+            - **default_value** (str) - 表示属性的默认值。 `default_value` 和 `value_type` 配合使用。如果属性实际的默认值为1.0，那么 `value_type` 是"float", `default_value` 是"1.0"。如果属性实际的默认值是[1, 2, 3]，那么 `value_type` 是"listInt", `default_value` 是"1,2,3"，其中数值通过','分割。如果该值为None，键"default_value"将不会出现在属性信息字典中。目前用于"akg"、"aicpu"和"tbe"类型的自定义算子。默认值： ``None`` 。
             - **\*\*kwargs** (dict) - 表示属性的其他信息，用于扩展。
 
         异常：
@@ -70,9 +70,9 @@ mindspore.ops.CustomRegOp
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的输入Tensor信息。每次调用该函数都会产生一个输入Tensor信息，也就是说，如果 `func` 有两个输入Tensor，那么该函数应该被连续调用两次。输入Tensor信息将生成为一个字典：{"index": `index`, "name": `name`, "param_type": `param_type`}。
 
         参数：
-            - **index** (int) - 表示输入的索引，从0开始。0表示第一个输入Tensor，1表示第二个输入Tensor，以此类推。如果该值为None，键"index"将不会出现在输入Tensor信息字典中。默认值：None。
-            - **name** (str) - 表示第 `index` 个输入的名称。如果该值为None，键"name"将不会出现在输入Tensor信息字典中。默认值：None。
-            - **param_type** (str) - 表示第 `index` 个输入的参数类型，可以是["required", "dynamic", "optional"]之一。如果该值为None，键"param_type"将不会出现在输入Tensor信息字典中。默认值："required"。
+            - **index** (int) - 表示输入的索引，从0开始。0表示第一个输入Tensor，1表示第二个输入Tensor，以此类推。如果该值为None，键"index"将不会出现在输入Tensor信息字典中。默认值： ``None`` 。
+            - **name** (str) - 表示第 `index` 个输入的名称。如果该值为None，键"name"将不会出现在输入Tensor信息字典中。默认值： ``None`` 。
+            - **param_type** (str) - 表示第 `index` 个输入的参数类型，可以是[ ``"required"`` , ``"dynamic"`` , ``"optional"`` ]之一。如果该值为None，键"param_type"将不会出现在输入Tensor信息字典中。默认值： ``"required"`` 。
 
               - "required": 表示第 `index` 个输入存在并且只能是单个Tensor。
               - "dynamic": 表示第 `index` 个输入存在且Tensor个数可能为多个，比如AddN算子的输入属于这种情况。
@@ -94,9 +94,9 @@ mindspore.ops.CustomRegOp
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的输出Tensor信息。每次调用该函数都会产生一个输出Tensor信息，也就是说，如果 `func` 有两个输出Tensor，那么该函数应该被连续调用两次。输出Tensor信息将生成为一个字典：{"index": `index`, "name": `name`, "param_type": `param_type`}。
 
         参数：
-            - **index** (int) - 表示输出的索引，从0开始。0表示第一个输出Tensor，1表示第二个输出Tensor，以此类推。如果该值为None，键"index"将不会出现在输出Tensor信息字典中。默认值：None。
-            - **name** (str) - 表示第 `index` 个输出的名称。如果该值为None，键"name"将不会出现在输出Tensor信息字典中。默认值：None。
-            - **param_type** (str) - 表示第 `index` 个输出的参数类型，可以是["required", "dynamic", "optional"]之一。如果该值为None，键"param_type"将不会出现在输出Tensor信息字典中。默认值："required"。
+            - **index** (int) - 表示输出的索引，从0开始。0表示第一个输出Tensor，1表示第二个输出Tensor，以此类推。如果该值为None，键"index"将不会出现在输出Tensor信息字典中。默认值： ``None`` 。
+            - **name** (str) - 表示第 `index` 个输出的名称。如果该值为None，键"name"将不会出现在输出Tensor信息字典中。默认值： ``None`` 。
+            - **param_type** (str) - 表示第 `index` 个输出的参数类型，可以是[ ``"required"`` , ``"dynamic"`` , ``"optional"`` ]之一。如果该值为None，键"param_type"将不会出现在输出Tensor信息字典中。默认值： ``"required"`` 。
 
               - "required": 表示第 `index` 个输出存在并且只能是单个Tensor。
               - "dynamic": 表示第 `index` 个输出存在且Tensor个数可能为多个。
@@ -118,7 +118,7 @@ mindspore.ops.CustomRegOp
         指定当前注册信息所对应的target。
 
         参数：
-            - **target** (str) - 表示当前注册信息所对应的target，可以是["Ascend", "GPU", "CPU"]之一。对于同一个 :class:`mindspore.ops.Custom` 的 `func` 参数，其在不同的target上可能支持不同的数据类型和数据格式，使用此参数指定注册信息用于哪个target。如果该值为None，它将在 :class:`mindspore.ops.Custom` 内部被自动推断。默认值：None。
+            - **target** (str) - 表示当前注册信息所对应的target，可以是["Ascend", "GPU", "CPU"]之一。对于同一个 :class:`mindspore.ops.Custom` 的 `func` 参数，其在不同的target上可能支持不同的数据类型和数据格式，使用此参数指定注册信息用于哪个target。如果该值为None，它将在 :class:`mindspore.ops.Custom` 内部被自动推断。默认值： ``None`` 。
 
         异常：
             - **TypeError** - `target` 既不是str也不是None。

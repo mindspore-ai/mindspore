@@ -16,18 +16,18 @@
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，是一个整数，对应深度、高度和宽度，或者是含3个分别对应深度、高度和宽度整数的tuple。默认值：1。
-        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，是一个整数，对应移动深度、高度和宽度，或者是含3个分别表对应移动深度、高度和宽度整数的tuple。默认值：1。
-        - **pad_mode** (str) - 指定池化填充模式，可选值有："same"、"valid"或"pad"。默认值："valid"。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，是一个整数，对应深度、高度和宽度，或者是含3个分别对应深度、高度和宽度整数的tuple。默认值： ``1`` 。
+        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，是一个整数，对应移动深度、高度和宽度，或者是含3个分别表对应移动深度、高度和宽度整数的tuple。默认值： ``1`` 。
+        - **pad_mode** (str) - 指定池化填充模式，可选值有： ``"same"`` 、 ``"valid"`` 或 ``"pad"`` 。默认值： ``"valid"`` 。
 
           - **same** - 输出的深度、高度和宽度分别与输入整除 `stride` 后的值相同。
           - **valid** - 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
           - **pad** - 对输入进行填充。在输入的深度、高度和宽度方向上填充 `pad` 大小的0。如果设置此模式， `pad` 必须大于或等于0。
 
-        - **pad** (Union(int, tuple[int], list[int])) - 池化填充方式。默认值：0。如果 `pad` 是一个整数，则头部、尾部、顶部、底部、左边和右边的填充都是相同的，等于 `pad` 。如果 `pad` 是六个integer的tuple，则头部、尾部、顶部、底部、左边和右边的填充分别等于填充pad[0]、pad[1]、pad[2]、pad[3]、pad[4]和pad[5]。
-        - **ceil_mode** (bool) - 是否使用ceil函数计算输出高度和宽度。默认值：False。
-        - **count_include_pad** (bool) - 如果为True，平均计算将包括零填充。默认值：True。
-        - **divisor_override** (int) - 如果指定了该值，它将在平均计算中用作除数，否则将使用kernel_size作为除数。默认值：0。
+        - **pad** (Union(int, tuple[int], list[int])) - 池化填充方式。默认值： ``0`` 。如果 `pad` 是一个整数，则头部、尾部、顶部、底部、左边和右边的填充都是相同的，等于 `pad` 。如果 `pad` 是六个integer的tuple，则头部、尾部、顶部、底部、左边和右边的填充分别等于填充pad[0]、pad[1]、pad[2]、pad[3]、pad[4]和pad[5]。
+        - **ceil_mode** (bool) - 是否使用ceil函数计算输出高度和宽度。默认值： ``False`` 。
+        - **count_include_pad** (bool) - 如果为 ``True`` ，平均计算将包括零填充。默认值： ``True`` 。
+        - **divisor_override** (int) - 如果指定了该值，它将在平均计算中用作除数，否则将使用kernel_size作为除数。默认值： ``0`` 。
         - **data_format** (str) - 输入和输出的数据格式。目前仅支持'NCDHW'。默认值：'NCDHW'。
 
     输入：

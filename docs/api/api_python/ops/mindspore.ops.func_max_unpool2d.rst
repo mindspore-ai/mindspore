@@ -22,12 +22,12 @@ mindspore.ops.max_unpool2d
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。int类型表示池化核的长宽相同。
           tuple类型中的两个值分别代表池化核的长和宽。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，int类型表示长宽方向的移动步长相同。
-          tuple中的两个值分别代表长宽方向移动的步长。若取值为 'None' ，`stride` 值与 `kernel_size` 相同。
-          默认值：None。
-        - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
+          tuple中的两个值分别代表长宽方向移动的步长。若取值为 ``'None'`` ， ``stride`` 值与 ``kernel_size`` 相同。
+          默认值： ``None`` 。
+        - **padding** (Union[int, tuple[int]]) - 填充值。默认值： ``0`` 。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的两个值分别代表长宽方向填充的大小。
-        - **output_size** (tuple[int]，可选) - 输出shape。默认值：None。
-          如果output_size为()，那么输出shape根据 `kernel_size` 、 `stride` 和 `padding` 计算得出。
+        - **output_size** (tuple[int]，可选) - 输出shape。默认值： ``None`` 。
+          如果output_size为()，那么输出shape根据 ``kernel_size`` 、 ``stride`` 和 ``padding`` 计算得出。
           如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)` ， :math:`(C, H, W)` 或 :math:`(H, W)` ，取值范围需满足：
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`。
 

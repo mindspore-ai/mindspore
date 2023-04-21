@@ -21,7 +21,7 @@ mindspore.ops.EditDistance
         - 如果输入 `truth_indices` 或者 `hypothesis_indices` 不是有序的， 可能会导致计算结果不符合预期， 建议调用该接口之前确保输入的稀疏张量 `truth_indices` 和 `hypothesis_indices` 都是升序排列的。
 
     参数：
-        - **normalize** (bool) - 如果为True，则编辑距离将按真实值长度标准化。默认值：True。
+        - **normalize** (bool) - 如果为 ``True`` ，则编辑距离将按真实值长度标准化。默认值： ``True`` 。
 
     输入：
         - **hypothesis_indices** (Tensor) - 预测列表的索引。类型为Tensor，数据类型为int64，其shape为 :math:`(N, R)` 。

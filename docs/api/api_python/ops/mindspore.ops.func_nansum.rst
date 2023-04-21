@@ -7,11 +7,11 @@ mindspore.ops.nansum
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **axis** (Union[int, tuple(int)], 可选) - 求和的维度。假设 `input` 的秩为r，取值范围[-r,r)。默认值：None，对Tensor中的所有元素求和。
-        - **keepdims** (bool, 可选) - 输出Tensor是否保持维度。默认值：False，不保留维度。
+        - **axis** (Union[int, tuple(int)], 可选) - 求和的维度。假设 `input` 的秩为r，取值范围[-r,r)。默认值： ``None`` ，对Tensor中的所有元素求和。
+        - **keepdims** (bool, 可选) - 输出Tensor是否保持维度。默认值： ``False`` ，不保留维度。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 输出Tensor的类型。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 输出Tensor的类型。默认值： ``None`` 。
 
     返回：
         Tensor，输入 `input` 指定维度的元素和，将非数字(NaNs)处理为零。

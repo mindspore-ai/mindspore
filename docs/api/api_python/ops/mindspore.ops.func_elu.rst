@@ -20,7 +20,7 @@ mindspore.ops.elu
 
     参数：
         - **input_x** (Tensor) - ELU的输入，为任意维度的Tensor，数据类型为float16或float32。
-        - **alpha** (float, 可选) - ELU的alpha值，数据类型为float，目前仅支持1.0。默认值：1.0。
+        - **alpha** (float, 可选) - ELU的alpha值，数据类型为float，目前仅支持1.0。默认值： ``1.0`` 。
 
     返回：
         Tensor，输出的shape、数据类型与 `input_x` 相同。

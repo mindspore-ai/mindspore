@@ -11,7 +11,7 @@ mindspore.ops.coo_concat
     参数：
         - **sp_input** (Union[list(COOTensor), tuple(COOTensor)]) - 输入的需要concat合并的稀疏张量。
         - **concat_dim** (scalar) - 指定需要合并的轴序号, 它的取值必须是在[-rank, rank)之内，
-          其中rank为sp_input中COOTensor的shape的维度值，默认值：0。
+          其中rank为sp_input中COOTensor的shape的维度值，默认值： ``0`` 。
 
     返回：
         COOTensor，按concat_dim轴合并后的COOTensor。这个COOTensor的稠密shape值为：

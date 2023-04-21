@@ -19,11 +19,11 @@ mindspore.ops.kaiser_window
 
     参数：
         - **window_length** (int) - 输出window的大小。
-        - **periodic** (bool, 可选) - 如果为True，则返回周期性window用于进行谱线分析。如果为False，则返回对称的window用于设计滤波器。默认值：True。
-        - **beta** (float, 可选) - 形状参数，当 `beta` 变大时，窗口就会变窄。默认值：12.0。
+        - **periodic** (bool, 可选) - 如果为 ``True`` ，则返回周期性window用于进行谱线分析。如果为 ``False`` ，则返回对称的window用于设计滤波器。默认值： ``True`` 。
+        - **beta** (float, 可选) - 形状参数，当 `beta` 变大时，窗口就会变窄。默认值： ``12.0`` 。
 
     关键字参数：
-        - **dtype** (mindspore.dtype, 可选) - 输出window的数据类型，必须为float。默认值：None。
+        - **dtype** (mindspore.dtype, 可选) - 输出window的数据类型，必须为float。默认值：``None`` 。
 
     返回：
         Tensor，一个Kaiser window。
