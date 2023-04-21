@@ -72,6 +72,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     *single_op_cache_hit = true;
     return iter->second;
   }
+  MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
+
   *single_op_cache_hit = false;
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
@@ -112,7 +114,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
   auto op_compiler_info =
-    std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, device_context, false);
+    std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, device_context,
+                                     op_run_info->base_op_run_info.need_earse_cache);
 
   op_compiler_infos_[graph_info] = op_compiler_info;
   return op_compiler_info;

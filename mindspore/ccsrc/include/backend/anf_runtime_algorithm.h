@@ -239,6 +239,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool IsSummaryNode(const AnfNodePtr &node);
   static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
   static void UpdateValueNodeShape(const AnfNodePtr &node);
+  static bool NeedEraseCache(const PrimitivePtr &prim);
 };
 }  // namespace session
 
