@@ -21,6 +21,8 @@
 
 namespace mindspore {
 AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
+
+TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_FALLBACK_H_

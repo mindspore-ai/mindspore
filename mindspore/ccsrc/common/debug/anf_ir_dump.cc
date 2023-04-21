@@ -138,16 +138,20 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer,
     return;
   }
 
-  buffer << "#IR entry      : @" << graph->ToString() << std::endl;
-  buffer << "#Total subgraph: " << sub_graphs.size() << std::endl;
+  buffer << "# IR entry: @" << graph->ToString() << std::endl;
+  buffer << "# Total subgraphs: " << sub_graphs.size() << std::endl;
   buffer << std::endl;
-  buffer << "#attrs         :" << std::endl;
-  for (const auto &attr : graph->attrs()) {
-    buffer << attr.first << " : ";
-    if (attr.second->isa<BoolImm>()) {
-      buffer << GetValue<bool>(attr.second);
-    } else if (attr.second->isa<StringImm>()) {
-      buffer << GetValue<std::string>(attr.second);
+
+  if (!graph->attrs().empty()) {
+    buffer << "# Attrs:" << std::endl;
+    for (const auto &attr : graph->attrs()) {
+      buffer << attr.first << " : ";
+      if (attr.second->isa<BoolImm>()) {
+        buffer << GetValue<bool>(attr.second);
+      } else if (attr.second->isa<StringImm>()) {
+        buffer << GetValue<std::string>(attr.second);
+      }
+      buffer << std::endl;
     }
     buffer << std::endl;
   }
@@ -190,9 +194,12 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     return 0;
   }
   std::vector<AnfNodePtr> parameters = graph->parameters();
-  buffer << "#Total params  : " << parameters.size() << std::endl;
-  buffer << std::endl;
+  buffer << "# Total params: " << parameters.size() << std::endl;
 
+  if (parameters.empty()) {
+    return 0;
+  }
+  buffer << "# Params:" << std::endl;
   // Dump parameters
   int32_t para_num = 1;
   for (const auto &param : parameters) {
@@ -499,6 +506,21 @@ void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIR
 void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub,
                    const LocDumpMode &dump_location) {
   MS_EXCEPTION_IF_NULL(node);
+  // Dump comments firstly.
+  if (node->debug_info() != nullptr) {
+    const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+    if (debug_info->location() != nullptr) {
+      const auto &comments = debug_info->location()->comments();
+      if (!comments.empty()) {
+        gsub->buffer << "      # Comment:\n";
+        for (auto &comment : comments) {
+          gsub->buffer << "        " << comment << '\n';
+        }
+      }
+    }
+  }
+
+  // Dump line info.
   if (dump_location == kTopStack) {
     auto fused_debug_infos = node->fused_debug_infos();
     if (!fused_debug_infos.empty()) {
@@ -585,9 +607,9 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   DumpKernelInfo(node, gsub);
 
   if (dump_full_name) {
-    gsub->buffer << "      # fullname_with_scope: (" << node->fullname_with_scope() << ")" << std::endl;
+    gsub->buffer << "      # Fullname with scope: (" << node->fullname_with_scope() << ")" << std::endl;
   } else {
-    gsub->buffer << "      # scope: (" << node->scope()->name() << ")" << std::endl;
+    gsub->buffer << "      # Scope: (" << node->scope()->name() << ")" << std::endl;
   }
 
   // Print debug info
@@ -600,7 +622,7 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
     return;
   }
   constexpr int width = 4;
-  oss << "# order:\n";
+  oss << "# Order:\n";
   int i = 1;
   for (auto &node : order_list) {
     MS_EXCEPTION_IF_NULL(node);
