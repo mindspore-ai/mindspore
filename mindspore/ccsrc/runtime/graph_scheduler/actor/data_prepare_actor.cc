@@ -710,8 +710,6 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   if (common::AnfAlgo::IsDynamicSequence(node)) {
     node_value = AnfAlgo::SequenceToTensor(node_value);
     AnfAlgo::UpdateValueNodeShape(node);
-    MS_LOG(INFO) << "Create new tensor:" << node_value->ToString()
-                 << " for dynamic sequence value node:" << node->DebugString();
   }
   MS_EXCEPTION_IF_NULL(node_value);
   std::vector<ValuePtr> values;
