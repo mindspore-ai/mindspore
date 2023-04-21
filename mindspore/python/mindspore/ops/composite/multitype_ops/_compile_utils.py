@@ -471,29 +471,31 @@ def convert_variable_to_tensor_slice(slice_index):
     return slice_index
 
 
+class _TensorIndexGetitem(base.TensorIndexGetitem_):
+    """
+    Getting item of Tensor.
+
+    Args:
+        data (Tensor): A tuple to be sliced.
+        index: Index of tensor.
+
+    Returns:
+        Type is the same as the element type of data.
+    """
+
+    def __init__(self, name):
+        """Initialize _TensorIndexGetitem."""
+        base.TensorIndexGetitem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+_tensor_index_getitem = _TensorIndexGetitem('tensor_index_getitem')
+
+
 def tensor_index_by_slice(data, slice_index):
     """Tensor getitem by a slice."""
-    min_data_dim, max_data_dim = 1, 8
-    const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
-    data_shape = F.shape(data)
-    slice_index = convert_variable_to_tensor_slice(slice_index)
-
-    is_dynamic = (F.is_sequence_value_unknown(data_shape)
-                  or isinstance(slice_get_item(slice_index, "start"), Tensor)
-                  or isinstance(slice_get_item(slice_index, "stop"), Tensor)
-                  or isinstance(slice_get_item(slice_index, "step"), Tensor))
-    if is_dynamic:
-        begin_strides, end_strides, step_strides = get_stride_info_from_slice(data, slice_index)
-    else:
-        begin_strides, end_strides, step_strides = const_utils.get_stride_info_from_slice(data_shape, slice_index)
-    begin_mask = 1 if slice_get_item(slice_index, "start") is None else 0
-    end_mask = 1 if slice_get_item(slice_index, "stop") is None else 0
-    for i in range(1, len(data_shape)):
-        begin_mask += 2 ** i
-        end_mask += 2 ** i
-    if begin_mask or end_mask:
-        return strided_slice(data, begin_strides, end_strides, step_strides, begin_mask, end_mask, 0, 0, 0)
-    return F.strided_slice(data, begin_strides, end_strides, step_strides)
+    return _tensor_index_getitem(data, slice_index)
 
 
 def get_stride_info_from_slice(data, slice_index):

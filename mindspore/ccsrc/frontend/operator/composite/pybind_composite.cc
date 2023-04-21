@@ -24,6 +24,7 @@
 #include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "frontend/operator/composite/zip_operation.h"
+#include "frontend/operator/composite/tensor_index.h"
 namespace mindspore {
 namespace prim {
 void RegCompositeOpsGroup(const py::module *m) {
@@ -142,6 +143,10 @@ void RegCompositeOpsGroup(const py::module *m) {
   (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
     *m, "VmapGeneralPreprocess_")
     .def(py::init<std::string &>(), py::arg("fn"));
+
+  // Reg TensorIndexGetitem
+  (void)py::class_<TensorIndexGetitem, MetaFuncGraph, std::shared_ptr<TensorIndexGetitem>>(*m, "TensorIndexGetitem_")
+    .def(py::init<std::string &>());
 }
 }  // namespace prim
 }  // namespace mindspore
