@@ -543,7 +543,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
     stack_actor->device_contexts_ = device_contexts;
     stack_actor->input_stack_data_num_ = input_parameter_data_num;
     stack_actor->input_stack_partials_num_ = input_parameter_partials_num;
-
+    stack_actor->node_ = need_stack_control_node;
     InsertActor(stack_actor.get());
     (void)stack_actors->emplace_back(stack_actor);
   }
@@ -1435,10 +1435,12 @@ void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *con
   // Connect the branch id arrows from the entrance actor to the stack actor.
   for (auto stack_actor : control_actor_set->stack_actors_) {
     MS_EXCEPTION_IF_NULL(stack_actor);
-    if (stack_actor->formal_parameters_.empty()) {
-      MS_LOG(ERROR) << "Invalid stack actor:" << stack_actor->GetAID();
+    auto node = stack_actor->node_;
+    if (!stack_actor->formal_parameters_.empty()) {
+      node = stack_actor->formal_parameters_.back().first;
+    } else {
+      MS_LOG(INFO) << "No formal parameter for stack actor:" << stack_actor->GetAID();
     }
-    const auto &node = stack_actor->formal_parameters_.back().first;
     MS_EXCEPTION_IF_NULL(node);
     const auto &func_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);

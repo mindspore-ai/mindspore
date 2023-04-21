@@ -2681,8 +2681,9 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], validator.EQ, self.name)
         num_segments_v = num_segments['value']
-        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_positive_int(num_segments_v, "num_segments", self.name)
+        if num_segments_v is not None:
+            validator.check_value_type('num_segments', num_segments_v, [int], self.name)
+            validator.check_positive_int(num_segments_v, "num_segments", self.name)
 
 
 class UnsortedSegmentProd(Primitive):
