@@ -12,7 +12,7 @@ mindspore.ops.Conv3D
         \operatorname{input}\left(N_{i}, k\right))
 
     其中，:math:`k` 为卷积核数，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ，
-    :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`W_{ij}` 对应第 :math:`j` 个过滤器的第 :math:`i` 个通道， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。
+    :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。
     :math:`\text{weight}(C_{\text{out}_j}, k)` 为卷积核的切片，其shape为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` 和 :math:`\text{kernel_size[2]}` 分别是卷积核的深度、高度和宽度。
     :math:`\text{bias}` 是偏置参数， :math:`\text{X}` 是输入Tensor。
     完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 `group` 是在通道上分割输入 `inputs` 的组数。

@@ -5992,9 +5992,11 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
 
     Args:
-        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
-        segment_ids (Tensor): Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments.
+        input_x (Tensor): Input Tensor contains the data to be summed.
+          The shape is :math:`(x_1, x_2, ..., x_R)`.
+        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.

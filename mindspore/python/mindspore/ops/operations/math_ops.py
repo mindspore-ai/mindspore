@@ -2518,10 +2518,10 @@ class Exp(Primitive):
     Refer to :func:`mindspore.ops.exp` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, has the same shape and dtype as the `input_x`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6770,8 +6770,8 @@ class IsClose(Primitive):
         equal_nan(bool, optional): If True, then two NaNs will be considered equal. Default: True.
 
     Inputs:
-        - **input**(Tensor) - First tensor to compare, with data type belongs to float32, float16, int32.
-        - **other**(Tensor) - Second tensor to compare, with data type belongs to float32, float16, int32.
+        - **input** (Tensor) - First tensor to compare, with data type belongs to float32, float16, int32.
+        - **other** (Tensor) - Second tensor to compare, with data type belongs to float32, float16, int32.
 
     Outputs:
         Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.

@@ -186,7 +186,7 @@ class Expand(Primitive):
         - **shape** (Tensor) - The new shape of x.
 
     Outputs:
-        - **y** (Tensor) - Tensor after expansion.
+        Tensor after expansion, it shape is determined by `shape`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2325,23 +2325,23 @@ class Tile(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_S)` .
+            :math:`(x_1, x_2, ..., x_S)` .
 
         - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
-          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
-          Only constant value is allowed.
+            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+            The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+            Only constant value is allowed.
 
     Outputs:
         Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
         the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
         - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
           lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_S*y_R)`.
+          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2467,9 +2467,11 @@ class UnsortedSegmentSum(Primitive):
     Refer to :func:`mindspore.ops.unsorted_segment_sum` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - Set :math:`z` as num_segments.
+        - **input_x** (Tensor) - Input Tensor contains the data to be summed.
+          The shape is :math:`(x_1, x_2, ..., x_R)`.
+        - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
+          Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        - **num_segments** (int) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Outputs:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
@@ -7435,7 +7437,7 @@ class ExtractVolumePatches(Primitive):
         >>> kernel_size = (1, 1, 2, 2, 2)
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"
-        >>> input_x = P.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
+        >>> input_x = ops.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
         >>> output_y = ops.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
         >>> print(output_y.shape)
         (1, 8, 2, 2, 2)
