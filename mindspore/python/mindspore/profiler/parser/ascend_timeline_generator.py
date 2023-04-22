@@ -207,21 +207,31 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         """Synchronize the timestamp from host to device."""
         host_start_file_path = os.path.join(source_path, f"host_start.log.{self._device_id}")
         dev_start_file_path = os.path.join(source_path, f"dev_start.log.{self._device_id}")
-
+        host_monotonic = 0
+        dev_cntvct = 0
         try:
             with open(host_start_file_path) as f_obj:
-                # f_obj.readlines()[2] stores host monotonic_raw time of start training.
-                host_monotonic = int(f_obj.readlines()[2].strip().split(':')[1])
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when read host_start.log: %s', err)
-            raise ProfilerIOException()
-        try:
+                lines = f_obj.readlines()
+            for line in lines:
+                info = line.strip().split(':')
+                if len(info) < 2 or info[0] != "clock_monotonic_raw":
+                    continue
+                host_monotonic = int(info[1])
+                break
+
             with open(dev_start_file_path) as f_obj:
-                # f_obj.readlines()[2] stores device cycle counter of start training.
-                dev_cntvct = int(f_obj.readlines()[2].strip().split(':')[1])
+                lines = f_obj.readlines()
+            for line in lines:
+                info = line.strip().split(':')
+                if len(info) < 2 or info[0] != "cntvct":
+                    continue
+                dev_cntvct = int(info[1])
+                break
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read dev_start.log: %s', err)
             raise ProfilerIOException()
+        if host_monotonic == 0 or dev_cntvct == 0:
+            logger.error('Error occurred when read host_monotonic or dev_cntvct time')
 
         factor = {"factor_ns_to_ms": 1e-6, "factor_ten_ns_to_ns": 10, "factor_ms_to_ns": 1e6}
         for idx, time_item in enumerate(timeline_list):
