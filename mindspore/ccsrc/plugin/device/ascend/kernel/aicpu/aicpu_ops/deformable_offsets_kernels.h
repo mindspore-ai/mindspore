@@ -23,30 +23,28 @@
 #include <memory>
 #include <map>
 #include <utility>
-#include "cpu_ops_kernel.h"
+#include "common/kernel_base.h"
 
 namespace aicpu {
-class DeformableOffsetsKernel : public CpuKernel {
+class DeformableOffsetsKernel : public KernelBase {
  public:
-  DeformableOffsetsKernel() = default;
+  DeformableOffsetsKernel() : KernelBase("DeformableOffsetsKernel") {}
 
   ~DeformableOffsetsKernel() = default;
 
  protected:
-  uint32_t Compute(CpuKernelContext &ctx) override;
+  uint32_t ParseKernelParam() override;
+
+  uint32_t DoCompute() override;
 
  private:
-  void ResetResource() noexcept;
+  uint32_t ParseAttrs();
+  uint32_t SetDims();
 
-  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
-
-  uint32_t ParseAttrs(const CpuKernelContext &ctx);
-  uint32_t SetDims(const CpuKernelContext &ctx);
-
-  uint32_t GenPositionGrid(const CpuKernelContext &ctx, int64_t *position_grid);
+  uint32_t GenPositionGrid(int64_t *position_grid);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, const int64_t *position_grid);
+  uint32_t DoCompute(const int64_t *position_grid);
 
   std::vector<int64_t> strides_;
   std::vector<int64_t> pads_;
@@ -54,7 +52,6 @@ class DeformableOffsetsKernel : public CpuKernel {
   std::vector<int64_t> dilations_;
   std::vector<size_t> workspace_size_list_;
   int64_t deformable_groups_{1};
-  bool modulated_{true};
 
   size_t n_axis_{0};
   size_t c_axis_{1};
@@ -67,7 +64,7 @@ class DeformableOffsetsKernel : public CpuKernel {
   int64_t output_h_{0};
   int64_t output_w_{0};
   int64_t position_grid_size_{0};
-  DataType index_type_{DT_FLOAT};
+  aicpuops::DataType index_type_{aicpuops::DataType::MS_UNKNOWN};
 };
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_DEFORMABLE_OFFSETS_KERNELS_H_
