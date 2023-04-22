@@ -28,6 +28,7 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &, int64_t, in
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &, const std::string &, const pybind11::object &,
                                               char *) {}
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &, const pybind11::dict &) { return nullptr; }
+void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params)  {}
 void AscendDeprecatedInterface::ClearGraphWrapper() {}
 void AscendDeprecatedInterface::ClearOpAdapterMap() {}
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &) {}

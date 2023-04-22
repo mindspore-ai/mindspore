@@ -107,7 +107,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase) const;
   void ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt = py::none(),
                    char *key = nullptr);
-
+  void InitParams(const py::dict &init_params, const std::string &phase) const;
   py::dict GetParams(const std::string &phase);
   py::bytes GetRandomStatus(const std::string &phase) const;
   void UpdataParamNodeDefaultInput(const std::string &phase,
