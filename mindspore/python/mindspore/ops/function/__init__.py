@@ -174,6 +174,7 @@ from .math_func import (
     argmin,
     angle,
     bincount,
+    bucketize,
     tensor_add,
     cosine_similarity,
     cov,

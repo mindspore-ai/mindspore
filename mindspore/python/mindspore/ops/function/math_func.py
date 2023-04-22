@@ -483,6 +483,51 @@ def bincount(input, weights=None, minlength=0):
     return P.ReduceSum()(idx_mapping.astype(mstype.float32), 1).ravel()
 
 
+def bucketize(input, boundaries, *, right=False):
+    r"""
+    Bucketizes `input` based on `boundaries`. If `right` is ``False``, the left boundary is closed. For each element x
+    in `input`, the returned index satisfies the following rules:
+
+    .. math::
+
+        \begin{cases}
+        boundaries[i-1] < x <= boundaries[i], & \text{if right} = False\\
+        boundaries[i-1] <= x < boundaries[i], & \text{if right} = True
+        \end{cases}
+
+    Args:
+        input (Tensor): A tensor containing the search value(s).
+        boundaries (list): A sorted list of boundary values of the buckets.
+
+    Keyword Args:
+        right (bool, optional): if ``False``, gets the lower bound index for each value in input from boundaries;
+            If ``True``, gets the upper bound index instead. Default: ``False``.
+
+    Returns:
+        Tensor, the indexes Tensor, with the same shape as the input, and data type is int32.
+
+    Raises:
+        TypeError: If `boundaries` is not a list.
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[3, 6, 9], [3, 6, 9]]))
+        >>> boundaries = list(np.array([1., 3., 5., 7., 9.]))
+        >>> output = ops.bucketize(input, boundaries, True)
+        >>> print(output)
+        [[2 3 5]
+         [2 3 5]]
+    """
+
+    bucketize_op = _get_cache_prim(P.Bucketize)
+    epsilon_ = 0. if right else 1.e-6
+    boundaries = [boundary+epsilon_ for boundary in boundaries]
+    return bucketize_op(boundaries)(input)
+
+
 def exp2(input):
     """
     Computes base two exponential of Tensor `input` element-wise.
@@ -10668,6 +10713,7 @@ __all__ = [
     'addn',
     'absolute',
     'abs',
+    'bucketize',
     'tensor_add',
     'add',
     'addbmm',
