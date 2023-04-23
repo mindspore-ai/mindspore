@@ -21,4 +21,5 @@ mindspore.ops.bitwise_left_shift
     异常：
         - **TypeError** - `input` 或 `other` 都不是Tensor。
         - **TypeError** - `input` 或 `other` 不是int、int类型的Tensor或uint类型的Tensor。
+        - **TypeError** - `input` 和 `other` 的数据类型不相同。
         - **ValueError** - `input` 的shape 与 `other` 的shape不能进行广播。
