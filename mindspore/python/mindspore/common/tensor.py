@@ -306,11 +306,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __index__(self):
         data = self.asnumpy()
-        if not (data.dtype == "int8"
-                or data.dtype == "int16"
-                or data.dtype == "int32"
-                or data.dtype == "int64"
-                or data.dtype == "bool"):
+        if data.dtype not in ["int8", "int16", "int32", "int64", "bool"]:
             raise ValueError("Only integer tensors of a single element can be converted to an index.")
         return self._convert_scalar_(data, int,
                                      "Only integer tensors of a single element can be converted to an index.")

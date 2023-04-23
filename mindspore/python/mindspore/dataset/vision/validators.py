@@ -715,7 +715,7 @@ def check_pad_to_size(method):
             else:
                 if len(offset) not in [0, 2]:
                     raise ValueError("The offset must be empty or a sequence of length 2.")
-                for i, value in enumerate(offset):
+                for i, _ in enumerate(offset):
                     check_non_negative_int32(offset[i], "offset{0}".format(i))
 
         check_fill_value(fill_value)
