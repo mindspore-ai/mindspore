@@ -474,7 +474,8 @@
     "PadV3": "Accuracy issues in AiCore, use AiCPU instead",
     "BNInferGrad": "Currently, the input whose format is NCH is not supported in AiCore.",
     "AvgPool": "not support strides > 63.",
-    "GatherNd": "Can't call check_supported function."
+    "GatherNd": "Can't call check_supported function.",
+    "Eye": "Failed to access aicore's Eye. The attr `dtype` require special treatment like Cast, and the default value of the attr `batch_shape` can't be processed appropriately."
   },
   "SkipNodes": [
     "Im2col",
