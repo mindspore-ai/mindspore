@@ -299,7 +299,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.truncate_mod
     mindspore.ops.xdivy
     mindspore.ops.xlogy
-    mindspore.ops.zeta
 
 Reduction函数
 ^^^^^^^^^^^^^
@@ -386,7 +385,6 @@ Reduction函数
     mindspore.ops.addr
     mindspore.ops.adjoint
     mindspore.ops.cholesky
-    mindspore.ops.cholesky_solve
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
@@ -405,7 +403,6 @@ Reduction函数
     mindspore.ops.mv
     mindspore.ops.outer
     mindspore.ops.orgqr
-    mindspore.ops.ormqr
     mindspore.ops.pinv
     mindspore.ops.svd
     mindspore.ops.tensor_dot

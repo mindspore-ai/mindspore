@@ -75,7 +75,6 @@ mindspore.Tensor
     mindspore.Tensor.broadcast_to
     mindspore.Tensor.ceil
     mindspore.Tensor.cholesky
-    mindspore.Tensor.cholesky_solve
     mindspore.Tensor.choose
     mindspore.Tensor.chunk
     mindspore.Tensor.clamp
@@ -95,7 +94,6 @@ mindspore.Tensor
     mindspore.Tensor.deg2rad
     mindspore.Tensor.diag
     mindspore.Tensor.diagflat
-    mindspore.Tensor.diagonal
     mindspore.Tensor.diff
     mindspore.Tensor.digamma
     mindspore.Tensor.div
@@ -148,7 +146,6 @@ mindspore.Tensor
     mindspore.Tensor.imag
     mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
-    mindspore.Tensor.index_put
     mindspore.Tensor.index_select
     mindspore.Tensor.init_data
     mindspore.Tensor.inner
@@ -192,7 +189,6 @@ mindspore.Tensor
     mindspore.Tensor.long
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
-    mindspore.Tensor.masked_scatter
     mindspore.Tensor.masked_select
     mindspore.Tensor.matmul
     mindspore.Tensor.max
@@ -229,7 +225,6 @@ mindspore.Tensor
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
     mindspore.Tensor.not_equal
-    mindspore.Tensor.ormqr
     mindspore.Tensor.permute
     mindspore.Tensor.positive
     mindspore.Tensor.pow
