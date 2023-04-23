@@ -217,16 +217,22 @@ int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
       return RET_ERROR;
     }
     if (!input_shape_map.at(input).empty() && input_shape_map.at(input) != input->shape()) {
-#ifndef ENABLE_LITE_ACL
-      MS_LOG(ERROR) << "graph input:" << input->tensor_name()
-                    << " shape has been illegally modified, please modify the input shape with method Resize().";
-      return RET_ERROR;
-#else
+#if defined(ENABLE_LITE_ACL)
       MS_LOG(WARNING) << "Please check graph input " << input->tensor_name()
                       << " shape:" << ShapeToString(input->shape())
                       << " has been modified by DVPP method to shape:" << ShapeToString(input_shape_map.at(input))
                       << "."
                       << "If not, the modification is illegal, please modify the input shape with method Resize().";
+#elif defined(ENABLE_LITE_DPICO)
+      MS_LOG(WARNING) << "Please check graph input " << input->tensor_name()
+                      << " shape:" << ShapeToString(input->shape())
+                      << " has been modified by setting 'SupportZeroCopy=on' to shape:"
+                      << ShapeToString(input_shape_map.at(input)) << "."
+                      << "If not, the modification is illegal, please modify the input shape with method Resize().";
+#else
+      MS_LOG(ERROR) << "graph input:" << input->tensor_name()
+                    << " shape has been illegally modified, please modify the input shape with method Resize().";
+      return RET_ERROR;
 #endif
     }
   }

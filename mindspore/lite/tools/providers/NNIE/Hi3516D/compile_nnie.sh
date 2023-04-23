@@ -26,10 +26,7 @@ function Run_Build_x86() {
     echo "build x86 for nnie success"
     hi3516d_release_path=${open_source_ms_path}/output/mindspore-lite-${version}-linux-x64/tools/converter/providers/Hi3516D
     rm -rf ${hi3516d_release_path}
-    mkdir -p ${hi3516d_release_path}/third_party/opencv-4.2.0
-    mkdir -p ${hi3516d_release_path}/third_party/protobuf-3.9.0
-    cp ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/adapter/nnie/providers/NNIE/Hi3516D/opencv-4.2.0/lib/* ${hi3516d_release_path}/third_party/opencv-4.2.0/ || exit 1
-    cp ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/adapter/nnie/providers/NNIE/Hi3516D/protobuf-3.9.0/lib/* ${hi3516d_release_path}/third_party/protobuf-3.9.0/ || exit 1
+    mkdir -p ${hi3516d_release_path}
     cp ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/adapter/nnie/providers/NNIE/Hi3516D/libnnie_mapper.so ${hi3516d_release_path}/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/adapter/nnie/libmslite_nnie_converter.so ${hi3516d_release_path}/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/adapter/nnie/data_process/libmslite_nnie_data_process.so ${hi3516d_release_path}/ || exit 1
