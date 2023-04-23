@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import pytest
 import mindspore as ms
 import tests.st.ms_adapter as adapter
@@ -69,6 +70,7 @@ def test_arithmetic_operator():
         assert type(func(adapter_x, [adapter_x,])) is adapter.Tensor   # "Tensor", "List"
         assert type(func([adapter_x,], adapter_x)) is adapter.Tensor   # "List", "Tensor"
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     check_output_type(add_fn)
     check_output_type(sub_fn)
     check_output_type(mul_fn)
@@ -76,6 +78,7 @@ def test_arithmetic_operator():
     check_output_type(floordiv_fn)
     check_output_type(mod_fn)
     check_output_type(pow_fn)
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -133,6 +136,7 @@ def test_binary_operator():
         assert type(func(adapter_x, 1)) is adapter.Tensor            # "Tensor", "Number"
         assert type(func(1, adapter_x)) is adapter.Tensor            # "Number", "Tensor"
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     check_output_type(equal_fn)
     check_output_type(not_equal_fn)
     check_output_type(less_fn)
@@ -142,6 +146,7 @@ def test_binary_operator():
     check_output_type(bitwise_and_fn)
     check_output_type(bitwise_or_fn)
     check_output_type(bitwise_xor_fn)
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -161,12 +166,14 @@ def test_unary_operator():
     def negative_fn(x):
         return -x
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor([1, -2, 3])
     adapter_x = adapter.Tensor([1, -2, 3])
     assert type(positive_fn(ms_x)) is ms.Tensor
     assert type(negative_fn(ms_x)) is ms.Tensor
     assert type(positive_fn(adapter_x)) is adapter.Tensor
     assert type(negative_fn(adapter_x)) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -194,6 +201,7 @@ def test_logical_operator():
     def logical_not_fn(x):
         return not x
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor(True)
     adapter_x = adapter.Tensor(True)
     assert not is_fn(adapter_x)
@@ -202,6 +210,7 @@ def test_logical_operator():
     assert type(logical_not_fn(ms_x)) is ms.Tensor
     assert type(invert_fn(adapter_x)) is adapter.Tensor
     assert type(logical_not_fn(adapter_x)) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -221,6 +230,7 @@ def test_contain_operator():
     def not_in_fn(x, y, z):
         return x not in (x, y, z)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor(2)
     ms_y = ms.Tensor(2)
     ms_z = ms.Tensor(3)
@@ -231,6 +241,7 @@ def test_contain_operator():
     assert type(not_in_fn(ms_x, ms_y, ms_z)) is ms.Tensor
     assert type(in_fn(adapter_x, adapter_y, adapter_z)) is adapter.Tensor
     assert type(not_in_fn(adapter_x, adapter_y, adapter_z)) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -246,12 +257,14 @@ def test_matmul():
     def func(x, y):
         return x @ y
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor([1, 2], ms.float32)
     ms_y = ms.Tensor([3, 4], ms.float32)
     adapter_x = adapter.Tensor([1, 2], dtype=ms.float32)
     adapter_y = adapter.Tensor([3, 4], dtype=ms.float32)
     assert type(func(ms_x, ms_y)) is ms.Tensor
     assert type(func(adapter_x, adapter_y)) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -271,6 +284,7 @@ def test_getitem():
     def getitem_slice_fn(x):
         return x[1:]
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_x = adapter.Tensor([[1, 2, 3], [4, 5, 6]])
     assert type(getitem_fn(ms_x, 0)) is ms.Tensor
@@ -283,6 +297,7 @@ def test_getitem():
     assert type(getitem_fn(adapter_x, [0, 1])) is adapter.Tensor
     assert type(getitem_fn(adapter_x, (0, 1))) is adapter.Tensor
     assert type(getitem_slice_fn(adapter_x)) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -299,9 +314,11 @@ def test_setitem():
         x[index] = value
         return x
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     ms_x = ms.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_x = adapter.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_index = adapter.Tensor([0], dtype=ms.int32)
     adapter_value = adapter.Tensor([7, 8, 9])
     assert type(setitem_fn(adapter_x, adapter_index, adapter_value)) is adapter.Tensor
     assert type(setitem_fn(ms_x, adapter_index, adapter_value)) is ms.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'

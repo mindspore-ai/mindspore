@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 from functools import partial
 import pytest
 import mindspore as ms
@@ -34,8 +35,10 @@ def test_abs():
     def func(x):
         return abs(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     assert type(func(ms.Tensor([-5]))) is ms.Tensor
     assert type(func(adapter.Tensor([-5]))) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -51,8 +54,10 @@ def test_round():
     def func(x):
         return round(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     assert type(func(ms.Tensor([1.55]))) is ms.Tensor
     assert type(func(adapter.Tensor([1.55]))) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -71,10 +76,12 @@ def test_map():
     def func(x, y):
         return map(add, x, y)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = (adapter.Tensor(1), 2)
     y = (adapter.Tensor(2), 4)
     out = func(x, y)
     assert type(out[0]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -93,9 +100,11 @@ def test_filter():
     def func(x):
         return filter(select_fn, x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = (adapter.Tensor(2), 1, 2, 3)
     out = func(x)
     assert type(out[0]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -115,8 +124,10 @@ def test_partial():
         add_ = partial(add, x=2)
         return add_(y=data)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     out = func(adapter.Tensor(1))
     assert type(out) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -132,11 +143,13 @@ def test_zip():
     def func(x, y):
         return zip(x, y)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = (adapter.Tensor(1), 2)
     y = (adapter.Tensor(2), 4)
     out = func(x, y)
     assert type(out[0][0]) is adapter.Tensor
     assert type(out[0][1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -152,10 +165,12 @@ def test_enumerate():
     def func(x):
         return enumerate(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([[1, 2], [3, 4], [5, 6]])
     out = func(x)
     assert out[0][0] == 0
     assert type(out[0][1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -173,10 +188,12 @@ def test_isinstance():
         b = isinstance(y, ms.Tensor) and isinstance(y, adapter.Tensor)
         return a, b
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = ms.Tensor(1)
     y = adapter.Tensor(1)
     a, b = func(x, y)
     assert a and b
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -192,12 +209,14 @@ def test_max():
     def func(x, y, z):
         return max(x), max(y, z)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2], dtype=ms.float32)
     y = adapter.Tensor([1], dtype=ms.float32)
     z = adapter.Tensor([2], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -213,12 +232,14 @@ def test_min():
     def func(x, y, z):
         return min(x), min(y, z)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2], dtype=ms.float32)
     y = adapter.Tensor([1], dtype=ms.float32)
     z = adapter.Tensor([2], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -234,12 +255,14 @@ def test_sum():
     def func(x, y, z):
         return sum(x), sum(y, z)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([[1, 2], [3, 4]], dtype=ms.float32)
     y = adapter.Tensor([1, 2, 3], dtype=ms.float32)
     z = adapter.Tensor([4, 5, 6], dtype=ms.float32)
     out = func(x, y, z)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -255,8 +278,10 @@ def test_getattr():
     def func(x):
         return getattr(x, "attr")
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     assert func(x) == 10
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -272,10 +297,12 @@ def test_hasattr():
     def func(x, y):
         return hasattr(x, "method"), hasattr(y, "method")
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     y = ms.Tensor([1, 2, 3])
     out = func(x, y)
     assert out[0] and not out[1]
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -291,9 +318,11 @@ def test_iter():
     def func(x):
         return iter(x)[0]
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     out = func(x)
     assert type(out) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -310,10 +339,12 @@ def test_next():
         it = iter(x)
         return next(it)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     out = func(x)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -330,7 +361,10 @@ def test_print():
         print(x)
         return x
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     func(adapter.Tensor([1, 2, 3]))
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
+
 
 
 @pytest.mark.level0
@@ -346,11 +380,13 @@ def test_tuple():
     def func(x):
         return tuple(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     out = func(x)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
     assert type(out[2]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -366,11 +402,13 @@ def test_list():
     def func(x):
         return list(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([1, 2, 3])
     out = func(x)
     assert type(out[0]) is adapter.Tensor
     assert type(out[1]) is adapter.Tensor
     assert type(out[2]) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
 
 
 @pytest.mark.level0
@@ -386,6 +424,8 @@ def test_bool():
     def func(x):
         return bool(x)
 
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '1'
     x = adapter.Tensor([10])
     out = func(x)
     assert type(out) is adapter.Tensor
+    os.environ['MS_DEV_ENABLE_MS_ADAPTER'] = '0'
