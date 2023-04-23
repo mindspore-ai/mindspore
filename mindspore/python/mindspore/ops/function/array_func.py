@@ -5697,7 +5697,9 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     indices.
 
     Note:
-        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+        - In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+        - When `axis` is ``None``, `keepdims` and subsequent parameters have no
+            effect. At the same time, the index is fixed to return 0.
 
     .. warning::
         - If there are multiple maximum values, the index of the first maximum value is used.
@@ -5802,7 +5804,9 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     indices.
 
     Note:
-        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+        - In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+        - When `axis` is ``None``, `keepdims` and subsequent parameters have no
+            effect. At the same time, the index is fixed to return 0.
 
     .. warning::
         - If there are multiple minimum values, the index of the first minimum value is used.

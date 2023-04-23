@@ -5,6 +5,9 @@ mindspore.Tensor.min
 
     返回Tensor元素中的最小值或沿 `axis` 轴方向上的最小值。
 
+    .. note::
+        - `axis` 为 ``None`` 时，`keepdims` 及以后参数均不会生效，同时索引固定返回0。
+
     参数：
         - **axis** (Union[None, int, list, tuple of ints], 可选) - 轴，在该轴方向上进行操作。默认情况下，使用扁平输入。如果该参数为整数元组，则在多个轴上选择最小值，而不是在单个轴或所有轴上进行选择。默认值：None。
         - **keepdims** (bool, 可选) - 如果这个参数为True，被删去的维度保留在结果中，且维度设为1。有了这个选项，结果就可以与输入数组进行正确的广播运算。默认值：False。
