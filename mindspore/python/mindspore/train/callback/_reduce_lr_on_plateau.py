@@ -20,6 +20,7 @@ import numpy as np
 
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore.common import dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
 from mindspore.ops import functional as F, ReduceOp
@@ -160,7 +161,7 @@ class ReduceLROnPlateau(Callback):
         if rank_size == 1:
             reduce_monitor_value = current_monitor_value
         else:
-            reduce_monitor_value = self._reduce(Tensor(current_monitor_value.astype(np.float32))) / rank_size
+            reduce_monitor_value = self._reduce(Tensor(current_monitor_value, mstype.float32)).asnumpy() / rank_size
 
         if reduce_monitor_value is None:
             return
@@ -226,4 +227,4 @@ class ValueReduce(nn.Cell):
         self.allreduce = ops.AllReduce(ReduceOp.SUM)
 
     def construct(self, x):
-        return self.allreduce(x).asnumpy()
+        return self.allreduce(x)
