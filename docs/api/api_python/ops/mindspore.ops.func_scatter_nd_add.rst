@@ -19,7 +19,7 @@ mindspore.ops.scatter_nd_add
         - **input_x** (Parameter) - scatter_nd_add的输入，任意维度的Parameter。
         - **indices** (Tensor) - 指定加法操作的索引，数据类型为mindspore.int32或mindspore.int64。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
         - **updates** (Tensor) - 指定与 `input_x` 相加操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
-        - **use_locking** (bool) - 是否启用锁保护。默认值：False。
+        - **use_locking** (bool) - 是否启用锁保护。默认值： ``False`` 。
 
     返回：
         Tensor，更新后的 `input_x` ，shape和数据类型与 `input_x` 相同。

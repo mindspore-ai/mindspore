@@ -7,7 +7,7 @@ mindspore.ops.zeros
 
     参数：
         - **size** (Union[tuple[int], int]) - 用来描述所创建的Tensor的 `shape` 。
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 用来描述所创建的Tensor的 `dtype`。如果为None，那么将会使用mindspore.float32。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 用来描述所创建的Tensor的 `dtype`。如果为 ``None`` ，那么将会使用mindspore.float32。默认值： ``None`` 。
 
     返回：
         Tensor，dtype和shape由入参决定。

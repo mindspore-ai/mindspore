@@ -527,8 +527,8 @@ class _Reduce(PrimitiveWithCheck):
     Definition of base class of reduction class operators.
 
     Args:
-         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                           If false, don't keep these dimensions. Default: False.
+         keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                           If ``False`` , don't keep these dimensions. Default: ``False`` .
     """
 
     __mindspore_signature__ = (
@@ -581,8 +581,8 @@ class EuclideanNorm(Primitive):
     The specified `axes` are removed by default.
 
     Args:
-        keep_dims (bool, optional): whether to retain the reduced dimensions. If true, retains them with length 1.
-            If false, these dimensions are removed. Default: False.
+        keep_dims (bool, optional): whether to retain the reduced dimensions. If ``True`` , retains them with length 1.
+            If ``False`` , these dimensions are removed. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to reduce.
@@ -623,23 +623,23 @@ class ReduceMean(_Reduce):
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                          If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-r, r).
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is (), and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the mean of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int) or list(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int) or list(int), set as (1, 2), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -707,21 +707,21 @@ class CumulativeLogsumexp(Primitive):
     log(exp(a) + exp(b) + exp(c))].
 
     Args:
-        exclusive (bool, optional): If true, the last element will be skipped during the calculation and thus an
+        exclusive (bool, optional): If ``True`` , the last element will be skipped during the calculation and thus an
                                     exclusive cumulative log-sum-exp will be performed. For example, this operation
                                     will output [-inf, a, log(exp(a) * exp(b))] with tensor [a, b, c] as the input.
                                     Note that the minimal value -inf, for performance reasons, is representable by the
-                                    floating point type. Default: False.
-        reverse (bool, optional): If true, the function accumulation values will be calculated after the elements of
-                                  `x` on `axis` are flipped, and the calculation result will be flipped afterwards. For
-                                  example, this operation will output [log(exp(c) + exp(b) + exp(a)), log(exp(c) +
-                                  exp(b)), c] with tensor [a, b, c] as the input. Default: False.
+                                    floating point type. Default: ``False`` .
+        reverse (bool, optional): If ``True`` , the function accumulation values will be calculated after the elements
+                                  of `x` on `axis` are flipped, and the calculation result will be flipped afterwards.
+                                  For example, this operation will output [log(exp(c) + exp(b) + exp(a)), log(exp(c) +
+                                  exp(b)), c] with tensor [a, b, c] as the input. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64. The
           dimension of `x` must greater than 0.
         - **axis** (Tensor) - A 0-D tensor describing the dimension to compute the cumulative product. Must be one of
-          the following types: int64, int32, int16. Must be in the range [-rank(x), rank(x)). Default: 0.
+          the following types: int64, int32, int16. Must be in the range [-rank(x), rank(x)). Default: ``0`` .
 
     Outputs:
         Tensor, has the same dtype and shape as the `x`.
@@ -775,29 +775,30 @@ class ReduceSum(PrimitiveWithCheck):
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
-        skip_mode (bool): If true and axis is empty tuple or empty list, the ReduceSum operation isn't performed,
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                          If ``False`` , don't keep these dimensions. Default: ``False`` .
+        skip_mode (bool): If ``True`` and axis is empty tuple or empty list, the ReduceSum operation isn't performed,
                           skip it.
-                          If true and axis is other values, the ReduceSum calculation is performed normally.
-                          If false, do reduce. Default: False.
+                          If ``True`` and axis is other values, the ReduceSum calculation is performed normally.
+                          If ``False`` , do reduce. Default: ``False`` .
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions
-           when skip_mode is false. Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+           dimensions when skip_mode is ``False`` . Only constant value is allowed. Must be in the range [-rank(`x`),
+           rank(`x`)).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If axis is (), keep_dims is False, and skip_mode is False,
+        - If axis is (), keep_dims is ``False`` , and skip_mode is ``False`` ,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
-        - If axis is (), and skip_mode is True,
+        - If axis is (), and skip_mode is ``True`` ,
           the ReduceSum operation is not performed, output tensor is equal to the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
+        - If axis is int, set as 2, and keep_dims is ``False`` ,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is ``False`` ,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Raises:
@@ -896,23 +897,23 @@ class ReduceAll(_Reduce):
     controlling `keep_dims`.
 
     Args:
-       keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions. Default : False.
+       keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                         If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
     Outputs:
         Tensor, the dtype is bool.
 
-        - If axis is (), and keep_dims is False,
+        - If axis is (), and keep_dims is ``False`` ,
           the output is a 0-D tensor representing the "logical and" of all elements in the input tensor.
-        - If axis is int, set as 2, and keep_dims is False,
+        - If axis is int, set as 2, and keep_dims is ``False`` ,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int), set as (2, 3), and keep_dims is ``False`` ,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Raises:
@@ -951,14 +952,14 @@ class ReduceAny(_Reduce):
     controlling `keep_dims`.
 
     Args:
-       keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions. Default : False.
+       keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                         If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
     Outputs:
         Tensor, the dtype is bool.
@@ -1006,14 +1007,14 @@ class ReduceMax(_Reduce):
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default : False.
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                          If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-           Only constant value is allowed. Must be in the range [-r, r).
+         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+           dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
@@ -1090,23 +1091,23 @@ class ReduceMin(_Reduce):
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default : False.
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                          If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-r, r).
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is (), and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the minimum of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -1213,23 +1214,23 @@ class ReduceProd(_Reduce):
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                          If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-r, r).
+        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is (), and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -1298,8 +1299,8 @@ class CumProd(Primitive):
         y_i = x_1 * x_2 * x_3 * ... * x_i
 
     Args:
-        exclusive (bool): If true, perform exclusive cumulative product. Default: False.
-        reverse (bool): If true, reverse the result along axis. Default: False
+        exclusive (bool): If ``True`` , perform exclusive cumulative product. Default: ``False`` .
+        reverse (bool): If ``True`` , reverse the result along axis. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor.
@@ -1407,7 +1408,7 @@ class Cdist(Primitive):
 
     Args:
         p (float, optional): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞].
-            Default: 2.0.
+            Default: ``2.0`` .
 
     Inputs:
         - **input_x** (Tensor) - Input tensor of shape :math:`(B, P, M)`.
@@ -1452,9 +1453,9 @@ class LpNorm(Primitive):
 
     Args:
         axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
-        p(int, optional): The order of norm. Default: 2.
-        keep_dims(bool, optional): Whether the output tensors have dim retained or not. Default: False.
-        epsilon(float, optional): A value added to the denominator for numerical stability. Default: 1e-12.
+        p(int, optional): The order of norm. Default: ``2`` .
+        keep_dims(bool, optional): Whether the output tensors have dim retained or not. Default: ``False`` .
+        epsilon(float, optional): A value added to the denominator for numerical stability. Default: ``1e-12`` .
 
     Inputs:
         - **input** (Tensor) - Input tensor.
@@ -1517,14 +1518,14 @@ class MatMul(PrimitiveWithCheck):
         If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
 
     Args:
-        transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
-        transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
+        transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
+        transpose_b (bool): If ``True`` , `b` is transposed before multiplication. Default: ``False`` .
 
     Inputs:
         - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is True, its shape must be :math:`(C, N)` after transpose.
+          `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
         - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_b` is True, its shape must be :math:`(M, C)` after transpose.
+          `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
@@ -1603,17 +1604,17 @@ class BatchMatMul(Primitive):
     The first input tensor must be not less than `3` and the second input must be not less than `2`.
 
     Args:
-        transpose_a (bool): If true, the last two dimensions of `x` is transposed before multiplication.
-            Default: False.
-        transpose_b (bool): If true, the last two dimensions of `y` is transposed before multiplication.
-            Default: False.
+        transpose_a (bool): If ``True`` , the last two dimensions of `x` is transposed before multiplication.
+            Default: ``False`` .
+        transpose_b (bool): If ``True`` , the last two dimensions of `y` is transposed before multiplication.
+            Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
           where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
-          size of the last two dimensions. If `transpose_a` is True, its shape must be :math:`(*B, C, N)`.
+          size of the last two dimensions. If `transpose_a` is ``True`` , its shape must be :math:`(*B, C, N)`.
         - **y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`. If
-          `transpose_b` is True, its shape must be :math:`(*B, M, C)`.
+          `transpose_b` is ``True`` , its shape must be :math:`(*B, M, C)`.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
@@ -1721,8 +1722,8 @@ class CumSum(Primitive):
 
     Args:
         exclusive (bool): By default, this op performs an inclusive cumsum, which means that the first
-            element of the input is identical to the first element of the output. Default: False.
-        reverse (bool): If true, perform inverse cumulative sum. Default: False.
+            element of the input is identical to the first element of the output. Default: ``False`` .
+        reverse (bool): If ``True`` , perform inverse cumulative sum. Default: ``False`` .
 
     Inputs:
         - **input** (Tensor) - The input tensor to accumulate.
@@ -2553,7 +2554,7 @@ class Logit(Primitive):
     Refer to :func:`mindspore.ops.logit` for more details.
 
     Args:
-        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: -1.0.
+        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: ``-1.0`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -2587,16 +2588,16 @@ class ReduceStd(Primitive):
 
     Args:
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Default: (), reduce all dimensions. Only constant value is allowed.
+            Default: ``()`` , reduce all dimensions. Only constant value is allowed.
             Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
         unbiased (bool, optional):  Whether to use Bessel’s correction.
-            If True, will use the Bessel correction unbiased estimation.
-            If False, will through the biased estimation to calculate the standard deviation.
-            Default: True.
+            If ``True`` , will use the Bessel correction unbiased estimation.
+            If ``False`` , will through the biased estimation to calculate the standard deviation.
+            Default: ``True`` .
         keep_dims (bool, optional): Whether the output Tensor has dim retained or not.
-            If True, keep these reduced dimensions specified by `axis` and the length is 1.
-            If False, don't keep these dimensions.
-            Default: Fasle.
+            If ``True`` , keep these reduced dimensions specified by `axis` and the length is 1.
+            If ``False`` , don't keep these dimensions.
+            Default: ``Fasle`` .
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input Tensor, it has dtype Number with shape
@@ -2751,9 +2752,9 @@ class Diagonal(Primitive):
         offset (int): The offset of main diagonal, which controls which diagonal to consider. If :math:`offset=0`,
             return the main diagonal elements with respect to dim1 and dim2. If :math:`offset>0`, return the
             diagonal elements that are `offset` units upward from the main diagonal. If :math:`offset<0`, return the
-            diagonal elements that are `offset` units downward from the main diagonal. Default: 0.
-        dim1 (int): The first dimension with respect to which to take diagonal. Default: 0.
-        dim2 (int): The second dimension with respect to which to take diagonal. Default: 1.
+            diagonal elements that are `offset` units downward from the main diagonal. Default: ``0`` .
+        dim1 (int): The first dimension with respect to which to take diagonal. Default: ``0`` .
+        dim2 (int): The second dimension with respect to which to take diagonal. Default: ``1`` .
 
     Inputs:
         - **x** (Tensor) - The input to take diagonal, with float32 or double data type.
@@ -2841,9 +2842,9 @@ class Histogram(Primitive):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
-        min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
-        max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+        bins (int, optional): Number of histogram bins, optional. Default ``100`` . If specified, must be positive.
+        min (float, optional): An optional float of the lower end of the range (inclusive). Default value is ``0.0`` .
+        max (float, optional): An optional float of the upper end of the range (inclusive). Default value is ``0.0`` .
 
     Inputs:
         - **x** (Tensor) - the input tensor, type support list: [float16, float32, int32].
@@ -2888,7 +2889,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Args:
         nbins (int): The number of histogram bins, the type is a positive integer.
-        dtype (str, optional): An optional attribute. The dtype must be str. Default: "int32".
+        dtype (str, optional): An optional attribute. The dtype must be str. Default: ``"int32"`` .
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
@@ -4026,10 +4027,10 @@ class Quantile(Primitive):
     Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more details.
 
     Args:
-        dim (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
-            input tensor being flattened before computation. Default: None.
-        keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
-        ignore_nan (bool, optional): Whether to ignore NaN values in the input. Default: False.
+        dim (int, optional): The dimension to reduce. By default, `axis` is ``None`` resulting in the
+            input tensor being flattened before computation. Default: ``None`` .
+        keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default: ``False`` .
+        ignore_nan (bool, optional): Whether to ignore NaN values in the input. Default: ``False`` .
 
     Inputs:
         - **input** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -4114,7 +4115,7 @@ class Equal(Primitive):
 
 class ApproximateEqual(_LogicBinaryOp):
     r"""
-    Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
+    Returns ``True`` if abs(x-y) is smaller than tolerance element-wise, otherwise False.
 
     .. math::
 
@@ -4130,7 +4131,7 @@ class ApproximateEqual(_LogicBinaryOp):
     the relatively highest precision data type.
 
     Args:
-        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: ``1e-05`` .
 
     Inputs:
         - **x** (Tensor) - A tensor. Must be one of the following types: float32, float16.
@@ -5135,7 +5136,7 @@ class NMSWithMask(PrimitiveWithInfer):
 
     Args:
         iou_threshold (float): Specifies the threshold of overlap boxes with respect to
-            IOU. Default: 0.5.
+            IOU. Default: ``0.5`` .
 
     Inputs:
         - **bboxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. Input bounding boxes.
@@ -6099,10 +6100,11 @@ class MatrixInverse(Primitive):
     result may be returned.
 
     Note:
-        The parameter 'adjoint' is only supporting False right now, because complex number is not supported at present.
+        The parameter 'adjoint' is only supporting ``False``  right now, because complex number is not supported at
+        present.
 
     Args:
-        adjoint (bool) : An optional bool. Default: False.
+        adjoint (bool) : An optional bool. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
@@ -6294,9 +6296,11 @@ class IndexAdd(Primitive):
     Args:
         axis (int): The dimension along which to index.
         use_lock (bool): Whether to enable a lock to protect the updating process of variable tensors.
-            If true, when updating the value of `x`, this process will be protected by a lock by using atomic operation.
-            If false, the result may be unpredictable. Default: True.
-        check_index_bound (bool): If true, check index boundary. If false, don't check index boundary. Default: True.
+            If ``True`` , when updating the value of `x`, this process will be protected by a lock by using atomic
+            operation.
+            If ``False`` , the result may be unpredictable. Default: ``True`` .
+        check_index_bound (bool): If ``True`` , check index boundary. If ``False`` , don't check index boundary.
+            Default: ``True`` .
 
     Inputs:
         - **x** (Parameter) - The input Parameter to add to.
@@ -6765,9 +6769,9 @@ class IsClose(Primitive):
     Refer to :func:`mindspore.ops.isclose` for more details.
 
     Args:
-        rtol(float, optional): Relative tolerance. Default: 1e-05.
-        atol(float, optional): Absolute tolerance. Default: 1e-08.
-        equal_nan(bool, optional): If True, then two NaNs will be considered equal. Default: True.
+        rtol(float, optional): Relative tolerance. Default: ``1e-05`` .
+        atol(float, optional): Absolute tolerance. Default: ``1e-08`` .
+        equal_nan(bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``True`` .
 
     Inputs:
         - **input** (Tensor) - First tensor to compare, with data type belongs to float32, float16, int32.
@@ -6840,7 +6844,7 @@ class MatrixSolve(Primitive):
 
     Args:
         adjoint (bool, optional): Indicates whether the adjoint of the
-            matrix is used during the computation. Default: False,  use its transpose instead.
+            matrix is used during the computation. Default: ``False`` ,  use its transpose instead.
 
     Inputs:
         - **matrix** (Tensor) - A tensor of shape :math:`(..., M, M)`,
@@ -6892,7 +6896,7 @@ class MatrixSolveLs(Primitive):
     path is typically 6-7 times slower than the fast path. If `fast` is `False` then `l2_regularizer` is ignored.
 
     Args:
-        fast (bool): An optional bool. Defaults to True.
+        fast (bool): An optional bool. Defaults to ``True`` .
 
     Inputs:
         - **matrix** (Tensor) -  A Tensor. Must be one of the following data types: float64, float32, complex64,
@@ -6940,7 +6944,7 @@ class Lu(Primitive):
 
     Args:
         output_idx_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
-            Default: `mindspore.dtype.int32`.
+            Default: ``mindspore.dtype.int32`` .
 
     Inputs:
         - **input** (Tensor) - A tensor of shape `[..., M, M]` whose inner-most 2 dimensions form
@@ -7053,9 +7057,9 @@ class LuUnpack(Primitive):
 
     Args:
         unpack_data (bool, optional): A flag indicating if the LU_data should be unpacked.
-            If False, then the returned L and U are None. Default: True.
+            If ``False`` , then the returned L and U are None. Default: ``True`` .
         unpack_pivots (bool, optional): A flag indicating if the LU_pivots should be unpacked
-            into a permutation matrix P. If False, then the returned P is None. Default: True.
+            into a permutation matrix P. If ``False`` , then the returned P is None. Default: ``True`` .
 
     Inputs:
         - **LU_data** (Tensor) - The packed LU factorization data. The shape of a tensor is :math:`(*, M, N)`,
@@ -7238,7 +7242,7 @@ class CholeskyInverse(Primitive):
     Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 
     Args:
-        upper(bool, optional): Whether to return a lower or upper triangular matrix. Default: False.
+        upper(bool, optional): Whether to return a lower or upper triangular matrix. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - The input tensor whose rank is 2. Supported dtypes: float32, float64.
@@ -7276,7 +7280,7 @@ class Cross(Primitive):
     Refer to :func:`mindspore.ops.cross` for more details.
 
     Args:
-        dim (int): Spefcified dim along which to cumpute cross product with. Default: -65530.
+        dim (int): Spefcified dim along which to cumpute cross product with. Default: ``-65530`` .
 
     Inputs:
         - **x1** (Tensor) - Input Tensor.
@@ -7427,14 +7431,15 @@ class Median(Primitive):
         - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
-        - When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
+        - When attr `global_median` is ``True`` , the value of the second output tensor `indices` is meaningless.
 
     Args:
         global_median (bool, optional): Whether the output tensor is the median of all
-            input tensor elements or not. Default: Fasle.
-        axis (int, optional): The specified dimension to compute median. Default: 0.
-        keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
-        ignore_nan (bool, optional): Whether to ignore the NaN values in input Tensor. Default: False.
+            input tensor elements or not. Default: ``Fasle`` .
+        axis (int, optional): The specified dimension to compute median. Default: ``0`` .
+        keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not.
+            Default: ``False`` .
+        ignore_nan (bool, optional): Whether to ignore the NaN values in input Tensor. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - A Tensor to calculate median with. Supported dtype:int16, int32, int64, float32 or float64.
@@ -7442,8 +7447,8 @@ class Median(Primitive):
     Outputs:
         - **y** (Tensor) - Median, has the same dtype as the `x`.
 
-          - If `global_median` is True, the `y` has only one element.
-          - If `keep_dims` is True, the `y` has the same shape as the `x` except the size
+          - If `global_median` is ``True`` , the `y` has only one element.
+          - If `keep_dims` is ``True`` , the `y` has the same shape as the `x` except the size
             of `y` in dimension `axis` is 1.
           - Otherwise, the `y` lacks `axis` dimension than input.
 
@@ -7570,16 +7575,16 @@ class Bernoulli(Primitive):
 
     Args:
         seed (int, optional): The seed value for random generating. The value of `seed` must be -1 or a
-            positive integer, and -1 means using the current timestamp. Default: -1.
+            positive integer, and -1 means using the current timestamp. Default: ``-1`` .
         offset (int, optional): Used to change the starting position during the generation of
-            random number sequence. Default: 0.
+            random number sequence. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - Input Tensor.
           Data type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         - **p** (Union[Tensor, float], optional) - Success probability, representing the probability of
           setting 1 for the corresponding position of the current Tensor. It has the same shape as `x`,
-          the value of `p` must be in the range `[0, 1]`. Default: 0.5.
+          the value of `p` must be in the range `[0, 1]`. Default: ``0.5`` .
 
     Outputs:
         - **y** (Tensor) - with the same shape and type as `x` .
@@ -7618,7 +7623,7 @@ class TridiagonalSolve(Primitive):
     The penultimate dimension of diagonals must be 3.
 
     Args:
-        partial_pivoting (bool): decide if use the method of partial_pivoting. Default: True.
+        partial_pivoting (bool): decide if use the method of partial_pivoting. Default: ``True`` .
 
     Inputs:
         - **diagonals** [Tensor] - The input tensor A of the equation AX = B, with data type of float32,
@@ -7715,7 +7720,7 @@ class Cholesky(Primitive):
 
     Args:
         upper (bool, optional): Flag that indicates whether to return a upper or lower triangular matrix.
-            Default: False.
+            Default: ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
@@ -7760,7 +7765,7 @@ class STFT(Primitive):
         normalized (bool): controls whether to return the normalized STFT results.
         onesided (bool): controls whether to return half of results to
             avoid redundancy for real inputs.
-        return_complex (bool): If True, return a complex tensor. If False, return
+        return_complex (bool): If ``True`` , return a complex tensor. If False, return
             a real tensor with an extra last dimension for the real and imaginary components.
 
     Inputs:
@@ -7802,7 +7807,7 @@ class CholeskySolve(Primitive):
     Computes the solution of a set of linear equations with a positive definite matrix,
     according to its Cholesky decomposition factor `u` , and outputs the result as `c`.
 
-    If `upper` is set to `True`, `u` is upper triangular and `c` is returned such that:
+    If `upper` is set to ``True`` , `u` is upper triangular and `c` is returned such that:
 
     .. math::
         c = (u^{T}u)^{{-1}}b
@@ -7814,7 +7819,7 @@ class CholeskySolve(Primitive):
 
     Args:
         upper (bool, optional): A flag indicates whether to treat the Cholesky factor
-            as an upper or a lower triangular matrix. Default: False.
+            as an upper or a lower triangular matrix. Default: ``False`` .
 
     Inputs:
         - **x1** (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
@@ -7897,18 +7902,18 @@ class FFTWithSize(Primitive):
             - "inverse:False real:True" corresponds to RFFT.
             - "inverse:True real:True" corresponds to IRFFT.
 
-        norm (str, optional): The normalization, optional values: ["backward", "forward", "ortho"].
-            Default value: "backward".
+        norm (str, optional): The normalization, optional values: [ ``"backward"`` , ``"forward"`` , ``"ortho"`` ].
+            Default value: ``"backward"`` .
 
-            - "backward" has the direct transforms unscaled and the inverse transforms scaled by :math:`1/n`,
+            - ``"backward"`` has the direct transforms unscaled and the inverse transforms scaled by :math:`1/n`,
               where n is the input x's element numbers.
-            - "ortho" has both direct and inverse transforms are scaled by :math:`1/\sqrt n`.
-            - "forward" has the direct transforms scaled by :math:`1/n` and the inverse transforms unscaled.
+            - ``"ortho"`` has both direct and inverse transforms are scaled by :math:`1/\sqrt n`.
+            - ``"forward"`` has the direct transforms scaled by :math:`1/n` and the inverse transforms unscaled.
 
-        onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
+        onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: ``True`` .
         signal_sizes (tuple, optional): Size of the original signal (the signal before rfft, no batch dimension),
-            only in IRFFT mode and set `onesided` to True requires the parameter, the following conditions must be
-            satisfied. Default: ().
+            only in IRFFT mode and set `onesided` to ``True`` requires the parameter, the following conditions must be
+            satisfied. Default: ``()`` .
 
             - The length of `signal_sizes` is equal to the signal_ndim of the IRFFT:
               :math:`len(signal_sizes)=signal_ndim`.
@@ -8076,9 +8081,9 @@ class TrilIndices(Primitive):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: ``mstype.int32`` .
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -8118,10 +8123,10 @@ class MatrixTriangularSolve(Primitive):
         Only GPU platforms now support the broadcast mechanism.
 
     Args:
-        lower (bool, optional): If True, the innermost matrices in `matrix` is
-            are lower triangular. Default: True.
+        lower (bool, optional): If ``True`` , the innermost matrices in `matrix` is
+            are lower triangular. Default: ``True`` .
         adjoint (bool, optional): Indicates whether the adjoint of the
-            matrix is used during the computation. Default: False,  use its transpose instead.
+            matrix is used during the computation. Default: ``False`` ,  use its transpose instead.
 
     Inputs:
         - **matrix** (Tensor) - Tensor of shape :math:`(*, M, M)`,
@@ -8166,7 +8171,7 @@ class CompareAndBitpack(Primitive):
     """
     Compare values of `x` to `threshold` and pack resulting bits into a `uint8`.
 
-    Each comparison returns a boolean true (if x_value > threshold) or and false otherwise.
+    Each comparison returns a boolean ``True`` (if x_value > threshold) or and ``False`` otherwise.
 
     Given an `x` shaped :math:`(s_0, s_1, ..., s_n)`, the output is a `uint8`
     Tensor shaped :math:`(s_0, s_1, ..., s_n / 8)`.
@@ -8216,13 +8221,13 @@ class NanToNum(Primitive):
     Refer to :func:`mindspore.ops.nan_to_num` for more details.
 
     Args:
-        nan (float, optional): The value to replace `NaN`. Default value is 0.0.
+        nan (float, optional): The value to replace `NaN`. Default value is ``0.0`` .
         posinf (float, optional): If a Number, the value to replace positive infinity values with. If None, positive
           infinity values are replaced with the greatest finite value representable by `x`'s dtype.
-          Default value is None.
+          Default value is ``None`` .
         neginf (float, optional): if a Number, the value to replace negative infinity values with. If None, negative
           infinity values are replaced with the lowest finite value representable by `x`'s dtype.
-          Default value is None.
+          Default value is ``None`` .
 
     Inputs:
         - **x** (Tensor) - Input Tensor of any dimensions. Supported data types: float32 or float16.
@@ -8310,9 +8315,9 @@ class TriuIndices(Primitive):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: ``mstype.int32`` .
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -8408,8 +8413,8 @@ class Eig(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        compute_v (bool, optional): If `True`, compute both eigenvalues and eigenvectors;
-            If `False`, just eigenvalues will be computed. Default: False.
+        compute_v (bool, optional): If ``True`` , compute both eigenvalues and eigenvectors;
+            If `False`, just eigenvalues will be computed. Default: ``False`` .
     Inputs:
         - **x** (Tensor) - Square matrices of shape :math:`(*, N, N)`,
           with float32, float64, complex64 or complex128 data type.
@@ -8455,8 +8460,8 @@ class SelfAdjointEig(Primitive):
     The eigenvalues are sorted in non-decreasing order.
 
     Args:
-         compute_v(bool): If `True` then eigenvectors will be computed and returned in v;
-              If `False`, only the eigenvalues will be computed. Default: True.
+         compute_v(bool): If ``True``  then eigenvectors will be computed and returned in v;
+              If ``False`` , only the eigenvalues will be computed. Default: ``True`` .
 
     Inputs:
          - **x** (Tensor) - Must be one of the following types:
@@ -8497,14 +8502,14 @@ class SelfAdjointEig(Primitive):
 
 class Qr(Primitive):
     """
-    Returns the QR decomposition of one or more matrices. If `full_matrices` is true, compute full-sized q and r,
-    If False (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
+    Returns the QR decomposition of one or more matrices. If `full_matrices` is ``True`` , compute full-sized q and r,
+    If ``False`` (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: False.
+        full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
@@ -8513,10 +8518,10 @@ class Qr(Primitive):
 
     Outputs:
         - **q** (Tensor) - The orthonormal matrices of x.
-          If `full_matrices` is true, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
+          If `full_matrices` is ``True`` , the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
           The dtype of `q` is same as `x`.
         - **r** (Tensor) - The upper triangular matrices of x.
-          If `full_matrices` is true, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
+          If `full_matrices` is ``True`` , the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
           The dtype of `r` is same as `x`.
 
     Raises:
@@ -8558,9 +8563,9 @@ class Cauchy(Primitive):
     Args:
         size (list[int]): The size of tensor.
         sigma (float, optional): the location parameter, specifying the location
-            of the peak of the distribution. Default: 1.0.
+            of the peak of the distribution. Default: ``1.0`` .
         median (float, optional): the scale parameter which specifies the half-width
-            at half-maximum. Default: 0.0.
+            at half-maximum. Default: ``0.0`` .
 
     Outputs:
         Tensor with cauchy distribution data. Tensor shape is size, and data type is float32.
@@ -8599,9 +8604,9 @@ class Ormqr(Primitive):
     reflectors (x, tau), which is the output of geqrf().
 
     Args:
-        left (bool, optional): controls the order of multiplication. If true, compute op(Q)*C.
-            If false, compute C*op(Q). Default: True.
-        transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: False.
+        left (bool, optional): controls the order of multiplication. If ``True`` , compute op(Q)*C.
+            If ``False`` , compute C*op(Q). Default: ``True`` .
+        transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape: (*, mn, k) where mn equals to m or n depending on the the args of `left`,
@@ -8621,10 +8626,10 @@ class Ormqr(Primitive):
         ValueError: If rank(x) - rank(tau) != 1.
         ValueError: If tau.shape[:-2] != x.shape[:-2]
         ValueError: If other.shape[:-2] != x.shape[:-2]
-        ValueError: If left == true, other.shape[-2] < tau.shape[-1].
-        ValueError: If left == true, other.shape[-2] != x.shape[-2].
-        ValueError: If left == false, other.shape[-1] < tau.shape[-1].
-        ValueError: If left == false, other.shape[-1] != x.shape[-2].
+        ValueError: If left == True, other.shape[-2] < tau.shape[-1].
+        ValueError: If left == True, other.shape[-2] != x.shape[-2].
+        ValueError: If left == False, other.shape[-1] < tau.shape[-1].
+        ValueError: If left == False, other.shape[-1] != x.shape[-2].
 
     Supported Platforms:
         ``GPU``

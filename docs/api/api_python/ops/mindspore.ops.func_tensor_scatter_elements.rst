@@ -17,7 +17,7 @@
 
     .. warning::
         - 如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
-        - 在Ascend平台上，目前仅支持 `reduction` 设置为"none"的实现。
+        - 在Ascend平台上，目前仅支持 `reduction` 设置为 ``"none"`` 的实现。
         - 在Ascend平台上，`input_x` 仅支持float16和float32两种数据类型。
 
     .. note::
@@ -27,8 +27,8 @@
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 其rank必须至少为1。
         - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64的。其rank必须和 `input_x` 一致。取值范围是[-s, s)，这里的s是 `input_x` 在 `axis` 指定轴的size。
         - **updates** (Tensor) - 指定与 `input_x` 进行reduction操作的Tensor，其数据类型与输入的数据类型相同。updates的shape必须等于indices的shape。
-        - **axis** (int) - `input_x` reduction操作的轴，默认值是0。取值范围是[-r, r)，其中r是 `input_x` 的秩。
-        - **reduction** (str) - 指定进行的reduction操作。默认值是"none"，可选"add"。
+        - **axis** (int) - `input_x` reduction操作的轴，默认值是 ``0`` 。取值范围是[-r, r)，其中r是 `input_x` 的秩。
+        - **reduction** (str) - 指定进行的reduction操作。默认值是 ``"none"`` ，可选 ``"add"`` 。
 
     返回：
         Tensor，shape和数据类型与输入 `input_x` 相同。

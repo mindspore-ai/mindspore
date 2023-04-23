@@ -18,29 +18,29 @@ mindspore.ops.stft
     参数：
         - **x** (Tensor) - STFT的时间序列，必须是1-D Tensor或2-D Tensor。
         - **n_fft** (int) - 傅里叶变换的尺寸。
-        - **hop_length** (int，可选) - 相邻滑动窗口之间的距离。如果为None，取值视为 :math:`floor(n_fft / 4)` 。默认值：None。
-        - **win_length** (int，可选) - 窗口和STFT过滤器的尺寸。如果为None，取值视为 `n_fft` 。默认值：None。
-        - **window** (Tensor，可选) - 可选的窗口函数，是一个长度为 `win_length` 的一维Tensor。如果为None，视为所含元素都为1。如果 `win_length` < `n_fft` ，在 `window` 两侧填充1至长度为 `n_fft` 后才生效。默认值：None。
-        - **center** (bool，可选) - 是否填充 `x` 两侧。默认值：True。
-        - **pad_mode** (str，可选) - `center` 为True的时候指定的填充模式。默认值：“REFLECT”。
-        - **normalized** (bool，可选) - 控制是否返回规范化的STFT结果。默认值：False。
-        - **onesided** (bool，可选) - 控制是否返回一半的结果，以避免实数输入计算结果的冗余。默认值：None。当 `x` 和 `window` 是实数时取值为True，否则为False。
-        - **return_complex** (bool，可选) - 若为True，返回一个复数Tensor。若为False，返回一个实数Tensor，
-          且其具有额外的最后一维以表示实部和虚部。默认值：None。当 `x` 或 `window` 为复数时取值为True，否则为False。
+        - **hop_length** (int，可选) - 相邻滑动窗口之间的距离。如果为 ``None`` ，取值视为 :math:`floor(n_fft / 4)` 。默认值： ``None`` 。
+        - **win_length** (int，可选) - 窗口和STFT过滤器的尺寸。如果为 ``None`` ，取值视为 `n_fft` 。默认值：None。
+        - **window** (Tensor，可选) - 可选的窗口函数，是一个长度为 `win_length` 的一维Tensor。如果为 ``None`` ，视为所含元素都为1。如果 `win_length` < `n_fft` ，在 `window` 两侧填充1至长度为 `n_fft` 后才生效。默认值： ``None`` 。
+        - **center** (bool，可选) - 是否填充 `x` 两侧。默认值： ``True`` 。
+        - **pad_mode** (str，可选) - `center` 为 ``True`` 的时候指定的填充模式。默认值：``"REFLECT"`` 。
+        - **normalized** (bool，可选) - 控制是否返回规范化的STFT结果。默认值： ``False`` 。
+        - **onesided** (bool，可选) - 控制是否返回一半的结果，以避免实数输入计算结果的冗余。默认值： ``None`` 。当 `x` 和 `window` 是实数时取值为 ``True`` ，否则为 ``False`` 。
+        - **return_complex** (bool，可选) - 若为 ``True`` ，返回一个复数Tensor。若为 ``False`` ，返回一个实数Tensor，
+          且其具有额外的最后一维以表示实部和虚部。默认值： ``None`` 。当 `x` 或 `window` 为复数时取值为 ``True`` ，否则为 ``False`` 。
 
     返回：
         - **output** (Tensor) - 包含STFT计算的结果的Tensor。
 
-          - 如果 `return_complex` 为True，则返回一个复数Tensor，shape为 :math:`(*, N, T)` 。
-          - 如果 `return_complex` 为False，则返回一个实数Tensor，shape为 :math:`(*, N, T, 2)` 。
+          - 如果 `return_complex` 为 ``True`` ，则返回一个复数Tensor，shape为 :math:`(*, N, T)` 。
+          - 如果 `return_complex` 为 ``False`` ，则返回一个实数Tensor，shape为 :math:`(*, N, T, 2)` 。
 
           `N` 为傅立叶变换的尺寸，取值受参数 `onesided` 影响：
-          - 如果 `onesided` 为False， :math:`N = n_fft` 。
-          - 如果 `onesided` 为True， :math:`N = n_fft // 2 + 1` 。
+          - 如果 `onesided` 为 ``False`` ， :math:`N = n_fft` 。
+          - 如果 `onesided` 为 ``True`` ， :math:`N = n_fft // 2 + 1` 。
             
           `T` 为使用的总帧数，计算公式：:math:`T = 1 + (len - n_fft) / hop_length` ，其中 :math:`len` 取值受 `center` 影响：
-          - 如果 `center` 为False，则 :math:`len = signal_length` 。
-          - 如果 `center` 为True，则 :math:`len = signal_length + (n_fft // 2) * 2` 。
+          - 如果 `center` 为 ``False`` ，则 :math:`len = signal_length` 。
+          - 如果 `center` 为 ``True`` ，则 :math:`len = signal_length + (n_fft // 2) * 2` 。
 
           其中signal_length为信号长度，取值 :math:`x.shape[-1]` 。     
 

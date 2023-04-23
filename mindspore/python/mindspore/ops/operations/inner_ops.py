@@ -60,9 +60,9 @@ class Randperm(Primitive):
     the last `max_length-n` elements will be filled with `pad`.
 
     Args:
-        max_length (int): Number of items expected to get and the number must be greater than 0. Default: 1.
-        pad (int): The pad value to be filled. Default: -1.
-        dtype (mindspore.dtype): The type of output. Default: mindspore.int32.
+        max_length (int): Number of items expected to get and the number must be greater than 0. Default: ``1`` .
+        pad (int): The pad value to be filled. Default: ``-1`` .
+        dtype (mindspore.dtype): The type of output. Default: ``mindspore.int32`` .
 
     Inputs:
         - **n** (Tensor) - The input tensor with shape :math:`(1,)` with and dtype int32 or int64.
@@ -118,7 +118,7 @@ class NoRepeatNGram(Primitive):
     Because 3 consecutive words [2, 3, 2] do not appear twice in the word sequence.
 
     Args:
-        ngram_size (int): Size of n-grams, must be greater than 0. Default: 1.
+        ngram_size (int): Size of n-grams, must be greater than 0. Default: ``1`` .
 
     Inputs:
         - **state_seq** (Tensor) - n-gram word series, a 3-D tensor with shape: :math:`(batch\_size, beam\_width, m)`.
@@ -328,9 +328,9 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
 
     Inputs:
         - **weight_decay** (Tensor) - The weight decay value, must be a scalar tensor with float data type.
-          Default: 0.0.
+          Default: ``0.0`` .
         - **loss_scale** (Tensor) - The loss scale value, must be a scalar tensor with float data type.
-          Default: 1.0.
+          Default: ``1.0`` .
         - **variable** (Parameter) - Weights to be updated. data type must be float.
         - **accumulation** (Parameter) - Accumulated gradient value by moment weight.
           Has the same data type with `variable`.
@@ -413,8 +413,8 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If true, updates of the var, m, and v tensors will be protected by a lock.
-            If false, the result is unpredictable. Default: False.
+            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+            If ``False`` , the result is unpredictable. Default: ``False`` .
 
     Inputs:
         - **var** (Tensor) - Weights to be updated with the type float16 or float32.
@@ -543,9 +543,9 @@ class FusedAdaFactor(PrimitiveWithInfer):
     :math:`C` is the running averages of the column sums of the squared gradient.
 
     Args:
-        enable_weight_decay (bool): If True, enable weight decay. default: False
-        enable_first_moment (bool): If True, enable first moment. default: False
-        enable_scale_parameter (bool): If True, enable scale learning rate using parameter. default: False
+        enable_weight_decay (bool): If ``True`` , enable weight decay. Default: ``False`` .
+        enable_first_moment (bool): If ``True`` , enable first moment. Default: ``False`` .
+        enable_scale_parameter (bool): If ``True`` , enable scale learning rate using parameter. Default: ``False`` .
 
     Inputs:
         - **epsilon** (Tensor) - input epsilon pair.

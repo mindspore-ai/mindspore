@@ -7,10 +7,10 @@ mindspore.ops.rand_like
 
     参数：
         - **input** (Tensor) - 输入的Tensor，用来决定输出Tensor的shape和默认的dtype。
-        - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值：None，值将取0。
+        - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值： ``None`` ，值将取 ``0`` 。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`，可选) - 指定的输出Tensor的dtype，必须是float类型。如果是None，`input` 的dtype会被使用。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 指定的输出Tensor的dtype，必须是float类型。如果是 ``None`` ，`input` 的dtype会被使用。默认值： ``None`` 。
 
     返回：
         Tensor，shape和dtype由输入决定其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。

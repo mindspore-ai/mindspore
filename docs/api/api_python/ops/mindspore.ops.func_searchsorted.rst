@@ -10,8 +10,8 @@ mindspore.ops.searchsorted
         - **values** (Tensor) - 要插入元素的值。
 
     关键字参数：
-        - **out_int32** (bool, 可选) - 输出数据类型。如果为True，则输出数据类型将为int32；如果为False，则输出数据类型将为int64。默认值：False。
-        - **right** (bool, 可选) - 搜索策略。如果为True，则返回找到的最后一个合适的索引；如果为False，则返回第一个合适的索引。默认值：False。
+        - **out_int32** (bool, 可选) - 输出数据类型。如果为 ``True`` ，则输出数据类型将为int32；如果为 ``False`` ，则输出数据类型将为int64。默认值： ``False`` 。
+        - **right** (bool, 可选) - 搜索策略。如果为 ``True`` ，则返回找到的最后一个合适的索引；如果为 ``False`` ，则返回第一个合适的索引。默认值： ``False`` 。
 
     返回：
         表示 `sorted_sequence` 最内维度的索引的Tensor，如果插入 `values` tensor中相应的值，则 `sorted_sequence` tensor的顺序将被保留；如果out_int32为True，则返回的数据类型为int32，否则为int64，并且形状与values的形状相同。

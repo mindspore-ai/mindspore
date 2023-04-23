@@ -76,11 +76,11 @@ class Svd(Primitive):
     Refer to :func:`mindspore.ops.svd` for more details.
 
     Args:
-        full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
-                                        only the leading P singular vectors, with P is the minimum of M and N.
-                                        Default: False.
-        compute_uv (bool, optional): If true, compute the left and right singular vectors.
-                                     If false, compute only the singular values. Default: True.
+        full_matrices (bool, optional): If ``True`` , compute full-sized :math:`U` and :math:`V`. If ``False``,
+                                        compute only the leading P singular vectors, with P is the minimum of M and N.
+                                        Default: ``False`` .
+        compute_uv (bool, optional): If ``True`` , compute the left and right singular vectors.
+                                     If ``False`` , compute only the singular values. Default: ``True`` .
 
     Inputs:
         - **input** (Tensor) - Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
@@ -88,10 +88,10 @@ class Svd(Primitive):
 
     Outputs:
         - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
-        - **u**  (Tensor) - Left singular vectors. If `compute_uv` is False, u will be zero value.
-          The shape is :math:`(*, M, P)`. If `full_matrices` is True, the shape will be :math:`(*, M, M)`.
-        - **v**  (Tensor) - Right singular vectors. If `compute_uv` is False, v will be zero value.
-          The shape is :math:`(*, N, P)`. If `full_matrices` is True, the shape will be :math:`(*, N, N)`.
+        - **u**  (Tensor) - Left singular vectors. If `compute_uv` is ``False`` , u will be zero value.
+          The shape is :math:`(*, M, P)`. If `full_matrices` is ``True`` , the shape will be :math:`(*, M, M)`.
+        - **v**  (Tensor) - Right singular vectors. If `compute_uv` is ``False`` , v will be zero value.
+          The shape is :math:`(*, N, P)`. If `full_matrices` is ``True`` , the shape will be :math:`(*, N, N)`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

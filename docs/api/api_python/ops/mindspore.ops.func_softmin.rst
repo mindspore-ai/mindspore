@@ -12,10 +12,10 @@ mindspore.ops.softmin
 
     参数：
         - **x** (Tensor) - Softmin的输入，其数据类型为float16或float32。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmin操作的轴。默认值：-1。
+        - **axis** (Union[int, tuple[int]], 可选) - 指定Softmin操作的轴。默认值： ``-1`` 。
     
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值： ``None`` 。
     
     返回：
         Tensor，数据类型和shape与 `x` 相同。

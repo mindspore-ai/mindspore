@@ -25,13 +25,13 @@ mindspore.ops.smooth_l1_loss
             \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    其中， :math:`\text{beta}` 控制损失函数在线性与二次间变换的阈值， :math:`\text{beta}>0` ，默认值是1.0。 :math:`N` 为batch size。
+    其中， :math:`\text{beta}` 控制损失函数在线性与二次间变换的阈值， :math:`\text{beta}>0` ，默认值是 ``1.0`` 。 :math:`N` 为batch size。
 
     参数：
         - **input** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型为float16，float32和float64。
         - **target** (Tensor) - shape： :math:`(N, *)` ，与 `input` 的shape和数据类型相同。
-        - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值必须大于0。默认值：1.0。
-        - **reduction** (str) - 缩减输出的方法。默认值：'none'。其他选项：'mean'和'sum'。
+        - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值必须大于0。默认值： ``1.0`` 。
+        - **reduction** (str) - 缩减输出的方法。默认值： ``'none'`` 。其他选项： ``'mean'`` 和 ``'sum'`` 。
 
     返回：
         Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `input` 的shape相同。否则shape为 `(1,)`。

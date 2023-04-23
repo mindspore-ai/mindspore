@@ -28,9 +28,9 @@ mindspore.ops.pinv
           - hermitian为True时，暂不支持多个批量维度。
 
     关键字参数：
-        - **atol** (float, Tensor) - 绝对公差值。默认值：None。
-        - **rtol** (float, Tensor) - 相对公差值。默认值：None。
-        - **hermitian** (bool) - 为True时求解x为实对称的矩阵。默认值：False。
+        - **atol** (float, Tensor) - 绝对公差值。默认值： ``None`` 。
+        - **rtol** (float, Tensor) - 相对公差值。默认值： ``None`` 。
+        - **hermitian** (bool) - 为 ``True`` 时求解x为实对称的矩阵。默认值： ``False`` 。
 
     输出：
         - **output** (Tensor): 类型与输入相同。shape为 :math:`(*, N, M)` ，其中*为零或多个批量维度。

@@ -7,8 +7,8 @@ mindspore.ops.sort
 
     参数：
         - **input_x** (Tensor) - 进行排序的Tensor，shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的的额外维度。
-        - **axis** (int，可选) - 进行排序的维度。默认值：-1。
-        - **descending** (bool，可选) - 按降序还是升序。如果为True，则元素按降序排列，否则按升序排列。默认值：False。
+        - **axis** (int，可选) - 进行排序的维度。默认值： ``-1`` 。
+        - **descending** (bool，可选) - 按降序还是升序。如果为 ``True`` ，则元素按降序排列，否则按升序排列。默认值： ``False`` 。
 
     .. warning::
         目前能良好支持的数据类型有：Float16、UInt8、Int8、Int16、Int32、Int64。如果使用Float32，可能产生精度误差。

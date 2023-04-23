@@ -258,7 +258,7 @@ class Custom(ops.PrimitiveWithInfer):
                        (ex. Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia"))
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
-            `func`. Default: None.
+            `func`. Default: ``None`` .
 
             If func has single output, then the value of output shape is a list or tuple of int.
 
@@ -269,7 +269,7 @@ class Custom(ops.PrimitiveWithInfer):
             shape mechanic will be enabled.
 
         out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output data type
-            infer function or the value of output data type of `func`. Default: None.
+            infer function or the value of output data type of `func`. Default: ``None`` .
 
             If func has single output, then the value of output shape is a `mindspore.dtype`.
 
@@ -281,23 +281,23 @@ class Custom(ops.PrimitiveWithInfer):
 
         func_type (str): The implementation type of `func`, should be one of
 
-            ["hybrid", "akg", "tbe", "aot", "pyfunc", "julia", "aicpu"].
+            [ ``"hybrid"`` , ``"akg"`` , ``"tbe"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"`` , ``"aicpu"`` ].
 
-            Each `func_type` only supports specific platforms(targets). Default: "hybrid".
+            Each `func_type` only supports specific platforms(targets). Default: ``"hybrid"`` .
             The supported platforms of `func_type`:
 
-            - "hybrid": supports ["Ascend", "GPU", "CPU"].
-            - "akg": supports ["Ascend", "GPU", "CPU"].
-            - "tbe": supports ["Ascend"].
-            - "aot": supports ["GPU", "CPU"].
-            - "pyfunc": supports ["CPU"].
-            - "julia": supports ["CPU"].
-            - "aicpu": supports ["Ascend"].
+            - ``"hybrid"``: supports ["Ascend", "GPU", "CPU"].
+            - ``"akg"``: supports ["Ascend", "GPU", "CPU"].
+            - ``"tbe"``: supports ["Ascend"].
+            - ``"aot"``: supports ["GPU", "CPU"].
+            - ``"pyfunc"``: supports ["CPU"].
+            - ``"julia"``: supports ["CPU"].
+            - ``"aicpu"``: supports ["Ascend"].
 
-        bprop (function): The back propagation function of `func`. Default: None.
+        bprop (function): The back propagation function of `func`. Default: ``None`` .
         reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
             json format of type str or dict. The reg info specifies supported data types and formats of inputs and
-            outputs, attributes and target of `func`. Default: None.
+            outputs, attributes and target of `func`. Default: ``None`` .
 
             If reg info is a list or tuple, then each item should be with json format of type str or dict, which
             represents the registration information of `func` in a specific target. You need to invoke `CustomRegOp`
