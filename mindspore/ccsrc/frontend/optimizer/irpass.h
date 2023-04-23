@@ -33,7 +33,6 @@ class OptimizeIRPassLib {
   ~OptimizeIRPassLib() = default;
 
   SubstitutionPtr arithmetic_simplify_;
-  SubstitutionPtr arithmetic_simplify2_;
   SubstitutionPtr special_op_eliminate_;
   SubstitutionPtr ad_related_special_op_eliminate_;
   SubstitutionPtr zero_like_fill_zero_;
