@@ -12,7 +12,7 @@
   ，并解压。
   >
   > 请手动下载相关模型文件[mobilenetv2](https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.mindir)
-  ，并将其拷贝到`mindspore/lite/examples/cloud_infer/runtime_cpp/`目录。
+  ，并将其拷贝到`mindspore/lite/examples/cloud_infer/quick_start_cpp/`目录。
 
   设置环境变量`LITE_HOME`为MindSpore Lite tar包解压路径，并设置环境变量`LD_LIBRARY_PATH`：
 
@@ -33,5 +33,5 @@
   可以执行以下命令，体验MindSpore Lite推理MobileNetV2模型。
 
   ```bash
-  ./runtime_cpp --model_path=../mobilenetv2.mindir --device_type=CPU
+  ./mindspore_quick_start_cpp ../mobilenetv2.mindir
   ```
