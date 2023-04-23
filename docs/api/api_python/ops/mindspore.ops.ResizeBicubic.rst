@@ -10,7 +10,7 @@ mindspore.ops.ResizeBicubic
         - **half_pixel_centers** (bool，可选) - 是否使用半像素中心对齐。如果设置为True，那么 `align_corners` 应该设置为False。默认值：False。
 
     输入：
-        - **images** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，支持的数据类型有：int8、int16、int32、int64、float16、float32、float64、uint8和uint16。
+        - **images** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，支持的数据类型有：float16、float32、float64。
         - **size** (Tensor) - 必须为含有两个元素的一维的Tensor，分别为new_height, new_width，表示输出图像的高和宽。支持的数据类型为int32。
 
     输出：

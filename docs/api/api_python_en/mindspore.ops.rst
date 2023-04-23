@@ -44,6 +44,7 @@ Neural Network
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
     mindspore.ops.max_unpool3d
+    mindspore.ops.unfold
 
 
 Loss Functions

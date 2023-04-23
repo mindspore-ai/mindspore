@@ -76,6 +76,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
     mindspore.ops.Padding
+    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
 
@@ -473,6 +474,7 @@ Array操作
     mindspore.ops.Hypot
     mindspore.ops.Identity
     mindspore.ops.Igamma
+    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
