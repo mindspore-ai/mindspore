@@ -128,7 +128,9 @@ uint32_t CoalesceCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   dims = {jump + 1};
   auto y_values_shape = y_values->GetTensorShape();
   y_values_shape->SetDimSizes(dims);
-
+  dims = {num_dims};
+  auto y_shape_shape = y_shape->GetTensorShape();
+  y_shape_shape->SetDimSizes(dims);
   return KERNEL_STATUS_OK;
 }
 
