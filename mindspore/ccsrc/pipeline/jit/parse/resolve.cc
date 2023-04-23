@@ -553,8 +553,10 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   if (!data_converter::IsCellInstance(obj)) {
     AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, resolve_node);
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
-    MS_EXCEPTION_IF_NULL(get_attr_node->func_graph());
-    AnfNodePtr res_node = get_attr_node->func_graph()->NewCNodeInOrder(std::move(inputs));
+    auto cur_func = get_attr_node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_func);
+    AnfNodePtr res_node = cur_func->NewCNode(std::move(inputs));
+    cur_func->ReplaceInOrder(get_attr_node, res_node);
     return res_node;
   }
 

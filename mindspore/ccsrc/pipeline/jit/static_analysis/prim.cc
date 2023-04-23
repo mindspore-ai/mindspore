@@ -1380,7 +1380,6 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
 
-  fg->ReplaceInOrder(cnode, getattr_node);
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());

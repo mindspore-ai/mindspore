@@ -19,6 +19,8 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore import jit
+import mindspore.amp as amp
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -201,3 +203,110 @@ def test_fallback_control_flow():
     assert out[0] == 1
     assert out[1] == 1
     assert out[2] == {'a': 1, 'b': 2}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_side_effect_asnumpy():
+    """
+    Feature: Fallback runtime side effect.
+    Description: Test execution order in Fallback runtime.
+    Expectation: No error.
+    """
+
+    @jit
+    def loss_scale():
+        loss_scaler = amp.DynamicLossScaler(scale_value=2 ** 10, scale_factor=2, scale_window=1)
+        grads = (Tensor(np.array([np.log(-1), 1.0]).astype(np.float32)), Tensor(np.array([0.2]).astype(np.float32)))
+        unscaled_grads = loss_scaler.unscale(grads)
+        is_finite = amp.all_finite(unscaled_grads)
+        loss_scaler.adjust(is_finite)
+        return loss_scaler.scale_value.asnumpy()
+
+    out = loss_scale()
+    assert out == 512
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_side_effect_assign_1():
+    """
+    Feature: Fallback runtime side effect.
+    Description: Test execution order in Fallback runtime.
+    Expectation: No error.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.para = Parameter(Tensor(2, dtype=ms.float64), name='para')
+
+        def construct(self, x):
+            out = x * self.para
+            self.para = 2 * x
+            return out, self.para.asnumpy()
+
+    net = Net()
+    x = np.array(10, np.float64)
+    out = net(ms.Tensor(x))
+    assert out[1] == 20
+
+
+@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_side_effect_assign_2():
+    """
+    Feature: Fallback runtime side effect.
+    Description: Test execution order in Fallback runtime.
+    Expectation: No error.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.para = Parameter(Tensor(2, dtype=ms.float64), name='para')
+
+        def construct(self, x):
+            self.para = 2 * x
+            return self.para.asnumpy()
+
+    net = Net()
+    x = np.array(10, np.float64)
+    out = net(ms.Tensor(x))
+    assert out == 20
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_side_effect_dict_3():
+    """
+    Feature: Fallback runtime side effect.
+    Description: Test execution order in Fallback runtime.
+    Expectation: No error.
+    """
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.para = Parameter(Tensor(2, dtype=ms.float64), name='para')
+
+        def construct(self, input_x):
+            self.para = input_x + 1
+            x = {'a': Tensor(1, dtype=ms.float64), 'b': self.para}
+            self.para = x.get('a') * 2
+            y = x.get('b') + self.para * 2
+            self.para = self.para + 10
+            z = {'c': 3, 'b': self.para * 2, 'd': self.para + 1}
+            return x.get('b') + 1, y, z
+
+
+    net = Net()
+    x = np.array(10, np.float64)
+    out = net(ms.Tensor(x))
+    assert out[0] == 13
+    assert out[1] == 6
+    assert out[2] == {'c': 3, 'b': 24, 'd': 13}
