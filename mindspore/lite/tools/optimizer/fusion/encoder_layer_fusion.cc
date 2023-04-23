@@ -204,7 +204,7 @@ BaseRef EncoderLayerFusion::DefineBatchValidLength(const BaseRef &input) const {
   auto reshape = VectorRef({is_reshape, batch_valid_length_, var});
   auto var2 = std::make_shared<Var>("var2");
   MS_CHECK_TRUE_RET(var2 != nullptr, {});
-  auto is_less = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess), "is_less");
+  auto is_less = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLessEqual), "is_less_eq");
   MS_CHECK_TRUE_RET(is_less != nullptr, {});
   auto less = VectorRef({is_less, var2, reshape});
   auto var3 = std::make_shared<Var>("var3");

@@ -183,6 +183,10 @@ int EncoderTensorRT::InitParam(fastertransformer::encoderParamRun *params) {
   params->attn.attn.mask = true;
   if (encoder_op->get_act_type() == ActType::ActType_Gelu) {
     params->ffn_param.ffn_param.act_type = fastertransformer::ActType_Gelu;
+  } else if (encoder_op->get_act_type() == ActType::ActType_Relu) {
+    params->ffn_param.ffn_param.act_type = fastertransformer::ActType_Relu;
+  } else if (encoder_op->get_act_type() == ActType::ActType_No) {
+    params->ffn_param.ffn_param.act_type = fastertransformer::ActType_No;
   } else {
     params->ffn_param.ffn_param.act_type = static_cast<fastertransformer::ActType>(encoder_op->get_act_type());
   }
@@ -210,6 +214,7 @@ void EncoderTensorRT::CastFfnTensors(fastertransformer::encoderParamRun *params,
     }
   }
 }
+
 void EncoderTensorRT::BuildEncoderTensors(TensorRTContext *ctx) {
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto in_tensor = input(ctx, i);
@@ -219,19 +224,21 @@ void EncoderTensorRT::BuildEncoderTensors(TensorRTContext *ctx) {
     }
   }
 }
+
 void EncoderTensorRT::BuildUsePastTensors(TensorRTContext *ctx) {
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto in_tensor = input(ctx, i);
     if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
       if (i == C1NUM || i == C2NUM) {
         int *data = const_cast<int *>(static_cast<const int *>(in_tensors_[i].Data()));
-        *data = unique_id_;
+        *data = unique_id_ | (i << C8NUM);
       }
       in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
       ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
     }
   }
 }
+
 int EncoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is invalid";
