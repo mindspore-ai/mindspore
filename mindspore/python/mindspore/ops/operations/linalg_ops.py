@@ -17,9 +17,8 @@
 
 from __future__ import absolute_import
 from mindspore import _checkparam as Validator
-from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
+from mindspore.ops.primitive import Primitive
 from mindspore.ops.primitive import prim_attr_register
-import mindspore.common.dtype as mstype
 
 
 class Geqrf(Primitive):
@@ -125,7 +124,7 @@ class Svd(Primitive):
         self.add_prim_attr('compute_uv', self.compute_uv)
 
 
-class Eigh(PrimitiveWithInfer):
+class Eigh(Primitive):
     """
     Eigh decomposition(Symmetric matrix)
     Ax = lambda * x
@@ -140,22 +139,3 @@ class Eigh(PrimitiveWithInfer):
         self.lower = Validator.check_value_type("lower", lower, [bool], self.lower)
         self.add_prim_attr('lower', self.lower)
         self.add_prim_attr('compute_eigenvectors', self.compute_eigenvectors)
-
-    def __infer__(self, A):
-        Validator.check_scalar_or_tensor_types_same({"A_dtype": A['dtype']},
-                                                    [mstype.float32, mstype.float64, mstype.complex64,
-                                                     mstype.complex128], self.name, True)
-        output = None
-        if self.compute_eigenvectors:
-            output = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (A['dtype'], A['dtype']),
-                'value': None
-            }
-        else:
-            output = {
-                'shape': (A['shape'][0],),
-                'dtype': A['dtype'],
-                'value': None
-            }
-        return output
