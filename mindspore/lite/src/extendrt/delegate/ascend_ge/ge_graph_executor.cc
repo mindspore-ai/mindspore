@@ -37,6 +37,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #endif
 #include "src/extendrt/utils/tensor_utils.h"
+#include "framework/common/ge_inner_error_codes.h"
 
 namespace mindspore {
 namespace {
@@ -367,21 +368,60 @@ bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id, const std::vector<t
   return true;
 }
 
-ge::Status GeGraphExecutor::RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
-                                                  std::vector<::ge::Tensor> *outputs) {
+bool GeGraphExecutor::RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
+                                      std::vector<::ge::Tensor> *outputs) {
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool is_finished = false;
+  bool end_of_sequence = false;
+  std::unique_lock<std::mutex> lock(mutex);
+  auto call_back = [=, &is_finished, &end_of_sequence, &condition](ge::Status ge_status,
+                                                                   const std::vector<ge::Tensor> &ge_outputs) {
+    if (ge_status == ge::GRAPH_SUCCESS) {
+      *outputs = ge_outputs;
+      is_finished = true;
+    } else if (ge_status == ge::END_OF_SEQUENCE) {
+      MS_LOG(WARNING) << "RunAsync out of range: End of sequence.";
+      end_of_sequence = true;
+    } else {
+      MS_LOG(ERROR) << "RunAsync failed.";
+    }
+    condition.notify_all();
+    return;
+  };
+  if (ge_session_ == nullptr) {
+    MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
+    return false;
+  }
+  ge::Status ret = ge_session_->RunGraphAsync(graph_id, inputs, call_back);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE RunGraphAsync Failed, ret is: " << ret;
+    return false;
+  }
+  if (!is_finished) {
+    condition.wait(lock);
+  }
+  if (end_of_sequence) {
+    throw(std::runtime_error("End of sequence."));
+  }
+  return is_finished;
+}
+
+bool GeGraphExecutor::RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
+                                            std::vector<::ge::Tensor> *outputs) {
   ge::DataFlowInfo data_flow_info;
   int time_out = 3000;  // set the timeout to 3000s.
   auto ret = ge_session_->FeedDataFlowGraph(graph_id, inputs, data_flow_info, time_out);
   if (ret != ge::SUCCESS) {
     MS_LOG(ERROR) << "Feed input data failed.";
-    return ret;
+    return false;
   }
   ret = ge_session_->FetchDataFlowGraph(graph_id, *outputs, data_flow_info, time_out);
   if (ret != ge::SUCCESS) {
     MS_LOG(ERROR) << "Fetch output data failed.";
-    return ret;
+    return false;
   }
-  return ge::GRAPH_SUCCESS;
+  return true;
 }
 
 bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
@@ -405,18 +445,17 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   }
   std::vector<::ge::Tensor> ge_outputs;
   auto time_start = std::chrono::system_clock::now();
-  auto ge_status = !is_data_flow_graph_ ? ge_session_->RunGraph(graph_id, ge_inputs, ge_outputs)
-                                        : RunDataFlowGraphAsync(graph_id, ge_inputs, &ge_outputs);
+  auto ret = !is_data_flow_graph_ ? RunGeGraphAsync(graph_id, ge_inputs, &ge_outputs)
+                                  : RunDataFlowGraphAsync(graph_id, ge_inputs, &ge_outputs);
+  if (!ret) {
+    MS_LOG(ERROR) << "Exec compute graph failed, graph id " << graph_id;
+    return false;
+  }
   auto time_cost =
     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start).count();
   MS_LOG(INFO) << "Call GE RunGraph Success in " << time_cost << " us, graph id " << graph_id
                << " the GE outputs num is: " << ge_outputs.size();
 
-  if (ge_status != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Exec compute graph failed, graph id " << graph_id;
-    return false;
-  }
-  MS_LOG(INFO) << "Exec compute graph success, graph id " << graph_id;
   if (!outputs->empty()) {
     if (outputs->size() != ge_outputs.size()) {
       MS_LOG(ERROR) << "Invalid output size, outputs' size " << outputs->size() << "ge tensor size "

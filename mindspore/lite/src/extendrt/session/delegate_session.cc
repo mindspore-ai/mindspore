@@ -32,6 +32,7 @@ namespace mindspore {
 namespace {
 constexpr auto kAscendProviderGe = "ge";
 constexpr auto kDataFlowGraphType = "data_flow";
+constexpr auto kIsAdapted = "is_adapted";
 std::mutex kernel_graph_mutex;
 std::mutex g_build_graph_mutex;
 }  // namespace
@@ -97,9 +98,12 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
   is_data_flow_graph_ = func_type != nullptr && GetValue<std::string>(func_type) == kDataFlowGraphType;
   if (context_ && !context_->MutableDeviceInfo().empty()) {
     auto device_info = context_->MutableDeviceInfo()[0];
-    if (device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
-        device_info->GetProvider() == kAscendProviderGe && !is_data_flow_graph_) {
+    bool is_ge_backend = device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
+                         device_info->GetProvider() == kAscendProviderGe;
+    bool is_adapted = graph->has_attr(kIsAdapted);  // The funcgraph will only adapted once while running parallel.
+    if (is_ge_backend && !is_adapted && !is_data_flow_graph_) {
       lite::AscendGeExecutorPlugin::GetInstance().AdaptGraph(graph);
+      graph->set_attr(kIsAdapted, MakeValue(true));
     }
   }
   DelegateGraphInfo graph_info;
