@@ -40,6 +40,8 @@
 #include "plugin/device/cpu/optimizer/insert_cast_to_pyexecute.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "plugin/device/cpu/optimizer/softmax_grad_fusion.h"
+#include "plugin/device/cpu/optimizer/matmul_biasadd_fusion.h"
+#include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
 #include "backend/common/pass/insert_type_transform_op.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
@@ -227,6 +229,9 @@ void CPUKernelExecutor::OptimizeMindIR(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::SoftmaxGradFusionCpu>("softmax_grad_fusion_cpu"));
+  // Match MatMul+BiasAdd+ReLU first, if no match, then match MatMul+BiasAdd
+  pm->AddPass(std::make_shared<opt::MatMulBiasAddReluFusionCPU>("matmul_biasadd_relu_fusion_cpu"));
+  pm->AddPass(std::make_shared<opt::MatMulBiasAddFusionCPU>("matmul_biasadd_fusion_cpu"));
   pm->AddPass(std::make_shared<opt::DynamicSequenceOpsAdaptation>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
