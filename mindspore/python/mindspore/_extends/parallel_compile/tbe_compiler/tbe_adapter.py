@@ -275,7 +275,7 @@ def get_auto_tune_support_op_list(job: TbeJob):
     :param job:
     :return:
     """
-    from auto_tune_main import enable_auto_tune_support
+    from auto_tune.auto_tune_main import enable_auto_tune_support
     auto_tune_op_list = enable_auto_tune_support()
     job.info("auto tune GA support ops list:{}".format(auto_tune_op_list))
     return [x.lower() for x in auto_tune_op_list]

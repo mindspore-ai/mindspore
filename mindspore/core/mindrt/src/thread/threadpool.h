@@ -142,7 +142,7 @@ class Worker {
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
   int spin_count_{0};
-  int max_spin_count_{kMinSpinCount};
+  std::atomic_int max_spin_count_{kMinSpinCount};
   ThreadPool *pool_{nullptr};
   HQueue<TaskSplit> *local_task_queue_{nullptr};
   size_t worker_id_{0};
@@ -234,11 +234,11 @@ class MS_CORE_API ThreadPool {
   std::vector<std::unique_ptr<HQueue<TaskSplit>>> task_queues_;
   std::unordered_map<std::thread::id, size_t> worker_ids_;
   CoreAffinity *affinity_{nullptr};
-  size_t actor_thread_num_{0};
-  size_t kernel_thread_num_{0};
+  std::atomic<size_t> actor_thread_num_{0};
+  std::atomic<size_t> kernel_thread_num_{0};
   bool occupied_actor_thread_{true};
-  int max_spin_count_{kDefaultSpinCount};
-  int min_spin_count_{kMinSpinCount};
+  std::atomic_int max_spin_count_{kDefaultSpinCount};
+  std::atomic_int min_spin_count_{kMinSpinCount};
   float server_cpu_frequence = -1.0f;  // Unit : GHz
   static std::mutex create_thread_pool_muntex_;
 };

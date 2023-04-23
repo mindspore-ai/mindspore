@@ -54,7 +54,7 @@ int CumSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_), LongToSize);
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
-    return true;
+    return KRET_OK;
   }
   auto kernel_ptr = std::make_shared<ops::CumSum>(base_operator->GetPrim());
   MS_EXCEPTION_IF_NULL(kernel_ptr);
