@@ -2332,22 +2332,20 @@ def bool_func(*data):
     if data_len == 0:
         return False
     data = data[0]
-    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error(
-            "bool() does not support sparse tensor input.")
     if isinstance(data, (Tensor, Tensor_)):
         tensor_shape = F.shape(data)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-            return data != 0
-        const_utils.raise_value_error(
-            "The truth value of an array with more than one element is ambiguous.")
+            return F.scalar_cast(data, mstype.bool_)
+        const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
             return data.__bool__()
         if hasattr(data, "__len__"):
             return len(data) != 0
-        return True
+        return F.scalar_cast(data, mstype.bool_)
+    if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
+        const_utils.raise_type_error("bool() does not support sparse tensor input.")
     return cast_to_bool(data)
 
 
@@ -2372,11 +2370,10 @@ def int_func(*data):
     base = 10
     if data_len == 2:
         base = data[1]
-    if isinstance(target, (Tensor, Tensor_, int, float, bool)) and base == 10 and not F.isconstant(target):
-        return F.scalar_cast(target, mstype.int64)
     if not F.isconstant(target):
-        const_utils.raise_type_error(
-            "int() does not support non-constant input.")
+        if base != 10:
+            const_utils.raise_type_error("int() does not support non-constant input when 'base' is specified.")
+        return F.scalar_cast(target, mstype.int64)
     if isinstance(target, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "int() does not support sparse tensor input.")
@@ -2398,11 +2395,8 @@ def float_func(*data):
     if data_len == 0:
         return 0.0
     data = data[0]
-    if isinstance(data, (Tensor, Tensor_, int, float, bool)) and not F.isconstant(data):
-        return F.scalar_cast(data, mstype.float32)
     if not F.isconstant(data):
-        const_utils.raise_type_error(
-            "float() does not support non-constant input.")
+        return F.scalar_cast(data, mstype.float32)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "float() does not support sparse tensor input.")

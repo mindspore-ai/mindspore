@@ -72,7 +72,9 @@ void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
 
 template <typename T>
 std::shared_ptr<T> GetAbstract(const AnfNodePtr &node) {
-  return dyn_cast<T>(node->abstract());
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  return dyn_cast<T>(abs);
 }
 
 bool CheckContainsDict(const AbstractBasePtr &abs) {
@@ -898,6 +900,52 @@ class AfterOptARewriter : public BaseRewriter {
     return raise_pyexecute_node;
   }
 
+  // ScalarCast(x, dtype) --> PyExecute(string, keys, values)
+  AnfNodePtr ConvertScalarCast(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    constexpr size_t x_index = 1;
+    constexpr size_t dtype_index = 2;
+    auto x_node = cnode->input(x_index);
+    auto dtype_node = cnode->input(dtype_index);
+    auto x_abs = GetAbstract<abstract::AbstractAny>(x_node);
+    if (x_abs == nullptr) {
+      return nullptr;
+    }
+    auto dtype_abs = GetAbstract<abstract::AbstractType>(dtype_node);
+    MS_EXCEPTION_IF_NULL(dtype_abs);
+    auto dtype_val = dtype_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(dtype_val);
+    auto scalar_type = dtype_val->cast<TypePtr>();
+    MS_EXCEPTION_IF_NULL(scalar_type);
+    std::string target_type_str;
+    auto type_id = NormalizeTypeId(scalar_type->type_id());
+    if (type_id == kNumberTypeInt) {
+      target_type_str = "int";
+    } else if (type_id == kNumberTypeFloat) {
+      target_type_str = "float";
+    } else if (type_id == kNumberTypeBool) {
+      target_type_str = "bool";
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported type: " << scalar_type->ToString();
+    }
+
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    std::string internal_scalar_arg_str = "__internal_scalar_arg__";
+    std::string script = target_type_str + "(" + internal_scalar_arg_str + ")";
+    auto script_node = NewValueNode(std::make_shared<StringImm>(script));
+    auto arg_name_node = NewValueNode(std::make_shared<StringImm>(internal_scalar_arg_str));
+    auto keys_tuple_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), arg_name_node});
+    auto values_tuple_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), x_node});
+    auto scalar_cast_node =
+      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, keys_tuple_node, values_tuple_node});
+    MS_LOG(DEBUG) << "Convert CastToScalar: " << cnode->DebugString() << " -> " << scalar_cast_node->DebugString();
+    return scalar_cast_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -919,6 +967,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
+    {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
   };
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
