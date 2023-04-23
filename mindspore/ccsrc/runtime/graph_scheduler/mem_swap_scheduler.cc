@@ -256,7 +256,6 @@ void MemSwapScheduler::AddSwappableTensors(const mindspore::device::DeviceContex
       device_address->set_swappable(false);
     } else {
       swap_manager->AddSwappableTensor(device_address);
-      device_address->set_swappable(true);
     }
   }
 }
