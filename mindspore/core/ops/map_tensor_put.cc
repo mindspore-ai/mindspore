@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorPut, BaseOperator);
-AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
+
+AbstractBasePtr MapTensorPutInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.
   constexpr int64_t input_num = 3;
@@ -93,6 +93,44 @@ AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const Pri
   // Return the input AbstractMapTensor.
   return abs_map_tensor;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MapTensorPut, prim::kPrimMapTensorPut, MapTensorPutInfer, nullptr, true);
+
+abstract::ShapePtr MapTensorPutInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto abs = MapTensorPutInferInner(prim, input_args);
+  auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
+  MS_EXCEPTION_IF_NULL(map_tensor_abs);
+  return map_tensor_abs->shape();
+}
+
+TypePtr MapTensorPutInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto abs = MapTensorPutInferInner(prim, input_args);
+  auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
+  MS_EXCEPTION_IF_NULL(map_tensor_abs);
+  return map_tensor_abs->BuildType();
+}
+
+AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                  const std::vector<AbstractBasePtr> &input_args) {
+  return MapTensorPutInferInner(primitive, input_args);
+}
+
+// AG means auto generated
+class MIND_API AGMapTensorPutInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorPutInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorPutInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return MapTensorPutInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MapTensorPut, prim::kPrimMapTensorPut, AGMapTensorPutInfer, false);
 }  // namespace ops
 }  // namespace mindspore
