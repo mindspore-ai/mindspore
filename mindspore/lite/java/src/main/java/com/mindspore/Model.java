@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 
 package com.mindspore;
 
-import java.util.HashMap;
+import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
+
 import com.mindspore.config.MSContext;
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
 
+import java.util.HashMap;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ public class Model {
         MindsporeLite.init();
     }
 
-    private long modelPtr = 0;
+    private long modelPtr = POINTER_DEFAULT_VALUE;
 
     /**
      * Construct function.
@@ -56,7 +58,7 @@ public class Model {
         if (graph == null || context == null) {
             return false;
         }
-        long cfgPtr = cfg != null ? cfg.getTrainCfgPtr() : 0;
+        long cfgPtr = cfg != null ? cfg.getTrainCfgPtr() : POINTER_DEFAULT_VALUE;
         return this.buildByGraph(modelPtr, graph.getGraphPtr(), context.getMSContextPtr(), cfgPtr);
     }
 
