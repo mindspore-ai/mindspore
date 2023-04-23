@@ -5803,6 +5803,8 @@ def argmax(input, dim=None, keepdim=False):
     """
     if not input.shape:
         return Tensor(0)
+    if input.dtype == mstype.bool_:
+        input = input.astype(mstype.int32)
     is_dim_none = False
     if dim is None:
         input = reshape_(input, (-1,))
