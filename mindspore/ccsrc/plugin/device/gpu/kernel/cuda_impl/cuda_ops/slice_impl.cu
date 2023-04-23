@@ -252,83 +252,106 @@ void CalSlice7DGrad(const size_t s1, const size_t s2, const size_t s3, const siz
     s1, s2, s3, s4, s5, s6, s7, l1, l2, l3, l4, l5, l6, l7, d1, d2, d3, d4, d5, d6, d7, dy, dx);
 }
 
-template <typename T>
-__global__ void StridedSliceKernel(const size_t b0, const size_t b1, const size_t b2, const size_t b3, const size_t b4,
-                                   const size_t b5, const size_t b6, const size_t b7, const size_t s0, const size_t s1,
-                                   const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t s6,
-                                   const size_t s7, const size_t i0, const size_t i1, const size_t i2, const size_t i3,
-                                   const size_t i4, const size_t i5, const size_t i6, const size_t i7, const size_t o0,
-                                   const size_t o1, const size_t o2, const size_t o3, const size_t o4, const size_t o5,
-                                   const size_t o6, const size_t o7, const T *input_addr, T *output_addr) {
-  size_t output_num = o0 * o1 * o2 * o3 * o4 * o5 * o6 * o7;
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6 * o7) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6 * o7) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6 * o7) % o2;
-    size_t l = pos / (o4 * o5 * o6 * o7) % o3;
-    size_t m = pos / (o5 * o6 * o7) % o4;
-    size_t n = pos / (o6 * o7) % o5;
-    size_t o = pos / o7 % o6;
-    size_t p = pos % o7;
+const size_t DIM_SIZE = 8;
+struct SliceInfo {
+  size_t input_stride[DIM_SIZE];
+  size_t output_stride[DIM_SIZE];
+  size_t begin[DIM_SIZE];
+  size_t strides[DIM_SIZE];
+};
 
-    size_t input_idx = (i * s0 + b0) * i1 * i2 * i3 * i4 * i5 * i6 * i7 + (j * s1 + b1) * i2 * i3 * i4 * i5 * i6 * i7 +
-                       (k * s2 + b2) * i3 * i4 * i5 * i6 * i7 + (l * s3 + b3) * i4 * i5 * i6 * i7 +
-                       (m * s4 + b4) * i5 * i6 * i7 + (n * s5 + b5) * i6 * i7 + (o * s6 + b6) * i7 + (p * s7 + b7);
-    output_addr[pos] = input_addr[input_idx];
-  }
+template <typename T>
+__global__ void StridedSliceKernel(size_t output_num, size_t dim_size, SliceInfo sliceInfo, const T *input, T *output) {
+    for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
+      int64_t cur_out_idx = 0;
+      size_t cur_pos = pos;
+      size_t input_idx = 0;
+      for (int idx = 0; idx < dim_size; idx++) {
+        cur_out_idx = cur_pos / sliceInfo.output_stride[idx];
+        cur_pos -= cur_out_idx * sliceInfo.output_stride[idx];
+        input_idx += (cur_out_idx * sliceInfo.strides[idx] + sliceInfo.begin[idx]) * sliceInfo.input_stride[idx];
+      }
+      output[pos] = input[input_idx];
+    }
 }
 
 template <typename T>
 void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                   const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape, const T *input,
                   T *output, cudaStream_t cuda_stream) {
-  size_t size = output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * output_shape[4] *
-                output_shape[5] * output_shape[6] * output_shape[7];
-  StridedSliceKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    begin[0], begin[1], begin[2], begin[3], begin[4], begin[5], begin[6], begin[7], strides[0], strides[1], strides[2],
-    strides[3], strides[4], strides[5], strides[6], strides[7], input_shape[0], input_shape[1], input_shape[2],
-    input_shape[3], input_shape[4], input_shape[5], input_shape[6], input_shape[7], output_shape[0], output_shape[1],
-    output_shape[2], output_shape[3], output_shape[4], output_shape[5], output_shape[6], output_shape[7], input,
-    output);
+    auto dim_size = DIM_SIZE;
+
+    SliceInfo sliceInfo;
+    sliceInfo.input_stride[dim_size-1] = 1;
+    sliceInfo.output_stride[dim_size-1] = 1;
+    for (int i = dim_size - 2; i >= 0; i--) {
+      sliceInfo.input_stride[i] = sliceInfo.input_stride[i+1] * input_shape[i+1];
+    }
+    for (int i = dim_size - 2; i >= 0; i--) {
+      sliceInfo.output_stride[i] = sliceInfo.output_stride[i+1] * output_shape[i+1];
+    }
+    size_t output_num = 1;
+    for (size_t i = 0; i < output_shape.size(); i++)  {
+      output_num *= output_shape[i];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.input_stride[idx] = (input_shape[idx] == 1) ? 0 : sliceInfo.input_stride[idx];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.begin[idx] = begin[idx];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.strides[idx] = strides[idx];
+    }
+    StridedSliceKernel<<<GET_BLOCKS(output_num), GET_THREADS, 0, cuda_stream>>>(
+                         output_num, dim_size, sliceInfo, input, output);
 }
 
 template <typename T>
-__global__ void StridedSliceGradKernel(const size_t b0, const size_t b1, const size_t b2, const size_t b3,
-                                       const size_t b4, const size_t b5, const size_t b6, const size_t s0,
-                                       const size_t s1, const size_t s2, const size_t s3, const size_t s4,
-                                       const size_t s5, const size_t s6, const size_t i0, const size_t i1,
-                                       const size_t i2, const size_t i3, const size_t i4, const size_t i5,
-                                       const size_t i6, const size_t o0, const size_t o1, const size_t o2,
-                                       const size_t o3, const size_t o4, const size_t o5, const size_t o6, const T *dy,
-                                       T *dx) {
-  size_t output_num = o0 * o1 * o2 * o3 * o4 * o5 * o6;
+__global__ void StridedSliceGradKernel(size_t output_num, size_t dim_size, SliceInfo sliceInfo, const T *dy, T *dx) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6) % o2;
-    size_t l = pos / (o4 * o5 * o6) % o3;
-    size_t m = pos / (o5 * o6) % o4;
-    size_t n = pos / (o6) % o5;
-    size_t o = pos % o6;
-
-    size_t input_idx = (i * s0 + b0) * i1 * i2 * i3 * i4 * i5 * i6 + (j * s1 + b1) * i2 * i3 * i4 * i5 * i6 +
-                       (k * s2 + b2) * i3 * i4 * i5 * i6 + (l * s3 + b3) * i4 * i5 * i6 + (m * s4 + b4) * i5 * i6 +
-                       (n * s5 + b5) * i6 + (o * s6 + b6);
+    int64_t cur_out_idx = 0;
+    size_t cur_pos = pos;
+    size_t input_idx = 0;
+    for (int idx = 0; idx < dim_size; idx++) {
+      cur_out_idx = cur_pos / sliceInfo.output_stride[idx];
+      cur_pos -= cur_out_idx * sliceInfo.output_stride[idx];
+      input_idx += (cur_out_idx * sliceInfo.strides[idx] + sliceInfo.begin[idx]) * sliceInfo.input_stride[idx];
+    }
     dx[input_idx] = dy[pos];
   }
-  return;
 }
 
 template <typename T>
 void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int64_t> &begin,
                       const std::vector<int64_t> &strides, const std::vector<size_t> &dx_shape, const T *dy, T *dx,
                       cudaStream_t cuda_stream) {
-  size_t size = dy_shape[0] * dy_shape[1] * dy_shape[2] * dy_shape[3] * dy_shape[4] * dy_shape[5] * dy_shape[6];
-  StridedSliceGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    begin[0], begin[1], begin[2], begin[3], begin[4], begin[5], begin[6], strides[0], strides[1], strides[2],
-    strides[3], strides[4], strides[5], strides[6], dx_shape[0], dx_shape[1], dx_shape[2], dx_shape[3], dx_shape[4],
-    dx_shape[5], dx_shape[6], dy_shape[0], dy_shape[1], dy_shape[2], dy_shape[3], dy_shape[4], dy_shape[5], dy_shape[6],
-    dy, dx);
+    auto dim_size = DIM_SIZE;
+
+    SliceInfo sliceInfo;
+    sliceInfo.input_stride[dim_size-1] = 1;
+    sliceInfo.output_stride[dim_size-1] = 1;
+    for (int i = dim_size - 2; i >= 0; i--) {
+      sliceInfo.input_stride[i] = sliceInfo.input_stride[i+1] * dx_shape[i+1];
+    }
+    for (int i = dim_size - 2; i >= 0; i--) {
+      sliceInfo.output_stride[i] = sliceInfo.output_stride[i+1] * dy_shape[i+1];
+    }
+    size_t output_num = 1;
+    for (size_t i = 0; i < dy_shape.size(); i++)  {
+      output_num *= dy_shape[i];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.input_stride[idx] = (dx_shape[idx] == 1) ? 0 : sliceInfo.input_stride[idx];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.begin[idx] = begin[idx];
+    }
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      sliceInfo.strides[idx] = strides[idx];
+    }
+    StridedSliceGradKernel<<<GET_BLOCKS(output_num), GET_THREADS, 0, cuda_stream>>>(output_num, dim_size, sliceInfo, dy,
+                                                                                    dx);
 }
 
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
