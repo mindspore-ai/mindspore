@@ -10647,7 +10647,7 @@ class MaxPoolWithArgmaxV2(Primitive):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`(h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
+    :math:`(h_{ker}, w_{ker})` and stride :math:`(s_0, s_1)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
