@@ -317,9 +317,28 @@ bool FindReshape(const CNodePtr &cnode, mindspore::HashSet<std::string> *op_cach
   return false;
 }
 
+bool FindReshapePreNodeCrossParam(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, bool *is_prev_param,
+                                  int64_t *out_index, size_t curr_depth) {
+  auto fg_map = node->func_graph()->func_graph_cnodes_index();
+  auto parameters = node->func_graph()->parameters();
+  int64_t param_index = -1;
+  for (size_t j = 0; j < parameters.size(); ++j) {
+    if (parameters[j] == node) {
+      param_index = SizeToLong(j);
+    }
+  }
+  if (fg_map.size() == 0 || param_index == -1) {
+    *is_prev_param = true;
+    return true;
+  }
+  auto temp_node = fg_map.begin()->first->first->cast<CNodePtr>();
+  auto prev_node = temp_node->input(param_index + 1);
+  return FindReshapePreNodeStraCosts(prev_node, pre_operator_info, is_prev_param, out_index, ++curr_depth);
+}
+
 // Find previous node of Reshape, then obtain its strategy_cost_ vector to get its layout vector.
-bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index,
-                                 size_t curr_depth) {
+bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, bool *is_prev_param,
+                                 int64_t *out_index, size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding Reshape's previous node, exceeded the max recursive depth: "
                     << MAX_RECURSIVE_DEPTH;
@@ -327,7 +346,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
   }
   // if previous node is a parameter, handle it in the outsize.
   if (node->isa<Parameter>()) {
-    return false;
+    return FindReshapePreNodeCrossParam(node, pre_operator_info, is_prev_param, out_index, curr_depth);
   }
   if (!node->isa<CNode>()) {
     return false;
@@ -365,7 +384,8 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
-    if (!FindReshapePreNodeStraCosts(cnode->inputs()[index], pre_operator_info, out_index, ++curr_depth)) {
+    if (!FindReshapePreNodeStraCosts(cnode->inputs()[index], pre_operator_info, is_prev_param, out_index,
+                                     ++curr_depth)) {
       continue;
     }
     return true;
