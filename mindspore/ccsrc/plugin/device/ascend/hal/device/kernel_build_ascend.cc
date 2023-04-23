@@ -117,7 +117,8 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     if (!build_failed_nodes.empty()) {
       auto ms_context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(ms_context);
-      bool enable_reconfig_to_acl = !ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+      bool enable_reconfig_to_acl = !ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) &&
+                                    ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode;
       if (enable_reconfig_to_acl) {
         for (const auto &node : build_failed_nodes) {
           auto new_builder =
