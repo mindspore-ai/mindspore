@@ -148,6 +148,8 @@ class Optimizer(Cell):
         parameters = self._parameters_base_check(parameters, "parameters")
         self.param_rank = None
         self.optim_filter = None
+        if not isinstance(parameters, list):
+            raise TypeError(f"For 'Optimizer' argument 'parameters' must be 'list', but got {type(parameters)}.")
         if not all(isinstance(x, Parameter) for x in parameters) and not all(isinstance(x, dict) for x in parameters):
             raise TypeError("For 'Optimizer', all elements of the argument 'parameters' must be 'Parameter' or 'dict',"
                             " please check the 'parameters'.")
