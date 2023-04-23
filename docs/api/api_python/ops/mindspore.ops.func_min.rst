@@ -6,7 +6,8 @@ mindspore.ops.min
     在给定轴上计算输入Tensor的最小值。并且返回最小值和索引。
 
     .. note::
-        在auto_parallel和semi_auto_parallel模式下，不能使用第一个输出索引。
+        - 在auto_parallel和semi_auto_parallel模式下，不能使用第一个输出索引。
+        - `axis` 为 ``None`` 时，`keepdims` 及以后参数均不会生效，同时索引固定返回0。
 
     .. warning::
         - 如果有多个最小值，则取第一个最小值的索引。
