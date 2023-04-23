@@ -42,19 +42,19 @@ bool IsSequenceExpandable(const AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return false;
   }
-  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+  auto abs_seq = abs->cast<abstract::AbstractTuplePtr>();
   if (abs_seq == nullptr) {
     return false;
   }
-  // not expand SparseTensor.
+  // Not expand SparseTensor.
   if (common::AnfAlgo::CheckAbsSparseTensor(abs)) {
     return false;
   }
-  // not expand dynamic len sequence.
+  // Not expand dynamic len sequence.
   if (abs_seq->dynamic_len()) {
     return false;
   }
-  // not expand node which is arg of dynamic len parameter.
+  // Not expand node which is arg of dynamic len parameter.
   return !abs_seq->is_arg_of_dyn_len_param();
 }
 
