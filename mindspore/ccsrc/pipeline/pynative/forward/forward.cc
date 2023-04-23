@@ -504,16 +504,16 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
     if (!grad()->grad_flag()) {
       ClearNodeAbsMap();
     }
+    if (grad()->forward_use_dynamic_shape_process()) {
+      MS_LOG(DEBUG) << "first cell run end, set forward use dynamic shape process false";
+      grad()->set_forward_use_dynamic_shape_process(false);
+    }
   }
 }
 
 void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
     ClearNodeAbsMap();
-    if (!grad()->grad_flag()) {
-      MS_LOG(DEBUG) << "first cell run end, set forward use dynamic shape process false";
-      grad()->set_forward_use_dynamic_shape_process(false);
-    }
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
 }
