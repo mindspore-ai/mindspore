@@ -25,15 +25,19 @@
 
 namespace mindspore {
 inline size_t SizeOf(const ShapeVector &shape) {
-  ShapeValueDType data_size = 1;
+  size_t data_size = 1;
   for (auto dim : shape) {
-    if (dim < 0) {
+    if (dim <= 0) {
       // For dynamic shape which has negative dimensions, data size should be zero.
       return 0;
     }
-    data_size *= dim;
+    if (SIZE_MAX / dim < data_size) {
+      MS_EXCEPTION(ValueError) << "The product value of shape (" << shape
+                               << ") exceeds the maximum value of size_t: " << SIZE_MAX;
+    }
+    data_size *= static_cast<size_t>(dim);
   }
-  return static_cast<size_t>(data_size);
+  return data_size;
 }
 
 inline bool IsDynamicRank(const ShapeVector &shape) {
