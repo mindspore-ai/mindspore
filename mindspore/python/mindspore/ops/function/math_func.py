@@ -2742,6 +2742,7 @@ def bitwise_left_shift(input, other):
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If `input` and `other` do not have the same dtype.
         ValueError: If `input` and `other` could not be broadcast.
 
     Supported Platforms:
@@ -2754,26 +2755,18 @@ def bitwise_left_shift(input, other):
         >>> print(output)
         [4096    8]
     """
-    if isinstance(input, numbers.Number) and isinstance(other, numbers.Number):
+    if not isinstance(input, Tensor) and not isinstance(other, Tensor):
         raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
 
     cast = ops.Cast()
-    white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                  mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
     if isinstance(input, numbers.Number):
-        _dtype = other.dtype
         if not isinstance(input, int):
             raise TypeError(f"For 'bitwise_left_shift', 'input' must be an integer, but got input:{type(input)}.")
-        if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
         input = cast(input, other.dtype)
     elif isinstance(other, numbers.Number):
-        _dtype = input.dtype
         if not isinstance(other, int):
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
-        if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'input' must be a Tensor of int or uint, but got {_dtype}.")
-    other = cast(other, input.dtype)
+        other = cast(other, input.dtype)
     ls = ops.LeftShift()
     return ls(input, other)
 
@@ -2799,6 +2792,7 @@ def bitwise_right_shift(input, other):
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If `input` and `other` do not have the same dtype.
         ValueError: If `input` and `other` could not be broadcast.
 
     Supported Platforms:
@@ -2811,25 +2805,17 @@ def bitwise_right_shift(input, other):
         >>> print(output)
         [256   0]
     """
-    if isinstance(input, numbers.Number) and isinstance(other, numbers.Number):
+    if not isinstance(input, Tensor) and not isinstance(other, Tensor):
         raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
     cast = ops.Cast()
-    white_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                  mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
     if isinstance(input, numbers.Number):
-        _dtype = other.dtype
         if not isinstance(input, int):
             raise TypeError(f"For 'bitwise_left_shift', 'input' must be an integer, but got input:{type(input)}.")
-        if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'other' must be a Tensor of int or uint, but got {_dtype}.")
         input = cast(input, other.dtype)
     elif isinstance(other, numbers.Number):
-        _dtype = input.dtype
         if not isinstance(other, int):
             raise TypeError(f"For 'bitwise_left_shift', 'other' must be an integer, but got other:{type(other)}.")
-        if _dtype not in white_list:
-            raise TypeError(f"For 'bitwise_left_shift', 'input' must be a Tensor of int or uint, but got {_dtype}.")
-    other = cast(other, input.dtype)
+        other = cast(other, input.dtype)
     rs = ops.RightShift()
     return rs(input, other)
 
