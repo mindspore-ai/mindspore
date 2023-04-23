@@ -28,7 +28,7 @@ size_t AscendLaunchKernel::AlignSizeForLaunchKernel(size_t size) { return Memory
 uint8_t *AscendLaunchKernel::AllocDeviceMem(size_t size) {
   auto device_memory = AscendMemoryPool::GetInstance().AllocTensorMem(size);
   if (device_memory == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << size;
+    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << size << "B.";
   }
   return static_cast<uint8_t *>(device_memory);
 }
