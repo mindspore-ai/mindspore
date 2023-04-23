@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,25 @@
 
 package com.mindspore.config;
 
+import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
+
+import java.util.Locale;
+import java.util.logging.Logger;
+
 /**
  * TrainCfg Class
  *
  * @since v1.0
  */
 public class TrainCfg {
+    private static final Logger LOGGER = Logger.getLogger(Version.class.toString());
+
     static {
         try {
             System.loadLibrary("mindspore-lite-train-jni");
         } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
+            LOGGER.severe("Failed to load MindSporLite native library.");
+            LOGGER.severe(String.format(Locale.ENGLISH, "exception %s.", e));
         }
     }
 
@@ -38,7 +44,7 @@ public class TrainCfg {
      * Construct function.
      */
     public TrainCfg() {
-        this.trainCfgPtr = 0;
+        this.trainCfgPtr = POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -48,7 +54,7 @@ public class TrainCfg {
      */
     public boolean init() {
         this.trainCfgPtr = createTrainCfg(null, 0, false);
-        return this.trainCfgPtr != 0;
+        return this.trainCfgPtr != POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -59,7 +65,7 @@ public class TrainCfg {
      */
     public boolean init(String loss_name) {
         this.trainCfgPtr = createTrainCfg(loss_name, 0, false);
-        return this.trainCfgPtr != 0;
+        return this.trainCfgPtr != POINTER_DEFAULT_VALUE;
     }
 
     /**
@@ -67,7 +73,7 @@ public class TrainCfg {
      */
     public void free() {
         this.free(this.trainCfgPtr);
-        this.trainCfgPtr = 0;
+        this.trainCfgPtr = POINTER_DEFAULT_VALUE;
     }
 
     /**

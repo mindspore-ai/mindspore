@@ -359,6 +359,10 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setShape(JNIEn
   auto size = static_cast<int>(env->GetArrayLength(tensor_shape));
   std::vector<int64_t> c_shape(size);
   jint *shape_pointer = env->GetIntArrayElements(tensor_shape, nullptr);
+  if (shape_pointer == nullptr) {
+    MS_LOG(ERROR) << "shape_pointer is nullptr.";
+    return static_cast<jboolean>(false);
+  }
   for (int i = 0; i < size; i++) {
     c_shape[i] = static_cast<int64_t>(shape_pointer[i]);
   }
@@ -412,7 +416,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByNat
   jlong data_len = env->GetDirectBufferCapacity(buffer);
   if (p_data == nullptr) {
     MS_LOG(ERROR) << "GetDirectBufferAddress return null";
-    return false;
+    return 0;
   }
 
   auto size = static_cast<int>(env->GetArrayLength(tensor_shape));

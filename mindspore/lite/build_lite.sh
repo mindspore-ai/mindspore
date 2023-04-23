@@ -164,6 +164,7 @@ build_lite_jni_and_jar() {
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/
     fi
 
+    chmod -R 750 ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite
     cd ${LITE_JAVA_PATH}/java
     rm -rf gradle .gradle gradlew gradlew.bat
     local gradle_version=""

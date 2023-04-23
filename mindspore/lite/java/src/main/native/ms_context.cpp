@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #include "include/api/context.h"
 #include "common/jni_utils.h"
 
+constexpr const int kCpuDevice = 0;
+constexpr const int kGpuDevice = 1;
 constexpr const int kNpuDevice = 2;
 constexpr const int kAscendDevice = 3;
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createMSContext(JNIEnv *env, jobject thiz,
@@ -58,23 +60,21 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
   auto *c_context_ptr = static_cast<mindspore::Context *>(pointer);
   auto &device_list = c_context_ptr->MutableDeviceInfo();
   switch (device_type) {
-    case 0: {
+    case kCpuDevice: {
       auto cpu_device_info = std::make_shared<mindspore::CPUDeviceInfo>();
       if (cpu_device_info == nullptr) {
         MS_LOG(ERROR) << "cpu device info is nullptr";
-        delete (c_context_ptr);
         return (jboolean) false;
       }
       cpu_device_info->SetEnableFP16(enable_fp16);
       device_list.push_back(cpu_device_info);
       break;
     }
-    case 1:  // DT_GPU
+    case kGpuDevice:  // DT_GPU
     {
       auto gpu_device_info = std::make_shared<mindspore::GPUDeviceInfo>();
       if (gpu_device_info == nullptr) {
         MS_LOG(ERROR) << "gpu device info is nullptr";
-        delete (c_context_ptr);
         return (jboolean) false;
       }
       gpu_device_info->SetEnableFP16(enable_fp16);
@@ -86,7 +86,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
       auto npu_device_info = std::make_shared<mindspore::KirinNPUDeviceInfo>();
       if (npu_device_info == nullptr) {
         MS_LOG(ERROR) << "npu device info is nullptr";
-        delete (c_context_ptr);
         return (jboolean) false;
       }
       npu_device_info->SetFrequency(npu_freq);
@@ -98,7 +97,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
       auto ascend_device_info = std::make_shared<mindspore::AscendDeviceInfo>();
       if (ascend_device_info == nullptr) {
         MS_LOG(ERROR) << "ascend device info is nullptr";
-        delete (c_context_ptr);
         return (jboolean) false;
       }
       ascend_device_info->SetDeviceID(0);
@@ -107,7 +105,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDev
     }
     default:
       MS_LOG(ERROR) << "Invalid device_type : " << device_type;
-      delete (c_context_ptr);
       return (jboolean) false;
   }
   return (jboolean) true;

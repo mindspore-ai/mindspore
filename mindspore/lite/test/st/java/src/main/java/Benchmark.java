@@ -69,23 +69,25 @@ public class Benchmark {
                     }
                     float[] outData = outTensor.getFloatData();
                     int errorCount = 0;
+                    meanError = 0;
                     for (int i = 0; i < benchmarkData.length; i++) {
                         double relativeTolerance = 1e-5;
                         double absoluteTolerance = 1e-8;
                         double tolerance = absoluteTolerance + relativeTolerance * Math.abs(benchmarkData[i]);
                         double absoluteError = Math.abs(outData[i] - benchmarkData[i]);
                         if (absoluteError > tolerance) {
-                            if (Math.abs(benchmarkData[i] - 0.0f) < Float.MIN_VALUE)
+                            if (Math.abs(benchmarkData[i] - 0.0f) < Float.MIN_VALUE) {
                                 if (absoluteError > 1e-5) {
                                     meanError += absoluteError;
                                     errorCount++;
                                 } else {
                                     continue;
                                 }
-                        } else {
-                            meanError += absoluteError / (Math.abs(benchmarkData[i]) + Float.MIN_VALUE);
-                            errorCount++;
-                        }
+                            } else {
+                                meanError += absoluteError / (Math.abs(benchmarkData[i]) + Float.MIN_VALUE);
+                                errorCount++;
+                            }                            
+                        } 
                     }
 
                     if (meanError > 0.0f) {
