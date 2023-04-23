@@ -4228,6 +4228,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('qr')(self, 'reduced' if some else 'complete')
 
 
+    def ormqr(self, input2, input3, left=True, transpose=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.ormqr`,
+        Args `input2` and `input3` correspond to the args `tau` and `other` of :func:`mindspore.ops.ormqr`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('ormqr')(self, input2, input3, left, transpose)
+
+
     def masked_scatter(self, mask, tensor):
         r"""
         Returns a Tensor. Updates the value in the "self Tensor" with the `tensor` value according to the mask.
