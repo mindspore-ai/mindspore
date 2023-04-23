@@ -191,11 +191,12 @@ void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const 
   auto logLevel = GetGlobalLogLevel();
   if (logLevel <= MsLogLevel::kInfo || GetEnv("GLOG_logtostderr") == "0") {
     std::string str = msg.str();
-    // remove any titles enclosed in "#dmsg#" or "#umsg#", as well as its formatted couterparts
-    std::regex title_re{R"(\#[d|u]msg\#.+?\#[d|u]msg\#|)" + std::string(kSplitLine) + R"(- .+?)" +
-                        std::string(kSplitLine)};
+    // remove any titles enclosed in "#dmsg#" or "#umsg#", and replace its formatted couterparts with "\n"
+    std::regex title_re{R"(\#[d|u]msg\#.+?\#[d|u]msg\#)"};
+    std::regex formatted_title_re{std::string(kSplitLine) + R"(- .+?)" + std::string(kSplitLine)};
     std::ostringstream replaced_msg;
-    replaced_msg << std::regex_replace(str, title_re, "");
+    auto replaced = std::regex_replace(str, title_re, "");
+    replaced_msg << std::regex_replace(replaced, formatted_title_re, "\n");
     OutputLog(replaced_msg);
   }
 }
