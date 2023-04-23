@@ -20,6 +20,7 @@ from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
 from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
 from .less import _less_aicpu
+from .left_shift import _left_shift_aicpu
 from .lgamma import _lgamma_aicpu
 from .lstsq import _lstsq_aicpu
 from .add import _add_aicpu
