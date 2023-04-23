@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_FILL_FP16_H_
-#define NNACL_FILL_FP16_H_
+
+#ifndef NNACL_KERNEL_FILL_H_
+#define NNACL_KERNEL_FILL_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
-#include "nnacl/fill_parameter.h"
-#ifdef ENABLE_ARM
-#include <arm_neon.h>
-#endif
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int FillFp16(float16_t *output, int size, float16_t data);
-#ifdef __cplusplus
-}
-#endif
+typedef struct FillStruct {
+  KernelBase base_;
+  int thread_sz_count_;
+  int thread_sz_stride_;
+  int data_size_;
+  void *src_data_;
+  void *out_ptr_;
+  int thread_count_;
+} FillStruct;
 
-#endif  // NNACL_FILL_FP16_H_
+KernelBase *CreateFill(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_FILL_H_

@@ -21,6 +21,7 @@
 #include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
 #include "nnacl/kernel/exp.h"
+#include "nnacl/kernel/fill.h"
 #include "nnacl/kernel/fullconnection.h"
 #include "nnacl/kernel/gather.h"
 #include "nnacl/kernel/gather_d.h"
@@ -46,6 +47,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
+  creators[PrimType_Fill][REGIST_DT(kNumberTypeFloat16)] = CreateFill;
   creators[PrimType_Flatten][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
@@ -93,6 +95,9 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeBool)] = CreateReshape;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeInt8)] = CreateReshape;
+  creators[PrimType_Fill][REGIST_DT(kNumberTypeBool)] = CreateFill;
+  creators[PrimType_Fill][REGIST_DT(kNumberTypeInt32)] = CreateFill;
+  creators[PrimType_Fill][REGIST_DT(kNumberTypeFloat32)] = CreateFill;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
