@@ -108,6 +108,11 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
     auto input = hccl_node->input(i);
+    if (HasAbstractMonad(input)) {
+      MS_LOG(DEBUG) << "Do not insert TensorMove for Monad. For node " << input->DebugString() << ", in input " << i;
+      new_inputs.push_back(input);
+      continue;
+    }
     if (NeedInsertTensorMoveForSpecialCase(input, hccl_node) || NeedInsertTensorMove(graph, input, i, hccl_node)) {
       auto tensor_move = CreateTensorMoveOp(graph, input);
       if (tensor_move == nullptr) {

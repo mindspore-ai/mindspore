@@ -256,7 +256,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
   }
   std::string hccl_type = common::AnfAlgo::GetCNodeName(anf_node);
-  if (hccl_type == kReceiveOpName) {
+  if (hccl_type == kReceiveOpName || hccl_type == kMuxReceiveOpName) {
     if (outputs.empty()) {
       MS_LOG(EXCEPTION) << "Outputs is empty";
     }
@@ -265,7 +265,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   }
   stream_id_ = stream_id;
   void *input_data_addr = nullptr;
-  if (hccl_type != kReceiveOpName) {
+  if (hccl_type != kReceiveOpName && hccl_type != kMuxReceiveOpName) {
     MS_EXCEPTION_IF_NULL(inputs.at(0));
     input_data_addr = inputs.at(0)->addr;
   }
