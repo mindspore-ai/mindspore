@@ -2103,6 +2103,11 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   }
   // User data '__py_execute_cnode_flag__' is used by 'IsPyExecuteCNodeData' to check forward PyExecute CNode.
   res->set_user_data("__py_execute_cnode_flag__", std::make_shared<bool>(true));
+
+  auto prim = GetCNodePrimitive(current_interpret_node);
+  if (prim->HasAttr("is_raise_prim")) {
+    res->set_user_data("__raise_flag__", MakeValue(true));
+  }
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;
