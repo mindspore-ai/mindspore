@@ -1,6 +1,8 @@
 mindspore_lite
 ==============
 
+The Python API only support cloud-side inference.
+
 Context
 --------
 

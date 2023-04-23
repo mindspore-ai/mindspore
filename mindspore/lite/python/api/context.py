@@ -92,7 +92,7 @@ class Context:
         >>> import mindspore_lite as mslite
         >>> context = mslite.Context()
         >>> print(context)
-        target: ["cpu"].
+        target: ['cpu'].
         >>> # testcase 2 about context's attribute parallel based on server inference package
         >>> # (export MSLITE_ENABLE_SERVER_INFERENCE=on before compile lite or use cloud inference package)
         >>> import mindspore_lite as mslite
@@ -193,7 +193,7 @@ class Context:
             >>> # set context with cpu target.
             >>> context.target = ["cpu"]
             >>> print(context.target)
-            ["cpu"]
+            ['cpu']
             >>> context.cpu.precision_mode = "preferred_fp16"
             >>> context.cpu.thread_num = 2
             >>> context.cpu.inter_op_parallel_num = 2
