@@ -323,6 +323,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kLogNormalReverseOpName,
   mindspore::kBetaincOpName,
   mindspore::kLessEqualOpName,
+  mindspore::kLeftShiftOpName,
   mindspore::kHSVToRGBOpName,
   mindspore::kLuSolveOpName,
   mindspore::kExtractGlimpseOpName,
