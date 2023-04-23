@@ -70,8 +70,9 @@ class GeGraphExecutor : public LiteGraphExecutor {
   static uint32_t GetNextGraphIdx();
 
   bool is_data_flow_graph_ = false;
-  ge::Status RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
-                                   std::vector<::ge::Tensor> *outputs);
+  bool RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs, std::vector<::ge::Tensor> *outputs);
+  bool RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
+                             std::vector<::ge::Tensor> *outputs);
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
 };
