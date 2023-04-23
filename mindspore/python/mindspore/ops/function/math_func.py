@@ -10752,9 +10752,9 @@ def zeta(input, other):
         \zeta(x, q) = \sum_{k=0}^{\infty} \frac{1}{(k + q)^x}
 
     Args:
-        input (Union([Tensor, int, float]): Input Tensor. Represented as :math:`x` in the formula. If it's a Tensor, its
+        input (Union[Tensor, int, float]): Input Tensor. Represented as :math:`x` in the formula. If it's a Tensor, its
             dtype must be either float32 or float64.
-        other (Union([Tensor, int, float]): Input Tensor must have the same dtype as `input`.
+        other (Union[Tensor, int, float]): Input Tensor must have the same dtype as `input`.
             Represented as :math:`q` in the formula.
 
     Returns:

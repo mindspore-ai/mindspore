@@ -2325,12 +2325,11 @@ class Tile(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
-            :math:`(x_1, x_2, ..., x_S)` .
-
+          :math:`(x_1, x_2, ..., x_S)` .
         - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
-            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
-            Only constant value is allowed.
+          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+          Only constant value is allowed.
 
     Outputs:
         Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
