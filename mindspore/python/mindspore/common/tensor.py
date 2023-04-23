@@ -2236,12 +2236,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         when the dimension of input is greater than 2.
 
         Args:
-            - fill_value (float): The value to fill with the diagonal of `self`.
-            - wrap (bool, optional): Controls whether the diagonal elements continue onto the
-              remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: False.
+            fill_value (float): The value to fill with the diagonal of `self`.
+            wrap (bool, optional): Controls whether the diagonal elements continue onto the
+                remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: False.
 
         Returns:
-            - y (Tensor): Tensor, has the same shape and data type as `self`.
+            - **y** (Tensor) - Tensor, has the same shape and data type as `self`.
 
         Raises:
             TypeError: If data type of `self` is not one of the following: float32, int32, int64.
