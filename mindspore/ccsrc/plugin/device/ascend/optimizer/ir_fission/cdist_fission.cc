@@ -26,8 +26,8 @@ namespace opt {
 namespace {
 constexpr size_t kCdistInputNum = 2;
 constexpr size_t kCdistGradInputNum = 4;
-constexpr int64_t kInputXDimP = -2;
-constexpr int64_t kInputYDimR = -3;
+constexpr int64_t kInputXDimP = -1;
+constexpr int64_t kInputYDimR = -2;
 constexpr int64_t kInputGradDim = -1;
 constexpr int64_t kInputOutDim = -1;
 constexpr size_t kCdistInputDimsMin = 2;
@@ -204,8 +204,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  auto axis = dim < 0 ? dim + expand_shape.size() + 1 : dim;
-  (void)expand_shape.insert(expand_shape.cend() + axis, 1);
+  (void)expand_shape.insert(expand_shape.cend() + dim, 1);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
@@ -288,10 +287,10 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   auto x_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim2], 0);
   auto y_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim3], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
-  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], kInputGradDim, broadcast_to_shape, *this);
+  auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], 0, broadcast_to_shape, *this);
   auto broadcast_input_x = AddBroadCastToNode(graph, cdist_grad_inputs[kDim2], kInputXDimP, broadcast_to_shape, *this);
   auto broadcast_input_y = AddBroadCastToNode(graph, cdist_grad_inputs[kDim3], kInputYDimR, broadcast_to_shape, *this);
-  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], kInputOutDim, broadcast_to_shape, *this);
+  auto broadcast_out = AddBroadCastToNode(graph, cdist_grad_inputs[kDim4], 0, broadcast_to_shape, *this);
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimCdistGrad->name())),
                                      broadcast_grad, broadcast_input_x, broadcast_input_y, broadcast_out};
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
