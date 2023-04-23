@@ -24,15 +24,10 @@
 #include "src/extendrt/execution_flow.h"
 #include "src/litert/inner_context.h"
 #include "src/infer/graph_compiler.h"
+#include "src/extendrt/kernel/kernel_selector.h"
 
 namespace mindspore {
 namespace infer {
-enum KernelType {
-  kKernelTypeUnknown = 0,
-  kKernelTypeLite = 1,
-  kKernelTypeCloud = 2,
-};
-
 class SingleGraphScheduler {
  public:
   explicit SingleGraphScheduler(lite::InnerContext *context, const abstract::CompileOption &option)
@@ -41,10 +36,8 @@ class SingleGraphScheduler {
   ExecutionFlowPtr Schedule(const CompileResultPtr &node_list);
 
  private:
-  int ScheduleToKernels(const CompileResultPtr &node_list);
-  abstract::Kernel *CreateKernel(const CompileNode *compile_node);
+  int SelectKernel(const CompileResultPtr &node_list);
   bool HandleWeightForKernels();
-  bool AppendKernelToPlan(kernel::KernelExec *kernel);
   bool OptimizeTranspose(const std::vector<kernel::KernelExec *> &kernels);
   bool InferShape(const CompileResultPtr &node_list);
 
@@ -52,8 +45,7 @@ class SingleGraphScheduler {
   lite::InnerContext *context_;
   const abstract::CompileOption &compile_option_;
   ExecutionFlowPtr execution_flow_{nullptr};
-  kernel::KERNEL_ARCH graph_arch_;
-  TypeId graph_data_type_ = kTypeUnknown;
+  std::shared_ptr<kernel::KernelSelector> kernel_selector_{nullptr};
 
   std::map<std::string, OpParameter *> op_parameters_;
 };

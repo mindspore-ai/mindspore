@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "src/extendrt/kernel/kernel_lib.h"
 
 using mindspore::infer::abstract::Tensor;
@@ -29,13 +30,15 @@ class DefaultKernelLib : public KernelLib {
  public:
   DefaultKernelLib() : KernelLib(kDefaultKernelLibName, "CPU") {}
 
-  bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const override;
+  bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format,
+               const std::string &backend) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 
  private:
   static std::shared_ptr<mindspore::kernel::KernelMod> CreateKernelMod(const PrimitiveType &op_type,
-                                                                       const KernelAttr &attr, const Format &format);
+                                                                       const KernelAttr &attr, const Format &format,
+                                                                       const std::string &backend);
 };
 }  // namespace mindspore::kernel
 #endif

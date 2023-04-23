@@ -22,13 +22,13 @@
 #include "infer/execution_flow.h"
 
 namespace mindspore::infer::abstract {
-constexpr char kDeviceCPU[] = "CPU";
-constexpr char kDeviceGPU[] = "GPU";
-constexpr char kDeviceNPU[] = "NPU";
-constexpr char kDeviceAscend[] = "Ascend";
+constexpr char kBackendCPU[] = "CPU";
+constexpr char kBackendGPU[] = "GPU";
+constexpr char kBackendNPU[] = "NPU";
+constexpr char kBackendAscend[] = "Ascend";
 struct CompileOption {
   Format format{Format::NHWC};
-  std::string device{kDeviceCPU};
+  std::string backend{kBackendCPU};
   TypeId datatype{kNumberTypeFloat32};
 };
 
