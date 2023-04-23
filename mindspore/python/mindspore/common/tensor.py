@@ -1999,6 +1999,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return the maximum of a tensor or maximum along an axis.
 
+        Note:
+            When `axis` is ``None``, `keepdims` and subsequent parameters
+            have no effect. At the same time, the index is fixed to return 0.
+
         Args:
             axis (Union[None, int, list, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
@@ -2065,6 +2069,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def min(self, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False):
         """
         Return the minimum of a tensor or minimum along an axis.
+
+        Note:
+            When `axis` is ``None``, `keepdims` and subsequent parameters
+            have no effect. At the same time, the index is fixed to return 0.
 
         Args:
             axis (Union[None, int, list, tuple of ints], optional): An axis or
