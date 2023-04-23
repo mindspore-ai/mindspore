@@ -38,6 +38,7 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
 
   // for ge
   void DoExecNonInputGraph(const std::string &phase) override;
+  void RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
   bool InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, const std::string &phase) override;
