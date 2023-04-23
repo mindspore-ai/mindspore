@@ -88,7 +88,7 @@ def test_cumulative_logsumexp_float16():
     cumulative_logsumexp(np.float16, 1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cumulative_logsumexp_float32():
