@@ -26,13 +26,12 @@
 #include "utils/kernel_util.h"
 
 namespace {
-constexpr auto kInputNum = 1;
+constexpr auto kInputNum = 3;
 constexpr auto kOutputNum = 1;
-constexpr auto kValue2 = 2;
-constexpr auto kValue3 = 3;
+constexpr int kValue3 = 3;
 constexpr auto kDims5 = 5;
-constexpr auto kIndex0 = 0;
-constexpr auto kIndex1 = 1;
+constexpr int64_t kIndex0 = 0;
+constexpr int64_t kIndex1 = 1;
 constexpr int64_t kIndex2 = 2;
 constexpr int64_t kIndex3 = 3;
 constexpr int64_t kIndex4 = 4;
@@ -44,19 +43,17 @@ constexpr auto kUpsampleTrilinear3dGrad = "UpsampleTrilinear3dGrad";
 }  // namespace
 namespace aicpu {
 template <typename T>
-static inline T ComputeScales(float scale, int64_t input_size, int64_t output_size) {
-  constexpr T zero = 0.;
-  if (scale > zero) {
+inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {
+  if (scale > 0.) {
     return static_cast<T>(1.0 / scale);
-  } else if (output_size == 0) {
-    return T(0);
-  } else {
+  } else if (output_size > 0) {
     return (static_cast<T>(input_size) / output_size);
   }
+  return 0;
 }
 
 template <typename T>
-static inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, bool align_corners, float scale) {
+inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, bool align_corners, double scale) {
   if (align_corners) {
     if (output_size > 1) {
       return static_cast<T>(input_size - 1) / (output_size - 1);
@@ -69,34 +66,34 @@ static inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, b
 }
 
 template <typename T>
-static inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool align_corners) {
+inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool align_corners) {
   if (align_corners) {
-    return scale * dst_index;
+    return scale * static_cast<T>(dst_index);
   } else {
     constexpr T zero = 0.;
     T src_idx = scale * (dst_index + 0.5) - 0.5;
-    return (src_idx < zero) ? T(0) : src_idx;
+    return src_idx < zero ? zero : src_idx;
   }
 }
 
 template <typename T>
-static inline void ComputeSourceIndexAndLambda(int64_t &input_index0, int64_t &input_index1, T &lambda0, T &lambda1,
-                                               T ratio, int64_t output_index, int64_t input_size, int64_t output_size,
-                                               bool align_corners) {
+inline void ComputeSourceIndexAndLambda(int64_t *const input_index0, int64_t *const input_index1, T *const lambda0,
+                                        T *const lambda1, T ratio, int64_t output_index, int64_t input_size,
+                                        int64_t output_size, bool align_corners) {
   if (output_size == input_size) {
     // scale_factor = 1
-    input_index0 = output_index;
-    input_index1 = output_index;
-    lambda0 = static_cast<T>(1);
-    lambda1 = static_cast<T>(0);
+    *input_index0 = output_index;
+    *input_index1 = output_index;
+    *lambda0 = static_cast<T>(1);
+    *lambda1 = static_cast<T>(0);
   } else {
     const T real_input_index = AreaPixelComputeSourceIndex<T>(ratio, output_index, align_corners);
-    input_index0 = static_cast<int64_t>(real_input_index);
-    int64_t offset = (input_index0 < input_size - 1) ? 1 : 0;
-    input_index1 = input_index0 + offset;
-    lambda1 = real_input_index - input_index0;
+    *input_index0 = static_cast<int64_t>(real_input_index);
+    int64_t offset = (*input_index0 < input_size - 1) ? 1 : 0;
+    *input_index1 = *input_index0 + offset;
+    *lambda1 = real_input_index - static_cast<T>(*input_index0);
     constexpr T one = 1.0;
-    lambda0 = one - lambda1;
+    *lambda0 = one - *lambda1;
   }
 }
 
@@ -126,6 +123,7 @@ static uint32_t CheckPositiveVectorWithSpecifiedSize(const std::vector<T> &args_
                      op_name.c_str(), args_name.c_str(), args_size, args_name.c_str(), args_str.c_str());
   return KERNEL_STATUS_OK;
 }
+
 uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradParamCheck(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleTrilinear3dGrad);
   auto grad_output_shape = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
@@ -133,62 +131,16 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradParamCheck(Cpu
   KERNEL_HANDLE_ERROR(
     CheckPositiveVectorWithSpecifiedSize(grad_output_shape, "grad_output shape", kDims5, kUpsampleTrilinear3dGrad),
     "[%s] check grad_output shape failed.", kUpsampleTrilinear3dGrad);
-  auto input_size_ptr = ctx.GetAttr("input_size");
-  KERNEL_CHECK_NULLPTR(input_size_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input_size failed.")
-  input_size = input_size_ptr->GetListInt();
-  KERNEL_HANDLE_ERROR(CheckPositiveVectorWithSpecifiedSize(input_size, "input_size", kDims5, kUpsampleTrilinear3dGrad),
-                      "[%s] check attr::input_size failed.", kUpsampleTrilinear3dGrad);
-  for (int64_t idx = 0; idx < static_cast<int64_t>(kDims5); ++idx) {
-    KERNEL_CHECK_FALSE((input_size[idx] == grad_input_shape[idx]), KERNEL_STATUS_PARAM_INVALID,
-                       "For [%s], input_size[%d](get %ld) != "
-                       "grad_input_shape[%d](get %ld).",
-                       kUpsampleTrilinear3dGrad, idx, input_size[idx], idx, grad_input_shape[idx]);
-  }
+
   auto align_corners_ptr = ctx.GetAttr("align_corners");
   if (align_corners_ptr) {
     align_corners = align_corners_ptr->GetBool();
   }
-  auto scales_ptr = ctx.GetAttr("scales");
-  if (scales_ptr) {
-    scales = scales_ptr->GetListFloat();
-  }
-  auto output_size_ptr = ctx.GetAttr("output_size");
-  if (output_size_ptr) {
-    output_size = output_size_ptr->GetListInt();
-  }
-  if ((output_size.empty() && scales.empty()) || (!output_size.empty() && !scales.empty())) {
-    KERNEL_LOG_ERROR(
-      "For UpsampleTrilinear3dGrad, only one of 'scales' and 'output_size' "
-      "can be specified.");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  if (output_size.empty()) {
-    KERNEL_HANDLE_ERROR(CheckPositiveVectorWithSpecifiedSize(scales, "scales", kValue3, kUpsampleTrilinear3dGrad),
-                        "[%s] check attr::scales failed.", kUpsampleTrilinear3dGrad);
+  auto none_list_ptr = ctx.GetAttr("none_list");
+  none_list = none_list_ptr->GetListInt();
+  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                     "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");
 
-    for (int64_t idx = 0; idx < kIndex3; ++idx) {
-      int64_t idx_dim = int64_t(floor(input_size[idx + kIndex2] * scales[idx]));
-      KERNEL_CHECK_FALSE((idx_dim == grad_output_shape[idx + kIndex2]), KERNEL_STATUS_PARAM_INVALID,
-                         "For [%s], input_size[%d]*scales[%d](get %ld) != "
-                         "grad_output_size[%d](get %ld).",
-                         kUpsampleTrilinear3dGrad, idx + kIndex2, idx, idx_dim, idx + kIndex2,
-                         grad_output_shape[idx + kIndex2]);
-    }
-  }
-  if (scales.empty()) {
-    scales = {0, 0, 0};
-    KERNEL_HANDLE_ERROR(
-      CheckPositiveVectorWithSpecifiedSize(output_size, "output_size", kValue3, kUpsampleTrilinear3dGrad),
-      "[%s] check attr::output_size failed.", kUpsampleTrilinear3dGrad);
-
-    for (int64_t idx = 0; idx < kIndex3; ++idx) {
-      KERNEL_CHECK_FALSE((output_size[idx] == grad_output_shape[idx + kIndex2]), KERNEL_STATUS_PARAM_INVALID,
-                         "For [%s], attr::output_size[%d](get %ld) != "
-                         "input::grad_output_shape[%d](get %ld).",
-                         kUpsampleTrilinear3dGrad, idx, output_size[idx], idx + kIndex2,
-                         grad_output_shape[idx + kIndex2]);
-    }
-  }
   return KERNEL_STATUS_OK;
 }
 
@@ -203,7 +155,7 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleTrilinear3dGradCompute<Eigen::half, float>(ctx);
       break;
     case DT_FLOAT:
-      res = UpsampleTrilinear3dGradCompute<float, float>(ctx);
+      res = UpsampleTrilinear3dGradCompute<float, double>(ctx);
       break;
     case DT_DOUBLE:
       res = UpsampleTrilinear3dGradCompute<double, double>(ctx);
@@ -222,55 +174,95 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-template <typename T, typename S>
-void UpsampleTrilinear3dGradCpuKernel::InnerCompute(int64_t c_idx, const T *grad_output_ptr, S *grad_input_ptr) {
-  const auto depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners, scales[kIndex0]);
-  const auto height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners, scales[kIndex1]);
-  const auto width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners, scales[kIndex2]);
-  auto input_index = [=](int64_t c_idx, int64_t d_idx, int64_t h_idx, int64_t w_idx) {
-    return c_idx * input_slice_size + d_idx * input_height * input_width + h_idx * input_width + w_idx;
-  };
-  int64_t id0, id1, ih0, ih1, iw0, iw1;
-  S d0lambda, d1lambda, h0lambda, h1lambda, w0lambda, w1lambda;
-  for (int64_t od = 0; od < output_depth; ++od) {
-    ComputeSourceIndexAndLambda<S>(id0, id1, d0lambda, d1lambda, depth_scale, od, input_depth, output_depth,
-                                   align_corners);
-    for (int64_t oh = 0; oh < output_height; ++oh) {
-      ComputeSourceIndexAndLambda<S>(ih0, ih1, h0lambda, h1lambda, height_scale, oh, input_height, output_height,
-                                     align_corners);
-      for (int64_t ow = 0; ow < output_width; ++ow) {
-        ComputeSourceIndexAndLambda<S>(iw0, iw1, w0lambda, w1lambda, width_scale, ow, input_width, output_width,
-                                       align_corners);
+template <typename S>
+void UpsampleTrilinear3dGradCpuKernel::ComputeWeightsAndIndices(
+  UpsampleTrilinear3dGradCpuKernel::WeightsAndIndices<S> &wi, S scale, int64_t out_idx, int64_t input_size,
+  int64_t output_size, int64_t stride) {
+  (void)ComputeSourceIndexAndLambda<S>(&(wi.id0), &(wi.id1), &(wi.lambda0), &(wi.lambda1), scale, out_idx, input_size,
+                                       output_size, align_corners);
+  wi.Step(stride);
+}
 
-        auto grad_output_value = static_cast<S>(
-          grad_output_ptr[c_idx * output_slice_size + od * output_height * output_width + oh * output_width + ow]);
-        double w000 = static_cast<double>(d0lambda) * h0lambda * w0lambda;
-        double w001 = static_cast<double>(d0lambda) * h0lambda * w1lambda;
-        double w010 = static_cast<double>(d0lambda) * h1lambda * w0lambda;
-        double w011 = static_cast<double>(d0lambda) * h1lambda * w1lambda;
-        double w100 = static_cast<double>(d1lambda) * h0lambda * w0lambda;
-        double w101 = static_cast<double>(d1lambda) * h0lambda * w1lambda;
-        double w110 = static_cast<double>(d1lambda) * h1lambda * w0lambda;
-        double w111 = static_cast<double>(d1lambda) * h1lambda * w1lambda;
-        grad_input_ptr[input_index(c_idx, id0, ih0, iw0)] =
-          static_cast<S>(w000 * grad_output_value + grad_input_ptr[input_index(c_idx, id0, ih0, iw0)]);
-        grad_input_ptr[input_index(c_idx, id0, ih0, iw1)] =
-          static_cast<S>(w001 * grad_output_value + grad_input_ptr[input_index(c_idx, id0, ih0, iw1)]);
-        grad_input_ptr[input_index(c_idx, id0, ih1, iw0)] =
-          static_cast<S>(w010 * grad_output_value + grad_input_ptr[input_index(c_idx, id0, ih1, iw0)]);
-        grad_input_ptr[input_index(c_idx, id0, ih1, iw1)] =
-          static_cast<S>(w011 * grad_output_value + grad_input_ptr[input_index(c_idx, id0, ih1, iw1)]);
-        grad_input_ptr[input_index(c_idx, id1, ih0, iw0)] =
-          static_cast<S>(w100 * grad_output_value + grad_input_ptr[input_index(c_idx, id1, ih0, iw0)]);
-        grad_input_ptr[input_index(c_idx, id1, ih0, iw1)] =
-          static_cast<S>(w101 * grad_output_value + grad_input_ptr[input_index(c_idx, id1, ih0, iw1)]);
-        grad_input_ptr[input_index(c_idx, id1, ih1, iw0)] =
-          static_cast<S>(w110 * grad_output_value + grad_input_ptr[input_index(c_idx, id1, ih1, iw0)]);
-        grad_input_ptr[input_index(c_idx, id1, ih1, iw1)] =
-          static_cast<S>(w111 * grad_output_value + grad_input_ptr[input_index(c_idx, id1, ih1, iw1)]);
+template <typename S>
+void UpsampleTrilinear3dGradCpuKernel::ComputeHelper(
+  const CpuKernelContext &ctx, std::vector<UpsampleTrilinear3dGradCpuKernel::WeightsAndIndices<S>> &helper, S scale,
+  int64_t input_size, int64_t output_size, int64_t stride) {
+  for (int64_t out_idx = 0; out_idx < output_size; ++out_idx) {
+    (void)ComputeWeightsAndIndices<S>(helper[out_idx], scale, out_idx, input_size, output_size, stride);
+  }
+}
+
+template <typename T, typename S, typename R>
+uint32_t UpsampleTrilinear3dGradCpuKernel::RealCompute(const CpuKernelContext &ctx, T *const grad_output_ptr,
+                                                       R *const grad_input_ptr) {
+  const S depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners, scales[kIndex0]);
+  const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners, scales[kIndex1]);
+  const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners, scales[kIndex2]);
+
+  std::vector<WeightsAndIndices<S>> d_helper(output_depth);
+  std::vector<WeightsAndIndices<S>> h_helper(output_height);
+  std::vector<WeightsAndIndices<S>> w_helper(output_width);
+  (void)ComputeHelper<S>(ctx, d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
+  (void)ComputeHelper<S>(ctx, h_helper, height_scale, input_height, output_height, input_width);
+  (void)ComputeHelper<S>(ctx, w_helper, width_scale, input_width, output_width, 1);
+
+  auto loop3d = [&](int64_t begin, int64_t end) {
+    for (int64_t c_idx = begin, src_c_offset = begin * input_slice_size; c_idx < end;
+         ++c_idx, src_c_offset += input_slice_size) {
+      int64_t id0{0}, id1{0}, ih0{0}, ih1{0}, iw0{0}, iw1{0};
+      S d0lambda{0}, d1lambda{0}, h0lambda{0}, h1lambda{0}, w0lambda{0}, w1lambda{0};
+      for (int64_t od = 0; od < output_depth; ++od) {
+        d_helper[od](&id0, &id1, &d0lambda, &d1lambda);
+
+        for (int64_t oh = 0; oh < output_height; ++oh) {
+          h_helper[oh](&ih0, &ih1, &h0lambda, &h1lambda);
+
+          for (int64_t ow = 0; ow < output_width; ++ow) {
+            w_helper[ow](&iw0, &iw1, &w0lambda, &w1lambda);
+
+            auto grad_output_value = static_cast<S>(
+              grad_output_ptr[c_idx * output_slice_size + od * output_height * output_width + oh * output_width + ow]);
+            S w000 = d0lambda * h0lambda * w0lambda;
+            S w001 = d0lambda * h0lambda * w1lambda;
+            S w010 = d0lambda * h1lambda * w0lambda;
+            S w011 = d0lambda * h1lambda * w1lambda;
+            S w100 = d1lambda * h0lambda * w0lambda;
+            S w101 = d1lambda * h0lambda * w1lambda;
+            S w110 = d1lambda * h1lambda * w0lambda;
+            S w111 = d1lambda * h1lambda * w1lambda;
+            grad_input_ptr[src_c_offset + id0 + ih0 + iw0] += static_cast<R>(w000 * grad_output_value);
+            grad_input_ptr[src_c_offset + id0 + ih0 + iw1] += static_cast<R>(w001 * grad_output_value);
+            grad_input_ptr[src_c_offset + id0 + ih1 + iw0] += static_cast<R>(w010 * grad_output_value);
+            grad_input_ptr[src_c_offset + id0 + ih1 + iw1] += static_cast<R>(w011 * grad_output_value);
+            grad_input_ptr[src_c_offset + id1 + ih0 + iw0] += static_cast<R>(w100 * grad_output_value);
+            grad_input_ptr[src_c_offset + id1 + ih0 + iw1] += static_cast<R>(w101 * grad_output_value);
+            grad_input_ptr[src_c_offset + id1 + ih1 + iw0] += static_cast<R>(w110 * grad_output_value);
+            grad_input_ptr[src_c_offset + id1 + ih1 + iw1] += static_cast<R>(w111 * grad_output_value);
+          }
+        }
       }
     }
+  };
+  auto block_size = FetchBlockSize(ctx, channels, output_slice_size);
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, channels, block_size, loop3d), "loop3d Compute failed.");
+  return KERNEL_STATUS_OK;
+}
+
+int64_t UpsampleTrilinear3dGradCpuKernel::FetchBlockSize(const CpuKernelContext &ctx, const int64_t parallel_num,
+                                                         const int64_t cost) {
+  int64_t block_size{parallel_num};
+  int64_t total_cost = cost * parallel_num;
+  if (total_cost > kParallelDataNum) {
+    uint32_t min_core_num = 1;
+    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
+    if (total_cost <= kParallelDataNumMid) {
+      max_core_num = std::min(max_core_num, kReserveCpu);
+    }
+    block_size = (total_cost / max_core_num) / output_slice_size;
+    block_size = std::max(block_size, 1L);
+    block_size = std::min(parallel_num, block_size);
   }
+  return block_size;
 }
 
 template <typename T, typename S>
@@ -278,31 +270,29 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
   Tensor *grad_output_ = ctx.Input(kIndex0);
   Tensor *grad_input_ = ctx.Output(kIndex0);
 
-  auto input_shape_ = grad_input_->GetTensorShape()->GetDimSizes();
-  auto output_shape_ = grad_output_->GetTensorShape()->GetDimSizes();
-  int64_t total = grad_input_->NumElements();
-  T *grad_output_ptr = reinterpret_cast<T *>(grad_output_->GetData());
-  S *grad_input_ptr = nullptr;
-  bool is_fp16 = std::is_same<T, Eigen::half>::value;
-  // define for fp16
-  std::vector<S> grad_input_copy(1);
-  if (is_fp16) {
-    grad_input_copy.resize(grad_input_->NumElements(), static_cast<int64_t>(0));
-    grad_input_ptr = grad_input_copy.data();
-  } else {
-    grad_input_ptr = reinterpret_cast<S *>(grad_input_->GetData());
-    (void)std::fill_n(grad_input_ptr, total, S(0));
+  // fetch scales
+  scales = std::vector<float>{0, 0, 0};
+  if (none_list[kIndex0] != static_cast<int64_t>(kIndex3)) {
+    auto scales_ptr = reinterpret_cast<float *>(ctx.Input(kIndex2)->GetData());
+    for (int i = 0; i < kValue3; ++i) {
+      scales[i] = scales_ptr[i];
+    }
   }
 
-  int64_t channels = input_shape_[kIndex0] * input_shape_[kIndex1];
+  auto input_shape_ = grad_input_->GetTensorShape()->GetDimSizes();
+  auto output_shape_ = grad_output_->GetTensorShape()->GetDimSizes();
+
+  channels = input_shape_[kIndex0] * input_shape_[kIndex1];
   input_depth = input_shape_[kIndex2];
   input_height = input_shape_[kIndex3];
   input_width = input_shape_[kIndex4];
+  input_slice_size = input_depth * input_height * input_width;
+
   output_depth = output_shape_[kIndex2];
   output_height = output_shape_[kIndex3];
   output_width = output_shape_[kIndex4];
   output_slice_size = output_depth * output_height * output_width;
-  input_slice_size = input_depth * input_height * input_width;
+
   const int64_t SIZE_BOUNDARY = 100000;
   if (channels <= 0 || output_depth <= 0 || output_height <= 0 || output_width <= 0 || output_depth > SIZE_BOUNDARY ||
       output_height > SIZE_BOUNDARY || output_width > SIZE_BOUNDARY) {
@@ -322,31 +312,42 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
       input_shape_[kIndex4]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  // calculate index
 
-  auto loop3d = [&](int64_t begin, int64_t end) {
-    for (int64_t c_idx = begin; c_idx < end; ++c_idx) {
-      InnerCompute(c_idx, grad_output_ptr, grad_input_ptr);
-    }
-  };
-  int64_t per_unit_size{total};
-  if (total > kParallelDataNum) {
-    uint32_t min_core_num = 1;
-    int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
-    if (total <= kParallelDataNumMid) {
-      max_core_num = std::min(max_core_num, kReserveCpu);
-    }
-    per_unit_size = (total / max_core_num) / output_slice_size;
-    per_unit_size = std::max(per_unit_size, 1L);
-    per_unit_size = std::min(channels, per_unit_size);
+  // workspace
+  int64_t total = grad_input_->NumElements();
+  T *grad_output_ptr = reinterpret_cast<T *>(grad_output_->GetData());
+  T *grad_input_ptr = reinterpret_cast<T *>(grad_input_->GetData());
+  S *grad_work_ptr = nullptr;
+
+  bool is_fp16 = std::is_same<T, Eigen::half>::value;
+  uint32_t paralle_ret = KERNEL_STATUS_OK;
+  // define for fp16
+  std::vector<S> grad_work_copy(1, 0);
+  if (is_fp16) {
+    grad_work_copy.resize(total, 0);
+    grad_work_ptr = grad_work_copy.data();
+    paralle_ret = RealCompute<T, S, S>(ctx, grad_output_ptr, grad_work_ptr);
+  } else {
+    size_t y_size = total * sizeof(T);
+    int ret = memset_s(grad_input_ptr, y_size, 0, y_size);
+    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                       "For 'UpsampleTrilinear3DGrad', memset_s error. Error no: %d.", ret);
+    paralle_ret = RealCompute<T, S, T>(ctx, grad_output_ptr, grad_input_ptr);
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, channels, per_unit_size, loop3d), "loop3d Compute failed.");
+  if (paralle_ret != KERNEL_STATUS_OK) {
+    return paralle_ret;
+  }
   // memcopy and cast for fp16
   if (is_fp16) {
-    T *real_input_ptr = reinterpret_cast<T *>(grad_input_->GetData());
-    for (int64_t idx = 0; idx < total; ++idx) {
-      real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);
-    }
+    auto memcpy_fp16 = [&](int64_t begin, int64_t end) {
+      for (int64_t idx = begin; idx < end; ++idx) {
+        grad_input_ptr[idx] = static_cast<T>(grad_work_ptr[idx]);
+      }
+    };
+    int64_t max_core_num = std::max(1L, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2L);
+    int64_t block_size = total / max_core_num;
+    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total, block_size, memcpy_fp16),
+                        "memcpy_fp16 Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

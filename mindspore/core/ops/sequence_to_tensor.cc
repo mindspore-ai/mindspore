@@ -174,11 +174,16 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
         << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16','uint32', "
            "'uint64','float16', 'float32', 'float64'], but got an invalid dtype!";
     }
-    auto output_dtype = attr->cast<TypePtr>();
-
+    TypePtr dst_type{nullptr};
+    if (attr->isa<TensorType>()) {
+      dst_type = attr->cast_ptr<TensorType>()->element();
+    } else {
+      dst_type = attr->cast<TypePtr>();
+    }
     const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    return CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, prim_name);
+    CheckAndConvertUtils::CheckSubClass("dtype", dst_type, valid_types, prim_name);
+    return dst_type;
   }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

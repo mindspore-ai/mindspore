@@ -39,7 +39,7 @@ from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
-from mindspore.ops.operations._sequence_ops import TupleToTensor
+from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -48,11 +48,17 @@ hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
 scalar_to_tensor_ = P.ScalarToTensor()
+list_to_tensor_ = ListToTensor()
+tuple_to_tensor_ = TupleToTensor()
+tensor_to_tuple_ = TensorToTuple()
+cast_ = P.Cast()
 sigmoid_ = NN_OPS.Sigmoid()
 check_positive_int_const = constexpr(validator.check_positive_int)
-check_positive_int_sequence_const = constexpr(validator.check_positive_int_sequence)
+check_positive_int_sequence_const = constexpr(
+    validator.check_positive_int_sequence)
 check_positive_float_const = constexpr(validator.check_positive_float)
-check_positive_float_sequence_const = constexpr(validator.check_positive_float_sequence)
+check_positive_float_sequence_const = constexpr(
+    validator.check_positive_float_sequence)
 check_bool_const = constexpr(validator.check_bool)
 check_int_const = constexpr(validator.check_is_int)
 check_non_negative_float_const = constexpr(validator.check_non_negative_float)
@@ -2062,12 +2068,79 @@ def hardswish(x):
     return hardswish_(x)
 
 
+def _is_dim_unknown(shape):
+    return isinstance(shape, tuple) and -2 in shape
+
+
 @_primexpr
-def _scale_factor_convert_size(shape, scale_factor, dim):
-    return [int(float(shape[i + 2]) * scale_factor[i] // 1) for i in range(dim)]
+def _interploate_make_tuple(rank, value):
+    s = tuple_to_tensor_((rank,), mstype.int32)
+    v = Tensor(value)
+    t = _get_cache_prim(P.FillV2)()(s, v)
+    out = tensor_to_tuple_(t)
+    return out
 
 
-def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
+@_primexpr
+def _interpolate_scale_factor_convert_size(shape, scale_factor):
+    x = tuple_to_tensor_(shape[2:], mstype.int64)
+    y = tuple_to_tensor_(scale_factor, mstype.float32)
+    t = x * y
+    t = ops.TruncateDiv()(t, Tensor(1))
+    t = ops.cast(t, mstype.int64)
+    return tensor_to_tuple_(t)
+
+
+def _interpolate_size_check_with_rank(size, input_rank):
+    if len(size) != input_rank - 2:
+        raise ValueError(
+            f"For 'interpolate', 'input' and 'size' must have the same spatial dimensions, "
+            f"but got 'input' is {input_rank - 2}D, 'size' is {len(size)}D")
+
+
+def _interpolate_scale_factor_check_with_rank(scale_factor, input_rank):
+    if len(scale_factor) != input_rank - 2:
+        raise ValueError(
+            f"For 'interpolate', 'input' and 'scale_factor' must have the same spatial dimensions, "
+            f"but got 'input' is {input_rank - 2}D, 'scale_factor' is {len(scale_factor)}D"
+        )
+
+
+def _interpolate_mode_check(mode, supported_dict):
+    if isinstance(mode, list) or mode not in supported_dict:
+        raise ValueError(
+            f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
+        )
+
+
+def _interpolate_rank_check(input_rank, mode, supported_dict):
+    if input_rank not in supported_dict.get(mode):
+        raise ValueError(
+            f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {input_rank}D"
+        )
+
+
+def _interpolate_scale_factor_check(scale_factor, mode, rank, supported_dict):
+    if scale_factor is not None and "scale_factor" not in supported_dict.get(
+            mode, {}).get(rank):
+        raise ValueError(
+            f"For 'interpolate', 'scale_factor' option cannot currently be set with the "
+            f"mode = {mode} and dim = {rank}D.")
+
+
+def _interpolate_align_corners_mode_check(rank, mode, supported_dict):
+    if "align_corners" not in supported_dict.get(mode, {}).get(rank):
+        raise ValueError(
+            f"For 'interpolate', 'align_corners' option cannot currently be set with the "
+            f"mode = {mode}, and dim = {rank}D")
+
+
+def interpolate(input,
+                size=None,
+                scale_factor=None,
+                mode="nearest",
+                align_corners=None,
+                recompute_scale_factor=None):
     r"""
     Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
 
@@ -2116,6 +2189,8 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
     | linear        | 3         | √             | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
     | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
@@ -2131,6 +2206,8 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    | trilinear     | 5         | √             | √            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
 
     - `-` indicates that there is no such parameter.
@@ -2167,73 +2244,69 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
     def run_nearest(x, size, align_corners=None, scale_factor=None):
         # 3D 4D use ResizeNearestNeighborV2, 5D use UpsampleNearest3D
-        if x.ndim == 3:
-            size = seq.TupleToTensor()((size[0], 1), mstype.int32)
+        x_rank = F.rank(x)
+        if size is not None and x_rank == 3:
+            t1 = seq.TupleToTensor()(size[:1], mstype.int32)
+            t2 = Tensor([1], mstype.int32)
+            size = F.concat([t1, t2])
             x = x.unsqueeze(-1)
-            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(
+                x, size)
             x = P.Squeeze(-1)(x)
-        elif x.ndim == 4:
-            if isinstance(size, int):
-                size = F.scalar_to_tensor(size, mstype.int32)
-            elif isinstance(size, tuple):
-                size = seq.TupleToTensor()(size, mstype.int32)
-            else:
-                size = seq.ListToTensor()(size, mstype.int32)
-            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
+        elif size is not None and x_rank == 4:
+            size = seq.TupleToTensor()(size[:2], mstype.int32)
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(
+                x, size)
         else:
-            x = _get_cache_prim(P.UpsampleNearest3D)(size, scales=scale_factor)(x)
+            x = _get_cache_prim(P.UpsampleNearest3D)()(x, size, scale_factor)
         return x
 
     def run_linear(x, size, align_corners=None, scale_factor=None):
         coordinate_transformation_mode = "align_corners" if align_corners else "half_pixel"
-        resize = _get_cache_prim(P.image_ops.ResizeLinear1D)(
-            coordinate_transformation_mode
-        )
+        resize = _get_cache_prim(
+            P.image_ops.ResizeLinear1D)(coordinate_transformation_mode)
         return resize(x, size)
 
     def run_bilinear(x, size, align_corners=None, scale_factor=None):
-        resize = _get_cache_prim(P.ResizeBilinearV2)(align_corners, not align_corners)
+        resize = _get_cache_prim(P.ResizeBilinearV2)(align_corners,
+                                                     not align_corners)
         return resize(x, size)
 
     def run_trilinear(x, size, align_corners=None, scale_factor=None):
-        resize = _get_cache_prim(P.nn_ops.UpsampleTrilinear3D)(
-            output_size=size, scales=scale_factor, align_corners=align_corners
-        )
-        return resize(x)
+        resize = _get_cache_prim(
+            P.nn_ops.UpsampleTrilinear3D)(align_corners=align_corners)
+        return resize(x, size, scale_factor)
 
     def run_bicubic(x, size, align_corners=None, scale_factor=None):
         resize = _get_cache_prim(P.image_ops.ResizeBicubic)(
-            align_corners=align_corners, half_pixel_centers=not align_corners
-        )
-        if isinstance(size, int):
-            size = F.scalar_to_tensor(size, mstype.int32)
-        elif isinstance(size, tuple):
-            size = seq.TupleToTensor()(size, mstype.int32)
-        else:
-            size = seq.ListToTensor()(size, mstype.int32)
+            align_corners=align_corners, half_pixel_centers=not align_corners)
+        size = seq.TupleToTensor()(size, mstype.int32)
         x = resize(x, size)
         return x
 
     def run_area(x, size, align_corners=None, scale_factor=None):
-        if x.ndim == 3:
+        x_rank = F.rank(x)
+        if x_rank == 3:
             x = ops.adaptive_avg_pool1d(x, size[0])
-        elif x.ndim == 4:
+        elif x_rank == 4:
             x = ops.adaptive_avg_pool2d(x, tuple(size))
         else:
             x = ops.adaptive_avg_pool3d(x, tuple(size))
         return x
 
     def run_nearest_exact(x, size, align_corners=None, scale_factor=None):
-        if x.ndim == 3:
+        x_rank = F.rank(x)
+        if x_rank == 3:
             size = seq.TupleToTensor()((size[0], 1), mstype.int32)
             # For impl of nearest 3D use 4D.
             x = x.unsqueeze(-1)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
-                data_format="NCHW", align_corners=False, half_pixel_centers=True
-            )
+                data_format="NCHW",
+                align_corners=False,
+                half_pixel_centers=True)
             x = resize(x, size)
             x = P.Squeeze(-1)(x)
-        if x.ndim == 4:
+        if x_rank == 4:
             if isinstance(size, int):
                 size = F.scalar_to_tensor(size, mstype.int32)
             elif isinstance(size, tuple):
@@ -2241,18 +2314,42 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             else:
                 size = seq.ListToTensor()(size, mstype.int32)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
-                data_format="NCHW", align_corners=False, half_pixel_centers=True
-            )
+                data_format="NCHW",
+                align_corners=False,
+                half_pixel_centers=True)
             x = resize(x, size)
         return x
 
     supported_dict = {
-        "nearest": {3: (), 4: ()},
-        "linear": {3: ("align_corners",)},
-        "bilinear": {4: ("align_corners",)},
-        "bicubic": {4: ("align_corners",)},
-        "area": {3: ("scale_factor",), 4: ("scale_factor",), 5: ("scale_factor",)},
-        "nearest-exact": {3: (), 4: ()},
+        "nearest": {
+            3: (),
+            4: (),
+            5: ("scale_factor",)
+        },
+        "linear": {
+            3: ("align_corners",)
+        },
+        "bilinear": {
+            4: ("align_corners",)
+        },
+        "bicubic": {
+            4: ("align_corners",)
+        },
+        "area": {
+            3: ("scale_factor",),
+            4: ("scale_factor",),
+            5: ("scale_factor",)
+        },
+        "nearest-exact": {
+            3: (),
+            4: ()
+        },
+        "trilinear": {
+            5: (
+                "align_corners",
+                "scale_factor",
+            )
+        },
     }
     resize_func = {
         "nearest": run_nearest,
@@ -2263,76 +2360,87 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
         "area": run_area,
         "nearest-exact": run_nearest_exact,
     }
+
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'interpolate', 'input' must be a tensor, but got {type(input)}")
+        raise TypeError(
+            f"For 'interpolate', 'input' must be a tensor, but got {type(input)}"
+        )
+
+    if isinstance(size, list):
+        size = tuple(size)
+    if isinstance(scale_factor, list):
+        scale_factor = tuple(scale_factor)
+
+    rank = F.rank(input)
+    shape = F.shape(input)
+    dim_unknown = _is_dim_unknown(shape)
+
+    # check for size and scale_factor
     if size is not None and scale_factor is not None:
         raise ValueError(
             "For 'interpolate', 'size' and 'scale_factor' cannot be set simultaneously"
         )
     if size is not None:
         if isinstance(size, (list, tuple)):
-            if len(size) != input.ndim - 2:
-                raise ValueError(
-                    f"For 'interpolate', 'input' and 'size' must have the same spatial dimensions, "
-                    f"but got 'input' is {input.ndim - 2}D, 'size' is {len(size)}D"
-                )
             check_positive_int_sequence_const(size, "size", "interpolate")
+            if dim_unknown is False:
+                _interpolate_size_check_with_rank(size, rank)
         else:
             check_positive_int_const(size, "size", "interpolate")
-            size = [size for _ in range(input.ndim - 2)]
+            if dim_unknown is False:
+                size = tuple([size for _ in range(rank - 2)])
+            else:
+                size = _interploate_make_tuple(rank - 2, size)
     elif scale_factor is not None:
         if isinstance(scale_factor, (list, tuple)):
-            if len(scale_factor) != input.ndim - 2:
-                raise ValueError(
-                    f"For 'interpolate', 'input' and 'scale_factor' must have the same spatial dimensions, "
-                    f"but got 'input' is {input.ndim - 2}D, 'scale_factor' is {len(scale_factor)}D"
-                )
-            check_positive_float_sequence_const(scale_factor, "scale_factor", "interpolate")
+            check_positive_float_sequence_const(scale_factor, "scale_factor",
+                                                "interpolate")
+            if dim_unknown is False:
+                _interpolate_scale_factor_check_with_rank(scale_factor, rank)
         else:
-            check_positive_float_const(scale_factor, "scale_factor", "interpolate")
-            scale_factor = [scale_factor for _ in range(input.ndim - 2)]
+            check_positive_float_const(scale_factor, "scale_factor",
+                                       "interpolate")
+            if dim_unknown is False:
+                scale_factor = tuple([scale_factor for _ in range(rank - 2)])
+            else:
+                scale_factor = _interploate_make_tuple(rank - 2, scale_factor)
     else:
         raise ValueError(
             "For 'interpolate', 'size' and 'scale_factor' cannot be both empty"
         )
 
-    if isinstance(mode, list) or mode not in supported_dict:
-        raise ValueError(
-            f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
-        )
-    if input.ndim not in supported_dict.get(mode):
-        raise ValueError(
-            f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {input.ndim}D"
-        )
+    # rank check
+    _interpolate_mode_check(mode, supported_dict)
+    if dim_unknown is False:
+        _interpolate_rank_check(rank, mode, supported_dict)
+
     # "area" mode always requires an explicit size rather than scale factor.
     if mode == "area" and size is None:
         recompute_scale_factor = True
+
+    # recompute_scale_factor
     if recompute_scale_factor is not None and recompute_scale_factor:
-        check_bool_const(recompute_scale_factor, "recompute_scale_factor", "interpolate")
+        check_bool_const(recompute_scale_factor, "recompute_scale_factor",
+                         "interpolate")
         if size is not None:
             raise ValueError(
                 "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
-                " after specifying an explicit 'size'."
-            )
-        size = _scale_factor_convert_size(input.shape, scale_factor, input.ndim - 2)
+                " after specifying an explicit 'size'.")
+        size = _interpolate_scale_factor_convert_size(shape, scale_factor)
         scale_factor = None
     else:
-        if scale_factor is not None and "scale_factor" not in supported_dict.get(mode, {}).get(input.ndim):
-            raise ValueError(
-                f"For 'interpolate', 'scale_factor' option cannot currently be set with the "
-                f"mode = {mode} and dim = {input.ndim}D."
-            )
+        if dim_unknown is False:
+            _interpolate_scale_factor_check(scale_factor, mode, rank,
+                                            supported_dict)
+
+    # align_corners
     if align_corners is not None:
         check_bool_const(align_corners, "align_corners", "interpolate")
-        if "align_corners" not in supported_dict.get(mode, {}).get(input.ndim):
-            raise ValueError(
-                f"For 'interpolate', 'align_corners' option cannot currently be set with the "
-                f"mode = {mode}, and dim = {input.ndim}D"
-            )
+        if dim_unknown is False:
+            _interpolate_align_corners_mode_check(rank, mode, supported_dict)
     else:
         align_corners = False
-    if isinstance(size, list):
-        size = tuple(size)
+
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
 
 

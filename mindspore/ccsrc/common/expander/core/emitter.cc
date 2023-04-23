@@ -198,8 +198,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     auto v = value_node->value();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<ValueSequence>()) {
-      auto sh = GetValue<std::vector<int64_t>>(v);
-      return Tensor(sh);
+      return Emit(prim::kSequenceZerosLike, {node});
     } else if (v->isa<Scalar>()) {
       return EmitValue(CreateZeroScalar(v->type()));
     } else if (v->isa<Type>()) {

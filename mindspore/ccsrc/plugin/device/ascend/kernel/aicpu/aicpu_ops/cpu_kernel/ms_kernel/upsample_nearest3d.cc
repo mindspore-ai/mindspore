@@ -26,14 +26,15 @@
 #include "utils/eigen_tensor.h"
 
 namespace {
-constexpr uint32_t kInputNum = 1;
+constexpr float kValueZero = 0.;
+constexpr int32_t kValue3 = 3;
+constexpr uint32_t kInputNum = 2;
 constexpr uint32_t kOutputNum = 1;
 constexpr uint32_t kIndex0 = 0;
 constexpr uint32_t kIndex1 = 1;
 constexpr uint32_t kIndex2 = 2;
 constexpr uint32_t kIndex3 = 3;
 constexpr uint32_t kIndex4 = 4;
-constexpr uint32_t kValue3 = 3;
 constexpr int32_t kDims5 = 5;
 const char *const kUpsampleNearest3d = "UpsampleNearest3d";
 }  // namespace
@@ -96,11 +97,16 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dParamCheck(CpuKernelContex
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleNearest3d);
   Tensor *x_ptr = ctx.Input(0);
   auto x_dims = x_ptr->GetTensorShape()->GetDims();
-
   KERNEL_CHECK_FALSE(x_dims == kDims5, KERNEL_STATUS_PARAM_INVALID,
                      "Upsample with NHWC format supports tensors with 5 "
                      "dims. but got %d dim(s).",
                      x_dims);
+
+  auto none_list_ptr = ctx.GetAttr("none_list");
+  none_list = none_list_ptr->GetListInt();
+  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                     "For 'UpsampleNearest3D', only one of output_size or scales should be specified.");
+
   return KERNEL_STATUS_OK;
 }
 
@@ -112,6 +118,9 @@ uint32_t UpsampleNearest3dCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType data_type = x->GetDataType();
   uint32_t res = KERNEL_STATUS_OK;
   switch (data_type) {
+    case DT_UINT8:
+      res = UpsampleNearest3dCompute<uint8_t>(ctx);
+      break;
     case DT_FLOAT16:
       res = UpsampleNearest3dCompute<Eigen::half>(ctx);
       break;
@@ -138,14 +147,12 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelCon
   Tensor *output_y = ctx.Output(0);
   std::vector<int64_t> x_shape_ = input_x->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> y_shape_ = output_y->GetTensorShape()->GetDimSizes();
-  auto scales_ptr = ctx.GetAttr("scales");
-  std::vector<float> scales = {0, 0, 0};
-  if (scales_ptr != nullptr) {
-    auto tmp = scales_ptr->GetListFloat();
-    if (tmp.size() == kValue3) {
-      scales[kIndex0] = tmp[kIndex0];
-      scales[kIndex1] = tmp[kIndex1];
-      scales[kIndex2] = tmp[kIndex2];
+
+  std::vector<float> scales(kIndex3, kValueZero);
+  if (none_list[kIndex0] != static_cast<int64_t>(kIndex2)) {
+    auto scales_ptr = reinterpret_cast<float *>(ctx.Input(kIndex1)->GetData());
+    for (int i = 0; i < kValue3; ++i) {
+      scales[i] = scales_ptr[i];
     }
   }
 
@@ -162,7 +169,6 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelCon
   auto x_ptr = reinterpret_cast<T *>(input_x->GetData());
   auto y_ptr = reinterpret_cast<T *>(output_y->GetData());
   size_t y_size = output_y->GetDataSize();
-  (void)std::fill_n(y_ptr, output_y->NumElements(), T(0));
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto ret = memcpy_s(y_ptr, y_size, x_ptr, channels * input_depth * input_height * input_width * sizeof(T));
     KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR,

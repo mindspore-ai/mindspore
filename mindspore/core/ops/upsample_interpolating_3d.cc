@@ -43,27 +43,108 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "mindapi/src/helper.h"
-
 namespace mindspore {
 namespace ops {
 namespace {
+const int64_t kVALUE_1 = 1;
+const int64_t kVALUE_2 = 2;
+const int64_t kVALUE_3 = 3;
+const int64_t kVALUE_5 = 5;
+
+void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                        size_t *const scales_idx, const std::string &prim_name) {
+  if (input_args.size() == kVALUE_3) {
+    std::vector<int64_t> none_list{};
+    auto is_output_size_none = input_args[kInputIndex1]->BuildType()->type_id() == kMetaTypeNone;
+    auto is_scales_none = input_args[kInputIndex2]->BuildType()->type_id() == kMetaTypeNone;
+    if (is_output_size_none && is_scales_none) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                               << " But get both empty or None.";
+    } else if (!is_output_size_none && !is_scales_none) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
+                               << " But get both.";
+    } else if (is_output_size_none) {
+      none_list.push_back(static_cast<int64_t>(kInputIndex1));
+    } else {
+      none_list.push_back(static_cast<int64_t>(kInputIndex2));
+    }
+    (void)primitive->AddAttr(kAttrNoneList, MakeValue<std::vector<int64_t>>(none_list));
+  } else {
+    *scales_idx = kInputIndex1;
+  }
+}
+
+void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
+                   std::vector<int64_t> *const y_shape) {
+  auto size_value_ptr = input_arg->BuildValue();
+  auto output_size = GetShapeValue(primitive, input_arg);
+  if (IsValueKnown(size_value_ptr)) {
+    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+  }
+  if (!IsDynamicRank(output_size)) {
+    (void)CheckAndConvertUtils::CheckInteger("elements' number of output_size", SizeToLong(output_size.size()), kEqual,
+                                             kVALUE_3, prim_name);
+  } else {
+    output_size = std::vector<int64_t>(kVALUE_3, abstract::Shape::kShapeDimAny);
+  }
+  (void)y_shape->insert(y_shape->end(), output_size.begin(), output_size.end());
+}
+
+void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
+                     const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
+  auto scales_value_ptr = input_arg->BuildValue();
+  if (IsValueKnown(scales_value_ptr) && !IsDynamicRank(x_shape)) {
+    std::vector<double> scales;
+    if (scales_value_ptr->isa<tensor::Tensor>()) {
+      scales = CheckAndConvertUtils::CheckTensorFloatValue("scales", scales_value_ptr, prim_name);
+    } else if (scales_value_ptr->isa<ValueSequence>()) {
+      scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", scales_value_ptr, prim_name);
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', scales should be 1D Tensor[Float] or Tuple[Float].";
+    }
+    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("elements' number of scales", SizeToLong(scales.size()), kEqual, kVALUE_3,
+                                             prim_name);
+    for (int64_t idx = 0; idx < kVALUE_3; ++idx) {
+      (void)y_shape->emplace_back(
+        x_shape[LongToSize(idx + kVALUE_2)] != abstract::Shape::kShapeDimAny
+          ? static_cast<int64_t>(floor(x_shape[LongToSize(idx + kVALUE_2)] * scales[LongToSize(idx)]))
+          : abstract::Shape::kShapeDimAny);
+    }
+  } else {
+    for (int64_t idx = 0; idx < kVALUE_3; ++idx) {
+      (void)y_shape->emplace_back(abstract::Shape::kShapeDimAny);
+    }
+  }
+}
+
+void GetOutputShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                    const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
+  auto prim_name = primitive->name();
+  // none_list and idx
+  size_t scales_idx(kInputIndex2);
+  (void)UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
+  auto none_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrNoneList));
+  (void)CheckAndConvertUtils::CheckInteger("the length of non_list", SizeToLong(none_list.size()), kEqual, kVALUE_1,
+                                           prim_name);
+  // infer output shape
+  if (none_list[kInputIndex0] != kVALUE_1) {
+    InferFromSize(primitive, input_args[kInputIndex1], prim_name, y_shape);
+  } else if (none_list[kInputIndex0] != kVALUE_2) {
+    InferFromScales(input_args[scales_idx], prim_name, x_shape, y_shape);
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', something unexpected happened.";
+  }
+}
+
 abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  int64_t long_kdim2 = static_cast<int64_t>(kDim2);
-  int64_t long_kdim3 = static_cast<int64_t>(kDim3);
-  int64_t long_kdim5 = static_cast<int64_t>(kDim5);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim5, prim_name);
-
-  auto output_size_ptr = primitive->GetAttr(kOutputSize);
-  MS_EXCEPTION_IF_NULL(output_size_ptr);
-  auto output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
-
-  auto scales_ptr = primitive->GetAttr(kScales);
-  MS_EXCEPTION_IF_NULL(scales_ptr);
-  auto scales = GetValue<std::vector<float>>(scales_ptr);
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, kVALUE_5, prim_name);
+  }
 
   ShapeVector y_shape;
   if (IsDynamicRank(x_shape)) {
@@ -73,48 +154,25 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
     (void)y_shape.emplace_back(x_shape[kInputIndex0]);
     (void)y_shape.emplace_back(x_shape[kInputIndex1]);
   }
+  (void)GetOutputShape(primitive, input_args, x_shape, &y_shape);
 
-  if (!output_size.empty() && scales.empty()) {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("elements number of output_size", SizeToLong(output_size.size()), kEqual,
-                                             long_kdim3, prim_name);
-    (void)y_shape.insert(y_shape.end(), output_size.begin(), output_size.end());
-  } else if (output_size.empty() && !scales.empty()) {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, long_kdim3,
-                                             prim_name);
-    if (IsDynamicRank(x_shape)) {
-      for (int64_t idx = 0; idx < long_kdim3; ++idx) {
-        (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-      }
-    } else {
-      for (int64_t idx = 0; idx < long_kdim3; ++idx) {
-        (void)y_shape.emplace_back(
-          x_shape[LongToSize(idx + long_kdim2)] != abstract::Shape::kShapeDimAny
-            ? static_cast<int64_t>(floor(x_shape[LongToSize(idx + long_kdim2)] * scales[LongToSize(idx)]))
-            : abstract::Shape::kShapeDimAny);
-      }
+  if (!IsDynamic(y_shape)) {
+    for (size_t i = 0; i < y_shape.size(); i++) {
+      (void)CheckAndConvertUtils::CheckInteger("output shape", y_shape[i], kGreaterThan, 0, prim_name);
     }
-  } else if (output_size.empty() && scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
-                             << " But get both empty or None.";
-  } else if (!output_size.empty() && !scales.empty()) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."
-                             << " But get both.";
   }
 
-  if (x_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(y_shape);
-  }
-  for (size_t i = 0; i < y_shape.size(); i++) {
-    (void)CheckAndConvertUtils::CheckInteger("output shape", y_shape[i], kGreaterThan, 0, prim_name);
-  }
   return std::make_shared<abstract::Shape>(y_shape);
 }
 
 TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), common_float_types,
-                                                    primitive->name());
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  std::set<TypePtr> valid_types(common_float_types);
+  if (prim_name == "UpsampleNearest3D") {
+    valid_types.insert(kUInt8);
+  }
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, prim_name);
 }
 }  // namespace
 
@@ -123,31 +181,13 @@ abstract::AbstractBasePtr UpsampleInterpolating3DInfer(const abstract::AnalysisE
                                                        const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr int64_t input_num = 1;
+  constexpr int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto type = UpsampleInterpolatingInferType(primitive, input_args);
   auto shape = UpsampleInterpolating3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
-std::vector<int64_t> UpsampleNearest3D::get_output_size_attr() const {
-  auto value_ptr = this->GetAttr(kOutputSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
-
-std::vector<float> UpsampleNearest3D::get_scales_attr() const {
-  auto value_ptr = this->GetAttr(kScales);
-  return GetValue<std::vector<float>>(value_ptr);
-}
-
-std::vector<int64_t> UpsampleTrilinear3D::get_output_size_attr() const {
-  auto value_ptr = this->GetAttr(kOutputSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
-std::vector<float> UpsampleTrilinear3D::get_scales_attr() const {
-  auto value_ptr = this->GetAttr(kScales);
-  return GetValue<std::vector<float>>(value_ptr);
-}
 bool UpsampleTrilinear3D::get_align_corners() const {
   auto value_ptr = this->GetAttr("align_corners");
   return GetValue<bool>(value_ptr);
@@ -167,10 +207,13 @@ class MIND_API AGUpsampleInterpolating3DInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return UpsampleInterpolatingInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return UpsampleInterpolating3DInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(UpsampleTrilinear3D, prim::kPrimUpsampleTrilinear3D, AGUpsampleInterpolating3DInfer,

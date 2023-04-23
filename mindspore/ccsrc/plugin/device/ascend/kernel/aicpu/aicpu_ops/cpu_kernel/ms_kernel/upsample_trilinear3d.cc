@@ -24,9 +24,9 @@
 #include "utils/eigen_tensor.h"
 
 namespace {
-constexpr uint32_t kInputNum = 1;
+constexpr uint32_t kInputNum = 2;
 constexpr uint32_t kOutputNum = 1;
-constexpr uint32_t kValue3 = 3;
+constexpr int32_t kValue3 = 3;
 constexpr int32_t kDims5 = 5;
 constexpr uint32_t kIndex0 = 0;
 constexpr uint32_t kIndex1 = 1;
@@ -109,49 +109,10 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dParamCheck(CpuKernelCo
   if (align_corners_ptr) {
     align_corners = align_corners_ptr->GetBool();
   }
-  auto scales_ptr = ctx.GetAttr("scales");
-  if (scales_ptr) {
-    scales = scales_ptr->GetListFloat();
-  }
-  auto output_size_ptr = ctx.GetAttr("output_size");
-  if (output_size_ptr) {
-    output_size = output_size_ptr->GetListInt();
-  }
-  if ((output_size.empty() && scales.empty()) || (!output_size.empty() && !scales.empty())) {
-    KERNEL_LOG_ERROR(
-      "For UpsampleTrilinear3d, only one of 'scales' and 'output_size' can "
-      "be specified.");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  if (output_size.empty()) {
-    KERNEL_CHECK_FALSE((scales.size() == kValue3), KERNEL_STATUS_INNER_ERROR,
-                       "For UpsampleTrilinear3d, `scales` should have 3 "
-                       "positive integer when `output_size` is empty.");
-    bool all_positive = true;
-    for (auto num : scales) {
-      all_positive = (all_positive & (num > 0));
-    }
-    KERNEL_CHECK_FALSE(all_positive, KERNEL_STATUS_INNER_ERROR,
-                       "For UpsampleTrilinear3d, `scales` should have 3 "
-                       "positive integer when `output_size` is empty. but get "
-                       "`scales` = (%f, %f, %f)",
-                       scales[kIndex0], scales[kIndex1], scales[kIndex2]);
-  }
-  if (scales.empty()) {
-    scales = {0, 0, 0};
-    KERNEL_CHECK_FALSE((output_size.size() == kValue3), KERNEL_STATUS_INNER_ERROR,
-                       "For UpsampleTrilinear3d, `output_size` should have 3 "
-                       "positive integer when `scales` is empty.");
-    bool all_positive = true;
-    for (auto num : output_size) {
-      all_positive = (all_positive & (num > 0));
-    }
-    KERNEL_CHECK_FALSE(all_positive, KERNEL_STATUS_INNER_ERROR,
-                       "For UpsampleTrilinear3d, `output_size` should have 3 "
-                       "positive integer when `scales` is empty. but get "
-                       "`output_size` = (%d, %d, %d)",
-                       output_size[kIndex0], output_size[kIndex1], output_size[kIndex2]);
-  }
+  auto none_list_ptr = ctx.GetAttr("none_list");
+  none_list = none_list_ptr->GetListInt();
+  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                     "For 'UpsampleTrilinear3D', only one of output_size or scales should be specified.");
   return KERNEL_STATUS_OK;
 }
 
@@ -233,6 +194,15 @@ void UpsampleTrilinear3dCpuKernel::InnerCompute(int64_t n, const T *x_ptr, T *y_
 
 template <typename T, typename S>
 uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKernelContext &ctx) {
+  // fetch scales
+  scales = std::vector<float>{0, 0, 0};
+  if (none_list[kIndex0] != static_cast<int64_t>(kIndex2)) {
+    auto scales_ptr = reinterpret_cast<float *>(ctx.Input(kIndex1)->GetData());
+    for (int i = 0; i < kValue3; ++i) {
+      scales[i] = scales_ptr[i];
+    }
+  }
+  //
   Tensor *input_x = ctx.Input(kIndex0);
   Tensor *output_y = ctx.Output(kIndex0);
 

@@ -25,19 +25,18 @@ from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 
 class UpsampleNearest3DNet(nn.Cell):
 
-    def __init__(self, output_size=None, scales=None):
+    def __init__(self):
         super(UpsampleNearest3DNet, self).__init__()
-        self.upsample = UpsampleNearest3D(output_size, scales)
+        self.upsample = UpsampleNearest3D()
 
-    def construct(self, x):
-        out = self.upsample(x)
+    def construct(self, x, output_size, scales):
+        out = self.upsample(x, output_size, scales)
         return out
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_nearest_3d_dynamic_shape():
     """
     Feature: Test UpsampleNearest3D op in gpu.
@@ -46,13 +45,13 @@ def test_upsample_nearest_3d_dynamic_shape():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     output_size = [3, 4, 5]
-    net = UpsampleNearest3DNet(output_size=output_size)
+    net = UpsampleNearest3DNet()
     x_dyn = Tensor(shape=[None, 1, 2, 2, 4], dtype=ms.float32)
-    net.set_inputs(x_dyn)
+    net.set_inputs(x_dyn, output_size, None)
     x = Tensor(
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                   16]).reshape([1, 1, 2, 2, 4]), ms.float32)
-    output = net(x)
+    output = net(x, output_size, None)
     expect_shape = (1, 1, 3, 4, 5)
     assert expect_shape == output.asnumpy().shape
 
@@ -61,7 +60,6 @@ def test_upsample_nearest_3d_dynamic_shape():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_nearest_3d_output_size_float(data_type):
     """
     Feature: UpsampleNearest3D
@@ -85,8 +83,8 @@ def test_upsample_nearest_3d_output_size_float(data_type):
                             [1.0000, 1.0000, 1.1000, 1.1000, 1.2000],
                             [1.0000, 1.0000, 1.1000, 1.1000,
                              1.2000]]]]]).astype(data_type)
-    net = UpsampleNearest3DNet(output_size=[3, 4, 5])
-    out = net(input_tensor)
+    net = UpsampleNearest3DNet()
+    out = net(input_tensor, [3, 4, 5], None)
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-5
     assert np.all(diff < error)
@@ -96,7 +94,6 @@ def test_upsample_nearest_3d_output_size_float(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_nearest_3d_scales_float(data_type):
     """
     Feature: UpsampleNearest3D
@@ -121,8 +118,8 @@ def test_upsample_nearest_3d_scales_float(data_type):
             [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000, 1.2000],
             [1.0000, 1.0000, 1.0000, 1.1000, 1.1000, 1.2000,
              1.2000]]]]]).astype(data_type)
-    net = UpsampleNearest3DNet(scales=[1.5, 2.0, 2.5])
-    out = net(input_tensor)
+    net = UpsampleNearest3DNet()
+    out = net(input_tensor, None, [1.5, 2.0, 2.5])
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-5
     assert np.all(diff < error)
@@ -131,7 +128,6 @@ def test_upsample_nearest_3d_scales_float(data_type):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_nearest_3d_error():
     """
     Feature: UpsampleNearest3D
@@ -142,45 +138,43 @@ def test_upsample_nearest_3d_error():
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(output_size=[3, 4, 5])
-        net(input_tensor)
+        net = UpsampleNearest3DNet()
+        net(input_tensor, [3, 4, 5], None)
 
     with pytest.raises(TypeError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.int32))
-        net = UpsampleNearest3DNet(output_size=[3, 4, 5])
-        net(input_tensor)
+        net = UpsampleNearest3DNet()
+        net(input_tensor, [3, 4, 5], None)
 
     with pytest.raises(TypeError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(scales=[1, 2, 3])
-        net(input_tensor)
-
-    with pytest.raises(ValueError):
-        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(output_size=[3, 4])
-        net(input_tensor)
-
-    with pytest.raises(ValueError):
-        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(scales=[1.0, 2.0, 3.0, 4.0])
-        net(input_tensor)
-
-    with pytest.raises(ValueError):
-        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net = UpsampleNearest3DNet(output_size=[3, 4, 5],
-                                   scales=[1.0, 2.0, 3.0])
-        net(input_tensor)
+        net = UpsampleNearest3DNet()
+        net(input_tensor, None, [1.0, 2.0, 3.0])
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = UpsampleNearest3DNet()
-        net(input_tensor)
+        net(input_tensor, [3, 4], None)
+
+    with pytest.raises(ValueError):
+        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
+        net = UpsampleNearest3DNet()
+        net(input_tensor, None, [1.0, 2.0, 3.0, 4.0])
+
+    with pytest.raises(ValueError):
+        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
+        net = UpsampleNearest3DNet()
+        net(input_tensor, [3, 4, 5], [1.0, 2.0, 3.0])
+
+    with pytest.raises(ValueError):
+        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
+        net = UpsampleNearest3DNet()
+        net(input_tensor, None, None)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="GPU backend deregistered for now")
 def test_vmap_upsample_nearest3d():
     """
     Feature:  UpsampleNearest3D GPU op vmap feature.
@@ -191,13 +185,14 @@ def test_vmap_upsample_nearest3d():
     # 3 batches
     input_tensor = Tensor(
         np.arange(0, 4.8, 0.1).reshape([3, 1, 1, 2, 2, 4]).astype(np.float32))
-    net = UpsampleNearest3DNet(output_size=[3, 2, 2])
+    net = UpsampleNearest3DNet()
     expect = np.array([[[[[[0.0, 0.2], [0.4, 0.6]], [[0.0, 0.2], [0.4, 0.6]],
                           [[0.8, 1.0], [1.2, 1.4]]]]],
                        [[[[[1.6, 1.8], [2.0, 2.2]], [[1.6, 1.8], [2.0, 2.2]],
                           [[2.4, 2.6], [2.8, 3.0]]]]],
                        [[[[[3.2, 3.4], [3.6, 3.8]], [[3.2, 3.4], [3.6, 3.8]],
                           [[4.0, 4.2], [4.4, 4.6]]]]]])
-    out_vmap = F.vmap(net, in_axes=(0))(input_tensor)
+    out_vmap = F.vmap(net, in_axes=(0, None, None))(input_tensor, [3, 2, 2],
+                                                    None)
     error = np.ones(shape=expect.shape) * 1.0e-6
     assert np.all(abs(out_vmap.asnumpy() - expect) < error)

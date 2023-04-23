@@ -107,6 +107,7 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }
+    (void)CheckAndConvertUtils::CheckPositiveVector("size", size_value, prim_name);
     y_shape[dim_idx_map['H']] = size_value.front();
     y_shape[dim_idx_map['W']] = size_value.back();
   }

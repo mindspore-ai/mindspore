@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_NEAREST_3D_GRAD_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_NEAREST_3D_GRAD_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalUpsampleNearest3DGrad(const T *dy, const size_t n, const size_t c, const size_t dy_d,
-                                              const size_t dy_h, const size_t dy_w, const size_t dx_d,
-                                              const size_t dx_h, const size_t dx_w, const float d_scale,
-                                              const float h_scale, const float w_scale, T *dx,
-                                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalUpsampleNearest3DGrad(const T *dy, const int n, const int c, const int dy_d,
+                                                     const int dy_h, const int dy_w, const int dx_d, const int dx_h,
+                                                     const int dx_w, const float d_scale, const float h_scale,
+                                                     const float w_scale, T *dx, const uint32_t device_id,
+                                                     cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_NEAREST_3D_GRAD_IMPL_CUH_

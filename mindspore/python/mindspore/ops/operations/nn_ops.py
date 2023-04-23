@@ -3825,23 +3825,22 @@ class UpsampleTrilinear3D(Primitive):
     using trilinear upscaling algorithm.
 
     Note:
-        One of `scales` and `output_size` MUST be specified and it is an error if both are specified.
+        One of `scales` and `output_size` must be specified and it is an error if both are specified.
 
     Args:
-        output_size (Union[tuple[int], list[int]], optional):  A tuple or list of 3 int
-            elements :math:`(output\_depth, output\_height, output\_width)`.
-            Default: ``None`` . Only one of `scales` and `output_size` can be specified.
-        scales (Union[tuple[float], list[float]], optional): A tuple or list of 3 float
-           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Default: ``None`` .
-        align_corners (bool, optional): An optional bool. Defaults to ``False``.
-            If ``True`` , the input and output tensors are aligned by the center points of their corner pixels,
+        align_corners (bool, optional): An optional bool. Defaults to false.
+            If True, the input and output tensors are aligned by the center points of their corner pixels,
             preserving the values at the corner pixels.
             If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
             and the interpolation use edge value padding for out of boundary values.
 
     Inputs:
-        - **x** (Tensor) - A 5-D input tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-          Must be one of the following types: float16, float32, float64.
+        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+          Must be one of the following types: [float16, float32, float64].
+        - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 3 int elements
+          :math:`(output\_depth, output\_height, output\_width)`. Defaults to None.
+        - **scales** (Union[tuple[float], list[float]]): A tuple or list of 3 float
+          elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to None.
 
     Outputs:
         - **y** (Tensor) - Upsampled output with the same data type as `x`.
@@ -3852,8 +3851,8 @@ class UpsampleTrilinear3D(Primitive):
         TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not in [float16, float32, float64].
         TypeError: If type of `align_corners` is not bool.
-        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
-        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
+        ValueError: If any value of `output_size` is negative when `output_size` is not empty.
+        ValueError: If any value of `scales` is negative when `scales` is not empty.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.
@@ -3863,15 +3862,17 @@ class UpsampleTrilinear3D(Primitive):
 
 
     Examples:
-        >>> net = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
+        >>> net = ops.UpsampleTrilinear3D()
         >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
-        >>> out = net(in_x)
+        >>> output_size=[4, 64, 48]
+        >>> out = net(in_x, output_size, None)
         >>> print(out.shape)
         (2, 3, 4, 64, 48)
         >>>
-        >>> net = ops.UpsampleTrilinear3D(output_size=[2, 4, 4])
+        >>> net = ops.UpsampleTrilinear3D()
         >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
-        >>> out = net(in_x)
+        >>> output_size=[2, 4, 4]
+        >>> out = net(in_x, output_size, None)
         >>> print(out)
         [[[[[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
@@ -3885,23 +3886,11 @@ class UpsampleTrilinear3D(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, output_size=None, scales=None, align_corners=False):
+    def __init__(self, align_corners=False):
         """Initialize UpsampleTrilinear3D."""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        self.output_size = [] if output_size is None else output_size
-        self.scales = [] if scales is None else scales
+        self.init_prim_io_names(inputs=['x', 'output_size', 'scales'], outputs=['y'])
         self.align_corners = align_corners
-
-        validator.check_value_type("output_size", self.output_size, [list, tuple], self.name)
-        validator.check_value_type("scales", self.scales, [list, tuple], self.name)
         validator.check_bool(self.align_corners, "align_corners", self.name)
-        if len(self.output_size) == 3:
-            validator.check_positive_int_sequence(self.output_size, "output_size", self.name)
-        if len(self.scales) == 3:
-            validator.check_positive_float_sequence(self.scales, "scales", self.name)
-
-        self.add_prim_attr('output_size', self.output_size)
-        self.add_prim_attr('scales', self.scales)
         self.add_prim_attr('align_corners', self.align_corners)
 
 
@@ -10190,28 +10179,24 @@ class UpsampleNearest3D(Primitive):
 
     One of `output_size` or `scales` must be given, and cannot specify both.
 
-    Args:
-        output_size (Union[tuple[int], list[int]], optional): A tuple or list of int
-            specifying the output volumetric size.
-            Default: ``None`` .
-        scales (Union[tuple[float], list[float]], optional): A tuple or list of float
-            specifying the upsampling factors.
-            Default: ``None`` .
-
     Inputs:
         - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Must be one of the
-          following types: [float16, float32, float64].
+            following types: [float16, float32, float64].
+        - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
+            Default: None.
+        - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
+            Default: None.
 
     Outputs:
         - **y** (Tensor) - Upsampled output with the same data type as `x`.
-          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+            Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
         TypeError: When `output_size` is not None and `output_size` is not list[int] or tuple[int].
         TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not int [float16, float32, float64].
-        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
-        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
+        ValueError: If any value of `output_size` is negative when `output_size` is not empty.
+        ValueError: If any value of `scales` is negative when `scales` is not empty.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.
@@ -10224,8 +10209,8 @@ class UpsampleNearest3D(Primitive):
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> output_size = [3, 4, 5]
-        >>> net = ops.UpsampleNearest3D(output_size = output_size)
-        >>> output = net(x)
+        >>> net = ops.UpsampleNearest3D()
+        >>> output = net(x, output_size, None)
         >>> print(output)
         [[[[[ 1.  1.  2.  3.  4.]
             [ 1.  1.  2.  3.  4.]
@@ -10242,21 +10227,9 @@ class UpsampleNearest3D(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, output_size=None, scales=None):
+    def __init__(self):
         """Initialize UpsampleNearest3D."""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        if output_size is None:
-            output_size = []
-        if scales is None:
-            scales = []
-        validator.check_value_type('output_size', output_size, [tuple, list], self.name)
-        for item in output_size:
-            validator.check_int(item, 0, validator.GT, 'output_size_item', self.name)
-        validator.check_value_type('scales', scales, [tuple, list], self.name)
-        for item in scales:
-            validator.check_float(item, 0, validator.GT, 'scales_item', self.name)
-        self.add_prim_attr('output_size', output_size)
-        self.add_prim_attr('scales', scales)
+        self.init_prim_io_names(inputs=['x', 'output_size', 'scales'], outputs=['y'])
 
 
 class SparseApplyAdagradDA(Primitive):

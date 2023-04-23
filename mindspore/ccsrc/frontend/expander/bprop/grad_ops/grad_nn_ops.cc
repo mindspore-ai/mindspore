@@ -857,25 +857,25 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
   return {dx1, dx2, dgrad};
 });
 
-REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("UpsampleNearest3DGrad", {dout},
-                     {{"input_size", MakeValue(ib->GetShape(input_x))},
-                      {"output_size", ib->GetAttr("output_size")},
-                      {"scales", ib->GetAttr("scales")}});
-  return {dx};
+REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleNearest3DGrad", {dout, x_shape, output_size, scales});
+  return {dx, ib->ZerosLike(output_size), ib->ZerosLike(scales)};
 });
 
-REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout},
-                     {{"input_size", MakeValue(ib->GetShape(x))},
-                      {"output_size", ib->GetAttr("output_size")},
-                      {"scales", ib->GetAttr("scales")},
-                      {"align_corners", ib->GetAttr("align_corners")}});
-  return {dx};
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout, x_shape, output_size, scales},
+                     {{"align_corners", ib->GetAttr("align_corners")}});
+  return {dx, ib->ZerosLike(output_size), ib->ZerosLike(scales)};
 });
 
 REG_BPROP_BUILDER("Dropout2D").SetUnusedInputs({i0}).SetBody(Dropout2DBpropExpander);

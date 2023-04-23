@@ -16,99 +16,93 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_trilinear_3d_impl.cuh"
 #include <algorithm>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-__inline__ __device__ float GetInput(const float *input, size_t index) { return input[index]; }
-__inline__ __device__ float GetInput(const half *input, size_t index) {
-  // required to maintain precision for fp16 input
-  return static_cast<float>(input[index]);
-}
-__inline__ __device__ float GetTargetIndex(size_t output_idx, float dim_scale, bool align_corner) {
-  float return_val = 0;
-  if (align_corner) {
-    return_val = output_idx * dim_scale;
-  } else {
-    return_val = dim_scale * (output_idx + 0.5f) - 0.5f;
-  }
-  return max(return_val, 0.0f);
-}
-
-template <typename T>  // float32 / float16
-__global__ void UpsampleTrilinear3D(const T *input, const size_t n, const size_t c, const size_t in_d,
-                                    const size_t in_h, const size_t in_w, const size_t in_cdhw, const size_t in_dhw,
-                                    const size_t in_hw, const size_t out_d, const size_t out_h, const size_t out_w,
-                                    const size_t out_ncdhw, const size_t out_cdhw, const size_t out_dhw,
-                                    const size_t out_hw, const float d_scale, const float h_scale, const float w_scale,
-                                    const bool align_corner, T *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_ncdhw; pos += blockDim.x * gridDim.x) {
-    const size_t posn = pos / out_cdhw;
-    const size_t posc = pos / out_dhw % c;
-    const size_t posd = pos / out_hw % out_d;
-    const size_t posh = pos / out_w % out_h;
-    const size_t posw = pos % out_w;
+template <typename T, typename S>
+__global__ void UpsampleTrilinear3DKernel(const int num_kernels, const T *input, T *output, const int batch_size,
+                                          const int channel, const int in_d, const int in_h, const int in_w,
+                                          const int out_d, const int out_h, const int out_w, const S d_scale,
+                                          const S h_scale, const S w_scale, const bool align_corners, const int in_dhw,
+                                          const int out_hw, const int out_dhw) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < num_kernels; pos += blockDim.x * gridDim.x) {
+    const int w2 = (pos % out_hw) % out_w;
+    const int h2 = (pos % out_hw) / out_w;
+    const int d2 = pos / out_hw;
     // calculate scaled values for input index
-    const float scaled_in_d = GetTargetIndex(posd, d_scale, align_corner);
-    const float scaled_in_h = GetTargetIndex(posh, h_scale, align_corner);
-    const float scaled_in_w = GetTargetIndex(posw, w_scale, align_corner);
-    // bounding indices and lambda values
-    const size_t in_d_floor = floorf(scaled_in_d);  // NOLINT
-    const size_t in_h_floor = floorf(scaled_in_h);  // NOLINT
-    const size_t in_w_floor = floorf(scaled_in_w);  // NOLINT
-    const size_t in_d_ceil = (in_d_floor < in_d - 1) ? in_d_floor + 1 : in_d_floor;
-    const size_t in_h_ceil = (in_h_floor < in_h - 1) ? in_h_floor + 1 : in_h_floor;
-    const size_t in_w_ceil = (in_w_floor < in_w - 1) ? in_w_floor + 1 : in_w_floor;
-    const float lambda_w0 = (scaled_in_w - in_w_floor);
-    const float lambda_w1 = (1.0f - lambda_w0);
-    const float lambda_h0 = (scaled_in_h - in_h_floor);
-    const float lambda_h1 = (1.0f - lambda_h0);
-    const float lambda_d0 = (scaled_in_d - in_d_floor);
-    const float lambda_d1 = (1.0f - lambda_d0);
-    // get required indices
-    const size_t p1 = posn * in_cdhw + posc * in_dhw + in_d_floor * in_hw + in_h_floor * in_w + in_w_floor;
-    const size_t p2 = posn * in_cdhw + posc * in_dhw + in_d_floor * in_hw + in_h_floor * in_w + in_w_ceil;
-    const size_t p3 = posn * in_cdhw + posc * in_dhw + in_d_floor * in_hw + in_h_ceil * in_w + in_w_floor;
-    const size_t p4 = posn * in_cdhw + posc * in_dhw + in_d_floor * in_hw + in_h_ceil * in_w + in_w_ceil;
-    const size_t p5 = posn * in_cdhw + posc * in_dhw + in_d_ceil * in_hw + in_h_floor * in_w + in_w_floor;
-    const size_t p6 = posn * in_cdhw + posc * in_dhw + in_d_ceil * in_hw + in_h_floor * in_w + in_w_ceil;
-    const size_t p7 = posn * in_cdhw + posc * in_dhw + in_d_ceil * in_hw + in_h_ceil * in_w + in_w_floor;
-    const size_t p8 = posn * in_cdhw + posc * in_dhw + in_d_ceil * in_hw + in_h_ceil * in_w + in_w_ceil;
-
-    const float val = lambda_d1 * ((lambda_h1 * (lambda_w1 * GetInput(input, p1) + lambda_w0 * GetInput(input, p2))) +
-                                   (lambda_h0 * (lambda_w1 * GetInput(input, p3) + lambda_w0 * GetInput(input, p4)))) +
-                      lambda_d0 * ((lambda_h1 * (lambda_w1 * GetInput(input, p5) + lambda_w0 * GetInput(input, p6))) +
-                                   (lambda_h0 * (lambda_w1 * GetInput(input, p7) + lambda_w0 * GetInput(input, p8))));
-    output[pos] = static_cast<T>(val);
+    const S t1r = area_pixel_compute_source_index<S>(d_scale, d2, align_corners, false);
+    const int t1 = t1r;
+    const int t1p = (t1 < in_d - 1) ? t1 + 1 : t1;
+    const S lambda_d1 = t1r - t1;
+    const S lambda_d0 = static_cast<S>(1) - lambda_d1;
+    //
+    const S h1r = area_pixel_compute_source_index<S>(h_scale, h2, align_corners, false);
+    const int h1 = h1r;
+    const int h1p = (h1 < in_h - 1) ? h1 + 1 : h1;
+    const S lambda_h1 = h1r - h1;
+    const S lambda_h0 = static_cast<S>(1) - lambda_h1;
+    //
+    const S w1r = area_pixel_compute_source_index<S>(w_scale, w2, align_corners, false);
+    const int w1 = w1r;
+    const int w1p = (w1 < in_w - 1) ? w1 + 1 : w1;
+    const S lambda_w1 = w1r - w1;
+    const S lambda_w0 = static_cast<S>(1) - lambda_w1;
+    //
+    auto in_data = input;
+    auto out_data = output;
+    for (int n = 0; n < batch_size; ++n) {
+      for (int c = 0; c < channel; ++c) {
+        const S val = lambda_d0 * (lambda_h0 * (lambda_w0 * static_cast<S>(in_data[(t1 * in_h + h1) * in_w + w1]) +
+                                                lambda_w1 * static_cast<S>(in_data[(t1 * in_h + h1) * in_w + w1p])) +
+                                   lambda_h1 * (lambda_w0 * static_cast<S>(in_data[(t1 * in_h + h1p) * in_w + w1]) +
+                                                lambda_w1 * static_cast<S>(in_data[(t1 * in_h + h1p) * in_w + w1p]))) +
+                      lambda_d1 * (lambda_h0 * (lambda_w0 * static_cast<S>(in_data[(t1p * in_h + h1) * in_w + w1]) +
+                                                lambda_w1 * static_cast<S>(in_data[(t1p * in_h + h1) * in_w + w1p])) +
+                                   lambda_h1 * (lambda_w0 * static_cast<S>(in_data[(t1p * in_h + h1p) * in_w + w1]) +
+                                                lambda_w1 * static_cast<S>(in_data[(t1p * in_h + h1p) * in_w + w1p])));
+        out_data[(d2 * out_h + h2) * out_w + w2] = static_cast<T>(val);
+        in_data += in_dhw;
+        out_data += out_dhw;
+      }
+    }
   }
   return;
 }
 
-template <typename T>
-void CalUpsampleTrilinear3D(const T *input, const size_t n, const size_t c, const size_t in_d, const size_t in_h,
-                            const size_t in_w, const size_t out_d, const size_t out_h, const size_t out_w,
-                            const float d_scale, const float h_scale, const float w_scale, const bool align_corner,
-                            T *output, cudaStream_t cuda_stream) {
-  const size_t out_hw = out_h * out_w;
-  const size_t out_dhw = out_d * out_hw;
-  const size_t out_cdhw = c * out_dhw;
-  const size_t out_ncdhw = n * out_cdhw;
-  const size_t in_hw = in_h * in_w;
-  const size_t in_dhw = in_d * in_hw;
-  const size_t in_cdhw = c * in_dhw;
-  UpsampleTrilinear3D<<<GET_BLOCKS(out_ncdhw), GET_THREADS, 0, cuda_stream>>>(
-    input, n, c, in_d, in_h, in_w, in_cdhw, in_dhw, in_hw, out_d, out_h, out_w, out_ncdhw, out_cdhw, out_dhw, out_hw,
-    d_scale, h_scale, w_scale, align_corner, output);
-  return;
+template <typename T, typename S>
+cudaError_t CalUpsampleTrilinear3D(const T *input, const int n, const int c, const int in_d, const int in_h,
+                                   const int in_w, const int out_d, const int out_h, const int out_w, const S d_scale,
+                                   const S h_scale, const S w_scale, const bool align_corners, T *output,
+                                   const uint32_t device_id, cudaStream_t cuda_stream) {
+  if (in_d == out_d && in_h == out_h && in_w == out_w) {
+    const int num_kernels = out_d * out_h * out_w * n * c;
+    CudaMemcpyDeviceToDevice<T, T>
+      <<<CUDA_BLOCKS(device_id, num_kernels), CUDA_THREADS(device_id), 0, cuda_stream>>>(num_kernels, input, output);
+  } else {
+    const int in_dhw = in_d * in_h * in_w;
+    const int out_hw = out_h * out_w;
+    const int out_dhw = out_d * out_hw;
+    const int num_kernels = out_dhw;
+    const int blockSize = std::min(CUDA_THREADS(device_id), 512);
+    const int gridSize = (num_kernels + blockSize - 1) / blockSize;
+    UpsampleTrilinear3DKernel<T, S>
+      <<<gridSize, blockSize, 0, cuda_stream>>>(num_kernels, input, output, n, c, in_d, in_h, in_w, out_d, out_h, out_w,
+                                                d_scale, h_scale, w_scale, align_corners, in_dhw, out_hw, out_dhw);
+  }
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalUpsampleTrilinear3D<half>(const half *input, const size_t n, const size_t c,
-                                                           const size_t in_d, const size_t in_h, const size_t in_w,
-                                                           const size_t out_d, const size_t out_h, const size_t out_w,
-                                                           const float d_scale, const float h_scale,
-                                                           const float w_scale, const bool align_corner, half *output,
-                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalUpsampleTrilinear3D<float>(const float *input, const size_t n, const size_t c,
-                                                            const size_t in_d, const size_t in_h, const size_t in_w,
-                                                            const size_t out_d, const size_t out_h, const size_t out_w,
-                                                            const float d_scale, const float h_scale,
-                                                            const float w_scale, const bool align_corner, float *output,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3D<half, float>(
+  const half *input, const int n, const int c, const int in_d, const int in_h, const int in_w, const int out_d,
+  const int out_h, const int out_w, const float d_scale, const float h_scale, const float w_scale,
+  const bool align_corners, half *output, const uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3D<float, float>(
+  const float *input, const int n, const int c, const int in_d, const int in_h, const int in_w, const int out_d,
+  const int out_h, const int out_w, const float d_scale, const float h_scale, const float w_scale,
+  const bool align_corners, float *output, const uint32_t device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3D<double, double>(
+  const double *input, const int n, const int c, const int in_d, const int in_h, const int in_w, const int out_d,
+  const int out_h, const int out_w, const double d_scale, const double h_scale, const double w_scale,
+  const bool align_corners, double *output, const uint32_t device_id, cudaStream_t cuda_stream);

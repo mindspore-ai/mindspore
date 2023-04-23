@@ -2732,11 +2732,13 @@ test_case_nn_ops = [
                         ([1, 1, 2, 2, 3], {'dtype': np.int64})],
         'skip': ['backward']}),
     ('UpsampleNearest3D', {
-        'block': UpsampleNearest3D(output_size=[4, 64, 48], scales=None),
+        'block': UpsampleNearest3D(),
+        'desc_const': [[4, 64, 48], None],
         'desc_inputs': [([2, 3, 4, 512, 256], {'dtype': np.float32})],
         'desc_bprop': [([2, 3, 4, 64, 48], {'dtype': np.float32})]}),
     ('UpsampleNearest3DGrad', {
-        'block': UpsampleNearest3DGrad(input_size=[2, 3, 4, 512, 256], output_size=[4, 64, 48], scales=None),
+        'block': UpsampleNearest3DGrad(),
+        'desc_const': [[2, 3, 4, 512, 256], [4, 64, 48], None],
         'desc_inputs': [([2, 3, 4, 64, 48], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('MaxPool3DWithArgmax', {
@@ -3083,11 +3085,13 @@ test_case_nn_ops = [
                         ([32, 24, 1, 1, 13], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('UpsampleTrilinear3D', {
-        'block': UpsampleTrilinear3D(output_size=[4, 64, 48]),
+        'block': UpsampleTrilinear3D(),
+        'desc_const': [[4, 64, 48], None],
         'desc_inputs': [([2, 3, 4, 512, 256], {'dtype': np.float32})],
         'desc_bprop': [([2, 3, 4, 64, 48], {'dtype': np.float32})]}),
-    ('UpsampleNearest3DGrad', {
-        'block': UpsampleTrilinear3DGrad(input_size=[2, 3, 4, 512, 256], output_size=[4, 64, 48], scales=None),
+    ('UpsampleTrilinear3DGrad', {
+        'block': UpsampleTrilinear3DGrad(),
+        'desc_const': [[2, 3, 4, 512, 256], [4, 64, 48], None],
         'desc_inputs': [([2, 3, 4, 64, 48], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('DropoutGenMask', {

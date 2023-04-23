@@ -930,6 +930,7 @@ constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kAllToAllvOpName = "AllToAllv";
 
 // attr key name
+constexpr auto kAttrNoneList = "none_list";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";
 constexpr auto kAttrInputNames = "input_names";

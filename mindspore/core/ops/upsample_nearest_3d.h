@@ -30,9 +30,7 @@ constexpr auto kNameUpsampleNearest3D = "UpsampleNearest3D";
 class MIND_API UpsampleNearest3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UpsampleNearest3D);
-  UpsampleNearest3D() : BaseOperator(kNameUpsampleNearest3D) { InitIOName({"x"}, {"y"}); }
-  std::vector<int64_t> get_output_size_attr() const;
-  std::vector<float> get_scales_attr() const;
+  UpsampleNearest3D() : BaseOperator(kNameUpsampleNearest3D) { InitIOName({"x", "output_size", "scales"}, {"y"}); }
 };
 using PrimUpsampleNearest3D = std::shared_ptr<UpsampleNearest3D>;
 }  // namespace ops

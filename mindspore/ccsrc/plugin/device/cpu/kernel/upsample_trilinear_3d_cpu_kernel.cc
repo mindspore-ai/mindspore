@@ -14,32 +14,57 @@
  * limitations under the License.
  */
 
-#include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/kernel/upsample_trilinear_3d_cpu_kernel.h"
 #include <string>
+#include <utility>
+#include "ops/upsample_trilinear_3d.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kUpsampleTrilinear3DInputsNum = 1;
+constexpr size_t kUpsampleTrilinear3DInputsNum = 2;
 constexpr size_t kUpsampleTrilinear3DOutputNum = 1;
-// GRAIN_SIZE for Parallel
-constexpr size_t kGrainSize = 32768;
+constexpr int64_t kGrainSize = 32768;
+const double kValueZero = 0.;
 }  // namespace
+template <typename S>
+void UpsampleTrilinear3DCpuKernelMod::ComputeWeightsAndIndices(
+  UpsampleTrilinear3DCpuKernelMod::WeightsAndIndices<S> *const wi, S scale, int64_t out_idx, int64_t input_size,
+  int64_t output_size, int64_t stride) {
+  (void)ComputeSourceIndexAndLambda<S>(&(wi->id0), &(wi->id1), &(wi->lambda0), &(wi->lambda1), scale, out_idx,
+                                       input_size, output_size, align_corners_);
+  wi->Step(stride);
+}
+
+template <typename S>
+void UpsampleTrilinear3DCpuKernelMod::ComputeHelper(UpsampleTrilinear3DCpuKernelMod::WeightsAndIndices<S> *const helper,
+                                                    S scale, int64_t input_size, int64_t output_size, int64_t stride) {
+  auto loop = [&](int64_t begin, int64_t end) {
+    for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
+      (void)ComputeWeightsAndIndices<S>(helper + out_idx, scale, out_idx, input_size, output_size, stride);
+    }
+  };
+  float block_size = 64.0;
+  ParallelLaunch(loop, static_cast<size_t>(output_size), block_size);
+}
 
 bool UpsampleTrilinear3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  in_type_ = inputs.at(kIndex0)->GetDtype();
+  x_type_ = inputs[kIndex0]->GetDtype();
   auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
-  attr_scales_ = kernel_ptr->get_scales_attr();
-  if (attr_scales_.empty()) {
-    attr_scales_ = {0, 0, 0};
+  align_corners_ = kernel_ptr->get_align_corners();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    return false;
   }
-  attr_align_corners_ = kernel_ptr->get_align_corners();
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -50,48 +75,46 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  // shape
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  if (x_shape_.size() != kDim5) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kDim5 << ", but got "
-                             << x_shape_.size();
+  // workspace
+  size_t unit_size = sizeof(WeightsAndIndices<float>);
+  if (x_type_ == kNumberTypeFloat64) {
+    unit_size = sizeof(WeightsAndIndices<double>);
+  }
+  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex2]));
+  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex3]));
+  workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex4]));
+  // none_list
+  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+  if (none_list_.size() != kIndex1) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   return KRET_OK;
 }
 
-bool UpsampleTrilinear3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DOutputNum, kernel_name_);
-
-  bool res = false;
-  switch (in_type_) {
-    case kNumberTypeFloat16:
-      res = LaunchKernel<float16, float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat32:
-      res = LaunchKernel<float, float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      res = LaunchKernel<double, double>(inputs, outputs);
-      break;
-    default:
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_
-                              << "', the dtype of 'x' should be float16, float32 or float64. But got "
-                              << TypeIdLabel(in_type_);
-  }
-  return res;
-}
-
 template <typename T, typename S>
 bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                   const std::vector<kernel::AddressPtr> &workspace,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUpsampleTrilinear3DInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUpsampleTrilinear3DOutputNum, kernel_name_);
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, kValueZero);
+  } else {
+    scales_.clear();
+    auto scales_ptr = GetDeviceAddress<float>(inputs, kIndex1);
+    for (size_t i = 0; i < kIndex3; ++i) {
+      scales_.push_back(static_cast<double>(scales_ptr[i]));
+    }
+  }
   // treat batch and channels as one dimension
   int64_t channels = x_shape_[kIndex0] * x_shape_[kIndex1];
   int64_t input_depth = x_shape_[kIndex2];
   int64_t input_height = x_shape_[kIndex3];
   int64_t input_width = x_shape_[kIndex4];
+  int64_t input_slice_size = input_depth * input_height * input_width;
 
   int64_t output_depth = y_shape_[kIndex2];
   int64_t output_height = y_shape_[kIndex3];
@@ -110,67 +133,95 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     }
     return true;
   }
-  int64_t input_slice_size = input_depth * input_height * input_width;
-  int64_t output_slice_size = output_depth * output_height * output_width;
-  auto input_indexr_value = [=](int64_t n, int64_t d, int64_t h, int64_t w) {
-    return x_ptr[n * input_slice_size + d * input_height * input_width + h * input_width + w];
-  };
-  auto loop3d = [&](int64_t begin, int64_t end) {
-    const S depth_scale =
-      AreaPixelComputeScale<S>(input_depth, output_depth, attr_align_corners_, attr_scales_[kIndex0]);
-    const S height_scale =
-      AreaPixelComputeScale<S>(input_height, output_height, attr_align_corners_, attr_scales_[kIndex1]);
-    const S width_scale =
-      AreaPixelComputeScale<S>(input_width, output_width, attr_align_corners_, attr_scales_[kIndex2]);
-    int64_t id0(0), id1(0), ih0(0), ih1(0), iw0(0), iw1(0);
-    S d0lambda(0), d1lambda(0), h0lambda(0), h1lambda(0), w0lambda(0), w1lambda(0);
-    for (int64_t n = begin; n < end; ++n) {
-      for (int64_t od = 0; od < output_depth; ++od) {
-        ComputeSourceIndexAndLambda(&id0, &id1, &d0lambda, &d1lambda, depth_scale, od, input_depth, output_depth,
-                                    attr_align_corners_);
-        for (int64_t oh = 0; oh < output_height; ++oh) {
-          ComputeSourceIndexAndLambda(&ih0, &ih1, &h0lambda, &h1lambda, height_scale, oh, input_height, output_height,
-                                      attr_align_corners_);
-          for (int64_t ow = 0; ow < output_width; ++ow) {
-            ComputeSourceIndexAndLambda(&iw0, &iw1, &w0lambda, &w1lambda, width_scale, ow, input_width, output_width,
-                                        attr_align_corners_);
-            auto i000 = static_cast<S>(input_indexr_value(n, id0, ih0, iw0));
-            auto i001 = static_cast<S>(input_indexr_value(n, id0, ih0, iw1));
-            auto i010 = static_cast<S>(input_indexr_value(n, id0, ih1, iw0));
-            auto i011 = static_cast<S>(input_indexr_value(n, id0, ih1, iw1));
-            auto i100 = static_cast<S>(input_indexr_value(n, id1, ih0, iw0));
-            auto i101 = static_cast<S>(input_indexr_value(n, id1, ih0, iw1));
-            auto i110 = static_cast<S>(input_indexr_value(n, id1, ih1, iw0));
-            auto i111 = static_cast<S>(input_indexr_value(n, id1, ih1, iw1));
-            double w000 = static_cast<double>(d0lambda) * h0lambda * w0lambda;
-            double w001 = static_cast<double>(d0lambda) * h0lambda * w1lambda;
-            double w010 = static_cast<double>(d0lambda) * h1lambda * w0lambda;
-            double w011 = static_cast<double>(d0lambda) * h1lambda * w1lambda;
-            double w100 = static_cast<double>(d1lambda) * h0lambda * w0lambda;
-            double w101 = static_cast<double>(d1lambda) * h0lambda * w1lambda;
-            double w110 = static_cast<double>(d1lambda) * h1lambda * w0lambda;
-            double w111 = static_cast<double>(d1lambda) * h1lambda * w1lambda;
-            y_ptr[n * output_slice_size + od * output_height * output_width + oh * output_width + ow] =
-              static_cast<T>(w000 * i000 + w001 * i001 + w010 * i010 + w011 * i011 + w100 * i100 + w101 * i101 +
-                             w110 * i110 + w111 * i111);
-          }
-        }
+
+  const S depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners_, scales_[kIndex0]);
+  const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
+  const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
+
+  WeightsAndIndices<S> *const d_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
+  WeightsAndIndices<S> *const h_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
+  WeightsAndIndices<S> *const w_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
+  (void)ComputeHelper<S>(d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
+  (void)ComputeHelper<S>(h_helper, height_scale, input_height, output_height, input_width);
+  (void)ComputeHelper<S>(w_helper, width_scale, input_width, output_width, 1);
+
+  auto get_value = [=](int64_t idx) -> S { return static_cast<S>(x_ptr[idx]); };
+  auto task = [&](int64_t begin, int64_t end) {
+    int64_t n = 0;
+    int64_t od = 0;
+    int64_t oh = 0;
+    (void)DataIndexInit(&begin, &n, &channels, &od, &output_depth, &oh, &output_height);
+
+    for (int64_t i = begin; i < end; ++i) {
+      int64_t id0(0), id1(0), ih0(0), ih1(0), iw0(0), iw1(0);
+      S d0lambda(0), d1lambda(0), h0lambda(0), h1lambda(0), w0lambda(0), w1lambda(0);
+      d_helper[od](&id0, &id1, &d0lambda, &d1lambda);
+      h_helper[oh](&ih0, &ih1, &h0lambda, &h1lambda);
+      int64_t src_offset = n * input_slice_size;
+      std::array<int64_t, 4> indices = {src_offset + id0 + ih0, src_offset + id0 + ih1, src_offset + id1 + ih0,
+                                        src_offset + id1 + ih1};
+      std::array<S, 4> weights = {d0lambda * h0lambda, d0lambda * h1lambda, d1lambda * h0lambda, d1lambda * h1lambda};
+      int64_t dst_offset = i * output_width;
+      for (int64_t ow = 0; ow < output_width; ++ow) {
+        w_helper[ow](&iw0, &iw1, &w0lambda, &w1lambda);
+        // weights
+        S w000 = weights[0] * w0lambda;
+        S w001 = weights[0] * w1lambda;
+        S w010 = weights[1] * w0lambda;
+        S w011 = weights[1] * w1lambda;
+        S w100 = weights[2] * w0lambda;
+        S w101 = weights[2] * w1lambda;
+        S w110 = weights[3] * w0lambda;
+        S w111 = weights[3] * w1lambda;
+        // indices
+        int64_t i000 = indices[0] + iw0;
+        int64_t i001 = indices[0] + iw1;
+        int64_t i010 = indices[1] + iw0;
+        int64_t i011 = indices[1] + iw1;
+        int64_t i100 = indices[2] + iw0;
+        int64_t i101 = indices[2] + iw1;
+        int64_t i110 = indices[3] + iw0;
+        int64_t i111 = indices[3] + iw1;
+        // get result
+        y_ptr[dst_offset + ow] = static_cast<T>(
+          w000 * get_value(i000) + w001 * get_value(i001) + w010 * get_value(i010) + w011 * get_value(i011) +
+          w100 * get_value(i100) + w101 * get_value(i101) + w110 * get_value(i110) + w111 * get_value(i111));
       }
+
+      (void)DataIndexStep(&n, &channels, &od, &output_depth, &oh, &output_height);
     }
   };
-  float block_size =
-    SizeToLong(kGrainSize) > output_slice_size ? static_cast<float>(kGrainSize / output_slice_size) : 1.0;
-  CPUKernelUtils::ParallelFor(loop3d, channels, block_size);
+  float block_size = static_cast<float>(kGrainSize) / output_width / 8;
+  ParallelLaunch(task, static_cast<size_t>(channels * output_depth * output_height), block_size);
+
   return true;
 }
 
-std::vector<KernelAttr> UpsampleTrilinear3DCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+#define UpsampleTrilinear3D_CPU_KERNEL_REG(M_S, M_T, S, T)             \
+  KernelAttr().AddInputAttr(M_S).AddInputAttr(M_T).AddOutputAttr(M_S), \
+    &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>
 
+std::vector<std::pair<KernelAttr, UpsampleTrilinear3DCpuKernelMod::KernelRunFunc>>
+  UpsampleTrilinear3DCpuKernelMod::func_list_ = {
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt32, float, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt32, double, double)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt64, float, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt64, double, double)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeFloat32, float16, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeFloat32, float, float)},
+    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeFloat32, double, double)},
+};
+
+std::vector<KernelAttr> UpsampleTrilinear3DCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, UpsampleTrilinear3DCpuKernelMod::KernelRunFunc> &pair) { return pair.first; });
   return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpsampleTrilinear3D, UpsampleTrilinear3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

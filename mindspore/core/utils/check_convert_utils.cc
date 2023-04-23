@@ -972,6 +972,70 @@ void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
   }
 }
 
+std::vector<double> CheckAndConvertUtils::CheckTensorFloatValue(const std::string &type_name, const ValuePtr &value,
+                                                                const std::string &prim_name) {
+  if (value == nullptr) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+                             << "] value is nullptr.";
+  }
+  std::vector<double> tensor_value;
+  if (!value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+                             << "] must be a tensor, but got " << value->ToString();
+  }
+  auto input_tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  size_t data_size = input_tensor->DataSize();
+  auto tensor_type = input_tensor->Dtype();
+  if (tensor_type->type_id() == kNumberTypeFloat32) {
+    auto data_c = reinterpret_cast<float *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(data_c);
+    for (size_t i = 0; i < data_size; i++) {
+      tensor_value.push_back(static_cast<double>(*data_c));
+      ++data_c;
+    }
+  } else if (tensor_type->type_id() == kNumberTypeFloat64) {
+    auto tensor_data = reinterpret_cast<double *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value = {tensor_data, tensor_data + data_size};
+  } else {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+                            << "] must be a Tensor[Float32] or Tensor[Float64], but got " << value->ToString();
+  }
+  return tensor_value;
+}
+
+std::vector<double> CheckAndConvertUtils::CheckListOrTupleFloat(const std::string &arg_name, const ValuePtr &attr,
+                                                                const std::string &prim_name) {
+  std::vector<double> result;
+  bool is_correct = false;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueTuple>() || attr->isa<ValueList>()) {
+    auto attr_vec =
+      attr->isa<ValueTuple>() ? attr->cast<ValueTuplePtr>()->value() : attr->cast<ValueListPtr>()->value();
+    if (attr_vec.empty()) {
+      return result;
+    }
+    is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
+      MS_EXCEPTION_IF_NULL(e);
+      if (e->isa<FP32Imm>()) {
+        (void)result.emplace_back(static_cast<double>(GetValue<float>(e)));
+        return true;
+      } else if (e->isa<FP64Imm>()) {
+        (void)result.emplace_back(GetValue<double>(e));
+        return true;
+      }
+      return false;
+    });
+  }
+  if (!is_correct) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                            << " must be one of ['tuple', 'list'] with all Float elements, but got "
+                            << attr->ToString();
+  }
+  return result;
+}
+
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result;

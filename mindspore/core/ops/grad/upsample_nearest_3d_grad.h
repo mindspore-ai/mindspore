@@ -31,15 +31,10 @@ constexpr auto kNameUpsampleNearest3DGrad = "UpsampleNearest3DGrad";
 class MIND_API UpsampleNearest3DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UpsampleNearest3DGrad);
-  UpsampleNearest3DGrad() : BaseOperator(kNameUpsampleNearest3DGrad) { InitIOName({"dy"}, {"dx"}); }
-  std::vector<int64_t> get_out_spatial_size() const;
-  std::vector<int64_t> get_grad_spatial_size() const;
-  std::vector<float> get_scale_factors() const;
+  UpsampleNearest3DGrad() : BaseOperator(kNameUpsampleNearest3DGrad) {
+    InitIOName({"dy", "input_size", "output_size", "scales"}, {"dx"});
+  }
 };
-
-MIND_API abstract::AbstractBasePtr UpsampleNearest3DGradInfer(const abstract::AnalysisEnginePtr &,
-                                                              const PrimitivePtr &primitive,
-                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimUpsampleNearest3DGrad = std::shared_ptr<UpsampleNearest3DGrad>;
 }  // namespace ops
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
 
 #include <dirent.h>
+#include <sstream>
 #include <limits>
 #include <functional>
 #include <memory>
@@ -25,7 +26,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <sstream>
 #include <algorithm>
 #include <vector>
 #include <utility>
@@ -229,6 +229,16 @@ inline T ComputeScales(const double &scale, const size_t &input_size, const size
   return 0;
 }
 
+template <typename T>
+inline T ComputeScalesBackward(const double scale, const int64_t src_size, const int64_t dst_size) {
+  if (scale > 0.) {
+    return static_cast<T>(scale);
+  } else if (dst_size > 0) {
+    return static_cast<T>(src_size) / dst_size;
+  }
+  return 0;
+}
+
 inline size_t NearestNeighborSourceIndex(const float &scale, const size_t &dst_index, const size_t &input_size) {
   size_t src_index = std::min(static_cast<size_t>(floorf(dst_index * scale)), input_size - 1);
   return src_index;
@@ -271,6 +281,29 @@ inline T AreaPixelComputeSourceIndex(T scale, int64_t dst_index, bool align_corn
     T src_idx = scale * (dst_index + 0.5) - 0.5;
     return src_idx < zero ? zero : src_idx;
   }
+}
+
+template <typename T>
+inline T DataIndexInit(const T *offset) {
+  return *offset;
+}
+
+template <typename T, typename... Args>
+inline T DataIndexInit(T *offset, T *x, const T *X, Args &&... args) {
+  auto off = DataIndexInit(offset, std::forward<Args>(args)...);
+  *x = off % *X;
+  return off / *X;
+}
+
+inline bool DataIndexStep() { return true; }
+
+template <typename T, typename... Args>
+inline bool DataIndexStep(T *x, const T *X, Args &&... args) {
+  if (DataIndexStep(std::forward<Args>(args)...)) {
+    *x = ((*x + 1) == *X) ? 0 : (*x + 1);
+    return *x == 0;
+  }
+  return false;
 }
 
 template <typename T>
