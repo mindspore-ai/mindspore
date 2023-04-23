@@ -1095,12 +1095,28 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
 std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                                   std::vector<KernelGraphPtr> *all_out_graph,
                                                                   DeviceType device_target) {
+  auto graph = NewKernelGraph();
+  front_backend_graph_map_[func_graph.get()] = graph;
+  ConstructKernelGraphInner(func_graph, all_out_graph, device_target, graph);
+  return graph;
+}
+
+std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructPackKernelGraph(const FuncGraphPtr &func_graph,
+                                                                      std::vector<KernelGraphPtr> *all_out_graph,
+                                                                      DeviceType device_target) {
+  auto graph = std::make_shared<KernelGraph>();
+  graph->set_graph_id(graph_sum_++);
+  ConstructKernelGraphInner(func_graph, all_out_graph, device_target, graph);
+  return graph;
+}
+
+void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
+                                               std::vector<KernelGraphPtr> *all_out_graph, DeviceType device_target,
+                                               const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
-  auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
-  front_backend_graph_map_[func_graph.get()] = graph;
   if (func_graph->has_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE)) {
     MS_LOG(INFO) << "Need backend inline: " << graph->graph_id();
     graph->set_need_inline(true);
@@ -1162,7 +1178,6 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
 
   all_out_graph->push_back(graph);
   graph->set_parameters(graph->inputs());
-  return graph;
 }
 
 void KernelGraphMgr::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) const {

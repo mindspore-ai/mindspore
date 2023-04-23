@@ -40,6 +40,7 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/expander/pack/packfunc.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -2024,6 +2025,7 @@ void ClearSingleton() {
   DumpJsonParser::Finalize();
 #endif
   CommManager::Clear();
+  expander::ClearAllCache();
   MS_LOG(INFO) << "End clear singleton.";
 }
 

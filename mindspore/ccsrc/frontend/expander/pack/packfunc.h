@@ -24,6 +24,7 @@ namespace expander {
 constexpr auto kPackFunc = "PackFunc";
 
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list);
+void ClearAllCache();
 }  // namespace expander
 }  // namespace mindspore
 

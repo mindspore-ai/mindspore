@@ -49,7 +49,7 @@ class PackExpander {
   ~PackExpander() = default;
 
   py::object BeginGraph(const abstract::AbstractBasePtrList &inputs);
-  FuncGraphPtr EndGraph(const py::object &output) const;
+  FuncGraphPtr EndGraph(const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
   py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
