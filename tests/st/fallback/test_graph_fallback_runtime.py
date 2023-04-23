@@ -1280,3 +1280,66 @@ def test_dynamic_shape_tensor():
     x = Tensor(dtype=ms.int32, input_data=[2, 2])
     out = net(x)
     return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_raise_error_with_dynamic_length_sequence():
+    """
+    Feature: Fallback runtime.
+    Description: Pyexecute node can not be used as multitype function graph.
+    Expectation: No error.
+    """
+    def _check_dim_shape_valid(data, tensor_index):
+        if data.shape[:tensor_index.ndim] != tensor_index.shape[:]:
+            raise IndexError(f"The shape of index {tensor_index.shape} does not match the shape "
+                             f"of the indexed data {data.shape}")
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            idx1 = Tensor([[True, False], [False, True], [True, True]])
+            idx2 = Tensor([True, True, True, False])
+            indices = idx1.nonzero()
+            x1 = ops.gather_nd(x, indices)
+            _check_dim_shape_valid(x1, idx2)
+            return x1
+
+    net = InnerNet()
+    input_x = Tensor(np.arange(6).reshape(3, 2).astype(np.float32))
+    ret = net(input_x)
+    assert np.allclose(ret.asnumpy(), np.array([0.0, 3.0, 4.0, 5.0]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
+    """
+    Feature: Fallback runtime.
+    Description: Pyexecute node can not be used as multitype function graph.
+    Expectation: No error.
+    """
+    def _check_dim_shape_valid(data, tensor_index):
+        if data.shape[:tensor_index.ndim] == tensor_index.shape[:]:
+            raise IndexError(f"The shape of index {tensor_index.shape} does not match the shape "
+                             f"of the indexed data {data.shape}")
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            idx1 = Tensor([[True, False], [False, True], [True, True]])
+            idx2 = Tensor([True, True, True, False])
+            indices = idx1.nonzero()
+            x1 = ops.gather_nd(x, indices)
+            _check_dim_shape_valid(x1, idx2)
+            return x1
+
+    with pytest.raises(IndexError) as err:
+        net = InnerNet()
+        input_x = Tensor(np.arange(6).reshape(3, 2).astype(np.float32))
+        net(input_x)
+    assert "does not match the shape" in str(err.value)
