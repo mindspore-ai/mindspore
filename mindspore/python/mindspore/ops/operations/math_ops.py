@@ -7062,7 +7062,7 @@ class LuUnpack(Primitive):
           where :math:`*` is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
           float32, float64. The dims of LU_data must be equal to or greater than 2.
         - **LU_pivots** (Tensor) - The packed LU factorization pivots. The shape of a tensor is :math:`(*, min(M, N))`,
-          where * is batch dimensions, with data type int8, uint8, int16, int32, int64.
+          where :math:`*` is batch dimensions, with data type int8, uint8, int16, int32, int64.
 
     Outputs:
         - **pivots** (Tensor) - The permutation matrix of LU factorization. The shape is :math:`(*, M, M)`,
