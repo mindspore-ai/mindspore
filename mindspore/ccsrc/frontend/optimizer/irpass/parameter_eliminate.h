@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,65 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
   std::vector<CNodePtr> caller_cnodes = {};
+  size_t fg_arg_nums = fg->parameters().size();
   // Find all caller of fg.
+  auto manager = fg->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
   for (const auto &it : fg_caller_and_indexes) {
     const auto &fg_caller_and_index = it.first;
     auto caller_cnode = fg_caller_and_index->first;
     auto index = fg_caller_and_index->second;
     // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.Because
     // in this situation ValueNode<FuncGraph> is a input of Return or of MakeTuple.
-    if (index != 0) {
+    MS_LOG(DEBUG) << "index:" << index;
+    // Process has partial func_graph with Primitive
+    // %1 = Partial(func_graph, arg1, arg2, ...)
+    if (index == 1 && IsPrimitiveCNode(caller_cnode, prim::kPrimPartial)) {
+      size_t arg_start_index = 2;
+      size_t partial_arg_num = caller_cnode->cast<CNodePtr>()->inputs().size() - arg_start_index;
+      auto iter = node_users.find(caller_cnode);
+      for (auto &user : iter->second) {
+        auto &user_node = user.first;
+        auto user_cnode = user_node->cast<CNodePtr>();
+        // check user of partial (switch), the numbers of args should be 0.
+        if (IsPrimitiveCNode(user_cnode, prim::kPrimSwitch)) {
+          // call switch()
+          auto call_switchs = node_users[user_cnode];
+          for (auto call_switch_iter : call_switchs) {
+            auto call_switch_cnode = call_switch_iter.first->cast<CNodePtr>();
+            if (call_switch_cnode->inputs().size() > 1) {
+              // means call switch(arg1, ...) has args.
+              MS_LOG(EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
+                                   "The call_switch_cnode is:"
+                                << call_switch_cnode->DebugString();
+            }
+          }
+          if (std::find(caller_cnodes.begin(), caller_cnodes.end(), caller_cnode) == caller_cnodes.end()) {
+            (void)caller_cnodes.emplace_back(caller_cnode->cast<CNodePtr>());
+          }
+          continue;
+        } else if (IsPrimitiveCNode(user_cnode, prim::kPrimMakeTuple)) {
+          continue;
+        }
+        size_t arg_num_in_user = user_cnode->inputs().size();
+        if (user_cnode->input(0) == caller_cnode) {
+          arg_num_in_user = arg_num_in_user - 1;
+        } else if (arg_num_in_user > 1 && user_cnode->input(1) == caller_cnode) {
+          arg_num_in_user = arg_num_in_user - arg_start_index;
+        }
+        if (fg_arg_nums != partial_arg_num + arg_num_in_user) {
+          MS_LOG(EXCEPTION) << "The number of formal parameters(" << fg_arg_nums
+                            << ") does not match the number of actual parameters(" << partial_arg_num + arg_num_in_user
+                            << "). The current func_graph is:" << fg->ToString();
+        }
+      }
+    } else if (index != 0) {
       return {};
+    } else {
+      // Process call func_graph: %1 = func_graph(arg1, arg2, ...)
+      (void)caller_cnodes.emplace_back(caller_cnode->cast<CNodePtr>());
     }
-    (void)caller_cnodes.emplace_back(caller_cnode->cast<CNodePtr>());
   }
   return caller_cnodes;
 }
@@ -162,15 +210,20 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
 // Adjust the call arguments of func graph whose parameter's eliminated.
 static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &caller,
                                     const mindspore::HashSet<size_t> &unused_parameter_indexes) {
+  size_t arg_start_index = 1;
   MS_EXCEPTION_IF_NULL(caller->func_graph());
   const FuncGraphManagerPtr &manager = caller->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::vector<AnfNodePtr> new_args = {caller->input(0)};
-  for (size_t i = 0; i < caller->size() - 1; i++) {
+  if (IsPrimitiveCNode(caller, prim::kPrimPartial)) {
+    (void)new_args.emplace_back(caller->input(1));
+    arg_start_index = arg_start_index + 1;
+  }
+  for (size_t i = 0; i < caller->size() - arg_start_index; i++) {
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
-      (void)new_args.emplace_back(caller->input(i + 1));
+      (void)new_args.emplace_back(caller->input(i + arg_start_index));
     } else {
-      MS_LOG(DEBUG) << "Erase arg:" << caller->input(i + 1)->DebugString() << ",index:" << i;
+      MS_LOG(DEBUG) << "Erase arg:" << caller->input(i + arg_start_index)->DebugString();
     }
   }
   // Remove any Args which may be packed into VarArgs if VarArgs is not used in called FuncGraph;
@@ -180,7 +233,7 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
   //       default value.
   if (!called->has_vararg() &&
       caller->size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
-    size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + 1;
+    size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + arg_start_index;
     size_t end_offset = called->fv_param_count();
     (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
   }
