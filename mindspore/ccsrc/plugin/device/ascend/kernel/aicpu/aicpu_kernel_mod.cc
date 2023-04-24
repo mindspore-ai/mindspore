@@ -424,12 +424,9 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     }
   }
 
-  if (unknow_type_ != ::ge::UnknowShapeOpType::DEPEND_COMPUTE ||
-      common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
-    for (uint32_t i = 0; i < output_num; ++i) {
-      if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
-        MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
-      }
+  for (uint32_t i = 0; i < output_num; ++i) {
+    if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
+      MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
     }
   }
 
@@ -486,6 +483,10 @@ void AicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {
     std::vector<int64_t> shape;
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
+    if (std::any_of(shape.begin(), shape.end(), [](int64_t x) { return x < 0; })) {
+      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << ": output[" << i << "] shape = " << ShapeVectorToStr(shape)
+                        << " contains negative value.";
+    }
     (void)type_ids.emplace_back(type_id);
     (void)shapes.emplace_back(shape);
   }
