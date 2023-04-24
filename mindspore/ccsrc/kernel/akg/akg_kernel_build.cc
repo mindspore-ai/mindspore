@@ -92,7 +92,11 @@ void AkgKernelPool::LockMng::Unlock() const noexcept {
   MS_LOG(INFO) << "AkgKernelBuild successfully release lock called at " << calling_position_;
 }
 
-std::string AkgKernelPool::GetCurrentPath() const {
+std::string AkgKernelPool::GetTmpKeyPath() const {
+  auto compile_cache = GetCompilerCachePath();
+  if (!compile_cache.empty()) {
+    return compile_cache;
+  }
   char cwd[PATH_MAX];
   char *ret = getcwd(cwd, sizeof(cwd));
   if (ret == nullptr) {
@@ -179,14 +183,15 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
 }
 
 int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
-  auto cp = GetCurrentPath();
+  auto cp = GetTmpKeyPath();
   if (cp.empty()) {
     return -1;
   }
 
-  fd_ = open(kKeyName_, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+  auto file_name = cp + "/" + std::string(kKeyName_);
+  fd_ = open(file_name.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if (fd_ == -1) {
-    MS_LOG(ERROR) << "open file <" << kKeyName_ << "> failed, error msg:" << GetErrorInfo();
+    MS_LOG(ERROR) << "open file <" << file_name << "> failed, error msg:" << GetErrorInfo();
     return -1;
   }
 
