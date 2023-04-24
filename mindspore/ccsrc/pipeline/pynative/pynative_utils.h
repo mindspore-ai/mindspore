@@ -68,7 +68,7 @@ struct DataConvert {
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
   static ValuePtr BaseRefToValue(const BaseRef &value);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
-  static void FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
+  static void FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
