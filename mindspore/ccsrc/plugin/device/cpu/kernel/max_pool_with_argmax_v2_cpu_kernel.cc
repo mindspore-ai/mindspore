@@ -138,14 +138,18 @@ void MaxPoolWithArgmaxV2CpuKernelMod::MaxPoolWithArgmaxV2SingleCompute(DATA_T *i
   int start_w = pos_w * sW - pW;
   int end_h = std::min<int>(start_h + (kH - 1) * dH + 1, iH);
   int end_w = std::min<int>(start_w + (kW - 1) * dW + 1, iW);
-  start_h = std::max<int>(start_h, 0);
-  start_w = std::max<int>(start_w, 0);
+  if (start_h < 0) {
+    start_h += ceil(-start_h / static_cast<double>(dH)) * dH;
+  }
+  if (start_w < 0) {
+    start_w += ceil(-start_w / static_cast<double>(dW)) * dW;
+  }
   INDICES_T input_start = pos_n * in_channel * iH * iW;
   INDICES_T stride = pos_c * iH * iW;
   INDICES_T max_idx = stride + start_h * iW + start_w;
   DATA_T max_data = input[input_start + max_idx];
-  for (int cur_h = start_h; cur_h < end_h; cur_h++) {
-    for (int cur_w = start_w; cur_w < end_w; cur_w++) {
+  for (int cur_h = start_h; cur_h < end_h; cur_h += dH) {
+    for (int cur_w = start_w; cur_w < end_w; cur_w += dW) {
       INDICES_T input_idx = stride + cur_h * iW + cur_w;
       DATA_T input_data = input[input_start + input_idx];
       if (input_data > max_data) {

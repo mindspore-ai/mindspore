@@ -10662,8 +10662,8 @@ class MaxPoolWithArgmaxV2(Primitive):
             represent height and width of movement respectively. Default: ``None`` , meaning that
             `strides = kernel_size`.
         pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
-            strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Default: ``'(1, 1)'`` .
+            strides, or a tuple of two int numbers that represent depth, height and width of movement respectively.
+        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``'(1, 1)'`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
         argmax_type (mindspore.dtype) : The dtype for argmax. Default: ``mstype.int64`` . [Disabled in Ascend.]
 
@@ -10680,11 +10680,11 @@ class MaxPoolWithArgmaxV2(Primitive):
 
           .. math::
               H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{pads[0]} - \text{dilation[0]}
-               \times (\text{kernel\_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
+               \times (\text{kernel_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
 
           .. math::
               W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{pads[1]} - \text{dilation[1]}
-               \times (\text{kernel\_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
+               \times (\text{kernel_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
 
         - **argmax** (Tensor) - Index corresponding to the maximum value.
           Data type is int32 or int64 in GPU and CPU, is uint16 in Ascend.
