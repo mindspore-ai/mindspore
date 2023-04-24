@@ -172,6 +172,8 @@ constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
 constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
+constexpr auto kDeformableOffsets = "DeformableOffsets";
+constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -252,7 +254,9 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReservoirReplayBufferSample,
                                               kReservoirReplayBufferDestroy,
                                               kGatherDGradV2,
-                                              kRandomShuffle};
+                                              kRandomShuffle,
+                                              kDeformableOffsets,
+                                              kDeformableOffsetsGrad};
 const std::set<std::string> kDynamicInputOps{kPrint,
                                              kPack,
                                              kMeshgrid,
@@ -295,7 +299,9 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kTensorScatterElements, "ScatterElements"},
   {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
-  {kHSigmoidGrad, "HardSigmoidGrad"}};
+  {kHSigmoidGrad, "HardSigmoidGrad"},
+  {kDeformableOffsets, "DeformableOffsets"},
+  {kDeformableOffsetsGrad, "DeformableOffsetsGrad"}};
 
 class AicpuOpUtil {
  public:

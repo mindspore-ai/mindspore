@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "./deformable_offsets.h"
-#include <memory>
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/deformable_offsets_kernels.h"
 #include <Eigen/Dense>
+#include <memory>
 #include <map>
 #include <functional>
 #include <thread>
-#include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
-#include "utils/kernel_util.h"
+#include "aicpu_sharder/aicpu_sharder.h"
 
 namespace aicpu {
 namespace {
-const char *kDeformableOffsets = "DeformableOffsets";
 constexpr auto kStrides = "strides";
 constexpr auto kPads = "pads";
 constexpr auto kSize = "ksize";
@@ -36,7 +33,7 @@ constexpr size_t kInputsSize = 2;
 constexpr size_t kOutputsSize = 1;
 constexpr size_t kStridesSize = 4;
 constexpr size_t kPadsSize = 4;
-constexpr size_t kKernelSizeSize = 2;
+constexpr size_t kKernelSize = 2;
 constexpr size_t kKernelSizeHIndex = 0;
 constexpr size_t kKernelSizeWIndex = 1;
 constexpr size_t kDilationsSize = 4;
@@ -106,72 +103,89 @@ T DeformableBilinear(const T *input, T x, T y, int64_t width, int64_t height) {
 }
 }  // namespace
 
-uint32_t DeformableOffsetsKernel::ParseAttrs(const CpuKernelContext &ctx) {
+uint32_t DeformableOffsetsKernel::ParseAttrs() {
   // Check args.
   n_axis_ = kIndex0;
   c_axis_ = kIndex1;
   h_axis_ = kIndex2;
   w_axis_ = kIndex3;
-  strides_ = ctx.GetAttr(kStrides)->GetListInt();
-  if (strides_.size() != kStridesSize || strides_[n_axis_] != 1 || strides_[c_axis_] != 1) {
-    KERNEL_LOG_ERROR(
-      "The strides should be a vector with size %zu and the values according to N and C dimensions must "
+  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
+
+  auto strides = attrs[kStrides].array();
+  if (strides.i_size() != kStridesSize || strides.i(n_axis_) != 1 || strides.i(c_axis_) != 1) {
+    AICPU_LOGE(
+      "For kernel %s, the strides should be a vector with size %zu and the values according to N and C dimensions must "
       "be set to 1.",
-      kStridesSize);
-    return KERNEL_STATUS_PARAM_INVALID;
+      kernel_name_, kStridesSize);
+    return kAicpuKernelStateInvalid;
   }
 
-  pads_ = ctx.GetAttr(kPads)->GetListInt();
-  if (pads_.size() != kPadsSize) {
-    KERNEL_LOG_ERROR("The 'pads' should be a vector with size %zu.", kPadsSize);
-    return KERNEL_STATUS_PARAM_INVALID;
+  auto pads = attrs[kPads].array();
+  if (pads.i_size() != kPadsSize) {
+    AICPU_LOGE("For kernel %s, the 'pads' should be a vector with size %zu.", kernel_name_, kPadsSize);
+    return kAicpuKernelStateInvalid;
   }
 
-  kernel_size_ = ctx.GetAttr(kSize)->GetListInt();
-  if (kernel_size_.size() != kKernelSizeSize) {
-    KERNEL_LOG_ERROR("The 'kernel_size' should be a vector with size %zu.", kKernelSizeSize);
-    return KERNEL_STATUS_PARAM_INVALID;
+  auto kernel_size = attrs[kSize].array();
+  if (kernel_size.i_size() != kKernelSize) {
+    AICPU_LOGE("For kernel %s, the 'kernel_size' should be a vector with size %zu.", kernel_name_, kKernelSize);
+    return kAicpuKernelStateInvalid;
   }
 
-  dilations_ = ctx.GetAttr(kDilations)->GetListInt();
-  if (dilations_.size() != kDilationsSize || dilations_[n_axis_] != 1 || dilations_[c_axis_] != 1) {
-    KERNEL_LOG_ERROR(
-      "The dilations should be a vector with size %zu and the values according to N and C dimensions "
+  auto dilations = attrs[kDilations].array();
+  if (dilations.i_size() != kDilationsSize || dilations.i(n_axis_) != 1 || dilations.i(c_axis_) != 1) {
+    AICPU_LOGE(
+      "For kernel %s, the dilations should be a vector with size %zu and the values according to N and C dimensions "
       "must be set to 1.",
-      kStridesSize);
-    return KERNEL_STATUS_PARAM_INVALID;
+      kernel_name_, kStridesSize);
+    return kAicpuKernelStateInvalid;
   }
 
-  deformable_groups_ = ctx.GetAttr(kDeformableGroups)->GetInt();
+  deformable_groups_ = attrs[kDeformableGroups].i();
   if (deformable_groups_ <= 0) {
-    KERNEL_LOG_ERROR("For kernel %s, the deformable_groups should be greater than 0.");
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  modulated_ = ctx.GetAttr(kModulated)->GetBool();
-  if (!modulated_) {
-    AICPU_LOGE("The value of 'modulated' only support to be set to True.");
-    return KERNEL_STATUS_PARAM_INVALID;
+    AICPU_LOGE("For kernel %s, the deformable_groups should be greater than 0", kernel_name_);
+    return kAicpuKernelStateInvalid;
   }
 
-  return KERNEL_STATUS_OK;
+  for (int32_t i = 0; i < strides.i_size(); i++) {
+    strides_.emplace_back(strides.i(i));
+  }
+
+  for (int32_t i = 0; i < pads.i_size(); i++) {
+    pads_.emplace_back(pads.i(i));
+  }
+
+  for (int32_t i = 0; i < kernel_size.i_size(); i++) {
+    kernel_size_.emplace_back(kernel_size.i(i));
+  }
+
+  for (int32_t i = 0; i < dilations.i_size(); i++) {
+    dilations_.emplace_back(dilations.i(i));
+  }
+
+  return kAicpuKernelStateSucess;
 }
 
-uint32_t DeformableOffsetsKernel::SetDims(const CpuKernelContext &ctx) {
-  auto inputs_shape = ctx.Input(kIndex0)->GetTensorShape();
-  if (inputs_shape->GetDims() != kXShapeSize) {
-    KERNEL_LOG_ERROR("The shape size of input 'x' should be %zu, but got %zu ", kXShapeSize, inputs_shape->GetDims());
-    return KERNEL_STATUS_PARAM_INVALID;
+uint32_t DeformableOffsetsKernel::SetDims() {
+  auto inputs_shape = node_def_.inputs(kIndex0).tensor_shape();
+  if (inputs_shape.dim_size() != kXShapeSize) {
+    AICPU_LOGE("For %s, the shape size of input 'x' should be %zu, but got %zu ", kernel_name_, kXShapeSize,
+               inputs_shape.dim_size());
+    return kAicpuKernelStateInvalid;
   }
 
-  auto outputs_shape = ctx.Output(kIndex0)->GetTensorShape();
-  if (outputs_shape->GetDims() != kOutputShapeSize) {
-    KERNEL_LOG_ERROR("The shape size of output 'y' should be %zu, but got %zu ", kOutputShapeSize,
-                     outputs_shape->GetDims());
-    return KERNEL_STATUS_PARAM_INVALID;
+  auto outputs_shape = node_def_.outputs(kIndex0).tensor_shape();
+  if (outputs_shape.dim_size() != kOutputShapeSize) {
+    AICPU_LOGE("For %s, the shape size of output 'y' should be %zu, but got %zu ", kernel_name_, kOutputShapeSize,
+               outputs_shape.dim_size());
+    return kAicpuKernelStateInvalid;
   }
-  ShapeVector x_shape = inputs_shape->GetDimSizes();
-  ShapeVector y_shape = outputs_shape->GetDimSizes();
-
+  ShapeVector x_shape;
+  ShapeVector y_shape;
+  for (size_t i = 0; i < kXShapeSize; i++) {
+    x_shape.emplace_back(inputs_shape.dim(i).size());
+    y_shape.emplace_back(outputs_shape.dim(i).size());
+  }
   n_ = x_shape[n_axis_];
   c_ = x_shape[c_axis_];
   input_h_ = x_shape[h_axis_];
@@ -179,34 +193,34 @@ uint32_t DeformableOffsetsKernel::SetDims(const CpuKernelContext &ctx) {
   output_h_ = y_shape[h_axis_];
   output_w_ = y_shape[w_axis_];
   position_grid_size_ = output_h_ * output_w_;
-  index_type_ = ctx.Input(kIndex0)->GetDataType();
-  workspace_size_list_.emplace_back(sizeof(int64_t) * static_cast<size_t>(position_grid_size_) * kKernelSizeSize);
-  return KERNEL_STATUS_OK;
+  index_type_ = static_cast<aicpuops::DataType>(node_def_.inputs(kIndex0).tensor_type());
+  workspace_size_list_.emplace_back(sizeof(int64_t) * LongToSize(position_grid_size_) * kKernelSize);
+  return kAicpuKernelStateSucess;
 }
 
-uint32_t DeformableOffsetsKernel::ParseKernelParam(const CpuKernelContext &ctx) {
-  auto input_size = ctx.GetInputsSize();
-  auto output_size = ctx.GetOutputsSize();
+uint32_t DeformableOffsetsKernel::ParseKernelParam() {
+  auto input_size = node_def_.inputs_size();
+  auto output_size = node_def_.outputs_size();
   if (input_size != kInputsSize || output_size != kOutputsSize) {
-    KERNEL_LOG_ERROR("It should get %zu inputs and %zu outputs, but got %zu input and %zu outputs.", kInputsSize,
-                     kOutputsSize, input_size, output_size);
-    return KERNEL_STATUS_PARAM_INVALID;
+    AICPU_LOGE("For %s, it should get %zu inputs and %zu outputs, but got %zu input and %zu outputs.", kernel_name_,
+               kInputsSize, kOutputsSize, input_size, output_size);
+    return kAicpuKernelStateInvalid;
   }
-  if (ParseAttrs(ctx) != KERNEL_STATUS_OK) {
-    return KERNEL_STATUS_PARAM_INVALID;
+  if (ParseAttrs() != kAicpuKernelStateSucess) {
+    return kAicpuKernelStateInvalid;
   }
 
-  if (SetDims(ctx) != KERNEL_STATUS_OK) {
-    return KERNEL_STATUS_PARAM_INVALID;
+  if (SetDims() != kAicpuKernelStateSucess) {
+    return kAicpuKernelStateInvalid;
   }
-  return KERNEL_STATUS_OK;
+  return kAicpuKernelStateSucess;
 }
 
 template <typename T>
-uint32_t DeformableOffsetsKernel::DoCompute(const CpuKernelContext &ctx, const int64_t *position_grid_addr) {
-  auto *input_addr = reinterpret_cast<T *>(ctx.Input(kIndex0)->GetData());
-  auto *offsets_addr = reinterpret_cast<T *>(ctx.Input(kIndex1)->GetData());
-  auto *output_addr = reinterpret_cast<T *>(ctx.Output(kIndex0)->GetData());
+uint32_t DeformableOffsetsKernel::DoCompute(const int64_t *position_grid) {
+  auto *input_addr = reinterpret_cast<T *>(io_addrs_[kIndex0]);
+  auto *offsets_addr = reinterpret_cast<T *>(io_addrs_[kIndex1]);
+  auto *output_addr = reinterpret_cast<T *>(io_addrs_[kIndex2]);
   int64_t pixel_h = output_h_ / kernel_size_[kKernelSizeHIndex];
   int64_t pixel_w = output_w_ / kernel_size_[kKernelSizeWIndex];
   int64_t output_c_dim = output_h_ * output_w_;
@@ -216,20 +230,20 @@ uint32_t DeformableOffsetsKernel::DoCompute(const CpuKernelContext &ctx, const i
   int64_t offset_kh_dim = offset_kw_dim * kernel_size_[kKernelSizeWIndex];
   int64_t offset_group_dim = offset_kh_dim * kernel_size_[kKernelSizeHIndex];
   int64_t offset_mask_dim = offset_group_dim * deformable_groups_;
-  int64_t offset_n_dim = offset_mask_dim * static_cast<int64_t>(kOffsetsSize);
+  int64_t offset_n_dim = offset_mask_dim * SizeToLong(kOffsetsSize);
   int64_t input_c_dim = input_h_ * input_w_;
   int64_t input_n_dim = input_c_dim * c_;
 
-  auto task = [this, &input_addr, &offsets_addr, &output_addr, &position_grid_addr, &pixel_w, &output_c_dim,
-               &output_n_dim, &c_size_per_dfm_group, &offset_kw_dim, &offset_kh_dim, &offset_group_dim,
-               &offset_mask_dim, &offset_n_dim, &input_c_dim, &input_n_dim](size_t start, size_t end) {
+  auto task = [this, &input_addr, &offsets_addr, &output_addr, &position_grid, &pixel_w, &output_c_dim, &output_n_dim,
+               &c_size_per_dfm_group, &offset_kw_dim, &offset_kh_dim, &offset_group_dim, &offset_mask_dim,
+               &offset_n_dim, &input_c_dim, &input_n_dim](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto long_i = static_cast<int64_t>(i);
+      auto long_i = SizeToLong(i);
       // Get input position
       int64_t hw_idx = long_i % output_c_dim;
       int64_t position_grid_idx = hw_idx * 2;
-      int64_t input_x = position_grid_addr[position_grid_idx];
-      int64_t input_y = position_grid_addr[position_grid_idx + 1];
+      int64_t input_x = position_grid[position_grid_idx];
+      int64_t input_y = position_grid[position_grid_idx + 1];
       // Get offsets
       int64_t n_index = long_i / output_n_dim;
       int64_t c_index = long_i / output_c_dim % c_;
@@ -257,15 +271,14 @@ uint32_t DeformableOffsetsKernel::DoCompute(const CpuKernelContext &ctx, const i
   };
   int64_t num_kernels = n_ * output_n_dim;
   int64_t per_unit_size = num_kernels / std::thread::hardware_concurrency();
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task),
-                      "DeformableOffset Compute failed.");
-  return KERNEL_STATUS_OK;
+  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  return kAicpuKernelStateSucess;
 }
 
-uint32_t DeformableOffsetsKernel::GenPositionGrid(const CpuKernelContext &ctx, int64_t *position_grid) {
+uint32_t DeformableOffsetsKernel::GenPositionGrid(int64_t *position_grid) {
   auto task = [this, &position_grid](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      auto long_i = static_cast<int64_t>(i);
+      auto long_i = SizeToLong(i);
       int64_t y = long_i / output_w_;
       int64_t x = long_i % output_w_;
       int64_t pixel_y = y / kernel_size_[kKernelSizeHIndex];
@@ -280,38 +293,42 @@ uint32_t DeformableOffsetsKernel::GenPositionGrid(const CpuKernelContext &ctx, i
 
   int64_t num_kernels = output_h_ * output_w_;
   int64_t per_unit_size = num_kernels / std::thread::hardware_concurrency();
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task),
-                      "DeformableOffset Compute failed.");
-  return KERNEL_STATUS_OK;
+  ParallelFor(UlongToLong(num_kernels), per_unit_size, task);
+  return kAicpuKernelStateSucess;
 }
 
-uint32_t DeformableOffsetsKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(ParseKernelParam(ctx), "DeformableOffsets normal check failed.");
+uint32_t DeformableOffsetsKernel::DoCompute() {
   auto *position_grid_addr = reinterpret_cast<int64_t *>(malloc(workspace_size_list_[0]));
   if (position_grid_addr == nullptr) {
-    KERNEL_LOG_ERROR("Malloc memory failed!");
-    return KERNEL_STATUS_PARAM_INVALID;
+    AICPU_LOGE("Malloc memory failed!");
+    return kAicpuKernelStateInternalError;
   }
-  auto ret = GenPositionGrid(ctx, position_grid_addr);
-  if (ret != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Generate position grid failed.");
+  auto ret = GenPositionGrid(position_grid_addr);
+  if (ret != kAicpuKernelStateSucess) {
+    AICPU_LOGE("Generate position grid failed.");
     free(position_grid_addr);
-    return KERNEL_STATUS_INNER_ERROR;
+    return kAicpuKernelStateFailed;
   }
   switch (index_type_) {
-    case DT_FLOAT:
-      ret = DoCompute<float>(ctx, position_grid_addr);
+    case aicpuops::DataType::MS_FLOAT32:
+      ret = DoCompute<float>(position_grid_addr);
       break;
-    case DT_FLOAT16:
-      ret = DoCompute<Eigen::half>(ctx, position_grid_addr);
+    case aicpuops::DataType::MS_FLOAT16:
+      ret = DoCompute<Eigen::half>(position_grid_addr);
       break;
     default:
-      KERNEL_LOG_ERROR("Error type %s.", DTypeStr(index_type_).c_str());
+      AICPU_LOGE("Error type %s.", typeid(index_type_).name());
       free(position_grid_addr);
-      return KERNEL_STATUS_INNER_ERROR;
+      return kAicpuKernelStateFailed;
   }
   free(position_grid_addr);
   return ret;
 }
-REGISTER_CPU_KERNEL(kDeformableOffsets, DeformableOffsetsKernel);
 }  // namespace aicpu
+
+extern "C" {
+__attribute__((visibility("default"))) uint32_t DeformableOffsets(void *param) {
+  aicpu::DeformableOffsetsKernel deformable_offsets_kernel;
+  return deformable_offsets_kernel.Compute(param);
+}
+}  // namespace kernel
