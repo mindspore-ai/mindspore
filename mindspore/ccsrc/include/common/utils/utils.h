@@ -484,6 +484,7 @@ constexpr auto kLayerNormXBackpropV2OpName = "LayerNormXBackpropV2";
 constexpr auto kLcmOpName = "Lcm";
 constexpr auto kLessEqualOpName = "LessEqual";
 constexpr auto kLessOpName = "Less";
+constexpr auto kLeftShiftOpName = "LeftShift";
 constexpr auto kLinSpaceOpName = "LinSpace";
 constexpr auto kLinSpaceDOpName = "LinSpaceD";
 constexpr auto kListDiffOpName = "ListDiff";
