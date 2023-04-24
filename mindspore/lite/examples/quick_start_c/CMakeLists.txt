@@ -15,6 +15,7 @@ target_link_libraries(
         mindspore_quick_start_c
         -Wl,--whole-archive mindspore-lite -Wl,--no-whole-archive
         pthread
+        mindspore_glog
 )
 
 if(WIN32)
