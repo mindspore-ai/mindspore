@@ -26,7 +26,10 @@ namespace mindspore::lite::micro::nnacl {
 int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder::Init() failed!");
   MS_CHECK_RET_CODE(InitParameter(), "dwconvolution do InitParamter failed");
-  if (Configurator::GetInstance()->keep_original_weight()) {
+  if (data_type_ == kNumberTypeFloat32) {
+    is_weight_online_ = Configurator::GetInstance()->keep_original_weight();
+  }
+  if (is_weight_online_) {
     MS_CHECK_RET_CODE(InitWeightBiasOnline(), "dwconvolution do InitWeightBiasOnline failed");
   } else {
     MS_CHECK_RET_CODE(InitWeightBiasOffline(), "dwconvolution do InitWeightBiasOffline failed");
@@ -48,14 +51,14 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBiasOffline() {
   auto *origin_weight = reinterpret_cast<float *>(filter_tensor_->data());
   MS_CHECK_PTR(origin_weight);
   int channel = filter_tensor_->Batch();
-  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, packed_weight_size_, kOfflinePackWeight));
+  packed_weight_ = allocator_->Malloc(data_type_, packed_weight_size_, kOfflinePackWeight);
   MS_CHECK_PTR(packed_weight_);
   MS_CHECK_RET_CODE(memset_s(packed_weight_, packed_weight_size_, 0, packed_weight_size_),
                     "memset packed weight failed!");
-  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel,
-                     kDefaultTaskId, 0);
+  PackNCHWToNHWCFp32(origin_weight, reinterpret_cast<float *>(packed_weight_), 1,
+                     filter_tensor_->Height() * filter_tensor_->Width(), channel, kDefaultTaskId, 0);
 
-  bias_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, packed_bias_size_, kOfflinePackWeight));
+  bias_ = allocator_->Malloc(data_type_, packed_bias_size_, kOfflinePackWeight);
   MS_CHECK_PTR(bias_);
   MS_CHECK_RET_CODE(memset_s(bias_, packed_bias_size_, 0, packed_bias_size_), "memset bias failed!");
   // init bias
@@ -68,15 +71,15 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBiasOffline() {
 }
 
 int ConvolutionDepthwiseFP32Coder::InitWeightBiasOnline() {
-  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight));
+  packed_weight_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(packed_weight_);
-  bias_ = reinterpret_cast<float *>(allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight));
+  bias_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(bias_);
   return RET_OK;
 }
 
 void ConvolutionDepthwiseFP32Coder::InitCodeOnline(CoderContext *const context) {
-  if (!Configurator::GetInstance()->keep_original_weight()) {
+  if (!is_weight_online_) {
     return;
   }
   Collect(context,
@@ -88,7 +91,7 @@ void ConvolutionDepthwiseFP32Coder::InitCodeOnline(CoderContext *const context) 
   init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), packed_weight_size_);
   auto filter_str = allocator_->GetRuntimeAddr(filter_tensor_);
-  init_code.CodeFunction("PackNCHWToNHWCFp32", filter_str, packed_weight_, 1,
+  init_code.CodeFunction("PackNCHWToNHWCFp32", filter_str, reinterpret_cast<float *>(packed_weight_), 1,
                          filter_tensor_->Height() * filter_tensor_->Width(), filter_tensor_->Batch(), 0, 0);
   init_code.CodeBufferOffsetExpression(bias_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), packed_bias_size_);
@@ -102,10 +105,7 @@ void ConvolutionDepthwiseFP32Coder::InitCodeOnline(CoderContext *const context) 
   context->AppendInitCode(init_code.str());
 }
 
-int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
-  MS_CHECK_TRUE(conv_param_->input_channel_ == conv_param_->output_channel_,
-                "Only support input channel equals output channel.");
-  // generate code .h .c
+void ConvolutionDepthwiseFP32Coder::CollectFilesForFunc(CoderContext *const context) {
   if (target_ != kX86) {
     Collect(context, {}, {},
             {
@@ -124,6 +124,13 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
             "activation_fp32.c",
           },
           {});
+}
+
+int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
+  MS_CHECK_TRUE(conv_param_->input_channel_ == conv_param_->output_channel_,
+                "Only support input channel equals output channel.");
+  // generate code .h .c
+  CollectFilesForFunc(context);
   InitCodeOnline(context);
   nnacl::NNaclFp32Serializer code;
   // call the op function
@@ -133,7 +140,10 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
     code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
     code << "    " << param_name << ".thread_num_ = 1;\n";
   }
-  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_, bias_, "&" + param_name, kDefaultTaskId);
+  auto packed_weight_str = "(float *)" + MemoryAllocator::GetInstance()->GetRuntimeAddr(packed_weight_);
+  auto bias_str = "(float *)" + MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_);
+  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_str, bias_str, "&" + param_name,
+                    kDefaultTaskId);
   context->AppendCode(code.str());
   return RET_OK;
 }

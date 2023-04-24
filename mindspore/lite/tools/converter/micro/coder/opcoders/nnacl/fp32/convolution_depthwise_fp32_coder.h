@@ -22,7 +22,7 @@
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ConvolutionDepthwiseFP32Coder final : public Conv2DBaseCoder {
+class ConvolutionDepthwiseFP32Coder : public Conv2DBaseCoder {
  public:
   ConvolutionDepthwiseFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                 const LiteGraph::Node *node, size_t node_index, Target target)
@@ -34,14 +34,18 @@ class ConvolutionDepthwiseFP32Coder final : public Conv2DBaseCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  int InitParameter();
   int InitWeightBiasOffline();
   int InitWeightBiasOnline();
-  void InitCodeOnline(CoderContext *const context);
+  int InitParameter();
+
+ protected:
+  virtual void InitCodeOnline(CoderContext *const context);
+  virtual void CollectFilesForFunc(CoderContext *const context);
   size_t packed_weight_size_{0};
-  float *packed_weight_{nullptr};
+  void *packed_weight_{nullptr};
   size_t packed_bias_size_{0};
-  float *bias_{nullptr};
+  void *bias_{nullptr};
+  bool is_weight_online_{false};
   TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
