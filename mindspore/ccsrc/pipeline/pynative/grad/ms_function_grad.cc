@@ -350,20 +350,27 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   // As long as the ms function is in the process of dynamic shape,
   // let it run actor execution to avoid backend pass
   grad_param->is_ms_function_self_dynamic_shape = compile_info_.is_dynamic_shape_;
-
   grad_param->fg = grad_graph;
   grad_param->source_fg = ms_func_graph;
   grad_param->graph_cache_key = graph_phase_;
+  auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
+  KPynativeWithFProp(grad_executor, auto_grad_cell_ptr, grad_param);
+  top_cell->set_need_do_final_opt(true);
+  top_cell->set_has_call_graph(grad_executor->use_dynamic_shape_process());
+  top_cell->set_has_control_flow(compile_info_.is_control_flow_);
+}
+
+void MsFunction::KPynativeWithFProp(const GradExecutor *grad_executor,
+                                    const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                                    const autograd::GradParamPtr &grad_param) const {
   {
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();
   }
-  if (!top_cell->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
-    MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: ";
+  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+  if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
+    MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode";
   }
-  top_cell->set_has_call_graph(grad_executor->use_dynamic_shape_process());
-  top_cell->set_has_control_flow(compile_info_.is_control_flow_);
-  top_cell->set_need_do_final_opt(true);
 }
 
 void MsFunction::RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_run_info,

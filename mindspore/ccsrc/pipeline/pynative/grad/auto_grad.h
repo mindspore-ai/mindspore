@@ -24,6 +24,7 @@
 #include <string>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "frontend/expander/bprop/bprop.h"
 
 namespace mindspore {
 namespace pynative {
@@ -183,10 +184,9 @@ struct AdParam {
   OrderedMap<AnfNodePtr, VariableAdjointPtr> anfnode_to_variable_adjoint_;
   OrderedSet<VariableAdjointPtr> variable_adjoint_set_;
   // Record cnode's input map for tape_
-  UserType users_;
+  expander::bprop::UserMap users_;
 };
 using AdParamPtr = std::shared_ptr<AdParam>;
-
 class AutoGradCellImpl {
  public:
   AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
@@ -239,7 +239,7 @@ class AutoGradCellImpl {
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor);
   AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
-                        const ValuePtr &input_arg, const AnfNodePtr &din);
+                        const tensor::TensorPtr &input_tensor, const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const;
@@ -262,7 +262,8 @@ class AutoGradCellImpl {
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
-  void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, bool need_update = false);
+  void AddTupleGetItemUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
+  void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, UserType *user, bool need_update = false);
   void ElimateTupleGetItem();
 
   // Fbprop
