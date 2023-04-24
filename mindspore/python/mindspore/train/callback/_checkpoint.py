@@ -327,6 +327,8 @@ class CheckpointConfig:
             handle_append_info["epoch_num"] = 0
         if "step_num" in append_info:
             handle_append_info["step_num"] = 0
+        if "random_op" in append_info:
+            handle_append_info["random_op"] = 0
         dict_num = 0
         for element in append_info:
             if not isinstance(element, str) and not isinstance(element, dict):
