@@ -2206,11 +2206,11 @@ class Cell(Cell_):
         is_param_set_input = isinstance(set_input, Parameter)
         is_param_net_input = isinstance(net_input, Parameter)
         if (is_param_set_input and not is_param_net_input) or (is_param_net_input and not is_param_set_input):
-            raise ValueError(
+            raise TypeError(
                 f"For 'set_inputs' and tuple(list) in 'set_inputs', the {index + 1}th input must be the same "
                 f"as network's input, but got 'set_inputs': {type(set_input)} and network's input: {type(net_input)}.")
         if set_input.dtype != net_input.dtype:
-            raise ValueError(
+            raise TypeError(
                 f"For 'set_inputs' and tuple(list) in 'set_inputs',the dtype of {index + 1}th input must be the same "
                 f"as network's input, but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
         if net_input.dim() != 0 and set_input.dim() != net_input.dim():
