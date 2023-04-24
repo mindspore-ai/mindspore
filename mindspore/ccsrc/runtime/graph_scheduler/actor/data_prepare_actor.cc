@@ -1019,7 +1019,8 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     UpdateDynamicShape(input_node, input_tensor);
     auto input_param = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(input_param);
-    if (input_param->has_dynamic_shape()) {
+    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    if (input_param->has_dynamic_shape() || (device_address != nullptr && IsDynamic(device_address->host_shape()))) {
       MS_LOG(INFO) << "Set new size to parameter:" << input_node->DebugString();
       UpdateDataNodeDeviceAddressSize(input_node, input_tensor, AnfAlgo::GetMutableOutputAddr(input_node, 0, false));
     }
