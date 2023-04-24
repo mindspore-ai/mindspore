@@ -124,8 +124,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     and this offset will be used as a variable for the loss.
 
     Args:
-        means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        means (tuple): Means for encoding bounding boxes calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
+        stds (tuple): The standard deviations of deltas calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
 
     Inputs:
         - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be :math:`(n, 4)`.
@@ -173,9 +173,9 @@ class BoundingBoxDecode(Primitive):
 
     Args:
         max_shape (tuple): The max size limit for decoding box calculation.
-        means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
-        wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
+        means (tuple): The means of deltas calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
+        stds (tuple): The standard deviations of deltas calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
+        wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: ``0.016`` .
 
     Inputs:
         - **anchor_box** (Tensor) - Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
@@ -243,22 +243,22 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
     Args:
         seed (int, optional): Random number seed. If either `seed` or `seed2` is set to a non-zero value,
-            the seed is to the given value. Otherwise, a random seed is uesed. Default: 0.
-        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
+            the seed is to the given value. Otherwise, a random seed is uesed. Default: ``0`` .
+        seed2 (int, optional): The second seed to avoid seed collision. Default: ``0`` .
         aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
             ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
-            attribute should be positive. Default: (0.75, 1.33).
+            attribute should be positive. Default: ``(0.75, 1.33)`` .
         area_range (Union[list(float), tuple(float)], optional): The cropped area of the image must contain a
             fraction of the supplied image within this range. The value of this attribute should
-            be in range (0.0, 1.0]. Default: (0.05, 1.0).
+            be in range (0.0, 1.0]. Default: ``(0.05, 1.0)`` .
         max_attempts (int, optional): A poditive integer specifies the number of attempts that will be made to
             generate a cropped region of the image based on the given constraints. If the maximum number of
             attempts is exceeded without success, the function will return the entire original image.
-            Default: 100.
+            Default: ``100`` .
         use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
             If no bounding boxes supplied (`bounding_boxes` in shape :math:`(0, N, 4)` or :math:`(batch, 0, 4)`), and
             this attribute is set True, then assume an implicit bounding box covering the
-            whole input, else if this attribute is set False, then raise an error. Default: False.
+            whole input, else if this attribute is set False, then raise an error. Default: ``False`` .
 
     Inputs:
         - **image_size** (Tensor) - 1-D Tensor, containing [height, width, channels]. The value of this input
@@ -407,8 +407,8 @@ class IOU(Primitive):
 
     Args:
         mode (string): The mode is used to specify the calculation method,
-                       now supporting 'iou' (intersection over union) or 'iof'
-                       (intersection over foreground) mode. Default: 'iou'.
+                       now supporting ``'iou'`` (intersection over union) or ``'iof'``
+                       (intersection over foreground) mode. Default: ``'iou'`` .
 
     Inputs:
         - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
@@ -672,9 +672,9 @@ class Push(PrimitiveWithInfer):
     Pushes the inputs of the corresponding optimizer to parameter server.
 
     Args:
-        optim_type (string): The optimizer type. Default: 'ApplyMomentum'.
+        optim_type (string): The optimizer type. Default: ``'ApplyMomentum'`` .
         only_shape_indices (list): The indices of input of which only shape
-                                   will be pushed to parameter server. Default: None.
+                                   will be pushed to parameter server. Default: ``None`` .
 
     Inputs:
         - **optim_inputs** (tuple) - The inputs for this kind of optimizer.

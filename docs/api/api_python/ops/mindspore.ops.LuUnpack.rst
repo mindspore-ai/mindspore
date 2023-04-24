@@ -11,8 +11,8 @@ mindspore.ops.LuUnpack
     更多参考详见 :func:`mindspore.ops.lu_unpack`。
 
     参数：
-        - **unpack_data** (bool，可选) - 是否解压缩 `LU_data` 的标志。如果为False，则返回的L和U为None。默认值：True。
-        - **unpack_pivots** (bool，可选) - 是否将 `LU_pivots` 解压缩为置换矩阵P的标志。如果为False，则返回的P为None。默认值：True。
+        - **unpack_data** (bool，可选) - 是否解压缩 `LU_data` 的标志。如果为 ``False`` ，则返回的L和U为 ``None`` 。默认值： ``True`` 。
+        - **unpack_pivots** (bool，可选) - 是否将 `LU_pivots` 解压缩为置换矩阵P的标志。如果为 ``False`` ，则返回的P为 ``None`` 。默认值： ``True`` 。
 
     输入：
         - **LU_data** (Tensor) - Tensor，打包的LU分解数据，shape为 :math:`(*, M, N)` ，其中 :math:`*` 为batch维度，其中 `*` 是batch

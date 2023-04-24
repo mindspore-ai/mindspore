@@ -33,10 +33,10 @@ def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         deltas (Tensor): Delta of boxes. Which has the same shape with `anchor_box`.
         max_shape (tuple): The max size limit for decoding box calculation.
-        means (tuple, optional): The means of `deltas` calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple, optional): The standard deviations of `deltas` calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        means (tuple, optional): The means of `deltas` calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
+        stds (tuple, optional): The standard deviations of `deltas` calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
         wh_ratio_clip (float, optional): The limit of width and height ratio for decoding box calculation.
-            Default: 0.016.
+            Default: ``0.016`` .
 
     Returns:
         Tensor, decoded boxes. It has the same data type and shape as `anchor_box`.
@@ -71,8 +71,8 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         groundtruth_box (Tensor): Ground truth boxes. Which has the same shape with `anchor_box`.
-        means (tuple, optional): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple, optional): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        means (tuple, optional): Means for encoding bounding boxes calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
+        stds (tuple, optional): The standard deviations of deltas calculation. Default: (``1.0, 1.0, 1.0, 1.0)`` .
 
     Returns:
         Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.
@@ -177,11 +177,12 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
             the output size of the cropped and resized images.
             Only positive values are supported. Supported type: int32.
         method (str, optional): An optional string that specifies the sampling method for resizing.
-           It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
-           interpolation algorithm, while "bilinear_v2" may result in better result in some cases.
-           "nearest" is the nearest neighbor interpolation algorithm.
-           Default: "bilinear".
-        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
+            It can be ``"bilinear"`` , ``"nearest"`` or ``"bilinear_v2"`` . The option ``"bilinear"`` stands for
+            standard bilinear interpolation algorithm, while ``"bilinear_v2"`` may result in better result in some
+            cases. ``"nearest"`` is the nearest neighbor interpolation algorithm.
+            Default: ``"bilinear"`` .
+        extrapolation_value (float, optional): An optional float value used extrapolation, if applicable.
+            Default: ``0.0`` .
 
     Returns:
         A 4-D tensor of shape :math:`(num_boxes, crop_height, crop_width, depth)` with type(float32).

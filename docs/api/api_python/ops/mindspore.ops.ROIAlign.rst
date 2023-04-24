@@ -12,11 +12,11 @@
         - **pooled_width** (int) - 输出特征宽度。
         - **spatial_scale** (float) - 缩放系数，将原始图像坐标映射到输入特征图坐标。
           设RoI的高度在原始图像中为 `ori_h` ，在输入特征图中为 `fea_h` ，则 `spatial_scale` 应为 `fea_h / ori_h` 。
-        - **sample_num** (int) - 采样数。默认值：2。
+        - **sample_num** (int) - 采样数。默认值： ``2`` 。
         - **roi_end_mode** (int) - 值必须为0或1。
           如果值为0，则使用该算子的历史实现。
           如果值为1，则对RoI末尾的像素进行偏移，偏移量为 `+1*spatial_scale` 。
-          默认值：1。
+          默认值： ``1`` 。
 
     输入：
         - **features** (Tensor) - 输入特征，shape: :math:`(N, C, H, W)` 。

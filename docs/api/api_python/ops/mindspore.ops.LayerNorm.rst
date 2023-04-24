@@ -13,9 +13,9 @@ mindspore.ops.LayerNorm
     其中 :math:`\gamma` 是Scalar， :math:`\beta` 是偏置项， :math:`\epsilon` 是精度值。
 
     参数：
-        - **begin_norm_axis** (int) - 指定 `input_x` 需进行层归一化的起始维度，其值必须在[-1, rank(input))范围内。默认值：1。
-        - **begin_params_axis** (int) - 指定输入参数(`gamma`, `beta`) 需进行层归一化的开始轴，其值必须在[-1, rank(input))范围内。默认值：1。
-        - **epsilon** (float) - 添加到分母中的值，以确保数据稳定性。默认值：1e-7。
+        - **begin_norm_axis** (int) - 指定 `input_x` 需进行层归一化的起始维度，其值必须在[-1, rank(input))范围内。默认值： ``1`` 。
+        - **begin_params_axis** (int) - 指定输入参数(`gamma`, `beta`) 需进行层归一化的开始轴，其值必须在[-1, rank(input))范围内。默认值： ``1`` 。
+        - **epsilon** (float) - 添加到分母中的值，以确保数据稳定性。默认值： ``1e-7`` 。
 
     输入：
         - **input_x** (Tensor) - LayerNorm的输入，shape为 :math:`(N, \ldots)` 的Tensor。

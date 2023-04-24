@@ -10,8 +10,8 @@ mindspore.ops.ScaleAndTranslate
         - 输入 `size` 、 `scale` 和 `translation` 必须是包含两个元素的一维Tensor。
 
     参数：
-        - **kernel_type** (str，可选) - 决定选择哪种图像滤波算法。可选列表：["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle", "keyscubic", "mitchellcubic"]。默认值：“lanczos3”。
-        - **antialias** (bool，可选) - 决定是否使用抗锯齿。默认值：True。
+        - **kernel_type** (str，可选) - 决定选择哪种图像滤波算法。可选列表：[ ``"lanczos1"`` , ``"lanczos3"`` , ``"lanczos5"`` , ``"gaussian"`` , ``"box"`` , ``"triangle"`` , ``"keyscubic"`` , ``"mitchellcubic"`` ]。默认值： ``"lanczos3"`` 。
+        - **antialias** (bool，可选) - 决定是否使用抗锯齿。默认值： ``True`` 。
 
     输入：
         - **images** (Tensor) - 四维Tensor，shape为 :math:`(batch, image\_height, image\_width, channel)` 。

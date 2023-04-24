@@ -6,9 +6,9 @@
     生成从0到n-1不重复的n个随机样本。如果 `max_length` > n，则末尾的 `max_length-n` 个元素使用 `pad` 填充。
 
     参数：    
-        - **max_length** (int) - 取样数量，必须大于0。默认值：1。
-        - **pad** (int) - 填充值。默认值：-1。
-        - **dtype** (mindspore.dtype) - 输出的数据类型。默认值：mindspore.int32。
+        - **max_length** (int) - 取样数量，必须大于0。默认值： ``1`` 。
+        - **pad** (int) - 填充值。默认值： ``-1`` 。
+        - **dtype** (mindspore.dtype) - 输出的数据类型。默认值： ``mindspore.int32`` 。
 
     输入：
         - **n** (Tensor) - shape为 :math:`(1,)` 的输入Tensor，其数据类型为int32或int64，须在[0, `max_length`]内取值。

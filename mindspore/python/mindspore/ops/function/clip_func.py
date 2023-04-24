@@ -74,8 +74,8 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
             Tensors of arbitrary dimensions are supported.
-          clip_value_min (Union(Tensor, float, int)): The minimum value. Default: None.
-          clip_value_max (Union(Tensor, float, int)): The maximum value. Default: None.
+          clip_value_min (Union(Tensor, float, int)): The minimum value. Default: ``None`` .
+          clip_value_max (Union(Tensor, float, int)): The maximum value. Default: ``None`` .
 
     Returns:
           (Union(Tensor, tuple[Tensor], list[Tensor])), a clipped Tensor or a tuple or a list of clipped Tensor.
@@ -176,8 +176,8 @@ def clamp(input, min=None, max=None):
     Args:
           input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
             Tensor. Tensors of arbitrary dimensions are supported.
-          min (Union(Tensor, float, int), optional): The minimum value. Default: None.
-          max (Union(Tensor, float, int), optional): The maximum value. Default: None.
+          min (Union(Tensor, float, int), optional): The minimum value. Default: ``None`` .
+          max (Union(Tensor, float, int), optional): The maximum value. Default: ``None`` .
 
     Returns:
           Union(Tensor, tuple[Tensor], list[Tensor]), a clipped Tensor or a tuple or a list of clipped Tensor.
@@ -299,8 +299,8 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
 
     Args:
         x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
-        clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: 1.0
-        use_norm (None): The global norm. Default: None. Currently only none is supported.
+        clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: ``1.0`` .
+        use_norm (None): The global norm. Default: ``None`` . Currently only none is supported.
 
     Returns:
         tuple[Tensor], a clipped Tensor. It has the same data type as `x` and each Tensor in the output tuple is the

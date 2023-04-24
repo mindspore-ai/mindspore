@@ -6,7 +6,7 @@ mindspore.ops.RNNTLoss
     计算相对于softmax输出的RNNTLoss及其梯度。
 
     参数：
-        - **blank_label** (int) - 空白标签。默认值：0。
+        - **blank_label** (int) - 空白标签。默认值： ``0`` 。
 
     输入：
         - **acts** (Tensor) - Tensor，shape为 :math:`(B, T, U, V)` 。数据类型必须为float16或float32。

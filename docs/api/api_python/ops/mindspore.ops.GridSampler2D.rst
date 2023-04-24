@@ -9,16 +9,16 @@ mindspore.ops.GridSampler2D
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为："bilinear"、"nearest"，默认值："bilinear"。
-        - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为："zeros"、"border"或者"reflection"，默认值："zeros"。
+        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为： ``"bilinear"`` 、 ``"nearest"`` ，默认值：``"bilinear"`` 。
+        - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``"zeros"`` 、 ``"border"`` 或者 ``"reflection"`` ，默认值：``"zeros"`` 。
           当采样grid超出输入Tensor的边界时，各种填充模式效果如下：
 
-          - "zeros": 使用零填充输入Tensor。
-          - "border": 使用Tensor边缘上像素的值填充输入Tensor。
-          - "reflection": 通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
+          - ``"zeros"``: 使用零填充输入Tensor。
+          - ``"border"``: 使用Tensor边缘上像素的值填充输入Tensor。
+          - ``"reflection"``: 通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
 
-        - **align_corners** (bool，可选) - 一个可选bool。如果为True，输入和输出Tensor的角像素是对齐的，如果为False，
-          则不使用角像素对齐。默认值：False。
+        - **align_corners** (bool，可选) - 一个可选bool。如果为 ``True`` ，输入和输出Tensor的角像素是对齐的，如果为 ``False`` ，
+          则不使用角像素对齐。默认值：``False`` 。
 
     输入：
         - **input_x** (Tensor) - 一个4D的Tensor，dtype为float16或者float32，shape为 :math:`(N, C, H_{in}, W_{in})` 。

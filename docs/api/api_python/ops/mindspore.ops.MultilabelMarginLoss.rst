@@ -9,11 +9,11 @@ mindspore.ops.MultilabelMarginLoss
     更多细节请参考 :func:`mindspore.ops.multilabel_margin_loss` 。
 
     参数：
-        - **reduction** (str, 可选) - 可选，对输出应用特定的缩减方法：可选'none'、'mean'、'sum'。默认值：'mean'。
+        - **reduction** (str, 可选) - 可选，对输出应用特定的缩减方法：可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
 
-          - 'none'：不应用缩减方法。
-          - 'mean'：输出的值总和除以输出的元素个数。
-          - 'sum'：输出的总和。
+          - ``'none'``：不应用缩减方法。
+          - ``'mean'``：输出的值总和除以输出的元素个数。
+          - ``'sum'``：输出的总和。
 
     输入：
         - **x** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`

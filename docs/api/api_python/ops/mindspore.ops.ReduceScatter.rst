@@ -9,8 +9,8 @@ mindspore.ops.ReduceScatter
         在集合的所有过程中，Tensor必须具有相同的shape和格式。
 
     参数：
-        - **op** (str) - 指定用于元素的规约操作，如SUM和MAX。默认值：ReduceOp.SUM。
-        - **group** (str) - 要处理的通信组。默认值："GlobalComm.WORLD_COMM_group"。
+        - **op** (str) - 指定用于元素的规约操作，如SUM和MAX。默认值： ``ReduceOp.SUM`` 。
+        - **group** (str) - 要处理的通信组。默认值： ``"GlobalComm.WORLD_COMM_group"`` 。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor，假设其形状为 :math:`(N, *)` ，其中 `*` 为任意数量的额外维度。N必须能够被rank_size整除，rank_size为当前通讯组里面的计算卡数量。

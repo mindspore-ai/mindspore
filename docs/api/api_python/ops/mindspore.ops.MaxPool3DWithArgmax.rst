@@ -20,10 +20,10 @@ mindspore.ops.MaxPool3DWithArgmax
         - **ksize** (Union[int, tuple[int]]) - 池化核尺寸大小。可以是一个整数表示池化核的深度，高度和宽度，或者包含三个整数的tuple，分别表示池化核的深度，高度和宽度。
         - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在深度，高度和宽度方向的移动步长，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的移动步长。
         - **pads** (Union[int, tuple[int]]) - 池化填充长度。可以是一个整数表示在深度，高度和宽度方向的填充长度，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的填充长度。
-        - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认为(1, 1, 1)。
-        - **ceil_mode** (bool) - 是否使用ceil代替floor来计算输出的shape。默认为False。
-        - **data_format** (str) - 选择输入数据格式，当前仅支持'NCDHW'。默认为'NCDHW'。
-        - **argmax_type** (mindspore.dtype) - 返回的最大值索引的数据类型。默认为mindspore.int64。
+        - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认为 ``(1, 1, 1)`` 。
+        - **ceil_mode** (bool) - 是否使用ceil代替floor来计算输出的shape。默认为 ``False`` 。
+        - **data_format** (str) - 选择输入数据格式，当前仅支持 ``'NCDHW'`` 。默认为 ``'NCDHW'`` 。
+        - **argmax_type** (mindspore.dtype) - 返回的最大值索引的数据类型。默认为 ``mindspore.int64`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。支持数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32和float64。

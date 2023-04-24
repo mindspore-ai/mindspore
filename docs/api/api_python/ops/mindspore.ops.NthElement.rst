@@ -9,7 +9,7 @@ mindspore.ops.NthElement
     - 如果输入是矩阵或更高维度的输入，分别计算每行中的第n小的值（或沿着最后一个维度的Vector），并输出这些值。因此，返回值 `values` 的shape满足 `values`.shape = `input`.shape[:-1]。
 
     参数：
-        - **reverse** (bool，可选) - 可选参数，如果设为True，则寻找第 :math:`n` 大的值，如果设为False，则寻找第n小的值。默认值：False。
+        - **reverse** (bool，可选) - 可选参数，如果设为 ``True`` ，则寻找第 :math:`n` 大的值，如果设为 ``False`` ，则寻找第n小的值。默认值： ``False`` 。
 
     输入：
         - **input** (Tensor) - 一维或者更高维度的输入Tensor。

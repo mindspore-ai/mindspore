@@ -11,8 +11,8 @@ mindspore.ops.ParameterizedTruncatedNormal
         - 当 `seed` 或 `seed2` 被赋予一个非零值时，该值将被用作种子。否则，将使用一个随机种子。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。默认值：0。
-        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
+        - **seed** (int，可选) - 随机数种子。默认值： ``0`` 。
+        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值： ``0`` 。
 
     输入：
         - **shape** (Tensor) - 生成Tensor的shape。shape为 :math:`(batch\_size, *)` ，其中 :math:`*` 为长度不小于1的额外维度。数据类型必须是int32或者int64。

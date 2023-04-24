@@ -26,9 +26,9 @@ mindspore.ops.Im2Col
 
     参数：
         - **ksizes** (Union[int, tuple[int], list[int]]) - 内核的大小，应该是两个整数，分别代表高度和宽度。如果是一个整数，则表示高度等于宽度。必须被指定。
-        - **strides** (Union[int, tuple[int], list[int]]，可选) - 窗口的滑动步幅，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值：1。
-        - **dilations** (Union[int, tuple[int], list[int]]，可选) - 窗口的扩张系数，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值：1。
-        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充，必须是1个或2个整数来指定高宽和宽度方向的填充。默认值：0。
+        - **strides** (Union[int, tuple[int], list[int]]，可选) - 窗口的滑动步幅，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值： ``1`` 。
+        - **dilations** (Union[int, tuple[int], list[int]]，可选) - 窗口的扩张系数，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值： ``1`` 。
+        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充，必须是1个或2个整数来指定高宽和宽度方向的填充。默认值： ``0`` 。
         
           - 如果是1个整数，则 :math:`pad\_height = pad\_width` 。
           - 如果是2个整数，则 :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]` 。

@@ -36,10 +36,10 @@ class BufferSample(PrimitiveWithInfer):
         batch_size (int64): The size of the sampled data, lessequal to `capacity`.
         buffer_shape (tuple(shape)): The shape of an buffer.
         buffer_dtype (tuple(type)): The type of an buffer.
-        seed (int64): Random seed for sample. Default: 0. If use the default seed, it will generate a ramdom
-        one in kernel. Set a number other than `0` to keep a specific seed. Default: 0.
+        seed (int64): Random seed for sample. Default: ``0`` . If use the default seed, it will generate a ramdom
+        one in kernel. Set a number other than `0` to keep a specific seed. Default: ``0`` .
         unique (bool): Whether the sampled data is strictly unique. Setting it to False has a better performance.
-            Default: False
+            Default: ``False`` .
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,

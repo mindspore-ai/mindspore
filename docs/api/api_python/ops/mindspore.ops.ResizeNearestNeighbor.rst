@@ -7,7 +7,7 @@ mindspore.ops.ResizeNearestNeighbor
 
     参数：
         - **size** (Union[tuple, list]) - 指定输入Tensor的新大小。size的维度必须为2。
-        - **align_corners** (bool) - 输入和输出Tensor的4个角像素是否居中对齐。默认值：False。
+        - **align_corners** (bool) - 输入和输出Tensor的4个角像素是否居中对齐。默认值： ``False`` 。
 
     输入：
         - **input_x** (Tensor) - ResizeNearestNeighbor的输入，四维的Tensor，其shape为 :math:`(N, C, H, W)` 。

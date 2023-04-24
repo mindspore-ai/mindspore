@@ -15,7 +15,7 @@ mindspore.ops.MultinomialWithReplacement
 
     参数：
         - **numsamples** (int) - 抽取样本量，必须大于零。
-        - **replacement** (bool，可选) - 是否有放回地抽取。默认值：False。
+        - **replacement** (bool，可选) - 是否有放回地抽取。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - 包含概率的累积和的输入Tensor，必须为一维或二维。

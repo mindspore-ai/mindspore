@@ -64,7 +64,7 @@ mindspore.ops.Primitive
             - 在PyNative模式下不支持。
 
         参数：
-            - **mode** (bool) - Primitive是否设置了重计算。默认值：True。
+            - **mode** (bool) - Primitive是否设置了重计算。默认值： ``True`` 。
 
     .. py:method:: set_device(device_target)
 
@@ -101,8 +101,8 @@ mindspore.ops.Primitive
             仅在半自动并行或自动并行模式下有效。在其他并行模式中，将忽略此处设置的策略。
 
         参数：
-            - **in_strategy** (tuple) - 描述算子输入的切分策略。默认值：None。
-            - **out_strategy** (tuple) - 描述算子输出的切分策略，仅针对某些算子，如MatMul。默认值：None。
+            - **in_strategy** (tuple) - 描述算子输入的切分策略。默认值： ``None`` 。
+            - **out_strategy** (tuple) - 描述算子输出的切分策略，仅针对某些算子，如MatMul。默认值： ``None`` 。
 
     .. py:method:: update_parameter()
         :property:

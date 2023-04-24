@@ -7,8 +7,8 @@ mindspore.ops.IndexAdd
 
     参数：
         - **axis** (int) - 进行索引的axis。
-        - **use_lock** (bool) - 是否对参数更新加锁保护。默认值：True。
-        - **check_index_bound** (bool) - 如果为True将对索引进行边界检查。默认值：True。
+        - **use_lock** (bool) - 是否对参数更新加锁保护。默认值： ``True`` 。
+        - **check_index_bound** (bool) - 如果为True将对索引进行边界检查。默认值： ``True`` 。
 
     输入：
         - **x** (Parameter) - 要添加到的输入参数。

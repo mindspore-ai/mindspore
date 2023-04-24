@@ -11,7 +11,7 @@ mindspore.ops.ResizeArea
         `size` 的值必须大于0。
 
     参数：
-        - **align_corners** (bool，可选) - 指定是否对齐输入和输出Tensor的四个角的中心点。当这个参数设置为True时，输出Tensor的角点会和输入Tensor的角点对齐，从而保留角点处的值。默认值：False。
+        - **align_corners** (bool，可选) - 指定是否对齐输入和输出Tensor的四个角的中心点。当这个参数设置为 ``True`` 时，输出Tensor的角点会和输入Tensor的角点对齐，从而保留角点处的值。默认值： ``False`` 。
 
     输入：
         - **images** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，数据格式为“NHWC”。支持的数据类型有：int8、int16、int32、int64、float16、float32、float64、uint8和uint16。

@@ -125,9 +125,9 @@ def svd(input, full_matrices=False, compute_uv=True):
           the supported dtype are float32 and float64.
         full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
                                         only the leading P singular vectors, with P is the minimum of M and N.
-                                        Default: False.
+                                        Default: ``False`` .
         compute_uv (bool, optional): If true, compute the left and right singular vectors.
-                                     If false, compute only the singular values. Default: True.
+                                     If false, compute only the singular values. Default: ``True`` .
 
     Returns:
         - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
@@ -206,9 +206,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
             - When hermitian is true, batch dimensions are not supported temporarily.
 
     Keyword args:
-        atol (float, Tensor): absolute tolerance value. Default: None.
-        rtol (float, Tensor): relative tolerance value. Default: None.
-        hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: False.
+        atol (float, Tensor): absolute tolerance value. Default: ``None`` .
+        rtol (float, Tensor): relative tolerance value. Default: ``None`` .
+        hermitian (bool): An optional bool. x is assumed to be symmetric if real. Default: ``False`` .
 
     Outputs:
         - **output** (Tensor) - same type as input. Shape is :math:`(*, N, M)`, * is zero or more batch dimensions.
@@ -285,8 +285,8 @@ def qr(input, mode='reduced'):
             float16, float32, float64, complex64 and complex128.
             Define the shape of input as :math:`(..., m, n)`, p as the
             minimum values of m and n.
-        mode (Union['reduced', 'complete'], optional): If `mode` is 'reduced', computing reduce-sized QR decomposition,
-            otherwise, computing the full-sized QR decomposition. Default: 'reduced'.
+        mode (Union['reduced', 'complete'], optional): If `mode` is ``'reduced'`` , computing reduce-sized QR
+            decomposition, otherwise, computing the full-sized QR decomposition. Default: ``'reduced'`` .
 
     Returns:
         - **Q** (Tensor) - The orthonormal matrices of input. If `mode` is 'complete', the shape is :math:`(m, m)`,

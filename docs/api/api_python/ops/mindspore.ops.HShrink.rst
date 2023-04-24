@@ -8,7 +8,7 @@ mindspore.ops.HShrink
     更多参考详见 :func:`mindspore.ops.hardshrink`。
 
     参数：
-        - **lambd** (float，可选) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值：0.5。
+        - **lambd** (float，可选) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值： ``0.5`` 。
 
     输入：
         - **input_x** (Tensor) - Hard Shrink的输入，数据类型为float16或float32。
