@@ -22,16 +22,15 @@
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::nnacl {
-class MatmulKernel : public NnaclKernel {
+class MatmulKernel : public NNACLKernel {
  public:
   explicit MatmulKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : NnaclKernel(parameter, inputs, outputs, ctx) {}
+      : NNACLKernel(parameter, inputs, outputs, ctx) {}
   ~MatmulKernel() override = default;
   int ReSize() override;
   int Prepare() override;
   int PreparePackedWeight(const lite::Tensor *tensor) override;
 };
 }  // namespace mindspore::nnacl
-
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_NNACL_MATMUL_H_

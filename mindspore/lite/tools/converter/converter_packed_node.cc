@@ -98,7 +98,7 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
   const void *pack_b_ptr = nullptr;
   size_t pack_b_size;
   auto data_type = lite_kernel->out_tensors().front()->data_type();
-  auto kernel_base = (reinterpret_cast<const mindspore::nnacl::NnaclKernel *>(lite_kernel))->Kernel();
+  auto kernel_base = (reinterpret_cast<const mindspore::nnacl::NNACLKernel *>(lite_kernel))->Kernel();
 
   if (data_type == kNumberTypeFloat32) {
     const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);

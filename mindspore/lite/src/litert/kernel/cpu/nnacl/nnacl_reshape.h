@@ -21,11 +21,11 @@
 #include "nnacl/nnacl_kernel.h"
 
 namespace mindspore::nnacl {
-class ReshapeKernel : public NnaclKernel {
+class ReshapeKernel : public NNACLKernel {
  public:
   explicit ReshapeKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : NnaclKernel(parameter, inputs, outputs, ctx) {}
+      : NNACLKernel(parameter, inputs, outputs, ctx) {}
   ~ReshapeKernel() override = default;
   int Run() override;
 };

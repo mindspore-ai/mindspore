@@ -17,7 +17,7 @@
 #include "nnacl/nnacl_manager.h"
 
 namespace mindspore::nnacl {
-bool SupportNnaclKernel(int op_type, TypeId data_type) {
+bool NNACLSupportKernel(int op_type, TypeId data_type) {
   auto creator = KernelRegistry::GetInstance()->Creator({op_type, data_type});
   if (creator != nullptr) {
     return true;
@@ -25,16 +25,16 @@ bool SupportNnaclKernel(int op_type, TypeId data_type) {
   return SupportKernelC(op_type, data_type);
 }
 
-NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+NNACLKernel *NNACLKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const kernel::KernelKey &key) {
   auto creator = KernelRegistry::GetInstance()->Creator({key.type, key.data_type});
-  NnaclKernel *kernel = nullptr;
+  NNACLKernel *kernel = nullptr;
   if (creator != nullptr) {
     kernel = creator(parameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
-    kernel = new (std::nothrow) NnaclKernel(parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) NNACLKernel(parameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create nnacl kernel failed:  " << parameter->name_;

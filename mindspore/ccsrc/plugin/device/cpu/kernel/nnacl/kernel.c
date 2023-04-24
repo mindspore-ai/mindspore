@@ -17,6 +17,7 @@
 #include "nnacl/kernel.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
+#include "nnacl/kernel/init_exec_env.h"
 
 static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
 
@@ -66,6 +67,7 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
   KernelBase *kernel_base = creator(param, data_type);
   kernel_base->infershape = NnaclKernelInferShape;
   kernel_base->env_ = env;
+  CheckExecEnv(kernel_base);
   kernel_base->param_ = param;
   kernel_base->thread_nr_ = param->thread_num_;
   kernel_base->train_session_ = param->is_train_session_;

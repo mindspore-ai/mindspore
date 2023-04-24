@@ -138,7 +138,7 @@ TEST_F(TestMatMulFp32, simple) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_MatMulFusion};
-  auto *mm = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
+  auto *mm = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
   mm->Prepare();
   mm->Run();
   float correct[] = {-0.1256939023733139, -0.07744802534580231,  0.07410638779401779,
@@ -175,7 +175,7 @@ TEST_F(TestMatMulFp32, simple_bias) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_MatMulFusion};
-  auto *mm = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
+  auto *mm = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
   mm->Prepare();
   mm->Run();
   float correct[] = {-0.1256939023733139 + 1, -0.07744802534580231 + 2,  0.07410638779401779 + 3,
@@ -231,7 +231,7 @@ TEST_F(TestMatMulFp32, simple2) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_MatMulFusion};
-  auto *mm = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
+  auto *mm = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
   mm->Prepare();
   mm->Run();
   float correct[] = {
@@ -305,7 +305,7 @@ TEST_F(TestMatMulFp32, simple_transb) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_MatMulFusion};
-  auto *mm = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
+  auto *mm = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
   mm->Prepare();
   mm->Run();
   float correct[] = {0.00533547, 0.002545945, 0.062974121, -0.445441471, -0.246223617, -0.142070031};
@@ -359,7 +359,7 @@ TEST_F(TestMatMulFp32, batch) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_MatMulFusion};
-  auto *mm = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
+  auto *mm = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, desc);
   mm->Prepare();
   mm->Run();
   float correct[] = {21.38518524169922,  -14.514888763427734, -11.040614128112793, 16.91403579711914,

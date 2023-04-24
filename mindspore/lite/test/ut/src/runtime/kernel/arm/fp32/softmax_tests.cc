@@ -44,7 +44,7 @@ TEST_F(TestSoftmaxFp32, 001) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Softmax};
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
+  auto *kernel = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx.get(), desc);
 
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
