@@ -17,6 +17,9 @@
 
 #include "extendrt/graph_runtime/factory.h"
 #include "extendrt/graph_executor/factory.h"
+#include "extendrt/utils/tensor_utils.h"
+#include "extendrt/execution_plan.h"
+#include "executor/sub_graph_kernel.h"
 
 namespace mindspore {
 using ExecutionPlan = mindspore::infer::abstract::ExecutionPlan;
@@ -92,7 +95,6 @@ Status DefaultGraphRuntime::Execute(const std::vector<infer::abstract::Tensor *>
 
   MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan Begin of Executor " << executor->Name();
   execution_plan_->SetInputs(inputs);
-  execution_plan_->SetOutputs(outputs);
   execution_plan_->SetKernelBeforeCallBack(before);
   execution_plan_->SetKernelAfterCallBack(after);
   auto status = executor->Execute();
@@ -121,6 +123,16 @@ Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> 
     return kLiteNullptr;
   }
 
+  auto graph_inputs = execution_plan_->GetInputs();
+  auto original_dims = AbstractTensorUtils::GetTensorListShapes(graph_inputs);
+
+  AbstractTensorUtils::SetTensorListShapse(graph_inputs, dims);
+
+  if (!ResizeKernels()) {
+    AbstractTensorUtils::SetTensorListShapse(graph_inputs, original_dims);
+    return kLiteError;
+  }
+
   MS_LOG(DEBUG) << "DefaultGraphRuntime::Resize Resize Execution Plan Begin of Executor " << executor->Name();
   auto status = executor->Resize(inputs, dims);
   if (status != kSuccess) {
@@ -131,6 +143,44 @@ Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> 
 
   MS_LOG(INFO) << "DefaultGraphRuntime::Resize End";
   return kSuccess;
+}
+
+bool DefaultGraphRuntime::ResizeKernels() {
+  auto infer_execution_plan = std::dynamic_pointer_cast<infer::ExecutionPlan>(execution_plan_);
+  if (infer_execution_plan == nullptr) {
+    MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Not Supported execution plan is passed";
+    return false;
+  }
+  auto kernels = infer_execution_plan->ToKernelList();
+  auto isolate_input_map = infer_execution_plan->GetInputsMap();
+  for (auto kernel : kernels) {
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "DefaultGraphRuntime::ResizeKernels input kernel is nullptr!";
+      return false;
+    }
+    int ret;
+    if (kernel->desc().arch == kernel::kDelegate) {
+      ret = kernel->ReSize();
+    } else {
+      // resize subgraph inputs
+      auto sub_graph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      for (auto input : sub_graph_kernel->in_tensors()) {
+        if (isolate_input_map->find(input) != isolate_input_map->end()) {
+          input->set_shape(isolate_input_map->at(input)->shape());
+        }
+      }
+      ret = sub_graph_kernel->ReSize();
+    }
+    if (ret == lite::RET_INFER_INVALID) {
+      MS_LOG(WARNING) << "DefaultGraphRuntime::ResizeKernels  InferShape is interrupted";
+      continue;
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DefaultGraphRuntime::ResizeKernels ReSize node " << kernel->name() << " failed";
+      return false;
+    }
+  }
+  return true;
 }
 
 std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetInputs() {

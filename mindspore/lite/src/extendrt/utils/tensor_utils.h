@@ -32,6 +32,7 @@
 #include "mindspore/core/ir/tensor.h"
 #include "kernel/kernel.h"
 #include "src/tensor.h"
+#include "infer/tensor.h"
 
 namespace mindspore {
 class TensorRefData : public tensor::TensorData {
@@ -198,6 +199,13 @@ class CloudTensorUtils {
   static kernel::KernelTensorPtr LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
   static std::vector<kernel::KernelTensorPtr> LiteTensorToKernelTensorPtrVec(
     const std::vector<lite::Tensor *> &lite_tensors);
+};
+
+class AbstractTensorUtils {
+ public:
+  static std::vector<std::vector<int64_t>> GetTensorListShapes(const std::vector<infer::abstract::Tensor *> &tensors);
+  static bool SetTensorListShapse(const std::vector<infer::abstract::Tensor *> &tensors,
+                                  const std::vector<std::vector<int64_t>> &shapes);
 };
 }  // namespace mindspore
 

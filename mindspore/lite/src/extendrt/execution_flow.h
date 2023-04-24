@@ -55,6 +55,10 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   abstract::Kernel *ConstructFusionKernel() override;
 
+  std::vector<abstract::Tensor *> GetTensors() { return tensors_; }
+
+  void SetTensors(const std::vector<abstract::Tensor *> &tensors) { tensors_ = tensors; }
+
   std::string Dump() const;
 
  private:

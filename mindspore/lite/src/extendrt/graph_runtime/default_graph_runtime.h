@@ -45,6 +45,7 @@ class DefaultGraphRuntime : public mindspore::infer::abstract::GraphRuntime {
 
  private:
   std::shared_ptr<infer::abstract::Executor> SelectExecutor();
+  bool ResizeKernels();
 
  private:
   std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_ = nullptr;

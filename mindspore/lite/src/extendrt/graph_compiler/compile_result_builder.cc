@@ -100,20 +100,15 @@ StatusCode CompileResultBuilder::BuildOutputs(const AnfNodePtrList &outputs) {
       MS_LOG(ERROR) << "Outputs should be a CNode vector, but got " << output->Type() << " type element.";
       return kLiteError;
     }
-    for (auto &input : out_cnode->inputs()) {
-      if (!utils::isa<CNodePtr>(input)) {
-        continue;
-      }
-      auto compile_node = graph_->GetNode(input->fullname_with_scope());
-      if (compile_node == nullptr) {
-        continue;
-      }
-      for (auto &tensor : compile_node->GetOutputs()) {
-        auto ret = graph_->AppendOutputTensor(tensor, true);
-        if (ret != kSuccess) {
-          MS_LOG(ERROR) << "Append output tensor to graph failed, output: " << out_cnode->fullname_with_scope();
-          return ret;
-        }
+    auto compile_node = graph_->GetNode(out_cnode->fullname_with_scope());
+    if (compile_node == nullptr) {
+      continue;
+    }
+    for (auto &tensor : compile_node->GetOutputs()) {
+      auto ret = graph_->AppendOutputTensor(tensor, true);
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "Append output tensor to graph failed, output: " << out_cnode->fullname_with_scope();
+        return ret;
       }
     }
   }
