@@ -19,15 +19,15 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                       const TransposeParameter *param, int task_id, int thread_num);
-int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    const TransposeParameter *param);
+void TransposeDimsFp16(const void *src, void *dst, const int *output_shape, int *perm, int *strides, int *out_strides,
+                       int num_axes, int task_id, int thread_num);
+int DoTransposeFp16(const void *src, void *dst, const int *output_shape, int *perm, int *strides, int *out_strides,
+                    int data_size, int num_axes);
 #ifdef __cplusplus
 }
 #endif

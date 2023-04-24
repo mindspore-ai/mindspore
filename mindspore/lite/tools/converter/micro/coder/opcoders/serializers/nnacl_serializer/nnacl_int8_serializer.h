@@ -32,7 +32,7 @@
 #include "nnacl/slice_parameter.h"
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/pad_parameter.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::lite::micro::nnacl {

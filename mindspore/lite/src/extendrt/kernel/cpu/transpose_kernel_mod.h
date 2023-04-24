@@ -22,7 +22,7 @@
 #include <map>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
-#include "plugin/device/cpu/kernel/nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore::kernel {

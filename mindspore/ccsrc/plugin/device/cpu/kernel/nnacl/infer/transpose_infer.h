@@ -17,7 +17,7 @@
 #define MINDSPORE_NNACL_TRANSPOSE_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

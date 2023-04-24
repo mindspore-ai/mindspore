@@ -16,7 +16,7 @@
 
 #include "src/expression/ops/transpose.h"
 #include <memory>
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include "inner/model_generated.h"
 #include "src/expression/import.h"
 

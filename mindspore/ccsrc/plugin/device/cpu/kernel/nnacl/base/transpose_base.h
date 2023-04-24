@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_NNACL_TRANSPOSE_BASE_H_
 #define MINDSPORE_NNACL_TRANSPOSE_BASE_H_
 
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 #include <string.h>
 
 #ifdef __cplusplus

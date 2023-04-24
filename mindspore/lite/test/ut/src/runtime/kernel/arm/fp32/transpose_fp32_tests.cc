@@ -19,8 +19,8 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "nnacl/fp32/transpose_fp32.h"
-#include "nnacl/transpose.h"
-#include "mindspore/lite/src/litert/kernel_registry.h"
+#include "nnacl/transpose_parameter.h"
+#include "nnacl/nnacl_manager.h"
 #include "mindspore/lite/src/executor/kernel_exec.h"
 
 namespace mindspore {
@@ -49,13 +49,15 @@ TEST_F(TestTransposeFp32, 10D) {
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
+
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+
+  param->op_parameter_.thread_num_ = ctx->thread_num_;
+  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
+
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -90,13 +92,15 @@ TEST_F(TestTransposeFp32, 10DSingleThread) {
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
+
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+
+  param->op_parameter_.thread_num_ = ctx->thread_num_;
+  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
+
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -138,7 +142,8 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) { /* 1x2x3x4 */
     param->strides_[i] = strides[i];
     param->out_strides_[i] = out_strides[i];
   }
-  auto ret = DoTransposeFp32(in, out, output_shape, param);
+  auto ret = DoTransposeFp32(in, out, output_shape, param->perm_, param->strides_, param->out_strides_,
+                             param->data_num_, param->num_axes_);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
@@ -170,7 +175,8 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) { /* 2x3x4 */
     param->strides_[i] = strides[i];
     param->out_strides_[i] = out_strides[i];
   }
-  auto ret = DoTransposeFp32(in, out, output_shape, param);
+  auto ret = DoTransposeFp32(in, out, output_shape, param->perm_, param->strides_, param->out_strides_,
+                             param->data_num_, param->num_axes_);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
@@ -202,7 +208,8 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) { /* 6x4 */
     param->strides_[i] = strides[i];
     param->out_strides_[i] = out_strides[i];
   }
-  auto ret = DoTransposeFp32(in, out, output_shape, param);
+  auto ret = DoTransposeFp32(in, out, output_shape, param->perm_, param->strides_, param->out_strides_,
+                             param->data_num_, param->num_axes_);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
@@ -242,9 +249,11 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   ctx.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(param), &ctx, desc);
+
+  param->op_parameter_.thread_num_ = ctx.thread_num_;
+  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs_tensor, outputs_tensor, &ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
   auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
@@ -255,6 +264,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   }
   std::cout << "\n";
   ASSERT_EQ(0, CompareOutputData(output.data(), correct, 24, 0.000001));
+
   input_tensor.set_data(nullptr);
   perm_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);

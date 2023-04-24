@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/transpose_fp32.h"
+#include "nnacl/op_base.h"
 
 void TransposeDim2Fp32(const float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
                        const int *output_shape) {
@@ -171,17 +172,14 @@ void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape,
-                       const TransposeParameter *transpose_param, int task_id, int thread_num) {
+void TransposeDimsFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                       int num_axes, int task_id, int thread_num) {
+  const float *in_data = (const float *)in;
+  float *out_data = (float *)out;
   NNACL_CHECK_NULL_RETURN_VOID(in_data);
   NNACL_CHECK_NULL_RETURN_VOID(out_data);
   NNACL_CHECK_NULL_RETURN_VOID(output_shape);
-  NNACL_CHECK_NULL_RETURN_VOID(transpose_param);
-  NNACL_CHECK_ZERO_RETURN(thread_num);
-  int *perm = (int *)(transpose_param->perm_);
-  int *strides = (int *)(transpose_param->strides_);
-  int *out_strides = (int *)(transpose_param->out_strides_);
-  int num_axes = transpose_param->num_axes_;
+
   int data_size = (*out_strides) * output_shape[0];
   int offset_size = UP_DIV(data_size, thread_num);
   int task_offset = offset_size * task_id;
@@ -206,17 +204,14 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_
   }
 }
 
-int DoTransposeFp32(const float *in_data, float *out_data, const int *output_shape,
-                    const TransposeParameter *transpose_param) {
+int DoTransposeFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                    int data_size, int num_axes) {
+  const float *in_data = (const float *)in;
+  float *out_data = (float *)out;
+
   NNACL_CHECK_NULL_RETURN_ERR(in_data);
   NNACL_CHECK_NULL_RETURN_ERR(out_data);
   NNACL_CHECK_NULL_RETURN_ERR(output_shape);
-  NNACL_CHECK_NULL_RETURN_ERR(transpose_param);
-  int *perm = (int *)(transpose_param->perm_);
-  int *strides = (int *)(transpose_param->strides_);
-  int *out_strides = (int *)(transpose_param->out_strides_);
-  int data_size = transpose_param->data_num_ * (int)(sizeof(float));
-  int num_axes = transpose_param->num_axes_;
 
   // check if transpose is needed
   bool needTranspose = false;

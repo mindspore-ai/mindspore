@@ -18,16 +18,15 @@
 #define MINDSPORE_NNACL_FP32_TRANSPOSE_H_
 
 #include <string.h>
-#include "nnacl/transpose.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-int DoTransposeFp32(const float *in_data, float *out_data, const int *output_shape, const TransposeParameter *param);
-void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape,
-                       const TransposeParameter *transpose_param, int task_id, int thread_num);
+int DoTransposeFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                    int data_size, int num_axes);
+void TransposeDimsFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                       int num_axes, int task_id, int thread_num);
 #ifdef __cplusplus
 }
 #endif

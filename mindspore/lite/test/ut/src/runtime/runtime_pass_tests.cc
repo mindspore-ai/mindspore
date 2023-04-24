@@ -20,7 +20,7 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/instance_norm_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 namespace mindspore {
 namespace lite {

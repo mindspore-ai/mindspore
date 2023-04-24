@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore {

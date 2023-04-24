@@ -27,6 +27,7 @@
 #include "nnacl/scale.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/split_parameter.h"
+#include "nnacl/transpose_parameter.h"
 #include "nnacl/base/tile_base.h"
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/pooling_parameter.h"

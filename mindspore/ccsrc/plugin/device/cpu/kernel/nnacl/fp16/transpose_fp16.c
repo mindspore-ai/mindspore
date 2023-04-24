@@ -173,17 +173,19 @@ void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                       const TransposeParameter *param, int task_id, int thread_num) {
+void TransposeDimsFp16(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                       int num_axes, int task_id, int thread_num) {
+  const float16_t *in_data = (const float16_t *)in;
+  float16_t *out_data = (float16_t *)out;
+
   NNACL_CHECK_NULL_RETURN_VOID(in_data);
   NNACL_CHECK_NULL_RETURN_VOID(out_data);
   NNACL_CHECK_NULL_RETURN_VOID(output_shape);
-  NNACL_CHECK_NULL_RETURN_VOID(param);
+  NNACL_CHECK_NULL_RETURN_VOID(perm);
+  NNACL_CHECK_NULL_RETURN_VOID(strides);
+  NNACL_CHECK_NULL_RETURN_VOID(out_strides);
   NNACL_CHECK_ZERO_RETURN(thread_num);
-  const int *perm = param->perm_;
-  const int *strides = param->strides_;
-  const int *out_strides = param->out_strides_;
-  int num_axes = param->num_axes_;
+
   size_t data_size = (*out_strides) * output_shape[0];
   size_t offset_size = UP_DIV(data_size, thread_num);
   size_t task_offset = offset_size * task_id;
@@ -208,17 +210,17 @@ void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int 
   }
 }
 
-int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    const TransposeParameter *param) {
+int DoTransposeFp16(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
+                    int data_size, int num_axes) {
+  const float16_t *in_data = (const float16_t *)in;
+  float16_t *out_data = (float16_t *)out;
+
   NNACL_CHECK_NULL_RETURN_ERR(in_data);
   NNACL_CHECK_NULL_RETURN_ERR(out_data);
   NNACL_CHECK_NULL_RETURN_ERR(output_shape);
-  NNACL_CHECK_NULL_RETURN_ERR(param);
-  const int *perm = param->perm_;
-  const int *strides = param->strides_;
-  const int *out_strides = param->out_strides_;
-  int data_size = param->data_num_ * sizeof(float16_t);
-  int num_axes = param->num_axes_;
+  NNACL_CHECK_NULL_RETURN_ERR(perm);
+  NNACL_CHECK_NULL_RETURN_ERR(strides);
+  NNACL_CHECK_NULL_RETURN_ERR(out_strides);
 
   // check if transpose is needed
   bool needTranspose = false;

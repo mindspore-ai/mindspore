@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "ut/src/runtime/kernel/opencl/common.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 namespace mindspore::lite::opencl::test {
 

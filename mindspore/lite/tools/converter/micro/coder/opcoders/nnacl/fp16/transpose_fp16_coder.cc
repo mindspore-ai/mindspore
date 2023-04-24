@@ -81,7 +81,7 @@ int TransposeFp16Coder::ResetStatus() {
 int TransposeFp16Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
-            "nnacl/transpose.h",
+            "nnacl/transpose_parameter.h",
             "nnacl/errorcode.h",
             "nnacl/fp16/transpose_fp16.h",
           },

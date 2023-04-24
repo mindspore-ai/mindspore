@@ -24,7 +24,7 @@
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "nnacl/transpose.h"
+#include "nnacl/transpose_parameter.h"
 
 namespace mindspore {
 namespace kernel {
