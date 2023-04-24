@@ -847,6 +847,8 @@ def argmax(x, axis=None, keepdims=False):
         x = ravel(x)
         axis = 0
         is_axis_none = True
+    if x.dtype == mstype.bool_:
+        x = x.astype(mstype.int32)
     out = P.Argmax(axis, mstype.int64)(x)
     if keepdims and not is_axis_none:
         out = expand_dims(out, axis)

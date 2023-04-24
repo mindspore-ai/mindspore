@@ -639,10 +639,15 @@ class Model:
                                  Default: 0.
         """
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
+        dataset_size = train_dataset.get_dataset_size()
+        if dataset_size // sink_size != 0:
+            logger.warning("In dataset_sink mode (dataset_size // sink_size) should equal to 0, "
+                           "it is suggested to pad/drop data or adjust sink_size. "
+                           "But got 'dataset_size': {dataset_size}, 'sink_size': {sink_size}.")
         if sink_size == -1:
             epoch_num = epoch - initial_epoch
         else:
-            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size()) - initial_epoch
+            epoch_num = math.ceil(epoch * sink_size / dataset_size) - initial_epoch
             train_dataset.__total_batch__ = (epoch - initial_epoch) * sink_size
 
         cb_params.cur_step_num = 0
@@ -659,7 +664,7 @@ class Model:
 
         self._check_enable_recovery()
         # Used to check whether need perform recovery for process which is restarted.
-        self._check_need_load_ckpt(cb_params, train_dataset.get_dataset_size(), sink_size)
+        self._check_need_load_ckpt(cb_params, dataset_size, sink_size)
         # Check whether this process is embedding cache server.
         is_embedding_cache_server = _is_role_pserver() and _cache_enable()
 
