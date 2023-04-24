@@ -100,6 +100,7 @@ constexpr char kControlDstOpName[] = "ControlDst";
 
 static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 static const char URL_IP_PORT_SEPARATOR[] = ":";
+static const char URL_IP_IFNAME_SEPARATOR[] = "%";
 
 constexpr char kEnableRDMA[] = "enable_rdma";
 constexpr char kRDMADevName[] = "rdma_dev";

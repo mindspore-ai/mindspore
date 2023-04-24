@@ -68,6 +68,64 @@ struct NodeInfo {
   NodeState state{NodeState::kNew};
 };
 
+inline std::string Dec2Hex(int i, uint32_t width) {
+  std::string temp;
+  std::stringstream ss;
+  ss << std::hex << i;
+  ss >> temp;
+  if (width > temp.size()) {
+    return std::string((width - temp.size()), '0') + temp;
+  }
+  return temp;
+}
+
+inline std::string GenerateIpInOrder(const std::string &ip) {
+  rpc::SocketAddress addr;
+  std::string ordered_ip = "";
+  int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
+  if (result > 0) {
+    for (size_t i = 0; i < sizeof(addr.saIn.sin_addr.s_addr) / sizeof(unsigned char); i++) {
+      ordered_ip += Dec2Hex(*(reinterpret_cast<unsigned char *>(&addr.saIn.sin_addr.s_addr) + i), 2);
+    }
+    return ordered_ip;
+  }
+
+  result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+  if (result > 0) {
+    for (size_t i = 0; i < 16; i++) {
+      ordered_ip += Dec2Hex(addr.saIn6.sin6_addr.s6_addr[i], 2);
+    }
+    return ordered_ip;
+  }
+
+  MS_LOG(EXCEPTION) << "Parse ip failed, result: " << result << ", ip:" << ip;
+}
+
+// The key of nodes consists of node's ip and id.
+struct NodeKey {
+  std::string host_ip;
+  std::string node_id;
+
+  bool operator<(const NodeKey &node_key) const {
+    auto this_host_ordered_ip = GenerateIpInOrder(host_ip);
+    auto host_ordered_ip = GenerateIpInOrder(node_key.host_ip);
+    if (this_host_ordered_ip < host_ordered_ip) {
+      return true;
+    } else if (this_host_ordered_ip > host_ordered_ip) {
+      return false;
+    } else {
+      if (node_id < node_key.node_id) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+  bool operator==(const NodeKey &node_key) const {
+    return (node_id == node_key.node_id) && (host_ip == node_key.host_ip);
+  }
+};
+
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status
 // of computation graph nodes.
 class MetaServerNode : public NodeBase {
