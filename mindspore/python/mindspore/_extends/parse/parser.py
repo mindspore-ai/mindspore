@@ -826,12 +826,10 @@ def eval_script(exp_str, params):
     # Eval function parses the expression argument and evaluates it as a python expression.
     global_params = params[0]
     local_params = params[1]
-    logger.debug(f"exp_str: '{exp_str}', params: '{params}'")
     try:
         local_params = _convert_python_data(local_params)
         res = eval(exp_str, global_params, local_params)
         res = _convert_stub_tensor(res)
-        logger.debug(f"eval res: '{res}'")
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \
             ". You can try to turn off JIT Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
