@@ -1784,6 +1784,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         if self.shape == ():
             return Tensor(0)
         a = self
+        if self.dtype == mstype.bool_:
+            a = self.astype(mstype.int32)
         is_axis_none = False
         if axis is None:
             a = a.ravel()
