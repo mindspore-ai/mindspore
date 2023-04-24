@@ -8,7 +8,7 @@ mindspore.ops.ChannelShuffle
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
-    
+
     更多详情请查看： :class:`mindspore.ops.channel_shuffle` 。
 
     参数：
