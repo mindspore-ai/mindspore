@@ -40,7 +40,6 @@ _conj = math.Conj()
 _reciprocal = math.Reciprocal()
 
 _k_0 = Tensor(0, mindspore.int32)
-_padding_0 = Tensor(0, mindspore.int32)
 
 
 @constexpr
@@ -98,7 +97,6 @@ def _mat_mul(x, y):
     """Do matmul"""
     shape = _shape(x)
     if F.is_sequence_value_unknown(shape):
-        shape = _dyn_shape(x)
         tensor_rank = dyn_rank(x)
     else:
         tensor_rank = len(shape)
@@ -121,7 +119,7 @@ def get_bprop_svd(self):
     def bprop(a, out, dout):
         if not compute_uv:
             s, u, v = svd(a)
-            da = _mat_mul(u, _mat_mul(_matrix_diag(_cast(dout[0], _dtype(a))), _adjoint(v)))
+            da = _mat_mul(u, _mat_mul(_matrix_diag(dout[0]), _adjoint(v)))
             return (da,)
 
         a_shape = _shape(a)
