@@ -204,7 +204,7 @@ def test_maxpool_with_argmax_2d_fp16():
     assert (index2.asnumpy() == expect__index_result2).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_2d_dynaimic_shape():
