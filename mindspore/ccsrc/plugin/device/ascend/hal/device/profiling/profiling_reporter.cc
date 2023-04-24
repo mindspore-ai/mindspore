@@ -108,7 +108,8 @@ void ProfilingReporter::ReportTasks() const {
 
     ++task_index;
   }
-  MS_LOG(INFO) << "Profiling report task data finish. cnode_size: " << task_index;
+  MS_LOG(INFO) << "Profiling report task data finish.graph_id: " << graph_id_ << ", rt_model_id: " << rt_model_id_
+               << ",  cnode_size: " << task_index;
 }
 
 // This function only report model start and model end.
