@@ -77,7 +77,10 @@ TypePtr GetTypeFromString(const std::string &dtype) {
     return nullptr;
   }
   auto type_ptr = py::cast<TypePtr>(type);
-  return type_ptr;
+  if (type_ptr == nullptr) {
+    return nullptr;
+  }
+  return type_ptr->Clone();
 }
 
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node) {
