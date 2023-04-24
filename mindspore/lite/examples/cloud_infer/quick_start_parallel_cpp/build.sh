@@ -22,7 +22,7 @@ get_version
 MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.mindir"
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/centos_x86/cloud_fusion/${MINDSPORE_FILE}"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/x86_64/cloud_fusion/${MINDSPORE_FILE}"
 
 mkdir -p model
 if [ ! -e ${BASEPATH}/model/mobilenetv2.mindir ]; then
