@@ -16,14 +16,13 @@
 
 #include "nnacl/nnacl_kernel.h"
 #include "src/tensor.h"
-#include "common/tensor_util.h"
 #include "include/errorcode.h"
 #include "src/litert/thread_cost_model.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore::nnacl {
-NnaclKernel::~NnaclKernel() {
+NNACLKernel::~NNACLKernel() {
   if (in_ != nullptr) {
     free(in_);
     in_ = nullptr;
@@ -41,7 +40,7 @@ NnaclKernel::~NnaclKernel() {
   }
 }
 
-int NnaclKernel::Prepare() {
+int NNACLKernel::Prepare() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -57,7 +56,7 @@ int NnaclKernel::Prepare() {
   return ReSize();
 }
 
-int NnaclKernel::ReSize() {
+int NNACLKernel::ReSize() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -65,7 +64,7 @@ int NnaclKernel::ReSize() {
   return kernel_->resize(kernel_);
 }
 
-int NnaclKernel::Run() {
+int NNACLKernel::Run() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -74,14 +73,14 @@ int NnaclKernel::Run() {
   return kernel_->compute(kernel_);
 }
 
-int NnaclKernel::InferShape() {
+int NNACLKernel::InferShape() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
   return kernel_->infershape(kernel_);
 }
 
-void NnaclKernel::UpdateTensorC() {
+void NNACLKernel::UpdateTensorC() {
   for (size_t i = 0; i < in_size_; i++) {
     in_[i] = in_tensors().at(i)->ConvertToTensorC();
   }
@@ -90,7 +89,7 @@ void NnaclKernel::UpdateTensorC() {
   }
 }
 
-int NnaclKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *ctx) {
+int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *ctx) {
   CHECK_NULL_RETURN(ctx);
 
   in_size_ = in_tensors_.size();

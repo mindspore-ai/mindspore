@@ -29,7 +29,7 @@ struct KeyDesc {
   bool operator<(const KeyDesc &comp) const { return (op_ != comp.op_) ? (op_ < comp.op_) : (dt_ < comp.dt_); }
 };
 
-typedef NnaclKernel *(*NnaclCreator)(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
+typedef NNACLKernel *(*NNACLCreator)(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
                                      const std::vector<lite::Tensor *> &out, const lite::InnerContext *ctx);
 
 class KernelRegistry {
@@ -38,8 +38,8 @@ class KernelRegistry {
     static KernelRegistry instance;
     return &instance;
   }
-  void Register(KeyDesc desc, NnaclCreator creator) { nnacl_map_[desc] = creator; }
-  NnaclCreator Creator(KeyDesc desc) {
+  void Register(KeyDesc desc, NNACLCreator creator) { nnacl_map_[desc] = creator; }
+  NNACLCreator Creator(KeyDesc desc) {
     auto iter = nnacl_map_.find(desc);
     if (iter != nnacl_map_.end()) {
       return iter->second;
@@ -48,29 +48,29 @@ class KernelRegistry {
   }
 
  protected:
-  std::map<KeyDesc, NnaclCreator> nnacl_map_;
+  std::map<KeyDesc, NNACLCreator> nnacl_map_;
 };
 
-class NnaclKernelRegistrar {
+class NNACLKernelRegistrar {
  public:
-  NnaclKernelRegistrar(int op_type, TypeId data_type, NnaclCreator creator) {
+  NNACLKernelRegistrar(int op_type, TypeId data_type, NNACLCreator creator) {
     KernelRegistry::GetInstance()->Register({op_type, data_type}, creator);
   }
-  ~NnaclKernelRegistrar() = default;
+  ~NNACLKernelRegistrar() = default;
 };
 
 template <class T>
-NnaclKernel *NnaclOpt(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
+NNACLKernel *NNACLOpt(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
                       const std::vector<lite::Tensor *> &out, const lite::InnerContext *ctx) {
   auto *kernel = new (std::nothrow) T(parameter, in, out, ctx);
   return kernel;
 }
 
 #define NNACL_KERNEL(op_type, data_type, creator) \
-  static NnaclKernelRegistrar g_kernel##op_type##data_type##kernelReg(op_type, data_type, creator);
+  static NNACLKernelRegistrar g_kernel##op_type##data_type##kernelReg(op_type, data_type, creator);
 
-bool SupportNnaclKernel(int op_type, TypeId data_type);
-NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+bool NNACLSupportKernel(int op_type, TypeId data_type);
+NNACLKernel *NNACLKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const kernel::KernelKey &key);
 }  // namespace mindspore::nnacl

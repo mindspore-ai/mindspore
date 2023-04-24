@@ -76,6 +76,6 @@ int MatmulKernel::PreparePackedWeight(const lite::Tensor *tensor) {
   return RET_OK;
 }
 
-NNACL_KERNEL(PrimitiveType_MatMulFusion, kNumberTypeFloat32, NnaclOpt<MatmulKernel>)
-NNACL_KERNEL(PrimitiveType_FullConnection, kNumberTypeFloat32, NnaclOpt<MatmulKernel>)
+NNACL_KERNEL(PrimitiveType_MatMulFusion, kNumberTypeFloat32, NNACLOpt<MatmulKernel>)
+NNACL_KERNEL(PrimitiveType_FullConnection, kNumberTypeFloat32, NNACLOpt<MatmulKernel>)
 }  // namespace mindspore::nnacl

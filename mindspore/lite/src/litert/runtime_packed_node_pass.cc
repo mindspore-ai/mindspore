@@ -260,7 +260,7 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   auto kernel = kernel_exec->kernel();
   MS_CHECK_TRUE_MSG(kernel != nullptr, lite::RET_NULL_PTR, "kernel is nullptr.");
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
-  const KernelBase *kernel_base = reinterpret_cast<const nnacl::NnaclKernel *>(kernel_exec->kernel())->Kernel();
+  const KernelBase *kernel_base = reinterpret_cast<const nnacl::NNACLKernel *>(kernel_exec->kernel())->Kernel();
   if (dst_tensor->data_type() == kNumberTypeFloat32) {
     const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
     if (matmul->matmul_type_ == kNotImplemented) {

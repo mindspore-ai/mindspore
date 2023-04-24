@@ -131,7 +131,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   auto kernel =
-    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
+    nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -180,7 +180,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   auto kernel =
-    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
+    nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -229,7 +229,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   auto kernel =
-    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
+    nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -276,7 +276,7 @@ TEST_F(TestActivationFp32, Softplus) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
   auto kernel =
-    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
+    nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();

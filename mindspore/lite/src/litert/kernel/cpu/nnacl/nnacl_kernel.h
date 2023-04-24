@@ -23,12 +23,12 @@
 #include "src/litert/lite_kernel.h"
 
 namespace mindspore::nnacl {
-class NnaclKernel : public kernel::LiteKernel {
+class NNACLKernel : public kernel::LiteKernel {
  public:
-  explicit NnaclKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  explicit NNACLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~NnaclKernel() override;
+  ~NNACLKernel() override;
 
   int Prepare() override;
   int ReSize() override;

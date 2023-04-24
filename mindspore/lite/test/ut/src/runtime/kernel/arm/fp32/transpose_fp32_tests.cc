@@ -55,7 +55,7 @@ TEST_F(TestTransposeFp32, 10D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   param->op_parameter_.thread_num_ = ctx->thread_num_;
-  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -98,7 +98,7 @@ TEST_F(TestTransposeFp32, 10DSingleThread) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   param->op_parameter_.thread_num_ = ctx->thread_num_;
-  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -251,7 +251,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
 
   param->op_parameter_.thread_num_ = ctx.thread_num_;
-  auto kernel = nnacl::NnaclKernelRegistry(&param->op_parameter_, inputs_tensor, outputs_tensor, &ctx, desc);
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();

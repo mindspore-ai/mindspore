@@ -163,7 +163,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   if (kernel_creator != nullptr) {
     return true;
   }
-  return nnacl::SupportNnaclKernel(key.type, key.data_type);
+  return nnacl::NNACLSupportKernel(key.type, key.data_type);
 }
 
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -218,7 +218,7 @@ kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &i
     return nullptr;
   }
 
-  auto *lite_kernel = nnacl::NnaclKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
+  auto *lite_kernel = nnacl::NNACLKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
   if (lite_kernel == nullptr) {
     MS_LOG(WARNING) << "Registry cpu kernel failed:  " << parameter->name_;
     return nullptr;

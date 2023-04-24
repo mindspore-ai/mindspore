@@ -67,7 +67,7 @@ TEST_F(TestFcFp32, FcTest1) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
+  auto *kernel = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -119,7 +119,7 @@ TEST_F(TestFcFp32, FcTest2) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
+  auto *kernel = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -173,7 +173,7 @@ TEST_F(TestFcFp32, FcTest3) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
+  auto *kernel = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -237,7 +237,7 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
+  auto *kernel = nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN

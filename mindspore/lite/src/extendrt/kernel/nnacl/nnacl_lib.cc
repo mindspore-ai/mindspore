@@ -79,11 +79,11 @@ LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
   }
   op_parameter->thread_num_ = ctx->thread_num_;
   auto creator = nnacl::KernelRegistry::GetInstance()->Creator({spec.op_type.FBType(), data_type});
-  nnacl::NnaclKernel *kernel = nullptr;
+  nnacl::NNACLKernel *kernel = nullptr;
   if (creator != nullptr) {
     kernel = creator(op_parameter, inputs, outputs, ctx);
   } else {
-    kernel = new (std::nothrow) nnacl::NnaclKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) nnacl::NNACLKernel(op_parameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(INFO) << "Create nnacl kernel failed:  " << op_parameter->name_;

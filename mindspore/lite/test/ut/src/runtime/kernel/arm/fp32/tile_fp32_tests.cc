@@ -51,7 +51,7 @@ TEST_F(TestTileFp32, Tile) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
-  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
+  auto kernel = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -95,7 +95,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
-  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
+  auto kernel = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -139,7 +139,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   OpParameter *param = reinterpret_cast<OpParameter *>(&parameter);
-  auto kernel = nnacl::NnaclKernelRegistry(param, inputs, outputs, ctx.get(), desc);
+  auto kernel = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
