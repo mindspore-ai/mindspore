@@ -23,7 +23,6 @@ from collections import OrderedDict
 from types import FunctionType, MethodType
 import numpy
 
-import mindspore.dataset as ds
 from mindspore._checkparam import args_type_check
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
@@ -889,8 +888,6 @@ class Cell(Cell_):
                 raise TypeError(f"For element in 'set_inputs', the type must not be str.")
         self._dynamic_shape_inputs = inputs
         self._check_construct_args(*inputs)
-        if self._dynamic_shape_inputs:
-            ds.config.set_dynamic_shape(True)
         if context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.set_dynamic_input(self)
 
