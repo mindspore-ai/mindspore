@@ -114,7 +114,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     const auto &local_dict_keys = local_dict_cnode->input(input_index_one);
     const auto &local_dict_values = local_dict_cnode->input(input_index_two);
     if ((!IsValueNode<ValueTuple>(local_dict_keys) && !IsPrimitiveCNode(local_dict_keys, prim::kPrimMakeTuple)) ||
-        !IsPrimitiveCNode(local_dict_values, prim::kPrimMakeTuple)) {
+        (!IsValueNode<ValueTuple>(local_dict_values) && !IsPrimitiveCNode(local_dict_values, prim::kPrimMakeTuple))) {
       MS_LOG(EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
                         << local_dict_cnode->DebugString();
     }

@@ -1451,14 +1451,10 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
     // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
     const auto &[py_res, has_real_node_address] = GetPyExecuteSequenceOutputFromAddress(res, value);
+    // Replace the output if it's not Tensor, but Python data.
     if (has_real_node_address) {
       return py_res;
     }
-  }
-  // Replace the output if it's not Tensor, but Python data.
-  const auto &[res_obj, has_real_output] = GetPyExecuteOutput(output, value);
-  if (has_real_output) {
-    return res_obj;
   }
 
   MS_LOG(DEBUG) << "Run end";
