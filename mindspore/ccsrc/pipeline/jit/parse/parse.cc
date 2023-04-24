@@ -1832,7 +1832,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
 
     AnfNodePtr cond_node = block->ForceToCondNode(test_node);
     UpdateInterpretForUserNode(cond_node, test_node);
-    cond_node = HandleInterpret(block, cond_node, first);
+    cond_node = HandleCondInterpret(block, cond_node, first);
 
     auto switch_app =
       block_fg->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
@@ -2216,7 +2216,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     condition_node = HandleInterpret(block, condition_node, test_node);
     bool_node = block->ForceToCondNode(condition_node);
     UpdateInterpretForUserNode(bool_node, condition_node);
-    bool_node = HandleInterpret(block, bool_node, test_node);
+    bool_node = HandleCondInterpret(block, bool_node, test_node);
   }
 
   FunctionBlockPtr true_block = nullptr;
@@ -2380,7 +2380,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
     while_condition_node = header_block->ForceToCondNode(condition_node, true);
   }
   UpdateInterpretForUserNode(while_condition_node, condition_node);
-  while_condition_node = HandleInterpret(header_block, while_condition_node, test_node);
+  while_condition_node = HandleCondInterpret(header_block, while_condition_node, test_node);
   (void)header_block->ConditionalJump(while_condition_node, body_block, after_block);
 
   body_block->Mature();
@@ -2721,7 +2721,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
 
   AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
-  bool_node = HandleInterpret(block, bool_node, test_node);
+  bool_node = HandleCondInterpret(block, bool_node, test_node);
 
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
@@ -3237,6 +3237,22 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   return MakeInterpretNode(block, value_node, script_text);
 }
 
+AnfNodePtr Parser::HandleCondInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                                       const py::object &value_object) {
+  std::stringstream buffer;
+  buffer << "bool(";
+  MS_EXCEPTION_IF_NULL(value_node);
+  if (!value_node->interpret()) {
+    return value_node;
+  }
+  const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
+  buffer << script_text << ")";
+  auto node = MakeInterpretNode(block, value_node, buffer.str());
+  fallback::SetRealType(node, kBool);
+  fallback::SetRealShape(node, std::make_shared<abstract::Shape>(std::vector<int64_t>{-1}));
+  return node;
+}
+
 bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
                                        const string &script_text) const {
   MS_EXCEPTION_IF_NULL(block);
@@ -3470,7 +3486,7 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
 
   AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
-  bool_node = HandleInterpret(block, bool_node, test_node);
+  bool_node = HandleCondInterpret(block, bool_node, test_node);
 
   FunctionBlockPtr true_block = MakeFunctionBlock(*this);
   FunctionBlockPtr false_block = MakeFunctionBlock(*this);

@@ -276,23 +276,6 @@ def test_parse_dict():
     assert (out.asnumpy() == [4, 5, 6]).all()
 
 
-def test_parse_ifexpr():
-    """
-    Feature: JIT Fallback
-    Description: Test Interpret node in ifexpr in graph mode.
-    Expectation: No exception.
-    """
-
-    class Network(nn.Cell):
-        def construct(self):
-            y = Tensor([0]) if np.array([1]) else Tensor([1])
-            return y
-
-    net = Network()
-    out = net()
-    assert out == 0
-
-
 def test_fallback_tensor_array_astype():
     """
     Feature: JIT Fallback

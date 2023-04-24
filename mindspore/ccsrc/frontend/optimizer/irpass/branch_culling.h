@@ -42,14 +42,6 @@ class SwitchSimplify : public OptimizerCaller {
       bool cond_value;
       if (value_ptr->isa<BoolImm>()) {
         cond_value = GetValue<bool>(value_ptr);
-      } else if (value_ptr->isa<parse::InterpretedObject>()) {
-        // {prim::kPrimSwitch, InterpretObject: 'True', X, Y}
-        // {prim::kPrimSwitch, InterpretObject: 'False', X, Y}
-        auto interpreted_obj = value_ptr->cast<parse::InterpretedObjectPtr>();
-        py::object obj = interpreted_obj->obj();
-        constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
-        py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-        cond_value = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
       } else {
         MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value or a bool scalar value,"
                           << " not support this condition value: " << value_ptr->ToString();
@@ -62,16 +54,7 @@ class SwitchSimplify : public OptimizerCaller {
       return false_br.GetNode(node);
     };
 
-    auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool {
-      auto &abs = node->abstract();
-      bool is_interpret_object = false;
-      if (abs != nullptr) {
-        ValuePtr value = abs->BuildValue();
-        MS_EXCEPTION_IF_NULL(value);
-        is_interpret_object = value->isa<parse::InterpretedObject>();
-      }
-      return IsValueNode<BoolImm>(node) || is_interpret_object;
-    };
+    auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool { return IsValueNode<BoolImm>(node); };
     MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), SwitchSimplLambda,
                             cond.CheckFunc(IsDeterminateCondition, node));
 
