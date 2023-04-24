@@ -34,6 +34,7 @@ using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraph
                                         abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
 static std::unordered_map<int64_t, PackGraphMap> pack_graph_cache;
+void ClearAllCache() { pack_graph_cache.clear(); }
 
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list) {
   auto key = GetValue<std::int64_t>(prim->GetAttr("unique_key"));

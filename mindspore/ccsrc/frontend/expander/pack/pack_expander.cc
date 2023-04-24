@@ -92,11 +92,13 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
   return outputs;
 }
 
-FuncGraphPtr PackExpander::EndGraph(const py::object &output) const {
+FuncGraphPtr PackExpander::EndGraph(const py::object &output) {
   auto node = ConvertInput(output);
   MS_EXCEPTION_IF_NULL(node);
   graph_->set_output(node);
-  return graph_;
+  auto graph = graph_;
+  graph_.reset();
+  return graph;
 }
 
 py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {

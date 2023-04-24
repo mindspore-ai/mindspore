@@ -65,6 +65,10 @@ class BACKEND_EXPORT KernelGraphMgr {
                                                     std::vector<KernelGraphPtr> *all_out_graph,
                                                     DeviceType device_target);
 
+  std::shared_ptr<KernelGraph> ConstructPackKernelGraph(const FuncGraphPtr &func_graph,
+                                                        std::vector<KernelGraphPtr> *all_out_graph,
+                                                        DeviceType device_target);
+
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) const;
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
@@ -118,6 +122,8 @@ class BACKEND_EXPORT KernelGraphMgr {
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
 
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const;
+  void ConstructKernelGraphInner(const FuncGraphPtr &func_graph, std::vector<KernelGraphPtr> *all_out_graph,
+                                 DeviceType device_target, const KernelGraphPtr &graph);
 
   mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;

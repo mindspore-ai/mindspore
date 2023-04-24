@@ -53,6 +53,14 @@ def test_pack_basic_cell():
     output, max_ = net(x, y)
     expect = np.array([36., 64., 100., 144.])
     expect_max = np.array([12])
+
+    @pack
+    def func(x):
+        z = x * x
+        return z
+    func_output = func(x)
+    func_expect = np.array([1, 4, 9, 16])
+    assert np.allclose(func_output.asnumpy(), func_expect)
     assert np.allclose(output.asnumpy(), expect)
     assert np.allclose(max_.asnumpy(), expect_max)
     assert output.dtype == ms.float64
