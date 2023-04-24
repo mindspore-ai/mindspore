@@ -14,18 +14,18 @@ mindspore.nn.FractionalMaxPool3d
         - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是正整数，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个正整数值分别表示目标输出的深、高和宽。为 ``None`` 时，输出大小由 `output_ratio` 决定。默认值： ``None`` 。
         - **output_ratio** (Union[float, tuple[float]]，可选) - 目标输出shape与输入shape的比率。通过输入shape和 `output_ratio` 确定输出shape。支持数据类型：float16、float32、float64，数值介于0到1之间。为None时，输出大小由 `output_size` 决定。默认值： ``None`` 。
         - **return_indices** (bool，可选) - 是否返回最大值的的索引值。默认值： ``False`` 。
-        - **_random_samples** (Tensor，可选) - 分数最大池化的随机步长。数值范围为 :math:`(0, 1)` ，shape为 :math:`(N, C, 3)` 支持的数据类型：float16、float32、float64。为None时，不设置随机步长。默认值： ``None`` 。
+        - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 或 :math:`(1, C, 3)` 的Tensor。数值范围[0, 1)。默认值： ``None`` ， `_random_samples` 的值由区间[0, 1)上的均匀分布随机生成。
 
     输入：
-        - **input** (Tensor) - 四维或五维的张量，支持的数据类型：float16、float32、float64、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 。
+        - **input** (Tensor) - 四维或五维的Tensor，支持的数据类型：float16、float32、float64、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。
 
     输出：
-        - **y** (Tensor) - 3D分数最大池化的输出，是一个张量。数据类型和输入相同，shape是 :math:`(N, C, D, H, W)` 。
+        - **y** (Tensor) - 3D分数最大池化的输出，是一个Tensor。数据类型和 `input` 相同，shape是 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。其中，:math:`(D_{out}, H_{out}, W_{out})` = `output_size` 或 :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` 。
         - **argmax** (Tensor) - 仅当 `return_indices` 为True时，输出最大池化的索引值。shape和输出 `y` 一致。
 
     异常：
-        - **TypeError** - `input` 不是四维或五维张量。
-        - **TypeError** - `random_samples` 不是三维张量。
+        - **TypeError** - `input` 不是四维或五维Tensor。
+        - **TypeError** - `random_samples` 不是三维Tensor。
         - **TypeError** - `input` 数据类型不是float16、float32、double、int32、int64。
         - **TypeError** - `random_samples` 数据类型不是float16、float32、double。
         - **TypeError** - `argmax` 数据类型不是int32、int64。

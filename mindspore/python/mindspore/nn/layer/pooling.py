@@ -1670,16 +1670,21 @@ class FractionalMaxPool2d(Cell):
             Data type : float16, float32, float64, and value is between (0, 1). If None, the shape of the target will be
             determined by `output_size`. Default: ``None`` .
         return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 2)`
-            whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
-            If ``None`` , no random step will be set. Default: ``None`` .
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
+            Tensor of data type: float16, float32, double, and value is between [0, 1).
+            Supported shape :math:`(N, C, 2)` or :math:`(1, C, 2)`.
+            Default: ``None``, the values of `_random_samples`
+            will be randomly distributed using uniform distribution over an interval [0,1).
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`,
           with float16, float32, float64, int32, int64 data type.
 
     Outputs:
-        - **y** (Tensor) - Has the same type as the `input`. Has the shape :math:`(N, C, H, W)`.
+        - **y** (Tensor) - Has the same type as the `input`.
+          Has the shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})` ,
+          where :math:`(H_{out}, W_{out})` = `output_size`
+          or :math:`(H_{out}, W_{out})` = `output_ratio` * :math:`(H_{in}, W_{in})`.
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int64 data type. It will be returned only when `return_indices` is True.
 
@@ -1769,19 +1774,22 @@ class FractionalMaxPool3d(Cell):
             Data type : float16, float32, float64, and value is between (0, 1). If ``None`` , the shape of the target
             will be determined by `output_size`.Default: ``None`` .
         return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 3)`
-            whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
-            If None, no random step will be set. Default: ``None`` .
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
+            Tensor of data type: float16, float32, double, and value is between [0, 1).
+            Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` . Default: ``None``, the values of `_random_samples`
+            will be randomly distributed using uniform distribution over an interval [0,1).
 
     Inputs:
         - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
           Tensor of data type : float16, float32, float64, int32, int64.
-          Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
+          Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
-          Has the same data type with `imput_x`.
-          Tensor of shape :math:`(N, C, D, H, W)` .
+          Has the same data type with `input`.
+          Has the shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})` ,
+          where :math:`(D_{out}, H_{out}, W_{out})` = `output_size`
+          or :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` .
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int32 data type. It will output only when `return_indices` is True.
