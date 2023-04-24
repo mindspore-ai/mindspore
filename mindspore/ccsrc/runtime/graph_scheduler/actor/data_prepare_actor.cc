@@ -673,7 +673,12 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
   MS_EXCEPTION_IF_NULL(context);
 
   std::vector<TensorPtr> tensors;
-  TensorValueToTensor(node_value, &tensors);
+  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0 &&
+      common::AnfAlgo::IsDynamicSequence(node)) {
+    (void)tensors.emplace_back(AnfAlgo::SequenceToTensor(node_value));
+  } else {
+    TensorValueToTensor(node_value, &tensors);
+  }
   for (size_t i = 0; i < tensors.size(); i++) {
     const auto &tensor = tensors[i];
     if (tensor == nullptr) {
@@ -1027,7 +1032,8 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     UpdateDynamicShape(input_node, input_tensor);
     auto input_param = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(input_param);
-    if (input_param->has_dynamic_shape()) {
+    auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    if (input_param->has_dynamic_shape() || (device_address != nullptr && IsDynamic(device_address->host_shape()))) {
       MS_LOG(INFO) << "Set new size to parameter:" << input_node->DebugString();
       UpdateDataNodeDeviceAddressSize(input_node, input_tensor, AnfAlgo::GetMutableOutputAddr(input_node, 0, false));
     }

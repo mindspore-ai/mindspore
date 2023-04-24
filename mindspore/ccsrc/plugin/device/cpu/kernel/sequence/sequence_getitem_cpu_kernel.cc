@@ -72,7 +72,7 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   auto output_size = output_size_list_[0];
   size_t element_index_size =
     static_cast<size_t>(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
-  size_t input_addr_offset = element_index_size * index;
+  size_t input_addr_offset = element_index_size * LongToSize(index);
   auto cp_ret = memcpy_s(output_addr, output_size, input_addr + input_addr_offset, element_index_size * sizeof(T));
   if (cp_ret != EOK) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;

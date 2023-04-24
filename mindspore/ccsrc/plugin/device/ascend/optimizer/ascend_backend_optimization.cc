@@ -74,6 +74,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/max_pool3d_grad_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/scale_grad_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/maximum_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
@@ -388,6 +389,9 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AscendClipByNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<LambFission>());
+  if (kernel_graph->is_dynamic_shape()) {
+    ir_fusion_pm->AddPass(std::make_shared<MaximumGradFission>());
+  }
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
