@@ -64,9 +64,6 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarAdd, x, zero_scalar_, true), x);          // Scalar Add by zero
     MATCH_REPLACE_IF(node, x * one_, any_const.WithValueOf(x), !one_.CheckFunc(IsParam, node));  // Multiply by one
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, one_scalar_, true), x);           // Scalar Mul by one
-
-    // Scalar Mul by zero
-    MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, zero_scalar_, true), zero_scalar_.NewValue());
   }
   // Prim Eliminate (identity)
   MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
@@ -99,31 +96,6 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   // PowerOneEliminate
   MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimPow, x, one_scalar_), x,
                    one_scalar_.CheckFunc(IsValueNode<Scalar>, node));
-
-  return nullptr;
-}
-
-AnfNodePtr ArithmeticSimplify2::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return nullptr;
-  }
-  PatternNode x, y;
-  PConstant zero_(node, false, 0);
-
-  auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  auto shape = abs->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (shape->IsDynamic()) {
-    return nullptr;
-  }
-
-  MATCH_REPLACE_IF(node, x * zero_, zero_.WithShapeAs(node),
-                   !zero_.CheckFunc(IsParam, node) && !x.CheckFunc(IsLoad, node) &&
-                     x.GetNode(node)->func_graph() == node->func_graph());
-  auto zero_prim = PPrimitive(prim::kPrimZerosLike, y);
-  MATCH_REPLACE_IF(node, x * zero_prim, zero_.WithShapeAs(node),
-                   !zero_prim.CheckFunc(IsParam, node) && x.GetNode(node)->func_graph() == node->func_graph());
 
   return nullptr;
 }

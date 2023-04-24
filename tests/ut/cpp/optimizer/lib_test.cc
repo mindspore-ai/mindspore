@@ -149,20 +149,13 @@ TEST_F(TestOptLib, test_inline_while) {
 }
 
 TEST_F(TestOptLib, test_arithmetic) {
-  FuncGraphPtr b1_0 = getPyFun.CallAndParseRet("test_arithmetic", "multiply_by_zero_l");
-  FuncGraphPtr b2_0 = getPyFun.CallAndParseRet("test_arithmetic", "multiply_by_zero_r");
   FuncGraphPtr b1 = getPyFun.CallAndParseRet("test_arithmetic", "multiply_by_one_l");
   FuncGraphPtr b2 = getPyFun.CallAndParseRet("test_arithmetic", "multiply_by_one_r");
   FuncGraphPtr b3 = getPyFun.CallAndParseRet("test_arithmetic", "add_zero_l");
   FuncGraphPtr b4 = getPyFun.CallAndParseRet("test_arithmetic", "add_zero_r");
   FuncGraphPtr b5 = getPyFun.CallAndParseRet("test_arithmetic", "elim_identity");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_arithmetic", "after");
-  FuncGraphPtr after_0 = getPyFun.CallAndParseRet("test_arithmetic", "after_0");
-
   auto patterns = std::vector<SubstitutionPtr>({irpass.arithmetic_simplify_});
-
-  ASSERT_TRUE(CheckOpt(b1_0, after_0, patterns));
-  ASSERT_TRUE(CheckOpt(b2_0, after_0, patterns));
   ASSERT_TRUE(CheckOpt(b1, after, patterns));
   ASSERT_TRUE(CheckOpt(b2, after, patterns));
   ASSERT_TRUE(CheckOpt(b3, after, patterns));

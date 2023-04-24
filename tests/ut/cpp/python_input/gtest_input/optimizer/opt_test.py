@@ -399,18 +399,6 @@ def test_arithmetic(tag):
     identity = Primitive('identity')
 
     @fns
-    def multiply_by_zero_l(x):
-        return scalar_mul(x, 0)
-
-    @fns
-    def multiply_by_zero_r(x):
-        return scalar_mul(0, x)
-
-    @fns
-    def after_0(x):
-        return 0
-
-    @fns
     def multiply_by_one_l(x):
         return scalar_mul(x, 1)
 
