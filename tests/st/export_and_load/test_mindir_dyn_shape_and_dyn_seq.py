@@ -131,3 +131,37 @@ def test_mutable_dynamic_tuple():
     assert np.allclose(result_mindir.asnumpy(), out_net.asnumpy(), 0.0001, 0.0001)
 
     os.remove(verify_name)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_mindir_raise_export_and_load():
+    """
+    Feature: export raise primitive and test the raise when
+    Description: Test export API to export network into MindIR
+    Expectation: current backend is not support raise. this case may be changed later.
+    """
+    class TestNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.fc = nn.Dense(2, 2, weight_init="normal")
+            self.idx = Tensor([True, True, True])
+
+        def construct(self, x):
+            output = self.fc(x[self.idx])
+            return output
+
+    mindir_file_name = "./tensor_bool.mindir"
+    data = Tensor([[1, 2], [4, 5], [6, 7]], dtype=ms.float32)
+    net = TestNet()
+    export(net, data, file_name=mindir_file_name, file_format="MINDIR")
+    assert os.path.exists(mindir_file_name)
+
+    graph = load(mindir_file_name)
+
+    with pytest.raises(RuntimeError):
+        load_cell = nn.GraphCell(graph)
+        load_cell(data)
