@@ -27,6 +27,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
+from mindspore.ops.operations.array_ops import MatrixBandPart
 from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.operations.array_ops import IndexPut
@@ -243,6 +244,17 @@ def get_bprop_matrix_diag_part_v3(self):
         else:
             result = (matrix_set_diag_v3(zeros_like(x), dout, k), zeros_like(k), zeros_like(padding_value))
         return result
+
+    return bprop
+
+
+@bprop_getters.register(MatrixBandPart)
+def get_bprop_matrix_band_part(self):
+    """Grad definition for `MatrixBandPart` operation."""
+    matrix_band_part = MatrixBandPart()
+
+    def bprop(x, lower, upper, out, dout):
+        return (matrix_band_part(dout, lower, upper), None, None)
 
     return bprop
 
