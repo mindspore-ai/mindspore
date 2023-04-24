@@ -10723,9 +10723,9 @@ def zeta(input, other):
             raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
         _dtype = input.dtype
         other = _get_cache_prim(P.Cast)()(other, _dtype)
-    if input.size() < other.size():
+    if input.size < other.size:
         input = _get_cache_prim(P.BroadcastTo)(other.shape)(input)
-    elif input.size() > other.size():
+    elif input.size > other.size:
         other = _get_cache_prim(P.BroadcastTo)(input.shape)(other)
     output = _get_cache_prim(P.Zeta)()(input, other)
     return output
