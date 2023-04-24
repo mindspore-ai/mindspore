@@ -366,7 +366,7 @@ def test_cellcontainer_pattern():
             new_relu2_node = Node.create_call_cell(new_relu2, ['new_relu_2'],
                                                    [ScopedValue.create_naming_value('new_maxpool1')])
             new_maxpool2 = nn.BiDense(1, 1, 2)
-            new_maxpool2_node = Node.create_call_cell(new_maxpool2, ['new_maxpool2'],
+            new_maxpool2_node = Node.create_call_cell(new_maxpool2, [bn_node.get_targets()[0]],
                                                       [ScopedValue.create_naming_value('new_relu_1'),
                                                        ScopedValue.create_naming_value('new_relu_2')])
             return [new_maxpool1_node, new_relu1_node, new_relu2_node, new_maxpool2_node]

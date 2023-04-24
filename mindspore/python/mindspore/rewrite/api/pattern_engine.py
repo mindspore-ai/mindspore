@@ -285,27 +285,14 @@ class PatternEngine:
                 is the matched node.
             new_nodes (list[Node]): A list of instance of Node as replacement.
         """
-        to_erase_list = matched_dict.values()
-        # keep all old nodes' inputs
-        inputs_dict = {}
-        for node in to_erase_list:
-            inputs_dict[node.get_name()] = (node.get_inputs())
         # call replace of SymbolTree
         new_root = stree.replace(old_root, new_nodes)
         # replace only support one-to-one replace or one-to-multi replace, we need to erase nodes except
         # cur_node manually
-        queue: [Node] = [old_root]
-        while queue:
-            cur_node: Node = queue.pop(0)
-            if cur_node in to_erase_list:
-                if cur_node.get_users():
-                    # if cur_node is depended on by other node, skip now.
-                    # cur_node will be push into queue and be erased later
-                    continue
-                if stree.get_node(cur_node.get_name()) is not None:
-                    # cur_node is not erased before
-                    stree.erase_node(cur_node)
-                queue.extend(inputs_dict.get(cur_node.get_name()))
+        to_erase_list = matched_dict.values()
+        for node in reversed(to_erase_list):
+            if node != old_root:
+                stree.erase_node(node)
         return new_root
 
     @staticmethod
@@ -354,7 +341,7 @@ class PatternEngine:
         #  2. Visit b, b does not match pattern, add a to queue.
         #  3. Visit d, d does not match pattern, add c to queue.
         #  4. Visit a, a matches pattern and erased from SymbolTree, add xx to queue.
-        #  5. Visit c, d does not match pattern, add a to queue.
+        #  5. Visit c, c does not match pattern, add a to queue.
         #  At step 5, a is visited at second time but a is erased from SymbolTree at step 4.
         visited: [Node] = []
         while queue:

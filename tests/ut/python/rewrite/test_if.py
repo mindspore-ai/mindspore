@@ -207,7 +207,7 @@ def test_resnet_fusion_in_if():
             old_bn = node_.get_users()[0]
             pos = stree.after(node_)
             conv: nn.Conv2d = node_.get_instance()
-            new_bn = Node.create_call_cell(nn.BatchNorm2d(conv.out_channels), targets=["x"],
+            new_bn = Node.create_call_cell(nn.BatchNorm2d(conv.out_channels), targets=[stree.unique_name("x")],
                                            args=[node_.get_targets()[0]], kwargs={}, name="new_bn")
             stree.insert(pos, new_bn)
             old_bn.set_arg_by_node(0, new_bn)
@@ -234,8 +234,9 @@ def test_resnet_fusion_cross_if():
         if node_.get_instance_type() == nn.Conv2d:
             pos = stree.after(node_)
             conv: nn.Conv2d = node_.get_instance()
-            new_bn = Node.create_call_cell(nn.BatchNorm2d(conv.out_channels), targets=["x"],
-                                           args=[ScopedValue.create_naming_value("x")], kwargs={}, name="new_bn")
+            new_bn = Node.create_call_cell(nn.BatchNorm2d(conv.out_channels), targets=[stree.unique_name("x")],
+                                           args=[ScopedValue.create_naming_value(stree.unique_name("x"))],
+                                           kwargs={}, name="new_bn")
             stree.insert(pos, new_bn)
             break
     assert len(stree.get_handler()._nodes) == original_nodes_size + 1

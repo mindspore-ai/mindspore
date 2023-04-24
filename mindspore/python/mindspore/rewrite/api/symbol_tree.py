@@ -238,14 +238,10 @@ class SymbolTree:
 
             1. Replace support one-to-one replacement or one-to-multi replacement. If you need multi-to-multi
                replacement, please refer to `PatternEngine`.
-            2. When applying one-to-multi replacement, Rewrite will insert all `new_nodes` into symbol_tree.
-            3. Caller should maintain arguments and targets of nodes intra sub-tree for specifying topological relation
-               intra sub-tree.
-            4. Caller should maintain arguments of input nodes of sub-tree and for specifying topological relation of
-               inputs of sub-tree.
-            5. Rewrite will maintain arguments of prepend node of sub-tree for specifying topological relation of
-               outputs of sub-tree.
-            6. Rewrite will maintain all inputs of nodes after replace `new_nodes` into `SymbolTree`.
+            2. When applying one-to-multi replacement, Rewrite will insert all `new_nodes` into symbol_tree
+               sequentially.
+            3. Caller should maintain the topological relationship between each node in the `new_nodes` , as well as
+               the topological relationship between nodes in the `new_nodes` and nodes in the original tree.
 
         Args:
             old_node (Node): Node to be replaced.
@@ -329,3 +325,6 @@ class SymbolTree:
 
     def save_network_to_file(self):
         self._symbol_tree.save_network_to_file()
+
+    def unique_name(self, name: str = "output"):
+        return self._symbol_tree.unique_name(name)
