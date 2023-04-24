@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_PY_H_
 
 #include <memory>
+#include <utility>
 
 #include "pybind11/pybind11.h"
 #include "utils/convert_utils_base.h"
@@ -37,6 +38,7 @@ COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBase
 COMMON_EXPORT bool IsStubTensor(const py::handle &obj);
 COMMON_EXPORT tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 COMMON_EXPORT ValuePtr PyStubNodeCast(const py::handle &obj);
+COMMON_EXPORT std::pair<ShapeVector, TypeId> GetStubTensorInfo(const py::handle &obj);
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
