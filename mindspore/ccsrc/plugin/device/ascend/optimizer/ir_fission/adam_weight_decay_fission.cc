@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <string>
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -54,6 +55,20 @@ ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
   kernel_graph->AddValueNodeToGraph(value_node);
   return value_node;
 }
+
+AnfNodePtr CreateCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const TypeId dst_type) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input);
+  if (common::AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
+    AnfNodePtr cast = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kCastOpName)), input});
+    MS_EXCEPTION_IF_NULL(cast);
+    common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {AnfAlgo::GetOutputDetailShape(input, 0)}, cast.get());
+    common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(dst_type), cast);
+    cast->set_scope(input->scope());
+    return cast;
+  }
+  return input;
+}
 }  // namespace
 
 const BaseRef AdamWeightDecayFission::DefinePattern() const {
@@ -75,20 +90,26 @@ const AnfNodePtr AdamWeightDecayFission::Process(const FuncGraphPtr &graph, cons
 
   const auto ori_inputs = adam_weight_decay_cnode->inputs();
 
+  // cast param to float32
+  auto param_fp32 = CreateCastNode(graph, ori_inputs[kIdxParam], kNumberTypeFloat32);
+  auto m_fp32 = CreateCastNode(graph, ori_inputs[kIdxM], kNumberTypeFloat32);
+  auto v_fp32 = CreateCastNode(graph, ori_inputs[kIdxV], kNumberTypeFloat32);
+  auto grad_fp32 = CreateCastNode(graph, ori_inputs[kIdxGradient], kNumberTypeFloat32);
+
   // create beta1 * m
-  auto mul_1 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxBeta1], ori_inputs[kIdxM]);
+  auto mul_1 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxBeta1], m_fp32);
   // create 1-beta1
   auto num_one = CreateValueNode(graph, 1.0);
   auto sub_1 = CreateNodeOfBinaryOp(graph, kSubOpName, num_one, ori_inputs[kIdxBeta1]);
   // create (1-beta1) * gradient
-  auto mul_2 = CreateNodeOfBinaryOp(graph, kMulOpName, sub_1, ori_inputs[kIdxGradient]);
+  auto mul_2 = CreateNodeOfBinaryOp(graph, kMulOpName, sub_1, grad_fp32);
   // create next_m = beta1 * m + (1 - beat1) * gradient
   auto add_1 = CreateNodeOfBinaryOp(graph, kTensorAddOpName, mul_1, mul_2);
 
   // create beta2 * v
-  auto mul_3 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxBeta2], ori_inputs[kIdxV]);
+  auto mul_3 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxBeta2], v_fp32);
   // create gradient^2
-  auto square = CreateNodeOfUnaryOp(graph, kSquareOpName, ori_inputs[kIdxGradient]);
+  auto square = CreateNodeOfUnaryOp(graph, kSquareOpName, grad_fp32);
   // create 1-beta2
   auto sub_2 = CreateNodeOfBinaryOp(graph, kSubOpName, num_one, ori_inputs[kIdxBeta2]);
   // create (1-beta2) * gradient^2
@@ -103,24 +124,27 @@ const AnfNodePtr AdamWeightDecayFission::Process(const FuncGraphPtr &graph, cons
   // create update = next_m / (eps + sqrt(next_v))
   auto real_div = CreateNodeOfBinaryOp(graph, kRealDivOpName, add_1, add_3);
   // create weight_decay * param
-  auto mul_5 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxWeightDecay], ori_inputs[kIdxParam]);
+  auto mul_5 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxWeightDecay], param_fp32);
   // create update <== weight_decay * param + update
   auto add_4 = CreateNodeOfBinaryOp(graph, kTensorAddOpName, mul_5, real_div);
   // create update_with_lr = lr * update
   auto mul_6 = CreateNodeOfBinaryOp(graph, kMulOpName, ori_inputs[kIdxLr], add_4);
   // create param - update_with_lr
-  auto sub_3 = CreateNodeOfBinaryOp(graph, kSubOpName, ori_inputs[kIdxParam], mul_6);
+  auto sub_3 = CreateNodeOfBinaryOp(graph, kSubOpName, param_fp32, mul_6);
 
   // create param = param - update_with_lr
-  auto assign_1 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), ori_inputs[kIdxParam], sub_3);
+  auto assign_1 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), param_fp32, sub_3);
   // create m = next_m
-  auto assign_2 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), ori_inputs[kIdxM], add_1);
+  auto assign_2 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), m_fp32, add_1);
   // create v = next_v
-  auto assign_3 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), ori_inputs[kIdxV], add_2);
+  auto assign_3 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), v_fp32, add_2);
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), assign_1, assign_2, assign_3};
   auto make_tuple = graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
+  AbstractBasePtrList abstract_list{assign_1->abstract(), assign_2->abstract(), assign_3->abstract()};
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+
   return make_tuple;
 }
 }  // namespace opt

@@ -966,18 +966,6 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass}};
 
-std::vector<PassItem> kGePasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
-                                   {"rewriter_before_opt_a", RewriterBeforeOptAPass},
-                                   {"opt_a", OptPassAGroup},
-                                   {"rewriter_after_opt_a", RewriterAfterOptAPassGe},
-                                   {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
-                                   {"opt_b", OptPassBGroup},
-                                   {"opt_control", ControlGroup},
-                                   {"opt_prepare", PrepareGroup},
-                                   {"cconv", CconvPass},
-                                   // The pass cache hccl group, so the hccl group should be created before the pass
-                                   {"handle_group_info", HandleGroupInfoPass}};
-
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"opt_b", OptPassBGroup},
                                          {"cconv", CconvPass},
