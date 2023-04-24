@@ -66,6 +66,9 @@ class SocketOperation {
   // Connect to the Socket sock_fd.
   static int Connect(int sock_fd, const struct sockaddr *sa, socklen_t saLen, uint16_t *boundPort);
 
+  // Get interface name for specified socket address.
+  static std::string GetInterfaceName(SocketAddress *const addr);
+
   // Close the given connection.
   virtual void Close(Connection *connection) = 0;
 
