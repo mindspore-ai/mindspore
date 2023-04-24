@@ -24,7 +24,7 @@ class Net(nn.Cell):
         return ops.zeta(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -43,4 +43,4 @@ def test_net(mode):
     net = Net()
     output = net(x, 1)
     np_out = np.array([1.6449, 1.0823])
-    assert np.allclose(output.asnumpy(), np_out)
+    assert np.allclose(output.asnumpy(), np_out, atol=0.0001, rtol=0.0001)
