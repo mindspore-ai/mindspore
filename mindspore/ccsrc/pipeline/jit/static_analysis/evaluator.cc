@@ -70,8 +70,8 @@ bool ContainsAnyType(const AbstractBasePtrList &args_abs_list) {
 }  // namespace
 
 const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{
-  prim::kPrimReturn,      prim::kPrimDepend,      prim::kPrimSwitch,
-  prim::kPrimSwitchLayer, prim::kPrimUpdateState, prim::kPrimLoad};
+  prim::kPrimReturn,      prim::kPrimDepend, prim::kPrimSwitch,    prim::kPrimSwitchLayer,
+  prim::kPrimUpdateState, prim::kPrimLoad,   prim::kPrimIsConstant};
 
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList args_abs_list;

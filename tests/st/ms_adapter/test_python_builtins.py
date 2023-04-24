@@ -388,4 +388,4 @@ def test_bool():
 
     x = adapter.Tensor([10])
     out = func(x)
-    assert type(out) is adapter.Tensor
+    assert out

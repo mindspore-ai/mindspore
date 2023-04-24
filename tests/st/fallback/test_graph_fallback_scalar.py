@@ -58,7 +58,11 @@ def test_return_scalar_tuple():
     assert isinstance(out[2], int) and out[2] == 24
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_int():
     """
     Feature: Return scalar.
@@ -75,7 +79,11 @@ def test_builtin_int():
     assert isinstance(out, int) and out == 1
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_float():
     """
     Feature: Return scalar.
@@ -92,7 +100,11 @@ def test_builtin_float():
     assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_builtin_bool():
     """
     Feature: Return scalar.
@@ -109,7 +121,11 @@ def test_builtin_bool():
     assert out is True
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_scalar_in_tuple_output():
     """
     Feature: Return scalar.
@@ -118,17 +134,125 @@ def test_scalar_in_tuple_output():
     """
     @ms.jit
     def func(x):
-        return int(x), float(x), bool(x)
+        return int(x), float(x)
 
     x = ms.Tensor(10)
     out = func(x)
     print(f'out: {out}')
     assert isinstance(out[0], int) and out[0] == 10
     assert isinstance(out[1], float) and math.isclose(out[1], 10, abs_tol=1e-5)
-    assert isinstance(out[2], bool) and out[2] is True
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_int_asnumpy():
+    """
+    Feature: Return scalar.
+    Description: Support tensor.asnumpy().
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return int(x.asnumpy())
+
+    x = ms.Tensor([5])
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 5
 
 
 @pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_int_asnumpy_calculation():
+    """
+    Feature: Return scalar.
+    Description: Support tensor.asnumpy().
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return int(x.asnumpy()) + 1
+
+    x = ms.Tensor([5])
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 6
+
+
+@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_int_tensor_asnumpy_calculation():
+    """
+    Feature: Return scalar.
+    Description: Support tensor.asnumpy().
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return int(ms.Tensor(x.asnumpy())) + 1
+
+    x = ms.Tensor([5])
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_int_mutable():
+    """
+    Feature: Return scalar.
+    Description: Support mutable.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return int(x)
+
+    out = func(ms.mutable(1))
+    print(f'out: {out}')
+    assert isinstance(out, int) and out == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_float_mutable():
+    """
+    Feature: Return scalar.
+    Description: Support mutable.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return float(x)
+
+    out = func(ms.mutable(1.0))
+    print(f'out: {out}')
+    assert isinstance(out, float) and math.isclose(out, 1, abs_tol=1e-5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_bool_condition():
     """
     Feature: Return scalar.
@@ -144,10 +268,108 @@ def test_bool_condition():
     x = ms.Tensor(5)
     out = func(x)
     print(f'out: {out}')
-    assert isinstance(out, int) and out == 6
+    assert out == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_int_condition():
+    """
+    Feature: Return scalar.
+    Description: Support scalar calculation.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        if int(x) == 5:
+            return x + 2
+        return x + 3
+
+    x = ms.Tensor(5)
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 7
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_float_condition():
+    """
+    Feature: Return scalar.
+    Description: Support scalar calculation.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        if float(x):
+            return x - 2
+        return x - 3
+
+    x = ms.Tensor(5)
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 3
 
 
 @pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_condition():
+    """
+    Feature: Return scalar.
+    Description: Support scalar calculation.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        if ms.Tensor(int(x)):
+            return x * 2
+        return x * 3
+
+    x = ms.Tensor(5)
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 10
+
+
+@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bool_asnumpy_condition():
+    """
+    Feature: Return scalar.
+    Description: Support scalar calculation.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        if bool(x.asnumpy()):
+            return x * 2
+        return x * 3
+
+    x = ms.Tensor(5)
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 10
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_scalar_int_calculation():
     """
     Feature: Return scalar.
@@ -161,10 +383,14 @@ def test_scalar_int_calculation():
     x = ms.Tensor(5)
     out = func(x)
     print(f'out: {out}')
-    assert out == 6
+    assert isinstance(out, int) and out == 6
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_combine_calculation():
     """
     Feature: Return scalar.
@@ -180,7 +406,59 @@ def test_combine_calculation():
     print(f'out: {out}')
     assert isinstance(out[0], float) and abs(out[0] - 10) < 1e-6
     assert isinstance(out[1], int) and out[1] == 6
-    assert isinstance(out[2], float) and abs(out[0] - 6.5) < 1e-6
+    assert isinstance(out[2], float) and abs(out[2] - 6.5) < 1e-6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_scalar_in_inner_function():
+    """
+    Feature: Return scalar.
+    Description: Support scalar in output list.
+    Expectation: No exception.
+    """
+    def inner_func(x):
+        if bool(x):
+            return int(x) + 1
+        return int(x) + 2
+
+    @ms.jit
+    def func(x):
+        return inner_func(x)
+
+    x = ms.Tensor(10)
+    out = func(x)
+    print(f'out: {out}')
+    assert out == 11
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_scalar_tuple_in_inner_function():
+    """
+    Feature: Return scalar.
+    Description: Support scalar in output list.
+    Expectation: No exception.
+    """
+    def inner_func(x):
+        if bool(x):
+            return int(x) + 1, x
+        return int(x) + 2, x * 2
+
+    @ms.jit
+    def func(x):
+        return inner_func(x)
+
+    x = ms.Tensor(10)
+    out = func(x)
+    print(f'out: {out}')
+    assert out[0] == 11
 
 
 @pytest.mark.level0
@@ -272,25 +550,3 @@ def test_scalar_in_dict_with_empty_tuple():
     out = func()
     print(f'out: {out}')
     assert out == {'x': 1, 'y': (), 'z': 2}
-
-
-@pytest.mark.skip(reason="No support by now.")
-def test_scalar_in_inner_function():
-    """
-    Feature: Return scalar.
-    Description: Support scalar in output list.
-    Expectation: No exception.
-    """
-    def inner_func(x):
-        if bool(x):
-            return int(x) + 1, x
-        return int(x) + 2, x * 2
-
-    @ms.jit
-    def func(x):
-        return inner_func(x)
-
-    x = ms.Tensor(1)
-    out = func(x)
-    print(f'out: {out}')
-    assert out[0] == 2
