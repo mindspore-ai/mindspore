@@ -286,6 +286,7 @@ from .one_hot import _one_hot_aicpu
 from .orgqr import _orgqr_aicpu
 from .parameterized_truncated_normal import _parameterized_truncated_normal_aicpu
 from .polar import _polar_aicpu
+from .polygamma import _polygamma_aicpu
 from .pdist_grad import _pdist_grad_aicpu
 from .ragged_range import _raggedrange_aicpu
 from .ragged_tensor_to_sparse import _ragged_tensor_to_sparse_aicpu

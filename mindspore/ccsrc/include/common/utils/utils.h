@@ -605,6 +605,7 @@ constexpr auto kPartialOpName = "partial";
 constexpr auto kPdistGradOpName = "PdistGrad";
 constexpr auto kPoissonOpName = "Poisson";
 constexpr auto kPolarOpName = "Polar";
+constexpr auto kPolygammaOpName = "Polygamma";
 constexpr auto kPoolingOpName = "Pooling";
 constexpr auto kPrintOpName = "Print";
 constexpr auto kPSROIPoolingOpName = "PSROIPooling";
