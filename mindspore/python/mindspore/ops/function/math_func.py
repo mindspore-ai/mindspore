@@ -443,7 +443,6 @@ def bincount(input, weights=None, minlength=0):
     Raises:
         TypeError: If `input` or `weights` is not a tensor.
         ValueError: If `input` is not one-dimensional, or if `input` and `weights` do not have the same shape.
-        ValueError: If `input` contains negative value.
         ValueError: If `minlength` is a negative integer.
 
     Supported Platforms:
@@ -461,15 +460,15 @@ def bincount(input, weights=None, minlength=0):
         raise TypeError("For math function 'bincount', 'input' must be Tensor.")
     if weights is not None and not isinstance(weights, Tensor):
         raise TypeError(f"For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
-    if not isinstance(minlength, int):
+    if not isinstance(minlength, int) or isinstance(minlength, bool):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
     rank_op = _get_cache_prim(P.Rank)()
-    if rank_op(input) != 1 or not (input > 0).all():
-        raise ValueError(f"For math function 'bincount', `input` should be one-dimensional non-negative tensor.")
+    if rank_op(input) != 1:
+        raise ValueError(f"For math function 'bincount', 'input' should be one-dimensional tensor.")
     if input.shape[0] == 0:
         return Tensor([])
     if minlength < 0:
-        raise ValueError(f"For bincount minlength should be >= 0.")
+        raise ValueError(f"For 'bincount', 'minlength' should be >= 0 but got {minlength}.")
     if max(input.astype(mstype.float32)) > minlength - 1:
         length = (max(input.astype(mstype.float32)) + 1).astype(mstype.int32)
     else:
