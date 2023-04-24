@@ -137,6 +137,12 @@ Format Converter::GetInputFormat() const {
   }
 }
 
+void Converter::SetOutputFormat(Format format) {
+  if (data_ != nullptr) {
+    data_->spec_output_format = format;
+  }
+}
+
 void Converter::SetInputDataType(DataType data_type) {
   if (data_ != nullptr) {
     data_->input_data_type = data_type;

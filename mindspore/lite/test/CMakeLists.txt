@@ -128,6 +128,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/*.cc
+            ${TEST_DIR}/ut/tools/optimizer/graph/*.cc
             )
     if(MSLITE_ENABLE_SERVER_INFERENCE)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/mindrt_parallel_test.cc)
@@ -138,6 +139,7 @@ if(MSLITE_ENABLE_CONVERTER)
     set(TEST_CONVERTER_UT_SRC
         ${TEST_CONVERTER_UT_SRC}
         ${TEST_DIR}/main.cc
+        ${TEST_DIR}/ut/utils/build_func_graph.cc
         ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/common/import_from_meta_graphT.cc
         )

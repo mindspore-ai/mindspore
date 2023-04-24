@@ -52,6 +52,7 @@ struct ConverterPara {
   std::map<std::string, std::vector<int64_t>> input_shape;
   Format input_format = NHWC;
   Format spec_input_format = DEFAULT_FORMAT;
+  Format spec_output_format = DEFAULT_FORMAT;
   DataType input_data_type = DataType::kNumberTypeFloat32;
   DataType output_data_type = DataType::kNumberTypeFloat32;
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)

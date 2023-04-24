@@ -54,6 +54,8 @@ class MS_API Converter {
   void SetInputFormat(Format format);
   Format GetInputFormat() const;
 
+  void SetOutputFormat(Format format);
+
   void SetInputDataType(DataType data_type);
   DataType GetInputDataType();
 

@@ -55,6 +55,8 @@
 #include "tools/optimizer/graph/input_data_type_trans_pass.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
+#include "tools/optimizer/graph/specify_graph_output_format.h"
+#include "tools/optimizer/graph/decrease_transpose_algo.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/offline_packing_optimizer.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
@@ -379,6 +381,12 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     return status;
   }
 
+  status = UnifyFuncGraphOutputFormat(param, func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UnifyFuncGraphOutputFormat failed.";
+    return status;
+  }
+
   FuncGraphUtils::SetFuncGraphOutputNames(func_graph, output_names);
   // Save input names to abstract, input names will be changed after load next time.
   SetInputParameterAbstractName(func_graph);
@@ -409,6 +417,27 @@ int ConverterFuncGraph::Save(const std::shared_ptr<ConverterPara> &param, const 
     return RET_OK;
   }
   return serializer.GetBuffAndSize(buff, size);
+}
+STATUS ConverterFuncGraph::UnifyFuncGraphOutputFormat(const std::shared_ptr<ConverterPara> &param,
+                                                      FuncGraphPtr func_graph) {
+  auto spec_output_format = param->spec_output_format;
+  if (spec_output_format == DEFAULT_FORMAT) {
+    return RET_OK;
+  }
+  opt::SpecifyGraphOutputFormat pass(spec_output_format);
+  auto status = pass.Run(func_graph);
+  if (!status) {
+    MS_LOG(ERROR) << "Failed to Specify graph output format to " << spec_output_format;
+    return RET_ERROR;
+  }
+  opt::DecreaseTransposeAlgo transpose_pass;
+  if (!transpose_pass.Run(func_graph)) {
+    MS_LOG(ERROR) << "Failed to decrease transpose ";
+    return RET_ERROR;
+  }
+
+  func_graph->set_attr(kOutputFormat, MakeValue(static_cast<int>(spec_output_format)));
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore
