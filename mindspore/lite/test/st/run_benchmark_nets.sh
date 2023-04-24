@@ -210,3 +210,13 @@ if [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
       exit 1
     fi
 fi
+
+# two whl in release_path
+if [[ $backend == "all" || $backend == "import_ms_and_mslite" ]]; then
+    sh $cur_path/scripts/run_import_ms_and_mslite.sh -r $release_path -m $models_path -e $backend -l $level
+    import_ms_and_mslite=$?
+    if [[ import_ms_and_mslite -ne 0 ]]; then
+      echo "Run import ms and mslite failed"
+      exit 1
+    fi
+fi
