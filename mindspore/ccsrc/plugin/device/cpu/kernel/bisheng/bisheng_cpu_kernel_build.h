@@ -33,11 +33,11 @@ class BishengCpuKernelBuilder : public AkgKernelBuilder {
   ~BishengCpuKernelBuilder() = default;
 
   kernel::KernelBuildClient *GetClient() override { return nullptr; }
-  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
+  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
                        const AnfNodePtr &anf_node) override {
     return;
   };
-  void BishengSetKernelMod(const string &kernel_name, const AkgKernelJsonGenerator &json_generator,
+  void BishengSetKernelMod(const string &kernel_name, const GraphKernelJsonGenerator &json_generator,
                            const AnfNodePtr &anf_node);
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
   bool ParallelBuild(const std::vector<JsonNodePair> &json_and_node) override;

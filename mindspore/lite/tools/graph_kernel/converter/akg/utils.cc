@@ -51,7 +51,7 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
   }
   std::set<std::string> unique_kernel_name;
   for (const auto &node : nodes) {
-    graphkernel::AkgKernelJsonGenerator akg_kernel_json_generator(option);
+    graphkernel::GraphKernelJsonGenerator graph_kernel_json_generator(option);
     auto fg = GetCNodeFuncGraph(node);
     MS_EXCEPTION_IF_NULL(fg);
     auto mng = fg->manager();
@@ -61,15 +61,15 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
     GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
-    akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
-    auto json_kernel_name = akg_kernel_json_generator.kernel_name();
+    graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
+    auto json_kernel_name = graph_kernel_json_generator.kernel_name();
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;
     }
     if (!unique_kernel_name.insert(json_kernel_name).second) {
       continue;
     }
-    if (!SaveJsonInfo(dir_path.value() + "/" + json_kernel_name, akg_kernel_json_generator.kernel_json_str())) {
+    if (!SaveJsonInfo(dir_path.value() + "/" + json_kernel_name, graph_kernel_json_generator.kernel_json_str())) {
       return "";
     }
   }

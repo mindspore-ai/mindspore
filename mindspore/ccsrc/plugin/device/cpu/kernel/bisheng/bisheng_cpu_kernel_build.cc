@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 void BishengCpuKernelBuilder::BishengSetKernelMod(const string &kernel_name,
-                                                  const AkgKernelJsonGenerator &json_generator,
+                                                  const GraphKernelJsonGenerator &json_generator,
                                                   const AnfNodePtr &anf_node) {
   auto kernel_mod_ptr = std::make_shared<BishengCpuKernelMod>(kernel_name);
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());

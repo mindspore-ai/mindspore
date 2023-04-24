@@ -107,7 +107,7 @@ constexpr auto kImplyGPUStr = "GPU";
 constexpr auto kImplyBISHENGStr = "BiSheng";
 const std::map<std::string, std::string> kProcessorMap = {
   {kCtxAscend, kImplyTBEStr}, {kCtxGPU, kImplyCUDAStr}, {kCtxCPU, kImplyCPUStr}};
-enum OpImplyType { kImplyAKG = 0, kImplyTBE, kImplyAICPU, kImplyCPU, kImplyGPU, kImplyBISHENG };
+enum OpImplyType { kImplyAKG = 0, kImplyTBE, kImplyAICPU, kImplyCPU, kImplyGPU, kImplyBISHENG, kImplyMLIR };
 enum OpPattern { kCommonPattern = 0, kFormatAgnosticPattern, kBroadcastPattern, kReducePattern, kDynamicFormatPattern };
 static const std::map<std::string, OpPattern> kPatternMap = {
   {kFormatAgnostic, kFormatAgnosticPattern},

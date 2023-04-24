@@ -22,7 +22,7 @@
 #include <memory>
 #include "ops/custom.h"
 #include "utils/anf_utils.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 
 namespace mindspore::graphkernel {
 constexpr auto kTunedSign = "tuned_signature";

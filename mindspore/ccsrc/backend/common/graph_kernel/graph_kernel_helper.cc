@@ -23,7 +23,7 @@
 
 #include "utils/hash_set.h"
 #include "kernel/common_utils.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include "kernel/akg/akg_kernel_json_decoder.h"
 #include "kernel/kernel.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -64,15 +64,15 @@ bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
 bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, AnfNodePtrList> &in_and_out,
              const DumpOption &dump_option, nlohmann::json *op_desc,
              std::map<std::string, AnfNodePtr> *address_node_map = nullptr) {
-  AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
-  if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, in_and_out.first, in_and_out.second)) {
+  GraphKernelJsonGenerator graph_kernel_json_generator(dump_option);
+  if (!graph_kernel_json_generator.CollectFusedJson(op_nodes, in_and_out.first, in_and_out.second)) {
     MS_LOG(ERROR) << "Collect json desc failed.";
     return false;
   }
 
-  *op_desc = akg_kernel_json_generator.kernel_json();
+  *op_desc = graph_kernel_json_generator.kernel_json();
   if (address_node_map != nullptr) {
-    *address_node_map = akg_kernel_json_generator.address_node_map();
+    *address_node_map = graph_kernel_json_generator.address_node_map();
   }
   std::string fused_name;
   (void)std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {

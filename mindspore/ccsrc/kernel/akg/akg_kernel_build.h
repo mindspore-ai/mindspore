@@ -26,12 +26,12 @@
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_build_client.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 
 namespace mindspore {
 namespace kernel {
-using graphkernel::AkgKernelJsonGenerator;
-using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
+using graphkernel::GraphKernelJsonGenerator;
+using JsonNodePair = std::pair<GraphKernelJsonGenerator, AnfNodePtr>;
 
 class BACKEND_EXPORT AkgKernelBuilder {
  public:
@@ -41,7 +41,7 @@ class BACKEND_EXPORT AkgKernelBuilder {
   virtual KernelBuildClient *GetClient() = 0;
   virtual KernelPackPtr AkgSearchCache(const std::string &kernel_name);
   virtual KernelPackPtr AkgInsertCache(const std::string &kernel_name);
-  virtual void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
+  virtual void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
                                const AnfNodePtr &anf_node) = 0;
   virtual void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) = 0;
   virtual void LoadCache();

@@ -32,7 +32,7 @@
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
+#include "kernel/akg/graph_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -604,7 +604,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     }
     graphkernel::DumpOption option;
     option.get_target_info = true;
-    AkgKernelJsonGenerator akg_kernel_json_generator(option);
+    GraphKernelJsonGenerator graph_kernel_json_generator(option);
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom) || IsAKGSparseOP(cnode);
@@ -620,7 +620,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
       if (is_custom_node) {
         // in this case, the cnode is a CustomOp (no matter whether graph kernel mode is enabled or not)
         // generate the fused json for the single kernel cnode
-        if (!akg_kernel_json_generator.CollectFusedJsonWithSingleKernel(cnode)) {
+        if (!graph_kernel_json_generator.CollectFusedJsonWithSingleKernel(cnode)) {
           MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
         }
       } else {
@@ -628,16 +628,16 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
         // generate the fused json for the graph kernel subgraph
         std::vector<AnfNodePtr> node_list, input_list, output_list;
         GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
-        if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
+        if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
           MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
         }
       }
     } else {
-      if (!akg_kernel_json_generator.CollectJson(anf_node)) {
+      if (!graph_kernel_json_generator.CollectJson(anf_node)) {
         MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
       }
     }
-    (void)json_and_node.emplace_back(std::move(akg_kernel_json_generator), anf_node);
+    (void)json_and_node.emplace_back(std::move(graph_kernel_json_generator), anf_node);
   }
 
   if (json_and_node.empty()) {
