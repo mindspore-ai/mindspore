@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include <set>
+#include <unordered_set>
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
@@ -39,6 +39,8 @@
 
 namespace mindspore {
 namespace opt {
+static const std::unordered_set<schema::PrimitiveType> kNNACLToOpsInfer = {schema::PrimitiveType_Abs,
+                                                                           schema::PrimitiveType_Resize};
 namespace {
 constexpr int kInputChannal = 3;
 constexpr size_t INITIAL_SIZE = 1024;
@@ -92,10 +94,8 @@ bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   if (prim_t == nullptr) {
     return false;
   }
-  static const std::set<schema::PrimitiveType> nnacl_to_ops_infer = {schema::PrimitiveType_Abs,
-                                                                     schema::PrimitiveType_Resize};
 
-  if (nnacl_to_ops_infer.find(prim_t->value.type) != nnacl_to_ops_infer.end()) {
+  if (kNNACLToOpsInfer.find(prim_t->value.type) != kNNACLToOpsInfer.end()) {
     return false;
   }
   auto parameter_gen =
@@ -253,37 +253,50 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
   AbstractBasePtr abs = result;
   if (abs == nullptr) {
     abs = cnode->abstract();
-    CHECK_NULL_RETURN(abs);
+    if (abs == nullptr) {
+      MS_LOG(ERROR) << "abstract is nullptr.";
+      return lite::RET_ERROR;
+    }
   }
   size_t output_size;
   if (utils::isa<abstract::AbstractTuple>(abs)) {
     auto abs_tuple = abs->cast_ptr<abstract::AbstractTuple>();
     AbstractBasePtrList abstract_list;
     output_size = abs_tuple->size();
-    for (size_t it = 0; it < output_size; ++it) {
-      auto abs_temp = (*abs_tuple)[it];
+    if (output_size == 0 || (*abs_tuple)[0]->isa<abstract::AbstractScalar>()) {
+      ShapeVector ori_shape = {static_cast<int64_t>(output_size)};
+      BaseShapePtr new_shape = std::make_shared<abstract::Shape>(ori_shape);
+      TypeId type_id = static_cast<TypeId>(kNumberTypeFloat32);
+
+      if (output_size != 0) {
+        auto scalar_type_ptr = (*abs_tuple)[0]->cast<abstract::AbstractScalarPtr>()->GetTypeTrack();
+        MS_CHECK_TRUE_MSG(scalar_type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+        type_id = scalar_type_ptr->type_id();
+      }
+      auto type_ptr = TypeIdToType(type_id);
+      auto out_abs = std::make_shared<abstract::AbstractTensor>(type_ptr, new_shape);
       AbstractBasePtr new_result;
-      if (ConvertAbstract(abs_temp, &new_result, change, perm) != RET_OK) {
+      if (ConvertAbstract(out_abs, &new_result, change, perm) != RET_OK) {
         MS_LOG(ERROR) << "ConvertAbstract failed.";
         return lite::RET_ERROR;
       }
-      /*
-      if (infer_ret == lite::RET_INFER_INVALID) {
-        ShapeVector shape;
-        if (tensor->data_type() == kObjectTypeTensorType) {
-          shape = {0};
+      cnode->set_abstract(new_result);
+      output_size = 1;
+    } else {
+      for (size_t it = 0; it < output_size; ++it) {
+        auto abs_temp = (*abs_tuple)[it];
+        AbstractBasePtr new_result;
+        if (ConvertAbstract(abs_temp, &new_result, change, perm) != RET_OK) {
+          MS_LOG(ERROR) << "ConvertAbstract failed.";
+          return lite::RET_ERROR;
         }
-        auto abstract_shape = std::make_shared<abstract::Shape>(shape);
-        CHECK_NULL_RETURN(abstract_shape);
-        new_abstract->set_shape(abstract_shape);
+        abstract_list.emplace_back(new_result);
       }
-      */
-      abstract_list.emplace_back(new_result);
+      auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstract_list);
+      CHECK_NULL_RETURN(new_abstract_list);
+      cnode->set_abstract(new_abstract_list);
     }
-    auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstract_list);
-    CHECK_NULL_RETURN(new_abstract_list);
-    cnode->set_abstract(new_abstract_list);
-  } else {
+  } else if (utils::isa<abstract::AbstractTensor>(abs)) {
     AbstractBasePtr new_result;
     if (ConvertAbstract(abs, &new_result, change, perm) != RET_OK) {
       MS_LOG(ERROR) << "ConvertAbstract failed.";
@@ -291,6 +304,22 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
     }
     cnode->set_abstract(new_result);
     output_size = 1;
+  } else if (utils::isa<abstract::AbstractScalar>(abs)) {
+    ShapeVector ori_shape = {1};
+    BaseShapePtr new_shape = std::make_shared<abstract::Shape>(ori_shape);
+    auto scalar_type_ptr = abs->cast<abstract::AbstractScalarPtr>()->GetTypeTrack();
+    MS_CHECK_TRUE_MSG(scalar_type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+    auto out_abs = std::make_shared<abstract::AbstractTensor>(scalar_type_ptr, new_shape);
+    AbstractBasePtr new_result;
+    if (ConvertAbstract(out_abs, &new_result, change, perm) != RET_OK) {
+      MS_LOG(ERROR) << "ConvertAbstract failed.";
+      return lite::RET_ERROR;
+    }
+    cnode->set_abstract(new_result);
+    output_size = 1;
+  } else {
+    MS_LOG(ERROR) << "Unknown abstract type :" << abs;
+    return lite::RET_ERROR;
   }
 
   std::vector<int64_t> outputs_format(output_size, NHWC);
@@ -306,22 +335,12 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
 STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   CHECK_NULL_RETURN(cnode);
   STATUS infer_ret = RET_OK;
-
   AbstractBasePtrList abs_list;
-  abs_list.reserve(cnode->size());
-  for (size_t index = 1; index < cnode->size(); index++) {
-    auto node = cnode->input(index);
-    auto abs = node->abstract();
-    if (abs == nullptr) {
-      if (node->isa<ValueNode>()) {
-        abs = node->cast<ValueNodePtr>()->value()->ToAbstract();
-      } else {
-        MS_LOG(ERROR) << "abstract is nullptr.";
-        return RET_ERROR;
-      }
-    }
-    abs_list.push_back(abs->Clone());
+  if (LiteTensorExtractor::GetCNodeInputAbstractLists(cnode, &abs_list) != RET_OK) {
+    MS_LOG(ERROR) << "GetCNodeInputAbstractLists failed.";
+    return lite::RET_ERROR;
   }
+
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
@@ -333,10 +352,16 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     MS_LOG(ERROR) << "GetCNodeConstInputToAbstract failed.";
     return RET_ERROR;
   }
+  Format ori_format = Format::NHWC;
+  if (anf_prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
+    ori_format = static_cast<Format>(GetValue<int64_t>(anf_prim->GetAttr(mindspore::ops::kFormat)));
+  }
   bool changed = false;
-  if (ConvertAbstractListToNCOrNH(cnode, abs_list, kNHWC2NCHW, &changed) != RET_OK) {
-    MS_LOG(ERROR) << "ConvertAbstractToNCOrNH failed.";
-    return RET_ERROR;
+  if (ori_format == Format::NHWC) {
+    if (ConvertAbstractListToNCOrNH(cnode, abs_list, kNHWC2NCHW, &changed) != RET_OK) {
+      MS_LOG(ERROR) << "ConvertAbstractToNCOrNH failed.";
+      return RET_ERROR;
+    }
   }
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int>(Format::NCHW)));
   AbstractBasePtr result;
@@ -355,7 +380,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
       infer_ret = lite::RET_INFER_INVALID;
     }
   }
-  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int>(Format::NHWC)));
+  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(ori_format)));
   if (infer_ret == lite::RET_OK) {
     (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
   }

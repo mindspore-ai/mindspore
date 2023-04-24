@@ -171,6 +171,9 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
     }
 
     auto abstract = abs_list[i - 1];
+    if (abstract->isa<abstract::AbstractScalar>()) {
+      continue;
+    }
     if (!utils::isa<abstract::AbstractTensor>(abstract)) {
       MS_LOG(ERROR) << "abstract is not a AbstractTensor";
       return RET_ERROR;
@@ -186,8 +189,8 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
     auto input_tensor = shape_value->cast<tensor::TensorPtr>();
     MS_CHECK_FALSE(input_tensor == nullptr, RET_ERROR);
     if (input_tensor->data().const_data() != nullptr) {
-      MS_LOG(WARNING) << "abstract already have const data.";
-      return RET_OK;
+      MS_LOG(DEBUG) << "abstract already have const data.";
+      continue;
     }
 
     if (input_tensor->Size() == data_info.data_.size()) {
@@ -201,7 +204,6 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
                     << data_info.data_.size() << "}";
       return RET_ERROR;
     }
-    return RET_OK;
   }
   return RET_OK;
 }
@@ -266,6 +268,41 @@ int LiteTensorExtractor::GetCNodeVarInput(const CNodePtr &cnode, std::vector<Ten
     var_ms_inputs->emplace_back(tensor);
   }
   return lite::RET_OK;
+}
+
+int LiteTensorExtractor::GetCNodeInputAbstractLists(const CNodePtr &cnode, AbstractBasePtrList *abs_list) {
+  MS_ASSERT(cnode != nullptr);
+  MS_ASSERT(abs_list != nullptr);
+  auto origin_inputs = cnode->inputs();
+  if (lite::RemoveIfDepend(cnode) != RET_OK) {
+    MS_LOG(ERROR) << "remove depend failed.";
+    cnode->set_inputs(origin_inputs);
+    return RET_ERROR;
+  }
+  if (lite::RemoveIfMakeTuple(cnode)) {
+    MS_LOG(ERROR) << "remove makeTuple failed.";
+    cnode->set_inputs(origin_inputs);
+    return RET_ERROR;
+  }
+  RemoveIfMonad(cnode);
+  abs_list->clear();
+  abs_list->reserve(cnode->size());
+  for (size_t index = 1; index < cnode->size(); index++) {
+    auto node = cnode->input(index);
+    auto abs = node->abstract();
+    if (abs == nullptr) {
+      if (node->isa<ValueNode>()) {
+        abs = node->cast<ValueNodePtr>()->value()->ToAbstract();
+      } else {
+        MS_LOG(ERROR) << "abstract is nullptr.";
+        cnode->set_inputs(origin_inputs);
+        return RET_ERROR;
+      }
+    }
+    abs_list->push_back(abs->Clone());
+  }
+  cnode->set_inputs(origin_inputs);
+  return RET_OK;
 }
 
 int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs,
