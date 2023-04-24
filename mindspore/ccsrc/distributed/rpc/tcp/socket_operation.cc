@@ -247,6 +247,20 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
   if (result > 0) {
     addr->saIn6.sin6_family = AF_INET6;
     addr->saIn6.sin6_port = htons(port);
+    if (!common::GetEnv("MS_IF_NAME").empty()) {
+      std::string if_name = common::GetEnv("MS_IF_NAME");
+      addr->saIn6.sin6_scope_id = if_nametoindex(if_name.c_str());
+    }
+    if (!common::GetEnv("MS_WORKER_IP").empty()) {
+      std::string ip_addr = common::GetEnv("MS_WORKER_IP");
+      SocketAddress v6_addr;
+      if (inet_pton(AF_INET6, ip_addr.c_str(), &(v6_addr.saIn6.sin6_addr)) <= 0) {
+        MS_LOG(EXCEPTION) << "Failed to use user-specified worker IPv6 address " << ip_addr;
+      }
+      v6_addr.saIn6.sin6_family = AF_INET6;
+      std::string if_name = GetInterfaceName(&v6_addr);
+      addr->saIn6.sin6_scope_id = if_nametoindex(if_name.c_str());
+    }
     return true;
   }
 
@@ -338,7 +352,8 @@ int SocketOperation::Connect(int sock_fd, const struct sockaddr *sa, socklen_t s
     if (errno == EINPROGRESS) {
       /* set iomux for write event */
     } else {
-      MS_LOG(ERROR) << "Failed to call connect, fd: " << sock_fd << ", ret: " << retval << ", errno: " << errno;
+      MS_LOG(ERROR) << "Failed to call connect, fd: " << sock_fd << ", ret: " << retval << ", errno: " << errno << " "
+                    << strerror(errno);
       return retval;
     }
   }
@@ -349,6 +364,35 @@ int SocketOperation::Connect(int sock_fd, const struct sockaddr *sa, socklen_t s
     return RPC_ERROR;
   }
   return RPC_OK;
+}
+
+std::string SocketOperation::GetInterfaceName(SocketAddress *const addr) {
+  struct ifaddrs *if_address = nullptr;
+  struct ifaddrs *ifa = nullptr;
+  std::string if_name;
+  if (getifaddrs(&if_address) == -1) {
+    MS_LOG(WARNING) << "Get ifaddrs failed.";
+  }
+  for (ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr != nullptr && addr->sa.sa_family == ifa->ifa_addr->sa_family) {
+      if (addr->sa.sa_family == AF_INET) {
+        struct sockaddr_in *addr_in = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
+        if (addr_in->sin_addr.s_addr == addr->saIn.sin_addr.s_addr) {
+          if_name = ifa->ifa_name;
+        }
+      }
+      if (addr->sa.sa_family == AF_INET6) {
+        struct sockaddr_in6 *addr_in6 = reinterpret_cast<struct sockaddr_in6 *>(ifa->ifa_addr);
+        if (memcmp(&addr_in6->sin6_addr, &addr->saIn6.sin6_addr, sizeof(addr_in6->sin6_addr)) == 0) {
+          if_name = ifa->ifa_name;
+        }
+      }
+    }
+  }
+  MS_EXCEPTION_IF_NULL(if_address);
+  freeifaddrs(if_address);
+  MS_LOG(INFO) << "Interface name is " << if_name;
+  return if_name;
 }
 
 int SocketOperation::Listen(const std::string &url) {
