@@ -134,12 +134,19 @@ std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
 
 std::string GetPrimitiveText(const PrimitivePtr &prim) {
   std::ostringstream oss;
-  if (prim == nullptr) {
-    return oss.str();
+  if (!prim->instance_name().empty()) {
+    oss << " {";
+    oss << "instance name"
+        << ": ";
+    oss << prim->instance_name();
+    oss << "}";
   }
-  oss << prim->name();
-  // Output primitive attributes
-  oss << prim->GetAttrsText();
+  auto attrs = prim->attrs();
+  if (!attrs.empty()) {
+    oss << " primitive_attrs: {";
+    oss << prim->GetAttrsText();
+    oss << "}";
+  }
 
   if (prim->isa<prim::DoSignaturePrimitive>()) {
     auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
@@ -236,15 +243,9 @@ std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
 std::string GetOtherValueText(const ValuePtr &value) {
   std::ostringstream oss;
 
-  oss << value->type_name() << "[" << value->DumpText() << "]";
+  oss << "[" << value->DumpText() << "]";
 
   return oss.str();
-}
-
-static bool CanUseDumpText(const ValuePtr &value) {
-  return (value->isa<RefKey>() || value->isa<Scalar>() || value->isa<StringImm>() || value->isa<tensor::Tensor>() ||
-          value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>() || value->isa<ValueSlice>() ||
-          value->isa<Type>() || value->isa<KeywordArg>());
 }
 
 std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
@@ -273,9 +274,6 @@ std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
   }
   if (value->isa<parse::PyObjectWrapper>()) {
     return value->type_name();
-  }
-  if (CanUseDumpText(value)) {
-    return value->ToString();
   }
   return GetOtherValueText(value);
 }
@@ -512,8 +510,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
     if (value != nullptr) {
-      auto value_string = GetValueText(node->func_graph(), value, gsub);
-      gsub->buffer << value_string;
+      gsub->buffer << value->ToString();
     }
   } else {
     // It's Parameter.
@@ -587,9 +584,7 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
         // ValueNode except FuncGraph.
-        auto value = GetValueNode(in);
-        auto value_string = GetValueText(node->func_graph(), value, gsub);
-        gsub->buffer << value_string;
+        gsub->buffer << GetValueNode(in)->ToString();
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
         gsub->buffer << "@" << fg->ToString();
@@ -839,9 +834,14 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   // Print operands
   DumpOperands(node, para_map, gsub);
 
-  // Print operator attrs
   AnfNodePtr op = node->input(0);
-  DumpOperateAttrs(op, gsub);
+  if (op->isa<ValueNode>()) {
+    auto value = GetValueNode(op);
+    if (value != nullptr) {
+      auto value_string = GetValueText(node->func_graph(), value, gsub);
+      gsub->buffer << value_string;
+    }
+  }
 
   // Print cnode attrs
   DumpCNodeAttrs(node, gsub);
