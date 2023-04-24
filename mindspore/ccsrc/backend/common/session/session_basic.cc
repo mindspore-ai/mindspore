@@ -465,6 +465,10 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   MS_EXCEPTION_IF_NULL(prim);
   buf << GetOpRunDeviceTarget(prim) << "_dynamic" << op_run_info->base_op_run_info.use_dynamic_shape_process << "_";
   buf << prim->name() << "_";
+  if (AnfAlgo::NeedEraseCache(prim)) {
+    op_run_info->base_op_run_info.need_earse_cache = true;
+    return;
+  }
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto &tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);

@@ -635,6 +635,7 @@ constexpr auto kRaggedTensorToTensorOpName = "RaggedTensorToTensor";
 constexpr auto kRandomChoiceWithMaskOpName = "RandomChoiceWithMask";
 constexpr auto kRandomPoissonOpName = "RandomPoisson";
 constexpr auto kRandomShuffleOpName = "RandomShuffle";
+constexpr auto kRandomCache = "random_cache";
 constexpr auto kRangeOpName = "Range";
 constexpr auto kRangeDOpName = "RangeD";
 constexpr auto kQuantDTypeCastOpName = "QuantDTypeCast";

@@ -30,7 +30,7 @@ from mindspore.common.api import _function_forbid_reuse
 
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
-    prim.set_user_data(key, value)
+    prim.add_prim_attr(key, value)
     return prim
 
 

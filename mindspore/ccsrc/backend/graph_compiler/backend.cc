@@ -1064,14 +1064,6 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
     WaitTaskFinish();
   }
 
-  if (!single_op_cache_hit) {
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    // If op not support dynamic shape, op will select static opinfo, update graph dynamic attr
-    op_compiler_info->need_erase_ = !enable_cache;
-  }
-
   RunOpImpl(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
@@ -1095,14 +1087,6 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
 
   const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
-
-  if (!single_op_cache_hit) {
-    MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    op_compiler_info->need_erase_ = !enable_cache;
-  }
   UpdateGraphInputAbstract(graph, op_run_info, device_context);
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }

@@ -2101,4 +2101,13 @@ void AnfRuntimeAlgorithm::UpdateValueNodeShape(const AnfNodePtr &node) {
                << " to:" << abstract_tuple->ToString();
   node->set_abstract(abstract_tuple);
 }
+
+bool AnfRuntimeAlgorithm::NeedEraseCache(const PrimitivePtr &prim) {
+  if (!prim->HasAttr(kRandomCache)) {
+    return false;
+  }
+  auto random_cache_value = prim->GetAttr(kRandomCache);
+  MS_EXCEPTION_IF_NULL(random_cache_value);
+  return !GetValue<bool>(random_cache_value);
+}
 }  // namespace mindspore::session
