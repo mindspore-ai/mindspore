@@ -299,7 +299,6 @@ Element-wise Operations
     mindspore.ops.truncate_mod
     mindspore.ops.xdivy
     mindspore.ops.xlogy
-    mindspore.ops.zeta
 
 Reduction Functions
 ^^^^^^^^^^^^^^^^^^^
@@ -386,7 +385,6 @@ Linear Algebraic Functions
     mindspore.ops.addr
     mindspore.ops.adjoint
     mindspore.ops.cholesky
-    mindspore.ops.cholesky_solve
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
@@ -405,7 +403,6 @@ Linear Algebraic Functions
     mindspore.ops.mv
     mindspore.ops.outer
     mindspore.ops.orgqr
-    mindspore.ops.ormqr
     mindspore.ops.pinv
     mindspore.ops.svd
     mindspore.ops.tensor_dot
