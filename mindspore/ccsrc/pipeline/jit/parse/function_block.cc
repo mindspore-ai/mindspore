@@ -105,7 +105,9 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     iter->second = std::make_pair(node, false);
   }
   if (use_fallback) {
-    UpdateLocalPyParam(var_name, node);
+    if (!HasGlobalPyParam(var_name)) {
+      UpdateLocalPyParam(var_name, node);
+    }
   }
 }
 
@@ -163,7 +165,9 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   auto node = ReadLocalVariable(var_name);
   if (node != nullptr) {
     if (use_fallback) {
-      UpdateLocalPyParam(var_name, node);
+      if (!HasGlobalPyParam(var_name)) {
+        UpdateLocalPyParam(var_name, node);
+      }
     }
     return node;
   }
@@ -181,7 +185,9 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
                       << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
                       << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
         UpdateGlobalPyParam(block->global_py_params());
-        UpdateLocalPyParam(var_name, res);
+        if (!HasGlobalPyParam(var_name)) {
+          UpdateLocalPyParam(var_name, res);
+        }
       }
       return res;
     } else if (prev_blocks_.empty()) {
@@ -334,16 +340,16 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
 }
 
 // Make a resolve node for symbol string
-AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
-  MS_LOG(DEBUG) << "value: " << value;
-  // The prefix of value is "self.".
-  if (value.compare(0, strlen("self"), "self") == 0) {
-    auto start = value.find_first_of('.') + 1;
-    if (start >= value.size()) {
-      MS_LOG(ERROR) << "Find invalid resolve symbol str: " << value;
+AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
+  MS_LOG(DEBUG) << "var_name: " << var_name;
+  // The prefix of var_name is "self.".
+  if (var_name.compare(0, strlen("self"), "self") == 0) {
+    auto start = var_name.find_first_of('.') + 1;
+    if (start >= var_name.size()) {
+      MS_LOG(ERROR) << "Find invalid resolve symbol str: " << var_name;
       return nullptr;
     }
-    auto bits_str = value.substr(start);
+    auto bits_str = var_name.substr(start);
     return MakeResolveClassMember(bits_str);
   }
   auto ast = parser_.ast();
@@ -353,10 +359,10 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (parser_.support_fallback() != "0");
   if (!use_fallback) {
-    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
+    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, var_name);
     return HandleNamespaceInfo(namespace_info);
   } else {
-    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, value);
+    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, var_name);
     return HandleBuiltinNamespaceInfo(namespace_info);
   }
 }
