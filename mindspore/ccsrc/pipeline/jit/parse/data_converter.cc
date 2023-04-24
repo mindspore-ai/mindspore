@@ -425,6 +425,12 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
     auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
     func_graph->set_stage(stage);
   }
+  auto cell = py::cast<CellPtr>(obj);
+  if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
+    auto value = cell->GetAttr(kAttrRandomOpSnapShot);
+    MS_EXCEPTION_IF_NULL(value);
+    func_graph->set_attr(kAttrRandomOpSnapShot, value);
+  }
   return func_graph;
 }
 

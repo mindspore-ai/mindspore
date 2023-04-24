@@ -20,10 +20,13 @@
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "include/backend/kernel_graph.h"
+#include "proto/random_status.pb.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
+#include "ir/anf.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -205,6 +208,20 @@ void EnableGraphOutputZeroCopy(const KernelGraphPtr &graph) {
     }
   }
 }
+
+template <typename T>
+std::vector<T> GetParameterValue(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!utils::isa<ValueNodePtr>(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a ValueNode.";
+  }
+
+  auto addr = AnfAlgo::GetOutputAddr(node, 0);
+  MS_EXCEPTION_IF_NULL(addr);
+  std::vector<T> result(addr->GetSize() / sizeof(T), 0);
+  addr->SyncDeviceToHost(result.size() * sizeof(T), result.data());
+  return result;
+}
 }  // namespace
 
 void AscendGraphExecutor::Initialize() {
@@ -376,6 +393,58 @@ bool AscendGraphExecutor::ExecuteGraph(const KernelGraphPtr &graph) const {
     MS_LOG(EXCEPTION) << graph->ToString() << " does not sink, should launch kernels";
   }
   return ret;
+}
+
+std::string AscendGraphExecutor::GetRandomStatus(const std::vector<FuncGraphPtr> &graphs) {
+  RandomNodeList list;
+  for (auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto graph_id = kernel_graph->graph_id();
+    std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
+    for (const auto &node : node_list) {
+      MS_EXCEPTION_IF_NULL(node);
+      auto cnode = node->cast<CNodePtr>();
+      if (cnode == nullptr) {
+        continue;
+      }
+      auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+      if (opt::kRandomNodeWhiteList.find(cnode_name) == opt::kRandomNodeWhiteList.end()) {
+        continue;
+      }
+      auto random_node = list.add_nodes();
+      std::string key = "";
+      auto debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+      if (debug_info != nullptr) {
+        auto location = debug_info->location();
+        if (location != nullptr) {
+          key = location->file_name() + ":" + std::to_string(location->line());
+        }
+      }
+      const auto &inputs = cnode->inputs();
+      size_t input_size = inputs.size();
+      auto status0_node = inputs[input_size - 2];
+      auto status1_node = inputs[input_size - 1];
+      auto status0_value = GetParameterValue<size_t>(status0_node);
+      auto status1_value = GetParameterValue<size_t>(status1_node);
+      if (status0_value.size() != 1) {
+        MS_LOG(EXCEPTION) << "Parameter " << status0_node->fullname_with_scope() << " has invalid element size "
+                          << status0_value.size() << ", which should be 1.";
+      }
+      if (status1_value.size() != 1) {
+        MS_LOG(EXCEPTION) << "Parameter " << status1_node->fullname_with_scope() << " has invalid element size "
+                          << status1_value.size() << ", which should be 1.";
+      }
+      random_node->set_code(key);
+      random_node->set_name(node->fullname_with_scope());
+      random_node->set_graph_id(graph_id);
+      random_node->set_status0(status0_value[0]);
+      random_node->set_status1(status1_value[0]);
+    }
+  }
+  MS_LOG(INFO) << "Random debug info: " << list.DebugString();
+  return list.SerializeAsString();
 }
 }  // namespace ascend
 }  // namespace device

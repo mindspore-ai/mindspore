@@ -1182,6 +1182,7 @@ constexpr auto kAttrDynamicLenName = "is_dynamic_len";
 constexpr auto kAttrForFormatChange = "for_format_change";
 constexpr auto kAttrReplaceRealKernelInBackend = "replace_real_kernel_in_backend";
 constexpr auto kAttrRefNodeMonadOutputIdx = "ref_node_monad_output_idx";
+constexpr auto kAttrRandomOpSnapShot = "random_op_snapshot";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";

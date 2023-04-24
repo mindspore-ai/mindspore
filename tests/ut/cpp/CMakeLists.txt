@@ -305,6 +305,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 add_library(_ut_mindspore_obj STATIC ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS} ${EXTEND_SRC_LIST})
 add_dependencies(_ut_ut_obj engine-cache-server)
+add_dependencies(_ut_mindspore_obj proto_input_ut)
 
 foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
@@ -324,7 +325,8 @@ add_executable(ut_tests ${ut_objects})
 include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
 file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/proto/*.proto")
-ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
+ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN}
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/random_status.proto)
 
 file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/dump/proto/*.proto")
@@ -359,7 +361,7 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_data_queue_obj>)
 target_link_libraries(ut_tests PRIVATE -Wl,--start-group mindspore backend_static proto_input _ut_mindspore_obj
-        -Wl,--end-group)
+        -Wl,--end-group proto_input_ut)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads

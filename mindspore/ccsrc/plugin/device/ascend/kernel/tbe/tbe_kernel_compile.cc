@@ -372,7 +372,13 @@ void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::Kern
 }
 
 std::string TbeKernelCompileManager::DispatchCompileTask(const nlohmann::json &kernel_json) const {
-  return AscendKernelBuildClient::Instance().DispatchToServer(kernel_json.dump());
+  std::string ret;
+  try {
+    ret = AscendKernelBuildClient::Instance().DispatchToServer(kernel_json.dump());
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << e.what();
+  }
+  return ret;
 }
 
 void TbeKernelCompileManager::SavePreBuildResult(const std::string &json_name, const std::string &pre_build_result) {
