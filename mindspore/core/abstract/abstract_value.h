@@ -938,7 +938,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   std::shared_ptr<AbstractSequence> BroadenToDynamicLenSequence();
 
   void set_as_arg_of_dyn_len_param() { is_arg_of_dyn_len_param_ = true; }
-  bool is_arg_of_dyn_len_param() { return is_arg_of_dyn_len_param_; }
+  bool is_arg_of_dyn_len_param() const { return is_arg_of_dyn_len_param_; }
 
  protected:
   AbstractBasePtrList elements_;
