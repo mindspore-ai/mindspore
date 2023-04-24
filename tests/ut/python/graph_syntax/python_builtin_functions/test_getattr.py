@@ -707,21 +707,3 @@ def test_getattr_for_fg_object():
 
     context.set_context(mode=context.GRAPH_MODE)
     net(x)
-
-
-def test_getattr_for_classtype_object():
-    """
-    Feature: Syntax getattr.
-    Description: Graph syntax getattr support class type object.
-    Expectation: No Exception
-    """
-    class User:
-        x = 1
-
-    class UserNet(nn.Cell):
-        def construct(self):
-            return User.x
-
-    context.set_context(mode=context.GRAPH_MODE)
-    net = UserNet()
-    assert net() == 1

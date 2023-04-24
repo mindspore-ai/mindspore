@@ -127,3 +127,55 @@ def test_getattr_cell_obj_2():
 
     out = foo()
     assert out is None
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_for_classtype_object():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support class type object.
+    Expectation: No Exception
+    """
+    class User:
+        x = 1
+
+    class UserNet(nn.Cell):
+        def construct(self):
+            return User.x, getattr(User, "y", 10)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = UserNet()
+    out1, out2 = net()
+    assert out1 == 1
+    assert out2 == 10
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getattr_for_other_cell_method():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support nn.Cell.
+    Expectation: No Exception
+    """
+    class NetBase(nn.Cell):
+        def construct(self, x):
+            return x * 2
+
+    class UserNet(NetBase):
+        def construct(self, x):
+            return NetBase.construct(self, x), getattr(NetBase, "y", 20)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(5)
+    net = UserNet()
+    out1, out2 = net(x)
+    assert out1 == 10
+    assert out2 == 20
