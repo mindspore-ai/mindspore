@@ -42,7 +42,7 @@ abstract::ShapePtr MakeMapParameterInferShape(const PrimitivePtr &primitive,
   constexpr int64_t value_arg_index = 1;
   auto shape = input_args[value_arg_index]->GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape);
-  ShapeVector input_value_shape = shape->cast<abstract::ShapePtr>()->shape();
+  const ShapeVector &input_value_shape = shape->cast<abstract::ShapePtr>()->shape();
   if (input_value_shape.empty()) {
     MS_LOG(EXCEPTION) << "The input value shape is empty";
   }
