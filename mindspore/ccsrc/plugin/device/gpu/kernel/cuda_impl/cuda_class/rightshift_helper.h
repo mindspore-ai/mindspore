@@ -54,12 +54,11 @@ class RightShiftHelperGpuKernel : public GpuKernelHelperBase {
     auto inputx_shape = input_shapes[0];
     auto inputy_shape = input_shapes[1];
     auto output_shape = output_shapes[0];
+    ProcessScalar(&inputx_shape, &inputy_shape, &output_shape);
 
     for (size_t i = 0; i < inputx_shape.size(); i++) {
-      if (inputy_shape.size() != 0) {
-        if (inputx_shape[i] != inputy_shape[i]) {
-          need_broadcast_ = true;
-        }
+      if (inputx_shape[i] != inputy_shape[i]) {
+        need_broadcast_ = true;
       }
     }
 
@@ -133,6 +132,19 @@ class RightShiftHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     return 0;
+  }
+
+  void ProcessScalar(std::vector<int64_t> *x1_shape, std::vector<int64_t> *x2_shape, std::vector<int64_t> *y_shape) {
+    // If there is a scalar in the inputs, its shape will be [], so it will be treated as [1].
+    if (x1_shape->size() == 0) {
+      x1_shape->insert(x1_shape->begin(), 1);
+    }
+    if (x2_shape->size() == 0) {
+      x2_shape->insert(x2_shape->begin(), 1);
+    }
+    if (y_shape->size() == 0) {
+      y_shape->insert(y_shape->begin(), 1);
+    }
   }
 
  private:
