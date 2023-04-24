@@ -86,16 +86,6 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   const OutputInputRefMap &out_in_ref_map() const { return out_in_ref_map_; }
   void AddRefMap(size_t out, size_t in) { out_in_ref_map_[out] = in; }
 
-  // Ignored input address.
-  void set_ignored_input_addresses(const std::vector<size_t> &ignored_input_addresses) {
-    ignored_input_addresses_ = ignored_input_addresses;
-  }
-  const std::vector<size_t> &ignored_input_addresses() const { return ignored_input_addresses_; }
-  bool IsIgnoredInputAddress(size_t input_index) {
-    return std::find(ignored_input_addresses_.begin(), ignored_input_addresses_.end(), input_index) !=
-           ignored_input_addresses_.end();
-  }
-
   // The interface of somas.
   bool SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
                       std::vector<std::pair<size_t, size_t>> &&workspace_somas_result);
@@ -126,8 +116,6 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   uint32_t graph_id_;
   // The map between kernel's output and input ref relationship.
   OutputInputRefMap out_in_ref_map_;
-  // The input addresses that are not used in the op calculation.
-  std::vector<size_t> ignored_input_addresses_;
 };
 }  // namespace device
 }  // namespace mindspore

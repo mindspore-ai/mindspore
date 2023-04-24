@@ -609,13 +609,6 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
     kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   }
 
-  // Set the kernel info of ignored_input_address.
-  if (!kernel_attrs.empty() && !kernel_attrs[0].ignored_input_addresses().empty()) {
-    auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    kernel_info->set_ignored_input_addresses(kernel_attrs[0].ignored_input_addresses());
-  }
-
   // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold.
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
     auto input_object_types =
