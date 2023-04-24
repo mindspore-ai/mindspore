@@ -1463,6 +1463,11 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   if (!AnfAlgo::IsEnableKernelSelectBackoff() || graph == nullptr || graph->is_from_single_op()) {
     MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
+  // Ref op does not support the backoff ability.
+  auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(common::AnfAlgo::GetCNodeName(node), node);
+  if (op_info != nullptr && op_info->is_ref()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first;
+  }
 
   if (graph->is_graph_run_mode()) {
     MS_EXCEPTION(failure_info.second) << failure_info.first
