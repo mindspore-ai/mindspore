@@ -779,22 +779,22 @@ class ResizeBicubic(Primitive):
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
           The format must be NCHW.
           Types allowed: float16, float32, float64.
-        - **size** (Tensor) - A 1-D tensor of shape [2], with 2 elements: new_height, new_width.
+        - **size** (Tensor) - A 1-D tensor with 2 elements: new_height, new_width.
           Types allowed: int32.
 
     Outputs:
-        A 4-D tensor of shape :math:`(batch, channels, new\_height, new\_width)` with type float32.
+        A 4-D tensor with shape :math:`(batch, channels, new\_height, new\_width)` whose dtype is the same as `images` .
 
     Raises:
-        TypeError: If `images` type is not allowed.
-        TypeError: If `size` type is not int32.
-        TypeError: If `align_corners` type is not bool.
-        TypeError: If `half_pixel_centers` type is not bool.
-        ValueError: If `images` dim is not 4.
-        ValueError: If `size` dim is not 1.
-        ValueError: If `size` size is not 2.
-        ValueError: If any `size` value is not positive.
-        ValueError: If `align_corners` and `half_pixel_centers` value are both ``True`` .
+        TypeError: If the type of `images`is not allowed.
+        TypeError: If the type of `size` is not int32.
+        TypeError: If the type of `align_corners` is not bool.
+        TypeError: If the type of `half_pixel_centers` is not bool.
+        ValueError: If the dim of `images` is not 4.
+        ValueError: If the dim of `size` is not 1.
+        ValueError: If the number of elements in `size` is not 2.
+        ValueError: If any value of `size` is not positive.
+        ValueError: If the values of `align_corners` and `half_pixel_centers` are both True .
 
 
     Supported Platforms:
