@@ -5776,6 +5776,7 @@ def argmax(input, dim=None, keepdim=False):
         Tensor, indices of the maximum values across a dimension.
 
     Raises:
+        TypeError: If `keepdim` is not bool.
         ValueError: If `dim` is out of range.
 
     Supported Platforms:
@@ -5787,6 +5788,7 @@ def argmax(input, dim=None, keepdim=False):
         >>> print(output)
         [1 0 0]
     """
+    _check_attr_dtype("keepdim", keepdim, [bool], "argmax")
     if not input.shape:
         return Tensor(0)
     if input.dtype == mstype.bool_:
@@ -6351,6 +6353,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
         and a new axis inserted at the end corresponding to the diagonal.
 
     Raises:
+        TypeError: if `dim1` or `dim2` are not an int.
         ValueError: if the input tensor has less than two dimensions.
 
     Supported Platforms:
@@ -6365,6 +6368,8 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     x_ndim = input.ndim
     if x_ndim < 2:
         raise ValueError(f"ops.diagonal requires an array of at least two dimensions")
+    _check_attr_dtype("dim1", dim1, [int], "diagonal")
+    _check_attr_dtype("dim2", dim2, [int], "diagonal")
     dtype = input.dtype
 
     axes = _check_diagonal_axes(dim1, dim2, x_ndim)
