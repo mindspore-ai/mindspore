@@ -150,6 +150,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_DETERMINISTIC,
   MS_CTX_PRECISION_MODE,
   MS_CTX_ENABLE_JIT_COMPILE,
+  MS_CTX_ATOMIC_CLEAN_POLICY,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
