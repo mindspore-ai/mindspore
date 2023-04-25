@@ -126,6 +126,7 @@ def test_auto_parallel_adasum5():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
 
+@pytest.mark.skip(reason="crashed while running coverage test")
 def test_auto_parallel_adasum6():
     """
     Feature: adasum in auto parallel.
