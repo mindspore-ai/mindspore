@@ -201,14 +201,36 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 
   auto x_type = ib->GetDtype(x);
   auto w_type = ib->GetDtype(w);
-  if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
-      (*w_type) == (*kComplex128)) {
-    MS_EXCEPTION(TypeError) << "For 'MatMul', gradient not support for complex type currently.";
-  }
 
   auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
+
+  if (((*x_type) == (*kComplex64) && (*w_type) == (*kComplex64)) ||
+      ((*x_type) == (*kComplex128) && (*w_type) == (*kComplex128))) {
+    // complex need conjoint transform
+    if (ta) {
+      dx = ib->MatMul(w, (ib->Emit("Conj", {dout})), (ta && tb), (ta || (!tb)));
+      dx = ib->Emit("Conj", {dx});
+    } else {
+      dx = ib->MatMul((ib->Emit("Conj", {dout})), w, (ta && tb), (ta || (!tb)));
+      dx = ib->Emit("Conj", {dx});
+    }
+    if (tb) {
+      dw = ib->MatMul((ib->Emit("Conj", {dout})), x, ((!ta) || tb), (ta && tb));
+      dw = ib->Emit("Conj", {dw});
+    } else {
+      dw = ib->MatMul((ib->Emit("Conj", {x})), dout, ((!ta) || tb), (ta && tb));
+    }
+    return {dx, dw};
+  }
+
+  if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
+      (*w_type) == (*kComplex128)) {
+    // only support complex64 * complex64 and complex128 * complex128, others throw exception
+    MS_EXCEPTION(TypeError) << "For 'MatMul', gradient not support x_type " << x_type << " * w_type " << w_type;
+  }
+
   if (ta) {
     dx = ib->MatMul(w, dout, (ta && tb), (ta || (!tb)));
   } else {
