@@ -97,12 +97,9 @@ bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, c
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
       T y_val = (input2[iter.GetInputPosB()]);
-      T bit_val = static_cast<T>(sizeof(T) * 8 - 1);
-      T zero = static_cast<T>(0);
-      if (y_val <= zero) {
-        y_val = zero;
-      } else if (y_val > bit_val) {
-        y_val = bit_val;
+      T bit_val = static_cast<T>(sizeof(T) * 8);
+      if (abs(y_val) > bit_val) {
+        y_val = y_val % bit_val;
       }
       output[i] = static_cast<T>(input1[iter.GetInputPosA()] >> y_val);
       iter.GenNextPos();
