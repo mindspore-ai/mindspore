@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -261,11 +261,8 @@ def test_print_validate_tuple():
         print("np_sum: ", np_sum)
         return tensor_sum, np_sum
 
-    with pytest.raises(RuntimeError) as err:
-        res1, res2 = print_func()
-        print("res1: ", res1)
-        print("res2: ", res2)
-    assert "Should not use Python object in runtime" in str(err.value)
+    res1, res2 = print_func()
+    assert (res1.asnumpy() == res2).all()
 
 
 @security_off_wrap

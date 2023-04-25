@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,6 @@ TEST_F(TestValidator, ValidateAbstract01) {
   abstract::AbstractBasePtr abstract_v1 = abstract::FromValue(static_cast<int64_t>(1), false);
   node->set_abstract(abstract_v1);
   ValidateAbstract(node);
-  // normally, the above statement should not exit, so expected the following statement execute
-  EXPECT_TRUE(true);
-}
-
-/// Feature: JIT Fallback
-/// Description: Make sure no interpreted node.
-/// Expectation: No exception.
-TEST_F(TestValidator, ValidateValueNode01) {
-  AnfNodePtr node = NewValueNode(static_cast<int64_t>(1));
-  ValidateValueNode(node);
   // normally, the above statement should not exit, so expected the following statement execute
   EXPECT_TRUE(true);
 }
