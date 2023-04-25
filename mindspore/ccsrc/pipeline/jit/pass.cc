@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -461,6 +461,7 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
 
   OptPassGroupMap map_a({{"c_1", c_1},
+                         {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"updatestate_depend_eliminate", updatestate_depend_eliminate},
                          {"updatestate_assign_eliminate", updatestate_assign_eliminate},
                          {"updatestate_loads_eliminate", updatestate_loads_eliminate},
