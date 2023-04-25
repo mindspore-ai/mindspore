@@ -20,22 +20,30 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "tools/optimizer/common/pattern_process_pass_extends.h"
+#include <unordered_map>
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "include/backend/optimizer/pattern_engine.h"
-
+#include "tools/optimizer/fusion/encoder_layer_fusion.h"
 namespace mindspore {
 namespace opt {
-class UsePastEmbedding : public LitePatternProcessPass {
+class UsePastEmbedding : public MultiplePatternProcessPass {
  public:
-  explicit UsePastEmbedding(bool multigraph = true, const std::string &name = "UsePastEmbedding")
-      : LitePatternProcessPass(name, multigraph) {}
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  const BaseRef DefinePattern() const override;
-  ~UsePastEmbedding() override = default;
+  explicit UsePastEmbedding(const std::string &name = "UsePastEmbedding", bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {}
+  AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
- protected:
+ private:
+  VectorRef DefinePatternEncoderEmbedding() const;
+  VectorRef DefinePatternQueryEmbedding() const;
+  //  VectorRef DefinePatternEncoder() const;
   mutable VarPtr is_gather2_{nullptr};
+  mutable VarPtr is_gather_query_{nullptr};
   mutable VarPtr position_ids_{nullptr};
+  mutable VarPtr position_ids_query_{nullptr};
+  mutable VarPtr is_query_{nullptr};
+  const std::string kEncoderUsePastEmbedding = "EncoderUsePastEmbedding";
+  const std::string kQueryUsePastEmbedding = "QueryUsePastEmbedding";
 };
 }  // namespace opt
 }  // namespace mindspore

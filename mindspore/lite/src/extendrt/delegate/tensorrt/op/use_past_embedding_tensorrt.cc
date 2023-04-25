@@ -62,7 +62,6 @@ int UsePastEmbeddingTensorRT::AddInnerOp(TensorRTContext *ctx) {
   layer->setName((op_name_ + "plugin_use_past_embedding").c_str());
   nvinfer1::ITensor *tensor = layer->getOutput(0);
   ctx->RegisterTensor(ITensorHelper{tensor, Format::NCHW, true}, out_tensors_[0].Name());
-  std::cout << out_tensors_[0].Name() << " Registered" << std::endl;
   this->layer_ = layer;
   return RET_OK;
 }
