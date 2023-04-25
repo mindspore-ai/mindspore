@@ -571,6 +571,10 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
+  auto env_atomic_clean_policy = common::GetEnv("MS_GE_ATOMIC_CLEAN_POLICY");
+  if (!env_atomic_clean_policy.empty()) {
+    (*ge_options)["ge.exec.atomicCleanPolicy"] = env_atomic_clean_policy;
+  }
   // set up dump options
   auto dump_env = common::GetEnv(kMindsporeDumpConfig);
   if (!dump_env.empty()) {
