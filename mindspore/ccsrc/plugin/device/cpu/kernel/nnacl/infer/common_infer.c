@@ -205,7 +205,7 @@ bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
       }
     } else {
       for (size_t j = 0; j < inputs[i]->shape_size_; ++j) {
-        if (inputs[i]->shape_[j] == -1) {
+        if (inputs[i]->shape_[j] < 0) {
           return false;
         }
       }

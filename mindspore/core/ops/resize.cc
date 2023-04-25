@@ -187,6 +187,7 @@ abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::ve
     (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
                                              image_shape_size, primitive->name());
   } else {
+    output_shape = {abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
