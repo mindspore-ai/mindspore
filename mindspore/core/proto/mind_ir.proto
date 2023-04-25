@@ -71,8 +71,17 @@ message AttributeProto {
   optional AttributeType type = 16;
   repeated AttributeProto values = 17;          // tuple, list, dict of value
   optional SeqInfoProto seq_info = 18;       // tuple, list, structural info
+  optional FunctorProto functor = 19;
 }
 
+message FunctorProto {
+  enum FunctorType {
+    SHAPE_CALC_FUNCTOR = 1;
+  }
+  optional FunctorType type = 1;
+  optional string name = 2;
+  repeated AttributeProto values = 3;
+}
 
 message ValueInfoProto {
   optional string name = 1;

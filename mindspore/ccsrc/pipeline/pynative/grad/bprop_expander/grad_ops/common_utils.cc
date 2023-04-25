@@ -146,6 +146,15 @@ TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
 }
 }  // namespace
 
+int64_t NormalizeAxis(int64_t axis, size_t rank) {
+  auto rank_i = SizeToLong(rank);
+  if (axis < -rank_i || axis >= rank_i) {
+    MS_EXCEPTION(ValueError) << "For rank " << rank << ", the axis must be in range [" << -rank_i << ", " << rank_i
+                             << "), but got " << axis;
+  }
+  return (axis < 0) ? (axis + rank_i) : axis;
+}
+
 NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
   MS_EXCEPTION_IF_NULL(ib);
   MS_EXCEPTION_IF_NULL(dx);
@@ -556,22 +565,20 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
-NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
-  // Grad definition for `Sum` operation.
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+DEF_PURE_SHAPE_CALC(g_sumgrad_shapecalc)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
     auto r_shape = ReduceShape(x_shape, axis_value);
     auto scaling = TupleDiv(x_shape, r_shape);
     return {r_shape, scaling};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
     return {x_rank, x_rank};
-  };
-
-  auto calc_res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  });
+NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
+  auto calc_res = ib->ShapeCalc(g_sumgrad_shapecalc, {x, axis}, {1});
   const size_t cal_num = 2;
   if (calc_res.size() != cal_num) {
     MS_LOG(EXCEPTION) << "Number of ShapeCalc should be 2, but got " << calc_res.size();
@@ -585,19 +592,20 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
   return ib->Emit("DynamicBroadcastTo", {grad, ib->Value(x->shape())});
 }
 
+DEF_PURE_SHAPE_CALC(g_min_or_max_grad)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    auto axis_value = inputs.at(1);
+    auto r_shape = ReduceShape(x_shape, axis_value);
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
+  });
 NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout) {
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto input_shape = inputs.at(0);
-    auto axis_value = inputs.at(1);
-    return {ReduceShape(input_shape, axis_value)};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
-  };
-
-  auto output_shape_kept_dims = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1})[0];
+  auto output_shape_kept_dims = ib->ShapeCalc(g_min_or_max_grad, {x, axis}, {1})[0];
   auto y = ib->Reshape(out, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
