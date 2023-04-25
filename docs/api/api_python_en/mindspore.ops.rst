@@ -345,6 +345,7 @@ Comparison Functions
 
     mindspore.ops.argsort
     mindspore.ops.approximate_equal
+    mindspore.ops.bucketize
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.greater
