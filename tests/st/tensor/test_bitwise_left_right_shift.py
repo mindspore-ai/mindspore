@@ -30,7 +30,7 @@ class Right(nn.Cell):
         return x.bitwise_right_shift(other)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -47,8 +47,8 @@ def test_left_shift_right_shift_normal(mode):
     left = Left()
     right = Right()
 
-    other_left = ms.Tensor(np.array([2]), ms.int8)
-    other_right = ms.Tensor(np.array([1]), ms.int8)
+    other_left = ms.Tensor(np.array([2]), ms.int32)
+    other_right = ms.Tensor(np.array([1]), ms.int32)
 
     left_output = left(x, other_left)
     right_output = right(x, other_right)
