@@ -89,6 +89,8 @@ Status DataQueueNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
+  // Ascend does not support receiving empty data at the moment, so send_epoch_end needs to be set to false.
+  send_epoch_end_ = false;
   auto op = std::make_shared<DataQueueOp>(queue_name_, type, device_id_, send_epoch_end_, total_batch_,
                                           create_data_info_queue_);
   op->SetTotalRepeats(GetTotalRepeats());
