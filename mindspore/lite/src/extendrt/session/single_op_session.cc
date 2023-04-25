@@ -280,18 +280,8 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
   return RunGraph(inputs, outputs);
 }
 
-Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "outputs cannot be nullptr";
-    return kLiteError;
-  }
-  MS_LOG(DEBUG) << "SingleOpInferSession::RunGraph with input and outputs";
-  std::vector<ShapeVector> new_shapes;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_shapes), [](auto &t) { return t.shape_c(); });
-  auto ret = OnNewInputShapes(new_shapes);
-  if (ret != kSuccess) {
-    return ret;
-  }
+Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tensor> &inputs,
+                                                 std::vector<tensor::Tensor> *outputs) {
   if (inputs.size() != kernel_args_.inputs.size()) {
     MS_LOG(ERROR) << "Given inputs size " << inputs.size() << " != graph inputs size " << kernel_args_.inputs.size();
     return kLiteError;
@@ -343,9 +333,28 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
       kernel_args_.outputs[i]->SetData(nullptr);
     }
   }
+  return kSuccess;
+}
+
+Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
+  if (outputs == nullptr) {
+    MS_LOG(ERROR) << "outputs cannot be nullptr";
+    return kLiteError;
+  }
   if (kernel_mod_ == nullptr) {
     MS_LOG(ERROR) << "Model has not been built";
     return kLiteError;
+  }
+  MS_LOG(DEBUG) << "SingleOpInferSession::RunGraph with input and outputs";
+  std::vector<ShapeVector> new_shapes;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_shapes), [](auto &t) { return t.shape_c(); });
+  auto ret = OnNewInputShapes(new_shapes);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  ret = InitInputOutputData(inputs, outputs);
+  if (ret != kSuccess) {
+    return ret;
   }
   try {
     std::vector<kernel::AddressPtr> ignore_datas;
@@ -362,6 +371,10 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
 }
 
 Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &new_shapes) {
+  if (kernel_mod_ == nullptr) {
+    MS_LOG(ERROR) << "Model has not been built";
+    return kLiteError;
+  }
   if (inputs_.size() != new_shapes.size()) {
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != resize input size " << new_shapes.size();
     return kLiteError;
@@ -382,10 +395,6 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
     return kSuccess;
   }
   MS_LOG(INFO) << "SingleOpInferSession::Resize";
-  if (kernel_mod_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been built";
-    return kLiteError;
-  }
   if (kernel_mod_->Resize(kernel_args_.op, kernel_args_.inputs, kernel_args_.outputs) != kSuccess) {
     MS_LOG(ERROR) << "Failed to resize custom ascend kernel";
     return kLiteError;

@@ -391,7 +391,10 @@ bool TfliteLstmCellFusion::CheckBodyGraph(const EquivPtr &equiv, float *zoneout_
   auto hidden_zoneout_new_node = utils::cast<AnfNodePtr>((*equiv)[hidden_zoneout_new_]);
   MS_ASSERT(hidden_zoneout_new_node != nullptr);
 
-  float cell_old, cell_new, hidden_old, hidden_new;
+  float cell_old;
+  float cell_new;
+  float hidden_old;
+  float hidden_new;
   if (GetFloatScalarFromTensorInfo(cell_zoneout_old_node, &cell_old) != RET_OK) {
     return false;
   }
