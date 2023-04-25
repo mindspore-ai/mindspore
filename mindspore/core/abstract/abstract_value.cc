@@ -680,6 +680,15 @@ bool AbstractSequence::PurifyElements() {
   return true;
 }
 
+bool AbstractCanJoin(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2) {
+  try {
+    (void)abs1->Join(abs2);
+  } catch (std::exception &) {
+    return false;
+  }
+  return true;
+}
+
 // Convert self from a fixed length sequence to dynamic length sequence.
 void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception) {
   // Can not use size() since it will raise error when sequence is already dynamic length.
@@ -690,7 +699,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
     auto first_element_shape = first_element->BuildShape();
     MS_EXCEPTION_IF_NULL(first_element_shape);
     auto first_element_type_id = first_element->BuildType()->generic_type_id();
-    for (size_t i = 0; i < input_len; ++i) {
+    for (size_t i = 1; i < input_len; ++i) {
       auto cur_element = elements()[i];
       MS_EXCEPTION_IF_NULL(cur_element);
       auto cur_element_type_id = cur_element->BuildType()->generic_type_id();
@@ -713,6 +722,15 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
                                  << "The element shape do not match, can not convert to dynamic length sequence. "
                                  << "The 0th element shape is: " << first_element_shape->ToString() << ". The " << i
                                  << "th element shape is: " << cur_element_shape->ToString();
+      }
+      if (!AbstractCanJoin(first_element, cur_element)) {
+        if (!raise_exception) {
+          return;
+        }
+        MS_EXCEPTION(TypeError) << "In graph mode, the element shape of dynamic length array must be the same."
+                                << "The element do not match, can not convert to dynamic length sequence. "
+                                << "The 0th element is: " << first_element->ToString() << ". The " << i
+                                << "th element shape is: " << cur_element->ToString();
       }
     }
     set_dynamic_len_element_abs(first_element);

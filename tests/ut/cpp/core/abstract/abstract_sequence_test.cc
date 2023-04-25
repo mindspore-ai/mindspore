@@ -331,5 +331,16 @@ TEST_F(DynamicSequenceTestUtils, test_dynamic_length_sequence_operator_equal) {
   ASSERT_FALSE(*abs_empty_list == *int_abs_list_1);
   ASSERT_FALSE(*int_abs_list_1 == *abs_empty_list);
 }
+
+/// Feature: AbstractSequence join test.
+/// Description: List[Tensor(int32)]  can not join with List[Tensor(float32)].
+/// Expectation: Can not convert to dynamic len sequence..
+TEST_F(DynamicSequenceTestUtils, test_sequence_convert_to_dyn_len) {
+  std::vector<AbstractBasePtr> elems = {std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>()),
+                                        std::make_shared<AbstractTensor>(kFloat32, std::make_shared<Shape>())};
+  auto abs_seq = std::make_shared<AbstractList>(elems);
+  abs_seq->CheckAndConvertToDynamicLenSequence(false);
+  ASSERT_FALSE(abs_seq->dynamic_len());
+}
 }  // namespace abstract
 }  // namespace mindspore
