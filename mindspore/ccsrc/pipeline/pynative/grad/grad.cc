@@ -981,13 +981,11 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->WaitForwardTask();
+  GetPreRunTopCell(grad, obj, args);
+  SetSensValue(grad, top_input_args_info_, args);
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
-
-  SetSensValue(grad, top_input_args_info_, args);
-  GetPreRunTopCell(grad, obj, args);
-
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
   auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
   if (!already_run_top_cell->need_compile_graph()) {
