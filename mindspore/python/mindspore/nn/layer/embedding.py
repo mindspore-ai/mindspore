@@ -126,13 +126,10 @@ class Embedding(Cell):
         self.array_mul = P.MatMul()
         self.reshape = P.Reshape()
         self.get_shp = P.Shape()
-        self.get_tensor_shp = P.TensorShape()
         self.concat = P.Concat()
 
     def construct(self, ids):
         out_shape = self.get_shp(ids) + (self.embedding_size,)
-        if F.is_sequence_value_unknown(self.get_shp(ids)):
-            out_shape = self.concat((self.get_tensor_shp(ids), Tensor([self.embedding_size])))
         flat_ids = self.reshape_flat(ids, self.shp_flat)
 
         if self.use_one_hot:

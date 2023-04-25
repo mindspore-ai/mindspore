@@ -64,7 +64,7 @@ def get_bprop_crop_and_resize(self):
     allowed_types = [mstype.float16, mstype.float32, mstype.float64]
     gradboxes = CropAndResizeGradBoxes(method="bilinear")
     method_ = self.method
-    dyn_shape = P.TensorShape()
+    shape = P.Shape()
 
     is_ascend_cpu = context.get_context('device_target') in ("Ascend", "CPU")
 
@@ -79,7 +79,7 @@ def get_bprop_crop_and_resize(self):
         gradimage = CropAndResizeGradImage(dimage_type, method=method_)
         image_shape = x.shape
         if F.is_sequence_value_unknown(image_shape):
-            image_size = dyn_shape(x)
+            image_size = shape(x)
             image_size = F.cast(image_size, mstype.int32)
         else:
             image_size = Tensor(image_shape, dtype=mstype.int32)

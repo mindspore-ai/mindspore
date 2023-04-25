@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.ops._grad_experimental.grad_math_ops import binop_grad_common
-from mindspore.ops._grad_experimental.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones
+from mindspore.ops._grad_experimental.grad_base import bprop_getters, dyn_ones
 from mindspore.ops._grad_experimental.grad_base import convert_to_tensor, create_tensor_by_element
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.array_ops import MatrixDiagV3
@@ -56,7 +56,6 @@ reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
 transpose = P.Transpose()
 shape_op = P.Shape()
-dyn_shape_op = P.TensorShape()
 reshape = P.Reshape()
 size_op = P.Size()
 invert_permutation = P.InvertPermutation()
@@ -82,6 +81,7 @@ def get_bprop_masked_select(self):
     mul_op = P.Mul()
     sum_op = P.ReduceSum()
     is_instance_op = inner.IsInstance()
+    rank = P.Rank()
 
     def bprop(input_data, mask, value, out, dout):
         mask = F.cast(mask, mstype.float32)
@@ -90,7 +90,7 @@ def get_bprop_masked_select(self):
         dinput, dvalue = binop_grad_common(input_data, mask, dinput, dvalue)
         # for dynamic rank, reduce axis should be calc
         if F.is_sequence_shape_unknown(P.Shape()(dvalue)):
-            axis = P.Range()(Tensor(0), dyn_rank(dvalue), Tensor(1))
+            axis = range(0, rank(dvalue), 1)
             dvalue = sum_op(dvalue, axis)
         else:
             dvalue = sum_op(dvalue)
@@ -169,12 +169,13 @@ def get_bprop_index_fill(self):
     gather = P.Gather()
     index_fill = IndexFill()
     shape = P.Shape()
+    rank = P.Rank()
 
     def bprop(x, dim, indices, value, out, dout):
         zero_value = zeros_like(value)
         x_grad = index_fill(dout, dim, indices, zero_value)
         if F.is_sequence_value_unknown(shape(x)):
-            if dyn_rank(x) == 0:
+            if rank(x) == 0:
                 value_grad = dout
             else:
                 value_grad = gather(dout, indices, dim).sum()
@@ -293,9 +294,6 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     possibly_updated = gather_nd(out, indices)
     out_indicators = F.cast(equal(updates, possibly_updated), mstype.int32)
     input_shape = shape(x)
-    if F.is_sequence_value_unknown(input_shape):
-        input_shape = dyn_shape_op(x)
-
     scattered_out_indicators = scatter_nd(indices, out_indicators, input_shape)
     indicators = x_indicators + scattered_out_indicators
     dx = dout * F.cast(x_indicators, F.dtype(dout)) / F.cast(indicators, F.dtype(dout))
@@ -362,8 +360,6 @@ def get_bprop_resize_nearest_neighbor_v2(self):
 
     def bprop(x, size, output, dout):
         x_shape = P.Shape()(x)
-        if F.is_sequence_value_unknown(x_shape):
-            x_shape = P.TensorShape()(x)
         grad_in_size = x_shape[1:3]
         if data_format == 'NCHW':
             grad_in_size = x_shape[2:4]
@@ -400,7 +396,7 @@ def get_bprop_im2col(self):
                     padding=padding)
 
     def bprop(x, out, dout):
-        x_shape = dyn_shape_op(x)[2:]
+        x_shape = shape_op(x)[2:]
         dx = col2im(dout, x_shape)
         return (dx,)
 
@@ -425,8 +421,8 @@ def get_bprop_extract_volume_patches(self):
     ones_like = P.OnesLike()
 
     def _dyn_extract_volume_patches(x, out, dout):
-        x_shape = dyn_shape_op(x)
-        out_shape = dyn_shape_op(out)
+        x_shape = shape_op(x)
+        out_shape = shape_op(out)
         x_n, x_c, x_d, x_h, x_w = x_shape[0], x_shape[1], x_shape[2], x_shape[3], x_shape[4]
         x_indices_num = 1 + x_d * x_h * x_w
         x_idx = range_(cast(1, mstype.float32), cast(x_indices_num, mstype.float32), cast(1, mstype.float32))
@@ -631,7 +627,7 @@ def get_bprop_affinegrid(self):
         return transpose(dtheta, perm2), tre
 
     def dyn_bprop(theta, output_size, out, dout):
-        len_output_size = reducesum(dyn_shape_op(output_size))
+        len_output_size = reducesum(shape_op(output_size))
         dtheta = dyn_ones(Tensor([1, 3, 2], mstype.int32), mstype.float32)
         ret = dyn_ones(Tensor([1, 6], mstype.int32), mstype.float32)
         if len_output_size == 5:
@@ -813,36 +809,21 @@ def get_bprop_segment_mean(self):
     """Generate bprop for SegmentMean"""
     rank = P.Rank()
     shape = P.Shape()
-    fill = P.Fill()
+    fill = P.FillV2()
     divide = P.Div()
     segment_sum = SegmentSum()
     gather = P.Gather()
     cast = P.Cast()
-    concat = P.Concat()
-    expand_dims = P.ExpandDims()
 
     def bprop(input_x, segment_ids, output, dout):
         input_x_type = F.dtype(input_x)
         input_x = cast(input_x, mstype.float32)
         dout = cast(dout, mstype.float32)
         dout_type = F.dtype(dout)
-
         ones_shape = shape(segment_ids)
-        if F.is_sequence_value_unknown(ones_shape):
-            ones_shape = dyn_shape_op(segment_ids)
-
-        ones = ()
-        inputx_shape = shape(input_x)
-        if F.is_sequence_value_unknown(inputx_shape):
-            input_rank = dyn_rank(input_x)
-            if input_rank > cast(1, mstype.float32):
-                ones_shape = concat([ones_shape, dyn_ones(expand_dims(input_rank - 1, 0), mstype.int64)])
-            ones = dyn_fill(dout_type, ones_shape, 1)
-        else:
-            input_rank = rank(input_x)
-            ones_shape = ones_shape + (1,) * (input_rank - 1)
-            ones = fill(dout_type, ones_shape, 1)
-
+        input_rank = rank(input_x)
+        ones_shape = ones_shape + (1,) * (input_rank - 1)
+        ones = fill(ones_shape, Tensor(1, dout_type))
         scaled_grad = divide(dout, segment_sum(ones, segment_ids))
         return cast(gather(scaled_grad, segment_ids, 0), input_x_type), zeros_like(segment_ids)
 

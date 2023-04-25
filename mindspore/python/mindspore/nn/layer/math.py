@@ -218,7 +218,6 @@ class LGamma(Cell):
         self.log1p = P.Log1p()
         self.abs = P.Abs()
         self.shape = P.Shape()
-        self.dyn_shape = P.TensorShape()
         self.dtype = P.DType()
         self.fill = P.Fill()
         self.floor = P.Floor()
