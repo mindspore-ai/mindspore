@@ -496,18 +496,15 @@ ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref) {
   return std::make_shared<ValueTuple>(v_list);
 }
 
-void DataConvert::FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v) {
+void DataConvert::FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(flatten_v);
-  const auto &v_vec = v->cast<ValueSequencePtr>();
-  size_t v_vec_size = v_vec->size();
-  for (size_t i = 0; i < v_vec_size; ++i) {
-    const auto &elem_v = v_vec->value()[i];
-    MS_LOG(DEBUG) << "Get elem_v is " << v->ToString();
-    if (elem_v->isa<ValueSequence>()) {
-      FlattenTupleArg(elem_v, flatten_v);
-    } else if (PyNativeAlgo::Common::IsTensor(elem_v)) {
-      (void)flatten_v->emplace_back(elem_v);
+  if (v->isa<tensor::Tensor>()) {
+    (void)flatten_v->emplace_back(v);
+  } else if (v->isa<ValueSequence>()) {
+    const auto &v_vec = v->cast<ValueSequencePtr>()->value();
+    for (const auto &elem : v_vec) {
+      FlattenValueSeqArg(elem, flatten_v);
     }
   }
 }
@@ -527,7 +524,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
     if (PyNativeAlgo::Common::IsTensor(v_vec[input_size])) {
       (void)flatten_v->emplace_back(v_vec[input_size]);
     } else if (v_vec[input_size]->isa<ValueSequence>()) {
-      FlattenTupleArg(v_vec[input_size], flatten_v);
+      FlattenValueSeqArg(v_vec[input_size], flatten_v);
     }
   }
 }

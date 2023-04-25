@@ -741,7 +741,7 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
     grad_func_graph = pyexecute_ins->GenerateFuncGraph(args_abs_list);
   } else if (prim->name() == kAttrMutableOpName) {
     grad_func_graph = mutable_ins->GenerateFuncGraph(args_abs_list);
-  } else if (prim->name() == kAttrMutableOpName) {
+  } else if (prim->name() == kMakeDictOpName) {
     grad_func_graph = make_dict_ins->GenerateFuncGraph(args_abs_list);
   }
   MS_EXCEPTION_IF_NULL(grad_func_graph);
@@ -804,7 +804,13 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, std::vector<A
       (void)cnode_inputs->emplace_back(new_v_node);
       op_args.emplace_back(v_node->value());
     } else {
-      MS_LOG(EXCEPTION) << "Get input node " << input_node->DebugString();
+      // Make Fake value
+      auto v = MakeValue(0);
+      auto new_v_node = NewValueNode(v);
+      new_v_node->set_abstract(input_node->abstract());
+      (void)cnode_inputs->emplace_back(new_v_node);
+      (void)op_args.emplace_back(v);
+      MS_LOG(DEBUG) << "Get input node " << input_node->DebugString();
     }
   }
   return op_args;
