@@ -420,3 +420,4 @@ from .glu_grad import _glu_grad_aicpu
 from .sspaddmm import _sspaddmm_aicpu
 from .sequence_addn import _sequence_addn_aicpu
 from .affine_grid import _affine_grid_aicpu
+from .matrix_band_part import _matrix_band_part_aicpu
