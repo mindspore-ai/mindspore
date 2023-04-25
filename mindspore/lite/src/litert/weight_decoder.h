@@ -37,6 +37,7 @@ static constexpr int kBitNum1 = 1;
 static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;
 static constexpr int kBitNum32 = 32;
+static constexpr int kMaxVarCorr = 10;
 
 namespace mindspore::lite {
 
@@ -197,7 +198,7 @@ class MS_API WeightDecoder {
       auto zero_point = param.zeroPoint;
       auto var_corr = param.var_corr;
       auto mean_corr = param.mean_corr;
-      if (var_corr < 0 || var_corr > 10) {
+      if (var_corr < 0 || var_corr > kMaxVarCorr) {
         MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
         var_corr = 1;
       }
@@ -317,7 +318,7 @@ class MS_API WeightDecoder {
   static void UnPackFromUintToOrigin(const T2 &packed_data, std::queue<bool> *unpack_bit_data) {
     auto n = packed_data;
     size_t bit_count = 0;
-    while (bit_count < sizeof(T2) * 8) {
+    while (bit_count < sizeof(T2) * kBitNum8) {
       bool a = n % 2;
       n = n >> 1;
       bit_count++;
