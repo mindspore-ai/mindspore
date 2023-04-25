@@ -18,7 +18,7 @@
 namespace mindspore::lite {
 int TransposeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() < 2) {
+  if (in_tensors.size() <= 1) {
     MS_LOG(ERROR) << "Npu transpose must get fixed values of transpose axis.";
     return RET_ERROR;
   }

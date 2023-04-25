@@ -59,8 +59,8 @@ int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
   int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
-  int thread_end = MSMIN((task_id + 1) * step, param->norm_outer_size_);
-  for (int i = task_id * step; i < thread_end; i++) {
+  int thread_end = MSMIN(((int)task_id + 1) * step, param->norm_outer_size_);
+  for (int i = (int)task_id * step; i < thread_end; i++) {
     const float *src_norm = src_data + i * param->norm_inner_size_;
     float *dst_norm = dst_data + i * param->norm_inner_size_;
     float cur_mean = 0.0f;
