@@ -20,7 +20,7 @@ pad_v3_op_info = AiCPURegOp("PadV3")                                            
     .fusion_type("OPAQUE")                                                                                   \
     .input(0, "x", "required")                                                                               \
     .input(1, "paddings", "required")                                                                        \
-    .input(2, "constant_values", "required")                                                                 \
+    .input(2, "constant_values", "optional")                                                                 \
     .output(0, "y", "required")                                                                              \
     .attr("mode", "str")                                                                                     \
     .attr("paddings_contiguous", "bool")                                                                     \

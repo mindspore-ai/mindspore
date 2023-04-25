@@ -49,7 +49,7 @@ constexpr int64_t k2Num = 2;
 constexpr int64_t k3Num = 3;
 constexpr int64_t k4Num = 4;
 
-const std::vector<std::string> mode_list = {"reflect", "edge"};
+const std::vector<std::string> mode_list = {"reflect", "edge", "circular"};
 using float16 = Eigen::half;
 
 #define PAD_V3_GRAD_READ_PADDINGS(DTYPE, TYPE, CTX)                  \
@@ -84,7 +84,6 @@ uint32_t PadV3GradCpuKernel::Compute(CpuKernelContext &ctx) {
       KERNEL_LOG_ERROR("PadV3Grad paddings data type [%s] not support.", DTypeStr(paddings_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-
   auto data_type = ctx.Output(0)->GetDataType();
   switch (data_type) {
     PAD_V3_GRAD_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -183,6 +182,8 @@ int64_t PadV3GradCpuKernel::IndexCaculate(int64_t pad_value, int64_t pad_end, in
       ip = pad_value + pad_value - now;
     } else if (mode == "edge") {
       ip = pad_value;
+    } else if (mode == "circular") {
+      ip = output_value + now + std::min(int64_t(0), pad_end);
     }
   } else if (now >= pad_value && now < output_value + pad_value) {
     ip = now;
@@ -191,6 +192,8 @@ int64_t PadV3GradCpuKernel::IndexCaculate(int64_t pad_value, int64_t pad_end, in
       ip = (output_value + pad_value - 1) + (output_value + pad_value - 1) - now;
     } else if (mode == "edge") {
       ip = output_value + pad_value - 1;
+    } else if (mode == "circular") {
+      ip = now - output_value - std::min(int64_t(0), pad_value);
     }
   }
   ip = ip - o_start + i_start;
