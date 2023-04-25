@@ -21,5 +21,4 @@ mindspore.ops.bincount
     异常：
         - **TypeError** - 如果 `input` 或 `weights` 不是Tensor。
         - **ValueError** - 如果 `input` 不是一维的，或者 `input` 和 `weights` 不具有相同的shape。
-        - **ValueError** - 如果 `input` 含有负数元素。
         - **ValueError** - 如果 `minlength` 是负整数。
