@@ -796,6 +796,21 @@ ValuePtr PyStubNodeCast(const py::handle &obj) {
   return stub;
 }
 
+std::pair<ShapeVector, TypeId> GetStubTensorInfo(const py::handle &obj) {
+  auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
+  auto stub = py_stub.cast<stub::StubNodePtr>();
+  AbstractBasePtr stub_abs;
+  if (stub == nullptr) {
+    auto tensor_ptr = py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    stub_abs = tensor_ptr->ToAbstract();
+  } else {
+    stub_abs = stub->ToAbstract();
+  }
+  MS_EXCEPTION_IF_NULL(stub_abs);
+  return {dyn_cast<abstract::Shape>(stub_abs->BuildShape())->shape(), stub_abs->BuildType()->type_id()};
+}
+
 ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {

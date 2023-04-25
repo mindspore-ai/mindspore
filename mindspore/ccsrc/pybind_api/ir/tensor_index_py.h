@@ -185,10 +185,13 @@ class Slice final {
   }
 
   static inline bool InitByNone(const py::object &index) {
-    if (py::isinstance<Tensor>(index) || IsStubTensor(index)) {
-      auto tensor_index = IsStubTensor(index) ? ConvertStubTensor(index) : index.cast<TensorPtr>();
+    if (py::isinstance<Tensor>(index)) {
+      auto tensor_index = index.cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor_index);
       return tensor_index->data_type() == kMetaTypeNone;
+    } else if (IsStubTensor(index)) {
+      auto type_id = GetStubTensorInfo(index).second;
+      return type_id == kMetaTypeNone;
     } else if (py::isinstance<py::none>(index)) {
       return true;
     }
@@ -429,6 +432,22 @@ class TensorIndex final {
     MS_EXCEPTION_IF_ZERO("dim_size", dim_size);
     return (dim_size + (x % dim_size)) % dim_size;
   }
+
+  static bool CheckScalarValue(const py::handle &value) {
+    if (py::isinstance<Tensor>(value)) {
+      TensorPtr data = value.cast<TensorPtr>();
+      MS_EXCEPTION_IF_NULL(data);
+      auto data_shape = data->shape();
+      return data_shape.empty();
+    }
+    if (IsStubTensor(value)) {
+      auto data_shape = GetStubTensorInfo(value).first;
+      return data_shape.empty();
+    }
+    return CheckTypeIsInstance(TensorIndex(value).type(),
+                               {TensorIndexType::Float, TensorIndexType::Integer, TensorIndexType::Boolean});
+  }
+
   static py::object DeepList(const py::object &array_like, int64_t dim_size);
   static py::object DeepTensorToNdArray(const py::object &array_like);
   static py::array MakeNdArray(const py::object &a, int64_t dim_size);

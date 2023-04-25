@@ -389,9 +389,13 @@ std::tuple<int64_t, py::object, ShapeVector> TensorIndex::GetValueTransferType(c
   ShapeVector value_shape = {};
   if (py_value_type == TensorIndexType::Tensor) {
     value_transfer_arg = py::none();
-    auto value_ptr = TensorIndex::py_value_handle_.cast<TensorPtr>();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-    value_shape = value_ptr->shape();
+    if (IsStubTensor(TensorIndex::py_value_handle_)) {
+      value_shape = GetStubTensorInfo(TensorIndex::py_value_handle_).first;
+    } else {
+      auto value_ptr = TensorIndex::py_value_handle_.cast<TensorPtr>();
+      MS_EXCEPTION_IF_NULL(value_ptr);
+      value_shape = value_ptr->shape();
+    }
   } else if (CheckTypeIsInstance(py_value_type,
                                  {TensorIndexType::Float, TensorIndexType::Integer, TensorIndexType::Boolean})) {
     value_transfer_type = ValueTransferType::kNumberToTensor;
@@ -1213,6 +1217,17 @@ py::array TensorIndex::SetItemByTensorByBool(const ShapeVector &data_shape, cons
                                              const py::array &np_index, std::vector<int64_t> *value_transfer_types,
                                              std::vector<py::object> *value_transfer_args,
                                              ValueTransferType *tensor_update_type) {
+  ShapeVector index_shape = GeneratePaddingShape(index->shape(), data_dims);
+  py::array output_np_index = TensorIndex::np_module_.attr("broadcast_to")(
+    TensorIndex::np_module_.attr("reshape")(np_index, VectorToPyTuple(index_shape)), VectorToPyTuple(data_shape));
+  if (CheckScalarValue(TensorIndex::py_value_handle_)) {
+    value_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kCast));
+    value_transfer_args->emplace_back(py::none());
+    value_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kBroadCast));
+    value_transfer_args->emplace_back(VectorToPyTuple(data_shape));
+    *tensor_update_type = ValueTransferType::kSelect;
+    return output_np_index;
+  }
   const int64_t index_dims = index->DataDim();
   py::tuple nonzero_indices = GenerateNonZeroIndex(data_shape, index, true);
   MS_EXCEPTION_IF_CHECK_FAIL(!nonzero_indices.empty(), "Output size of nonzero should not be empty");
@@ -1238,10 +1253,6 @@ py::array TensorIndex::SetItemByTensorByBool(const ShapeVector &data_shape, cons
   value_transfer_args->emplace_back(VectorToPyTuple(value_shape));
   value_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kScatterND));
   value_transfer_args->emplace_back(py::make_tuple(nonzero_indices_tensor, VectorToPyTuple(data_shape)));
-
-  ShapeVector index_shape = GeneratePaddingShape(index->shape(), data_dims);
-  py::array output_np_index = TensorIndex::np_module_.attr("broadcast_to")(
-    TensorIndex::np_module_.attr("reshape")(np_index, VectorToPyTuple(index_shape)), VectorToPyTuple(data_shape));
   *tensor_update_type = ValueTransferType::kSelect;
   return output_np_index;
 }
@@ -1451,12 +1462,16 @@ py::object TensorIndex::GetItemBySlice(const ShapeVector &data_shape, const Tens
 
 py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::object &py_index,
                                          const py::bool_ &is_ascend) {
-  if (!IsStubTensor(py_data) && !py::isinstance<Tensor>(py_data)) {
+  ShapeVector data_shape;
+  if (IsStubTensor(py_data)) {
+    data_shape = GetStubTensorInfo(py_data).first;
+  } else if (py::isinstance<Tensor>(py_data)) {
+    TensorPtr data = py_data.cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(data);
+    data_shape = data->shape();
+  } else {
     MS_EXCEPTION(TypeError) << "First input of Tensor index must be tensor but got " << py_data;
   }
-  TensorPtr data = IsStubTensor(py_data) ? ConvertStubTensor(py_data) : py_data.cast<TensorPtr>();
-  MS_EXCEPTION_IF_NULL(data);
-  const ShapeVector data_shape = data->shape();
   MS_LOG(DEBUG) << "Get item datashape is: " << data_shape << ", index is: " << py_index;
   py::object new_py_index = IsStubTensor(py_index) ? py::cast(ConvertStubTensor(py_index)) : py_index;
   TensorIndex::py_index_handle_ = new_py_index;
@@ -1684,24 +1699,21 @@ py::object TensorIndex::SetItemBySlice(const ShapeVector &data_shape, const Type
 
 py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::object &py_index,
                                          const py::object &py_value, const py::bool_ &is_ascend) {
-  if (!IsStubTensor(py_data) && !py::isinstance<Tensor>(py_data)) {
+  if (!py::isinstance<Tensor>(py_data)) {
     MS_EXCEPTION(TypeError) << "First input of Tensor index must be tensor but got " << py_data;
   }
-  TensorPtr data = IsStubTensor(py_data) ? ConvertStubTensor(py_data) : py_data.cast<TensorPtr>();
+  TensorPtr data = py_data.cast<TensorPtr>();
   MS_EXCEPTION_IF_NULL(data);
   const ShapeVector data_shape = data->shape();
   const TypePtr data_type = data->Dtype();
-
-  py::object new_py_index = IsStubTensor(py_index) ? py::cast(ConvertStubTensor(py_index)) : py_index;
-  py::object new_py_value = IsStubTensor(py_value) ? py::cast(ConvertStubTensor(py_value)) : py_value;
   MS_LOG(DEBUG) << "Set item data shape is: " << data_shape << ", index is: " << py_index << ", value is: " << py_value;
-  TensorIndex::py_index_handle_ = new_py_index;
-  TensorIndex::py_value_handle_ = new_py_value;
+  TensorIndex::py_index_handle_ = py_index;
+  TensorIndex::py_value_handle_ = py_value;
   TensorIndex::is_ascend_ = is_ascend;
   TensorIndex::index_op_type_ = IndexOpType::SetItem;
   TensorIndex::np_module_ = py::module::import("numpy");
-  TensorIndex index = TensorIndex(new_py_index);
-  const TensorIndexType value_type = TensorIndex(new_py_value).type();
+  TensorIndex index = TensorIndex(py_index);
+  const TensorIndexType value_type = IsStubTensor(py_value) ? TensorIndexType::Tensor : TensorIndex(py_value).type();
   CheckSetItemIndex(index.type(), value_type);
   if (index.IsList()) {
     if (data_shape.empty()) {
