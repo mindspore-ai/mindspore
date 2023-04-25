@@ -118,7 +118,8 @@ int SoftmaxOpenCLKernel::SetGlobalLocal() {
       global_size_ = {32, out_shape_.N};
     }
   } else {
-    size_t global_x, global_y;
+    size_t global_x;
+    size_t global_y;
     if (axis_ == 1) {
       global_x = out_shape_.Slice;
       global_y = out_shape_.W;
