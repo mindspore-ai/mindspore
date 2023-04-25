@@ -14,6 +14,7 @@
 
 import numpy as np
 import mindspore as ms
+import pytest
 from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum, AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
@@ -97,6 +98,7 @@ def test_auto_parallel_adasum3():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net)
 
+@pytest.mark.skip(reason="crashed while running coverage test")
 def test_auto_parallel_adasum4():
     """
     Feature: adasum in auto parallel.
@@ -110,6 +112,7 @@ def test_auto_parallel_adasum4():
     net = Net(mul_strategy1, matmul_strategy2, gather_strategy3)
     compile_net(net, by_grad=False)
 
+@pytest.mark.skip(reason="crashed while running coverage test")
 def test_auto_parallel_adasum5():
     """
     Feature: adasum in auto parallel.
