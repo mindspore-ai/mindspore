@@ -676,10 +676,7 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
   }
   for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
     output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
-    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(sub_ret, i);
-    if (type_id == kTypeUnknown) {
-      type_id = common::AnfAlgo::GetOutputInferDataType(sub_ret, i);
-    }
+    TypeId type_id = common::AnfAlgo::GetOutputInferDataType(sub_ret, i);
     output_types.push_back(type_id);
     output_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
