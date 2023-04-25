@@ -28,7 +28,9 @@ class ConvolutionFP16Coder final : public ConvolutionFP32Coder {
  public:
   ConvolutionFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                        const LiteGraph::Node *node, size_t node_index, Target target)
-      : ConvolutionFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+      : ConvolutionFP32Coder(in_tensors, out_tensors, node, node_index, target) {
+    data_type_ = kNumberTypeFloat16;
+  }
 
   int DoCode(CoderContext *const context) override;
 
@@ -38,7 +40,6 @@ class ConvolutionFP16Coder final : public ConvolutionFP32Coder {
   void CollectFilesForFunc(CoderContext *const context) override;
   int InitWeightBias(CoderContext *const context) override;
   int InitTmpBuffer() override;
-  TypeId data_type_{kNumberTypeFloat16};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_CONVOLUTION_FP16_CODER_H_

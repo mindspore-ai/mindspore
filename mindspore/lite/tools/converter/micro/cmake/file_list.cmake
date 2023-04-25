@@ -94,6 +94,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/convolution_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/convolution_winograd_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/convolution_1x1_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/conv_depthwise_3x3_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/conv_depthwise_sw_fp16_coder.cc
         #### nnacl fp32 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/activation_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/addn_fp32_coder.cc

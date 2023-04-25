@@ -74,7 +74,6 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
   void *trans_input_{nullptr};
   void *gemm_out_{nullptr};
   void *col_buffer_{nullptr};
-  TypeId data_type_{kNumberTypeFloat32};
   std::vector<float> matrix_g_;
   std::vector<float> matrix_gt_;
   bool is_weight_online_{false};

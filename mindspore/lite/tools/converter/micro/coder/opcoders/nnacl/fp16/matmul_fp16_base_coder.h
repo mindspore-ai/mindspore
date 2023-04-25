@@ -28,7 +28,9 @@ class MatMulFP16BaseCoder : public MatMulFP32BaseCoder {
  public:
   MatMulFP16BaseCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const LiteGraph::Node *node, size_t node_index, Target target)
-      : MatMulFP32BaseCoder(in_tensors, out_tensors, node, node_index, target) {}
+      : MatMulFP32BaseCoder(in_tensors, out_tensors, node, node_index, target) {
+    data_type_ = kNumberTypeFloat16;
+  }
 
   ~MatMulFP16BaseCoder() override = default;
 
@@ -54,7 +56,6 @@ class MatMulFP16BaseCoder : public MatMulFP32BaseCoder {
  protected:
   int a_batch_ = 1;
   int b_batch_ = 1;
-  TypeId data_type_{kNumberTypeFloat16};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_MATMUL_FP16_BASE_CODER_H_

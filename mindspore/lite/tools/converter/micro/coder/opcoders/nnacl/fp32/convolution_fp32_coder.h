@@ -61,7 +61,6 @@ class ConvolutionFP32Coder : public Conv2DBaseCoder {
   size_t col_major_input_size_{0};
 
   size_t pack_weight_size_{0};
-  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONVOLUTION_FP32_CODER_H_

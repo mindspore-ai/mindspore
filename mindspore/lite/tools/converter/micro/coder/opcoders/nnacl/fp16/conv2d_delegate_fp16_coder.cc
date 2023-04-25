@@ -16,13 +16,17 @@
 
 #include "coder/opcoders/nnacl/fp16/conv2d_delegate_fp16_coder.h"
 #include "src/common/version_manager.h"
+#include "src/common/tensor_util.h"
 #include "src/common/ops/populate/populate_register.h"
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/base/conv_common_base.h"
+#include "nnacl/infer/conv2d_infer.h"
 #include "coder/opcoders/nnacl/fp16/convolution_fp16_coder.h"
 #include "coder/opcoders/nnacl/fp16/conv_depthwise_fp16_coder.h"
 #include "coder/opcoders/nnacl/fp16/convolution_winograd_fp16_coder.h"
 #include "coder/opcoders/nnacl/fp16/convolution_1x1_fp16_coder.h"
+#include "coder/opcoders/nnacl/fp16/conv_depthwise_3x3_fp16_coder.h"
+#include "coder/opcoders/nnacl/fp16/conv_depthwise_sw_fp16_coder.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore::lite::micro::nnacl {
@@ -159,8 +163,59 @@ std::unique_ptr<OperatorCoder> CPUConvDwFp16CoderCreator(const std::vector<Tenso
                                                          const std::vector<Tensor *> &out_tensors,
                                                          const LiteGraph::Node *node, size_t node_index, Target target,
                                                          int schema_version) {
-  return CPUOpCoderCreator<ConvolutionDepthwiseFP16Coder>(in_tensors, out_tensors, node, node_index, target,
-                                                          schema_version);
+  const void *primitive = node->primitive_;
+  if (primitive == nullptr) {
+    return nullptr;
+  }
+  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
+  MS_CHECK_PTR_RET_NULL(paramGen);
+  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
+  MS_CHECK_PTR_RET_NULL(conv_param);
+  std::unique_ptr<OperatorCoder> coder;
+  conv_param->input_h_ = in_tensors.at(kInputIndex)->Height();
+  conv_param->input_w_ = in_tensors.at(kInputIndex)->Width();
+  conv_param->input_channel_ = in_tensors.at(kInputIndex)->Channel();
+  conv_param->output_h_ = out_tensors.at(kOutputIndex)->Height();
+  conv_param->output_w_ = out_tensors.at(kOutputIndex)->Width();
+  conv_param->output_channel_ = out_tensors.at(kOutputIndex)->Channel();
+  conv_param->op_parameter_.thread_num_ = 1;
+
+  if (target == kARM64 || target == kARM32) {
+    std::vector<TensorC *> in_tensor_c;
+    std::vector<TensorC *> out_tensor_c;
+    GenerateInTensorC(in_tensors, &in_tensor_c, NULL);
+    GenerateOutTensorC(reinterpret_cast<const OpParameter *const>(conv_param), out_tensors, &out_tensor_c);
+    Conv2dInferShape(reinterpret_cast<const TensorC *const *>(in_tensor_c.data()), in_tensor_c.size(),
+                     reinterpret_cast<TensorC **>(out_tensor_c.data()), out_tensor_c.size(),
+                     reinterpret_cast<OpParameter *>(conv_param));
+    bool use_winograd =
+      (conv_param->kernel_h_ == C3NUM && conv_param->kernel_w_ == C3NUM && conv_param->stride_w_ == C1NUM &&
+       conv_param->stride_h_ == C1NUM && conv_param->dilation_h_ == C1NUM && conv_param->dilation_w_ == C1NUM &&
+       conv_param->pad_u_ == C1NUM && conv_param->pad_d_ <= C1NUM && conv_param->pad_l_ == C1NUM &&
+       conv_param->pad_r_ == C1NUM && conv_param->input_channel_ == conv_param->output_channel_ &&
+       conv_param->output_w_ >= C4NUM && conv_param->output_h_ >= C4NUM);
+    if (use_winograd) {
+      MS_LOG(DEBUG) << "create ConvolutionDepthwise3x3FP16CPUKernel";
+      coder = CPUOpCoderCreator<ConvolutionDepthwise3x3FP16Coder>(in_tensors, out_tensors, node, node_index, target,
+                                                                  schema_version);
+    }
+    if (coder != nullptr) {
+      free(conv_param);
+      return coder;
+    }
+  }
+  if (conv_param->input_channel_ < C32NUM) {
+    MS_LOG(DEBUG) << "create ConvolutionDepthwiseSWFP16CPUKernel";
+    coder = CPUOpCoderCreator<ConvolutionDepthwiseSWFP16Coder>(in_tensors, out_tensors, node, node_index, target,
+                                                               schema_version);
+  } else {
+    MS_LOG(DEBUG) << "create ConvolutionDepthwiseFp16CPUKernel";
+    coder = CPUOpCoderCreator<ConvolutionDepthwiseFP16Coder>(in_tensors, out_tensors, node, node_index, target,
+                                                             schema_version);
+  }
+  free(conv_param);
+  return coder;
 }
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionFP16CoderCreator(const std::vector<Tensor *> &in_tensors,
