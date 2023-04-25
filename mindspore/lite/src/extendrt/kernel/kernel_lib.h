@@ -50,7 +50,8 @@ class KernelLib {
  public:
   KernelLib(std::string name, std::string backend) : name_(std::move(name)), backend_(std::move(backend)) {}
   virtual ~KernelLib() = default;
-  virtual bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const = 0;
+  virtual bool Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format,
+                       const std::string &backend) const = 0;
   virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) const = 0;
 

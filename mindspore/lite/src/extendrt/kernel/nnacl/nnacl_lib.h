@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_NNACL_NNACL_LIB_H_
 
 #include <vector>
+#include <string>
 #include "src/extendrt/kernel/kernel_lib.h"
 #include "src/litert/kernel/cpu/nnacl/nnacl_kernel.h"
 #include "src/common/tensor_util.h"
@@ -31,7 +32,8 @@ class NNAclLib : public KernelLib {
  public:
   NNAclLib() : KernelLib(kNNAclName, "CPU") {}
 
-  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const Format &format) const override;
+  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const Format &format,
+               const std::string &backend) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 };

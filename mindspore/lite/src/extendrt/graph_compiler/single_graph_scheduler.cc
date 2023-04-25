@@ -22,9 +22,8 @@
 #include "src/litert/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 #include "src/extendrt/kernel/kernel_lib.h"
-#include "src/extendrt/kernel/default/default_kernel_lib.h"
 #include "src/extendrt/graph_compiler/cnode_infer_manager.h"
-#include "src/extendrt/kernel/primitive_type.h"
+#include "src/extendrt/kernel/default_kernel_selector.h"
 
 namespace mindspore {
 namespace infer {
@@ -41,10 +40,7 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
   execution_flow_->SetInputs(node_list->GetInputs());
   execution_flow_->SetOutputs(node_list->GetOutputs());
   execution_flow_->SetTensors(node_list->GetTensors());
-  graph_arch_ = kernel::kCPU;
-  graph_data_type_ = kNumberTypeFloat32;
-  // select kernel
-  auto schedule_ret = ScheduleToKernels(node_list);
+  auto schedule_ret = SelectKernel(node_list);
   if (schedule_ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Scheduler CompileResult to kernels failed.";
     return nullptr;
@@ -63,64 +59,35 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
   return execution_flow_;
 }
 
-int SingleGraphScheduler::ScheduleToKernels(const CompileResultPtr &node_list) {
-  // todo, init graph_arch_, graph_data_type_, the SingleGraph has certain arch and data_type.
+int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
+  kernel::DefaultKernelSelector selector(&compile_option_);
   std::vector<abstract::Kernel *> kernels;
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, lite::RET_NULL_PTR);
-    auto kernel = CreateKernel(node);
-    if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create kernel for node: " << node->GetName();
-      return lite::RET_NULL_PTR;
+    auto lite_kernel =
+      selector.CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_.format, node->GetBaseOperator()},
+                            node->GetInputs(), node->GetOutputs(), context_);
+    if (lite_kernel == nullptr) {
+      MS_LOG(ERROR) << "Create kernel for node: " << node->GetName() << " failed.";
+      return lite::RET_NOT_SUPPORT;
     }
-    kernels.push_back(kernel);
+    auto *kernel_exec = new (std::nothrow) kernel::KernelExec(std::shared_ptr<kernel::LiteKernel>(lite_kernel));
+    if (kernel_exec == nullptr) {
+      MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";
+      return lite::RET_MEMORY_FAILED;
+    }
+    auto desc = kernel_exec->desc();
+    desc.format = compile_option_.format;
+    kernel_exec->set_desc(desc);
+    kernel_exec->set_context(context_);
+    kernels.push_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);
   return lite::RET_OK;
 }
 
-abstract::Kernel *SingleGraphScheduler::CreateKernel(const CompileNode *compile_node) {
-  auto base_operator = compile_node->GetBaseOperator();
-  kernel::KernelExec *kernel_exec = nullptr;
-  kernel::KernelKey desc{graph_arch_, graph_data_type_, DEFAULT_FORMAT, PrimType_NONE};
-  if (op_parameters_.find(compile_node->GetName()) != op_parameters_.end()) {
-    // select lite kernel
-    auto op_parameter = op_parameters_[compile_node->GetName()];
-    MSLITE_CHECK_PTR_RETURN(op_parameter, nullptr);
-    op_parameter->thread_num_ = context_->thread_num_;
-    desc.type = op_parameter->type_;
-    desc.format = NHWC;
-    auto ret = lite::KernelRegistry::GetInstance()->GetKernelExec(compile_node->GetInputs(), compile_node->GetOutputs(),
-                                                                  context_, nullptr, desc, op_parameter, &kernel_exec);
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "Get kernel from LiteRT failed for op: " << compile_node->GetName();
-      return nullptr;
-    }
-  } else {
-    // select core/ops kernel
-    auto *kernellib = kernel::KernelLibRegister::Instance().GetKernelLib(kernel::kDefaultKernelLibName);
-    kernel_exec = kernellib->CreateKernelExec({kernel::PrimitiveType(compile_node->GetType()),
-                                               compile_node->GetKernelAttr(), compile_option_.format, base_operator},
-                                              compile_node->GetInputs(), compile_node->GetOutputs(), context_);
-    if (kernel_exec == nullptr) {
-      MS_LOG(ERROR) << "Get kernel from KernelMod failed for op: " << compile_node->GetName();
-      return nullptr;
-    }
-    desc.format = NCHW;
-    kernel_exec->set_desc(desc);
-  }
-  kernel_exec->set_name(compile_node->GetName());
-  auto ret = kernel::KernelExecUtil::SetKernelTensorDataType(kernel_exec);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set tensor data type for kernel " << kernel_exec->name();
-    delete kernel_exec;
-    return nullptr;
-  }
-  return kernel_exec;
-}
-
 bool SingleGraphScheduler::HandleWeightForKernels() {
-  if (graph_data_type_ != kNumberTypeFloat32 && graph_data_type_ != kNumberTypeFloat16) {
+  if (compile_option_.datatype != kNumberTypeFloat32 && compile_option_.datatype != kNumberTypeFloat16) {
     return true;
   }
   auto kernels = execution_flow_->GetKernels();
@@ -134,7 +101,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
       if (input->data_type() != kNumberTypeFloat32 && input->data_type() != kNumberTypeFloat16) {
         continue;
       }
-      auto ret = CastConstTensorData(input, graph_data_type_, context_->device_and_pkg_support_fp16_);
+      auto ret = CastConstTensorData(input, compile_option_.datatype, context_->device_and_pkg_support_fp16_);
       if (ret != lite::RET_OK) {
         MS_LOG(ERROR) << "Cast data for tensor: " << input->tensor_name() << " failed.";
         return false;
@@ -143,8 +110,6 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
   }
   return true;
 }
-
-bool SingleGraphScheduler::AppendKernelToPlan(kernel::KernelExec *kernel) { return false; }
 
 bool SingleGraphScheduler::OptimizeTranspose(const std::vector<kernel::KernelExec *> &kernels) { return false; }
 

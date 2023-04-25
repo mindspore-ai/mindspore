@@ -17,8 +17,9 @@
 #include "src/extendrt/kernel/nnacl/nnacl_lib.h"
 #include <unordered_set>
 #include <vector>
-#include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
+#include "src/litert/kernel_registry.h"
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "src/infer/graph_compiler.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -44,7 +45,12 @@ TypeId GetFirstFp32Fp16OrInt8Type(const KernelAttr &attr) {
 }
 }  // namespace
 
-bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format) const {
+bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format,
+                       const std::string &backend) const {
+  if (backend != infer::abstract::kBackendCPU) {
+    MS_LOG(INFO) << "NNACL only support CPU backend, but got: " << backend << ".";
+    return false;
+  }
   if (!MatchFormat(format, NHWC)) {
     MS_LOG(INFO) << "NNACL not support NHWC layout.";
     return false;
@@ -54,11 +60,9 @@ bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, con
     MS_LOG(INFO) << "Get main datatype of kernel failed.";
     return false;
   }
-  auto creator = nnacl::KernelRegistry::GetInstance()->Creator({op_type.FBType(), data_type});
-  if (creator != nullptr) {
-    return true;
-  }
-  return SupportKernelC(op_type.FBType(), data_type);
+  // call SupportKernelC in nnacl/kernel.h directly in the further
+  kernel::KernelKey key{kCPU, data_type, NHWC, op_type.FBType()};
+  return lite::KernelRegistry::GetInstance()->SupportKernel(key);
 }
 
 LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
@@ -78,28 +82,15 @@ LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
     return nullptr;
   }
   op_parameter->thread_num_ = ctx->thread_num_;
-  auto creator = nnacl::KernelRegistry::GetInstance()->Creator({spec.op_type.FBType(), data_type});
-  nnacl::NNACLKernel *kernel = nullptr;
-  if (creator != nullptr) {
-    kernel = creator(op_parameter, inputs, outputs, ctx);
-  } else {
-    kernel = new (std::nothrow) nnacl::NNACLKernel(op_parameter, inputs, outputs, ctx);
-  }
-  if (kernel == nullptr) {
-    MS_LOG(INFO) << "Create nnacl kernel failed:  " << op_parameter->name_;
+  // create nnacl kernel base directly in the further
+  kernel::KernelKey key{kCPU, data_type, NHWC, spec.op_type.FBType()};
+  auto lite_kernel = lite::KernelRegistry::GetInstance()->GetLiteKernel(inputs, outputs, ctx, key, op_parameter);
+  if (lite_kernel == nullptr) {
+    MS_LOG(INFO) << "Create lite kernel failed:  " << op_parameter->name_;
     free(op_parameter);
     return nullptr;
   }
-
-  auto ret = kernel->InitKernel(data_type, ctx);
-  if (ret != RET_OK) {
-    MS_LOG(INFO) << "Init nnacl kernel failed:  " << op_parameter->name_;
-    kernel->set_parameter(nullptr);
-    delete kernel;
-    free(op_parameter);
-    return nullptr;
-  }
-  return kernel;
+  return lite_kernel;
 }
 
 REG_KERNEL_LIB(kNNAclName, NNAclLib);
