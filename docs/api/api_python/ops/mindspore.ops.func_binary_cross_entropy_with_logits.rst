@@ -37,7 +37,7 @@ mindspore.ops.binary_cross_entropy_with_logits
             L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
         \end{array}
 
-    其中 c 是类别数目（C>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
+    其中 c 是类别数目（c>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：

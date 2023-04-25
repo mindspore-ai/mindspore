@@ -23,14 +23,14 @@ mindspore.ops.crop_and_resize
     异常：
         - **TypeError** - `image`、 `boxes` 或 `box_indices` 不是Tensor。
         - **TypeError** - `crop_size` 不是元素类型为int32的tuple，或 `crop_size` 的长度不为2。
-        - **TypeError** - `boxes` 的数据类型不是float， 或者，`box_indices` 的数据类型不是int32。
+        - **TypeError** - `boxes` 的数据类型不是float，或 `box_indices` 的数据类型不是int32。
         - **TypeError** - `method` 不是字符串。
         - **TypeError** - `extrapolation_value` 不是浮点值。
         - **ValueError** - `image` 的维度不是四维。
-        - **ValueError** - `boxes` 的纬度不是二维。
+        - **ValueError** - `boxes` 的维度不是二维。
         - **ValueError** - `boxes` 的第二维不是4。
         - **ValueError** - `box_indices` 的维度不是一维。
         - **ValueError** - `box_indices` 的第一维与 `boxes` 的第一维不相等。
-        - **ValueError** - `box_indices` 存在元素不在 `[0, batch)` 的范围内.
-        - **ValueError** - `crop_size` 的数据不是正整数.
+        - **ValueError** - `box_indices` 存在元素不在 `[0, batch)` 的范围内。
+        - **ValueError** - `crop_size` 的数据不是正整数。
         - **ValueError** - `method` 不是 "bilinear"、"nearest"、"bilinear_v2"之一。
