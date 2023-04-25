@@ -13,11 +13,11 @@ mindspore.ops.MaxPoolWithArgmaxV2
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。由一个整数或者两个整数组成的tuple，分别表示高和宽。
-        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的移动步长。默认值：None。表示取 `kernel_size` 的值。
-        - **pads** (Union[int, tuple[int]]) - 池化操作的填充元素个数。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的填充0的个数。默认值：0。
-        - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的核内间距。默认值：(1, 1)。
-        - **ceil_mode** (bool) - 控制是否使用Ceil计算输出shape。默认值：False。表示使用Floor计算输出。
-        - **argmax_type** (mindspore.dtype) - 指定输出 `argmax` 的数据类型。默认值：mstype.int64。【该参数在Ascend上不生效。】
+        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的移动步长。默认值： ``None`` 。表示取 `kernel_size` 的值。
+        - **pads** (Union[int, tuple[int]]) - 池化操作的填充元素个数。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的填充0的个数。默认值： ``0`` 。
+        - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的核内间距。默认值： ``(1, 1)`` 。
+        - **ceil_mode** (bool) - 控制是否使用Ceil计算输出shape。默认值： ``False`` 。表示使用Floor计算输出。
+        - **argmax_type** (mindspore.dtype) - 指定输出 `argmax` 的数据类型。默认值： ``mstype.int64`` 。【该参数在Ascend上不生效。】
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在CPU和GPU上，支持的数据类型包括：int8，int16，int32，int64，uint8，uint16，uint32，uint64，float16，float32和float64。在Ascend上，数据类型仅支持Float16。

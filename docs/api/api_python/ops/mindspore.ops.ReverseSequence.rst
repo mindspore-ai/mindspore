@@ -7,7 +7,7 @@ mindspore.ops.ReverseSequence
 
     参数：
         - **seq_dim** (int) - 指定反转的维度，此值为必填参数。
-        - **batch_dim** (int) - 指定切片维度。默认值：0。
+        - **batch_dim** (int) - 指定切片维度。默认值： ``0`` 。
 
     输入：
         - **x** (Tensor) - 输入需反转的数据，其数据类型支持包括bool在内的所有数值型。

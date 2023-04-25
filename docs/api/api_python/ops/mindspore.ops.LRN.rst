@@ -14,11 +14,11 @@ mindspore.ops.LRN
     :math:`\alpha` 为参数 `alpha` ； :math:`\beta` 为参数 `beta` 。
 
     参数：
-        - **depth_radius** (int) - 一维归一化窗口的半宽。默认值：5。
-        - **bias** (float) - 偏移量（通常为正以避免除零问题）。默认值：1.0。
-        - **alpha** (float) - 比例系数，通常为正。默认值：1.0。
-        - **beta** (float) - 指数。默认值：0.5。
-        - **norm_region** (str) - 指定归一化区域。可选值："ACROSS_CHANNELS"。默认值："ACROSS_CHANNELS"。
+        - **depth_radius** (int) - 一维归一化窗口的半宽。默认值： ``5`` 。
+        - **bias** (float) - 偏移量（通常为正以避免除零问题）。默认值： ``1.0`` 。
+        - **alpha** (float) - 比例系数，通常为正。默认值： ``1.0`` 。
+        - **beta** (float) - 指数。默认值： ``0.5`` 。
+        - **norm_region** (str) - 指定归一化区域。可选值： ``"ACROSS_CHANNELS"`` 。默认值： ``"ACROSS_CHANNELS"`` 。
 
     输入：
         - **x** (Tensor) - 数据类型为float16或float32的四维Tensor。

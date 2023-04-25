@@ -20,13 +20,13 @@ mindspore.ops.MatrixSetDiagV3
 
     参数：
         - **align** (str，可选) - 可选字符串，指定超对角线和次对角线的对齐方式。
-          可选值："RIGHT_LEFT"、"LEFT_RIGHT"、"LEFT_LEFT"、"RIGHT_RIGHT"。
-          默认值："RIGHT_LEFT"。
+          可选值： ``"RIGHT_LEFT"`` 、 ``"LEFT_RIGHT"`` 、 ``"LEFT_LEFT"`` 、 ``"RIGHT_RIGHT"`` 。
+          默认值： ``"RIGHT_LEFT"`` 。
 
-          - "RIGHT_LEFT"表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。
-          - "LEFT_RIGHT"表示将超对角线与左侧对齐（右侧填充行），将次对角线与右侧对齐（左侧填充行）。
-          - "LEFT_LEFT"表示将超对角线和次对角线均与左侧对齐（右侧填充行）。
-          - "RIGHT_RIGHT"表示将超对角线与次对角线均右侧对齐（左侧填充行）。
+          - ``"RIGHT_LEFT"`` 表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。
+          - ``"LEFT_RIGHT"`` 表示将超对角线与左侧对齐（右侧填充行），将次对角线与右侧对齐（左侧填充行）。
+          - ``"LEFT_LEFT"`` 表示将超对角线和次对角线均与左侧对齐（右侧填充行）。
+          - ``"RIGHT_RIGHT"`` 表示将超对角线与次对角线均右侧对齐（左侧填充行）。
 
     输入：
         - **x** (Tensor) - n维Tensor，其中 :math:`n >= 2` 。

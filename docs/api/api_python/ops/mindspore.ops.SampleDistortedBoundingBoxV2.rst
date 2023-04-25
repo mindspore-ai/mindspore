@@ -13,12 +13,12 @@ mindspore.ops.SampleDistortedBoundingBoxV2
     `begin` 、 `size` 和 `bboxes` 。前两个Tensor可以直接输入到 :class:`mindspore.ops.Slice` 中，以裁剪图像。第三个Tensor即为生成的扭曲边界框。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。如果 `seed` 或 `seed2` 设置为非零，则随机数生成器将使用这两个给定的的种子。否则，将使用随机数作为种子。默认值：0。
-        - **seed2** (int，可选) - 避免种子冲突的第二个种子。默认值：0。
-        - **aspect_ratio_range** (Union[list(float), tuple(float)]，可选) - 指定图像的裁剪区域必须具有宽高比范围。区域宽高比 = area_width / area_height。这个属性应为正。默认值：(0.75, 1.33)。
-        - **area_range** (Union[list(float), tuple(float)]，可选) - 图像的裁剪区域必须包含在此范围内提供的图像。此属性的值应该在范围(0.0, 1.0]内。默认值：(0.05, 1.0)。
-        - **max_attempts** (int，可选) - 尝试生成指定约束的图像的裁剪区域的次数。 `max_attemps` 次失败后，返回整个图像。此属性的值应为正。默认值：100。
-        - **use_image_if_no_bounding_boxes** (bool，可选) - 如果没有提供边界框，则此参数控制算子行为。如果没有边界框提供（ `bounding_boxes` 的shape为 :math:`(0, N, 4)` 或者 :math:`(batch, 0, 4)` ），并且此属性设置为True，然后假定一个隐式边界框涵盖整个输入，但如果此属性设置为False，则引发报错。默认值：False。
+        - **seed** (int，可选) - 随机数种子。如果 `seed` 或 `seed2` 设置为非零，则随机数生成器将使用这两个给定的的种子。否则，将使用随机数作为种子。默认值： ``0`` 。
+        - **seed2** (int，可选) - 避免种子冲突的第二个种子。默认值： ``0`` 。
+        - **aspect_ratio_range** (Union[list(float), tuple(float)]，可选) - 指定图像的裁剪区域必须具有宽高比范围。区域宽高比 = area_width / area_height。这个属性应为正。默认值： ``(0.75, 1.33)`` 。
+        - **area_range** (Union[list(float), tuple(float)]，可选) - 图像的裁剪区域必须包含在此范围内提供的图像。此属性的值应该在范围(0.0, 1.0]内。默认值： ``(0.05, 1.0)`` 。
+        - **max_attempts** (int，可选) - 尝试生成指定约束的图像的裁剪区域的次数。 `max_attemps` 次失败后，返回整个图像。此属性的值应为正。默认值： ``100`` 。
+        - **use_image_if_no_bounding_boxes** (bool，可选) - 如果没有提供边界框，则此参数控制算子行为。如果没有边界框提供（ `bounding_boxes` 的shape为 :math:`(0, N, 4)` 或者 :math:`(batch, 0, 4)` ），并且此属性设置为 ``True`` ，然后假定一个隐式边界框涵盖整个输入，但如果此属性设置为 ``False`` ，则引发报错。默认值： ``False`` 。
 
     输入：
         - **image_size** (Tensor) - 包含[height, width, channels]三个元素的一维Tensor，其中每个值都应大于零。

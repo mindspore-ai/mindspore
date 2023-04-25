@@ -8,9 +8,9 @@ mindspore.ops.LARSUpdate
     更多细节请参考 :class:`mindspore.nn.LARS` 。
 
     参数：
-        - **epsilon** (float) - 添加在分母中，提高数值稳定性。默认值：1e-05。
-        - **hyperpara** (float) - 计算局部学习率的信任系数。默认值：0.001。
-        - **use_clip** (bool) - 计算局部学习速率时是否裁剪。默认值：False。
+        - **epsilon** (float) - 添加在分母中，提高数值稳定性。默认值： ``1e-05`` 。
+        - **hyperpara** (float) - 计算局部学习率的信任系数。默认值： ``0.001`` 。
+        - **use_clip** (bool) - 计算局部学习速率时是否裁剪。默认值： ``False`` 。
 
     输入：
         - **weight** (Tensor) - 权重Tensor，shape: :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

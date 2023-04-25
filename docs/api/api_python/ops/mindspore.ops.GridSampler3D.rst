@@ -11,10 +11,10 @@ mindspore.ops.GridSampler3D
     更多参考详见 :func:`mindspore.ops.grid_sample`。
 
     参数：
-        - **interpolation_mode** (str，可选) - 指定插值方法。可选方法为 'bilinear'、'nearest' 或 'bicubic'。默认值： 'bilinear'。
-        - **padding_mode** (str，可选) - 指定填充方法。可选方法为 'zeros'、'border' 和 'reflection'。默认值为 'zeros'。
-        - **align_corners** (bool，可选) - 指定对齐方式。如果设置成 `True`，-1和1被视为引用输入角像素的中心点。如果设置为 `False`，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。
-          默认值为 `False`。
+        - **interpolation_mode** (str，可选) - 指定插值方法。可选方法为 ``'bilinear'`` 、 ``'nearest'`` 或 ``'bicubic'`` 。默认值： ``'bilinear'`` 。
+        - **padding_mode** (str，可选) - 指定填充方法。可选方法为 ``'zeros'`` 、 ``'border'`` 和 ``'reflection'`` 。默认值为 ``'zeros'`` 。
+        - **align_corners** (bool，可选) - 指定对齐方式。如果设置成 ``True`` ，-1和1被视为引用输入角像素的中心点。如果设置为 ``False`` ，将被视为引用到输入角像素的角点，使采样更不受分辨率影响。
+          默认值为 ``False`` 。
 
     输入：
         - **input_x** (Tensor) - 5-D输入Tensor，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float32或float64。

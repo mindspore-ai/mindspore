@@ -9,9 +9,9 @@ mindspore.ops.RandomPoisson
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     参数：
-        - **seed** (int，可选) - 随机数种子。如果 `seed` 或者 `seed2` 被设置为非零，则使用这个非零值。否则使用一个随机生成的种子。默认值：0。
-        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
-        - **dtype** (mindspore.dtype，可选) - 输出数据类型， 默认值：mstype.int64。
+        - **seed** (int，可选) - 随机数种子。如果 `seed` 或者 `seed2` 被设置为非零，则使用这个非零值。否则使用一个随机生成的种子。默认值： ``0`` 。
+        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值： ``0`` 。
+        - **dtype** (mindspore.dtype，可选) - 输出数据类型， 默认值： ``mstype.int64`` 。
 
     输入：
         - **shape** (tuple) - 待生成的随机Tensor的shape，是一个一维Tensor。数据类型为int32或int64。

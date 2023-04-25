@@ -318,7 +318,7 @@ class SetSize(Primitive):
      Number of unique elements along last dimension of input set.
 
     Args:
-        validate_indices (bool): If true, sparse tensor is transposed before multiplication. Default: True.
+        validate_indices (bool): If true, sparse tensor is transposed before multiplication. Default: ``True`` .
 
     Inputs:
         - **set_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
@@ -461,7 +461,7 @@ class SparseToDenseV2(Primitive):
 
     Args:
         validate_indices (bool): If true, indices are checked to make sure they are sorted in
-                                 lexicographic order and that there are no repeats. Default: True.
+                                 lexicographic order and that there are no repeats. Default: ``True`` .
 
     Inputs:
         - **indices** (Tensor) - A 0D, 1D, or 2D Tensor of type int32 or int64, represents the position
@@ -609,8 +609,8 @@ class SparseTensorDenseMatmul(Primitive):
     The rank of sparse matrix and dense matrix must be equal to `2`.
 
     Args:
-        adjoint_st (bool): If true, sparse tensor is transposed before multiplication. Default: False.
-        adjoint_dt (bool): If true, dense tensor is transposed before multiplication. Default: False.
+        adjoint_st (bool): If ``True`` , sparse tensor is transposed before multiplication. Default: ``False`` .
+        adjoint_dt (bool): If ``True`` , dense tensor is transposed before multiplication. Default: ``False`` .
 
     Inputs:
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
@@ -811,12 +811,12 @@ class DenseToDenseSetOperation(Primitive):
     with the same first n-1 dimensions in x1 and x2.
 
     Args:
-        set_operation (str): The type of set operation, case insensitive. Default:"a-b".
+        set_operation (str): The type of set operation, case insensitive. Default: ``"a-b"`` .
             "a-b": Get the difference set of x1 to x2.
             "b-a": Get the difference set of x2 to x1.
             "intersection": Get the intersection set of x2 to x1.
             "union": Get the union set of x2 to x1.
-        validate_indices (bool): Optional attributes for DenseToDenseSetOperation.  Default: True.
+        validate_indices (bool): Optional attributes for DenseToDenseSetOperation.  Default: ``True`` .
 
     Inputs:
         - **x1** (Tensor) - The input tensor `x1` with rank `n`. 1st `n-1` dimensions must be the same as `x2`.
@@ -1042,7 +1042,7 @@ class SparseConcat(Primitive):
     Args:
         concat_dim(Scalar) - A Scalar, decide the dimension to concatenation along.
         The value must be in range [-rank, rank), where rank is the number of dimensions in each input
-        SparseTensor. Support int32, int64. Default: 0.
+        SparseTensor. Support int32, int64. Default: ``0`` .
 
     Inputs:
         - **sp_input_indices** (Tensor) - the list of Tensor which means COOTensor indices, and Need to
@@ -1691,7 +1691,7 @@ class SparseMatrixTranspose(Primitive):
         It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator is not defined.
 
     Args:
-        conjugate (bool): If True, the output sparse tensor is conjugated . Default: False.
+        conjugate (bool): If ``True`` , the output sparse tensor is conjugated . Default: ``False`` .
 
     Inputs:
         - **dense_shape** (Tensor) - A 1-D Tensor, represents the shape of input sparse matrix under dense status.
@@ -1909,13 +1909,14 @@ class SparseMatrixSparseMatMul(Primitive):
     Performs a matrix multiplication of a sparse matrix x1 with sparse matrix x2; return a sparse matrix x1*x2.
     Each matrix may be transposed or adjointed (conjugated and transposed),
     according to the Boolean parameters transpose_a,adjoint_a,transpose_b and adjoint_b.
-    At most one of transpose_a or adjoint_a may be True. Similarly, at most one of transpose_b or adjoint_b may be True.
+    At most one of transpose_a or adjoint_a may be ``True`` . Similarly, at most one of transpose_b or adjoint_b may
+    be ``True`` .
 
     Args:
-        transpose_a (bool): If true, sparse tensor x1 is transposed before multiplication. Default: False.
-        transpose_b (bool): If true, dense tensor x2 is transposed before multiplication. Default: False.
-        adjoint_a (bool): If true, sparse tensor x1 is adjointed before multiplication. Default: False.
-        adjoint_b (bool): If true, dense tensor x2 is adjointed before multiplication. Default: False.
+        transpose_a (bool): If ``True`` , sparse tensor x1 is transposed before multiplication. Default: ``False`` .
+        transpose_b (bool): If ``True`` , dense tensor x2 is transposed before multiplication. Default: ``False`` .
+        adjoint_a (bool): If ``True`` , sparse tensor x1 is adjointed before multiplication. Default: ``False`` .
+        adjoint_b (bool): If ``True`` , dense tensor x2 is adjointed before multiplication. Default: ``False`` .
 
     Inputs:
         - **x1_dense_shape** (Tensor) - A 1-D Tensor, represents the shape of input sparse matrix x1 under dense status.
@@ -2033,19 +2034,19 @@ class SparseMatrixMatMul(Primitive):
     Performs a matrix multiplication of a sparse matrix x1 with dense matrix x2; return a dense matrix x1*x2.
     Each matrix may be transposed or adjointed (conjugated and transposed)
     according to the Boolean parameters transpose_x1, adjoint_x1, transpose_x2 and adjoint_x2.
-    At most one of transpose_x1 or adjoint_x1 may be True.
-    Similarly, at most one of transpose_x2 or adjoint_x2 may be True.
+    At most one of transpose_x1 or adjoint_x1 may be ``True`` .
+    Similarly, at most one of transpose_x2 or adjoint_x2 may be ``True`` .
 
     Note:
         It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator is not defined.
 
     Args:
-        transpose_x1 (bool): If true, sparse tensor x1 is transposed before multiplication. Default: False.
-        transpose_x2 (bool): If true, dense tensor x2 is transposed before multiplication. Default: False.
-        adjoint_x1 (bool): If true, sparse tensor x1 is adjointed before multiplication. Default: False.
-        adjoint_x2 (bool): If true, dense tensor x2 is adjointed before multiplication. Default: False.
-        transpose_output (bool): If true, output x1*x2 is tansposed. Default: False.
-        conjugate_output (bool): If true, output x1*x2 is conjugated. Default: False.
+        transpose_x1 (bool): If ``True`` , sparse tensor x1 is transposed before multiplication. Default: ``False`` .
+        transpose_x2 (bool): If ``True`` , dense tensor x2 is transposed before multiplication. Default: ``False`` .
+        adjoint_x1 (bool): If ``True`` , sparse tensor x1 is adjointed before multiplication. Default: ``False`` .
+        adjoint_x2 (bool): If ``True`` , dense tensor x2 is adjointed before multiplication. Default: ``False`` .
+        transpose_output (bool): If ``True`` , output x1*x2 is tansposed. Default: ``False`` .
+        conjugate_output (bool): If ``True`` , output x1*x2 is conjugated. Default: ``False`` .
 
     Inputs:
         - **x1_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
@@ -2200,7 +2201,7 @@ class SparseSplit(Primitive):
     `[0 : shape[split_dim] % num_split]` gets one extra dimension.
 
     Args:
-        num_split (int): An `int` that is `>= 1`. The number of ways to split. Default: 1.
+        num_split (int): An `int` that is `>= 1`. The number of ways to split. Default: ``1`` .
 
     Inputs:
         - **split_dim** (Tensor) -A 0-D Tensor of type `int64`.
@@ -2378,10 +2379,10 @@ class SparseCountSparseOutput(Primitive):
     Counts the number of times each value occurs in the input.
 
     Args:
-        binary_output (bool) - If false, output the number of occurrences of each value,
-                               if True output 1 for orresponding values. Default False
-        minlength(Scalar) - Int type minimum value to count, default -1
-        maxlength(Scalar) - Int type maximum value to count, default -1
+        binary_output (bool) - If ``False`` , output the number of occurrences of each value,
+                               if ``True`` output 1 for orresponding values. Default ``False`` .
+        minlength(Scalar) - Int type minimum value to count, Default ``-1`` .
+        maxlength(Scalar) - Int type maximum value to count, Default ``-1`` .
 
     Inputs:
         - **indices** (Tensor) - Tensor representing the position of the element in the sparse
@@ -2448,12 +2449,13 @@ class DenseToSparseSetOperation(Primitive):
     duplicates are allowed but ignored.
 
     Args:
-        set_operation (str): The type of set operation, supports four kinds of inputs, case insensitive. Default: "".
+        set_operation (str): The type of set operation, supports four kinds of inputs, case insensitive.
+            Default: ``""`` .
             "a-b": Get the difference set of x1 to x2.
             "b-a": Get the difference set of x2 to x1.
             "intersection": Get the intersection set of x2 to x1.
             "union": Get the union set of x2 to x1.
-        validate_indices (bool): Optional attributes for DenseToSparseSetOperation.  Default: True.
+        validate_indices (bool): Optional attributes for DenseToSparseSetOperation.  Default: ``True`` .
 
     Inputs:
         - **x1** (Tensor) - The input tensor `x1` with rank `n`. 1st `n-1` dimensions must be the same as `x2`.

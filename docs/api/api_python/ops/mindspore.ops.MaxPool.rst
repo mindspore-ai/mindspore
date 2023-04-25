@@ -14,14 +14,14 @@ mindspore.ops.MaxPool
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。由一个整数或者是两个整数组成的tuple，表示高和宽。默认值：1。
-        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，由一个整数或者是两个整数组成的tuple，表示高和宽上的移动步长。默认值：1。
-        - **pad_mode** (str) - 指定池化填充模式，可选值是'same'或'valid'，不区分大小写。默认值：'valid'。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。由一个整数或者是两个整数组成的tuple，表示高和宽。默认值： ``1`` 。
+        - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，由一个整数或者是两个整数组成的tuple，表示高和宽上的移动步长。默认值： ``1`` 。
+        - **pad_mode** (str) - 指定池化填充模式，可选值是 ``'same'`` 或 ``'valid'`` ，不区分大小写。默认值： ``'valid'`` 。
 
           - **same** - 输出的高度和宽度分别与输入整除 `stride` 后的值相同。
           - **valid** - 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
 
-        - **data_format** (str) - 输入和输出的数据格式。可选值为'NHWC'或'NCHW'。默认值：'NCHW'。
+        - **data_format** (str) - 输入和输出的数据格式。可选值为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。

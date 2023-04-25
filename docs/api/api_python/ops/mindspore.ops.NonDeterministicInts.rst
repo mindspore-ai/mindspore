@@ -11,7 +11,7 @@ mindspore.ops.NonDeterministicInts
         `shape` 中的值必须大于零，输出元素总数不可超过1000000。
 
     参数：
-        - **dtype** (mindspore.dtype，可选) - 输出数据类型。支持的数据类型为：mstype.int32和mstype.int64。默认值：mstype.int64。
+        - **dtype** (mindspore.dtype，可选) - 输出数据类型。支持的数据类型为： ``mstype.int32`` 和 ``mstype.int64`` 。默认值： ``mstype.int64`` 。
 
     输入：
         - **shape** (Tensor) - 输出Tensor的shape。支持的数据类型为：int32和int64。

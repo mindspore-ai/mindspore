@@ -22,25 +22,25 @@ mindspore.ops.MaxUnpool3D
     参数：
         - **ksize** (Union[int, tuple[int]]) - 用于取最大值的内核大小，
           是一个整数，表示内核的深度、高度和宽度，或一个元组包含三个整数，分别表示深度、高度和宽度。
-        - **strides** (Union[int, tuple[int]]，可选) - 内核移动的步长，默认值：0。
+        - **strides** (Union[int, tuple[int]]，可选) - 内核移动的步长，默认值： ``0`` 。
 
           - 一个整数，则表示移动的深度、高度和宽度都是 `strides` ，
           - 三个整数的元组，分别表示深度、高度和宽度方向的移动步长。
           - 如果 `strides` 为0或(0, 0, 0)，那么 `strides` 等于 `ksize` 。
   
-        - **pads** (Union[int, tuple[int]]，可选) - 需要被填充的值。默认值：0。
+        - **pads** (Union[int, tuple[int]]，可选) - 需要被填充的值。默认值： ``0`` 。
 
           - 如果 `pads` 是一个整数，则深度、高度和宽度方向的填充数量相同，都等于 `pads` 。
           - 如果 `pads` 是含三个整数的元组，则深度、高度和宽度方向的填充数量分别等于 `pads[0]` 、 `pads[1]` 和 `pads[2]`。
 
-        - **output_shape** (tuple[int]，可选) - 指定目标输出的尺寸。默认值：()。
+        - **output_shape** (tuple[int]，可选) - 指定目标输出的尺寸。默认值： ``()`` 。
 
           - 如果 :math:`output\_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 根据上面的公式计算得到。
           - 如果 :math:`output\_shape != ()` ，则 `output_shape` 数据格式为 :math:`(N, C, D, H, W)` 或 :math:`(N, D, H, W, C)` ，
             同时 `output_shape` 必须属于 :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]` 范围。
         
-        - **data_format** (str，可选) - 可选的数据格式。当前支持 `NCDHW` 和 `NDHWC` 。默认值： `NCDHW` 。
+        - **data_format** (str，可选) - 可选的数据格式。当前支持 `NCDHW` 和 `NDHWC` 。默认值： ``NCDHW`` 。
 
     输入：
         - **x** (Tensor) - 求逆的输入Tensor。其shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(N, D_{in}, H_{in}, W_{in}, C)` 。

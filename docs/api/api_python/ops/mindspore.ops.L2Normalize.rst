@@ -16,8 +16,8 @@ mindspore.ops.L2Normalize
         在Ascend上，暂时不支持float64数据类型。
 
     参数：
-        - **axis** (Union[list(int), tuple(int), int]) - 指定计算L2范数的轴。默认值：0。
-        - **epsilon** (float) - 为了数值稳定性而引入的很小的浮点数。默认值：1e-4。
+        - **axis** (Union[list(int), tuple(int), int]) - 指定计算L2范数的轴。默认值： ``0`` 。
+        - **epsilon** (float) - 为了数值稳定性而引入的很小的浮点数。默认值： ``1e-4`` 。
 
     输入：
         - **x** (Tensor) - 计算归一化的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16、float32和float64。

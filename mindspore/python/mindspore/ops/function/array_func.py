@@ -179,16 +179,16 @@ def arange(start=0, end=None, step=1, *, dtype=None):
 
     Args:
         start (Union[float, int, Tensor], optional): The start of the interval.
-            If Tensor, the shape must be (). Default: 0.
+            If Tensor, the shape must be (). Default: ``0`` .
         end (Union[float, int, Tensor], optional): The end of the interval, exclusive.
             If Tensor, the shape must be ().
-            Default: None. If None, it defaults to the value of `start`, and 0 is used as the starting value.
+            Default: ``None`` . If ``None`` , it defaults to the value of `start`, and 0 is used as the starting value.
         step (Union[float, int, Tensor], optional): Number that increments `start`.
-            If Tensor, the shape must be (). Default: 1.
+            If Tensor, the shape must be (). Default: ``1`` .
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: None.
-            If the value is not specified or is None, the type with the highest precision in the
+        dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
+            If the value is not specified or is ``None`` , the type with the highest precision in the
             `start`, `end`, and `step` parameters is inferred.
 
     Returns:
@@ -264,7 +264,7 @@ def cat(tensors, axis=0):
             all other dimensions should be equal, that is,
             :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
             where :math:`R` represents the rank of tensor.
-        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: 0.
+        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: ``0`` .
 
     Returns:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
@@ -308,10 +308,10 @@ def eye(n, m=None, dtype=None):
     Args:
         n (int): The number of rows of returned tensor. Constant value only.
         m (int): The number of columns of returned tensor. Constant value only.
-            Default: if None, the number of columns is as the same as n.
+            Default: ``None`` , if ``None`` , the number of columns is as the same as n.
         dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
             The data type can be bool or Number.
-            Default: None, the data type of the returned tensor is mindspore.float32.
+            Default: ``None`` , the data type of the returned tensor is mindspore.float32.
 
     Returns:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
@@ -373,7 +373,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
         beta (float, optional): The coefficient β.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The output window data type. Default: None.
+        dtype (mindspore.dtype, optional): The output window data type. Default: ``None`` .
 
     Returns:
         Tensor, a 1-D tensor of size (window_length) containing the window.
@@ -585,7 +585,8 @@ def padding(x, pad_dim_size=8):
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of `x` must be at least 2.
             The last dimension of `x` must be 1. The data type is Number.
-        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive. Default: 8.
+        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive.
+            Default: ``8`` .
 
     Returns:
         Tensor, has the same type and shape as input shape value.
@@ -653,7 +654,7 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
         axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
             the output shape will be :math:`(N, C, depth)`, If `axis` is 0,
             the output shape will be :math:`(depth, N, C)`.
-            Default: -1.
+            Default: ``-1`` .
 
     Returns:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
@@ -729,7 +730,7 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
 
     Keyword Args:
         dtype (mindspore.dtype): The specified type of output tensor. `bool_` and `number` are supported, for details,
-            please refer to :class:`mindspore.dtype` . Default: None.
+            please refer to :class:`mindspore.dtype` . Default: ``None`` .
 
     Returns:
         Tensor.
@@ -773,7 +774,7 @@ def full_like(input, fill_value, *, dtype=None):
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The specified type of output tensor. `bool_` and `number` are supported,
-            for details, please refer to :class:`mindspore.dtype` . Default: None.
+            for details, please refer to :class:`mindspore.dtype` . Default: ``None`` .
 
     Returns:
         Tensor.
@@ -814,7 +815,7 @@ def chunk(input, chunks, axis=0):
     Args:
         input (Tensor): A Tensor to be cut.
         chunks (int): Number of sub-tensors to cut.
-        axis (int, optional): Specify the dimensions that you want to split. Default: 0.
+        axis (int, optional): Specify the dimensions that you want to split. Default: ``0`` .
 
     Returns:
         A tuple of sub-tensors.
@@ -897,8 +898,8 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
 
     Args:
         shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is None,
-            `mindspore.float32` will be used. Default: None.
+        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
+            `mindspore.float32` will be used. Default: ``None`` .
 
     Returns:
         Tensor, has the same type and shape as input shape value.
@@ -939,8 +940,8 @@ def ones_like(input, *, dtype=None):
         input (Tensor): Tensor of any dimension.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is None,
-            the dtype of the input tensor will be used. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is ``None`` ,
+            the dtype of the input tensor will be used. Default: ``None`` .
 
     Returns:
         Tensor, has the same shape as `input` but filled with ones.
@@ -971,8 +972,8 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
 
     Args:
         size (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
-            mindspore.float32 will be used. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
+            mindspore.float32 will be used. Default: ``None`` .
 
     Returns:
         Tensor, has the same dtype and size as input.
@@ -1015,8 +1016,8 @@ def zeros_like(input, *, dtype=None):
         input (Tensor): Tensor of any dimension.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is None,
-            the dtype of the input tensor will be used. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is ``None`` ,
+            the dtype of the input tensor will be used. Default: ``None`` .
 
     Returns:
         Tensor, filled with 0.
@@ -1266,10 +1267,10 @@ def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
     Args:
         input (Tensor): The input tensor.
         return_idx (bool, optional): Whether to return the index of where the element in the original input
-            maps to the position in the output. Default: False.
-        return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
-        axis (int, optional): The dimension to apply unique. If None, the unique of the flattened input is
-            returned. If specified, it must be int32 or int64. Default: None.
+            maps to the position in the output. Default: ``False`` .
+        return_counts (bool, optional): Whether to return the counts of each unique element. Default: ``False`` .
+        axis (int, optional): The dimension to apply unique. If ``None`` , the unique of the flattened input is
+            returned. If specified, it must be int32 or int64. Default: ``None`` .
 
     Returns:
         A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`). `output` has the
@@ -1325,15 +1326,16 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
         values (Tensor): The value that should be inserted.
 
     Keyword Args:
-        out_int32 (bool, optional): Output datatype. If True, the output datatype will be int32;
-            if False, the output datatype will be int64. Default: False.
-        right (bool, optional): Search Strategy. If True, return the last suitable index found;
-            if False, return the first such index. Default: False.
+        out_int32 (bool, optional): Output datatype. If ``True`` , the output datatype will be int32;
+            if ``False`` , the output datatype will be int64. Default: ``False`` .
+        right (bool, optional): Search Strategy. If ``True`` , return the last suitable index found;
+            if ``False`` , return the first such index. Default: ``False`` .
 
     Returns:
         Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
         if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
-        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of `values`.
+        whose datatype is int32 if out_int32 is ``True`` , otherwise int64, and shape is the same as the shape of
+        `values`.
 
     Raises:
         ValueError: If the dimension of `sorted_sequence` isn't 1 and all dimensions except the last dimension of
@@ -1546,7 +1548,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
         x (Tensor): The input to reverse, supporting all number types including bool.
         seq_lengths (Tensor): Specified reversing length, must be a 1-D vector with int32 or int64 types.
         seq_dim (int): The dimension where reversal is performed. Required.
-        batch_dim (int): The input is sliced in this dimension. Default: 0.
+        batch_dim (int): The input is sliced in this dimension. Default: ``0`` .
 
     Returns:
         Tensor, with the same shape and data type as `x`.
@@ -1604,11 +1606,11 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     Args:
         input (Tensor): The input Tensor.
         order (str, optional): Only 'C' and 'F' are supported. 'C' means to flatten in row-major (C-style) order.
-            'F' means to flatten in column-major (Fortran-style) order. Default: 'C'.
+            'F' means to flatten in column-major (Fortran-style) order. Default: ``'C'`` .
 
     Keyword Args:
-        start_dim (int, optional): The first dimension to flatten. Default: 1.
-        end_dim (int, optional): The last dimension to flatten. Default: -1.
+        start_dim (int, optional): The first dimension to flatten. Default: ``1`` .
+        end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
 
     Returns:
         Tensor. If no dimensions are flattened, returns the original `input`, otherwise return the flattened Tensor.
@@ -1932,11 +1934,11 @@ def strided_slice(input_x,
         strides (tuple[int]): A tuple which represents the strides is continuously added
             before reaching the maximum location. Only int is allowed, it can be negative
             which results in reversed slicing.
-        begin_mask (int, optional): Starting index of the slice. Default: 0.
-        end_mask (int, optional): Ending index of the slice. Default: 0.
-        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: 0.
-        new_axis_mask (int, optional): An int mask for adding new dims. Default: 0.
-        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: 0.
+        begin_mask (int, optional): Starting index of the slice. Default: ``0`` .
+        end_mask (int, optional): Ending index of the slice. Default: ``0`` .
+        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: ``0`` .
+        new_axis_mask (int, optional): An int mask for adding new dims. Default: ``0`` .
+        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: ``0`` .
 
     Returns:
         Tensor, return the extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
@@ -2093,7 +2095,7 @@ def stack(tensors, axis=0):
 
     Args:
         tensors (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
-        axis (int): Dimension to stack. Default: 0.
+        axis (int): Dimension to stack. Default: ``0`` .
             Negative values wrap around. The range is [-(R+1), R+1).
 
     Returns:
@@ -2134,7 +2136,7 @@ def unstack(input_x, axis=0):
     Args:
         input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
-        axis (int): Dimension along which to unpack. Default: 0.
+        axis (int): Dimension along which to unpack. Default: ``0`` .
             Negative values wrap around. The range is [-R, R).
 
     Returns:
@@ -2168,7 +2170,7 @@ def unbind(input, dim=0):
     Args:
         input (Tensor): The shape is :math:`(n_1, n_2, ..., n_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
-        dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
+        dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: ``0`` .
 
     Returns:
         A tuple of tensors, the shape of each objects is the same.
@@ -2276,7 +2278,7 @@ def squeeze(input, axis=None):
         input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
             all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
-            Default: None, an empty tuple will be used.
+            Default: ``None`` , an empty tuple will be used.
 
     Returns:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
@@ -2849,7 +2851,7 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the addition operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -2921,7 +2923,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the subtraction operation with `input_x`, has the same type as input.
             The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -2993,7 +2995,7 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
             mindspore.int64. The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the multiplication operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3065,7 +3067,7 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the div operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3138,7 +3140,7 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the max operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3210,7 +3212,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the min operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: ``False`` .
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3267,9 +3269,9 @@ def sort(input_x, axis=-1, descending=False):
     Args:
         input_x(Tensor): The input tensor to sort.
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int, optional): The dimension to sort along. Default: -1.
+        axis (int, optional): The dimension to sort along. Default: ``-1`` .
         descending (bool, optional): Controls the sort order. If `descending` is True, the elements
-            are sorted in descending order, or else sorted in ascending order. Default: False.
+            are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
 
     .. warning::
         Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are well supported.
@@ -3313,9 +3315,9 @@ def argsort(input, axis=-1, descending=False):
 
     Args:
         input(Tensor): The input tensor to sort.
-        axis (int): The axis to sort along. Default: -1, means the last axis
+        axis (int): The axis to sort along. Default: ``-1`` , means the last axis
         descending (bool): The sort order. If `descending` is True then the elements
-            are sorted in descending order by value. Otherwise sort in ascending order. Default: False.
+            are sorted in descending order by value. Otherwise sort in ascending order. Default: ``False`` .
 
     Returns:
         Tensor, the indices of sorted input tensor. Data type is int32.
@@ -3360,7 +3362,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
             Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
         axis (int): Specifies the dimension index to gather indices. It must be greater than or equal to `batch_dims`.
         batch_dims (int): Specifies the number of batch dimensions. It must be less than or euqal to the rank
-                          of `input_indices`. Default: 0.
+                          of `input_indices`. Default: ``0`` .
 
     Returns:
         Tensor, the shape of tensor is
@@ -4033,23 +4035,23 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
             0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
             (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band.
             k[0] must not be larger than k[1]. The value must be in the range of given or derivated `num_rows`
-            and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: 0.
+            and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: ``0`` .
         num_rows (Union[int, Tensor], optional): The number of rows of the output Tensor. A Tensor of type int32 with
             only one value. If `num_rows` is -1, indicating that the innermost matrix of the output Tensor is a square
             matrix, and the real number of rows will be derivated by other inputs. That is
             :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
-            :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
+            :math:`x.shape[-1] - min(k[1], 0)`. Default: ``-1`` .
         num_cols (Union[int, Tensor], optional): The number of columns of
             the output Tensor. A Tensor of type int32 with only one value.
             If `num_cols` is -1, indicating that the innermost matrix of the output
             Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
             That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
-            greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
+            greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: ``-1`` .
         padding_value (Union[int, float, Tensor], optional): The number to fill the area outside the specified
-            diagonal band. A Tensor with only one value. Have the same dtype as x. Default: 0.
+            diagonal band. A Tensor with only one value. Have the same dtype as x. Default: ``0`` .
         align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
-            Default: "RIGHT_LEFT".
+            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
+            Default: ``"RIGHT_LEFT"`` .
 
             - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
               (padding the row on the left), while subdiagonals will be towards the left side
@@ -4132,11 +4134,11 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
             of a matrix band. k[0] must not be larger than k[1]. The value of k has restructions, meaning
             value of k must be in (-x.shape[-2], x.shape[-1]).
         padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
-            The number to fill the area outside the specified diagonal band. Default: 0.
-        align (str, optional): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT",
-            "RIGHT_RIGHT". Align is a string specifying how superdiagonals and subdiagonals should be aligned,
-            respectively. "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals
-            to the left (right-pads the row).
+            The number to fill the area outside the specified diagonal band. Default: ``0`` .
+        align (str, optional): An optional string from: ``"RIGHT_LEFT"`` (Default), ``"LEFT_RIGHT"`` ,
+            ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` . Align is a string specifying how superdiagonals and subdiagonals
+            should be aligned, respectively. ``"RIGHT_LEFT"`` aligns superdiagonals to the right (left-pads the row)
+            and subdiagonals to the left (right-pads the row).
 
     Returns:
         A Tensor. Has the same type as `x`.
@@ -4274,7 +4276,7 @@ def meshgrid(*inputs, indexing='xy'):
             inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
             for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing. Default: 'xy'.
+            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing. Default: ``'xy'`` .
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
@@ -4350,9 +4352,9 @@ def affine_grid(theta, size, align_corners=False):
             The value of target output with format :math:`(N, C, H, W)` for 2D grid or :math:`(N, C, D, H, W)` for 3D
             grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
-            If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
-            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
-            irrelevant to resolution of the image. Default: False.
+            If ``True`` , consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            irrelevant to resolution of the image. Default: ``False`` .
     Returns:
         Tensor, a tensor whose data type is same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
         or :math:`(N, D, H, W, 3)` for 3D grid.
@@ -4922,7 +4924,7 @@ def scalar_to_tensor(input_x, dtype=mstype.float32):
 
     Args:
         input_x (Union[bool, int, float]): The input is a scalar. Only constant value is allowed.
-        dtype (mindspore.dtype): The target data type. Default: mindspore.float32. Only
+        dtype (mindspore.dtype): The target data type. Default: ``mindspore.float32`` . Only
             constant value is allowed.
 
     Returns:
@@ -5093,7 +5095,7 @@ def diagflat(input, offset=0):
 
     Args:
         input (Tensor): Input Tensor, which is flattened and set as the diagonal of the output.
-        offset (int, optional): `offset` controls which diagonal to choose. Default: 0.
+        offset (int, optional): `offset` controls which diagonal to choose. Default: ``0`` .
 
             - When `offset` is zero, the diagonal chosen is the main diagonal.
             - When `offset` is a positive integer, the diagonal chosen is up the main diagonal.
@@ -5148,11 +5150,11 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 0.
+            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
 
     Returns:
         A 4D Tensor, with same type as 'input_x'.
@@ -5238,7 +5240,7 @@ def split(tensor, split_size_or_sections, axis=0):
             if `tensor.shape[axis]` is not divisible by `split_size_or_sections`.
             If `split_size_or_sections` is a list type, then `tensor` will be split into len(split_size_or_sections)
             chunks with sizes `split_size_or_sections` along the given `axis`.
-        axis (int): The axis along which to split. Default: 0.
+        axis (int): The axis along which to split. Default: ``0`` .
 
     Returns:
         A tuple of sub-tensors.
@@ -5444,10 +5446,10 @@ def _list_comprehensions(obj, item=None, return_tuple=False):
     Args:
         obj (Union[int, list, tuple]):
             If integer, it will be the length of the returned tuple/list.
-        item: The value to be filled. Default: None.
-            If None, the values in the new list/tuple are the same as obj
+        item: The value to be filled. Default: ``None`` .
+            If ``None`` , the values in the new list/tuple are the same as obj
             or range(obj) when obj is integer.
-        return_tuple(bool): If true, returns tuple, else returns list.
+        return_tuple(bool): If ``true`` , returns tuple, else returns list.
 
     Returns:
         List or tuple.
@@ -5544,7 +5546,7 @@ def tensor_split(input, indices_or_sections, axis=0):
               and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,
               :math:`input[1:4]` , and :math:`input[4:]` .
 
-        axis (int): The axis along which to split. Default: 0.
+        axis (int): The axis along which to split. Default: ``0`` .
 
     Returns:
         A tuple of sub-tensors.
@@ -5725,16 +5727,17 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        axis (int): The dimension to reduce. Default: None.
+        axis (int): The dimension to reduce. Default: ``None`` .
         keepdims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-            the output will reduce dimension if false. Default: False.
+            the output will reduce dimension if false. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
-            on empty slice. Default: None.
+            on empty slice. Default: ``None`` .
         where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
+            with the value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True``
+            in `where`, the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates
+            ``True`` by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
@@ -5781,10 +5784,10 @@ def argmax(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): Input tensor.
-        dim (Union[int, None], optional): The dimension to reduce. If `dim` is None, the indices of the maximum
-            value within the flattened input will be returned. Default: None.
+        dim (Union[int, None], optional): The dimension to reduce. If `dim` is ``None`` , the indices of the maximum
+            value within the flattened input will be returned. Default: ``None`` .
         keepdim (bool, optional): Whether the output tensor retains the specified
-            dimension. Ignored if `dim` is None. Default: False.
+            dimension. Ignored if `dim` is None. Default: ``False`` .
 
     Returns:
         Tensor, indices of the maximum values across a dimension.
@@ -5834,16 +5837,17 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        axis (int): The dimension to reduce. Default: None.
-        keepdims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-            the output will reduce dimension if false. Default: False.
+        axis (int): The dimension to reduce. Default: ``None`` .
+        keepdims (bool): Whether to reduce dimension, if ``True`` the output will keep the same dimension as the input,
+            the output will reduce dimension if ``False`` . Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The maximum value of an output element. Must be present to allow computation
-            on empty slice. Default: None.
+            on empty slice. Default: ``None`` .
         where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
+            with the value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True``
+            in `where`, the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates
+            ``True``  by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
@@ -5895,9 +5899,9 @@ def aminmax(input, *, axis=0, keepdims=False):
 
     Keyword Args:
         axis (int, optional): The dimension to reduce. The value range of `axis` is [-rank, rank),
-            where "rank" is the dimension of `input`. Default: 0.
+            where "rank" is the dimension of `input`. Default: ``0`` .
         keepdims (bool, optional): Whether to maintain dimension. When set to True, the output will keep the same
-            dimension as the input, or the dimension specified by `axis` is reduced. Default: False.
+            dimension as the input, or the dimension specified by `axis` is reduced. Default: ``False`` .
 
     Returns:
         tuple (Tensor), containing the minimum value and maximum value of the input tensor.
@@ -6064,10 +6068,11 @@ def topk(input, k, dim=None, largest=True, sorted=True):
     Args:
         input (Tensor): Input to be computed, data type must be float16, float32 or int32.
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
-        dim (int, optional): The dimension to sort along. Default: None.
-        largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
-        sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
-            If False, the obtained elements will not be sorted. Default: True.
+        dim (int, optional): The dimension to sort along. Default: ``None`` .
+        largest (bool, optional): If largest is ``False``  then the k smallest elements are returned.
+            Default: ``True`` .
+        sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending order.
+            If ``False`` , the obtained elements will not be sorted. Default: ``True`` .
 
     Returns:
         A tuple consisting of `values` and `indexes`.
@@ -6199,11 +6204,11 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 0.
+            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
         stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Returns:
         A Tensor, with same type as `input` , format of the Tensor is (N, C, H, W).
@@ -6291,14 +6296,14 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
         padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
             a tuple/list of one or two `int` for height and width.
             If one int, pad_height = pad_width.
             If two int, pad_height = padding[0], pad_width = padding[1].
-            Default: 0.
+            Default: ``0`` .
         stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: 1.
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Returns:
         A Tensor, with same type as `input` . And its shape is as described above.
@@ -6992,7 +6997,7 @@ def sequence_mask(lengths, maxlen=None):
         lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be
             less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
         maxlen (int): size of the last dimension of returned tensor. Must be positive and same
-            type as elements in `lengths`. Default is None.
+            type as elements in `lengths`. Default is ``None`` .
 
     Returns:
         One mask tensor of shape `lengths.shape + (maxlen,)` .

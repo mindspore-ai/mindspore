@@ -15,9 +15,9 @@ mindspore.ops.LogSpace
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **steps** (int，可选) - `steps` 必须为非负整数。默认值：10。
-        - **base** (int，可选) - `base` 必须为非负整数。默认值：10。
-        - **dtype** (mindspore.dtype，可选) - 输出的数据类型，支持mindspore.float16、mindspore.float32或mindspore.float64。默认值：mindspore.float32。
+        - **steps** (int，可选) - `steps` 必须为非负整数。默认值： ``10`` 。
+        - **base** (int，可选) - `base` 必须为非负整数。默认值： ``10`` 。
+        - **dtype** (mindspore.dtype，可选) - 输出的数据类型，支持mindspore.float16、mindspore.float32或mindspore.float64。默认值： ``mindspore.float32`` 。
 
     输入：
         - **start** (Tensor) - 间隔的起始值，shape为0-D，数据类型为float16、float32或float64（对于GPU）类型。

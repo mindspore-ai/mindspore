@@ -22,12 +22,12 @@ mindspore.ops.Lstsq
        \end{array}
 
     参数：
-        - **fast** (bool，可选) - 使用的算法。默认值：True。
+        - **fast** (bool，可选) - 使用的算法。默认值： ``True`` 。
   
-          - 如果 `fast` 为True，则使用Cholesky分解求解正态方程来计算解。
-          - 如果 `fast` 为False，则使用基于数值稳定的完全正交分解算法。
+          - 如果 `fast` 为 ``True`` ，则使用Cholesky分解求解正态方程来计算解。
+          - 如果 `fast` 为 ``False`` ，则使用基于数值稳定的完全正交分解算法。
   
-        - **l2_regularizer** (float，可选) - L2正则化系数。默认值：0.0。
+        - **l2_regularizer** (float，可选) - L2正则化系数。默认值： ``0.0`` 。
   
     输入：
         - **x** (Tensor) - :math:`(m \times n)` 的矩阵 `x` 。输入Tensor的数据类型为float16、float32或float64。

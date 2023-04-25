@@ -8,9 +8,9 @@ mindspore.ops.IsClose
     更多参考详见 :func:`mindspore.ops.isclose`。
 
     参数：
-        - **rtol** (float, 可选) - 相对容忍度。默认值：1e-05。
-        - **atol** (float, 可选) - 绝对容忍度。默认值：1e-08。
-        - **equal_nan** (bool, 可选) - 若为True，则两个NaN被视为相同。默认值：True。
+        - **rtol** (float, 可选) - 相对容忍度。默认值： ``1e-05`` 。
+        - **atol** (float, 可选) - 绝对容忍度。默认值： ``1e-08`` 。
+        - **equal_nan** (bool, 可选) - 若为True，则两个NaN被视为相同。默认值： ``True`` 。
 
     输入：
         - **input** (Tensor) - 对比的第一个输入，支持的类型有float32、float16、int32。

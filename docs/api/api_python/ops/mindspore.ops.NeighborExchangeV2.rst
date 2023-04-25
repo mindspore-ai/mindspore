@@ -16,7 +16,7 @@ mindspore.ops.NeighborExchangeV2
         - **send_lens** (list(int)) - 指定 `send_rank_ids` 发送数据的长度，4个数字分别代表[send_top, send_bottom, send_left, send_right]4个方向上的长度。
         - **recv_lens** (list(int)) - 指定 `recv_rank_ids` 接收数据的长度，4个数字分别代表[recv_top, recv_bottom, recv_left, recv_right]4个方向上的长度。
         - **data_format** (str) - 数据格式，现在只支持NCHW。
-        - **group** (str, 可选) - 工作的通信组。默认值："GlobalComm.WORLD_COMM_GROUP"（即Ascend平台为"hccl_world_group"，GPU平台为"nccl_world_group" ）。
+        - **group** (str, 可选) - 工作的通信组。默认值： ``"GlobalComm.WORLD_COMM_GROUP"`` （即Ascend平台为"hccl_world_group"，GPU平台为"nccl_world_group" ）。
     输入：
         - **input_x** (Tensor) - 交换前的输入Tensor，其shape为 :math:`(N, C, H, W)`。
 

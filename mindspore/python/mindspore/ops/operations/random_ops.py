@@ -238,9 +238,9 @@ class RandomGamma(Primitive):
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
-            must be non-negative. Default: 0.
+            must be non-negative. Default: ``0`` .
         seed2 (int, optional): The global random seed, which combines with the operator-level
-            random seed to determine the final generated random number, must be non-negative. Default: 0.
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. It must be constant value.
@@ -291,9 +291,9 @@ class LogNormalReverse(Primitive):
 
     Args:
         mean (float, optional): the mean of normal distribution. With float data type.
-            Default: 1.0.
+            Default: ``1.0`` .
         std (float, optional): the std of normal distribution. With float data type.
-            Default: 2.0.
+            Default: ``2.0`` .
 
     Inputs:
         - **input** (Tensor) - The tensor to be generated with log-normal distribution.
@@ -348,9 +348,10 @@ class Gamma(PrimitiveWithInfer):
           operator-level random seed.
 
     Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative.
+            Default: ``0`` .
         seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: 0.
+            final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -424,8 +425,8 @@ class ParameterizedTruncatedNormal(Primitive):
           Otherwise, a random seed will be used instead.
 
     Args:
-        seed (int, optional): Random number seed. Default: 0.
-        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
+        seed (int, optional): Random number seed. Default: ``0`` .
+        seed2 (int, optional): The second seed to avoid seed collision. Default: ``0`` .
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated.
@@ -493,8 +494,8 @@ class Poisson(PrimitiveWithInfer):
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: ``0`` .
+        seed2 (int): Random seed2, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -559,10 +560,10 @@ class RandomPoisson(Primitive):
 
     Args:
         seed (int, optional): Random number seed. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
-        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: ``0`` .
+        seed2 (int, optional): A second seed to avoid seed collision. Default: ``0`` .
 
-        dtype (mindspore.dtype, optional): The type of output. Default: mstype.int64.
+        dtype (mindspore.dtype, optional): The type of output. Default: ``mstype.int64`` .
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype must be in
@@ -621,8 +622,8 @@ class UniformInt(Primitive):
         - If neither `seed` nor `seed2` is assigned a non-zero value, a randomly generated seed is used instead.
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: ``0`` .
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: ``0`` .
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -669,9 +670,10 @@ class UniformReal(Primitive):
     Produces random floating-point values, uniformly distributed to the interval [0, 1).
 
     Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative.
+            Default: ``0`` .
         seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: 0.
+            final generated random number, must be non-negative. Default: ``0`` .
 
     .. note::
         - Global random seed and operator-level random seed are not set: Use a randomly generated seed.
@@ -720,10 +722,10 @@ class RandomChoiceWithMask(Primitive):
     Refer to :func:`mindspore.ops.choice_with_mask` for more details.
 
     Args:
-        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: 256.
+        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
         seed (int, optional): Seed is used as entropy source for Random number engines generating
-            pseudo-random numbers. Default: 0.
-        seed2 (int, optional): Second seed to avoid collision. Default: 0.
+            pseudo-random numbers. Default: ``0`` .
+        seed2 (int, optional): Second seed to avoid collision. Default: ``0`` .
 
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
@@ -766,12 +768,12 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Args:
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
-            mindspore.int32 and mindspore.int64. Default: mindspore.int64.
+            mindspore.int32 and mindspore.int64. Default: ``mindspore.int64`` .
 
     Inputs:
         - **logits** (Tensor) - The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
         - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
-        - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
+        - **seed** (int) - Random seed. Default: ``0`` . Only constant values is allowed.
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape :math:`(batch_size, num_samples)`.
@@ -823,8 +825,8 @@ class Multinomial(Primitive):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: ``0`` .
+        seed2 (int): Random seed2, must be non-negative. Default: ``0`` .
         dtype(dtype): The type of output, must be int32 or int64. Default: int32.
 
     Inputs:
@@ -881,7 +883,7 @@ class MultinomialWithReplacement(Primitive):
 
     Args:
         numsamples (int): number of samples to draw, must be a nonnegative number.
-        replacement (bool, optional): Whether to draw with replacement or not. Default: False.
+        replacement (bool, optional): Whether to draw with replacement or not. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
@@ -931,8 +933,8 @@ class UniformCandidateSampler(Primitive):
         unique (bool): Whether all sampled classes in a batch are unique.
         range_max (int): The number of possible classes, must be non-negative.
         seed (int, optional): Used for random number generation, must be non-negative. If seed has a value of 0,
-            the seed will be replaced with a randomly generated value. Default: 0.
-        remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: False.
+            the seed will be replaced with a randomly generated value. Default: ``0`` .
+        remove_accidental_hits (bool, optional): Whether accidental hit is removed. Default: ``False`` .
 
     Inputs:
         - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of
@@ -996,13 +998,13 @@ class LogUniformCandidateSampler(Primitive):
     Refer to :func:`mindspore.ops.log_uniform_candidate_sampler` for more details.
 
     Args:
-        num_true (int, optional): The number of target classes per training example. Default: 1.
-        num_sampled (int, optional): The number of classes to randomly sample. Default: 5.
-        unique (bool, optional): Determines whether sample with rejection. If `unique` is True,
-          all sampled classes in a batch are unique. Default: True.
-        range_max (int, optional): The number of possible classes. When `unique` is True,
-          `range_max` must be greater than or equal to `num_sampled`. Default: 5.
-        seed (int, optional): Random seed, must be non-negative. Default: 0.
+        num_true (int, optional): The number of target classes per training example. Default: ``1`` .
+        num_sampled (int, optional): The number of classes to randomly sample. Default: ``5`` .
+        unique (bool, optional): Determines whether sample with rejection. If `unique` is ``True`` ,
+          all sampled classes in a batch are unique. Default: ``True`` .
+        range_max (int, optional): The number of possible classes. When `unique` is ``True`` ,
+          `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
+        seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int64 and
@@ -1063,9 +1065,9 @@ class RandomShuffle(Primitive):
     Args:
         seed (int, optional): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator
             will be seeded by the given seed. Otherwise, it will be seeded randomly.
-            The `seed` must be non-negative. Default: 0.
+            The `seed` must be non-negative. Default: ``0`` .
         seed2 (int, optional): A second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
-            the seed of the random generator. It must be non-negative. Default: 0.
+            the seed of the random generator. It must be non-negative. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - The Tensor need be shuffled.
@@ -1101,8 +1103,8 @@ class Uniform(Primitive):
     Generates random numbers according to the Uniform random number distribution.
 
     Args:
-        minval(float):must be non-negative. Default: 0.0.
-        maxval(float):must be non-negative. Default: 1.0.
+        minval(float):must be non-negative. Default: ``0.0`` .
+        maxval(float):must be non-negative. Default: ``1.0`` .
 
     Inputs:
         - **x** (Tensor) - The x of random tensor to be generated.

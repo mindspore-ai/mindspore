@@ -10,11 +10,11 @@ mindspore.ops.LogUniformCandidateSampler
     更多参考详见 :func:`mindspore.ops.log_uniform_candidate_sampler`。
 
     参数：
-        - **num_true** (int，可选) - 每个训练样本的目标类数。默认值：1。
-        - **num_sampled** (int，可选) - 随机采样的类数。默认值：5。
-        - **unique** (bool，可选) - 确认批处理中的所有采样类是否都是唯一的。如果 `unique` 为True，则批处理中的所有采样类都唯一。默认值：True。
-        - **range_max** (int，可选) - 可能的类数。当 `unique` 为True时， `range_max` 必须大于或等于 `num_sampled` 。默认值：5。
-        - **seed** (int，可选) - 随机种子，必须是非负。默认值：0。
+        - **num_true** (int，可选) - 每个训练样本的目标类数。默认值： ``1`` 。
+        - **num_sampled** (int，可选) - 随机采样的类数。默认值： ``5`` 。
+        - **unique** (bool，可选) - 确认批处理中的所有采样类是否都是唯一的。如果 `unique` 为 ``True`` ，则批处理中的所有采样类都唯一。默认值： ``True`` 。
+        - **range_max** (int，可选) - 可能的类数。当 `unique` 为 ``True`` 时， `range_max` 必须大于或等于 `num_sampled` 。默认值： ``5`` 。
+        - **seed** (int，可选) - 随机种子，必须是非负。默认值： ``0`` 。
 
     输入：
         - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为 :math:`(batch\_size, num\_true)` 。

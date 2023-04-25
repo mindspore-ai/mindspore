@@ -11,7 +11,7 @@ mindspore.ops.Logit
     更多参考详见 :func:`mindspore.ops.logit`。
 
     参数：
-        - **eps** (float, 可选) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值：-1.0。
+        - **eps** (float, 可选) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值： ``-1.0`` 。
 
     输入：
         - **x** (Tensor) - Tensor输入。

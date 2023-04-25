@@ -6,7 +6,7 @@ mindspore.ops.MatrixSolve
     求解线性方程组。
 
     参数：
-        - **adjoint** (bool，可选) - 指明是否使用矩阵的伴随矩阵进行求解。默认值：False，使用转置矩阵进行求解。
+        - **adjoint** (bool，可选) - 指明是否使用矩阵的伴随矩阵进行求解。默认值： ``False`` ，使用转置矩阵进行求解。
   
     输入：
         - **matrix** (Tensor) - Tensor，线性方程组系数组成的矩阵，其shape为 :math:`(..., M, M)` 。
