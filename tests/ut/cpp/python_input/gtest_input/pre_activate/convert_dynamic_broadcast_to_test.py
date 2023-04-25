@@ -37,7 +37,7 @@ def test_dyn_broadcast(tag):
     Expectation: Get correct Graph.
     """
     fns = FnDict()
-    d_shape = ops.TensorShape()
+    d_shape = ops.Shape()
     d_broadcastto = inner.DynamicBroadcastTo()
 
     @fns

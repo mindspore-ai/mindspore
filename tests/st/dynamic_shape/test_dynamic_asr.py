@@ -325,9 +325,6 @@ class EncoderCell(nn.Cell):
         attention_output = self.reshape(attention_output, self.shape_2d)
         fc_output = self.feedforward(attention_output)
         output = self.res_norm(fc_output, attention_output)
-        # TODO Temp change for dynamic length sequence.
-        if F.is_sequence_value_unknown(shape_out):
-            shape_out = P.TensorShape()(x)
         return self.reshape(output, shape_out)
 
 
@@ -361,8 +358,6 @@ class PositionalEncoding(nn.Cell):
         :return: Encoded x (B, time, dim)
         """
         _, l, _ = self.shape(x)
-        if not F.isconstant(l):
-            l = P.DynamicShape()(x)[1]
         pos = self.pe[:, :l, :]
         x = self.mul(x, self.te)
         x = self.add(x, pos)
@@ -651,13 +646,10 @@ class KLDivLoss(_Loss):
         self.div = P.RealDiv()
         self.mul = P.Mul()
         self.shape = P.Shape()
-        self.tensor_shape = P.TensorShape()
 
     def construct(self, s_logit, t_logit):
         # student
         shape_ori = self.shape(s_logit)
-        if F.is_sequence_value_unknown(shape_ori):
-            shape_ori = self.tensor_shape(s_logit)
         s_1d = self.reshape(s_logit, (-1,))
         s = self.cast(s_1d/self.kl_temperature, mstype.float32)
 

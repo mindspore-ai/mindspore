@@ -1542,7 +1542,7 @@ def test_grad_operation_dynamic_shape():
     class DynamicShape(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.dynamicshape = ops.DynamicShape()
+            self.dynamicshape = ops.Shape()
 
         def construct(self, inputx):
             return self.dynamicshape(inputx)

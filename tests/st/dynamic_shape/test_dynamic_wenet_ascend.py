@@ -1314,8 +1314,6 @@ class RelPositionalEncoding(PositionalEncoding):
         """
         x = x * self.xscale
         x_shape = self.get_shape(x)
-        if F.is_sequence_value_unknown(x_shape):
-            x_shape = self.dyn_shape(x)
         pos_emb = self.pe[:, offset: offset + x_shape[1]]
         return self.dropout(x), self.dropout(pos_emb)
 

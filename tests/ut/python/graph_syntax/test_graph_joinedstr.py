@@ -109,7 +109,7 @@ def test_joinedstr_dynamic_shape_scalar():
             self.unique = P.Unique()
             self.gather = P.Gather()
             self.axis = 0
-            self.shape = ops.TensorShape()
+            self.shape = ops.Shape()
 
         def construct(self, x, indices):
             unique_indices, _ = self.unique(indices)

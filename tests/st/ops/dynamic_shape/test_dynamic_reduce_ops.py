@@ -48,7 +48,7 @@ class ReduceMaxMinAxisNet(nn.Cell):
         super(ReduceMaxMinAxisNet, self).__init__()
         self.reduce_max = P.ReduceMax()
         self.reduce_min = P.ReduceMin()
-        self.tensor_shape = P.TensorShape()
+        self.tensor_shape = P.Shape()
 
     def construct(self, x, y):
         axis = self.tensor_shape(y)[0:1]
@@ -61,7 +61,7 @@ class ReduceSumMeanProdAxisNet(nn.Cell):
         self._sum = P.ReduceSum()
         self._mean = P.ReduceMean()
         self._prod = P.ReduceProd()
-        self.tensor_shape = P.TensorShape()
+        self.tensor_shape = P.Shape()
 
     def construct(self, x, y):
         axis = self.tensor_shape(y)[0:1]

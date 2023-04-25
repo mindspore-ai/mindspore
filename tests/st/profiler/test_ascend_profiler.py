@@ -46,7 +46,7 @@ class NetWork(nn.Cell):
     def __init__(self):
         super(NetWork, self).__init__()
         self.unique = P.Unique()
-        self.shape = P.TensorShape()
+        self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.add = P.Add()
 

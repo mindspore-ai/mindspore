@@ -319,17 +319,6 @@ class SpaceToBatchNDNet(Cell):
         return self.space_to_batch_nd(x)
 
 
-class TensorShapeNet(Cell):
-    def __init__(self):
-        super(TensorShapeNet, self).__init__()
-        self.shape = P.TensorShape()
-        self.unique = P.Unique()
-
-    def construct(self, x):
-        x, _ = self.unique(x)
-        return self.shape(x)
-
-
 class UniqueFunc1(Cell):
     def __init__(self):
         super(UniqueFunc1, self).__init__()
@@ -475,8 +464,7 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32),
                         Tensor(np.array([[True, True, False]]), mstype.bool_),
                         Tensor(5.0, mstype.float32)],
-        'desc_bprop': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32)]}),
-    ('TensorShapeNet', {'block': TensorShapeNet(), 'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]})
+        'desc_bprop': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32)]})
 ]
 
 test_case_lists = [test_case_array_ops]
@@ -503,9 +491,7 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]}),
     ('ReduceSum_Error', {
         'block': (lambda x: P.ReduceSum(keep_dims=1), {'exception': TypeError}),
-        'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]}),
-    ('TensorShapeNet_Error', {'block': (lambda x: P.TensorSHape(), {'exception': TypeError}),
-                              'desc_inputs': [(Tensor(np.ones(shape=[3, 1, 5])), Tensor(np.ones(shape=[3, 1, 5])))]})
+        'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]})
 ]
 
 

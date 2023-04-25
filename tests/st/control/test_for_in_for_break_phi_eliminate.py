@@ -25,7 +25,7 @@ class IfInFor(Cell):
     def __init__(self):
         super().__init__()
         self.param = Parameter(Tensor(np.ones((1,), dtype=np.int32)), name="w1")
-        self.shape = P.TensorShape()
+        self.shape = P.Shape()
 
     def construct(self, x, y):
         shape = self.shape(y)

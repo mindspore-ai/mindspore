@@ -171,14 +171,13 @@ class ShapeTensorNet(nn.Cell):
     def __init__(self):
         super(ShapeTensorNet, self).__init__()
         self.reshape = ops.Reshape()
-        self.tensor_shape = ops.TensorShape()
         self.shape = ops.Shape()
         self.strided_slice = ops.StridedSlice()
         self.mul = ops.Mul()
         self.tensor_scatter_update = ops.TensorScatterUpdate()
 
     def construct(self, x, y):
-        res = self.tensor_shape(x)
+        res = self.shape(x)
         res = self.strided_slice(res, (1,), (4,), (1,))
         res = self.mul(res, 4)
         y = self.reshape(x, res)
