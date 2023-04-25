@@ -93,10 +93,16 @@ class SearchSubGraph {
   void InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs);
   void DoOnlineFusion();
   void DoSplitReduceConcatFusionPass();
+  void DoCastGatherReduceFusionPass();
+
   int CreateCustomNode(LiteGraph::Node *node, Subgraph *subgraph, SplitParameter *split_param,
                        const std::vector<uint32_t> &positions);
+  int CreateCastGatherReduceCustomNode(LiteGraph::Node *node, Subgraph *subgraph,
+                                       std::vector<uint32_t> *new_input_indices);
+
   int ParseNodePrimitive(Subgraph *subgraph);
   OpParameter *GetNodeOpParameter(LiteGraph::Node *node);
+  std::vector<std::vector<uint32_t>> GetFrontNodeIndex(LiteGraph::Node *cur_node);
   std::vector<std::vector<uint32_t>> GetNextNodeIndex(LiteGraph::Node *cur_node);
 
  private: /* split by output */
@@ -104,9 +110,12 @@ class SearchSubGraph {
   void InitSearchSubGraphByOutput();
   void InsertNode(uint32_t index, Subgraph *subgraph, uint32_t last_index);
   bool DoSplitReduceConcatFusion(uint32_t node_id);
+  bool DoCastGatherReduceFusion(uint32_t node_id);
   bool SatifyReduceReshapeConcatParse(Subgraph *subgraph, uint32_t node_id, int split_concat_axis,
                                       std::vector<uint32_t> *positions);
+  bool SatifyGatherReduceParse(Subgraph *subgraph, uint32_t in_node, std::vector<uint32_t> *new_input_indices);
   void DeleteOriginNode(Subgraph *subgraph, const std::vector<uint32_t> &positions);
+  void DeleteCastGatherReduceOriginNode(Subgraph *subgraph);
 
  private: /* split by middle */
   void SubGraphSplitByMiddle();

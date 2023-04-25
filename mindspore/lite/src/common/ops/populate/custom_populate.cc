@@ -18,6 +18,7 @@
 #include "src/tensor.h"
 #include "nnacl/custom_parameter.h"
 #include "nnacl/split_parameter.h"
+#include "nnacl/reduce_parameter.h"
 using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
@@ -96,6 +97,15 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     }
 
     param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
+    return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "CastGatherReduceFusion") {
+    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc ShapeParameter failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(OpParameter));
+    param->type_ = PrimType_Inner_CastGatherReduceFusion;
     return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;

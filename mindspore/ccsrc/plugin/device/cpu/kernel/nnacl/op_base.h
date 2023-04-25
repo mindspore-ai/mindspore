@@ -535,6 +535,7 @@ enum PrimType {
   PrimType_Inner_ShapeFusion = 10003,
   PrimType_Inner_GraphKernel = 10004,
   PrimType_Inner_SplitReduceConcatFusion = 10005,
+  PrimType_Inner_CastGatherReduceFusion = 10006,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };
