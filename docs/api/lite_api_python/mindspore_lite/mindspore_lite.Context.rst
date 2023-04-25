@@ -98,6 +98,7 @@ mindspore_lite.Context
               - **preferred_optimal** - 对应ACL选项为allow_mix_precision，优先使用fp16+精度权衡。
 
             - **provider** (str) - 支持目标设备推理能力的provider，可以是""或"ge"，默认""。
+            - **rank_id** (int) - 当前设备在集群中的ID，固定从0开始编号。
 
         返回：
             int，Context的目标设备信息。

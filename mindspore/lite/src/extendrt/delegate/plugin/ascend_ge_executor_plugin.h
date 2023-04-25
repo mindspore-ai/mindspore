@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_PLUGIN_ASCEND_GE_EXECUTOR_PLUGIN_H_
 
 #include <string>
+#include <memory>
+#include "include/api/context.h"
 #include "include/api/status.h"
 #include "utils/log_adapter.h"
 #include "mindapi/base/macros.h"
 #include "base/base.h"
+#include "common/config_infos.h"
 
 namespace mindspore::lite {
 class AscendGeExecutorPluginImplBase {
@@ -28,7 +31,8 @@ class AscendGeExecutorPluginImplBase {
   AscendGeExecutorPluginImplBase() = default;
   virtual ~AscendGeExecutorPluginImplBase() = default;
 
-  virtual Status AscendGeDeviceContextInitialize() = 0;
+  virtual Status AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context,
+                                                 const ConfigInfos &config_info = {}) = 0;
   virtual void AscendGeDeviceContextDestroy() const = 0;
   virtual Status AdaptGraph(FuncGraphPtr graph) const = 0;
 };
@@ -38,7 +42,7 @@ class MS_API AscendGeExecutorPlugin {
   static AscendGeExecutorPlugin &GetInstance();
   bool Register();
 
-  Status InitializeGeContext();
+  Status InitializeGeContext(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   void DestroyGeContext();
   void AdaptGraph(FuncGraphPtr graph);
 

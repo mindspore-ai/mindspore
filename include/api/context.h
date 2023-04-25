@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,6 +392,16 @@ class MS_API AscendDeviceInfo : public DeviceInfoContext {
   ///
   /// \return The device id.
   uint32_t GetDeviceID() const;
+
+  /// \brief Set the distribution rank id.
+  ///
+  /// \param[in] rank_id The rank id.
+  void SetRankID(uint32_t rank_id);
+
+  /// \brief Get the distribution rank id.
+  ///
+  /// \return The rank id.
+  uint32_t GetRankID() const;
 
   /// \brief Set AIPP configuration file path.
   ///

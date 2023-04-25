@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class LiteInferSession : public InferSession {
   LiteInferSession() = default;
   explicit LiteInferSession(const std::shared_ptr<Context> &context) : context_(context) {}
   virtual ~LiteInferSession() = default;
-  Status Init(const std::shared_ptr<Context> &context) override;
+  Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
   Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,

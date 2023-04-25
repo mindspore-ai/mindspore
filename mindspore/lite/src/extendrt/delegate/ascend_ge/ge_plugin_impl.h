@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class AscendGeExecutorPluginImpl : public lite::AscendGeExecutorPluginImplBase {
   AscendGeExecutorPluginImpl() = default;
   ~AscendGeExecutorPluginImpl() = default;
 
-  Status AscendGeDeviceContextInitialize();
+  Status AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   void AscendGeDeviceContextDestroy() const;
   Status AdaptGraph(FuncGraphPtr graph) const;
 

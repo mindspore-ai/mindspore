@@ -430,6 +430,64 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
   return;
 }
 
+void BenchmarkUnifiedApi::InitMSContextForGPU(const std::shared_ptr<mindspore::Context> &context,
+                                              std::vector<std::shared_ptr<DeviceInfoContext>> *device_list) {
+  std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
+  gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
+  uint32_t device_id = 0;
+  auto device_id_env = std::getenv("GPU_DEVICE_ID");
+  if (device_id_env != nullptr) {
+    try {
+      device_id = static_cast<uint32_t>(std::stoul(device_id_env));
+    } catch (std::invalid_argument &e) {
+      MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
+    }
+    MS_LOG(INFO) << "GPU device_id = " << device_id;
+  }
+  gpu_device_info->SetDeviceID(device_id);
+  if (flags_->enable_gl_texture_) {
+    gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
+
+    auto gl_context = eglGetCurrentContext();
+    gpu_device_info->SetGLContext(gl_context);
+
+    auto gl_display = eglGetCurrentDisplay();
+    gpu_device_info->SetGLDisplay(gl_display);
+  } else {
+    gpu_device_info->SetProvider("tensorrt");
+    gpu_device_info->SetAllocator(nullptr);
+  }
+  device_list->push_back(gpu_device_info);
+}
+
+void BenchmarkUnifiedApi::InitMSContextForAscend(const std::shared_ptr<mindspore::Context> &context,
+                                                 std::vector<std::shared_ptr<DeviceInfoContext>> *device_list) {
+  uint32_t device_id = 0;
+  auto device_id_env = std::getenv("ASCEND_DEVICE_ID");
+  if (device_id_env != nullptr) {
+    try {
+      device_id = static_cast<uint32_t>(std::stoul(device_id_env));
+    } catch (std::invalid_argument &e) {
+      MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
+    }
+    MS_LOG(INFO) << "Ascend device_id = " << device_id;
+  }
+  std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
+  ascend_device_info->SetDeviceID(device_id);
+  auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
+  if (back_policy_env != nullptr) {
+    ascend_device_info->SetProvider(back_policy_env);
+  }
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+  if (flags_->device_id_ >= 0 && flags_->rank_id_ >= 0) {
+    ascend_device_info->SetDeviceID(flags_->device_id_);
+    ascend_device_info->SetRankID(flags_->rank_id_);
+    ascend_device_info->SetProvider("ge");
+  }
+#endif
+  device_list->push_back(ascend_device_info);
+}
+
 int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
   context->SetThreadNum(flags_->num_threads_);
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
@@ -454,32 +512,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   // }
 
   if (flags_->device_ == "GPU" || flags_->device_ == "Auto") {
-    std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
-    gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
-    uint32_t device_id = 0;
-    auto device_id_env = std::getenv("GPU_DEVICE_ID");
-    if (device_id_env != nullptr) {
-      try {
-        device_id = static_cast<uint32_t>(std::stoul(device_id_env));
-      } catch (std::invalid_argument &e) {
-        MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
-      }
-      MS_LOG(INFO) << "GPU device_id = " << device_id;
-    }
-    gpu_device_info->SetDeviceID(device_id);
-    if (flags_->enable_gl_texture_) {
-      gpu_device_info->SetEnableGLTexture(flags_->enable_gl_texture_);
-
-      auto gl_context = eglGetCurrentContext();
-      gpu_device_info->SetGLContext(gl_context);
-
-      auto gl_display = eglGetCurrentDisplay();
-      gpu_device_info->SetGLDisplay(gl_display);
-    } else {
-      gpu_device_info->SetProvider("tensorrt");
-      gpu_device_info->SetAllocator(nullptr);
-    }
-    device_list.push_back(gpu_device_info);
+    InitMSContextForGPU(context, &device_list);
   }
 
   if (flags_->device_ == "NPU" || flags_->device_ == "Auto") {
@@ -490,23 +523,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   }
 
   if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend310P" || flags_->device_ == "Auto") {
-    uint32_t device_id = 0;
-    auto device_id_env = std::getenv("ASCEND_DEVICE_ID");
-    if (device_id_env != nullptr) {
-      try {
-        device_id = static_cast<uint32_t>(std::stoul(device_id_env));
-      } catch (std::invalid_argument &e) {
-        MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
-      }
-      MS_LOG(INFO) << "Ascend device_id = " << device_id;
-    }
-    std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
-    ascend_device_info->SetDeviceID(device_id);
-    auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
-    if (back_policy_env != nullptr) {
-      ascend_device_info->SetProvider(back_policy_env);
-    }
-    device_list.push_back(ascend_device_info);
+    InitMSContextForAscend(context, &device_list);
   }
 
   // CPU priority is behind GPU and NPU

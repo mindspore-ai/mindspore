@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021  uawei Technologies Co., Ltd
+ * Copyright 2019-2023  uawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
   return kSuccess;
 }
 
-Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
+Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
   if (context == nullptr) {
     MS_LOG(ERROR) << "Input argument context cannot be nullptr";

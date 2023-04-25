@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 
+#include "common/config_infos.h"
 #include "include/api/context.h"
 #include "mindspore/core/utils/ms_context.h"
 
@@ -32,14 +33,17 @@ class GeDeviceContext {
   GeDeviceContext(const GeDeviceContext &) = delete;
   GeDeviceContext &operator=(const GeDeviceContext &) = delete;
 
-  void Initialize();
+  void Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   void Destroy();
 
  private:
-  void InitGe(const std::shared_ptr<MsContext> &inst_context);
+  void InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
+              const ConfigInfos &config_info = {});
   bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context);
-  void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
-  void SetHcclOptions(std::map<std::string, std::string> *ge_options);
+  void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
+                    std::map<std::string, std::string> *ge_options, const ConfigInfos &config_info = {});
+  void SetHcclOptions(const std::shared_ptr<Context> &context, std::map<std::string, std::string> *ge_options,
+                      const ConfigInfos &config_info = {});
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
 };
 }  // namespace mindspore

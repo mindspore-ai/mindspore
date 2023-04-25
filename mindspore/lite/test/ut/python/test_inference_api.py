@@ -241,6 +241,26 @@ def test_context_ascend_provider():
     assert "provider: ge" in str(context.ascend)
 
 
+def test_context_ascend_rank_id_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        context = mslite.Context()
+        context.ascend.rank_id = "1"
+    assert "ascend_rank_id must be int" in str(raise_info.value)
+
+
+def test_context_ascend_rank_id_negative_error():
+    with pytest.raises(ValueError) as raise_info:
+        context = mslite.Context()
+        context.ascend.rank_id = -1
+    assert "ascend_rank_id must be a non-negative int" in str(raise_info.value)
+
+
+def test_context_ascend_rank_id():
+    context = mslite.Context()
+    context.ascend.rank_id = 1
+    assert "rank_id: 1" in str(context.ascend)
+
+
 # ============================ Model ============================
 def test_model_01():
     model = mslite.Model()

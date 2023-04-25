@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,19 @@
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
 #include "runtime/config.h"
+#include "common/config_infos.h"
+#include "common/common.h"
 
 namespace mindspore {
-void GeDeviceContext::Initialize() {
+void GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MsContext::GetInstance()->set_backend_policy("ge");
-  InitGe(MsContext::GetInstance());
+  InitGe(MsContext::GetInstance(), context, config_info);
 }
 
 void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
 
-void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
+void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
+                             const ConfigInfos &config_info) {
   MS_EXCEPTION_IF_NULL(inst_context);
   int32_t is_heterogeneous = 0;
   (void)rtGetIsHeterogenous(&is_heterogeneous);
@@ -48,7 +51,7 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   }
 
   std::map<std::string, std::string> ge_options;
-  GetGeOptions(inst_context, &ge_options);
+  GetGeOptions(inst_context, context, &ge_options, config_info);
   {
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;
@@ -73,8 +76,10 @@ void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::strin
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
-                                   std::map<std::string, std::string> *ge_options) {
+                                   const std::shared_ptr<Context> &context,
+                                   std::map<std::string, std::string> *ge_options, const ConfigInfos &config_info) {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
@@ -107,7 +112,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   SetDisableReuseMemoryFlag(ge_options);
-  SetHcclOptions(ge_options);
+  SetHcclOptions(context, ge_options, config_info);
 
   auto env_job_id = common::GetEnv("JOB_ID");
   if (!env_job_id.empty()) {
@@ -161,30 +166,61 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 }
 
-void GeDeviceContext::SetHcclOptions(std::map<std::string, std::string> *ge_options) {
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
-  auto env_rank_id = common::GetEnv("RANK_ID");
-  auto env_device_id = common::GetEnv("ASCEND_DEVICE_ID");
+void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
+                                     std::map<std::string, std::string> *ge_options, const ConfigInfos &config_info) {
+  auto device_list = context->MutableDeviceInfo();
+  auto ascend_info_iter = std::find_if(
+    device_list.begin(), device_list.end(),
+    [&](std::shared_ptr<mindspore::DeviceInfoContext> &device_info) { return (device_info->GetProvider() == "ge"); });
+  if (ascend_info_iter == device_list.end()) {
+    MS_LOG(ERROR) << "AscendDeviceInfo is not set. If using distributed inference, make sure device_id "
+                     "and rank_id are set in AscendDeviceInfo";
+    return;
+  }
+  auto device_info = *(ascend_info_iter);
+  auto ascend_info = device_info->Cast<mindspore::AscendDeviceInfo>();
+  std::string rank_table_file = "";
+  uint32_t device_id = ascend_info->GetDeviceID();
+  uint32_t rank_id = ascend_info->GetRankID();
+
+  if (config_info.empty() || config_info.find(lite::kAscendContextSection) == config_info.end()) {
+    MS_LOG(INFO) << "There is no ascend context info in config file.";
+  } else {
+    auto config_info_ascend = config_info.at(lite::kAscendContextSection);
+    if (config_info_ascend.find(lite::kRankTableFilePathKey) == config_info_ascend.end()) {
+      MS_LOG(INFO)
+        << "There is no rank table file in Ascend section of config file, distributed inference is not enabled."
+        << " If using distributed inference, make sure rank_table_file in the config file,"
+        << " device_id and rank_id are set in AscendDeviceInfo.";
+    } else {
+      rank_table_file = config_info_ascend[lite::kRankTableFilePathKey];
+      MS_LOG(INFO) << "Distributed inference is enabled, rank table file: " << rank_table_file;
+    }
+  }
+
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
-  if (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty())) {
+  MS_LOG(INFO) << "Set ge_options for rank table file " << rank_table_file << " device id " << device_id << " rank id "
+               << rank_id;
+  if (!(rank_table_file.empty() || !(env_cluster_info.empty()))) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
-    if (!env_table_file.empty()) {
+    if (!rank_table_file.empty()) {
       MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-      (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
+      (*ge_options)["ge.exec.rankTableFile"] = rank_table_file;
     }
     auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
     if (!env_hccl_flag.empty()) {
       (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
     }
     (*ge_options)["ge.exec.isUseHcom"] = "1";
-    (*ge_options)["ge.exec.deviceId"] = env_device_id;
-    (*ge_options)["ge.exec.rankId"] = env_rank_id;
-    (*ge_options)["ge.exec.podName"] = env_rank_id;
+    (*ge_options)["ge.exec.deviceId"] = std::to_string(device_id);
+    (*ge_options)["ge.exec.rankId"] = std::to_string(rank_id);
+    (*ge_options)["ge.exec.podName"] = std::to_string(rank_id);
   } else {
     // device id is still needed for non-distribute case
-    (*ge_options)["ge.exec.deviceId"] = env_device_id;
+    (*ge_options)["ge.exec.deviceId"] = std::to_string(device_id);
     MS_LOG(INFO) << "No hccl mode. "
-                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
+                 << "If use hccl, make sure that the rank table file path is set in config file, "
+                 << "rank id and device id are set in AscendDeviceInfo.";
   }
 
   auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");

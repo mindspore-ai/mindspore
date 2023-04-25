@@ -95,46 +95,6 @@ class Model(BaseModel):
         return res
 
     @staticmethod
-    def init_distributed(rank_table_file, rank_id, device_id, provider="ge"):
-        """
-        Used to declare the distributed information of a large model. Beta interface, which may be removed in the
-        future.
-
-        Args:
-            rank_table_file (str): file path of the rank table.
-            rank_id (int): rank id of the models.
-            device_id (int): target device id.
-            provider (str): provider that supports the inference capability of target device,
-                only "ge" is supported currently.
-
-        Raises:
-            TypeError: `rank_table_file` or `provider` is not a str.
-            TypeError: `rank_id` or `device_id` is not a ModelType.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> mslite.Model.init_distributed(rank_table_file="hccl_8p.json", rank_id=0, device_id=0)
-            >>> context = mslite.Context()
-            >>> context.ascend.device_id = 0
-            >>> context.ascend.rank_id = 0
-            >>> context.ascend.provider = "ge"
-            >>> context.target = ["Ascend"]
-            >>> model0, model1 = mslite.Model.build_from_file("seq_1024.mindir", "seq_1.mindir",
-            ...                                               mslite.ModelType.MINDIR, context, "config.ini")
-        """
-        check_isinstance("rank_table_file", rank_table_file, str)
-        check_isinstance("rank_id", rank_id, int)
-        check_isinstance("device_id", device_id, int)
-        check_isinstance("provider", provider, str)
-
-        os.environ["RANK_ID"] = str(rank_id)
-        os.environ["DEVICE_ID"] = str(device_id)
-        os.environ["ASCEND_DEVICE_ID"] = str(device_id)
-        os.environ["ASCEND_BACK_POLICY"] = provider
-        os.environ["MS_ENABLE_HCCL"] = "1"
-        os.environ["RANK_TABLE_FILE"] = rank_table_file
-
-    @staticmethod
     def build_multi_models(model_path0, model_path1, model_type, context, config_path):
         """
         Used to load two models that share weights. Beta interface, which may be removed in the future.
@@ -160,7 +120,6 @@ class Model(BaseModel):
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> mslite.Model.init_distributed(rank_table_file="hccl_8p.json", rank_id=0, device_id=0)
             >>> context = mslite.Context()
             >>> context.ascend.device_id = 0
             >>> context.ascend.rank_id = 0

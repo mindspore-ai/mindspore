@@ -73,20 +73,6 @@ mindspore_lite.Model
         返回：
             list[Tensor]，模型的输入Tensor列表。
 
-    .. py:method:: init_distributed(rank_table_file, rank_id, device_id, provider="ge")
-
-        用于声明大模型的分布式信息。Beta接口，后续可能会被删除。
-
-        参数：
-            - **rank_table_file** (str) - rank table的文件路径。
-            - **rank_id** (int) - 模型的rank id。
-            - **device_id** (int) - 目标device id。
-            - **provider** (str) - 支持目标设备推理能力的provider，当前仅支持 "ge"。
-
-        异常：
-            - **TypeError** - `rank_table_file` 或 `provider` 不是str类型。
-            - **TypeError** - `rank_id` 或 `device_id` 不是int类型。
-
     .. py:method:: predict(inputs)
 
         推理模型。

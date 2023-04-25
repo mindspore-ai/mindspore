@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class SingleOpInferSession : public InferSession {
  public:
   SingleOpInferSession() = default;
   ~SingleOpInferSession() override = default;
-  Status Init(const std::shared_ptr<Context> &context) override;
+  Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;

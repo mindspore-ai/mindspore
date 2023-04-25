@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,11 @@ GraphSinkSession::~GraphSinkSession() {
   }
 }
 
-Status GraphSinkSession::GeDeviceContextInit() {
-  return lite::AscendGeExecutorPlugin::GetInstance().InitializeGeContext();
+Status GraphSinkSession::GeDeviceContextInit(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
+  return lite::AscendGeExecutorPlugin::GetInstance().InitializeGeContext(context, config_info);
 }
 
-Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
+Status GraphSinkSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "GraphSinkSession::Init";
   if (graph_executor_ == nullptr) {
     MS_LOG(ERROR) << "GraphSinkSession::Init failed, graph executor is nullptr.";
@@ -61,7 +61,7 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
     if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
       MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
       is_use_ascend_ge_ = true;
-      GeDeviceContextInit();
+      GeDeviceContextInit(context, config_info);
       break;
     }
   }

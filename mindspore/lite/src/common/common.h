@@ -20,6 +20,13 @@
 #include <string>
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 
+/*
+Naming a key of path must be consistent with existing naming styles and follow the following rules:
+(1) If a path points to a file, please name it xxx_file;
+(2) If a path points to a dir, please name it xxx_dir;
+(3) If others, please make a technical review.
+*/
+
 namespace mindspore {
 namespace lite {
 enum NCHW_SHAPE { NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
@@ -88,8 +95,8 @@ static const char *const kDumpOpsKey = "dump_ops";
 static const char *const kDumpDirKey = "dump_dir";
 // ascend context
 static const char *const kAscendContextSection = "ascend_context";
-static const char *const kProfilingPathKey = "profiling_path";
-static const char *const kDumpPathKey = "dump_path";
+static const char *const kProfilingPathKey = "profiling_config_file";
+static const char *const kDumpPathKey = "dump_config_file";
 static const char *const kDumpModelNameKey = "dump_model_name";
 static const char *const kGeVariableMemoryMaxSize = "ge_variable_memory_max_size";
 static const char *const kGeGraphMemoryMaxSize = "ge_graph_memory_max_size";
@@ -98,6 +105,8 @@ static const char *const kModifyMixList = "mixprecision_list_path";
 // ge options
 static const char *const kGeSessionOptionsSection = "ge_session_options";
 static const char *const kGeGraphOptionsSection = "ge_graph_options";
+// distributed infer
+static const char *const kRankTableFilePathKey = "rank_table_file";
 // transformer
 static const char *const kTransformerSection = "transformer_context";
 static const char *const kEncoderInputKey = "encoder_input";
