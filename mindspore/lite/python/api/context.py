@@ -209,7 +209,7 @@ class Context:
             >>> # set context with gpu target.
             >>> context.target = ["gpu"]
             >>> print(context.target)
-            ["gpu"]
+            ['gpu']
             >>> context.gpu.precision_mode = "preferred_fp16"
             >>> context.gpu.device_id = 2
             >>> print(context.gpu.rank_id)
@@ -225,7 +225,7 @@ class Context:
             >>> # set context with ascend target.
             >>> context.target = ["ascend"]
             >>> print(context.target)
-            ["ascend"]
+            ['ascend']
             >>> context.ascend.precision_mode = "enforce_fp32"
             >>> context.ascend.device_id = 2
             >>> print(context.ascend)
