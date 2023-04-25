@@ -414,9 +414,11 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
     // Clone value node for find it in grad.cc:SaveForwardTensorInfoInBpropGraph, which used by clean device address
     clone_grad_graph = BasicClone(grad_graph, true);
   }
-  auto new_make_tuple = clone_ms_func_graph->output()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(new_make_tuple);
-  clone_ms_func_graph->set_output(new_make_tuple->input(1));
+  if (added_out_v != nullptr) {
+    auto new_make_tuple = clone_ms_func_graph->output()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(new_make_tuple);
+    clone_ms_func_graph->set_output(new_make_tuple->input(1));
+  }
   if (common::AnfAlgo::IsDynamicShape(clone_ms_func_graph->output())) {
     MS_LOG(EXCEPTION)
       << "Jit does not support dynamic shape input yet, please remove the jit decorator for running pure PyNative";

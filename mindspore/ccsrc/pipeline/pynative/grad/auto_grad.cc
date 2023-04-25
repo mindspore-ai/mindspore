@@ -759,7 +759,13 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, std::vector<A
       (void)cnode_inputs->emplace_back(new_v_node);
       (void)op_args.emplace_back(v_node->value());
     } else {
-      MS_LOG(EXCEPTION) << "Get input node " << input_node->DebugString();
+      // Make a fake value
+      auto v = MakeValue(0);
+      auto new_v_node = NewValueNode(v);
+      new_v_node->set_abstract(input_node->abstract());
+      (void)cnode_inputs->emplace_back(new_v_node);
+      (void)op_args.emplace_back(v);
+      MS_LOG(DEBUG) << "Get input node " << input_node->DebugString();
     }
   }
   return op_args;
