@@ -206,8 +206,8 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_a_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_, matmul->base_.in_[FIRST_INPUT]->data_,
-                                               data_size, &is_packed);
+      data = matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_,
+                                                      matmul->base_.in_[FIRST_INPUT]->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -246,8 +246,8 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_b_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_, matmul->base_.in_[SECOND_INPUT]->data_,
-                                               data_size, &is_packed);
+      data = matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_,
+                                                      matmul->base_.in_[SECOND_INPUT]->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -659,6 +659,7 @@ KernelBase *CreateMatmulFp32Base() {
   InitMatrixInfo(&(matmul->matrix_a_));
   InitMatrixInfo(&(matmul->matrix_b_));
   InitMatrixInfo(&(matmul->matrix_c_));
+  matmul->is_sharing_pack_ = true;
   matmul->pack_opt_ = false;
   matmul->a_const_ = false;
   matmul->b_const_ = false;
