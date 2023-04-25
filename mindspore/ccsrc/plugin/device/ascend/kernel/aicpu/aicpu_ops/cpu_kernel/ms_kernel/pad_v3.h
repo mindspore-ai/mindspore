@@ -83,6 +83,21 @@ class PadV3CpuKernel : public CpuKernel {
   int64_t ReflectIndexCaculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start);
 
   template <typename T>
+  uint32_t CircularModeCompute(CpuKernelContext &ctx, int64_t p);
+
+  template <typename T>
+  void CircularCompute3D(T *input, T *output, int64_t p) const;
+
+  template <typename T>
+  void CircularCompute2D(T *input, T *output, int64_t p) const;
+
+  template <typename T>
+  void CircularCompute1D(T *input, T *output, int64_t p) const;
+
+  int64_t CircularIndexCaculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t input_value, int64_t o_start,
+                                int64_t i_start) const;
+
+  template <typename T>
   uint32_t ConstantModeCompute(CpuKernelContext &ctx, T constant_values);
 };
 }  // namespace aicpu
