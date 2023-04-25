@@ -1486,10 +1486,11 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
             Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
-            Tensor of data type: float16, float32, double, and value is between (0, 1).
+        _random_samples (Tensor, optional): The random step of fractional_max_pool2d, which is a 3D tensor.
+            Tensor of data type: float16, float32, double, and value is between [0, 1).
             Supported shape :math:`(N, C, 2)` or :math:`(1, C, 2)`.
-            Default: None.
+            Default: ``None``, the values of `_random_samples`
+            will be randomly distributed using uniform distribution over an interval [0,1).
 
     Returns:
         - **y** (Tensor) - Has the same type as the `input`.
@@ -1596,9 +1597,10 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
-            Tensor of data type: float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` .
+        _random_samples (Tensor, optional): The random step of fractional_max_pool3d, which is a 3D tensor.
+            Tensor of data type: float16, float32, double, and value is between [0, 1).
+            Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` . Default: ``None``, the values of `_random_samples`
+            will be randomly distributed using uniform distribution over an interval [0,1).
 
     Returns:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
