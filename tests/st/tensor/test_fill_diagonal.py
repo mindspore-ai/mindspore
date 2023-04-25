@@ -24,16 +24,14 @@ class Net(nn.Cell):
         return x.fill_diagonal(fill_value, wrap)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('wrap', [True, False])
-def test_tensor_baddbmm(mode, wrap):
+def test_tensor_fill_diag(mode, wrap):
     """
     Feature: tensor.fill_diagonal
     Description: Verify the result of fill_diagonal
@@ -48,4 +46,4 @@ def test_tensor_baddbmm(mode, wrap):
         expect_output = np.array([[5.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, 5.0],
                                   [0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [0.0, 5.0, 0.0]])
 
-        assert np.allclose(output.asnumpy(), expect_output)
+    assert np.allclose(output.asnumpy(), expect_output)
