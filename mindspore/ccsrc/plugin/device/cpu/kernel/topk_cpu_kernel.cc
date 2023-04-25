@@ -138,9 +138,24 @@ bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<float>(inputs, workspaces, outputs);
   } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeUInt32) {
+    LaunchKernel<uint32_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    LaunchKernel<int8_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    LaunchKernel<uint8_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    LaunchKernel<int16_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeUInt16) {
+    LaunchKernel<uint16_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    LaunchKernel<int64_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeUInt64) {
+    LaunchKernel<uint64_t>(inputs, workspaces, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, workspaces, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input must be float16 or float32 or int32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float, int or uint, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -158,9 +173,49 @@ std::vector<KernelAttr> TopKCpuKernelMod::GetOpSupport() {
                                                        .AddOutputAttr(kNumberTypeFloat32)
                                                        .AddOutputAttr(kNumberTypeInt32),
                                                      KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat64)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeFloat64)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt8)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt8)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt8)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeUInt8)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt16)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt16)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt16)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeUInt16)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
                                                        .AddInputAttr(kNumberTypeInt32)
                                                        .AddInputAttr(kNumberTypeInt32)
                                                        .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeUInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt64)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeUInt64)
                                                        .AddOutputAttr(kNumberTypeInt32)};
   return kernel_attr_list;
 }

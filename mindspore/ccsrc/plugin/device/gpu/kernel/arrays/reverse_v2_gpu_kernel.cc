@@ -119,6 +119,9 @@ bool ReverseV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, ReverseV2GpuKernelMod::ReverseV2LaunchFunc>> ReverseV2GpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &ReverseV2GpuKernelMod::LaunchKernel<bool>},
+
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
    &ReverseV2GpuKernelMod::LaunchKernel<Complex<float>>},
 
@@ -139,6 +142,12 @@ std::vector<std::pair<KernelAttr, ReverseV2GpuKernelMod::ReverseV2LaunchFunc>> R
 
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
    &ReverseV2GpuKernelMod::LaunchKernel<uint16_t>},
+
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ReverseV2GpuKernelMod::LaunchKernel<uint32_t>},
+
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ReverseV2GpuKernelMod::LaunchKernel<uint64_t>},
 
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
    &ReverseV2GpuKernelMod::LaunchKernel<int8_t>},

@@ -127,10 +127,16 @@ bool ReverseV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, ReverseV2CpuKernelMod::ReverseV2Func>> ReverseV2CpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &ReverseV2CpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
    &ReverseV2CpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
    &ReverseV2CpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ReverseV2CpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ReverseV2CpuKernelMod::LaunchKernel<uint64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
    &ReverseV2CpuKernelMod::LaunchKernel<int16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),

@@ -883,7 +883,8 @@ class Sigmoid(Primitive):
     Refer to :func:`mindspore.ops.sigmoid` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
+        - **input_x** (Tensor) - Tensor of any dimension, the data type is
+          float16, float32, float64, complex64 or complex128.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.

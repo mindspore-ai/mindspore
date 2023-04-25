@@ -25,3 +25,4 @@ mindspore.nn.Sigmoid
 
     异常：
         - **TypeError** - `input_x` 的数据类型不是float16、float32、float64、complex64或complex128。
+        - **TypeError** - `input_x` 不是Tensor。

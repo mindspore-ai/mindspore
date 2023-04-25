@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/unpack_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,5 +52,14 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Unstack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   UnpackFwdGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(
+  Unstack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  UnpackFwdGpuKernelMod, double)
+MS_REG_GPU_KERNEL_ONE(
+  Unstack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+  UnpackFwdGpuKernelMod, utils::Complex<float>)
+MS_REG_GPU_KERNEL_ONE(
+  Unstack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+  UnpackFwdGpuKernelMod, utils::Complex<double>)
 }  // namespace kernel
 }  // namespace mindspore

@@ -33,18 +33,6 @@ using SlicePtrCreatorFunc =
 
 const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {
   {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   CreateSliceKernelPtr<Complex<float>, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeComplex128),
-   CreateSliceKernelPtr<Complex<double>, int64_t>},
-  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
@@ -187,7 +175,31 @@ const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeBool),
-   CreateSliceKernelPtr<bool, int32_t>}};
+   CreateSliceKernelPtr<bool, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateSliceKernelPtr<Complex<float>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateSliceKernelPtr<Complex<float>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateSliceKernelPtr<Complex<double>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateSliceKernelPtr<Complex<double>, int64_t>}};
 }  // namespace
 
 bool SliceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

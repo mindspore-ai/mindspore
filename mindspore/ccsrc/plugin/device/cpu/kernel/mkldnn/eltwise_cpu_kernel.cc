@@ -52,11 +52,21 @@ class EltwiseCpuKernelFunc : public CpuKernelFunc {
     static std::map<string, std::vector<std::pair<KernelAttr, TypeComputeFunc>>> eltwise_func_map = {
       {kSigmoid,
        {{KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-         &EltwiseCpuKernelFunc<T>::SigmoidComplex},
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
         {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-         &EltwiseCpuKernelFunc<T>::SigmoidComplex},
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
         {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-         &EltwiseCpuKernelFunc<T>::SigmoidComplex}}}};
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+         &EltwiseCpuKernelFunc<T>::Sigmoid},
+        {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+         &EltwiseCpuKernelFunc<T>::Sigmoid}}}};
 
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto iter = eltwise_func_map.find(kernel_name_);
@@ -96,28 +106,28 @@ class EltwiseCpuKernelFunc : public CpuKernelFunc {
   using TypeComputeFunc = std::function<void(EltwiseCpuKernelFunc *, const T *input, T *output)>;
   TypeComputeFunc compute_func_{nullptr};
   size_t input_element_num_{0};
-  void SigmoidComplex(const T *input, T *output);
+  void Sigmoid(const T *input, T *output);
 };  // namespace
 
 template <typename T>
-void EltwiseCpuKernelFunc<T>::SigmoidComplex(const T *input, T *output) {
-  T one_complex{1, 0};
-  auto task = [&input, &output, &one_complex](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      output[i] = one_complex / (one_complex + exp(-input[i]));
-    }
-  };
-  ParallelLaunchAutoSearch(task, input_element_num_, this, &parallel_search_info_);
-}
-
-template <>
-void EltwiseCpuKernelFunc<double>::SigmoidComplex(const double *input, double *output) {
-  auto task = [&input, &output](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      output[i] = 1.0 / (1.0 + exp(-input[i]));
-    }
-  };
-  ParallelLaunchAutoSearch(task, input_element_num_, this, &parallel_search_info_);
+void EltwiseCpuKernelFunc<T>::Sigmoid(const T *input, T *output) {
+  if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
+    T one_complex{1, 0};
+    auto task = [&input, &output, &one_complex](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        output[i] = one_complex / (one_complex + exp(-input[i]));
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_element_num_, this, &parallel_search_info_);
+  } else {
+    T one_scalar = static_cast<double>(1);
+    auto task = [&input, &output, &one_scalar](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        output[i] = static_cast<T>(one_scalar / (one_scalar + exp(-static_cast<double>(input[i]))));
+      }
+    };
+    ParallelLaunchAutoSearch(task, input_element_num_, this, &parallel_search_info_);
+  }
 }
 
 struct DescParam {
@@ -311,8 +321,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
        SpecializeEltwiseFunc<complex64>},
       {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
        SpecializeEltwiseFunc<complex128>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       SpecializeEltwiseFunc<double>}}},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeEltwiseFunc<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeEltwiseFunc<bool>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeEltwiseFunc<int8_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeEltwiseFunc<uint8_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeEltwiseFunc<int16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeEltwiseFunc<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeEltwiseFunc<int64_t>}}},
 };
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu, []() { return std::make_shared<EltWiseCpuKernelMod>(kElu); });

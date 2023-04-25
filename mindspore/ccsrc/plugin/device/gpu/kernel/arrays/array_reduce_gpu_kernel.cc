@@ -61,6 +61,8 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)}};
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
@@ -69,6 +71,8 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
@@ -91,6 +95,8 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},

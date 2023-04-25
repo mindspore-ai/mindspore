@@ -499,6 +499,8 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
     {kRound,
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
        &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
