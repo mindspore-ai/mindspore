@@ -4483,6 +4483,13 @@ class LogicalNot(Primitive):
 
     Refer to :func:`mindspore.ops.logical_not` for more details.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+
+    Outputs:
+        Tensor, the shape is the same as the `x`, and the dtype is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4506,6 +4513,15 @@ class LogicalAnd(_LogicBinaryOp):
 
     Refer to :func:`mindspore.ops.logical_and` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type can be implicitly
+          converted to bool.
+        - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+          a tensor whose data type can be implicitly converted to bool.
+
+    Outputs:
+        Tensor, the shape is the same as the `x` and `y` after broadcasting, and the data type is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4524,6 +4540,15 @@ class LogicalOr(_LogicBinaryOp):
     Computes the "logical OR" of two tensors element-wise.
 
     Refer to :func:`mindspore.ops.logical_or` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type can be implicitly
+          converted to bool.
+        - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+          a tensor whose data type can be implicitly converted to bool.
+
+    Outputs:
+        Tensor, the shape is the same as the `x` and `y` after broadcasting, and the data type is bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4546,6 +4571,15 @@ class LogicalXor(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.logical_xor` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type can be implicitly
+          converted to bool.
+        - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+          a tensor whose data type can be implicitly converted to bool.
+
+    Outputs:
+        Tensor, the shape is the same as the `x` and `y` after broadcasting, and the data type is bool.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

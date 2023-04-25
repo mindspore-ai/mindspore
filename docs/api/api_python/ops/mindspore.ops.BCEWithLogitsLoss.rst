@@ -37,14 +37,14 @@ mindspore.ops.BCEWithLogitsLoss
             L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
         \end{array}
 
-    其中 c 是类别数目（C>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
+    其中 c 是类别数目（c>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
-        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
+        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果取值为 'none' ，则不执行 `reduction` 。默认值：'mean' 。
 
     输入：
-        - **logits** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。据类型必须为float16或float32。
+        - **logits** (Tensor) - 输入预测值，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。数据类型必须为float16或float32。
         - **label** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
         - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
         - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。

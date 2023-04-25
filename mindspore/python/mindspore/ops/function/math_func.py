@@ -7692,7 +7692,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ValueError: If any elements of `dim` is out of range.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
