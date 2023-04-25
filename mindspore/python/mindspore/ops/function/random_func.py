@@ -954,10 +954,11 @@ def rand_like(input, seed=None, *, dtype=None):
         [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
          [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
     """
-
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'rand_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = input.dtype
-    elif dtype not in mstype.float_type:
+    if dtype not in mstype.float_type:
         raise ValueError(f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
     cast_ = P.Cast()
@@ -1046,9 +1047,11 @@ def randn_like(input, seed=None, *, dtype=None):
         [[ 0.30639967 -0.42438635 -0.20454668]
          [-0.4287376   1.3054721   0.64747655]]
     """
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'randn_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = input.dtype
-    elif dtype not in mstype.float_type:
+    if dtype not in mstype.float_type:
         raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
     cast_ = P.Cast()
@@ -1100,8 +1103,10 @@ def randint(low, high, size, seed=None, *, dtype=None):
         raise ValueError(f"For 'randint', the 'dtype' must be an int type, but got {dtype}.")
     if not isinstance(size, tuple):
         raise ValueError(f"For 'randint', the input 'size' must be a tuple, but got {size}.")
-    if not isinstance(low, int) or not isinstance(high, int):
-        raise TypeError(f"For 'randint', 'low' and 'high' must be an int, but got {type(low)} and {type(high)}.")
+    if not isinstance(low, int) or isinstance(low, bool):
+        raise TypeError(f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
+    if not isinstance(high, int) or isinstance(high, bool):
+        raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     seed1, seed2 = _get_seed(seed, 'randint')
     cast_ = P.Cast()
     rand_op = P.UniformInt(seed1, seed2)
@@ -1147,12 +1152,16 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
        [[4 9 7]
         [9 1 2]]
     """
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'randint_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = input.dtype
-    elif dtype not in mstype.int_type:
+    if dtype not in mstype.int_type:
         raise ValueError(f"For 'randint_like', the 'dtype' must be an int type, but got {dtype}.")
-    if not isinstance(low, int) or not isinstance(high, int):
-        raise TypeError(f"For 'randint_like', 'low' and 'high' must be an int, but got {type(low)} and {type(high)}.")
+    if not isinstance(low, int) or isinstance(low, bool):
+        raise TypeError(f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
+    if not isinstance(high, int) or isinstance(high, bool):
+        raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     size = input.shape
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)

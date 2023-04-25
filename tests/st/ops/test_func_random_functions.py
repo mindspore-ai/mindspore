@@ -51,7 +51,7 @@ class RandIntLike(nn.Cell):
         return ops.randint_like(x, low, high, dtype=dtype)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -94,7 +94,7 @@ def test_rand_functions(mode, dtype):
     assert out4.shape == x.shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
