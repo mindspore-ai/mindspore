@@ -61,9 +61,6 @@ FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrLis
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(types),
                        [](const AbstractBasePtr &arg) -> TypePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->isa<abstract::AbstractAny>()) {
-                           return std::make_shared<External>();
-                         }
                          return arg->BuildType();
                        });
   // filter unsafe characters in log print since name_ is from outside

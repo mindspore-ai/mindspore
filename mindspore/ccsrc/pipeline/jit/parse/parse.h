@@ -276,6 +276,8 @@ class Parser {
   // Parse an ast expression node
   AnfNodePtr ParseExprNode(const FunctionBlockPtr &block, const py::object &node);
 
+  std::string GetExprStr(const AnfNodePtr &node, const py::object &ast_node);
+
   void MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
                            const FunctionBlockPtr &false_block) const;
   std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> CalRemovablePhis();

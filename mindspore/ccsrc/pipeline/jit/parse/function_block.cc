@@ -239,18 +239,24 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
 }
 
 // Resolve Ast operator node
-AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
+std::pair<AnfNodePtr, std::string> FunctionBlock::MakeResolveAstOp(const py::object &op) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   TraceGuard trace_guard(parser_.GetLocation(op));
   py::tuple namespace_var = ast->CallParseModFunction(PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL, op);
-  if (namespace_var.size() != 2) {
+  constexpr size_t namespace_size = 3;
+  if (namespace_var.size() != namespace_size) {
     MS_LOG(EXCEPTION) << "Resolve ast op failed, get namespace tuple size=" << namespace_var.size();
   }
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_AST, namespace_var[0]);
-  SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
-  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
-  return MakeResolve(name_space, symbol);
+  constexpr size_t namespace_index = 0;
+  constexpr size_t symbol_index = 1;
+  constexpr size_t op_str_index = 2;
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_AST, namespace_var[namespace_index]);
+  SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[symbol_index].cast<std::string>());
+  std::string op_str = py::str(namespace_var[op_str_index]);
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
+                << ", operation :" << op_str;
+  return std::pair<AnfNodePtr, std::string>(MakeResolve(name_space, symbol), op_str);
 }
 
 // Resolve class member, two possible: method, member variable

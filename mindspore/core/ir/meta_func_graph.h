@@ -83,6 +83,8 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
 
   void DoBreakLoop() override { cache_.clear(); }
 
+  void set_node_expr_src(const std::string &node_expr_src) { node_expr_src_ = node_expr_src; }
+
  protected:
   template <typename Derived>
   std::shared_ptr<Derived> shared_from_base() {
@@ -92,6 +94,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   std::string name_;
   std::vector<Signature> signatures_;
   TypeListMap<FuncGraphPtr> cache_;
+  std::string node_expr_src_ = "";
 
  private:
   DebugInfoPtr debug_info_{nullptr};

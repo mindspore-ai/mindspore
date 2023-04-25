@@ -948,6 +948,56 @@ class AfterOptARewriter : public BaseRewriter {
     return scalar_cast_node;
   }
 
+  AnfNodePtr ConvertMakeSlice(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    MS_LOG(DEBUG) << " make_slice node: " << cnode->DebugString();
+    constexpr size_t slice_size = 4;
+    if (cnode->size() != slice_size) {
+      MS_LOG(EXCEPTION) << "The size of input to make_slice should be " << slice_size << ", but got " << cnode->size();
+    }
+    constexpr size_t start_index = 1;
+    constexpr size_t stop_index = 2;
+    constexpr size_t step_index = 3;
+    bool is_start_none = IsValueNode<None>(cnode->input(start_index));
+    bool is_stop_none = IsValueNode<None>(cnode->input(stop_index));
+    bool is_step_none = IsValueNode<None>(cnode->input(step_index));
+    auto start_str = is_start_none ? "None" : "__start__";
+    auto stop_str = is_stop_none ? "None" : "__stop__";
+    auto step_str = is_step_none ? "None" : "__step__";
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "slice(" << start_str << ", " << stop_str << ", " << step_str << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Pack local parameters keys and values.
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    if (!is_start_none) {
+      (void)key_value_names_list.emplace_back(NewValueNode(start_str));
+      (void)key_value_list.emplace_back(cnode->input(start_index));
+    }
+    if (!is_stop_none) {
+      (void)key_value_names_list.emplace_back(NewValueNode(stop_str));
+      (void)key_value_list.emplace_back(cnode->input(stop_index));
+    }
+    if (!is_step_none) {
+      (void)key_value_names_list.emplace_back(NewValueNode(step_str));
+      (void)key_value_list.emplace_back(cnode->input(step_index));
+    }
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    // Build the new slice node.
+    const auto slice_node = fg->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    MS_LOG(DEBUG) << "Made slice node: " << slice_node->DebugString();
+    slice_node->set_debug_info(cnode->debug_info());
+    return slice_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -970,7 +1020,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
-  };
+    {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice}};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr NoneConvertPyExecute(const FuncGraphPtr &func_graph) {
@@ -1070,7 +1120,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return;
     }
-    if (AnfUtils::IsRealKernel(cnode)) {
+    if (AnfUtils::IsRealKernel(cnode) && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
       return;
     }
     const auto &inputs = cnode->inputs();

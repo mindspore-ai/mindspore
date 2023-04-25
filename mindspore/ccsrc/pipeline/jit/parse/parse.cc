@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <stack>
 #include "utils/hash_map.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
@@ -808,6 +809,15 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   }
 }
 
+std::string Parser::GetExprStr(const AnfNodePtr &node, const py::object &ast_node) {
+  auto node_type = ast_->GetNodeType(ast_node);
+  const std::string &node_name = node_type->node_name();
+  if (node_name == "Name") {
+    return py::cast<std::string>(python_adapter::GetPyObjAttr(ast_node, "id"));
+  }
+  return GetNodeExprSrc(node);
+}
+
 // Process the expr statement and expand it
 FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Expr";
@@ -998,7 +1008,9 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   }
   right_node = HandleInterpret(block, right_node, right);
   // Resolve the op
-  AnfNodePtr op_node = block->MakeResolveAstOp(op);
+  auto op_node_pair = block->MakeResolveAstOp(op);
+  auto op_node = op_node_pair.first;
+
   // Create apply node
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
@@ -1039,6 +1051,12 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
       }
     }
   }
+
+  // Generate expression script for binary operation node.
+  std::string left_str = GetExprStr(left_node, left);
+  std::string right_str = GetExprStr(right_node, right);
+  auto new_expr_src = GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
+  SetNodeExprSrc(new_node, new_expr_src);
 
   return new_node;
 }
@@ -1564,11 +1582,18 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   right_node = HandleInterpret(block, right_node, comparators[0]);
 
   MS_EXCEPTION_IF_NULL(block);
-  AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
+  auto op_node_pair = block->MakeResolveAstOp(ops[0]);
+  auto op_node = op_node_pair.first;
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
   new_node = HandleInterpret(block, new_node, node);
+
+  // Generate expression script for binary operation node.
+  std::string left_str = GetExprStr(left_node, left);
+  std::string right_str = GetExprStr(right_node, comparators[0]);
+  auto new_expr_src = GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
+  SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1733,6 +1758,15 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
   UpdateInterpretForUserNode(new_node, {value, slice});
   new_node = HandleInterpret(block, new_node, node);
+
+  // Generate expression script for binary operation node.
+  std::string value_str = GetExprStr(value, value_node);
+  std::string slice_str = GetExprStr(slice, slice_node);
+  auto slice_type = ast_->GetNodeType(slice_node);
+  std::string slice_type_name = slice_type->node_name();
+  bool is_slice = slice_type_name == "Slice";
+  auto new_expr_src = GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
+  SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1789,7 +1823,8 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   MS_EXCEPTION_IF_NULL(block);
   // Resolve the op
-  AnfNodePtr op_node = block->MakeResolveAstOp(op);
+  auto op_node_pair = block->MakeResolveAstOp(op);
+  auto op_node = op_node_pair.first;
 
   py::object operand = python_adapter::GetPyObjAttr(node, "operand");
   AnfNodePtr operand_node = ParseExprNode(block, operand);
@@ -1797,6 +1832,11 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
   MS_EXCEPTION_IF_NULL(block->func_graph());
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, operand_node});
   UpdateInterpretForUserNode(new_node, operand_node);
+
+  // Generate expression script for binary operation node.
+  std::string operand_str = GetExprStr(operand_node, operand);
+  auto new_expr_src = GeneratePyExecuteScriptForUnary(operand_str, op_node_pair.second);
+  SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1862,7 +1902,8 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   py::object op_object = python_adapter::GetPyObjAttr(node, "op");
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   AnfNodePtr target_node = nullptr;
-  AnfNodePtr op_node = block->MakeResolveAstOp(op_object);
+  auto op_node_pair = block->MakeResolveAstOp(op_object);
+  auto op_node = op_node_pair.first;
   AnfNodePtr value_node = ParseExprNode(block, value_object);
   value_node = HandleInterpret(block, value_node, value_object);
   auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, target_object)));
