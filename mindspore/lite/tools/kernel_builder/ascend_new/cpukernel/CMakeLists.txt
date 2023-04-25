@@ -1,7 +1,8 @@
 # CMake minimum version number requirements
 cmake_minimum_required(VERSION 3.5)
 project(kernel)
-set(TOOLCHAIN_DIR $ENV{TOOLCHAIN_DIR})
+#set(TOOLCHAIN_DIR $ENV{TOOLCHAIN_DIR})
+set(TOOLCHAIN_DIR "${ASCEND_HOME}/toolkit/toolchain/hcc")
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_RELEASE "-fPIC -O2 -Wall -s")
 set(CMAKE_CXX_FLAGS_DEBUG "-fPIC -O0 -g -Wall")
@@ -89,7 +90,8 @@ endif()
 
 add_custom_target(${AICPU_CONFIG_JSON_TARGET} ALL DEPENDS ${OUTPUT_FILES}
     COMMAND mkdir -p ${TF_PLUGIN_TARGET_OUT_DIR}
-    COMMAND bash ${CMAKE_SOURCE_DIR}/cmake/util/merge_aicpu_info_json.sh ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/merge_aicpu_info_json.sh
+                    ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 # =========================kernel compile============================
 macro(SUBDIRLIST current_dir)
@@ -122,7 +124,7 @@ if("x${ASCEND_OPP_PATH}" STREQUAL "x")
 endif()
 
 if(UNIX)
-    set(ASCEND_AICPU_PATH $ENV{ASCEND_AICPU_PATH})
+    set(ASCEND_AICPU_PATH $ENV{ASCEND_HOME})
     if("x${ASCEND_AICPU_PATH}" STREQUAL "x")
             message(FATAL_ERROR "ENV ASCEND_AICPU_PATH is not set")
     endif()

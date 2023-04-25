@@ -298,6 +298,8 @@ def write_json_file(tbe_ops_info, json_file_path):
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     modes = stat.S_IWUSR | stat.S_IRUSR
     json_file_real_path = os.path.realpath(json_file_path)
+    if os.path.isfile(json_file_real_path):
+        os.remove(json_file_real_path)
     with os.fdopen(os.open(json_file_real_path, flags, modes), "w") as file_path:
         # Only the owner and group have rights
         os.chmod(json_file_real_path, stat.S_IWGRP + stat.S_IWUSR + stat.S_IRGRP

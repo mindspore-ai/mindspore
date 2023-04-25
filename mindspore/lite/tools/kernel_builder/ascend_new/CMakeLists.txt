@@ -13,7 +13,9 @@ add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 message(STATUS "CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}")
 
-project(opp)
+set(ASCEND_HOME $ENV{ASCEND_HOME})
+
+project(mslite_ascend_opp)
 
 if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/cmake/config.cmake)
     include(${CMAKE_CURRENT_BINARY_DIR}/cmake/config.cmake)
@@ -23,91 +25,55 @@ else()
     endif()
 endif()
 
-execute_process(COMMAND rm -rf ./makepkg)
+execute_process(COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/makepkg)
 
 message(STATUS "OP_COMMON_INC=${OP_COMMON_INC}")
 # add sub compile directory
 # open this when aicpu env is ok
-#if(EXISTS "${CMAKE_SOURCE_DIR}/cpukernel")
+#if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpukernel")
 #    add_subdirectory(cpukernel)
 #endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/framework")
-    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/framework/mindspore")
-        add_subdirectory(framework)
-    endif()
-endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/op_proto")
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/op_proto")
     add_subdirectory(op_proto)
 endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/op_tiling")
-    add_subdirectory(op_tiling)
-endif()
-if(EXISTS "${CMAKE_SOURCE_DIR}/tbe")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tbe")
     add_subdirectory(tbe)
-endif()
-
-if(UNIX)
-    if(NOT "x$ENV{ADD_TESTCASE}" STREQUAL "x")
-      # add testcases subdirectory
-      if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/testcases")
-        add_subdirectory(testcases)
-      endif()
-    endif()
 endif()
 
 message(STATUS "operation system is ${CMAKE_HOST_SYSTEM_NAME}")
 
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/op_proto")
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/op_proto")
     set(ALL_MODULES ${OP_PROTO_TARGET})
 endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/op_tiling")
-    set(ALL_MODULES ${ALL_MODULES} ${OP_TILING_TARGET})
-endif()
-#if(EXISTS "${CMAKE_SOURCE_DIR}/cpukernel/CMakeLists.txt")
+#if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cpukernel/CMakeLists.txt")
 #    set(ALL_MODULES ${ALL_MODULES} ${AICPU_KERNEL_TARGET})
 #    set(ALL_MODULES ${ALL_MODULES} ${AICPU_CONFIG_JSON_TARGET})
 #endif()
 message(STATUS "AICPU_CONFIG_INFO_FLAG=${AICPU_CONFIG_INFO_FLAG}")
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/tbe/CMakeLists.txt")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tbe/CMakeLists.txt")
     set(ALL_MODULES ${ALL_MODULES} config_json)
-endif()
-
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/framework/caffe_plugin")
-    set(ALL_MODULES ${ALL_MODULES} ${CAFFE_PLUGIN_TARGET})
-endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/framework/tf_plugin")
-    set(ALL_MODULES ${ALL_MODULES} ${TF_PLUGIN_TARGET})
-endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/framework/tf_scope_fusion_pass")
-    set(ALL_MODULES ${ALL_MODULES} ${TF_SCOPE_FUSION_PASS_TARGET})
-endif()
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/framework/onnx_plugin")
-    set(ALL_MODULES ${ALL_MODULES} ${ONNX_PLUGIN_TARGET})
 endif()
 
 message(STATUS "ALL_MODULES=${ALL_MODULES}")
 add_custom_target(${RUN_TARGET} ALL DEPENDS ${ALL_MODULES})
+message("RUN_TARGET ${RUN_TARGET}")
 
 add_custom_command(TARGET ${RUN_TARGET}
         PRE_BUILD
-        COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/fusion_rules/
         COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/mslite_impl
         COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/vector_core/tbe/mslite_impl
         COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/cpu/aicpu_kernel/impl
-        COMMAND bash ${CMAKE_SOURCE_DIR}/cmake/util/gen_impl_and_mrege_json.sh ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
-        COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/* ./makepkg/
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/gen_impl_and_mrege_json.sh
+                        ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/scripts/* ./makepkg/
+        COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/akg/gen_custom_op_files.py
+                        ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/vendors/mslite/op_impl/ai_core/tbe/config
+                        ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/vendors/mslite/op_impl/ai_core/tbe/mslite_impl
         )
-
-if(EXISTS ${CMAKE_SOURCE_DIR}/custom.proto)
-    add_custom_command(TARGET ${RUN_TARGET}
-        PRE_BUILD
-        COMMAND cp ${CMAKE_SOURCE_DIR}/custom.proto ./makepkg/packages
-        )
-endif()
 
 add_custom_command(TARGET ${RUN_TARGET}
         PRE_BUILD
-        COMMAND chmod u+x ./makepkg/*.sh
+        COMMAND chmod u+x ${CMAKE_CURRENT_BINARY_DIR}/makepkg/*.sh
         )
 

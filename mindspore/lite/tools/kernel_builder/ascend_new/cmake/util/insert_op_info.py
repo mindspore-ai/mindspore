@@ -30,7 +30,9 @@ if __name__ == '__main__':
             print('insert op:[', k, '] success')
         all_operators[k] = insert_operator[k]
 
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-    modes = stat.S_IWUSR | stat.S_IRUSR
-    with os.fdopen(os.open(sys.argv[2], flags, modes), 'w') as json_file:
+    flag = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if os.path.exists(sys.argv[2]):
+        flag = os.O_WRONLY | os.O_EXCL
+    mode = stat.S_IWUSR | stat.S_IRUSR
+    with os.fdopen(os.open(sys.argv[2], flag, mode), 'w') as json_file:
         json_file.write(json.dumps(all_operators, indent=4))
