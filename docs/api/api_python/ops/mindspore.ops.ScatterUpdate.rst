@@ -18,7 +18,7 @@
         - **use_locking** (bool) - 表示是否使用锁来保护。默认值：True。
 
     输入：
-        - **input_x** (Parameter) - ScatterUpdate的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input_x** (Parameter) - ScatterUpdate的输入，shape：零维或 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **indices** (Tensor) - 指定更新操作的索引。数据类型为int32。如果索引中存在重复项，则更新的顺序无法得知。
         - **updates** (Tensor) - 指定与 `input_x` 更新操作的Tensor，其数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 

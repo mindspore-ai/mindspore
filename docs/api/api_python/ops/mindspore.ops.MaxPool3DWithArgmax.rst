@@ -13,6 +13,18 @@ mindspore.ops.MaxPool3DWithArgmax
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
+    输出是shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 的Tensor，其深度、高度和宽度的计算公式如下：
+
+    .. math::
+        \begin{array}{ll} \\
+            D_{out} = \frac{D_{in} + 2 \times \text{pads}[0] - \text{dilation}[0] \times (\text{ksize}[0] - 1) - 1}
+                {\text{stride}[0]} + 1 \\
+            H_{out} = \frac{H_{in} + 2 \times \text{pads}[1] - \text{dilation}[1] \times (\text{ksize}[1] - 1) - 1}
+                {\text{stride}[1]} + 1 \\
+            W_{out} = \frac{W_{in} + 2 \times \text{pads}[2] - \text{dilation}[2] \times (\text{ksize}[2] - 1) - 1}
+                {\text{stride}[2]} + 1 \\
+        \end{array}
+
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 

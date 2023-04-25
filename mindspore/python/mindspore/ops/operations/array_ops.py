@@ -1767,6 +1767,8 @@ class Ones(Primitive):
 
 class Zeros(Primitive):
     r"""
+    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
+
     Creates a tensor filled with value zeros.
 
     Creates a tensor with shape described by the first argument and
@@ -1784,7 +1786,7 @@ class Zeros(Primitive):
         TypeError: If `shape` is a tuple whose elements are not all int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> zeros = ops.Zeros()
@@ -4311,7 +4313,7 @@ class ScatterUpdate(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is 0-D or :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
           If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
