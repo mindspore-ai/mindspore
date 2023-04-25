@@ -145,6 +145,27 @@ Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
   return strategies;
 }
 
+Strategies PrepareStandAlone(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
+  size_t numDev = g_device_manager->DeviceNum();
+
+  if (numDev == 0) {
+    MS_LOG(EXCEPTION) << "The number of devices is 0";
+  }
+
+  Strategies stra;
+  Dimensions dim;
+
+  for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info().size(); i++) {
+    dim.clear();
+    for (size_t j = 0; j < ops[iter_ops]->inputs_tensor_info()[i].shape().size(); j++) {
+      dim.push_back(1);
+    }
+    stra.push_back(dim);
+  }
+
+  return stra;
+}
+
 Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
   size_t numDev = g_device_manager->DeviceNum();
 
@@ -1794,6 +1815,25 @@ void RecStrategyPropagator::AjustToNoTraining() {
       }
     }
   }
+}
+
+size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
+  size_t changes = 0;
+  for (auto iter_ops = 0; iter_ops < ops_.size(); iter_ops++) {
+    auto pos = ops_[iter_ops]->name().find("Info");
+    auto name = ops_[iter_ops]->name().substr(0, pos);
+    if (name == STAND_ALONE) {
+      Strategies stra = PrepareDataParallel(ops_, iter_ops);
+      ApplyStrategy(iter_ops, stra);
+      changes++;
+    }
+    if (name == BATCH_PARALLEL) {
+      Strategies stra = PrepareStandAlone(ops_, iter_ops);
+      ApplyStrategy(iter_ops, stra);
+      changes++;
+    }
+  }
+  return changes;
 }
 
 void RecStrategyPropagator::GenerateStrategyV3() {

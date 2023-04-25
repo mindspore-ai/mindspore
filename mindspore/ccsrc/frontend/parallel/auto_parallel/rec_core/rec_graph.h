@@ -28,6 +28,8 @@
 namespace mindspore {
 namespace parallel {
 enum OperatorType {
+  kRecStandAlone,
+  kRecBatchParallel,
   kRecUnknownType,
   kRecMatMul,
   kRecConvolution,
