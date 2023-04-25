@@ -320,12 +320,12 @@ def qr(input, mode='reduced'):
     return qr_(input)
 
 
-def _narrow(input, axis, start, length):
-    begins = [0] * input.ndim
+def _narrow(x, axis, start, length):
+    begins = [0] * x.ndim
     begins[axis] = start
-    sizes = list(input.shape)
+    sizes = list(x.shape)
     sizes[axis] = length
-    return P.Slice()(input, begins, sizes)
+    return P.Slice()(x, begins, sizes)
 
 
 def _nd_transpose(a):
