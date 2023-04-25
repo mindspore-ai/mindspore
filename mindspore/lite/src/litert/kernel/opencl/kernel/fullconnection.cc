@@ -208,7 +208,8 @@ int FullConnectionOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
   int co4 = UP_DIV(CO_, C4NUM);
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  size_t im_dst_x, im_dst_y;
+  size_t im_dst_x;
+  size_t im_dst_y;
   im_dst_x = co4;
   im_dst_y = 1;
   size_t img_dtype = CL_FLOAT;
@@ -311,7 +312,8 @@ int FullConnectionOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
   int co4 = UP_DIV(CO_, C4NUM);
   size_t dtype_size = sizeof(float);
-  size_t im_dst_x, im_dst_y;
+  size_t im_dst_x;
+  size_t im_dst_y;
   im_dst_x = co4;
   im_dst_y = 1;
   size_t img_dtype = CL_FLOAT;
