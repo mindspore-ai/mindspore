@@ -259,7 +259,6 @@ bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstC
 void PyNativeExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
   forward_executor_->WorkerJoin();
-  grad_executor_->WorkerJoin();
 }
 
 void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const {

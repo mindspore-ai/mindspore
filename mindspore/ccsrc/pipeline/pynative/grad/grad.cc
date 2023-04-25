@@ -487,6 +487,8 @@ void GradExecutor::Init() {
   MS_LOG(DEBUG) << "Do windows bprop expander register";
 #endif
   init_ = true;
+  MS_EXCEPTION_IF_NULL(async_executor_);
+  async_executor_->Init();
 }
 
 TopCellInfoPtr GradExecutor::PopHighOrderGraphStack() {
@@ -828,8 +830,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
 
 void GradExecutor::AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   const auto fn = [this, input_args_info]() { this->EndGraphImpl(input_args_info); };
-  auto task = std::make_shared<BpropTask>(fn);
-  async_executor_->Push(task);
+  async_executor_->Push(new (std::nothrow) BpropTask(fn));
 }
 
 void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) {
@@ -999,7 +1000,10 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     // If no need compile, we can clear construct bprop queue.
     {
       py::gil_scoped_release gil_release;
-      async_executor_->Clear();
+      // cppcheck-suppress unreadVariable
+      auto async_top_cell = top_cell_;  // Hold a reference for top cell
+      auto fn = [async_top_cell]() mutable { async_top_cell = nullptr; };
+      async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
     }
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
@@ -1704,9 +1708,8 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
 }
 
 void GradExecutor::AsyncProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const {
-  const auto fn = [this, op_run_info]() { this->ProcessOpGradInfo(op_run_info); };
-  auto task = std::make_shared<BpropTask>(fn);
-  async_executor_->Push(task);
+  auto fn = [this, op_run_info]() { this->ProcessOpGradInfo(op_run_info); };
+  async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
 }
 
 void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
@@ -1807,18 +1810,16 @@ void GradExecutor::GradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad
 
 void GradExecutor::AsyncGradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
                                        const autograd::GradParamPtr &grad_param) const {
-  const auto fn = [this, auto_grad_cell_ptr, grad_param]() { this->GradPynativeOp(auto_grad_cell_ptr, grad_param); };
-  auto task = std::make_shared<BpropTask>(fn);
-  async_executor_->Push(task);
+  auto fn = [this, auto_grad_cell_ptr, grad_param]() { this->GradPynativeOp(auto_grad_cell_ptr, grad_param); };
+  async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
 }
 
 void GradExecutor::AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &cloned_value) const {
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-  const auto fn = [auto_grad_cell_ptr, output_node, cloned_value]() {
+  auto fn = [auto_grad_cell_ptr, output_node, cloned_value]() {
     auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(output_node, cloned_value);
   };
-  auto task = std::make_shared<BpropTask>(fn);
-  async_executor_->Push(task);
+  async_executor_->Push(new (std::nothrow) BpropTask(std::move(fn)));
 }
 
 void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {

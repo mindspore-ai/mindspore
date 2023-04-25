@@ -407,8 +407,7 @@ void MsFunction::AsyncKPynativeWithFProp(const GradExecutor *grad_executor,
       MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode";
     }
   };
-  auto task = std::make_shared<BpropTask>(fn);
-  grad_executor->async_executor()->Push(task);
+  grad_executor->async_executor()->Push(new (std::nothrow) BpropTask(fn));
 }
 
 void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,

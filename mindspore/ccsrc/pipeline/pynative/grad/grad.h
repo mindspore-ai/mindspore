@@ -54,7 +54,7 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         ms_function_(std::make_shared<MsFunction>()),
-        async_executor_(std::make_shared<AsyncQueue>()) {}
+        async_executor_(std::make_shared<AsyncHqueue>()) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -93,7 +93,7 @@ class GradExecutor {
   inline bool eliminate_forward() const { return eliminate_forward_; }
   inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline std::shared_ptr<AsyncQueue> async_executor() const { return async_executor_; }
+  inline AsyncHqueuePtr async_executor() const { return async_executor_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                     const py::object &grad_position, const py::args &args);
@@ -110,7 +110,6 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
   void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::TensorPtr &old_tensor) const;
   void ClearRes();
-  void WorkerJoin() { async_executor_->WorkerJoin(); }
   void CheckGraphDynamic(const AnfNodePtr &anf_node, bool is_ms_function_node = false,
                          const std::string &graph_phase = "") const;
   void SaveDynamicInputsCells(const py::object &cell);
@@ -243,7 +242,7 @@ class GradExecutor {
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
   MsFunctionPtr ms_function_;
-  std::shared_ptr<AsyncQueue> async_executor_;
+  AsyncHqueuePtr async_executor_;
   mutable CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
   std::set<std::string> dynamic_inputs_cells_;
   bool forward_use_dynamic_shape_process_{false};
