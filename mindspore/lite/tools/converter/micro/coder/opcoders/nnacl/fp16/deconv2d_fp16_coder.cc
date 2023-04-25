@@ -134,8 +134,6 @@ int DeConvolutionFP16Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", packed_input_str, "0", pack_input_size_);
   code.CodeFunction("memset", packed_output_str, "0", pack_output_size_);
   code.CodeFunction("memset", tmp_buffer_str, "0", tmp_buffer_size_);
-  code.CodeStruct("conv_parameter", *conv_param_);
-  code.CodeStruct("matmul_parameter", matmul_param_);
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     int plan_stride = UP_DIV(matmul_param_.row_16_ / C16NUM, 1) * C16NUM;
@@ -175,6 +173,7 @@ int DeConvolutionFP16Coder::DoCode(CoderContext *const context) {
       output_ptr_ =
         allocator_->GetRuntimeAddr(output_tensor_) + " + " +
         std::to_string(batch_index * output_plane_ * conv_param_->output_channel_ + kDefaultTaskId * oc_stride);
+      code.CodeStruct("conv_parameter", *conv_param_);
       code.CodeFunction("DeConvPostFp16", tmp_buf_str, tmp_out_str, tmp_bias_str, output_ptr_, cur_res,
                         "&conv_parameter");
     }

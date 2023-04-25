@@ -43,13 +43,13 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
   nnacl::NNaclFp32Serializer code;
   code.CodeArray("input_shape", input_tensor_->shape().data(), input_tensor_->shape().size(), true);
   code.CodeArray("output_shape", output_tensor_->shape().data(), output_tensor_->shape().size(), true);
-  auto x_weights_fp16 = reinterpret_cast<float16 *>(malloc(sizeof(float16) * x_weight_len_));
-  MS_CHECK_RET_CODE_WITH_EXE(x_weights_fp16 != nullptr, "x_weights_fp16 malloc data failed!", free(x_weights_fp16));
+  float16 *x_weights_fp16 = reinterpret_cast<float16 *>(malloc(DataTypeLen() * x_weight_len_));
+  MS_CHECK_PTR_WITH_EXE(x_weights_fp16, free(x_weights_fp16));
   for (size_t i = 0; i < x_weight_len_; i++) {
     x_weights_fp16[i] = float16(x_weights_[i]);
   }
-  auto y_weights_fp16 = reinterpret_cast<float16 *>(malloc(sizeof(float16) * y_weight_len_));
-  MS_CHECK_RET_CODE_WITH_EXE(y_weights_fp16 != nullptr, "y_weights_fp16 malloc data failed!", free(y_weights_fp16));
+  float16 *y_weights_fp16 = reinterpret_cast<float16 *>(malloc(DataTypeLen() * y_weight_len_));
+  MS_CHECK_PTR_WITH_EXE(y_weights_fp16, free(y_weights_fp16));
   for (size_t i = 0; i < y_weight_len_; i++) {
     y_weights_fp16[i] = float16(y_weights_[i]);
   }
@@ -60,6 +60,18 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
 
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
+      auto ret = memset_s(coordinate_.y_bottoms_, y_len_ * sizeof(int), 0, y_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(coordinate_.y_tops_, y_len_ * sizeof(int), 0, y_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(coordinate_.x_lefts_, x_len_ * sizeof(int), 0, x_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(coordinate_.x_rights_, x_len_ * sizeof(int), 0, x_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(y_weights_fp16, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(x_weights_fp16, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
       code.CodeArray("y_bottoms", coordinate_.y_bottoms_, y_len_, true);
       code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
       code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
@@ -84,6 +96,14 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
       break;
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
+      auto ret = memset_s(coordinate_.y_tops_, y_len_ * sizeof(int), 0, y_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(coordinate_.x_lefts_, x_len_ * sizeof(int), 0, x_len_ * sizeof(int));
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(y_weights_fp16, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
+      ret = memset_s(x_weights_fp16, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
+      MS_CHECK_RET_CODE(ret, "memset_s failed");
       code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
       code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
       code.CodeArray("y_weights", y_weights_fp16, y_weight_len_, true);
