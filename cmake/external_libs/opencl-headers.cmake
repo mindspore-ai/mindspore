@@ -19,7 +19,7 @@ if(ENABLE_GITEE_EULER)
     file(MAKE_DIRECTORY "${OPENCL_HEADER_SRC}")
     execute_process(COMMAND tar -xf ${OPENCL_CLHPP_SRC}/v2020.12.18.tar.gz --strip-components 1 -C ${OPENCL_HEADER_SRC})
 elseif(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/OpenCL-Headers/repository/archive/v2020.12.18.tar.gz")
+    set(REQ_URL "https://gitee.com/mirrors/OpenCL-Headers/repository/archive/v2020.12.18.tar.gz")# VER v2020.12.18
     set(SHA256 "076251b94284b931399ee525527bc9aef3f5f6f3f3b1964ae485218cc88956ba")
     __download_pkg(OpenCL-Headers ${REQ_URL} ${SHA256})
 else()
