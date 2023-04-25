@@ -18,7 +18,7 @@ from typing import Optional, Union, Tuple, Any
 import os
 import sys
 import ast
-import importlib
+import importlib.util
 import types
 import time
 import astunparse
@@ -1355,12 +1355,15 @@ class SymbolTree(Observer, Observable):
 
         i = 0
         while not tmp_module:
-            try:
-                tmp_module = importlib.import_module(tmp_module_name)
-            except ModuleNotFoundError:
+            spec = importlib.util.spec_from_file_location(tmp_module_name, network_file)
+            if spec:
+                tmp_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(tmp_module)
+            else:
+                logger.warning(f"load module {tmp_module_name} failed, retrying.")
                 if i > 10:
                     break
-                time.sleep(0.1)
+                time.sleep(0.5)
                 i += 1
         if not tmp_module:
             logger.error(f"load module {tmp_module_name} failed.")
