@@ -24,5 +24,5 @@ mindspore.ops.adaptive_max_pool1d
         - **TypeError** - 如果 `input` 的数据类型不是float16或者float32。
         - **ValueError** - 如果 `output_size` 小于1。
         - **ValueError** - 如果 `input` 的维度不等于3。
-        - **ValueError** - 如果 `input` 的最后一维尺寸小于等于 `output_size` 。
+        - **ValueError** - 如果 `input` 的最后一维尺寸小于 `output_size` 。
         - **ValueError** - 如果 `input` 的最后一维尺寸不能被 `output_size` 整除。

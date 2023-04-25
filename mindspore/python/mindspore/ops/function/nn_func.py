@@ -613,20 +613,10 @@ def adaptive_max_pool1d(input, output_size):
 
     expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
-
-    width = x_in_shape[2]
-    stride = width // output_size
-    kernel_size = width - (output_size - 1) * stride
-
-    stride = (1, stride)
-    kernel_size = (1, kernel_size)
-
-    max_pool_ = _get_cache_prim(P.MaxPool)(kernel_size=kernel_size, strides=stride)
     input = expand_(input, 2)
-    input = max_pool_(input)
-    input = squeeze_(input)
-
-    return input
+    output = adaptive_avg_pool2d(input, (1, output_size))
+    output = squeeze_(output)
+    return output
 
 
 @constexpr
