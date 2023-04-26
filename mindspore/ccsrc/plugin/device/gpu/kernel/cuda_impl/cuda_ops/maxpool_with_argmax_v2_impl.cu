@@ -33,14 +33,18 @@ __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const i
     int start_w = pos_w * stridesW - padsW;
     const int end_h = min(start_h + (ksizeH - 1) * dilationH + 1, inputH);
     const int end_w = min(start_w + (ksizeW - 1) * dilationW + 1, inputW);
-    start_h = max(start_h, 0);
-    start_w = max(start_w, 0);
+    if (start_h < 0) {
+      start_h += ceil(-start_h / static_cast<double>(dilationH)) * dilationH;
+    }
+    if (start_w < 0) {
+      start_w += ceil(-start_w / static_cast<double>(dilationW)) * dilationW;
+    }
     S input_start = pos_n * inputC * inputH * inputW;
     S stride = pos_c * inputH * inputW;
     S max_idx = stride + start_h * inputW + start_w;
     T max_data = input[input_start + max_idx];
-    for (int cur_h = start_h; cur_h < end_h; cur_h++) {
-      for (int cur_w = start_w; cur_w < end_w; cur_w++) {
+    for (int cur_h = start_h; cur_h < end_h; cur_h += dilationH) {
+      for (int cur_w = start_w; cur_w < end_w; cur_w += dilationW) {
         S input_idx = stride + cur_h * inputW + cur_w;
         T input_data = input[input_start + input_idx];
         if (input_data > max_data) {
