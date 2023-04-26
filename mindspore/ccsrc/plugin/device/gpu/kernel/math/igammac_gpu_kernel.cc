@@ -74,10 +74,6 @@ int IgammacGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   std::vector<int64_t> a_shape = inputs.at(kIndex0)->GetShapeVector();
   std::vector<int64_t> x_shape = inputs.at(kIndex1)->GetShapeVector();
   std::vector<int64_t> out_shape = outputs.at(kIndex0)->GetShapeVector();
-  if (a_shape.empty() || x_shape.empty()) {
-    MS_LOG(ERROR) << "input cannot be empty";
-    return KRET_RESIZE_FAILED;
-  }
   input_shapes.emplace_back(a_shape);
   input_shapes.emplace_back(x_shape);
   output_shapes.emplace_back(out_shape);
