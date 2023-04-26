@@ -38,47 +38,49 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
   ~ConvolutionWinogradFP32Coder() override = default;
 
  private:
-  int InitParameter();
-
   int InitWeightBiasOffline();
 
   int InitWeightBiasOnline();
 
-  void InitCodeOnline(CoderContext *const context);
+ protected:
+  int InitParameter();
 
-  int ConfigInputOutput();
+  virtual void InitCodeOnline(CoderContext *const context);
 
-  int InitTmpBuffer();
+  virtual void CollectFilesForFunc(CoderContext *const context);
 
-  int ReSize();
+  virtual int ConfigInputOutput();
 
-  std::string GetInputTransFunc(int input_unit);
+  virtual int InitTmpBuffer();
 
-  std::string GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
+  virtual std::string GetInputTransFunc(int input_unit);
+
+  virtual std::string GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
 
   size_t trans_weight_size_{0};
-  float *trans_weight_{nullptr};
+  void *trans_weight_{nullptr};
   size_t packed_bias_size_{0};
-  float *new_bias_{nullptr};
-
+  void *new_bias_{nullptr};
   int kernel_unit_{0};
   int input_unit_{0};
   int output_unit_{0};
-
+  int col_tile_{C8NUM};
+  int row_tile_{C12NUM};
   size_t tmp_data_size_{0};
   size_t tile_buffer_size_{0};
   size_t gemm_out_size_{0};
   size_t col_buffer_size_{0};
-
-  float *tmp_data_{nullptr};
-  float *trans_input_{nullptr};
-  float *gemm_out_{nullptr};
-  float *col_buffer_{nullptr};
-
-  TransFuncStr trans_func_str_;
+  void *tmp_data_{nullptr};
+  void *trans_input_{nullptr};
+  void *gemm_out_{nullptr};
+  void *col_buffer_{nullptr};
   TypeId data_type_{kNumberTypeFloat32};
   std::vector<float> matrix_g_;
   std::vector<float> matrix_gt_;
+  bool is_weight_online_{false};
+
+ private:
+  TransFuncStr trans_func_str_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONVOLUTION_WINOGRAD_FP32_CODER_H_

@@ -205,6 +205,13 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const CustomGruPar
                         op_param.input_size, op_param.hidden_size);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SlidingWindowParam &param) {
+  CodeBaseStruct<false>("SlidingWindowParam", name, param.left_, param.right_, param.top_, param.bottom_,
+                        param.c_block_, param.block_channel_, param.ic_align_, param.out_step_, param.out_h_step_,
+                        param.out_c_step_, param.out_w_step_, param.out_block_step_, param.in_step_, param.in_h_step_,
+                        param.in_sh_step_, param.in_sw_step_, param.in_kh_step_, param.in_kw_step_, param.kernel_step_);
+}
+
 void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
   std::vector<std::string> tensor_names;
   int size = tensor.size();

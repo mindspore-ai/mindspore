@@ -25,7 +25,9 @@ class ConvolutionDepthwiseFP16Coder final : public ConvolutionDepthwiseFP32Coder
  public:
   ConvolutionDepthwiseFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                 const LiteGraph::Node *node, size_t node_index, Target target)
-      : ConvolutionDepthwiseFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+      : ConvolutionDepthwiseFP32Coder(in_tensors, out_tensors, node, node_index, target) {
+    is_weight_online_ = true;
+  }
 
   ~ConvolutionDepthwiseFP16Coder() override = default;
 
@@ -36,7 +38,6 @@ class ConvolutionDepthwiseFP16Coder final : public ConvolutionDepthwiseFP32Coder
  private:
   void InitCodeOnline(CoderContext *const context) override;
   void CollectFilesForFunc(CoderContext *const context) override;
-  bool is_weight_online_{true};
   TypeId data_type_{kNumberTypeFloat16};
 };
 }  // namespace mindspore::lite::micro::nnacl

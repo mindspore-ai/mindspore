@@ -36,6 +36,8 @@ class ConvDelegateFP16Coder : public ConvDelegateCoder {
   std::unique_ptr<OperatorCoder> conv_coder_ = nullptr;
 };
 
+int SelectOutUnit(const ConvParameter *conv_param);
+
 std::unique_ptr<OperatorCoder> CPUConvolutionFP16CoderSelect(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
                                                              const LiteGraph::Node *node, size_t node_index,
