@@ -50,6 +50,8 @@ class SingleOpInferSession : public InferSession {
   Status BuildCustomAscendKernel(const CNodePtr &node);
   Status InitInputOutputInfos(const FuncGraphPtr &graph);
   void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
+  Status InitInputOutputData(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
+
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
