@@ -508,6 +508,7 @@ constexpr auto kListGreaterThan = "list_greater_than";
 constexpr auto kListGreaterEqual = "list_greater_equal";
 
 constexpr auto kCond = "Cond";
+constexpr auto kPackFunc = "PackFunc";
 
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
@@ -1861,6 +1862,9 @@ GVAR_DEF(PrimitivePtr, kPrimAngleAtomEnergy, std::make_shared<Primitive>("AngleA
 
 // Framework ops
 GVAR_DEF(PrimitivePtr, kPrimTileSize, std::make_shared<Primitive>("TileSize"));
+
+// Pack
+GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFunc));
 
 class DoSignaturePrimitive : public Primitive {
  public:

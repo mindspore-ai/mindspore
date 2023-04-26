@@ -18,18 +18,14 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
-#include "ops/base_operator.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/expander/pack/pack_expander.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/core/ops/packfunc.h"
 
 namespace mindspore {
 namespace expander {
-#define REGISTER_PRIMITIVE_OP_CPP_INFER_IMPL(name, primitive, OP_INFER_ClASS, is_impl_infer_value) \
-  const auto helper_op_infer_##name = abstract::RegisterStandardPrimitiveEvalHelper(               \
-    abstract::GetPrimitiveInferMapPtr(), primitive, std::make_shared<OP_INFER_ClASS>(), is_impl_infer_value);
-
 using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
                                         abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
@@ -89,8 +85,8 @@ class PackFuncInfer : public abstract::OpInferBase {
     return graph->output()->abstract();
   }
 };
-
-inline const PrimitivePtr kPrimPackFunc = std::make_shared<Primitive>(kPackFunc);
-REGISTER_PRIMITIVE_OP_CPP_INFER_IMPL(PackFunc, kPrimPackFunc, PackFuncInfer, false);
 }  // namespace expander
+namespace ops {
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PackFunc, prim::kPrimPackFunc, expander::PackFuncInfer, false);
+}  // namespace ops
 }  // namespace mindspore

@@ -52,12 +52,12 @@ class PackExpander {
   FuncGraphPtr EndGraph(const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
-  py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
 
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;
   AnfNodePtr ConvertInput(const py::object &arg) const;
-  void CNodeInfer(const CNodePtr &cnode) const;
+  AnfNodePtr CNodeInfer(const CNodePtr &cnode) const;
+  py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
 
   FuncGraphPtr graph_{nullptr};
 };

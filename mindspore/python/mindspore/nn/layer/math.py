@@ -350,8 +350,9 @@ class DiGamma(Cell):
             num = 0
             denom = k_base_lanczos_coeff
             for i in range(8):
-                num = num - k_lanczos_coefficients[i] / ((z + i + 1) * (z + i + 1))
-                denom = denom + k_lanczos_coefficients[i] / (z + i + 1)
+                j = z + i + 1
+                num = num - k_lanczos_coefficients[i] / (j * j)
+                denom = denom + k_lanczos_coefficients[i] / j
             return num, denom
 
         num, denom = _calculate_num_denom(z, self.k_base_lanczos_coeff, self.k_lanczos_coefficients)
