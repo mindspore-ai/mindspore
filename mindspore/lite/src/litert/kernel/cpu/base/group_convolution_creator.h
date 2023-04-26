@@ -22,10 +22,12 @@
 #include "src/litert/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "src/litert/tensor_category.h"
+#include "include/api/allocator.h"
 
 namespace mindspore::kernel {
 struct TensorInfo {
   std::vector<int> shape_;
+  AllocatorPtr allocator_;
   mindspore::Format format_;
   TypeId data_type_;
   lite::Category tensor_type_;
@@ -35,8 +37,9 @@ struct TensorInfo {
 class GroupConvCreator {
  public:
   GroupConvCreator(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs, OpParameter *op_parameter,
-                   bool is_quant, TypeId data_type)
-      : origin_inputs_(std::move(inputs)),
+                   bool is_quant, TypeId data_type, const lite::InnerContext *ctx)
+      : ms_context_(ctx),
+        origin_inputs_(std::move(inputs)),
         origin_outputs_(std::move(outputs)),
         is_quant_(is_quant),
         data_type_(data_type) {
@@ -64,6 +67,7 @@ class GroupConvCreator {
   int NewOutputTensor(std::vector<lite::Tensor *> *tensors, const lite::Tensor *output) const;
 
  private:
+  const lite::InnerContext *ms_context_ = nullptr;
   std::vector<lite::Tensor *> origin_inputs_;
   std::vector<lite::Tensor *> origin_outputs_;
   std::vector<kernel::LiteKernel *> group_convs_;
