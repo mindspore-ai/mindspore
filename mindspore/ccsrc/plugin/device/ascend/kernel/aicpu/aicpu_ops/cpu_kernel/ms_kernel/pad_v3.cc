@@ -34,11 +34,14 @@ constexpr int64_t kInput5D = 5;
 constexpr int64_t kPadding1D = 2;
 constexpr int64_t kPadding2D = 4;
 constexpr int64_t kPadding3D = 6;
+constexpr int64_t kNum0 = 0;
+constexpr int64_t kNum1 = 1;
 constexpr int64_t kNum2 = 2;
 constexpr int64_t kNum3 = 3;
 constexpr int64_t kNum4 = 4;
+constexpr int64_t kNum5 = 5;
 
-const std::vector<std::string> mode_list = {"constant", "reflect", "edge"};
+const std::vector<std::string> mode_list = {"constant", "reflect", "edge", "circular"};
 using float16 = Eigen::half;
 
 #define PAD_V3_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
@@ -308,6 +311,114 @@ uint32_t PadV3CpuKernel::ReflectModeCompute(CpuKernelContext &ctx, int64_t p) {
 }
 
 template <typename T>
+void PadV3CpuKernel::CircularCompute1D(T *input, T *output, int64_t p) const {
+  int64_t nplane = 0;
+  int64_t input_w = input_shape[kNum2];
+  int64_t output_w = output_shape.end()[-1];
+  int64_t pad_l = paddings[kNum0];
+  int64_t pad_r = paddings[kNum1];
+  int64_t i_start_x = std::max(int64_t(0), -pad_l);
+  int64_t o_start_x = std::max(int64_t(0), pad_l);
+  for (int64_t j = 0; j < output_w; ++j) {
+    auto ip_x = CircularIndexCaculate(pad_l, pad_r, j, input_w, o_start_x, i_start_x);
+    T *dest_p = output + p * output_w * (nplane + 1) + j;
+    T *src_p = input + p * input_w * (nplane + 1) + ip_x;
+    *dest_p = *src_p;
+  }
+}
+
+template <typename T>
+void PadV3CpuKernel::CircularCompute2D(T *input, T *output, int64_t p) const {
+  int64_t pad_l = paddings[kNum0];
+  int64_t pad_r = paddings[kNum1];
+  int64_t pad_t = paddings[kNum2];
+  int64_t pad_d = paddings[kNum3];
+  int64_t nplane = 0;
+  int64_t input_h = input_shape[kNum2];
+  int64_t input_w = input_shape[kNum3];
+  int64_t output_h = input_h + pad_t + paddings[kNum3];
+  int64_t output_w = input_w + pad_l + paddings[kNum1];
+  int64_t i_start_x = std::max(int64_t(0), -pad_l);
+  int64_t i_start_y = std::max(int64_t(0), -pad_t);
+  int64_t o_start_x = std::max(int64_t(0), pad_l);
+  int64_t o_start_y = std::max(int64_t(0), pad_t);
+  for (int64_t i = 0; i < output_h; ++i) {
+    for (int64_t j = 0; j < output_w; ++j) {
+      auto ip_x = CircularIndexCaculate(pad_l, pad_r, j, input_w, o_start_x, i_start_x);
+      auto ip_y = CircularIndexCaculate(pad_t, pad_d, i, input_h, o_start_y, i_start_y);
+      T *dest_p = output + p * output_w * output_h * (nplane + 1) + i * output_w + j;
+      T *src_p = input + p * input_w * input_h * (nplane + 1) + ip_y * input_w + ip_x;
+      *dest_p = *src_p;
+    }
+  }
+}
+
+template <typename T>
+void PadV3CpuKernel::CircularCompute3D(T *input, T *output, int64_t p) const {
+  int64_t pad_l = paddings[kNum0];
+  int64_t pad_r = paddings[kNum1];
+  int64_t pad_t = paddings[kNum2];
+  int64_t pad_d = paddings[kNum3];
+  int64_t pad_f = paddings[kNum4];
+  int64_t pad_b = paddings[kNum5];
+  int64_t nplane = 0;
+  int64_t input_d = input_shape[kNum2];
+  int64_t input_h = input_shape[kNum3];
+  int64_t input_w = input_shape[kNum4];
+  int64_t output_d = output_shape[kNum2];
+  int64_t output_h = output_shape[kNum3];
+  int64_t output_w = output_shape[kNum4];
+  int64_t i_start_x = std::max(int64_t(0), -pad_l);
+  int64_t i_start_y = std::max(int64_t(0), -pad_t);
+  int64_t i_start_z = std::max(int64_t(0), -pad_f);
+  int64_t o_start_x = std::max(int64_t(0), pad_l);
+  int64_t o_start_y = std::max(int64_t(0), pad_t);
+  int64_t o_start_z = std::max(int64_t(0), pad_f);
+  for (int64_t k = 0; k < output_d; ++k) {
+    for (int64_t j = 0; j < output_h; ++j) {
+      for (int64_t i = 0; i < output_w; ++i) {
+        auto ip_x = CircularIndexCaculate(pad_l, pad_r, i, input_w, o_start_x, i_start_x);
+        auto ip_y = CircularIndexCaculate(pad_t, pad_d, j, input_h, o_start_y, i_start_y);
+        auto ip_z = CircularIndexCaculate(pad_f, pad_b, k, input_d, o_start_z, i_start_z);
+        T *dest_p =
+          output + p * output_w * output_h * output_d * (nplane + 1) + k * output_w * output_h + j * output_w + i;
+        T *src_p =
+          input + p * input_w * input_h * input_d * (nplane + 1) + ip_z * input_w * input_h + ip_y * input_w + ip_x;
+        *dest_p = *src_p;
+      }
+    }
+  }
+}
+
+int64_t PadV3CpuKernel::CircularIndexCaculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t input_value,
+                                              int64_t o_start, int64_t i_start) const {
+  int64_t ip = 0;
+  if (now < pad_value) {
+    ip = input_value + now + std::min(int64_t(0), pad_end);
+  } else if (now >= pad_value && now < input_value + pad_value) {
+    ip = now;
+  } else {
+    ip = now - input_value - std::min(int64_t(0), pad_value);
+  }
+  ip = ip - o_start + i_start;
+  return ip;
+}
+
+template <typename T>
+uint32_t PadV3CpuKernel::CircularModeCompute(CpuKernelContext &ctx, int64_t p) {
+  auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
+  auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
+  if (paddings_num == kPadding1D) {
+    CircularCompute1D<T>(input, output, p);
+  } else if (paddings_num == kPadding2D) {
+    CircularCompute2D<T>(input, output, p);
+  } else if (paddings_num == kPadding3D) {
+    CircularCompute3D<T>(input, output, p);
+  }
+  return KERNEL_STATUS_OK;
+}
+
+template <typename T>
 uint32_t PadV3CpuKernel::ConstantModeCompute(CpuKernelContext &ctx, T constant_values) {
   auto input_ptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_ptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -439,6 +550,23 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
                           "PadV3 Compute failed.");
     } else {
       shard_padv3_edge(0, data_num);
+    }
+  } else if (mode == "circular") {
+    auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
+      for (int p = start; p < end; p++) {
+        CircularModeCompute<T>(ctx, p);
+      }
+    };
+    const int64_t data_num = parallelSliceNum;
+    const bool enable_parallel = data_num > kParallelNum;
+    if (enable_parallel) {
+      const int64_t max_core_num =
+        std::max(static_cast<int64_t>(kMinCoreNum), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx)));
+      const int64_t per_unit_size = data_num / std::min(data_num, max_core_num);
+      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_unit_size, shard_padv3_reflcet),
+                          "PadV3 Compute failed.");
+    } else {
+      shard_padv3_reflcet(0, data_num);
     }
   }
   return KERNEL_STATUS_OK;
