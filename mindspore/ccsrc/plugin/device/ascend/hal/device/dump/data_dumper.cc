@@ -295,6 +295,11 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     MS_LOG(INFO) << "Skip dump output";
     return;
   }
+  if ((!DumpJsonParser::GetInstance().OutputNeedDump() &&
+       DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope()))) {
+    MS_LOG(INFO) << "For kernel: " << kernel->fullname_with_scope()
+                 << ", although is is not in need_dump output kernels, it is input of hccl kernel, so dump its output.";
+  }
   if (HasAbstractMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node output:" << kernel->fullname_with_scope();
     return;
@@ -330,6 +335,10 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
 }
 
 void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
+  if (!DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
+    MS_LOG(INFO) << "Not need dump input for kernel: " << kernel->fullname_with_scope();
+    return;
+  }
   if (!DumpJsonParser::GetInstance().InputNeedDump()) {
     MS_LOG(INFO) << "Skip dump input";
     return;

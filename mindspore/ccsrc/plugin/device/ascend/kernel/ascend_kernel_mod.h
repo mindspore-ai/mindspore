@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ class AscendKernelMod : public KernelMod {
   virtual bool NeedDump() {
 #ifndef ENABLE_SECURITY
     const auto &dump_json = DumpJsonParser::GetInstance();
-    return dump_json.NeedDump(fullname_) && dump_json.async_dump_enabled() && dump_json.op_debug_mode() == 0 &&
-           !is_monad_;
+    return (dump_json.NeedDump(fullname_) || dump_json.IsHCCLKernelInput(fullname_)) &&
+           dump_json.async_dump_enabled() && dump_json.op_debug_mode() == 0 && !is_monad_;
 #else
     return false;
 #endif

@@ -857,7 +857,6 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
   GetCellDumpFlag(kernel_graph);
 
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
-  std::map<std::string, uint32_t> update_kernels;
   for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
@@ -871,14 +870,11 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
         if (input->isa<CNode>()) {
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
                        << " Input:" << GetKernelNodeName(input);
-          update_kernels.try_emplace(GetKernelNodeName(input), 0);
-          cell_dump_kernels_.push_back(GetKernelNodeName(input));
           hccl_input_kernels_.insert(GetKernelNodeName(input));
         }
       }
     }
   }
-  kernels_.insert(update_kernels.begin(), update_kernels.end());
 }
 
 bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
