@@ -19,17 +19,21 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-template <typename T>
-CUDA_LIB_EXPORT void CalIgamma(const size_t size, const T *a, const T *x, T *output, const uint32_t &device_id,
-                               cudaStream_t cuda_stream);
+constexpr int64_t kLgammaSameShape = 0;
+constexpr int64_t kLgammaAOneElement = 1;
+constexpr int64_t kLgammaXOneElement = 2;
 
 template <typename T>
-CUDA_LIB_EXPORT void CalIgammac(const size_t size, const T *a, const T *x, T *output, const uint32_t &device_id,
-                                cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalIgamma(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                               const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalIgammaGradA(const size_t size, const T *a, const T *x, T *output, const uint32_t &device_id,
-                                    cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalIgammac(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                                const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CalIgammaGradA(const size_t size, const int64_t type, const T *a, const T *x, T *output,
+                                    const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void CalBroadcastIgamma(const std::vector<size_t> &inputa_shape,
