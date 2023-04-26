@@ -67,7 +67,9 @@ if(MSVC)
             -DBUILD_JASPER=OFF
             -DCV_TRACE=OFF    # cause memory usage increacing
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 elseif(WIN32)
     mindspore_add_pkg(opencv
                 VER 4.5.2
@@ -95,7 +97,9 @@ elseif(WIN32)
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 else()
     mindspore_add_pkg(opencv
                 VER 4.5.2
@@ -121,7 +125,9 @@ else()
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
-                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 endif()
 
 if(MSVC)

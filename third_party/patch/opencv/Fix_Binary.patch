@@ -1,0 +1,20 @@
+diff -Npur opencv-4.5.2/CMakeLists.txt opencv-4.5.2-change/CMakeLists.txt
+--- opencv-4.5.2/CMakeLists.txt	2021-04-02 19:23:54.000000000 +0800
++++ opencv-4.5.2-change/CMakeLists.txt	2023-02-08 03:40:02.807178015 +0800
+@@ -1050,7 +1050,7 @@ endif()
+ if(OPENCV_TIMESTAMP)
+   status("    Timestamp:"      ${OPENCV_TIMESTAMP})
+ endif()
+-status("    Host:"             ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR})
++status("    Host:"             ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_PROCESSOR})
+ if(CMAKE_CROSSCOMPILING)
+   status("    Target:"         ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR})
+ endif()
+@@ -1639,7 +1639,6 @@ status("  Python (for build):"  PYTHON_D
+ if(BUILD_JAVA)
+   status("")
+   status("  Java:"            BUILD_FAT_JAVA_LIB  THEN "export all functions"                                      ELSE "")
+-  status("    ant:"           ANT_EXECUTABLE      THEN "${ANT_EXECUTABLE} (ver ${ANT_VERSION})"                    ELSE NO)
+   if(NOT ANDROID)
+     status("    JNI:"         JNI_INCLUDE_DIRS    THEN "${JNI_INCLUDE_DIRS}"                                       ELSE NO)
+   endif()
