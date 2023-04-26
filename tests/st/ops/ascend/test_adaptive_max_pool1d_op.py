@@ -33,13 +33,13 @@ def adaptive_max_pool1d_forward_functional(nptype):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_adaptive_max_pool1d_forward_float32_functional():
+def test_adaptive_max_pool1d_forward_float16_functional():
     """
     Feature: test adaptive_max_pool1d forward.
-    Description: test float32 inputs.
+    Description: test float16 inputs.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    adaptive_max_pool1d_forward_functional(np.float32)
+    adaptive_max_pool1d_forward_functional(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    adaptive_max_pool1d_forward_functional(np.float32)
+    adaptive_max_pool1d_forward_functional(np.float16)
