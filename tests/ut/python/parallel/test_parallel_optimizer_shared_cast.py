@@ -108,7 +108,7 @@ class TestSharedParameterCast:
         appear_count = 0
         with open(ir_files[0], 'r') as fp:
             for line in fp:
-                if 'Float16' in line:
+                if 'Float16' in line or 'F16' in line:
                     appear_count += 1
         assert appear_count == target_count
 
