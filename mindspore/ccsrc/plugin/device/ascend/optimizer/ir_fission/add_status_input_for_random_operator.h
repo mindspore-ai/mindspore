@@ -21,11 +21,11 @@
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::opt {
-const std::set<std::string> kRandomNodeWhiteList = {kDropoutGenMaskOpName, kMultinomialOpName};
+inline const std::set<std::string> kRandomNodeWhiteList = {kDropoutGenMaskOpName, kMultinomialOpName};
 
 class AddStatusInputForRandomOperator : public Pass {
  public:
-  explicit AddStatusInputForRandomOperator(bool multigraph = true) : Pass("add_status_input_for_random_operator") {}
+  AddStatusInputForRandomOperator() : Pass("add_status_input_for_random_operator") {}
   ~AddStatusInputForRandomOperator() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
