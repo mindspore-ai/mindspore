@@ -2266,7 +2266,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> import mindspore
             >>> from mindspore import Tensor
             >>> x = Tensor(np.ones((6, 3)), mindspore.float32)
-            >>> output = x.fill_diagonal(x, 5.0, wrap=True)
+            >>> output = x.fill_diagonal(5.0, wrap=True)
             >>> print(output)
             [[5. 1. 1.]
              [1. 5. 1.]
