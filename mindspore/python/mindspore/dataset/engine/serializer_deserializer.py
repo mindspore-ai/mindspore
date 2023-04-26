@@ -109,7 +109,7 @@ def show(dataset, indentation=2):
     Args:
         dataset (Dataset): The starting node.
         indentation (int, optional): The indentation used by the JSON print.
-            Do not indent if indentation is None. Default: 2.
+            Do not indent if indentation is None. Default: 2, indent 2 space.
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
