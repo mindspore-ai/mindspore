@@ -14,6 +14,7 @@
 
 """aicpu ops"""
 from .adaptive_max_pool_3d_grad import _adaptive_max_pool_3d_grad_aicpu
+from .adaptive_max_pool_2d import _adaptive_max_pool_2d_aicpu
 from .adaptive_max_pool_2d_grad import _adaptive_max_pool_2d_grad_aicpu
 from .adaptive_avg_pool_3d_grad import _adaptiveavgpool3d_grad_aicpu
 from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
