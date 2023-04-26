@@ -1550,7 +1550,10 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
         input = input.expand_dims(axis=0)
         dim_flag = True
     if _random_samples is None:
-        _random_samples = ops.rand(input.shape[0], input.shape[1], 2, dtype=input.dtype)
+        if input.dtype in mstype.float_type:
+            _random_samples = ops.rand(input.shape[0], input.shape[1], 2, dtype=input.dtype)
+        else:
+            _random_samples = ops.rand(input.shape[0], input.shape[1], 2)
     if output_ratio is not None:
         if isinstance(output_ratio, (float, int)):
             _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool2d")
@@ -1652,7 +1655,10 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     _check_value_type("return_indices", return_indices, [bool], "fractional_max_pool3d")
     if _random_samples is None:
         n = 1 if input.ndim == 4 else input.shape[0]
-        _random_samples = ops.rand(n, input.shape[-4], 3, dtype=input.dtype)
+        if input.dtype in mstype.float_type:
+            _random_samples = ops.rand(n, input.shape[-4], 3, dtype=input.dtype)
+        else:
+            _random_samples = ops.rand(n, input.shape[-4], 3)
     if input.ndim == 4:
         _random_samples = _random_samples.transpose(1, 0, 2)
     if output_ratio is not None:
