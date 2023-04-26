@@ -2431,6 +2431,8 @@ class Tile(PrimitiveWithInfer):
                     raise ValueError(f'For \'{self.name}\', the dim of multiples must be 1.')
                 rank = max(len(x['shape']), shape[0])
                 out_shape = [-1] * rank
+                if -2 in x['shape']:
+                    out_shape = [-2]
                 return {
                     'shape': out_shape,
                     'dtype': x['dtype'],
