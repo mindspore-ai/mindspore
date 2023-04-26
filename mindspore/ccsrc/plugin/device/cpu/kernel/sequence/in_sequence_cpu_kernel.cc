@@ -105,6 +105,15 @@ bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type> \
   }
 
+#define ADD_MIXED_KERNEL(x_dtype, y_dtype, x_type, y_type)  \
+  {                                                         \
+    KernelAttr()                                            \
+      .AddInputAttr(kObjectTypeNumber, x_dtype)             \
+      .AddInputAttr(y_dtype)                                \
+      .AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),   \
+      &InSequenceCpuKernelMod::LaunchKernel<x_type, y_type> \
+  }
+
 const std::vector<std::pair<KernelAttr, InSequenceCpuKernelMod::KernelRunFunc>> &InSequenceCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, InSequenceCpuKernelMod::KernelRunFunc>> func_list = {
@@ -139,7 +148,23 @@ const std::vector<std::pair<KernelAttr, InSequenceCpuKernelMod::KernelRunFunc>> 
     ADD_KERNEL(kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
     ADD_KERNEL(kNumberTypeInt64, kNumberTypeFloat64, int64_t, double),
     ADD_KERNEL(kNumberTypeInt64, kNumberTypeInt32, int64_t, int),
-    ADD_KERNEL(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)};
+    ADD_KERNEL(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    ADD_MIXED_KERNEL(kNumberTypeFloat32, kNumberTypeFloat32, float, float),
+    ADD_MIXED_KERNEL(kNumberTypeFloat32, kNumberTypeFloat64, float, double),
+    ADD_MIXED_KERNEL(kNumberTypeFloat32, kNumberTypeInt32, float, int),
+    ADD_MIXED_KERNEL(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t),
+    ADD_MIXED_KERNEL(kNumberTypeFloat64, kNumberTypeFloat32, double, float),
+    ADD_MIXED_KERNEL(kNumberTypeFloat64, kNumberTypeFloat64, double, double),
+    ADD_MIXED_KERNEL(kNumberTypeFloat64, kNumberTypeInt32, double, int),
+    ADD_MIXED_KERNEL(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t),
+    ADD_MIXED_KERNEL(kNumberTypeInt32, kNumberTypeFloat32, int, float),
+    ADD_MIXED_KERNEL(kNumberTypeInt32, kNumberTypeFloat64, int, double),
+    ADD_MIXED_KERNEL(kNumberTypeInt32, kNumberTypeInt32, int, int),
+    ADD_MIXED_KERNEL(kNumberTypeInt32, kNumberTypeInt64, int, int64_t),
+    ADD_MIXED_KERNEL(kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
+    ADD_MIXED_KERNEL(kNumberTypeInt64, kNumberTypeFloat64, int64_t, double),
+    ADD_MIXED_KERNEL(kNumberTypeInt64, kNumberTypeInt32, int64_t, int),
+    ADD_MIXED_KERNEL(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, InSequence, InSequenceCpuKernelMod);
