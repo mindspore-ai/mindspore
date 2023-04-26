@@ -149,7 +149,7 @@
 - [STABLE] Add operator primitive for `mindspore.ops.Svd`.
 - [STABLE] Add operator primitive for `mindspore.ops.TripletMarginLoss`.
 
-#### Be deleted APIs
+#### Deleted APIs
 
 - The `mindspore.compression` feature was deprecated at MindSpore 1.8 and is removed in this version.
   The following `mindspore.nn.quant` interfaces are also removed simultaneously: `mindspore.nn.FakeQuantWithMinMaxObserver`, `mindspore.nn.Conv2dBnFoldQuantOneConv`, `mindspore.nn.Conv2dBnFoldQuant`, `mindspore.nn.Conv2dBnWithoutFoldQuant`, `mindspore.nn.Conv2dQuant`, `mindspore.nn.DenseQuant`, `mindspore.nn.ActQuant`, `mindspore.nn.TensorAddQuant`, `mindspore.nn.ActQuant`, `mindspore.nn.MulQuant`. Please use [MindSpore Golden Stick](https://gitee.com/mindspore/golden-stick) instead to implement QuantAwareTraining in MindSpore.
@@ -157,11 +157,11 @@
 
 #### Backwards Incompatible Change
 
-- Interface：mindspore.set_context(mode=PYNATIVE_MODE)
+- Interface: mindspore.set_context(mode=PYNATIVE_MODE)
 
-  Change：The default value is changed from GRAPH_MODE to PYNATIVE_MODE.
+  Change: The default value is changed from GRAPH_MODE to PYNATIVE_MODE.
 
-  Description：If the running mode is not set and the diagram mode needs to be set, use the following method:
+  Description: If the running mode is not set and the diagram mode needs to be set, use the following method:
   mindspore.set_context(mode=GRAPH_MODE).
 
   <table>
@@ -179,11 +179,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.train.Model.train
+- Interface: mindspore.train.Model.train
 
-  Change：The default value of dataset_sink_mode is changed from True to False.
+  Change: The default value of dataset_sink_mode is changed from True to False.
 
-  Description：If dataset_sink_mode is not set and the data sinking mode needs to be set, use the following method:
+  Description: If dataset_sink_mode is not set and the data sinking mode needs to be set, use the following method:
   Model.train(dataset_sink_mode=True).
 
   <table>
@@ -201,11 +201,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.export
+- Interface: mindspore.export
 
-  Change：The file_format parameter is changed from AIR to no default value.
+  Change: The file_format parameter is changed from AIR to no default value.
 
-  Description：If file_format is not set in the original mode, you need to set file_format additionally. In this case, use the following method:
+  Description: If file_format is not set in the original mode, you need to set file_format additionally. In this case, use the following method:
   mindspore.export(net, *inputs, file_name, file_format="AIR", **kwargs).
 
   <table>
@@ -225,11 +225,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.norm
+- Interface: mindspore.ops.norm
 
-  Change：The ord parameter function is extended to support multiple forms.
-
-  Description：For details, see the example.
+  Change: The ord parameter function is extended to support multiple forms.
 
   <table>
   <tr>
@@ -254,11 +252,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.Tensor.norm
+- Interface: mindspore.Tensor.norm
 
-  Change：The ord parameter function is extended to support multiple forms.
+  Change: The ord parameter function is extended to support multiple forms.
 
-  Description：For details, see the example of ops.norm.
+  Description: For details, see the example of ops.norm.
 
   <table>
   <tr>
@@ -275,11 +273,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.dropout
+- Interface: mindspore.ops.dropout
 
-  Change：The seed1 parameter is deleted. Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
-
-  Description：For details, see the example.
+  Change: The seed1 parameter is deleted. Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -304,11 +300,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.dropout2d
+- Interface: mindspore.ops.dropout2d
 
-  Change：Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
-
-  Description：For details, see the example.
+  Change: Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -333,11 +327,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.dropout3d
+- Interface: mindspore.ops.dropout3d
 
-  Change：Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
-
-  Description：For details, see the example.
+  Change: Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -362,11 +354,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.std
+- Interface: mindspore.ops.std
 
-  Change：The interface is reconstructed, and the interface usage mode is more consistent with user habits.
+  Change: The interface is reconstructed, and the interface usage mode is more consistent with user habits.
 
-  Description：If parameter `unbiased` has been set, use the following alternative：`unbiased=False` -> `ddof=0`, `unbiased=True` -> `ddof=1`.
+  Description: If parameter `unbiased` has been set, use the following alternative: `unbiased=False` -> `ddof=0`, `unbiased=True` -> `ddof=1`.
 
   <table>
   <tr>
@@ -383,11 +375,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.load_param_into_net
+- Interface: mindspore.load_param_into_net
 
-  Change：Parameters that are not loaded in the ckpt are added as return values.
-
-  Description：ddof=0 replaces unbiased=False, ddof=1 replaces unbiased=True.
+  Change: Parameters that are not loaded in the ckpt are added as return values.
 
   <table>
   <tr>
@@ -404,11 +394,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.nn.BCELoss
+- Interface: mindspore.nn.BCELoss
 
-  Change：The default value of `reduction` is changed from'none' to'mean'.
-
-  Description：For details, see the example.
+  Change: The default value of `reduction` is changed from 'none' to 'mean'.
 
   <table>
   <tr>
@@ -451,11 +439,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.split
+- Interface: mindspore.ops.split
 
-  Change：The interface is reconstructed. The interface usage mode is more suitable for users. The sequence of the second and third parameters is adjusted, and the split_size_or_sections function is modified and extended.
-
-  Description：For details, see the example.
+  Change: The interface is reconstructed. The interface usage mode is more suitable for users. The sequence of the second and third parameters is adjusted, and the split_size_or_sections function is modified and extended.
 
   <table>
   <tr>
@@ -480,11 +466,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.Tensor.split
+- Interface: mindspore.Tensor.split
 
-  Change：The interface is reconstructed. The interface usage mode is more suitable for users. The sequence of the second and third parameters is adjusted, and the split_size_or_sections function is modified and extended.
+  Change: The interface is reconstructed. The interface usage mode is more suitable for users. The sequence of the second and third parameters is adjusted, and the split_size_or_sections function is modified and extended.
 
-  Description：For details, see the example of ops.split.
+  Description: For details, see the example of ops.split.
 
   <table>
   <tr>
@@ -501,11 +487,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.pad
+- Interface: mindspore.ops.pad
 
-  Change：The padding parameter name and usage are modified, and the mode function is added.
-
-  Description：For details, see the example.
+  Change: The padding parameter name and usage are modified, and the mode function is added.
 
   <table>
   <tr>
@@ -534,11 +518,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.meshgrid
+- Interface: mindspore.ops.meshgrid
 
-  Change：The input parameter is changed from `inputs` to `*input`.
-
-  Description：For details, see the example.
+  Change: The input parameter is changed from `inputs` to `*input`.
 
   <table>
   <tr>
@@ -565,11 +547,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.max
+- Interface: mindspore.ops.max
 
-  Change：Return value exchange sequence. The value is changed from "index, value" to "value, index".
-
-  Description：For details, see the example.
+  Change: Return value exchange sequence. The value is changed from "index, value" to "value, index".
 
   <table>
   <tr>
@@ -597,11 +577,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.min
+- Interface: mindspore.ops.min
 
-  Change：Return value exchange sequence. The value is changed from "index, value" to "value, index".
-
-  Description：For details, see the example.
+  Change: Return value exchange sequence. The value is changed from "index, value" to "value, index".
 
   <table>
   <tr>
@@ -628,9 +606,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.random_gamma
+- Interface: mindspore.ops.random_gamma
 
-  Change：The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
+  Change: The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
 
   <table>
   <tr>
@@ -647,9 +625,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.standard_laplace
+- Interface: mindspore.ops.standard_laplace
 
-  Change：The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
+  Change: The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
 
   <table>
   <tr>
@@ -666,9 +644,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.standard_normal
+- Interface: mindspore.ops.standard_normal
 
-  Change：The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
+  Change: The seed2 parameter is deleted and seed=0 is changed to None. The framework behavior is unified and complies with the actual application scenarios and habits of users.
 
   <table>
   <tr>
@@ -685,9 +663,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.bernoulli
+- Interface: mindspore.ops.bernoulli
 
-  Change：Parameter seed=-1 is change to None. Meets the actual application scenario.
+  Change: Parameter seed=-1 is change to None. Meets the actual application scenario.
 
   <table>
   <tr>
@@ -704,9 +682,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.data_sink
+- Interface: mindspore.data_sink
 
-  Change：Deleted the steps parameter. The usability is improved to meet the requirements of actual application scenarios.
+  Change: Deleted the steps parameter. The usability is improved to meet the requirements of actual application scenarios.
 
   <table>
   <tr>
@@ -725,9 +703,9 @@
   </tr>
   </table>
 
-- Interface：mindspore.ops.conv2d
+- Interface: mindspore.ops.conv2d
 
-  Change：Add the bias parameter and modify the parameter name and parameter sequence.
+  Change: Add the bias parameter and modify the parameter name and parameter sequence.
 
   <table>
   <tr>
@@ -746,11 +724,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.dataset.vision.Pad
+- Interface: mindspore.dataset.vision.Pad
 
-  Change：Adjust the input parameter padding of Pad, RandomCrop, and RandomCropWithBbox. When the input length of Padding is 2, the first value is used to fill the left/upper boundary, the second value is used to fill the right/lower boundary, and the first value is used to fill the left/right boundary. Fill the upper/lower boundary with the second value.
+  Change: Adjust the input parameter padding of Pad, RandomCrop, and RandomCropWithBbox. When the input length of Padding is 2, the first value is used to fill the left/upper boundary, the second value is used to fill the right/lower boundary, and the first value is used to fill the left/right boundary. Fill the upper/lower boundary with the second value.
 
-  Description：The padding parameter whose size is 2 is not compatible with the effect of the earlier version. The padding parameter needs to be explicitly represented (left, right, top, and bottom).
+  Description: The padding parameter whose size is 2 is not compatible with the effect of the earlier version. The padding parameter needs to be explicitly represented (left, right, top, and bottom).
 
   <table>
   <tr>
@@ -771,11 +749,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.dataset.Dataset.map
+- Interface: mindspore.dataset.Dataset.map
 
-  Change：Delete the column_order parameter. In most cases, output_columns and column_order have the same value. Therefore, column_order does not need to be transferred. To adjust the sequence of data columns, use mindspore.dataset.Dataset.project.
+  Change: Delete the column_order parameter. In most cases, output_columns and column_order have the same value. Therefore, column_order does not need to be transferred. To adjust the sequence of data columns, use mindspore.dataset.Dataset.project.
 
-  Description：
+  Description:
 
   1. If the column sequence does not need to be changed, delete the column_order parameter.
   2. If you need to specify the data column sequence, delete the column_order parameter and add a project method to the end of the parameter for column transformation (as in the following example).
@@ -801,11 +779,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.dataset.Dataset.batch
+- Interface: mindspore.dataset.Dataset.batch
 
-  Change：Delete the column_order parameter. In most cases, output_columns and column_order have the same value. Therefore, column_order does not need to be transferred. To adjust the sequence of data columns, use mindspore.dataset.Dataset.project.
+  Change: Delete the column_order parameter. In most cases, output_columns and column_order have the same value. Therefore, column_order does not need to be transferred. To adjust the sequence of data columns, use mindspore.dataset.Dataset.project.
 
-  Description：
+  Description:
 
   1. If the column sequence does not need to be changed, delete the column_order parameter.
   2. If you need to specify the data column sequence, delete the column_order parameter and add a project method to the end of the parameter for column transformation (as in the following example).
@@ -830,11 +808,11 @@
   </tr>
   </table>
 
-- Interface：mindspore.dataset.Dataset.batch
+- Interface: mindspore.dataset.Dataset.batch
 
-  Change：Split the batch method into two methods: batch and padded_batch. The pad_info parameter is moved from the batch method to the padded_batch method.
+  Change: Split the batch method into two methods: batch and padded_batch. The pad_info parameter is moved from the batch method to the padded_batch method.
 
-  Description：To use the pad_info parameter, use the padded_batch method instead.
+  Description: To use the pad_info parameter, use the padded_batch method instead.
 
   <table>
   <tr>
@@ -900,7 +878,7 @@ Contributions of any kind are welcome!
 #### PyNative
 
 - The default mode of MindSpore is switched to PyNative. If you want to manually set the mode, please refer to [Computational Graph](https://www.mindspore.cn/tutorials/en/r2.0.0-alpha/advanced/compute_graph.html).
-- Support dynamic shape without padding, three networks are supported as demos: Transformer-GPU, YOLOV5-GPU, ASR-Ascend. Transformer-GPU and YOLOV5-GPU can be downloaded from [models](https://gitee.com/mindspore/models/tree/dynamic_shape). Only the following operators are available on Ascend backend：Add、Assign、BatchMatMul、BiasAdd、BiasAddGrad、Cast、Conv2D、Conv2DBackpropFilter、Conv2DBackpropInput、CTCLoss、Div、Dropout、DropoutDoMask、Equal、ExpandDims、Gather、GetNext、LayerNorm、LayerNormGrad、LessEqual、Load、Log、LogicalAnd、LogicalNot、LogicalOr、LogSoftmax、LogSoftmaxGrad、MatMul、Maximum、Mul、Neg、NotEqual、NPUAllocFloatStatus、NPUClearFloatStatus、OneHot、RealDiv、Reciprocal、ReduceMean、ReduceSum、ReLU、ReluGrad、Reshape、Select、Softmax、StridedSlice、Sub、Tile、Transpose、UnsortedSegmentSum、ZerosLike。The remaining operators have not been fully verified, please use them as appropriate.
+- Support dynamic shape without padding, three networks are supported as demos: Transformer-GPU, YOLOV5-GPU, ASR-Ascend. Transformer-GPU and YOLOV5-GPU can be downloaded from [models](https://gitee.com/mindspore/models/tree/dynamic_shape). Only the following operators are available on Ascend backend: Add、Assign、BatchMatMul、BiasAdd、BiasAddGrad、Cast、Conv2D、Conv2DBackpropFilter、Conv2DBackpropInput、CTCLoss、Div、Dropout、DropoutDoMask、Equal、ExpandDims、Gather、GetNext、LayerNorm、LayerNormGrad、LessEqual、Load、Log、LogicalAnd、LogicalNot、LogicalOr、LogSoftmax、LogSoftmaxGrad、MatMul、Maximum、Mul、Neg、NotEqual、NPUAllocFloatStatus、NPUClearFloatStatus、OneHot、RealDiv、Reciprocal、ReduceMean、ReduceSum、ReLU、ReluGrad、Reshape、Select、Softmax、StridedSlice、Sub、Tile、Transpose、UnsortedSegmentSum、ZerosLike。The remaining operators have not been fully verified, please use them as appropriate.
 
 #### DataSet
 
@@ -2806,9 +2784,9 @@ MSTensor::DestroyTensorPtr(tensor);
 
 #### OpenCL backend
 
-1. Add new ops：add 10+ ops，total 72 ops；
-2. Performance optimization：by memory layout optimize，block tiling，Performance improved by 30% compared to version 1.1 at Adreno GPU.
-3. Initialization time optimization：initialization time improve 100% vs MSLITE Version1.1 by store kernel cache as binary.
+1. Add new ops: add 10+ ops，total 72 ops；
+2. Performance optimization: by memory layout optimize，block tiling，Performance improved by 30% compared to version 1.1 at Adreno GPU.
+3. Initialization time optimization: initialization time improve 100% vs MSLITE Version1.1 by store kernel cache as binary.
 4. Support Java call on Mali or Adreno GPU.
 
 #### Post quantization
@@ -4382,7 +4360,7 @@ Contributions of any kind are welcome!
 - Executor and performance optimization
     - Decouple C++ and python, so make the architecture more extensible.
     - Parameter Server for distributed deep learning supported.
-    - Serving：a flexible service deployment framework for deep learning models.
+    - Serving: a flexible service deployment framework for deep learning models.
     - Memory reuse is enhanced, and the batch size of Bert large model is increased from 96 to 160 on a single server.
 - Data processing, augmentation, and save format
     - Support MindRecord save operator after  date processing
@@ -4464,8 +4442,8 @@ Contributions of any kind are welcome!
     - ResNext50: a simple, highly modularized network architecture using aggregated resdiual transformations for image classification on ImageNet 2012 dataset.
     - MASS: a pre-training method for sequence to sequence based language generation tasks on Text Summarization and Conversational Response Generation using News Crawls 2007-2017 dataset, Gigaword corpus and Cornell movie dialog corpus.
     - Transformer: a neural network architecture for language understanding on WMT 2014 English-German dataset.
-    - GCN：Graph Convolutional Networks for the task of classification of nodes in a graph on Cora and Citeseer datasets.
-    - GAT：an attention-based graph neural network for node classification on Cora and CiteSeer dataset.
+    - GCN: Graph Convolutional Networks for the task of classification of nodes in a graph on Cora and Citeseer datasets.
+    - GAT: an attention-based graph neural network for node classification on Cora and CiteSeer dataset.
 - Frontend and user interface
     - Support tensor value and assignment of mixed tensor index in graph mode.
     - Support tensor comparison, len operator, constexpr syntax, value and assignment of tensor index in pynative mode.
