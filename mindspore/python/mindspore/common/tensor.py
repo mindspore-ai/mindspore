@@ -1899,7 +1899,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Examples:
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
             >>> output, index = x.argmin_with_value()
-            >>> print(output, index
+            >>> print(output, index)
             0.0 0
             >>> output, index = x.argmin_with_value(keep_dims=True)
             >>> print(output, index)
