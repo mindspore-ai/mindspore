@@ -2298,7 +2298,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ValueError: If the size of each dimension is not equal, when the dimension is greater than 2.
 
         Supported Platforms:
-            ``GPU`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
