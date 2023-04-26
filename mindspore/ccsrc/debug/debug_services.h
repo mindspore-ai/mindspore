@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,6 +192,9 @@ class DebugServices {
              condition.type == SD_LT || condition.type == MAX_MIN_LT;
     }
 
+    // for parameter_list of the condition TOO_LARGE/TOO_SMALL, the meaning of parameter_list is:
+    // parameter_list[0]: the absolute mean value is set; parameter_list[1]: the max value is set;
+    // parameter_list[2]: the min is set; parameter_list[3]: the mean value is set.
     // mean or sd related condition set
     bool mean_sd_enabled() const {
       return condition.type == MEAN_LT || condition.type == MEAN_GT || condition.type == SD_LT ||
@@ -208,6 +211,9 @@ class DebugServices {
     }
     bool allclose_enabled() const { return condition.type == NOT_CHANGED; }
 
+    // for parameter_list of the condition RANGE, the meaning of parameter_list is:
+    // parameter_list[0]: the elements value in range is lower than setting percentage is set;
+    // parameter_list[1]: the elements value in range is higher than setting percentage is set.
     bool range_enabled() const {
       return condition.type == RANGE && (!parameter_list[0].disabled || !parameter_list[1].disabled);
     }
