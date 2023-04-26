@@ -15,7 +15,7 @@ mindspore.amp.build_train_network
           - **"O1"** - 白名单中的算子用float16计算，其余算子均用float32计算。其中，白名单中的算子如下列表：[Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose, Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger]
           - **"O2"** - 将网络精度转为float16， `BatchNorm`, `LayerNorm` 和 `loss_fn` 保持float32精度，使用动态调整损失缩放系数（loss scale）的策略。
           - **"O3"** - 将网络精度转为float16，不使用损失缩放策略，并设置 `keep_batchnorm_fp32` 为False。
-          - **auto** - 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。 `keep_batchnorm_fp32` ， `cast_model_type` 和 `loss_scale_manager` 属性由level自动决定。
+          - **"auto"** - 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。 `keep_batchnorm_fp32` ， `cast_model_type` 和 `loss_scale_manager` 属性由level自动决定。
 
         - **boost_level** (str) - `mindspore.boost` 中参数 `level` 的选项，设置boost的训练模式级别。支持["O0", "O1", "O2"]。默认值: "O0"。
 
