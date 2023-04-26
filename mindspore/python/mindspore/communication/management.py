@@ -215,7 +215,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the rank ID of the calling process within the group.
@@ -262,7 +262,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the local rank ID of the calling process within the group.
@@ -312,7 +312,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the rank size of the group.
@@ -361,7 +361,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
-                     or the default world communication group. Default: WORLD_COMM_GROUP.
+                     or the default world communication group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
         int, the local rank size where the calling process is within the group.

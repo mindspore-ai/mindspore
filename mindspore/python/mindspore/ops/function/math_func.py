@@ -4694,8 +4694,8 @@ def ormqr(input, tau, other, left=True, transpose=False):
             and its type is the same as `input`.
         other (Tensor): Tensor of shape :math:`(*, m, n)` where `*` is zero or more batch dimensions,
             and its type is the same as `input`.
-        left (bool, optional): determines the order of multiplication. If True, computes op(Q)* `other` , otherwise,
-            compute `other` *op(Q). Default: True.
+        left (bool, optional): determines the order of multiplication. If True, computes op(Q) \* `other` ,
+            otherwise, compute `other` \* op(Q). Default: True.
         transpose (bool, optional): If True, the matrix Q is conjugate transposed,
             otherwise, not conjugate transposing matrix Q. Default: False.
 
