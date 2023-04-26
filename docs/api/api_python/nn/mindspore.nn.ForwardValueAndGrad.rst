@@ -6,7 +6,7 @@ mindspore.nn.ForwardValueAndGrad
     训练网络的封装。
 
     包括正向网络和梯度函数。该类生成的Cell使用'\*inputs'输入来训练。
-    通过梯度函数来创建反向图，用以计算梯度。
+    通过梯度函数来创建反向图，用于计算梯度。
 
     参数：
         - **network** (Cell) - 训练网络。
