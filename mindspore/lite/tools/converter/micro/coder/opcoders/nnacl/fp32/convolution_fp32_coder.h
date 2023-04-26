@@ -24,7 +24,7 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ConvolutionFP32Coder final : public Conv2DBaseCoder {
+class ConvolutionFP32Coder : public Conv2DBaseCoder {
  public:
   ConvolutionFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                        const LiteGraph::Node *node, size_t node_index, Target target)
@@ -36,18 +36,20 @@ class ConvolutionFP32Coder final : public Conv2DBaseCoder {
 
   ~ConvolutionFP32Coder() override = default;
 
- private:
-  int InitWeightBias(CoderContext *const context);
+ protected:
+  virtual void CollectFilesForFunc(CoderContext *const context);
 
-  int InitTmpBuffer();
+  virtual int InitWeightBias(CoderContext *const context);
+
+  virtual int InitTmpBuffer();
 
   int Resize();
 
-  float *packed_weight_{nullptr};
+  void *packed_weight_{nullptr};
 
-  float *bias_data_{nullptr};
+  void *bias_data_{nullptr};
 
-  float *packed_input_{nullptr};
+  void *packed_input_{nullptr};
 
   size_t packed_input_size_{0};
 
@@ -55,10 +57,11 @@ class ConvolutionFP32Coder final : public Conv2DBaseCoder {
 
   int thread_count_{0};
 
-  float *col_major_input_{nullptr};
+  void *col_major_input_{nullptr};
   size_t col_major_input_size_{0};
 
   size_t pack_weight_size_{0};
+  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONVOLUTION_FP32_CODER_H_

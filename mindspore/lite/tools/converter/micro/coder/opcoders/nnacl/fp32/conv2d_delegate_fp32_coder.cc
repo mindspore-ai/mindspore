@@ -39,6 +39,7 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
     }
     if (memcpy_s(op_parameter, sizeof(ConvParameter), parameter_, sizeof(ConvParameter)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed.";
+      free(op_parameter);
       return RET_ERROR;
     }
     conv_coder_->set_type(GetPrimitiveType(node_->primitive_, schema_version_));
@@ -69,10 +70,10 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
   if (primitive == nullptr) {
     return nullptr;
   }
-  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+  ParameterGen param_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
     GetPrimitiveType(node->primitive_, schema_version), schema_version);
-  MS_CHECK_PTR_RET_NULL(paramGen);
-  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
+  MS_CHECK_PTR_RET_NULL(param_gen);
+  auto conv_param = reinterpret_cast<ConvParameter *>(param_gen(node->primitive_));
   MS_CHECK_PTR_RET_NULL(conv_param);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -122,13 +123,13 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector
   if (primitive == nullptr) {
     return nullptr;
   }
-  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+  ParameterGen param_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
     GetPrimitiveType(node->primitive_, schema_version), schema_version);
-  if (paramGen == nullptr) {
+  if (param_gen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is null";
     return nullptr;
   }
-  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
+  auto conv_param = reinterpret_cast<ConvParameter *>(param_gen(node->primitive_));
   std::unique_ptr<OperatorCoder> coder;
   if (conv_param->group_ == 1) {
     coder = CreateDelegateConv(in_tensors, out_tensors, node, node_index, target, schema_version);

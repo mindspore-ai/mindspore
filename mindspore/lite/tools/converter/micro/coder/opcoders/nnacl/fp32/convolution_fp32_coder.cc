@@ -31,19 +31,20 @@ namespace mindspore::lite::micro::nnacl {
 int ConvolutionFP32Coder::InitTmpBuffer() {
   int in_channel = conv_param_->input_channel_;
   int uint_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C12NUM * thread_num_;
-  packed_input_size_ = uint_size * sizeof(float);
-  packed_input_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, packed_input_size_, kWorkspace));
+  packed_input_size_ = uint_size * DataTypeSize(data_type_);
+  packed_input_ = allocator_->Malloc(data_type_, packed_input_size_, kWorkspace);
   MS_CHECK_PTR(packed_input_);
-  col_major_input_size_ = uint_size * sizeof(float);
-  col_major_input_ =
-    reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, col_major_input_size_, kWorkspace));
+  col_major_input_size_ = uint_size * DataTypeSize(data_type_);
+  col_major_input_ = allocator_->Malloc(data_type_, col_major_input_size_, kWorkspace);
   MS_CHECK_PTR(col_major_input_);
   return RET_OK;
 }
 
 int ConvolutionFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder::Init() failed.");
-  de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(filter_tensor_);
+  if (input_tensor_->data_type() == kNumberTypeFloat32) {
+    de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(filter_tensor_);
+  }
   MS_CHECK_RET_CODE(InitWeightBias(context), "Init weight bias failed.");
   return Resize();
 }
@@ -69,8 +70,8 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   }
   int oc_block_num = UP_ROUND(out_channel, oc_block);
   int pack_weight_size = oc_block_num * in_channel * kernel_plane;
-  pack_weight_size_ = pack_weight_size * sizeof(float);
-  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+  pack_weight_size_ = pack_weight_size * DataTypeSize(data_type_);
+  packed_weight_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(packed_weight_);
   auto out_channel_size = static_cast<size_t>(out_channel);
 
@@ -85,6 +86,7 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   }
   size_t w_buf_size = 0;
   w_buf_size += pack_weight_size_;
+
   init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), pack_weight_size_);
   if (target_ == kARM32) {
@@ -96,14 +98,14 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   }
 
   if (input_tensors_.size() == kInputSize2) {
-    auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
-    bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+    auto bias_data_size = static_cast<size_t>(oc_block_num * DataTypeSize(data_type_));
+    bias_data_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
     MS_CHECK_PTR(bias_data_);
-    std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
     init_code.CodeBufferOffsetExpression(bias_data_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), bias_data_size);
     w_buf_size += bias_data_size;
-    init_code.CodeFunction("memcpy", bias_data_, bias_tensor_str, out_channel_size * sizeof(float));
+    std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
+    init_code.CodeFunction("memcpy", bias_data_, bias_tensor_str, out_channel_size * DataTypeSize(data_type_));
   }
 
   context->AppendInitWeightSizeCode(w_buf_size);
@@ -111,32 +113,7 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   return RET_OK;
 }
 
-int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
-  Collect(context,
-          {
-            "nnacl/fp32/conv_common_fp32.h",
-            "nnacl/fp32/matmul_fp32.h",
-            "nnacl/conv_parameter.h",
-            "nnacl/op_base.h",
-          },
-          {
-            "common_func.c",
-            "conv_common_fp32.c",
-            "matmul_fp32.c",
-            "pack_fp32.c",
-          });
-  if (de_quant_flag_) {
-    Collect(context,
-            {
-              "wrapper/fp32/dequant_int8_to_fp32_wrapper.h",
-            },
-            {
-              "dequant_int8_to_fp32_wrapper.c",
-            });
-  }
-  if (support_parallel_) {
-    Collect(context, {"wrapper/fp32/conv_fp32_wrapper.h"}, {"conv_fp32_wrapper.c"});
-  }
+void ConvolutionFP32Coder::CollectFilesForFunc(CoderContext *const context) {
   if (target_ == kARM32) {
     Collect(context, {}, {},
             {
@@ -166,18 +143,50 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "MatmulInt8.S",
             });
   }
+  Collect(context,
+          {
+            "nnacl/fp32/conv_common_fp32.h",
+            "nnacl/fp32/matmul_fp32.h",
+            "nnacl/conv_parameter.h",
+            "nnacl/op_base.h",
+          },
+          {
+            "common_func.c",
+            "conv_common_fp32.c",
+            "matmul_fp32.c",
+            "pack_fp32.c",
+          });
+  if (de_quant_flag_) {
+    Collect(context,
+            {
+              "wrapper/fp32/dequant_int8_to_fp32_wrapper.h",
+            },
+            {
+              "dequant_int8_to_fp32_wrapper.c",
+            });
+  }
+  if (support_parallel_) {
+    Collect(context, {"wrapper/fp32/conv_fp32_wrapper.h"}, {"conv_fp32_wrapper.c"});
+  }
+}
+
+int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
+  CollectFilesForFunc(context);
 
   NNaclFp32Serializer code;
   // call the op function
-  code.CodeFunction("memset", packed_input_, "0", packed_input_size_);
-  code.CodeFunction("memset", col_major_input_, "0", col_major_input_size_);
+  auto packed_input_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_input_));
+  auto col_major_input_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(col_major_input_));
+  auto packed_weight_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_weight_));
+  code.CodeFunction("memset", packed_input_str, "0", packed_input_size_);
+  code.CodeFunction("memset", col_major_input_str, "0", col_major_input_size_);
   code.CodeStruct("conv_parameter", *conv_param_);
   if (support_parallel_) {
-    code.CodeBaseStruct("ConvFp32Args", kRunArgs, input_tensor_, packed_input_, packed_weight_, bias_data_,
-                        col_major_input_, output_tensor_, "&conv_parameter");
+    code.CodeBaseStruct("ConvFp32Args", kRunArgs, input_tensor_, packed_input_str, packed_weight_str, bias_data_,
+                        col_major_input_str, output_tensor_, "&conv_parameter");
     code.CodeFunction(kParallelLaunch, "ConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
   } else {
-    code.CodeFunction("ConvFp32", input_tensor_, packed_input_, packed_weight_, bias_data_, col_major_input_,
+    code.CodeFunction("ConvFp32", input_tensor_, packed_input_str, packed_weight_str, bias_data_, col_major_input_str,
                       output_tensor_, kDefaultTaskId, "&conv_parameter");
   }
   context->AppendCode(code.str());
