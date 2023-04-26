@@ -113,6 +113,8 @@ class GraphLoader {
   std::unique_ptr<GraphFeatureParser> graph_feature_parser_;
   const std::vector<std::string> required_key_;
   std::unordered_map<std::string, bool> optional_key_;
+  // mutex for shard_reader_ and row_id_
+  std::mutex mutex_;
 };
 }  // namespace gnn
 }  // namespace dataset

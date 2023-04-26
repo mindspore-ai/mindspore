@@ -187,9 +187,11 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
 Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, int32_t worker_id) {
   RETURN_UNEXPECTED_IF_NULL(fetched_row);
   *fetched_row = {};
-  auto rc = shard_reader_->GetNextById(row_id, worker_id);
-  auto task_type = rc.first;
-  auto tupled_buffer = rc.second;
+  auto task_content_ptr = std::make_shared<mindrecord::TASK_CONTENT>(
+    mindrecord::TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>());
+  RETURN_IF_NOT_OK(shard_reader_->GetNextById(row_id, worker_id, &task_content_ptr));
+  auto task_type = task_content_ptr->first;
+  auto tupled_buffer = task_content_ptr->second;
   if (task_type == mindrecord::TaskType::kPaddedTask) {
     RETURN_IF_NOT_OK(LoadTensorRow(fetched_row, {}, mindrecord::json(), task_type));
     std::vector<std::string> file_path(fetched_row->size(), dataset_file_[0]);
