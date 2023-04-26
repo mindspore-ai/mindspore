@@ -1456,8 +1456,16 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
     return eng->ForwardConfig(out_conf, fn_conf);
   }
-  if (pipeline::GetJitLevel() == "O0" && IsValueNode<FuncGraph>(new_node)) {
-    UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
+
+  auto new_node_to_fg = GetValueNode<FuncGraphPtr>(new_node);
+  if (new_node_to_fg != nullptr) {
+    bool has_recompute_scope = (out_node->scope() != nullptr &&
+                                out_node->scope()->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
+    if (has_recompute_scope) {
+      parse::UpdateRecomputeScope(new_node_to_fg);
+    } else if (pipeline::GetJitLevel() == "O0") {
+      UpdateDebugInfo(new_node_to_fg, out_node->scope(), out_node->debug_info());
+    }
   }
 
   // Replace old node with the resolved new node in order list.
@@ -1752,9 +1760,19 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
     // composite registered in standard_method_map go to this branch
     converted_value = prim::GetPythonOps(require.cast<std::string>());
     MS_EXCEPTION_IF_NULL(converted_value);
-    if (pipeline::GetJitLevel() == "O0" && converted_value->isa<FuncGraph>()) {
-      UpdateDebugInfo(converted_value->cast<FuncGraphPtr>(), out_conf->node()->scope(), out_conf->node()->debug_info());
+
+    auto converted_fg = converted_value->cast<FuncGraphPtr>();
+    if (converted_fg != nullptr) {
+      bool has_recompute_scope =
+        (out_conf->node()->scope() != nullptr &&
+         out_conf->node()->scope()->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
+      if (has_recompute_scope) {
+        parse::UpdateRecomputeScope(converted_fg);
+      } else if (pipeline::GetJitLevel() == "O0") {
+        UpdateDebugInfo(converted_fg, out_conf->node()->scope(), out_conf->node()->debug_info());
+      }
     }
+
     if (!converted_value->isa<Primitive>()) {
       AddToManager(engine, converted_value->cast<FuncGraphPtr>());
     }

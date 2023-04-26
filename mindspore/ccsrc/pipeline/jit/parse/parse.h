@@ -482,6 +482,9 @@ class ParseFunctionAst {
 // Update the graph flags
 bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph);
 
+// Update recomputed scope for the graph.
+void UpdateRecomputeScope(const FuncGraphPtr &func_graph);
+
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
 }  // namespace parse
 }  // namespace mindspore
