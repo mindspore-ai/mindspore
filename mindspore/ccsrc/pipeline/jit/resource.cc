@@ -350,6 +350,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"fliplr", std::string("fliplr")},                                  // fliplr
        {"flipud", std::string("flipud")},                                  // flipud
        {"float_power", std::string("float_power")},                        // F.float_power
+       {"fmax", std::string("fmax")},                                      // fmax()
+       {"fmin", std::string("fmin")},                                      // fmin()
        {"fmod", std::string("fmod")},                                      // F.fmod
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"heaviside", std::string("heaviside")},                            // F.heaviside
@@ -489,6 +491,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"lu_solve", std::string("lu_solve")},                              // lu_solve()
        {"masked_scatter", std::string("masked_scatter")},                  // masked_scatter()
        {"index_put", std::string("index_put")},                            // index_input()
+       {"aminmax", std::string("aminmax")},                                // aminmax()
+       {"quantile", std::string("quantile")},                              // quantile()
+       {"nanquantile", std::string("nanquantile")},                        // nanquantile()
+       {"orgqr", std::string("orgqr")},                                    // orgqr()
+       {"outer", std::string("outer")},                                    // outer()
      }},
     {kObjectTypeRowTensorType,
      {

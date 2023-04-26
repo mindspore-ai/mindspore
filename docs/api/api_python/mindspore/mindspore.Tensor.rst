@@ -38,6 +38,7 @@ mindspore.Tensor
     mindspore.Tensor.all
     mindspore.Tensor.amax
     mindspore.Tensor.amin
+    mindspore.Tensor.aminmax
     mindspore.Tensor.any
     mindspore.Tensor.angle
     mindspore.Tensor.approximate_equal
@@ -122,6 +123,7 @@ mindspore.Tensor
     mindspore.Tensor.float_power
     mindspore.Tensor.floor
     mindspore.Tensor.flush_from_cache
+    mindspore.Tensor.fmax
     mindspore.Tensor.fmod
     mindspore.Tensor.fold
     mindspore.Tensor.frac
@@ -232,6 +234,8 @@ mindspore.Tensor
     mindspore.Tensor.nonzero
     mindspore.Tensor.norm
     mindspore.Tensor.not_equal
+    mindspore.Tensor.outer
+    mindspore.Tensor.orgqr
     mindspore.Tensor.ormqr
     mindspore.Tensor.permute
     mindspore.Tensor.positive

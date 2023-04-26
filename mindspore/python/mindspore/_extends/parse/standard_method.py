@@ -1530,6 +1530,20 @@ def float_power(x, exponent):
     return F.float_power(x, exponent)
 
 
+def fmax(input, other):
+    """
+    For details, please refer to :func:`mindspore.ops.fmax`.
+    """
+    return F.fmax(input, other)
+
+
+def fmin(input, other):
+    """
+    For details, please refer to :func:`mindspore.ops.fmin`.
+    """
+    return F.fmin(input, other)
+
+
 def fmod(x, other):
     """
     For details, please refer to :func:`mindspore.ops.fmod`.
@@ -4493,3 +4507,38 @@ def index_put(input, indices, values, accumulate=False):
     check_bool_type(accumulate, 'accumulate', 'Tensor.index_put')
     _index_put = array_ops.IndexPut(0 if accumulate is False else 1)
     return _index_put(input, values, indices)
+
+
+def aminmax(input, *, axis=0, keepdims=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.aminmax`.
+    """
+    return F.aminmax(input, axis=axis, keepdims=keepdims)
+
+
+def quantile(input, q, axis=None, keepdims=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.quantile`.
+    """
+    return F.quantile(input, q, axis, keepdims)
+
+
+def nanquantile(input, q, axis=None, keepdims=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.nanquantile`.
+    """
+    return F.nanquantile(input, q, axis, keepdims)
+
+
+def orgqr(input, input2):
+    r"""
+    For details, please refer to :func:`mindspore.ops.orgqr`.
+    """
+    return F.orgqr(input, input2)
+
+
+def outer(input, vec2):
+    r"""
+    For details, please refer to :func:`mindspore.ops.vec2`.
+    """
+    return F.outer(input, vec2)
