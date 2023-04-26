@@ -11,12 +11,11 @@ mindspore.dataset.TFRecordDataset
           支持传入JSON文件路径或 mindspore.dataset.Schema 构造的对象。默认值：None。
         - **columns_list** (list[str], 可选) - 指定从TFRecord文件中读取的数据列。默认值：None，读取所有列。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-          `num_samples` 的处理优先级如下：
-          - 如果 `num_samples` 的值大于0，则读取 `num_samples` 条数据。
-          - 否则，如果 numRows字段（由参数 `schema` 定义）的值大于0，则读取numRows条数据。
-          - 否则，则读取所有数据集。
-          `num_samples` 或numRows字段（由参数 `schema` 定义）将是为每个分片从压缩文件中读取的行数。
-          强烈建议在 `compression_type` 为 "GZIP" 或 "ZLIB" 时提供 `num_samples` 或numRows字段（由参数 `schema` 定义）以避免为了获取文件大小对同一个文件进行多次解压而导致性能下降的问题。
+          当指定了 `num_shards` 和 `shard_id` 参数时，`num_samples` 或numRows字段（由参数 `schema` 定义）将表示每个分片读取的数据量。 `num_samples` 的处理优先级如下：
+
+          - 指定了 `num_samples` 参数，且值大于0，则读取 `num_samples` 条数据。此时 `schema` 参数的numRows字段会失效。
+          - 不指定 `num_samples` 参数，指定了 `schema` 参数并定义了numRows字段，且值大于0，则读取numRows条数据。
+          - 不指定 `num_samples` 参数 与 `schema` 参数，读取所有样本数据。
 
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
@@ -28,9 +27,10 @@ mindspore.dataset.TFRecordDataset
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后，`num_samples` 表示每个分片的最大样本数。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-        - **shard_equal_rows** (bool, 可选) - 分布式训练时，为所有分片获取等量的数据行数。默认值：False。如果 `shard_equal_rows` 为False，则可能会使得每个分片的数据条目不相等，从而导致分布式训练失败。因此当每个TFRecord文件的数据数量不相等时，建议将此参数设置为True。注意，只有当指定了 `num_shards` 时才能指定此参数。当 `compression_type` 不是 None，和 `num_samples` 或numRows字段（由参数 `schema` 定义）提供时，`shard_equal_rows` 会被视为True。
-        - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/dataset/cache.html>`_ 。默认值：None，不使用缓存。
+        - **shard_equal_rows** (bool, 可选) - 分布式训练时，为所有分片获取等量的数据行数。默认值：False。如果 `shard_equal_rows` 为False，则可能会使得每个分片的数据条目不相等，从而导致分布式训练失败。因此当每个TFRecord文件的数据数量不相等时，建议将此参数设置为True。注意，只有当指定了 `num_shards` 时才能指定此参数。当 `compression_type` 非None，且指定了 `num_samples` 或numRows字段（由参数 `schema` 定义）时，`shard_equal_rows` 会被视为True。
+        - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
         - **compression_type** (str, 可选) - 用于所有文件的压缩类型，必须是“”，“GZIP”，或“ZLIB”。默认值:None，即空字符串。
+          建议在 `compression_type` 为 "GZIP" 或 "ZLIB" 时，指定 `num_samples` 或numRows字段（由参数 `schema` 定义）以避免出现为了获取文件大小对同一个文件进行多次解压而导致性能下降的问题。
 
     异常：
         - **ValueError** - `dataset_files` 参数所指向的文件无效或不存在。
