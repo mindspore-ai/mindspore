@@ -172,7 +172,7 @@ mindspore.common.initializer
     如果维度大于2，多余的维度将会被展平。
 
     参数：
-        - **gain** (float) - 可选的比例因子，默认值为1。
+        - **gain** (float) - 可选的比例因子，默认值为 ``1.`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度小于2。

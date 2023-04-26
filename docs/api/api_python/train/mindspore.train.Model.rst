@@ -22,7 +22,7 @@
           - "O1": 将白名单中的算子转为float16，剩余算子保持float32。白名单中的算子如下列表：[Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose, Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger]。
           - "O2": 将网络精度转为float16，BatchNorm保持float32精度，使用动态调整损失缩放系数（loss scale）的策略。
           - "O3": 将网络精度（包括BatchNorm）转为float16，不使用损失缩放策略。
-          - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。
+          - "auto": 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。
 
           在GPU上建议使用"O2"，在Ascend上建议使用"O3"。
           通过 `kwargs` 设置 `keep_batchnorm_fp32` ，可修改BatchNorm的精度策略， `keep_batchnorm_fp32` 必须为bool类型；通过 `kwargs` 设置 `loss_scale_manager` 可修改损失缩放策略，`loss_scale_manager` 必须为 :class:`mindspore.amp.LossScaleManager` 的子类，
@@ -95,7 +95,7 @@
             - **dataset_sink_mode** (bool) - 训练数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：False。
             - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值：False。
             - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
-            - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。
+            - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。默认值：0。
 
     .. py:method:: infer_predict_layout(*predict_data)
 
@@ -165,7 +165,7 @@
             - **callbacks** (Optional[list[Callback], Callback]) - 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
             - **dataset_sink_mode** (bool) - 数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：False。
             - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
-            - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。
+            - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。默认值：0。
 
     .. py:method:: train_network
         :property:
