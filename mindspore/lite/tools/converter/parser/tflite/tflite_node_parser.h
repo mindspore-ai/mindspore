@@ -179,7 +179,6 @@ class TfliteNodeParser {
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + (k2DMultipler * i + 1) * sizeof(uint8_t))));
           (*vec)[i][1] = static_cast<T>(data);
-          i += k2DMultipler;
         }
         break;
       }
