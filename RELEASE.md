@@ -237,16 +237,16 @@
   <td><pre style="display: block;"><code class="language-python">
   ops.norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
   >>> # Example:
-  >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
   ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-  >>> output = ops.norm(input_x, [0, 1], p=2)
+  >>> output = ops.norm(input, [0, 1], p=2)
   </code></pre>
   <td><pre style="display: block;"><code class="language-python">
   ops.norm(A, ord=None, dim=None, keepdim=False, *, dtype=None)
   >>> # Example:
-  >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
   ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-  >>> output = ops.norm(input_x, ord=2, dim=(0, 1))
+  >>> output = ops.norm(input, ord=2, dim=(0, 1))
   </code></pre>
   </td>
   </tr>
@@ -275,7 +275,7 @@
 
 - Interface: mindspore.ops.dropout
 
-  Change: The seed1 parameter is deleted. Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
+  Change: The seed0 and seed1 parameters are deleted and seed=None parameter is added. Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -302,7 +302,7 @@
 
 - Interface: mindspore.ops.dropout2d
 
-  Change: Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
+  Change: Return value is changed from Tensor and mask to Tensor only. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -329,7 +329,7 @@
 
 - Interface: mindspore.ops.dropout3d
 
-  Change: Instead of returning Tensors and masks, only Tensors are returned. The input parameter training=True is added.
+  Change: Return value is changed from Tensor and mask to Tensor only. The input parameter training=True is added.
 
   <table>
   <tr>
@@ -468,7 +468,7 @@
 
 - Interface: mindspore.Tensor.split
 
-  Change: The interface is reconstructed. The interface usage mode is more suitable for users. The sequence of the second and third parameters is adjusted, and the split_size_or_sections function is modified and extended.
+  Change: The interface is reconstructed. The interface usage mode is more suitable for users. The positions of the two parameters is adjusted, and the split_size_or_sections function is modified and extended.
 
   Description: For details, see the example of ops.split.
 
@@ -489,7 +489,7 @@
 
 - Interface: mindspore.ops.pad
 
-  Change: The padding parameter name and usage are modified, and the mode function is added.
+  Change: Modify the parameter name paddings to padding, and the mode and value functions are added.
 
   <table>
   <tr>
@@ -665,7 +665,7 @@
 
 - Interface: mindspore.ops.bernoulli
 
-  Change: Parameter seed=-1 is change to None. Meets the actual application scenario.
+  Change: The default value of seed is changed from -1 to None. Meets the actual application scenario.
 
   <table>
   <tr>
@@ -684,7 +684,7 @@
 
 - Interface: mindspore.data_sink
 
-  Change: Deleted the steps parameter. The usability is improved to meet the requirements of actual application scenarios.
+  Change: Deleted the steps parameter. Parameter name jit is changed to jit_config, and new input_signature parameter is added. The usability is improved to meet the requirements of actual application scenarios.
 
   <table>
   <tr>
@@ -705,7 +705,7 @@
 
 - Interface: mindspore.ops.conv2d
 
-  Change: Add the bias parameter and modify the parameter name and parameter sequence.
+  Change: Extend Interface Function. Add the bias parameter and modify the parameter name and parameter sequence.
 
   <table>
   <tr>
