@@ -397,6 +397,7 @@ Linear Algebraic Functions
     mindspore.ops.geqrf
     mindspore.ops.ger
     mindspore.ops.kron
+    mindspore.ops.lu_solve
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
     mindspore.ops.matrix_solve

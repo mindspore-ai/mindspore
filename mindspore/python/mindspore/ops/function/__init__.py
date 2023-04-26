@@ -254,6 +254,7 @@ from .math_func import (
     matrix_determinant,
     det,
     linspace,
+    lu_solve,
     matrix_solve,
     maximum,
     median,

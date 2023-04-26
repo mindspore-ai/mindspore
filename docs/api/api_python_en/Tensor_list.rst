@@ -196,6 +196,7 @@
     mindspore.Tensor.log_normal
     mindspore.Tensor.long
     mindspore.Tensor.lt
+    mindspore.Tensor.lu_solve
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_scatter
     mindspore.Tensor.masked_select
