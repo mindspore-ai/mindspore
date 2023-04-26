@@ -36,15 +36,26 @@ constexpr size_t kSecondVirtualNodeOffset = 1;
 constexpr char kOffloadTargetDDR[] = "cpu";
 constexpr char kOffloadTargetDisk[] = "disk";
 namespace {
-AbstractActor *GetCtrlActor(const ControlNodeParserPtr &parser, const KernelGraph *graph, const string &actor_suffix) {
+ControlActor *GetCtrlActor(const ControlNodeParserPtr &parser, const KernelGraphPtr &graph,
+                           const string &actor_suffix) {
   MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(graph);
-  const auto func_graph = parser->FetchFuncGraphByKernelGraph(graph);
+  std::string actor_name;
+  if (parser->IsInited() && !graph->execution_order().empty()) {
+    actor_name = parser->FetchGroupNameByKernelGraph(graph) + actor_suffix;
+  } else {
+    actor_name = graph->ToString() + actor_suffix;
+  }
+  const auto kernel_graph_actor = reinterpret_cast<ControlActor *>(FetchActor(actor_name));
+  if (kernel_graph_actor != nullptr) {
+    return kernel_graph_actor;
+  }
+  const auto func_graph = parser->FetchFuncGraphByKernelGraph(graph.get());
   if (func_graph == nullptr) {
     return nullptr;
   }
-  const std::string &actor_name = func_graph->ToString() + actor_suffix;
-  return FetchActor(actor_name);
+  actor_name = func_graph->ToString() + actor_suffix;
+  return reinterpret_cast<ControlActor *>(FetchActor(actor_name));
 }
 
 std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapAction> &swap_action,
@@ -165,16 +176,23 @@ std::shared_ptr<device::SwapContext> GetSwapContext() {
 void MemSwapScheduler::GetRealParameters(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parser);
-  const auto &entrance_actor =
-    dynamic_cast<EntranceActor *>(GetCtrlActor(parser, graph.get(), kEntranceActorNameSuffix));
-  if (entrance_actor == nullptr) {
+  ControlActor *source_actor = nullptr;
+  if (parser->IsCallInputKernelGraph(graph.get())) {
+    source_actor = GetCtrlActor(parser, graph, kStackActorNameSuffix);
+  } else {
+    source_actor = GetCtrlActor(parser, graph, kEntranceActorNameSuffix);
+  }
+  if (source_actor == nullptr) {
     return;
   }
   HashMap<AnfNodePtr, size_t> real_parameters;
   for (const auto &input : graph->input_nodes()) {
+    if (HasAbstractMonad(input)) {
+      continue;
+    }
     if (parser->IsControlFlowDataArrow(graph, input)) {
       const auto &front_node = GetFrontNodeByKernelGraph(input, graph.get());
-      const size_t index = entrance_actor->FetchNodePosition(front_node);
+      const size_t index = source_actor->FetchNodePosition(front_node);
       real_parameters.insert({input, index});
     }
   }
@@ -232,13 +250,14 @@ void MemSwapScheduler::AddSwappableTensors(const mindspore::device::DeviceContex
       continue;
     }
     const auto &anf_with_out_index = std::make_pair(tensor_info->node_, tensor_info->index_);
-    if (ref_map.find(anf_with_out_index) != ref_map.end()) {
-      continue;
-    }
     const auto &device_address = AnfAlgo::GetMutableOutputAddr(tensor_info->node_, tensor_info->index_, false);
     MS_EXCEPTION_IF_NULL(device_address);
-    swap_manager->AddSwappableTensor(device_address);
-    device_address->set_swappable(true);
+    if (ref_map.find(anf_with_out_index) != ref_map.end()) {
+      device_address->set_swappable(false);
+    } else {
+      swap_manager->AddSwappableTensor(device_address);
+      device_address->set_swappable(true);
+    }
   }
 }
 
@@ -270,7 +289,7 @@ void MemSwapScheduler::BuildSwapActorForGraph(const KernelGraphPtr &graph, const
   for (const auto &iter : swap_strategy->actions_) {
     // Fixed DeviceAddress in MemorySwapActor.
     std::vector<DeviceTensor *> fixed_device_address;
-    // Output index of EntranceActor for real parameter whose DeviceAddress is changeable.
+    // Output index of EntranceActor or StackActor for real parameter whose DeviceAddress is not fixed.
     std::vector<size_t> real_parameter_index;
     auto tensors_id_index_map = GetActionTensors(iter.second, swap_strategy, real_parameters_[graph->graph_id()],
                                                  &fixed_device_address, &real_parameter_index);
@@ -322,12 +341,12 @@ AbstractActor *MemSwapScheduler::GetActorForLink(size_t id, const std::shared_pt
   MS_EXCEPTION_IF_NULL(actor_set);
   AbstractActor *ret = nullptr;
   if (id == kFirstVirtualNode) {
-    ret = dynamic_cast<EntranceActor *>(GetCtrlActor(parser, graph.get(), kEntranceActorNameSuffix));
+    ret = dynamic_cast<EntranceActor *>(GetCtrlActor(parser, graph, kEntranceActorNameSuffix));
     if (ret == nullptr) {
       ret = actor_set->data_prepare_actor_.get();
     }
   } else if (id == graph->execution_order().size() + kSecondVirtualNodeOffset) {
-    ret = dynamic_cast<ExitActor *>(GetCtrlActor(parser, graph.get(), kExitActorNameSuffix));
+    ret = dynamic_cast<ExitActor *>(GetCtrlActor(parser, graph, kExitActorNameSuffix));
     if (ret == nullptr) {
       ret = actor_set->loop_count_actor_.get();
     }
@@ -354,6 +373,7 @@ AbstractActor *MemSwapScheduler::GetActorForLink(size_t id, const std::shared_pt
 
 void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
   for (const auto &graph : graph_compiler_info.graphs_) {
     const auto &strategy_iter = graph_strategy_map_.find(graph->graph_id());
     if (strategy_iter == graph_strategy_map_.end()) {
@@ -363,17 +383,19 @@ void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorS
     MS_EXCEPTION_IF_NULL(strategy);
     for (const auto &link : strategy->links_) {
       MS_EXCEPTION_IF_NULL(link);
-      const auto from_actor =
-        GetActorForLink(link->from_, strategy, graph, graph_compiler_info.control_node_parser_, actor_set);
+      const auto from_actor = GetActorForLink(link->from_, strategy, graph, parser, actor_set);
       MS_EXCEPTION_IF_NULL(from_actor);
-      const auto to_actor =
-        GetActorForLink(link->to_, strategy, graph, graph_compiler_info.control_node_parser_, actor_set);
+      const auto to_actor = GetActorForLink(link->to_, strategy, graph, parser, actor_set);
       MS_EXCEPTION_IF_NULL(to_actor);
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
     }
-    const auto &entrance_actor = dynamic_cast<EntranceActor *>(
-      GetCtrlActor(graph_compiler_info.control_node_parser_, graph.get(), kEntranceActorNameSuffix));
-    if (entrance_actor == nullptr) {
+    ControlActor *source_actor = nullptr;
+    if (parser->IsCallInputKernelGraph(graph.get())) {
+      source_actor = GetCtrlActor(parser, graph, kStackActorNameSuffix);
+    } else {
+      source_actor = GetCtrlActor(parser, graph, kEntranceActorNameSuffix);
+    }
+    if (source_actor == nullptr) {
       continue;
     }
     const auto &action_actor_map = action_actor_map_.find(graph->graph_id());
@@ -395,7 +417,7 @@ void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorS
       }
       for (size_t i = 0; i < data_dependency_iter->second.size(); ++i) {
         const auto &output_index = data_dependency_iter->second[i];
-        SchedulerHelper::AddDataArrow(entrance_actor, actor_iter->second.get(), output_index, i);
+        SchedulerHelper::AddDataArrow(source_actor, actor_iter->second.get(), output_index, i);
       }
     }
   }

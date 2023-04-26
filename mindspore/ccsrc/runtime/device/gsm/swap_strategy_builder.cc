@@ -143,12 +143,15 @@ void SwapStrategyBuilder::BuildSpans() {
       last_index = current_index;
     }
 
-    if (info->is_graph_output_) {
-      RecordSpan(info, last_index, kernel_num_, true);
-    }
-
+    bool is_weight = false;
     if (info->is_graph_input_) {
+      const auto &parameter = info->node_->cast<ParameterPtr>();
+      is_weight = (parameter != nullptr) && common::AnfAlgo::IsParameterWeight(parameter);
+    }
+    if (is_weight) {
       RecordSpan(info, last_index, used_by_kernels[0] + kernel_num_);
+    } else if (info->is_graph_output_) {
+      RecordSpan(info, last_index, kernel_num_, true);
     }
   }
 }
