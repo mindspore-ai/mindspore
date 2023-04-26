@@ -1,3 +1,4 @@
+# VER d6ba69b1
 set(REQ_URL "https://github.com/NVIDIA/cuCollections/archive/d6ba69b1fdab90ae144301e77eb93a2f130ede1d.tar.gz")
 set(SHA256 "8968d3a426db5f48ece1dafd10d51e77c163a53a514055efe96b42b88b938a87")
 set(INCLUDE "include")
