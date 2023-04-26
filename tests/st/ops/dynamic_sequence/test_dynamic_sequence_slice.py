@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.ops.operations import _sequence_ops as S
-from mindspore.common import mutable
+from mindspore.common import mutable, dtype
 from mindspore.ops.composite import GradOperation
 from sequence_help import TupleFactory, context_prepare
 
@@ -127,3 +127,25 @@ def test_seq_slice_mutable_typeerror():
     net = Net()
     with pytest.raises(TypeError):
         net(x, a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_seq_slice_neg_step():
+    """
+    Feature: test sequence_slice negative step
+    Description: slice operation when step == -1
+    Expectation: the behavior is matched to python style
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            shp = x.shape
+            out = shp[::-1]
+            return out
+
+    x = Tensor([[2, 1]], dtype.float32)
+    net = Net()
+    output = net(x)
+    expect = x.shape[::-1]
+    assert output == expect

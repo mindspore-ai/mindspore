@@ -137,10 +137,10 @@ def _tuple_getitem_by_slice(data, slice_index):
         start = slice_getitem(slice_index, "start")
         stop = slice_getitem(slice_index, "stop")
         step = slice_getitem(slice_index, "step")
-        if start is None:
-            start = 0
         if step is None:
             step = 1
+        if start is None:
+            start = 0 if step >= 1 else -1
         if stop is None:
             stop = (2**31-1) if step >= 1 else -(2**31-1)
         return sequence_slice(data, start, stop, step)
@@ -193,10 +193,10 @@ def _list_getitem_by_slice(data, slice_index):
         start = slice_getitem(slice_index, "start")
         stop = slice_getitem(slice_index, "stop")
         step = slice_getitem(slice_index, "step")
-        if start is None:
-            start = 0
         if step is None:
             step = 1
+        if start is None:
+            start = 0 if step >= 1 else -1
         if stop is None:
             stop = (2**31-1) if step >= 1 else -(2**31-1)
         return sequence_slice(data, start, stop, step)
