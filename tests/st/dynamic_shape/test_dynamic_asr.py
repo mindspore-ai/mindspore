@@ -821,30 +821,39 @@ def warmup_lr(init_lr, warmup_steps, total_steps):
     return np.array(lr).astype(np.float32)
 
 
-def create_dataset(batch_size=16, feats_dim=83, text_dim=6368):
-    feats_widths = (1024, 1015)
-    feats2_widths = ((1024, 1024), (1015, 1014))
-    token_widths = (24, 22)
-    text_widths = ((24, 22), (21, 22))
-    seq_shape_list = [((batch_size, 895, feats_dim), (batch_size, 23)), ((
-        batch_size, 896, feats_dim), (batch_size, 26))]
-    seq_shape_list = []
-
-    for feats_wid, feats2_wid, token_wid, text_wid in zip(feats_widths, feats2_widths, token_widths, text_widths):
-        seq_shape_list.append(((batch_size, feats_wid, feats_dim),
-                               ((feats2_wid[0], feats_dim), (feats2_wid[1], feats_dim)),
-                               (batch_size, token_wid),
-                               ((text_wid[0], text_dim), (text_wid[1], text_dim))))
+def create_dataset(batch_size=2, feats_dim=83, text_dim=6368):
+    if batch_size != 2 or feats_dim != 83 or text_dim != 6368:
+        raise ValueError("param wrong, only for batch_size 2, feats_dim 83 and text_dim 6368!")
 
     np.random.seed(0)
+
+    feats_widths = (598, 539)
+    token_widths = (15, 18)
+    tokens = [np.array([1491, 1122, 1741, 1307, 1115, 1499, 3382, 1465, 1176, 1044, 1116, 1043, 1002, 1859, 2127, 1138,
+                        1115, 1052, 1150, 1148, 1759, 2186, 1002, 1476, 1082, 1289, -1, -1, -1, -1], dtype=np.int32),
+              np.array([1162, 1487, 1182, 1496, 1066, 1096, 1940, 1308, 1307, 1897, 1316, 2452, 1651, 1380, 1297, 1859,
+                        2127, 1089, 1985, 1150, 1759, 2186, 1660, 2861, 2861, 1199, 1255, -1, -1, -1, -1, -1, -1, -1,
+                        -1, -1], dtype=np.int32)]
+    feats2_widths = ((feats_widths[0], 384), (feats_widths[1], 315))
+    text_widths = ((token_widths[0], 11), (token_widths[1], 9))
+
+    seq_shape_list = []
+    for feats_wid, token_wid, token_value, feats2_wid, text_wid in zip(
+            feats_widths, token_widths, tokens, feats2_widths, text_widths):
+        seq_shape_list.append(((batch_size, feats_wid, feats_dim),
+                               (batch_size, token_wid),
+                               token_value,
+                               ((feats2_wid[0], feats_dim), (feats2_wid[1], feats_dim)),
+                               ((text_wid[0], text_dim), (text_wid[1], text_dim))))
+
     data_list = []
-    for feats_shape1, feats_shape_temp, token_shape, text_shape_temp in seq_shape_list:
+    for feats_shape1, token_shape, token_value, feats_shape_temp, text_shape_temp in seq_shape_list:
         label_indices = []
         label_values = []
         text_shape = np.array(text_shape_temp).astype(np.int32)
         blank_token = text_shape[0][1] - 1
 
-        token = np.random.randn(*token_shape).astype(np.int32)
+        token = token_value.reshape(*token_shape).astype(np.int32)
 
         for batch_id, item in enumerate(token):
             tmp_token = copy.deepcopy(item)
@@ -1041,8 +1050,8 @@ def test_ascend_train_by_mode(mode):
     losses = asr_run(mode)
     current_time = time.time()
     logging.info("Run asr with %f s.", current_time - start_time)
-    expect_losses = [np.array(106.237755, dtype=np.float32), np.array(90.78951, dtype=np.float32),
-                     np.array(89.331894, dtype=np.float32), np.array(102.211105, dtype=np.float32)]
+    expect_losses = [np.array(365.10015869140625, dtype=np.float32), np.array(301.9192199707031, dtype=np.float32),
+                     np.array(171.00082397460938, dtype=np.float32), np.array(144.65423583984375, dtype=np.float32)]
     _compare_result(losses[:1], expect_losses[:1])
     logging.info("Test asr done.")
 
@@ -1087,7 +1096,7 @@ def test_gpu_train():
     losses = asr_run(context.GRAPH_MODE)
     current_time = time.time()
     logging.info("Run asr with %f s.", current_time - start_time)
-    expect_losses = [np.array(727.7395, dtype=np.float32), np.array(518.216, dtype=np.float32),
-                     np.array(107.88617, dtype=np.float32), np.array(139.66273, dtype=np.float32)]
+    expect_losses = [np.array(362.0659, dtype=np.float32), np.array(287.72534, dtype=np.float32),
+                     np.array(143.58578, dtype=np.float32), np.array(131.3605, dtype=np.float32)]
     _compare_result(losses, expect_losses)
     logging.info("Test asr done.")
