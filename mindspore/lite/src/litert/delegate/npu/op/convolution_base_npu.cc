@@ -122,7 +122,7 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
 }
 
 int ConvolutionBaseNPUOp::InitBiasConst(const std::vector<mindspore::MSTensor> &inputs) {
-  if (inputs.size() >= 3) {
+  if (inputs.size() >= BIAS_INDEX) {
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_b");
     if (bias_ == nullptr) {
       MS_LOG(ERROR) << "New bias const failed.";

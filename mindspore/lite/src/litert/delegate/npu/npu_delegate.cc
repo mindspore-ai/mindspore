@@ -196,7 +196,8 @@ Status NPUDelegate::Init() {
 }
 
 Status NPUDelegate::Build(DelegateModel<schema::Primitive> *model) {
-  KernelIter from, end;
+  KernelIter from;
+  KernelIter end;
   std::vector<NPUOp *> npu_ops;
   int graph_index = 0;
   for (auto iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
