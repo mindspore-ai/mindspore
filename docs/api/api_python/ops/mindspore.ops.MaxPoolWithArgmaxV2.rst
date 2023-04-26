@@ -28,10 +28,10 @@ mindspore.ops.MaxPoolWithArgmaxV2
         - **output** (Tensor) - 输出池化后的最大值，shape为 :math:`(N_{out}, C_{out}, H_{out}, W_{out})`。其数据类型与 `x` 相同。
 
           .. math::
-              H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{pads[0]} - \text{dilation[0]} \times (\text{kernel\_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
+              H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{pads[0]} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
 
           .. math::
-              W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{pads[1]} - \text{dilation[1]} \times (\text{kernel\_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
+              W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{pads[1]} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
 
         - **argmax** (Tensor) - 输出的最大值对应的索引。在CPU和GPU上，数据类型为int32或者int64。在Ascend上，数据类型为uint16。
 
