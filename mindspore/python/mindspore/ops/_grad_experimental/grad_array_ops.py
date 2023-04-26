@@ -396,7 +396,7 @@ def get_bprop_im2col(self):
                     padding=padding)
 
     def bprop(x, out, dout):
-        x_shape = shape_op(x)[2:]
+        x_shape = P.TensorShape()(x)[2:]
         dx = col2im(dout, x_shape)
         return (dx,)
 
