@@ -152,10 +152,8 @@ DuplexPipe &DuplexPipe::operator>>(std::string &buf) {
 }
 
 void DuplexPipe::Close() noexcept {
-  close(fd1_[0]);
   close(fd1_[1]);
   close(fd2_[0]);
-  close(fd2_[1]);
   pid_ = -1;
 }
 
