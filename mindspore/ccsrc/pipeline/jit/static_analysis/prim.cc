@@ -1525,107 +1525,6 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
   return GetEvaluatedValueForNameSpaceString(args_abs_list, data_value, out_conf, data_id_str);
 }
 
-EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList &args_abs_list,
-                                                      const ValuePtr &data_value, const AnfNodeConfigPtr &out_conf) {
-  constexpr size_t item_index = 1;
-  auto item_args = args_abs_list[item_index];
-  ValuePtr item_value = item_args->BuildValue();
-
-  MS_EXCEPTION_IF_NULL(item_value);
-  MS_EXCEPTION_IF_NULL(data_value);
-  MS_EXCEPTION_IF_NULL(out_conf);
-  // Get the name of item.
-  if (!item_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
-  }
-  auto item_str = item_value->cast_ptr<StringImm>();
-  MS_EXCEPTION_IF_NULL(item_str);
-  const auto &item_name = item_str->value();
-  // Get ms_class object.
-  if (!data_value->isa<parse::MsClassObject>()) {
-    MS_LOG(EXCEPTION) << "Expect a ms_class object, but got " << data_value->ToString();
-  }
-  auto ms_class = data_value->cast_ptr<parse::MsClassObject>();
-  MS_LOG(DEBUG) << "Resolve ms_class (" << ms_class->name() << ") with item " << item_name << ".";
-
-  // Get the attr/method of ms_class object.
-  auto out_node = out_conf->node();
-  FuncGraphPtr func_graph = out_node->func_graph();
-  // If the attribute is not found and the default is not set, AttributeError will be raised.
-  auto new_node = parse::ResolveMsClassWithAttr(func_graph->manager(), ms_class->obj(), item_name, out_node);
-  if (new_node == nullptr) {
-    constexpr auto max_args_len = 3;
-    bool has_default = (args_abs_list.size() == max_args_len);
-    if (!has_default) {
-      MS_EXCEPTION(AttributeError) << py::str(ms_class->obj()) << " object has no attribute: " << item_name << ".";
-    }
-    constexpr auto default_index = 3;
-    auto out_cnode = out_node->cast_ptr<CNode>();
-    MS_EXCEPTION_IF_NULL(out_cnode);
-    new_node = out_cnode->inputs()[default_index];
-  }
-
-  func_graph->ReplaceInOrder(out_node, new_node);
-  AnalysisEnginePtr eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf);
-}
-
-EvalResultPtr GetEvaluatedValueForFuncGraphAttrOrMethod(const AbstractBasePtrList &args_abs_list,
-                                                        const FuncGraphPtr &func_value,
-                                                        const AnfNodeConfigPtr &out_conf) {
-  constexpr size_t item_index = 1;
-  auto item_args = args_abs_list[item_index];
-  ValuePtr item_value = item_args->BuildValue();
-
-  MS_EXCEPTION_IF_NULL(item_value);
-  MS_EXCEPTION_IF_NULL(func_value);
-  if (!item_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
-  }
-  auto python_obj = func_value->python_obj();
-  if (python_obj == nullptr) {
-    return nullptr;
-  }
-  auto wrapper_obj = dyn_cast_ptr<parse::PyObjectWrapper>(python_obj);
-  MS_EXCEPTION_IF_NULL(wrapper_obj);
-  py::object real_python_obj = wrapper_obj->obj();
-  const auto &py_obj_str = py::str(real_python_obj);
-  MS_LOG(DEBUG) << "item_value: " << item_value->ToString() << ", func_value: " << func_value->ToString()
-                << ", real_python_obj: " << py_obj_str;
-  if (py::isinstance<Cell>(real_python_obj)) {
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::object ns_obj =
-      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, real_python_obj);
-    auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
-    return GetEvaluatedValueForNameSpaceString(args_abs_list, ns, out_conf, py_obj_str);
-  }
-  if (py::hasattr(real_python_obj, PYTHON_MS_CLASS)) {
-    auto out_node = out_conf->node();
-    auto out_cnode = out_node->cast_ptr<CNode>();
-    MS_EXCEPTION_IF_NULL(out_cnode);
-    auto fg = out_cnode->func_graph();
-    std::string item_name = item_value->cast_ptr<StringImm>()->value();
-    auto new_node = parse::ResolveMsClassWithAttr(fg->manager(), real_python_obj, item_name, out_node);
-    if (new_node == nullptr) {
-      constexpr auto max_args_len = 3;
-      bool has_default = (args_abs_list.size() == max_args_len);
-      if (!has_default) {
-        MS_EXCEPTION(AttributeError) << py::str(real_python_obj) << " object has no attribute: " << item_name << ".";
-      }
-      constexpr auto default_index = 3;
-      new_node = out_cnode->inputs()[default_index];
-    }
-    fg->ReplaceInOrder(out_node, new_node);
-    AnalysisEnginePtr eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf);
-  }
-  return nullptr;
-}
-
 EvalResultPtr GetEvaluatedValueForPrimitiveAttr(const AbstractBasePtrList &args_abs_list,
                                                 const AbstractFunctionPtr &data_args) {
   MS_EXCEPTION_IF_NULL(data_args);
@@ -1807,29 +1706,12 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-ValuePtr GetMsClassObject(const AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!abs->isa<abstract::PartialAbstractClosure>()) {
-    return nullptr;
-  }
-  auto partial_abs = abs->cast_ptr<abstract::PartialAbstractClosure>();
-  auto fn = partial_abs->fn();
-  if (!fn->isa<abstract::PrimitiveAbstractClosure>()) {
-    return nullptr;
-  }
-  // Check if type is kObjectTypeClass.
-  auto args = partial_abs->args();
-  if (args.size() > 0) {
-    constexpr size_t first_input_index = 0;
-    auto first_arg = args[first_input_index];
-    MS_EXCEPTION_IF_NULL(first_arg);
-    auto type = first_arg->BuildType();
-    MS_EXCEPTION_IF_NULL(type);
-    if (type->type_id() == kObjectTypeClass) {
-      return first_arg->BuildValue();
-    }
-  }
-  return nullptr;
+EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::string &cls_name,
+                                       const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, cls_obj);
+  auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
+  return GetEvaluatedValueForNameSpaceString(args_abs_list, ns, out_conf, cls_name);
 }
 
 EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const AbstractBasePtrList &args_abs_list,
@@ -1837,18 +1719,39 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
   if (data_args == nullptr) {
     return nullptr;
   }
-  // Get attribute or method of PartialAbstractClosure, the object is class object decorated with 'jit_class'.
-  auto class_value = GetMsClassObject(data_args);
-  if (class_value != nullptr) {
-    return GetEvaluatedValueForMsClassAttrOrMethod(args_abs_list, class_value, out_conf);
+  // Get attribute or method of PartialAbstractClosure, the object could be nn.Cell/ms_class object.
+  auto data_partial = dyn_cast_ptr<PartialAbstractClosure>(data_args);
+  if (data_partial != nullptr) {
+    const auto &partial_args = data_partial->args();
+    auto prim_abs = dyn_cast_ptr<PrimitiveAbstractClosure>(data_partial->fn());
+    if (prim_abs != nullptr && !partial_args.empty()) {
+      const auto &prim_name = prim_abs->prim()->name();
+      if (prim_name == prim::kPrimCreateInstance->name() || prim_name == prim::kPrimCallInstance->name()) {
+        constexpr size_t class_index = 0;
+        auto class_val = partial_args[class_index]->BuildValue();
+        MS_EXCEPTION_IF_NULL(class_val);
+        auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(class_val);
+        MS_EXCEPTION_IF_NULL(wrapper);
+        return GetClassAttrFromPyObject(wrapper->obj(), wrapper->name(), args_abs_list, out_conf);
+      }
+    }
+    return nullptr;
   }
-  // Get attribute or method of FuncGraphAbstractClosure, the object could be Cell/ms_class object.
+  // Get attribute or method of FuncGraphAbstractClosure, the object could be nn.Cell/ms_class object.
   auto data_func_graph = dyn_cast_ptr<FuncGraphAbstractClosure>(data_args);
   if (data_func_graph != nullptr) {
-    auto res = GetEvaluatedValueForFuncGraphAttrOrMethod(args_abs_list, data_func_graph->func_graph(), out_conf);
-    if (res != nullptr) {
-      return res;
+    auto func_value = data_func_graph->func_graph();
+    MS_EXCEPTION_IF_NULL(func_value);
+    auto python_obj = func_value->python_obj();
+    if (python_obj != nullptr) {
+      auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(python_obj);
+      MS_EXCEPTION_IF_NULL(wrapper);
+      auto cls_obj = wrapper->obj();
+      if (py::isinstance<Cell>(cls_obj) || py::hasattr(cls_obj, PYTHON_MS_CLASS)) {
+        return GetClassAttrFromPyObject(cls_obj, wrapper->name(), args_abs_list, out_conf);
+      }
     }
+    return nullptr;
   }
   return GetEvaluatedValueForPrimitiveAttr(args_abs_list, data_args);
 }

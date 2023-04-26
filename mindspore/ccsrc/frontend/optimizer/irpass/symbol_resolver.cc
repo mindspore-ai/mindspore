@@ -56,8 +56,7 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     // {prim::kPrimGetAttr, MsClassObject, attr}
     if (IsValueNode<parse::MsClassObject>(object_node)) {
       auto ms_class = GetValueNode<parse::MsClassObjectPtr>(object_node)->obj();
-      auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
-      return parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
+      return parse::ResolveMsClassWithAttr(ms_class, attr_node, node);
     }
     return nullptr;
   };
