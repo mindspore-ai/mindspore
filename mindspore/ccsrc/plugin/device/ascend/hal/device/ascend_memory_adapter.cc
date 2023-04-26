@@ -149,7 +149,7 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &ta
   if (static_mem_offset_ < size || (static_mem_offset_ - size) < max_dynamic_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
-                      << ", Memory Statistic:" << DevMemStatistics()
+                      << "B, Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
@@ -167,7 +167,7 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   if (new_dynamic_offset > static_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
-                      << ", Memory Statistic:" << DevMemStatistics()
+                      << "B, Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
