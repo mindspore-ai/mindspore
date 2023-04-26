@@ -123,7 +123,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             Default: None, will use global default workers(8), it can be set
             by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: None, performs global shuffle. Bool type and Shuffle enum are both supported to pass in.
+            Default: None, performs mindspore.dataset.Shuffle.GLOBAL.
+            Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
@@ -256,16 +257,16 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
             Default: None.
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
-        num_samples (int, optional): The number of samples (rows) to be included in the dataset.
-            Default: None.
+        num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
+            When `num_shards` and `shard_id` are specified, it will be interpreted as number of rows per shard.
             Processing priority for `num_samples` is as the following:
-            1. If `num_samples` is greater than 0, read `num_samples` rows.
-            2. Otherwise, if numRows (parsed from `schema` ) is greater than 0, read numRows rows.
-            3. Otherwise, read the full dataset.
-            `num_samples` or numRows (parsed from `schema` ) will be interpreted as number of rows per shard.
-            It is highly recommended to provide `num_samples` or numRows (parsed from `schema` )
-            when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
-            decompressions of the same file to obtain the file size.
+
+            - If specify `num_samples` with value > 0, read `num_samples` samples.
+
+            - If no `num_samples` and specify numRows(parsed from `schema`) with value > 0, read numRows samples.
+
+            - If no `num_samples and no `schema`, read the full dataset.
+
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
             by `mindspore.dataset.config.set_num_parallel_workers` .
@@ -294,7 +295,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
         compression_type (str, optional): The type of compression used for all files, must be either '', 'GZIP', or
-            'ZLIB'. Default: None, as in empty string.
+            'ZLIB'. Default: None, as in empty string. It is highly recommended to provide `num_samples` or
+            numRows (parsed from `schema`) when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation
+            caused by multiple decompressions of the same file to obtain the file size.
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
