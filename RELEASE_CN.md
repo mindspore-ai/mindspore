@@ -168,12 +168,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   mindspore.set_context(mode=GRAPH_MODE)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   mindspore.set_context(mode=PYNATIVE_MODE)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -190,12 +191,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   Model.train(dataset_sink_mode=True)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   Model.train(dataset_sink_mode=False)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -212,14 +214,15 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   mindspore.export(net, *inputs, file_name,
                    file_format="AIR", **kwargs)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   mindspore.export(net, *inputs, file_name,
                    file_format, **kwargs)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -233,20 +236,21 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
   >>> # 举例:
   >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
-  ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+  ...                          [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
   >>> output = ops.norm(input, [0, 1], p=2)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.norm(A, ord=None, dim=None, keepdim=False, *, dtype=None)
   >>> # 举例:
   >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
-  ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+  ...                          [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
   >>> output = ops.norm(input, ord=2, dim=(0, 1))
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -262,12 +266,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   Tensor.norm(axis, p=2, keep_dims=False, epsilon=1e-12)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   Tensor.norm(ord=None, dim=None, keepdim=False, *, dtype=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -281,20 +286,23 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td>
+  <pre>
   ops.dropout(x, p=0.5, seed0=0, seed1=0)
   >>> # 举例:
   >>> input = Tensor(((20, 16), (50, 50)),
   ...                mindspore.float32)
   >>> output, mask = dropout(x, p=0.5)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td>
+  <pre>
   ops.dropout(input, p=0.5, training=True, seed=None)
   >>> # 举例:
   >>> input = Tensor(((20, 16), (50, 50)),
   ...                mindspore.float32)
   >>> output = ops.dropout(input, p=0.5，training=True)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -308,20 +316,23 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td>
+  <pre>
   ops.dropout2d(x, p=0.5)
   >>> # 举例:
   >>> input = Tensor(np.ones([2, 1, 2, 3]),
   ...                mindspore.float32)
   >>> output, mask = dropout2d(input, 0.5)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td>
+  <pre>
   ops.dropout2d(input, p=0.5, training=True)
   >>> # 举例:
   >>> input = Tensor(np.ones([2, 1, 2, 3]),
   ...                mindspore.float32)
   >>> output = ops.dropout2d(input, 0.5, training=True)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -335,20 +346,21 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.dropout3d(x, p=0.5)
   >>> # 举例:
   >>> input = Tensor(np.ones([2, 1, 2, 3]),
   ...                mindspore.float32)
   >>> output, mask = dropout3d(input, 0.5)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.dropout3d(input, p=0.5, training=True)
   >>> # 举例:
   >>> input = Tensor(np.ones([2, 1, 2, 3]),
   ...                mindspore.float32)
   >>> output = ops.dropout3d(input, 0.5, training=True)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -365,12 +377,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.std(input_x, axis=(), unbiased=True, keep_dims=False)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.std(input, axis=None, ddof=0, keepdims=False)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -384,12 +397,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   net_param = load_param_into_net()
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   net_param, ckpt_param = load_param_into_net()
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -403,7 +417,7 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   BCELoss(weight=None, reduction='none')
   >>> # 举例:
   >>> weight = Tensor(np.array([[1.0, 2.0, 3.0],
@@ -418,8 +432,9 @@
   >>> output = loss(logits, labels)
   >>> print(output)
   >>> 1.8952923
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   BCELoss(weight=None, reduction='mean')
   >>> # 举例:
   >>> weight = Tensor(np.array([[1.0, 2.0, 3.0],
@@ -434,7 +449,7 @@
   >>> output = loss(logits, labels)
   >>> print(output)
   >>> 1.8952923
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -448,20 +463,21 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.split(input_x, axis=0, output_num=1)
   >>> # 举例:
   >>> input = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]),
   ...                mindspore.int32)
   >>> output = ops.split(input, axis=1, output_num=4)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.split(tensor, split_size_or_sections, axis=0)
   >>> # 举例:
   >>> input = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]),
   ...                mindspore.int32)
   >>> output = ops.split(input, split_size_or_sections=1, axis=1)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -477,12 +493,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   Tensor.split(axis=0, output_num=1)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   Tensor.split(split_size_or_sections, axis=0)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -496,7 +513,7 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.pad(input_x, paddings)
   >>> # 举例:
   >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6],
@@ -504,8 +521,9 @@
   ...                  mindspore.float32)
   >>> paddings = ((1, 2), (2, 1))
   >>> output = ops.pad(input_x, paddings)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.pad(input_x, padding, mode='constant', value=None)
   >>> # 举例:
   >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6],
@@ -513,7 +531,7 @@
   ...                  mindspore.float32)
   >>> paddings = (2, 1, 1, 2)
   >>> output = ops.pad(input_x, paddings)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -527,22 +545,23 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.meshgrid(inputs, indexing='xy')
   >>> # 举例:
   >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
   >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
   >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
   >>> output = ops.meshgrid((x, y, z), indexing='xy')
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.meshgrid(*inputs, indexing='xy')
   >>> # 举例:
   >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
   >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
   >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
   >>> output = ops.meshgrid(x, y, z, indexing='xy')
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -556,7 +575,7 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.max(x, axis=0, keep_dims=False)
   >>> # 举例:
   >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
@@ -564,15 +583,16 @@
   >>> index, output = ops.max(input)
   >>> print(index, output)
   >>> 3 0.7
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.max(input, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False)
   >>> # 举例:
   >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
   ...                mindspore.float32)
   >>> output, index = ops.max(input, axis=0)
   >>> print(output, index)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -586,22 +606,23 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.min(x, axis=0, keep_dims=False)
   >>> # 举例:
   >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
   ...                mindspore.float32)
   >>> index, output = ops.min(input)
   >>> 0 0.0
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.min(input, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False)
   >>> # 举例:
   >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
   ...                mindspore.float32)
   >>> output, index = ops.min(input, keepdims=True)
   >>> 0.0 0
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -615,12 +636,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.random_gamma(shape, alpha, seed=0, seed2=0)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.random_gamma(shape, alpha, seed=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -634,12 +656,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.standard_laplace(shape, seed=0, seed2=0)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.standard_laplace(shape, seed=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -653,12 +676,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.standard_normal(shape, seed=0, seed2=0)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.standard_normal(shape, seed=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -672,12 +696,13 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   ops.bernoulli(x, p=0.5, seed=-1)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   ops.bernoulli(input, p=0.5, seed=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -691,14 +716,15 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   mindspore.data_sink(fn, dataset, steps,
                       sink_size=1, jit=False)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   mindspore.data_sink(fn, dataset, sink_size=1,
                       jit_config=None, input_signature=None)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -712,14 +738,15 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   conv2d(inputs, weight, pad_mode="valid",
          padding=0, stride=1, dilation=1, group=1)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   conv2d(input, weight, bias=None, stride=1,
          pad_mode="valid", padding=0, dilation=1, groups=1)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -735,14 +762,15 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   mindspore.dataset.vision.Pad(padding=(1,2))
   代表图片的左/上填充 1像素，右/下填充 2像素
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   mindspore.dataset.vision.Pad(padding=(1,2,1,2))
   代表图片的左/上填充 1像素，右/下填充 2像素
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -761,18 +789,19 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   >>> dataset = dataset.map(operations=[transforms],
   ...                       input_columns=["column_a"],
   ...                       output_columns=["column_b", "column_c"],
   ...                       column_order=["column_c", "column_b"])
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   >>> dataset = dataset.map(operations=[transforms],
   ...                       input_columns=["column_a"],
   ...                       output_columns=["column_b", "column_c"])
   >>> dataset = dataset.project(["column_c", column_b"])")
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -791,17 +820,18 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   >>> dataset = dataset.batch(batch_size=4,
   ...                         input_columns=["column_a"],
   ...                         output_columns=["column_b", "column_c"],
   ...                         column_order=["column_c", "column_b"])
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   >>> dataset = dataset.batch(batch_size=4, input_columns=["column_a"]
   ...                         output_columns=["column_b", "column_c"])
   >>> dataset = dataset.project(["column_c", column_b"])")
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
@@ -817,14 +847,15 @@
   <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
   </tr>
   <tr>
-  <td><pre style="display: block;"><code class="language-python">
+  <td><pre>
   >>> dataset = dataset.batch(batch_size=4,
   ...                         drop_remainder=True, pad_info=...)
-  </code></pre>
-  <td><pre style="display: block;"><code class="language-python">
+  </pre>
+  </td>
+  <td><pre>
   >>> dataset = dataset.padded_batch(batch_size=4,
   ...                                drop_remainder=True, pad_info=...)
-  </code></pre>
+  </pre>
   </td>
   </tr>
   </table>
