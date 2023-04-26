@@ -298,13 +298,14 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   }
 
   if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, workspace, outputs);
+    return LaunchKernel<float>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, workspace, outputs);
+    return LaunchKernel<float16>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, workspace, outputs);
+    return LaunchKernel<double>(inputs, workspace, outputs);
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << " error get " << TypeIdToType(dtype_)->ToString();
+    return false;
   }
   return true;
 }
