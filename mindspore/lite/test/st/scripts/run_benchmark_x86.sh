@@ -62,6 +62,11 @@ function Run_Converter() {
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${x86_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
+    convert_status=$?
+    if [[ convert_status -ne 0 ]]; then
+      echo "run X86 convert failed."
+      exit 1
+    fi
 }
 
 # Run on x86 platform:
