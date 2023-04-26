@@ -27,7 +27,7 @@ mindspore.ops.batch_to_space_nd
     异常：
         - **TypeError** - 如果 `block_shape` 不是 list、tuple 或者 int。
         - **TypeError** - 如果 `crops` 不是 list 或者 tuple。
-        - **ValueError** - 如果当 `block_shape` 为 list 或 tuple， `block_shape` 不是一维。
+        - **ValueError** - 当 `block_shape` 为list或tuple时， `block_shape` 不是一维。
         - **ValueError** - 如果 Ascend 平台上 `block_shape` 长度不是2。
         - **ValueError** - 如果 `block_shape` 的元素不是大于或者等于一的整数。
         - **ValueError** - 如果 `crops` 的shape不是 (M, 2)，其中 M 为 `block_shape` 的长度。
