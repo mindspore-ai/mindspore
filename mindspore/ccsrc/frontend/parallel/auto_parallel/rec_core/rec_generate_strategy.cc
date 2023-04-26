@@ -147,7 +147,6 @@ Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
 
 Strategies PrepareStandAlone(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   size_t numDev = g_device_manager->DeviceNum();
-
   if (numDev == 0) {
     MS_LOG(EXCEPTION) << "The number of devices is 0";
   }
