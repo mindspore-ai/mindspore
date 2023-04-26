@@ -48,6 +48,7 @@ from mindspore.ops.operations.math_ops import (
     BesselY1,
     BesselK1,
     BesselK1e,
+    LuSolve,
     MatrixExp,
     MatrixSolve,
     Median,
@@ -3349,6 +3350,52 @@ def matrix_exp(input):
         [0.        2.7182817]]
     """
     return matrix_exp_(input)
+
+
+def lu_solve(b, LU_data, LU_pivots):
+    r"""
+    Computes the solution y to the system of linear equations :math:`Ay = b` ,
+    given LU decomposition :math:`A` and column vector :math:`b`.
+
+    LU decomposition of a matrix can be generated from :func:`mindspore.scipy.linalg.lu_factor` .
+
+    Args:
+        - **b** (Tensor) - Column vector `b` in the above equation. It has shape :math:`(*, m, k)`,
+          where :math:`*` is batch dimensions, with data type float32, float16.
+        - **LU_data** (Tensor) - LU decomposition. It has shape :math:`(*, m, m)`, where * is batch
+          dimensions, that can be decomposed into an upper triangular matrix U and a lower triangular
+          matrix L, with data type float32, float16.
+        - **LU_pivots** (Tensor) - Permutation matrix P of LU decomposition. It has
+          shape :math:`(*, m)`, where :math:`*` is batch dimensions, that can be converted
+          to a permutation matrix P, with data type int32.
+
+    Returns:
+        Tensor, the same data type as the `b` and `LU_data`.
+
+    Raises:
+        TypeError: If dtype of `b` or `LU_data` is not one of: float32, float16.
+        TypeError: If dtype of `LU_pivots` is not: int32.
+        TypeError: If `b`, `LU_data` or `LU_pivots` is not Tensor.
+        TypeError: If dtype of `b` is not same as dtype of `LU_data`.
+        ValueError: If the batch dimensions of LU_pivots does not match the batch dimensions of LU_data.
+        ValueError: If `b` dimension less than 2, `LU_data` dimension less than 2 or `LU_pivots` dimension less than 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> b = Tensor(np.array([[1], [3], [3]]), mindspore.float32)
+        >>> LU_data = Tensor(np.array([[2, 1, 1], [0.5, 1, 1.5], [0.5, 0, 2.5]]), mindspore.float32)
+        >>> LU_pivots = Tensor(np.array([2, 2, 3]), mindspore.int32)
+        >>> y = ops.lu_solve(b, LU_data, LU_pivots)
+        >>> print(y)
+        [[ 1.9000002]
+         [-1.4000001]
+         [ 0.6      ]]
+    """
+    lu_solve_ = _get_cache_prim(LuSolve)()
+    out = lu_solve_(b, LU_data, LU_pivots)
+    return out
 
 
 def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer-name
@@ -10861,6 +10908,7 @@ __all__ = [
     'det',
     'linspace',
     'logspace',
+    'lu_solve',
     'matrix_solve',
     'std',
     'maximum',

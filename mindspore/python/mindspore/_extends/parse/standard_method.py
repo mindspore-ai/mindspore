@@ -4431,6 +4431,13 @@ def amin(input, axis=None, keep_dims=False):
     return F.amin(input, axis, keep_dims)
 
 
+def lu_solve(b, LU_data, LU_pivots):
+    r"""
+    For details, please refer to :func:`mindspore.Tensor.lu_solve`
+    """
+    return F.lu_solve(b, LU_data, LU_pivots)
+
+
 def masked_scatter(input, mask, tensor):
     r"""
     For details, please refer to :func:`mindspore.Tensor.masked_scatter`
