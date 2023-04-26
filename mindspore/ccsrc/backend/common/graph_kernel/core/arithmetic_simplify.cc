@@ -487,7 +487,7 @@ class TransposePatternTree : public PatternTree {
       auto perm_i = perm[i] < 0 ? (perm[i] + rank) : perm[i];
       auto i_v = static_cast<int64_t>(i);
       if (perm_i != i_v) {
-        exchange_axes.emplace_back(i_v, perm_i);
+        (void)exchange_axes.emplace_back(i_v, perm_i);
       }
     }
     // if there is only 1 non-one shape value within the perm indices, then Transpose --> Reshape is ok

@@ -28,7 +28,13 @@ from impl.util.util_select_op_base import get_dynamic_param_in_json
 BLOCK = 16
 
 
-# pylint: disable=unnecessary-pass
+def copy_shape(shape):
+    res = []
+    for _, s in enumerate(shape):
+        res.append(s)
+    return res
+
+
 class OpInfer:
     """Base infer class, used to provide supported formats and data type of each op and update each of"""
 
@@ -78,7 +84,9 @@ class OpInfer:
 
     def supported_format(self):
         """get the supported format of current of"""
-        pass
+        io_num = len(self.input_desc) + len(self.output_desc)
+        nd = ["ND"] * io_num
+        return ",".join(nd)
 
     def infer_type(self):
         """infer data type"""
@@ -90,7 +98,7 @@ class OpInfer:
 
     def infer_shape(self):
         """infer shape"""
-        self.output_desc[0]["shape"] = self.input_desc[0]["shape"]
+        self.output_desc[0]["shape"] = copy_shape(self.input_desc[0]["shape"])
 
     def infer(self):
         """infer shape, format and data type"""
@@ -100,14 +108,13 @@ class OpInfer:
 
     def post_process(self):
         """post process after infer"""
-        pass
 
     def update(self):
         """update each of"""
         for _, desc in enumerate(self.output_desc):
             desc["ori_data_type"] = desc["data_type"]
             desc["ori_format"] = desc["format"]
-            desc["ori_shape"] = copy.deepcopy(desc["shape"])
+            desc["ori_shape"] = copy_shape(desc["shape"])
         self.infer()
         self.post_process()
 
@@ -163,7 +170,7 @@ class ElemwiseBinary(OpInfer):
             a, b = pad_sh0[i], pad_sh1[i]
             if a == 1:
                 out_shape.append(b)
-            elif b == 1 or b == a:
+            elif b in [1, a]:
                 out_shape.append(a)
             else:
                 raise ValueError("For '{}', input shapes {} and {} can not broadcast".format(self.name, sh0, sh1))
@@ -199,7 +206,7 @@ class ElemwiseBinary(OpInfer):
         return supported_formats
 
     def infer_format(self):
-        # return special format
+        # select special format
         special_formats = ["FRACTAL", "C0"]
         format0, format1 = self.input_desc[0]["format"], self.input_desc[1]["format"]
         for f in special_formats:
@@ -211,7 +218,7 @@ class ElemwiseBinary(OpInfer):
     def infer_shape(self):
         sh0, sh1 = self.input_desc[0]["shape"], self.input_desc[1]["shape"]
         if sh0 == sh1:
-            self.output_desc[0]["shape"] = sh0
+            self.output_desc[0]["shape"] = copy_shape(sh0)
         format0, format1 = self.input_desc[0]["format"], self.input_desc[1]["format"]
         if format0 != format1:
             new_sh0 = self.nd2fractal_nz(sh0)
@@ -322,8 +329,8 @@ class Reshape(OpInfer):
         return supported_formats
 
     def infer_shape(self):
-        # Reshape keeps ND format, so the output shape will not be changed
-        pass
+        """Reshape keeps ND format, so the output shape will not be changed"""
+        self.output_desc[0]["shape"] = self.output_desc[0]["shape"]
 
 
 prims = {
@@ -379,7 +386,7 @@ def update_global_input_desc(info_desc, args):
             desc[0]["data_type"] = _convert_tbe_type(args[i]["dtype"])
             desc[0]["ori_format"] = desc[0]["format"]
             desc[0]["format"] = args[i]["format"]
-            desc[0]["ori_shape"] = copy.deepcopy(desc[0]["shape"])
+            desc[0]["ori_shape"] = copy_shape(desc[0]["shape"])
             desc[0]["shape"] = list(args[i]["shape"])
 
 
@@ -407,7 +414,7 @@ def update_op_input_desc(op_desc, tensor_desc):
                 const_inputs_idx.append(i)
                 item["ori_data_type"] = item["data_type"]
                 item["ori_format"] = item["format"]
-                item["ori_shape"] = copy.deepcopy(item["shape"])
+                item["ori_shape"] = copy_shape(item["shape"])
             else:
                 inputs_type_orig.append(item["data_type"])
                 tensor_name = item["tensor_name"]
