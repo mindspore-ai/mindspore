@@ -42,6 +42,7 @@
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
+#include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
@@ -463,6 +464,8 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+  redistribution_oplist_ptr =
+    TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(redistribution_oplist_ptr);
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
