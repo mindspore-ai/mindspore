@@ -1819,7 +1819,7 @@ void RecStrategyPropagator::AjustToNoTraining() {
 
 size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
   size_t changes = 0;
-  for (auto iter_ops = 0; iter_ops < ops_.size(); iter_ops++) {
+  for (size_t iter_ops = 0; iter_ops < ops_.size(); iter_ops++) {
     auto pos = ops_[iter_ops]->name().find("Info");
     auto name = ops_[iter_ops]->name().substr(0, pos);
     if (name == STAND_ALONE) {
