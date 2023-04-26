@@ -6212,6 +6212,10 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         >>> print(output.shape)
         (16, 16, 8, 8)
     """
+    if not isinstance(input, (Tensor, Tensor_)) or F.rank(input) != 3:
+        raise ValueError(
+            f"For array function 'fold', 'input' must be a 3-D tensor."
+        )
     kernel_size = _check_fold_param(kernel_size, "kernel_size")
     dilation = _check_fold_param(dilation, "dilation")
     padding = _check_fold_param(padding, "padding")

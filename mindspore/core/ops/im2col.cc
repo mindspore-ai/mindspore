@@ -153,8 +153,8 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION(ValueError) << "For Im2Col, given input with spatial size (" << in_n << ", " << in_c << ", " << in_h
                              << ", " << in_w << "), ksizes=(" << filter_h << ", " << filter_w << "), dilation=("
                              << dilation_h << ", " << dilation_w << ", pads=(" << pads
-                             << "), calculated shape of output as (" << in_h << ", " << in_c << ", " << kernel_product
-                             << ", " << total_block << "), which is too small (non-positive).";
+                             << "), calculated shape of the array of sliding blocks as (" << out_h << ", " << out_w
+                             << "), but its components must be at least one.";
   }
 
   // padding pads to 4 for tbe
