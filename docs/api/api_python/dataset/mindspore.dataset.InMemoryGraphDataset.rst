@@ -12,7 +12,7 @@
     参数：
         - **data_dir** (str) - 加载数据集的目录，这里包含原始格式的数据，并将在 `process` 方法中被加载。
         - **save_dir** (str) - 保存处理后得到的数据集的相对目录，该目录位于 `data_dir` 下面。默认值："./processed"。
-        - **column_names** (Union[str, list[str]]，可选) - dataset包含的单个列名或多个列名组成的列表。默认值：'Graph'。当实现类似 `__getitem__` 等方法时，列名的数量应该等于该方法中返回数据的条数。
+        - **column_names** (Union[str, list[str]]，可选) - dataset包含的单个列名或多个列名组成的列表。默认值：'graph'。当实现类似 `__getitem__` 等方法时，列名的数量应该等于该方法中返回数据的条数。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值：1。
         - **shuffle** (bool，可选) - 是否混洗数据集。当实现的Dataset带有可随机访问属性（ `__getitem__` ）时，才可以指定该参数。默认值：None。
