@@ -15,4 +15,6 @@ mindspore.save_checkpoint
         - **enc_mode** (str) - 该参数在 `enc_key` 不为None时有效，指定加密模式，目前仅支持"AES-GCM"，"AES-CBC"和"SM4-CBC"。默认值："AES-GCM"。
 
     异常：
-        - **TypeError** - 如果参数 `save_obj` 类型不为nn.Cell或者list，且如果参数 `integrated_save` 及 `async_save` 非bool类型。如果参数 `ckpt_file_name` 不是字符串类型。
+        - **TypeError** - 如果参数 `save_obj` 类型不为nn.Cell或者list。
+        - **TypeError** - 如果参数 `integrated_save` 或 `async_save` 不是bool类型。
+        - **TypeError** - 如果参数 `ckpt_file_name` 不是字符串类型。

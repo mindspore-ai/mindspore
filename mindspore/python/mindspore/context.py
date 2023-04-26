@@ -1031,7 +1031,7 @@ def set_context(**kwargs):
             - RL: Reinforcement Learning tune.
             - GA: Genetic Algorithm tune.
             - RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
-              different types of operators in the network model. The sequence of RL and GA is not differentiated.
+              different types of operators in the network model. The sequence of RL and GA is not differentiated
               (Automatic selection).
 
             For more information about the enable operator tuning tool settings, please check
