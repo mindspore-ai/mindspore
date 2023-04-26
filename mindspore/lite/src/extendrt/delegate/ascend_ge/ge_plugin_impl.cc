@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@
 #include "extendrt/delegate/ascend_ge/ge_utils.h"
 
 namespace mindspore {
-Status AscendGeExecutorPluginImpl::AscendGeDeviceContextInitialize() {
+Status AscendGeExecutorPluginImpl::AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context,
+                                                                   const ConfigInfos &config_info) {
   ge_context_ = std::make_shared<GeDeviceContext>();
   if (ge_context_ == nullptr) {
     MS_LOG(ERROR) << "Create GeDeviceContext failed.";
     return kLiteUninitializedObj;
   }
-  ge_context_->Initialize();
+  ge_context_->Initialize(context, config_info);
   return kSuccess;
 }
 

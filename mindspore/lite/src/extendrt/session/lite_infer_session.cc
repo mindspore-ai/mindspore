@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace {
 std::mutex g_build_graph_mutex;
 }
 
-Status LiteInferSession::Init(const std::shared_ptr<Context> &context) {
+Status LiteInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "LiteInferSession::Init";
   context_ = context;
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));

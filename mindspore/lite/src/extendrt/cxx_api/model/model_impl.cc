@@ -45,6 +45,7 @@ const char *const kDataFlowGraphName = "data_flow_graph";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 std::shared_mutex g_model_converter_lock;
+constexpr auto kAscendProviderGe = "ge";
 
 std::map<std::string, tensor::TensorPtr> GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
@@ -117,13 +118,25 @@ FuncGraphPtr CreateFuncGraphFromDataFlow(const void *model_data, size_t data_siz
 }
 }  // namespace
 
-void ModelImpl::SetMsContext() {
-  if (MsContext::GetInstance() != nullptr) {
-    auto back_policy_env = std::getenv("ASCEND_BACK_POLICY");
-    if (back_policy_env != nullptr) {
-      MsContext::GetInstance()->set_backend_policy(std::string(back_policy_env));
-    }
+void ModelImpl::SetMsContext(const std::shared_ptr<Context> &model_context) {
+  auto inst_mscontext = MsContext::GetInstance();
+  if (inst_mscontext == nullptr) {
+    MS_LOG(INFO) << "MsContext is null.";
+    return;
   }
+
+  auto device_list = model_context->MutableDeviceInfo();
+  auto ascend_info_iter = std::find_if(device_list.begin(), device_list.end(),
+                                       [&](std::shared_ptr<mindspore::DeviceInfoContext> &device_info) {
+                                         return (device_info->GetProvider() == kAscendProviderGe);
+                                       });
+  if (ascend_info_iter == device_list.end()) {
+    MS_LOG(ERROR) << "AscendDeviceInfo is not set. If using distributed inference, make sure device_id "
+                     "and rank_id are set in AscendDeviceInfo";
+    return;
+  }
+  auto device_info = *(ascend_info_iter);
+  auto ascend_info = device_info->Cast<mindspore::AscendDeviceInfo>();
 }
 
 std::mutex ConverterPlugin::mutex_;
@@ -224,7 +237,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteError;
   }
-  SetMsContext();
+  SetMsContext(model_context);
   auto thread_num = model_context->GetThreadNum();
   if (thread_num < 0) {
     MS_LOG(ERROR) << "Invalid thread num " << thread_num;
@@ -290,7 +303,7 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteError;
   }
-  SetMsContext();
+  SetMsContext(model_context);
   auto thread_num = model_context->GetThreadNum();
   if (thread_num < 0) {
     MS_LOG(ERROR) << "Invalid thread num " << thread_num;
@@ -347,7 +360,7 @@ Status ModelImpl::Build(const std::vector<std::shared_ptr<ModelImpl>> &model_imp
   if (model_impls.size() == 1) {
     return model_impls[0]->Build(model_paths[0], model_type, model_context);
   }
-  SetMsContext();
+  model_impls[0]->SetMsContext(model_context);
   auto thread_num = model_context->GetThreadNum();
   if (thread_num < 0) {
     MS_LOG(ERROR) << "Invalid thread num " << thread_num;
@@ -358,7 +371,7 @@ Status ModelImpl::Build(const std::vector<std::shared_ptr<ModelImpl>> &model_imp
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteError;
   }
-  auto ret = session->Init(model_context);
+  auto ret = session->Init(model_context, model_impls[0]->config_info_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Init session failed.";
     return ret;

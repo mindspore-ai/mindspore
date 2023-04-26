@@ -52,6 +52,8 @@ void ContextPyBind(const py::module &m) {
     .def("get_device_type", &AscendDeviceInfo::GetDeviceType)
     .def("set_device_id", &AscendDeviceInfo::SetDeviceID)
     .def("get_device_id", &AscendDeviceInfo::GetDeviceID)
+    .def("set_rank_id", &AscendDeviceInfo::SetRankID)
+    .def("get_rank_id", &AscendDeviceInfo::GetRankID)
     .def("set_input_format",
          [](AscendDeviceInfo &device_info, const std::string &format) { device_info.SetInputFormat(format); })
     .def("get_input_format", &AscendDeviceInfo::GetInputFormat)

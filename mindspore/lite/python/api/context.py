@@ -183,6 +183,10 @@ class Context:
               - "enforce_origin": ACL option is must_keep_origin_dtype, force use original type.
               - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
+            - **provider** (str) - The provider that supports the inference capability of the target device,
+              can be "" or "ge". The default is "".
+            - **rank_id** (int) - The ID of the current device in the cluster, which starts from 0.
+
         Returns:
             list[str], the target device information of context.
 
@@ -228,10 +232,14 @@ class Context:
             ['ascend']
             >>> context.ascend.precision_mode = "enforce_fp32"
             >>> context.ascend.device_id = 2
+            >>> context.ascend.provider = "ge"
+            >>> context.ascend.rank_id = 0
             >>> print(context.ascend)
             device_type: DeviceType.kAscend,
             precision_mode: enforce_fp32,
-            device_id: 2.
+            device_id: 2,
+            provider: ge,
+            rank_id: 0.
         """
         return self._target
 
@@ -602,7 +610,8 @@ class _Ascend(_Target):
         res = f"device_type: {self._device_info.get_device_type()},\n" \
               f"precision_mode: {self.precision_mode},\n" \
               f"device_id: {self.device_id}." \
-              f"provider: {self.provider}."
+              f"provider: {self.provider}." \
+              f"rank_id: {self.rank_id}."
         return res
 
     @property
@@ -658,6 +667,33 @@ class _Ascend(_Target):
         if ascend_device_id < 0:
             raise ValueError(f"ascend_device_id must be a non-negative int.")
         self._device_info.set_device_id(ascend_device_id)
+
+    @property
+    def rank_id(self):
+        """
+        Get the ID of the current device in the cluster from context.
+
+        Returns:
+            int, the ID of the current device in the cluster, which starts from 0.
+        """
+        return self._device_info.get_rank_id()
+
+    @rank_id.setter
+    def rank_id(self, ascend_rank_id):
+        """
+        Set the ID of the current device in the cluster from context.
+
+        Args:
+            ascend_rank_id(int): The rank id.
+
+        Raises:
+            TypeError: `ascend_rank_id` is not an int.
+            ValueError: `ascend_rank_id` is less than 0.
+        """
+        check_isinstance("ascend_rank_id", ascend_rank_id, int)
+        if ascend_rank_id < 0:
+            raise ValueError(f"ascend_rank_id must be a non-negative int.")
+        self._device_info.set_rank_id(ascend_rank_id)
 
     @property
     def provider(self):

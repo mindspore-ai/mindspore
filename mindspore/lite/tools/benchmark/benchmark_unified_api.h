@@ -138,6 +138,12 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   std::atomic<bool> runner_run_start_ = false;
   mindspore::ModelParallelRunner model_runner_;
 #endif
+
+  void InitMSContextForGPU(const std::shared_ptr<Context> &context,
+                           std::vector<std::shared_ptr<DeviceInfoContext>> *device_list);
+
+  void InitMSContextForAscend(const std::shared_ptr<Context> &context,
+                              std::vector<std::shared_ptr<DeviceInfoContext>> *device_list);
 };
 
 }  // namespace mindspore::lite

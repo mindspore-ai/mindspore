@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,14 +76,15 @@ bool AscendGeExecutorPlugin::Register() {
   return true;
 }
 
-Status AscendGeExecutorPlugin::InitializeGeContext() {
+Status AscendGeExecutorPlugin::InitializeGeContext(const std::shared_ptr<Context> &context,
+                                                   const ConfigInfos &config_info) {
   Status ret = kSuccess;
 #if !defined(_WIN32)
   if (!is_registered_ || ge_plugin_impl_ == nullptr) {
     MS_LOG(ERROR) << "The Ascend ge executor is not registered.";
     return kLiteError;
   }
-  ret = ge_plugin_impl_->AscendGeDeviceContextInitialize();
+  ret = ge_plugin_impl_->AscendGeDeviceContextInitialize(context, config_info);
 #endif
   return ret;
 }

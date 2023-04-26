@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class GraphSinkSession : public InferSession {
   }
   ~GraphSinkSession() override;
 
-  Status Init(const std::shared_ptr<Context> &context) override;
+  Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
   Status CompileGraph(const void *model_data, size_t data_size, uint32_t *graph_id) override;
@@ -65,7 +65,7 @@ class GraphSinkSession : public InferSession {
   void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
 
  private:
-  Status GeDeviceContextInit();
+  Status GeDeviceContextInit(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   Status InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id);
   Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
   Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);

@@ -16,8 +16,9 @@ if(Python3_FOUND)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../core/)
 
-    if(MSLITE_ENABLE_CLOUD_INFERENCE)
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
       add_compile_definitions(MSLITE_ENABLE_CLOUD_INFERENCE)
+      add_compile_definitions(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     endif()
 
     file(GLOB_RECURSE PY_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
@@ -25,7 +26,7 @@ if(Python3_FOUND)
       file(GLOB_RECURSE CONVERTER_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "converter_pybind.cc")
       list(REMOVE_ITEM PY_SRC_LIST ${CONVERTER_SRC_FILES})
     endif()
-    if(NOT MSLITE_ENABLE_CLOUD_INFERENCE)
+    if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
       file(GLOB_RECURSE LITE_INFER_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "lite_infer_pybind.cc")
       list(REMOVE_ITEM PY_SRC_LIST ${LITE_INFER_SRC_FILES})
     endif()
@@ -54,13 +55,13 @@ if(Python3_FOUND)
               mindspore_converter
               )
     else()
-      if(MSLITE_ENABLE_CLOUD_INFERENCE)
+      if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         target_link_libraries(_c_lite_wrapper PRIVATE
                 -Wl,-no-as-need
                 mindspore_infer_shared_lib_obj
                 )
       endif()
-      if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+      if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
         target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static
                 -Wl,--no-whole-archive -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
       endif()

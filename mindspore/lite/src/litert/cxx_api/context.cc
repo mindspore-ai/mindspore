@@ -49,6 +49,7 @@ constexpr auto KModelOptionAscendFusionSwitchCfgPath = "mindspore.option.ascend.
 constexpr auto kModelOptionAscendDynamicBatchSize = "mindspore.option.ascend.dynamic_batch_size";
 constexpr auto kModelOptionAscendDynamicImageSize = "mindspore.option.ascend.dynamic_image_size";
 constexpr auto kModelOptionAscendBufferOptimize = "mindspore.option.ascend.buffer_optimize";
+constexpr auto kModelOptionAscendRankID = "mindspore.option.ascend.rank_id";
 #ifdef USE_GLOG
 extern "C" {
 extern void mindspore_log_init();
@@ -461,6 +462,22 @@ uint32_t AscendDeviceInfo::GetDeviceID() const {
     return 0;
   }
   return GetValue<uint32_t>(data_, kModelOptionAscendDeviceID);
+}
+
+void AscendDeviceInfo::SetRankID(uint32_t rank_id) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionAscendRankID] = rank_id;
+}
+
+uint32_t AscendDeviceInfo::GetRankID() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return 0;
+  }
+  return GetValue<uint32_t>(data_, kModelOptionAscendRankID);
 }
 
 void AscendDeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {

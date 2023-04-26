@@ -142,6 +142,12 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+    // Distributed Infer
+    AddFlag(&BenchmarkFlags::device_id_, "deviceId", "Set device id for distributed inference", -1);
+    AddFlag(&BenchmarkFlags::rank_id_, "rankId", "Set rank id for distributed inference", -1);
+#endif
+    // Decrypt and Crypte
     AddFlag(&BenchmarkFlags::decrypt_key_str_, "decryptKey",
             "The key used to decrypt the file, expressed in hexadecimal characters. Only support AES-GCM and the key "
             "length is 16.",
@@ -205,6 +211,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   // Resize
   std::string resize_dims_in_;
   std::vector<std::vector<int>> resize_dims_;
+  // Distributed Infer
+  int device_id_;
+  int rank_id_;
 
   std::string device_ = "CPU";
   std::string provider_ = "litert";
