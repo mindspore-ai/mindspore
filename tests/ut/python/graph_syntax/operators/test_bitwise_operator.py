@@ -99,31 +99,6 @@ def test_bitwise_operator_augassign():
     assert result == (x & y, x | y, x ^ y)
 
 
-def test_bitwise_operator_error_list_input():
-    """
-    Feature: bitwise operator
-    Description: test bitwise operator with lists
-    Expectation: throw RuntimeError
-    """
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.const_x = [10]
-            self.const_y = [11]
-
-        def construct(self):
-            res = self.const_x & self.const_y
-            return res
-
-    net = Net()
-    with pytest.raises(RuntimeError) as err:
-        net()
-    assert "For operation 'bitwise_and'" in str(err.value)
-    assert "The 1-th argument type 'List' is not supported now." in str(err.value)
-    assert "<Tensor, Number>" in str(err.value)
-
-
 def test_bitwise_operator_error_float_input():
     """
     Feature: bitwise operator

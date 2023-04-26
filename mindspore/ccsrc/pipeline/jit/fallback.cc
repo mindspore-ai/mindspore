@@ -385,7 +385,7 @@ std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const s
   auto real_right = ConvertToRealStr(right);
   auto unicode_left = ConvertRealStrToUnicodeStr(real_left, 0);
   auto unicode_right = ConvertRealStrToUnicodeStr(real_right, 1);
-  auto res = unicode_left + op + unicode_right;
+  auto res = unicode_left + " " + op + " " + unicode_right;
   MS_LOG(DEBUG) << "Generate new script for BinOp/Compare: " << res;
   return res;
 }

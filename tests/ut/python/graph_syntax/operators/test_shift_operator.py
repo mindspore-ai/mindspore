@@ -67,31 +67,6 @@ def test_bitwise_operator_augassign():
     assert result == (x << y, x >> y)
 
 
-def test_shift_operator_error_list_input():
-    """
-    Feature: shift operator
-    Description: test shift operator with lists
-    Expectation: throw RuntimeError
-    """
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.const_x = [10]
-            self.const_y = [2]
-
-        def construct(self):
-            res = self.const_x << self.const_y
-            return res
-
-    net = Net()
-    with pytest.raises(RuntimeError) as err:
-        net()
-    assert "For operation 'left_shift'" in str(err.value)
-    assert "The 1-th argument type 'List' is not supported now." in str(err.value)
-    assert "<Number, Number>" in str(err.value)
-
-
 def test_shift_operator_error_float_input():
     """
     Feature: shift operator

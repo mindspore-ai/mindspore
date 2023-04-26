@@ -18,7 +18,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, mutable
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -83,6 +83,88 @@ def test_fallback_add_meta_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_fallback_add_meta_3():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        value = (Tensor(1), Tensor(2), Tensor(3))
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self, net_input):
+            return self.x.value + net_input
+
+    net = InnerClass(SubClass())
+    ret = net(Tensor(4))
+    assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_add_meta_4():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        value = mutable([Tensor(1), Tensor(2), Tensor(3)], True)
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self, net_input):
+            y = -net_input
+            return self.x.value + y
+
+    net = InnerClass(SubClass())
+    ret = net(Tensor(4))
+    assert np.allclose(ret.asnumpy(), Tensor([-3, -2, -1]).asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_add_meta_5():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        value = (Tensor(1), Tensor(2), Tensor(3))
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self, net_input):
+            return self.x.value + net_input
+
+    net = InnerClass(SubClass())
+    ret = net((Tensor(4), Tensor(5)))
+    assert ret == (Tensor(1), Tensor(2), Tensor(3), Tensor(4), Tensor(5))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_mul_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -137,6 +219,33 @@ def test_fallback_negative_meta():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_fallback_negative_meta_2():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        value = Tensor([1, 2, 3])
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self, net_input):
+            return -(self.x.value + net_input)
+
+    net = InnerClass(SubClass())
+    ret = net(Tensor(10))
+    assert np.allclose(ret.asnumpy(), Tensor([-11, -12, -13]).asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_compare_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -158,6 +267,41 @@ def test_fallback_compare_meta():
     net = InnerClass(SubClass())
     ret = net()
     assert not ret
+
+
+@pytest.mark.skip(reason="inferred as float64 but got int64 at the backend.")
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_compare_meta_2():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        number1 = 10
+        list1 = [Tensor(1), Tensor(2), Tensor(3)]
+        tuple1 = (Tensor(1), Tensor(2), Tensor(3))
+        tensor1 = Tensor(10)
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self):
+            tensor_tensor = (self.x.tensor1 == self.x.tensor1)
+            num_tensor = (self.x.number1 == self.x.tensor1)
+            list_list = (self.x.list1 == [Tensor(1), Tensor(2), Tensor(3)])
+            tuple_tuple = (self.x.tuple1 == (Tensor(1), Tensor(2), Tensor(3)))
+            result = [tensor_tensor, num_tensor, list_list, tuple_tuple]
+            return result
+
+    net = InnerClass(SubClass())
+    ret = net()
+    assert ret == [True, True, True, True]
 
 
 @pytest.mark.level0
@@ -215,13 +359,43 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
-@pytest.mark.skip(reason="Meta fg with unsupported types can not run now.")
+@pytest.mark.skip(reason="inferred as float64 but got int64 at the backend.")
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_in_meta():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        list_tensor = [Tensor(1), Tensor(2), Tensor(3)]
+        tuple_tensor = (Tensor(1), Tensor(2), Tensor(3))
+        tensor1 = Tensor(1)
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self):
+            tensor_list = self.x.tensor1 in self.x.list_tensor
+            tensor_tuple = self.x.tensor1 in self.x.tuple_tensor
+            return tensor_list, tensor_tuple
+
+    net = InnerClass(SubClass())
+    ret = net()
+    assert ret == (True, True)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_meta_fg_not_support_type():
+def test_fallback_meta_fg_not_support_type_in_1():
     """
     Feature: Support JIT Fallback runtime feature.
     Description: Support JIT Fallback runtime feature.
@@ -235,13 +409,12 @@ def test_fallback_meta_fg_not_support_type():
     assert net()
 
 
-@pytest.mark.skip(reason="Meta fg with unsupported types can not run now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_meta_fg_not_support_type_2():
+def test_fallback_meta_fg_not_support_type_in_2():
     """
     Feature: Support JIT Fallback runtime feature.
     Description: Support JIT Fallback runtime feature.
@@ -255,13 +428,12 @@ def test_fallback_meta_fg_not_support_type_2():
     assert not net()
 
 
-@pytest.mark.skip(reason="None in sequence can not convert to pyexecute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_meta_fg_not_support_type_3():
+def test_fallback_meta_fg_not_support_type_in_3():
     """
     Feature: Support JIT Fallback runtime feature.
     Description: Support JIT Fallback runtime feature.
@@ -273,6 +445,115 @@ def test_fallback_meta_fg_not_support_type_3():
 
     net = InnerClass()
     assert net()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_equal():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = Tensor(1)
+            return x == y
+
+    net = InnerClass()
+    res = not net()
+    assert res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_greater_equal():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = [1, 2, 3]
+            y = (1, 2, 3)
+            return x >= y
+
+    net = InnerClass()
+    res = net()
+    assert res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_not():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = {'a': 1, 'b': 2}
+            return not x
+
+    net = InnerClass()
+    res = not net()
+    assert res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_and():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = [1, 2]
+            y = 2
+            return x and y
+
+    net = InnerClass()
+    res = net()
+    assert res == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_not_equal():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = [1, 2]
+            y = 2
+            return x != y
+
+    net = InnerClass()
+    res = net()
+    assert res
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
@@ -332,3 +613,31 @@ def test_fallback_setitem_meta_2():
     net = InnerClass(SubClass())
     ret = net(0)
     assert ret == [10, 2, 3, 4]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_shift_operator_error_list_input():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.const_x = [10]
+            self.const_y = [2]
+
+        def construct(self):
+            res = self.const_x << self.const_y
+            return res
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)

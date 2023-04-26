@@ -15,7 +15,7 @@
 """test python built-in functions in graph mode"""
 import pytest
 import numpy as np
-from mindspore import Tensor, context, nn
+from mindspore import Tensor, context, nn, jit
 from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -146,3 +146,46 @@ def test_fallback_sum_with_tensor_0d(mode):
         context.set_context(mode=mode)
         net = Net()
         net()
+
+
+@pytest.mark.skip(reason="do not support += operation yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_sum_with_x_unsupported_operand_type_error_1():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode when input x is list of list
+    Expectation: TypeError.
+    """
+    @jit
+    def foo():
+        x = sum([[1, 2], [3, 4]])
+        return x
+    with pytest.raises(TypeError) as ex:
+        foo()
+    assert "unsupported operand type" in str(ex.value)
+
+
+@pytest.mark.skip(reason="do not support += operation yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_sum_with_x_unsupported_operand_type_error_2():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in graph mode when input x is dict with string type key.
+    Expectation: TypeError.
+    """
+
+    @jit
+    def foo():
+        x = sum({'a': 1, 'b': 2, 'c': 3})
+        return x
+    with pytest.raises(TypeError) as ex:
+        foo()
+    assert "unsupported operand type" in str(ex.value)
