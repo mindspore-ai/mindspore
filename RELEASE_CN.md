@@ -236,16 +236,16 @@
   <td><pre style="display: block;"><code class="language-python">
   ops.norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
   >>> # 举例:
-  >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
   ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-  >>> output = ops.norm(input_x, [0, 1], p=2)
+  >>> output = ops.norm(input, [0, 1], p=2)
   </code></pre>
   <td><pre style="display: block;"><code class="language-python">
   ops.norm(A, ord=None, dim=None, keepdim=False, *, dtype=None)
   >>> # 举例:
-  >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
   ...                            [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-  >>> output = ops.norm(input_x, ord=2, dim=(0, 1))
+  >>> output = ops.norm(input, ord=2, dim=(0, 1))
   </code></pre>
   </td>
   </tr>
@@ -274,7 +274,7 @@
 
 - 接口名称：mindspore.ops.dropout
 
-  变更内容：删除seed1参数，由返回Tensor和掩码改为只返回Tensor, 新增入参training=True。
+  变更内容：删除seed0、seed1参数，新增参数seed=None。由返回Tensor和掩码改为只返回Tensor，新增入参training=True。
 
   <table>
   <tr>
@@ -301,7 +301,7 @@
 
 - 接口名称：mindspore.ops.dropout2d
 
-  变更内容：由返回Tensor和掩码改为只返回Tensor，新增入参training=True。
+  变更内容：返回值从Tensor和掩码改为只返回Tensor，新增入参training=True。
 
   <table>
   <tr>
@@ -328,7 +328,7 @@
 
 - 接口名称：mindspore.ops.dropout3d
 
-  变更内容：由返回Tensor和掩码改为只返回Tensor, 新增入参training=True。
+  变更内容：返回值从Tensor和掩码改为只返回Tensor，新增入参training=True。
 
   <table>
   <tr>
@@ -468,7 +468,7 @@
 
 - 接口名称：mindspore.Tensor.split
 
-  变更内容：接口重构，接口使用方式更符合用户使用习惯，调整第2个和第3个参数的顺序，修改并扩展split_size_or_sections功能。
+  变更内容：接口重构，接口使用方式更符合用户使用习惯，调整两个参数的位置，修改并扩展split_size_or_sections功能。
 
   说明：参考ops.split例子。
 
@@ -489,7 +489,7 @@
 
 - 接口名称：mindspore.ops.pad
 
-  变更内容：修改padding参数名称及用法，添加mode功能。
+  变更内容：修改参数名paddings为padding，添加mode和value功能。
 
   <table>
   <tr>
@@ -570,7 +570,7 @@
   >>> # 举例:
   >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
   ...                mindspore.float32)
-  >>>output, index = ops.max(input, axis=0)
+  >>> output, index = ops.max(input, axis=0)
   >>> print(output, index)
   </code></pre>
   </td>
@@ -665,7 +665,7 @@
 
 - 接口名称：mindspore.ops.bernoulli
 
-  变更内容：seed=-1改为None。符合用户实际使用场景。
+  变更内容：seed的默认值由-1改为None。符合用户实际使用场景。
 
   <table>
   <tr>
@@ -684,7 +684,7 @@
 
 - 接口名称：mindspore.data_sink
 
-  变更内容：删除steps参数。增加易用性，符合用户实际使用场景。
+  变更内容：删除steps参数，jit参数名称修改为jit_config，新增input_signature参数。增加易用性，符合用户实际使用场景。
 
   <table>
   <tr>
@@ -705,7 +705,7 @@
 
 - 接口名称：mindspore.ops.conv2d
 
-  变更内容：添加bias参数，修改参数名及参数顺序。
+  变更内容：扩展接口功能，添加bias参数，修改参数名及参数顺序。
 
   <table>
   <tr>
