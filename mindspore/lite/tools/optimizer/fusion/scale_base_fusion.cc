@@ -132,7 +132,8 @@ bool ScaleBaseFusion::CheckCurrCnodeProper(const CNodePtr &scale_cnode) const {
     MS_LOG(INFO) << "scale fusion not support dynamic dims";
     return false;
   }
-  int64_t axis = scale_prim->get_axis() < 0 ? scale_prim->get_axis() + in_shape.size() : scale_prim->get_axis();
+  int64_t axis =
+    scale_prim->get_axis() < 0 ? scale_prim->get_axis() + SizeToLong(in_shape.size()) : scale_prim->get_axis();
   if (axis != SizeToLong(in_shape.size() - 1)) {
     MS_LOG(INFO) << "scale axis must be the last dim of input";
     return false;
