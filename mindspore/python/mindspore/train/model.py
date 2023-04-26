@@ -138,7 +138,7 @@ class Model:
               Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger].
             - "O2": Cast network to float16, keep BatchNorm run in float32, using dynamic loss scale.
             - "O3": Cast network to float16, the BatchNorm is also cast to float16, loss scale will not be used.
-            - auto: Set level to recommended level in different devices. Set level to "O2" on GPU, set
+            - "auto": Set level to recommended level in different devices. Set level to "O2" on GPU, set
               level to "O3" on Ascend. The recommended level is chosen by the expert experience, not applicable to all
               scenarios. User should specify the level for special network.
 

@@ -11,10 +11,10 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.GlobalComm
 
-    GlobalComm 是一个储存通信信息的全局类。成员包含：BACKEND、WORLD_COMM_GROUP。
+    GlobalComm 是一个储存通信信息的全局类。成员包含： ``BACKEND`` 、 ``WORLD_COMM_GROUP`` 。
 
-    - BACKEND：使用的通信库，HCCL或者NCCL。
-    - WORLD_COMM_GROUP：全局通信域。
+    - ``BACKEND`` ：使用的通信库，HCCL或者NCCL。
+    - ``WORLD_COMM_GROUP`` ：全局通信域。
 
 .. py:function:: mindspore.communication.init(backend_name=None)
 
@@ -60,7 +60,7 @@ mindspore.communication
         - `get_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **group** (str) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组。默认值： `GlobalComm.WORLD_COMM_GROUP` 。
+        - **group** (str) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
         int，调用该方法的进程对应的组内序号。
@@ -83,7 +83,7 @@ mindspore.communication
         - `get_group_size` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **group** (str) - 指定工作组实例（由 create_group 方法创建）的名称，支持数据类型为str，默认值为 `WORLD_COMM_GROUP` 。
+        - **group** (str) - 指定工作组实例（由 create_group 方法创建）的名称，支持数据类型为str，默认值为 ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
         指定通信组实例的rank_size，数据类型为int。
@@ -184,7 +184,7 @@ mindspore.communication
         - `get_local_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **group** (`str`) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组名称。默认值： `WORLD_COMM_GROUP` 。
+        - **group** (`str`) - 通信组名称，通常由 `create_group` 方法创建，否则将使用默认组名称。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
         int，调用该方法的进程对应的通信组内本地设备序号。
@@ -208,7 +208,7 @@ mindspore.communication
         - `get_local_rank_size` 方法应该在 `init` 方法之后使用。
 
     参数：
-        - **group** (str) - 传入的通信组名称，通常由 `create_group` 方法创建，或默认使用 `WORLD_COMM_GROUP` 。
+        - **group** (str) - 传入的通信组名称，通常由 `create_group` 方法创建，或默认使用 ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
         int，调用该方法的进程对应的通信组设备总数。

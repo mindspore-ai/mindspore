@@ -101,8 +101,8 @@ class GlobalComm:
     """
     World communication information. The GlobalComm is a global class. The members contain:
 
-    - BACKEND: The communication library used, using HCCL/NCCL.
-    - WORLD_COMM_GROUP: Global communication domain.
+    - ``BACKEND`` : The communication library used, using HCCL/NCCL.
+    - ``WORLD_COMM_GROUP`` : Global communication domain.
     """
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP

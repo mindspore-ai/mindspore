@@ -10,7 +10,7 @@ mindspore.ops.ormqr
         - **input** (Tensor) - shape :math:`(*, mn, k)`，当 `left` 为True时， mn的值等于m，否则mn的值等于n。 `*` 表示Tensor在轴0上的长度为0或者大于0。
         - **tau** (Tensor) - shape :math:`(*, min(mn, k))`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0，其类型与 `input` 相同。
         - **other** (Tensor) - shape :math:`(*, m, n)`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0，其类型与 `input` 相同。
-        - **left** (bool, 可选) - 决定了矩阵乘积运算的顺序。如果 `left` 为True，计算顺序为op(Q)\* `other` ，否则，计算顺序为 `other` \*op(Q)。默认值：True。
+        - **left** (bool, 可选) - 决定了矩阵乘积运算的顺序。如果 `left` 为True，计算顺序为op(Q) \* `other` ，否则，计算顺序为 `other` \* op(Q)。默认值：True。
         - **transpose** (bool, 可选) - 如果为True，对矩阵Q进行共轭转置变换，否则，不对矩阵Q进行共轭转置变换。默认值：False。
 
     返回：

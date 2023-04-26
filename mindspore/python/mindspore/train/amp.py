@@ -421,9 +421,9 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     Args:
         network (Cell): Definition of the network.
+        optimizer (Optimizer): Define the optimizer to update the Parameter.
         loss_fn (Union[None, Cell]): Define the loss function. If None, the `network` should have the loss inside.
             Default: None.
-        optimizer (Optimizer): Define the optimizer to update the Parameter.
         level (str): Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
 
             - "O0": Do not change.
@@ -433,7 +433,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             - "O2": Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
             - "O3": Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
-            - auto: Set to level to recommended level in different devices. Set level to "O2" on GPU, Set
+            - "auto": Set to level to recommended level in different devices. Set level to "O2" on GPU, Set
               level to "O3" Ascend. The recommended level is chosen by the export experience, not applicable to all
               scenarios. User should specify the level for special network.
 
