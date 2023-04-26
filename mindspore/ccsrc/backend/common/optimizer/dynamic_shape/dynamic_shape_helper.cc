@@ -171,6 +171,78 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                     << node->fullname_with_scope();
 }
 
+abstract::AbstractBasePtr MakeNewAbstractByScalar(const tensor::TensorPtr &depended_value) {
+  abstract::AbstractBasePtr new_abs;
+  auto type = depended_value->Dtype()->type_id();
+  if (type == kNumberTypeInt32) {
+    auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+  } else if (type == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+  } else if (type == kNumberTypeFloat32) {
+    auto tensor_data = reinterpret_cast<float *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+  } else if (type == kNumberTypeFloat64) {
+    auto tensor_data = reinterpret_cast<double *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported type: " << type;
+  }
+  return new_abs;
+}
+
+abstract::AbstractBasePtr MakeNewAbstractBySequence(const tensor::TensorPtr &depended_value,
+                                                    const abstract::AbstractBasePtr &input_abs) {
+  abstract::AbstractBasePtr new_abs;
+  auto type = depended_value->Dtype()->type_id();
+  AbstractBasePtrList elems;
+  if (type == kNumberTypeInt32) {
+    auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    for (size_t i = 0; i < depended_value->DataSize(); i++) {
+      auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+      (void)elems.emplace_back(scalar);
+    }
+  } else if (type == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    for (size_t i = 0; i < depended_value->DataSize(); i++) {
+      auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+      (void)elems.emplace_back(scalar);
+    }
+  } else if (type == kNumberTypeFloat32) {
+    auto tensor_data = reinterpret_cast<float *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    for (size_t i = 0; i < depended_value->DataSize(); i++) {
+      auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+      (void)elems.emplace_back(scalar);
+    }
+  } else if (type == kNumberTypeFloat64) {
+    auto tensor_data = reinterpret_cast<double *>(depended_value->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    for (size_t i = 0; i < depended_value->DataSize(); i++) {
+      auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
+      (void)elems.emplace_back(scalar);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported type: " << type;
+  }
+  if (input_abs->isa<abstract::AbstractTuple>()) {
+    new_abs = std::make_shared<abstract::AbstractTuple>(elems);
+  } else if (input_abs->isa<abstract::AbstractList>()) {
+    new_abs = std::make_shared<abstract::AbstractList>(elems);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported abstract type:" << input_abs->ToString();
+  }
+  new_abs->set_value(depended_value);
+  return new_abs;
+}
+
 abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor::TensorPtr &depended_value,
                                           const size_t &input_index) {
   auto abs = input->abstract();
@@ -185,47 +257,9 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
       new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
     }
   } else if (abs->isa<abstract::AbstractScalar>()) {
-    auto type = depended_value->Dtype()->type_id();
-    if (type == kNumberTypeInt32) {
-      auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
-    } else if (type == kNumberTypeInt64) {
-      auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      new_abs = std::make_shared<abstract::AbstractScalar>(*tensor_data);
-    } else {
-      MS_LOG(EXCEPTION) << "Unsupported type: " << type;
-    }
+    new_abs = MakeNewAbstractByScalar(depended_value);
   } else if (AnfAlgo::IsRealSquenceOutput(input)) {
-    auto type = depended_value->Dtype()->type_id();
-    AbstractBasePtrList elems;
-    if (type == kNumberTypeInt32) {
-      auto tensor_data = reinterpret_cast<int32_t *>(depended_value->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      for (size_t i = 0; i < depended_value->DataSize(); i++) {
-        auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
-        (void)elems.emplace_back(scalar);
-      }
-    } else if (type == kNumberTypeInt64) {
-      auto tensor_data = reinterpret_cast<int64_t *>(depended_value->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      for (size_t i = 0; i < depended_value->DataSize(); i++) {
-        auto scalar = std::make_shared<abstract::AbstractScalar>(tensor_data[i]);
-        (void)elems.emplace_back(scalar);
-      }
-    } else {
-      MS_LOG(EXCEPTION) << "Unsupported type:" << type;
-    }
-
-    if (abs->isa<abstract::AbstractTuple>()) {
-      new_abs = std::make_shared<abstract::AbstractTuple>(elems);
-    } else if (abs->isa<abstract::AbstractList>()) {
-      new_abs = std::make_shared<abstract::AbstractList>(elems);
-    } else {
-      MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
-    }
-    new_abs->set_value(depended_value);
+    new_abs = MakeNewAbstractBySequence(depended_value, abs);
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto abstract_seq = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abstract_seq);
