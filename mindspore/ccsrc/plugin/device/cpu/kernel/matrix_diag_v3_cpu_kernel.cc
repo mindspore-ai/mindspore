@@ -48,7 +48,6 @@ bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  MS_LOG(WARNING) << "in new init " << kernel_name_;
   auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagV3>(base_operator);
   MS_ERROR_IF_NULL(op_prim);
   auto align = op_prim->get_align();
@@ -75,7 +74,6 @@ int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK) {
     return ret;
   }
-  MS_LOG(WARNING) << "in new resize ..";
   diagonal_data_type_ = inputs[kIndex0]->GetDtype();
   auto padding_type = inputs[kIndexPaddingValue]->GetDtype();
   auto output_data_type = outputs[kIndex0]->GetDtype();

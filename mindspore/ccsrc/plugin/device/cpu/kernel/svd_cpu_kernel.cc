@@ -69,7 +69,6 @@ int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
                             const std::map<uint32_t, tensor::TensorPtr> &onHost) {
   int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, onHost);
   if (ret != 0) {
-    MS_LOG(WARNING) << kernel_name_ << "resize failed.";
     return ret;
   }
 
@@ -78,7 +77,6 @@ int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   size_t dim = input_shape.size();
   if (dim < kDim2) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input dimension must be greater than or equal to 2.";
-    return -1;
   }
 
   num_of_rows_ = input_shape[dim - kDim2];
