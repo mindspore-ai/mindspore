@@ -30,6 +30,12 @@ const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
 const int REGISTER_UNIT_IN_WARP = 256;
 const int WARP_SIZE = 32;
 const int WARP_ALLOC_GRAN = 4;
+const int AKG_KERNEL_MOD_BX_IDX = 0;
+const int AKG_KERNEL_MOD_BY_IDX = 1;
+const int AKG_KERNEL_MOD_BZ_IDX = 2;
+const int AKG_KERNEL_MOD_TX_IDX = 3;
+const int AKG_KERNEL_MOD_TY_IDX = 4;
+const int AKG_KERNEL_MOD_TZ_IDX = 5;
 
 AkgGpuKernelManagerPtr AkgGpuKernelMod::kernel_manager_ = std::make_shared<AkgGpuKernelManager>();
 AkgGpuKernelManager::AkgGpuKernelManager() {}
@@ -102,12 +108,6 @@ AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack
 
 bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  const int BX = 0;
-  const int BY = 1;
-  const int BZ = 2;
-  const int TX = 3;
-  const int TY = 4;
-  const int TZ = 5;
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
@@ -136,9 +136,10 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
                          [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
   }
-  result = cuLaunchKernel(kernel_addr_, thread_info_[BX], thread_info_[BY], thread_info_[BZ], thread_info_[TX],
-                          thread_info_[TY], thread_info_[TZ], 0, reinterpret_cast<CUstream>(stream_ptr),
-                          reinterpret_cast<void **>(&runtimeargs[0]), 0);
+  result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
+                          thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],
+                          thread_info_[AKG_KERNEL_MOD_TY_IDX], thread_info_[AKG_KERNEL_MOD_TZ_IDX], 0,
+                          reinterpret_cast<CUstream>(stream_ptr), reinterpret_cast<void **>(&runtimeargs[0]), 0);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
