@@ -9,7 +9,8 @@ mindspore.ops.adaptive_max_pool1d
     输出的shape为 :math:`(N, C, L_{out})`，其中 :math:`L_{out}` 由 `output_size` 定义。
 
     .. note::
-        :math:`L_{in}` 必须能被 `output_size` 整除。
+        - :math:`L_{in}` 必须能被 `output_size` 整除。
+        - Ascend平台input参数仅支持float16类型。
 
     参数：
         - **input** (Tensor) - 输入shape为 :math:`(N, C, L_{in})`，数据类型为float16、float32。
