@@ -20,10 +20,10 @@
 
 #include "include/api/delegate_api.h"
 #include "ir/func_graph.h"
-#include "include/api/kernel.h"
+#include "src/extendrt/kernel/base_kernel.h"
 
 namespace mindspore {
-class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::Kernel> {
+class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::BaseKernel> {
  public:
   ExtendDelegate() = default;
   virtual ~ExtendDelegate() = default;
@@ -34,10 +34,10 @@ class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::Kernel> {
 
   bool IsDelegateNode(const std::shared_ptr<AnfNode> &node) override {
     // not implemented
-    return true;
+    return false;
   }
 
-  std::shared_ptr<kernel::Kernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override {
+  std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override {
     // not implemented
     return nullptr;
   }
