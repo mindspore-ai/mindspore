@@ -37,7 +37,11 @@ struct RandomNode {
 std::map<std::string, std::vector<RandomNode>> Deserialization(const std::string &proto_str, uint32_t graph_id) {
   std::map<std::string, std::vector<RandomNode>> snap_map;
   mindspore::RandomNodeList proto_random_node_list;
-  proto_random_node_list.ParseFromString(proto_str);
+  auto ret = proto_random_node_list.ParseFromString(proto_str);
+  if (!ret) {
+    MS_LOG(WARNING) << "Parse proto str " << proto_str << " failed, random status will be ignored.";
+    return snap_map;
+  }
   for (auto &proto_random_node : proto_random_node_list.nodes()) {
     if (graph_id != proto_random_node.graph_id()) {
       continue;
@@ -92,7 +96,7 @@ std::map<std::string, std::vector<AnfNodePtr>> FilterRandomNodeFromToposortList(
     if (kRandomNodeWhiteList.find(cnode_name) == kRandomNodeWhiteList.end()) {
       continue;
     }
-    std::string key = "";
+    std::string key = {};
     auto debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
     if (debug_info != nullptr) {
       auto location = debug_info->location();
