@@ -19,7 +19,10 @@
 template <typename T>
 __global__ void CalRightShiftKernel(size_t size, const T *inputx, const T *inputy, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    T y1 = inputy[pos] <= static_cast<T>(0) ? static_cast<T>(0) : inputy[pos];
+    T y1 = inputy[pos];
+    if ((y1 > (sizeof(T) * CHAR_BIT)) || (y1 < -(sizeof(T) * CHAR_BIT))) {
+      y1 = y1 % (sizeof(T) * CHAR_BIT);
+    }
     output[pos] = inputx[pos] >> y1;
   }
 }
