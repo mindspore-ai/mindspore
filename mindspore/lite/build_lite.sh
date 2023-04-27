@@ -248,6 +248,9 @@ build_python_wheel_package() {
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl/*.so* package/mindspore_lite/lib/
     fi
+    if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels" ]; then
+      cp -rf ${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels package/mindspore_lite/
+    fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib/*.so* package/mindspore_lite/lib/
     fi

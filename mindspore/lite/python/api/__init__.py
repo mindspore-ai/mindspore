@@ -27,6 +27,18 @@ from mindspore_lite.tensor import DataType, Format, Tensor
 if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
     from mindspore_lite import lite_infer
 
+
+def install_custom_kernels():
+    custom_kernel_path = __path__[0] + "/custom_kernels/"
+    if os.path.exists(custom_kernel_path):
+        ascend_custom_kernel_path = custom_kernel_path + "ascend/"
+        install_script_path = ascend_custom_kernel_path + "install.sh"
+        cmd_str = "bash " + install_script_path
+        out = os.popen(cmd_str).read()
+        print(out)
+    else:
+        print("no custom kernel " + custom_kernel_path)
+
 __all__ = []
 __all__.extend(__version__)
 __all__.extend(context.__all__)
