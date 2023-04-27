@@ -205,6 +205,7 @@
 "mindspore/mindspore/lite/python/api/tensor.py"                                                          "protected-access"
 "mindspore/mindspore/lite/test"                                                                          "missing-docstring"
 "mindspore/mindspore/lite/test"                                                                          "unused-variable"
+"mindspore/mindspore/lite/test/st/python/import_ms_and_mslite/"                                          "unused-import"
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "wrong-import-order"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "wrong-import-order"
