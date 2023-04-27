@@ -786,7 +786,7 @@ class ResizeBicubic(Primitive):
         A 4-D tensor with shape :math:`(batch, channels, new\_height, new\_width)` whose dtype is the same as `images` .
 
     Raises:
-        TypeError: If the type of `images`is not allowed.
+        TypeError: If the type of `images` is not allowed.
         TypeError: If the type of `size` is not int32.
         TypeError: If the type of `align_corners` is not bool.
         TypeError: If the type of `half_pixel_centers` is not bool.

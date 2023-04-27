@@ -265,7 +265,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
             - If no `num_samples` and specify numRows(parsed from `schema`) with value > 0, read numRows samples.
 
-            - If no `num_samples and no `schema`, read the full dataset.
+            - If no `num_samples` and no `schema`, read the full dataset.
 
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
