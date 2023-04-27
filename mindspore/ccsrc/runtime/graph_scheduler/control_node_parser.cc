@@ -258,6 +258,14 @@ TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
       if (sequence_abs->dynamic_len_element_abs() == nullptr) {
         type_id = type->type_id();
       } else {
+        if (sequence_abs->dynamic_len_element_abs()->isa<abstract::AbstractTensor>()) {
+          const auto &tensor_abs = sequence_abs->dynamic_len_element_abs()->cast<abstract::AbstractTensorPtr>();
+          MS_EXCEPTION_IF_NULL(tensor_abs);
+          MS_EXCEPTION_IF_NULL(tensor_abs->element());
+          const auto &tensor_element_type = tensor_abs->element()->BuildType();
+          MS_EXCEPTION_IF_NULL(tensor_element_type);
+          return tensor_element_type->type_id();
+        }
         const auto &element_type = sequence_abs->dynamic_len_element_abs()->BuildType();
         MS_EXCEPTION_IF_NULL(element_type);
         type_id = element_type->type_id();
