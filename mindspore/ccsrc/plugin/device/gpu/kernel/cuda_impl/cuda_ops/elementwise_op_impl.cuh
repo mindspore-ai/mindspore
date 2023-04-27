@@ -48,6 +48,8 @@ CUDA_LIB_EXPORT void TanhOpt(const T *input, T *output, const size_t count, cuda
 template <typename T>
 CUDA_LIB_EXPORT void SigmoidOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void SiLUOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void TanhGradOpt(const T *input, const T *dout, T *output, const size_t count,
                                  cudaStream_t cuda_stream);
 template <typename T>

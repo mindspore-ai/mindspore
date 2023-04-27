@@ -609,7 +609,7 @@ class SiLU(Cell):
     r"""
     Sigmoid Linear Unit activation function.
 
-    Applies the sigmoid linear unit function element-wise.
+    Applies the silu linear unit function element-wise.
 
     .. math::
 
