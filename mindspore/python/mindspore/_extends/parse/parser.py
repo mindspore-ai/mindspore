@@ -1045,9 +1045,8 @@ class Parser:
                 support_info = self.global_namespace, var, value, SYNTAX_SUPPORTED
             return support_info
 
-        error_info = f"The name '{var}' is not defined, or not supported in graph mode."
-        logger.debug(f"error_info: {error_info}")
-        return None, error_info
+        logger.debug(f"The name '{var}' is an undefined symbol.")
+        return None, None
 
     def analyze_super(self, class_type_node, subclass_instance):
         """Analyze super and return a class instance."""

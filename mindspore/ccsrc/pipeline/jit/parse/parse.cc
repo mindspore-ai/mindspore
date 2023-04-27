@@ -1070,9 +1070,14 @@ AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &no
   // The Tensor object will be parsed into an Interpret node. For example, Tensor(0).astype("int32")
   if (block->IsGlobalVar(name_id) || (use_fallback && name_id == "Tensor")) {
     MS_LOG(DEBUG) << "name_id: " << name_id;
-    return block->MakeResolveSymbol(name_id);
+    AnfNodePtr res = block->MakeResolveSymbol(name_id);
+    block->CheckUndefinedSymbol(name_id, res);
+    return res;
   }
-  return block->ReadVariable(name_id);
+
+  AnfNodePtr res = block->ReadVariable(name_id);
+  block->CheckUndefinedSymbol(name_id, res);
+  return res;
 }
 
 AnfNodePtr Parser::ParseNone(const FunctionBlockPtr &, const py::object &) {
@@ -1227,6 +1232,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name_id = py::cast<std::string>(name);
     if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
       auto error_node = block->ReadVariable(name_id);
+      block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
       return {NewValueNode(name_id), error_node};
     } else if (exception_types_map.find(name_id) != exception_types_map.end()) {
@@ -1250,6 +1256,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto node_list = ParseException(block, args, name_id);
     if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
       auto error_node = block->ReadVariable(name_id);
+      block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
       (void)node_list.emplace_back(error_node);
       return node_list;
@@ -1441,9 +1448,12 @@ AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block
                              py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
                              py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj));
   if (check_need_resolve) {
-    return block->MakeResolveSymbol(var_name);
+    AnfNodePtr res = block->MakeResolveSymbol(var_name);
+    block->CheckUndefinedSymbol(var_name, res);
+    return res;
   }
   auto var_node = block->ReadVariable(var_name);
+  block->CheckUndefinedSymbol(var_name, var_node);
   // Process numpy array, eg: self.x = np.array([1, 2])
   // The fallback feature is enabled in default.
   static const auto use_fallback = (support_fallback() != "0");
@@ -2026,6 +2036,8 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   std::pair<FunctionBlockPtr, FunctionBlockPtr> true_branch_graphs;
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
+  std::string true_branch_name = "true branch";
+  true_end->set_block_name(true_branch_name);
   MS_EXCEPTION_IF_NULL(true_end->func_graph());
   CheckControlFlowAlterationInIf(&true_branch_graphs, true_block, true_end, after_block, block);
   // If the return_ is set, it has its own continuation block
@@ -2041,6 +2053,8 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   std::pair<FunctionBlockPtr, FunctionBlockPtr> false_branch_graphs;
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
   FunctionBlockPtr false_end = ParseStatements(false_block, orelseNode);
+  std::string false_branch_name = "false branch";
+  false_end->set_block_name(false_branch_name);
   MS_EXCEPTION_IF_NULL(false_end->func_graph());
   CheckControlFlowAlterationInIf(&false_branch_graphs, false_block, false_end, after_block, block);
   // If the return_ is set, it has its own continuation block
@@ -2114,6 +2128,10 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
     after_block = MakeFunctionBlock(*this);
   }
 
+  std::string block_name = "outside of 'while'";
+  block->set_block_name(block_name);
+  std::string body_block_name = "inside of 'while'";
+  body_block->set_block_name(body_block_name);
   body_block->AddPrevBlock(header_block);
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {});
@@ -2357,6 +2375,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   ParameterPtr header_iter_param = header_block->func_graph()->add_parameter();
   AnfNodePtr header_len = header_block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+  header_block->CheckUndefinedSymbol(NAMED_PRIMITIVE_LEN, header_len);
   CNodePtr scalar_len = header_block->func_graph()->NewCNodeInOrder({header_len, header_iter_param});
 
   // Create loop variable 'i'

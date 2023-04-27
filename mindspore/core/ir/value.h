@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -468,7 +468,7 @@ class MS_CORE_API ValueAny final : public Value {
 
 GVAR_DEF(ValuePtr, kValueAny, std::make_shared<ValueAny>());
 
-enum ValueProblemType : int { kDead = 0, kPoly = 1 };
+enum ValueProblemType : int { kDead = 0, kPoly = 1, kUndefined = 2 };
 
 /// \brief ValueProblem defines a class for DeadNode and PolyNode.
 class MS_CORE_API ValueProblem final : public Value {
@@ -508,10 +508,22 @@ class MS_CORE_API ValueProblem final : public Value {
   ///
   /// \return Whether the value belongs to PolyNode.
   bool IsPoly() const { return err_type_ == kPoly; }
+  /// \brief Check whether the value belongs to UndefinedNode.
+  ///
+  /// \return Whether the value belongs to UndefinedNode.
+  bool IsUndefined() const { return err_type_ == kUndefined; }
   /// \brief Show the ValueProblem object.
   ///
   /// \return The description of the ValueProblem object.
-  std::string ToString() const override { return IsDead() ? "DeadNode" : "PolyNode"; }
+  std::string ToString() const override {
+    if (IsDead()) {
+      return "DeadNode";
+    } else if (IsPoly()) {
+      return "PolyNode";
+    } else {
+      return "UndefinedNode";
+    }
+  }
 
  private:
   ValueProblemType err_type_{kDead};

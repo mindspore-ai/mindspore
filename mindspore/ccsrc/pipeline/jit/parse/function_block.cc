@@ -218,6 +218,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
       // need resolve to determine whether it needs to be marked with interpret.
       auto resolve_node = MakeResolveSymbol(var_name);
+      CheckUndefinedSymbol(var_name, resolve_node);
       MS_EXCEPTION_IF_NULL(resolve_node);
       phi_param->set_interpret(resolve_node->interpret());
       phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
@@ -280,6 +281,15 @@ AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_o
   return MakeResolve(name_space, symbol);
 }
 
+void FunctionBlock::CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node) {
+  if (node->isa<ValueNode>()) {
+    auto value = GetValuePtr<ValueProblem>(node->cast<ValueNodePtr>());
+    if ((value != nullptr) && (value->IsUndefined())) {
+      MS_EXCEPTION(NameError) << "The name '" << var << "' is not defined, or not supported in graph mode.";
+    }
+  }
+}
+
 AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
@@ -296,7 +306,8 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   }
   // If namespace is None, the symbol is an undefined name.
   if (info[namespace_index].is_none()) {
-    MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
+    const auto undefined_symbol = std::make_shared<ValueProblem>(ValueProblemType::kUndefined);
+    return NewValueNode(undefined_symbol);
   }
 
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, info[namespace_index]);
@@ -433,19 +444,49 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
 }
 
 std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi) {
-  std::set<AnfNodePtr> all_arg_nodes;
+  std::vector<std::pair<std::string, AnfNodePtr>> defined_branch;
+  std::pair<std::string, AnfNodePtr> not_defined_branch;
   MS_LOG(DEBUG) << "Search block:" << ToString() << "Prev_blocks size: " << prev_blocks_.size();
   for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
-    MS_LOG(DEBUG) << "Read from prev block:" << prev->ToString() << ", temp_node: " << temp_node->DebugString();
-    (void)all_arg_nodes.insert(temp_node);
+    MS_LOG(DEBUG) << "Read from prev block:" << prev->ToString() << "Found var: " << var
+                  << ", as: " << temp_node->DebugString();
+    bool undefined_symbol_flag = false;
+    if (temp_node->isa<ValueNode>()) {
+      auto value = GetValuePtr<ValueProblem>(temp_node->cast<ValueNodePtr>());
+      if ((value != nullptr) && (value->IsUndefined())) {
+        undefined_symbol_flag = true;
+      }
+    }
+    if (undefined_symbol_flag) {
+      not_defined_branch = std::make_pair(prev->get_block_name(), temp_node);
+    } else {
+      defined_branch.push_back(std::make_pair(prev->get_block_name(), temp_node));
+    }
   }
-  if (all_arg_nodes.size() == 1) {
-    auto arg_node = *(all_arg_nodes.begin());
+  if (defined_branch.size() == 1) {
+    auto arg_node = defined_branch.front().second;
     MS_EXCEPTION_IF_NULL(arg_node);
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi "
                   << (phi ? phi->ToString() : "null") << " may be replaced by node " << arg_node->DebugString();
+  }
+
+  if (!not_defined_branch.first.empty()) {
+    if (!defined_branch.empty()) {
+      const auto &debug_info = trace::GetSourceCodeDebugInfo(defined_branch.back().second->debug_info());
+      const auto &location = debug_info->location();
+      MS_EXCEPTION(UnboundLocalError) << "The local variable '" << var << "' is not defined in "
+                                      << not_defined_branch.first << ", but defined in " << defined_branch.back().first
+                                      << ".\n"
+                                      << location->ToString();
+    }
+    MS_EXCEPTION(NameError) << "The name '" << var << "' is not defined, or not supported in graph mode.";
+  }
+
+  std::set<AnfNodePtr> all_arg_nodes;
+  for (auto &item : defined_branch) {
+    (void)all_arg_nodes.insert(item.second);
   }
   return all_arg_nodes;
 }
