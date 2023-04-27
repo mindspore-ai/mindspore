@@ -176,16 +176,13 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
   memset(Output_data, 0, sizeof(data_type_x) * output_flat_size);
   for (int64_t i = 0; i < n_slices; ++i) {
     int64_t to_pos = 0;
+    bool out_bound = false;
     for (int64_t j = 0; j < indices_nd; ++j) {
       int64_t idx = Indices_data[i * indices_nd + j];
-
-      if (idx < 0 || idx >= data_shape[j]) {
-        KERNEL_LOG_ERROR("The indices[%d] is so big or small", idx);
-        return KERNEL_STATUS_PARAM_INVALID;
-      }
-
+      out_bound |= (idx < 0 || idx >= data_shape[j]);
       to_pos += idx * dims_to_count[j];
     }
+    if (out_bound) continue;
     for (int64_t j = 0; j < slice_size; j++) {
       Output_data[to_pos + j] += Updates_data[i * slice_size + j];
     }
