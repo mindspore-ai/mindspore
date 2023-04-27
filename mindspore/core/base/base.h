@@ -75,7 +75,13 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \param[in] Define another instance of Base.
   ///
   /// \return The instance of Base.
-  Base &operator=(const Base &) { return *this; }
+  Base &operator=(const Base &other) {
+    if (this == &other) {
+      return *this;
+    }
+    user_data_ = other.user_data_;
+    return *this;
+  }
 
   /// \brief The destructor of Base.
   virtual ~Base() = default;
