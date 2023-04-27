@@ -223,7 +223,7 @@ class ModelImpl {
   /// \brief Set Mindspore Context.
   /// This is used for load mindir file for model, turn off the infer shape flow
   ///
-  void SetMsContext(const std::shared_ptr<Context> &model_context);
+  void SetMsContext();
 
   friend class Model;
   friend class Serialization;
