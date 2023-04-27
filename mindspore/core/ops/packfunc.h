@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPERATOR_PACK_FUNC_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPERATOR_PACK_FUNC_H_
 
-#include "ir/anf.h"
-#include "abstract/abstract_value.h"
+#ifndef MINDSPORE_CORE_OPS_PACKFUNC_H_
+#define MINDSPORE_CORE_OPS_PACKFUNC_H_
+
+#include "ops/base_operator.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
-namespace expander {
-FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list);
-void ClearAllCache();
-}  // namespace expander
+namespace ops {
+/// \brief PackFunc.
+class MIND_API PackFunc : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(PackFunc);
+  /// \brief Constructor.
+  PackFunc() : BaseOperator(prim::kPackFunc) {}
+  /// \brief Init function.
+  void Init() const {}
+};
+}  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPERATOR_PACK_FUNC_H_
+#endif  // MINDSPORE_CORE_OPS_PACKFUNC_H_
