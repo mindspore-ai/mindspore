@@ -369,13 +369,6 @@ class AxisIterator {
   AxisIterator() = default;
   virtual ~AxisIterator() = default;
   void Init(const ShapeVector &input_shape, size_t axis);
-  // Iterate index through outer_size_ * inner_size_, combine inner iteration and outer iteration
-  // into one single iteration to fit ParallelLaunchAutoSearch
-  // Possible usage:
-  // for (i = 0; i < outer_size_ * inner_size_; i ++) {
-  //    axisIterator.SetOffset(i);
-  //    // Do computation
-  // }
   inline void SetOffset(size_t index) {
     size_t outer_index = index / inner_size_;
     size_t inner_index = index % inner_size_;

@@ -163,8 +163,8 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *param, int data_size, size_t row_size) {
   size_t copy_size = IntToSize(data_size * param->size_[1]);
   for (size_t i = 0; i < row_size; ++i) {
-    auto dst = output + data_size * param->size_[1] * i;
-    auto src = input + data_size * (param->shape_[1] * i + param->begin_[1]);
+    auto dst = output + data_size * param->size_[1] * SizeToInt(i);
+    auto src = input + data_size * (param->shape_[1] * SizeToInt(i) + param->begin_[1]);
     auto ret = memcpy_s(dst, copy_size, src, copy_size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kKernelName << "', memcpy failed. Error no: " << ret;
@@ -233,9 +233,9 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   auto output_addr = outputs[0]->addr;
   if (origin_dim_size_ == kSliceTwoDims) {
     auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
-      auto src =
-        static_cast<int8_t *>(input_addr) + data_size_ * slice_param_.shape_[1] * (start + slice_param_.begin_[0]);
-      auto dst = static_cast<int8_t *>(output_addr) + data_size_ * slice_param_.size_[1] * start;
+      auto src = static_cast<int8_t *>(input_addr) +
+                 data_size_ * slice_param_.shape_[1] * (SizeToInt(start) + slice_param_.begin_[0]);
+      auto dst = static_cast<int8_t *>(output_addr) + data_size_ * slice_param_.size_[1] * SizeToInt(start);
       SliceSimpleDim2(src, dst, &slice_param_, data_size_, end - start);
     };
     ParallelLaunchAutoSearch(task, slice_param_.size_[0], this, &parallel_search_info_);
