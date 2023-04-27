@@ -40,13 +40,14 @@ constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 95;
 constexpr size_t kBodyCNodesNum = 34;
 constexpr size_t kLSTMOutputNum = 3;
+constexpr size_t kPlaceholderMinSize = 20;
 constexpr auto kUnidirectionalGateNum = 4;
 const auto &p1 = std::placeholders::_1;
 constexpr float EPSILON = 1e-5;
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
 
 std::vector<VectorRef> GenerateBodyGraphCellPattern(const std::vector<CondVarPtr> &placeholders) {
-  MS_CHECK_TRUE_RET(placeholders.size() > 19, {});
+  MS_CHECK_TRUE_RET(placeholders.size() >= kPlaceholderMinSize, {});
   auto is_var1 = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_var1 != nullptr, {});
   VectorRef concat_i_w = VectorRef({is_var1, placeholders[8], placeholders[12]});
