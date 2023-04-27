@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,11 @@ EvalResultPtr GetEvalResult(const AnfNodeConfigPtr &conf) {
   }
 }
 
-AnfNodePtr BuildValueNode(const ValuePtr &v, const AbstractBasePtr &abs_base) {
+AnfNodePtr BuildValueNode(const ValuePtr &v, const AnfNodePtr &origin_node, const AbstractBasePtr &abs_base) {
   MS_EXCEPTION_IF_NULL(abs_base);
   AnfNodePtr value_node = NewValueNode(v);
   value_node->set_abstract(abs_base);
+  value_node->set_debug_info(origin_node->debug_info());
   MS_LOG(DEBUG) << "Create ValueNode: " << value_node->ToString() << ", with abstract: " << abs_base->ToString();
   return value_node;
 }
@@ -947,13 +948,13 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, con
     if (errcode == kSpecializeDead) {
       const auto err_dead_value = std::make_shared<ValueProblem>(ValueProblemType::kDead);
       const auto err_dead_abstract = std::make_shared<AbstractProblem>(err_dead_value, func);
-      repl = BuildValueNode(err_dead_value, err_dead_abstract);
+      repl = BuildValueNode(err_dead_value, cnode, err_dead_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "DEAD for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else if (errcode == kSpecializePoly) {
       const auto error_poly_value = std::make_shared<ValueProblem>(ValueProblemType::kPoly);
       const auto error_poly_abstract = std::make_shared<AbstractProblem>(error_poly_value, func);
-      repl = BuildValueNode(error_poly_value, error_poly_abstract);
+      repl = BuildValueNode(error_poly_value, cnode, error_poly_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "POLY for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else {
@@ -985,7 +986,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   *errcode = kSpecializeSuccess;
   auto real_func = dyn_cast_ptr<TypedPrimitiveAbstractClosure>(func_abs);
   if (real_func != nullptr) {
-    return BuildValueNode(real_func->prim(), abs);
+    return BuildValueNode(real_func->prim(), cnode, abs);
   }
 
   EvaluatorPtr eval = engine_->GetEvaluatorFor(func_abs);
@@ -1004,7 +1005,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
   auto prim_func = dyn_cast_ptr<PrimitiveAbstractClosure>(func_abs);
   if (prim_func != nullptr) {
     auto type_func = std::make_shared<TypedPrimitiveAbstractClosure>(prim_func->prim(), argvals, unique_output);
-    return BuildValueNode(prim_func->prim(), type_func);
+    return BuildValueNode(prim_func->prim(), cnode, type_func);
   }
 
   if (!eval->isa<BaseFuncGraphEvaluator>()) {
@@ -1060,7 +1061,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
     const auto &func_graph_abs = dyn_cast_ptr<FuncGraphAbstractClosure>(func_abs);
     specializer_->PutSpecializedFuncGraphToAbstract(func_graph_abs->func_graph(), new_abs_func);
   }
-  return BuildValueNode(func_graph, new_abs_func);
+  return BuildValueNode(func_graph, cnode, new_abs_func);
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &cnode) {
@@ -1091,7 +1092,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &c
   auto wrapped_node = specialized_node;
   if (fnval->isa<PartialAbstractClosure>()) {
     auto partial_closure = dyn_cast<PartialAbstractClosure>(fnval);
-    AnfNodePtrList partial_node_list = {BuildValueNode(prim::kPrimPartial, FromValueInside(prim::kPrimPartial)),
+    AnfNodePtrList partial_node_list = {BuildValueNode(prim::kPrimPartial, cnode, FromValueInside(prim::kPrimPartial)),
                                         specialized_node};
     auto anf_node = partial_closure->node();
     if (!anf_node->isa<CNode>()) {
@@ -1492,12 +1493,12 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<FuncGraph>() || value->cast_ptr<FuncGraph>()->parent() == nullptr ||
       (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast_ptr<FuncGraph>()->parent()))) {
-    return BuildValueNode(value, ival);
+    return BuildValueNode(value, origin_node, ival);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimJ) && origin_node->isa<Parameter>() &&
              !value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
     // Only if J(Parameter=func_graph) and func_graph(aka 'value') is not K graph.
     MS_LOG(DEBUG) << "Specialize the parameter used by J CNode, cnode: " << cnode->DebugString();
-    return BuildValueNode(value, ival);
+    return BuildValueNode(value, origin_node, ival);
   }
   return nullptr;
 }
@@ -1531,7 +1532,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     if (IsPrimitiveCNode(origin_node, prim::kPrimPyExecute)) {
       return nullptr;
     }
-    return BuildValueNode(val, ival);
+    return BuildValueNode(val, origin_node, ival);
   }
 }
 

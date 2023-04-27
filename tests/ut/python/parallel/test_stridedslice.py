@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -636,12 +636,12 @@ def test_stridedslice_layout():
     assert validator.check_node_attrs('StridedSlice-1', roi_expect_attrs)
 
     # check inputs
-    roi_expect_inputs = ['Load-0', 'out((127, 0, 0))', 'out((128, 64, 32))', 'out((1, 1, 1))']
-    assert validator.check_node_inputs('StridedSlice-1', roi_expect_inputs)
+    roi_expect_inputs = ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))']
+    assert validator.check_node_inputs_fuzzy_match('StridedSlice-1', roi_expect_inputs)
 
     # check sub_graph
     sub_graph = {
-        'StridedSlice-1': ['Load-0', 'out((127, 0, 0))', 'out((128, 64, 32))', 'out((1, 1, 1))'],
+        'StridedSlice-1': ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))'],
         'Mul-0': ['Reshape-1', 'StridedSlice-1'],
         'Split-1': ['AllGather-1'],
         'Concat-1': ['MakeTuple-2']

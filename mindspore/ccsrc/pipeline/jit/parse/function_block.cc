@@ -406,6 +406,7 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
   MS_EXCEPTION_IF_NULL(node);
+  node->set_debug_info(orig_node->debug_info());
   node->set_interpret_internal_type(orig_node->interpret_internal_type());
   return node;
 }
