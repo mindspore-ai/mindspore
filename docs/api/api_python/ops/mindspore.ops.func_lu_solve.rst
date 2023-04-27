@@ -5,7 +5,7 @@ mindspore.ops.lu_solve
 
     给定LU分解结果 :math:`A` 和列向量 :math:`b`，求解线性方程组的解y :math:`Ay = b`。
 
-    一个矩阵的LU分解可以由 :func:`mindspore.scipy.linalg.LU_factor` 得到。
+    一个矩阵的LU分解可以由 :func:`mindspore.scipy.linalg.lu_factor` 得到。
 
     参数：
         - **b** (Tensor) - 上面公式的列向量 `b` 。 `b` 的shape为 :math:`(*, m, k)`，其中 :math:`*` 是batch的维度， 数据类型是float32、float16。
