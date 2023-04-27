@@ -8521,6 +8521,9 @@ def matmul(input, other):
         >>> print(output.shape)
         (1,)
     """
+    if not (isinstance(input, Tensor) and isinstance(other, Tensor)):
+        raise TypeError("For matmul op, inputs must be all tensors.")
+
     dtype_op = _get_cache_prim(P.DType)()
     rank_op = _get_cache_prim(P.Rank)()
     shape_op = _get_cache_prim(P.Shape)()
