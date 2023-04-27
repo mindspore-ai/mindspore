@@ -519,7 +519,7 @@ def bucketize(input, boundaries, *, right=False):
     Examples:
         >>> input = Tensor(np.array([[3, 6, 9], [3, 6, 9]]))
         >>> boundaries = list(np.array([1., 3., 5., 7., 9.]))
-        >>> output = ops.bucketize(input, boundaries, True)
+        >>> output = ops.bucketize(input, boundaries, right=True)
         >>> print(output)
         [[2 3 5]
          [2 3 5]]
