@@ -51,11 +51,11 @@ inline void RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_
     size_t k2 = i % dim2;
     size_t offset = k1 * stride + k2;
     for (int j = SizeToInt(dim1 - 1); j >= 0; --j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = IntToSize(j) * stride2 + offset;
       if (j == SizeToInt(dim1 - 1)) {
         output[read_index] = (T)0;
       } else {
-        size_t read_index2 = (j + 1) * stride2 + offset;
+        size_t read_index2 = IntToSize((j + 1)) * stride2 + offset;
         output[read_index] = input[read_index2];
       }
     }
@@ -84,11 +84,11 @@ inline void CumSumKernelReverse(const T *input, T *output, size_t dim0, size_t d
     size_t k2 = i % dim2;
     size_t offset = k1 * stride + k2;
     for (int j = SizeToInt(dim1 - 1); j >= 0; --j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = IntToSize(j) * stride2 + offset;
       if (j == SizeToInt(dim1 - 1)) {
         output[read_index] = input[read_index];
       } else {
-        size_t read_index2 = (j + 1) * stride2 + offset;
+        size_t read_index2 = IntToSize((j + 1)) * stride2 + offset;
         output[read_index] = output[read_index2] + input[read_index];
       }
     }

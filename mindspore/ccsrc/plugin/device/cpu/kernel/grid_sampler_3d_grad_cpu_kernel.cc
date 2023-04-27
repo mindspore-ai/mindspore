@@ -78,7 +78,7 @@ int GridSampler3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto stride_compute = [&](std::vector<size_t> &stride, std::vector<int64_t> shape) {
     for (int i = kFour; i > -static_cast<int>(kOne); i--) {
       (void)stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= shape[i];
+      stride_tmp *= shape[IntToSize(i)];
     }
     stride_tmp = kOne;
   };

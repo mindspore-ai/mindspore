@@ -302,7 +302,7 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size, Content c
     task_num += 1;
   }
   auto func = [&](void *, int task_id, float, float) {
-    size_t start = task_id * once_compute_size;
+    size_t start = IntToSize(task_id) * once_compute_size;
     size_t end = (start + once_compute_size) > count ? count : (start + once_compute_size);
     task(start, end);
     return common::SUCCESS;
@@ -328,7 +328,7 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, Thr
     task_num += 1;
   }
   auto func = [&](void *, int task_id, float, float) {
-    size_t start = task_id * once_compute_size;
+    size_t start = IntToSize(task_id) * once_compute_size;
     size_t end = (start + once_compute_size) > count ? count : (start + once_compute_size);
     for (size_t i = start; i < end; ++i) {
       (void)tasks[i]();

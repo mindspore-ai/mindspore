@@ -232,9 +232,9 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::v
       for (auto plane = start; plane < end; ++plane) {
         /* each plane contains 3 random random_samples,
            one for T, one for W, and one for H */
-        scalar_t *inputForPlane = input_data + plane * inputD_ * inputH_ * inputW_;
-        scalar_t *outputForPlane = output_data + plane * outputD_ * outputH_ * outputW_;
-        argmax_t *argmaxForPlane = argmax_data + plane * outputD_ * outputH_ * outputW_;
+        scalar_t *inputForPlane = input_data + plane * LongToSize(inputD_ * inputH_ * inputW_);
+        scalar_t *outputForPlane = output_data + plane * LongToSize(outputD_ * outputH_ * outputW_);
+        argmax_t *argmaxForPlane = argmax_data + plane * LongToSize(outputD_ * outputH_ * outputW_);
         random_sample_t *random_samplesForPlane = random_samples_data + plane * 3;
         FractionalMaxPool3DWithFixedKsizeCompute<scalar_t, random_sample_t, argmax_t>(
           inputForPlane, random_samplesForPlane, argmaxForPlane, outputForPlane, outputD_, outputH_, outputW_,
@@ -246,13 +246,13 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::v
     auto shard_fractional_max_pool3d_with_fixed_ksize = [&](size_t start, size_t end) {
       for (auto batch = start; batch < end; ++batch) {
         for (int64_t plane = 0; plane < inputC_; ++plane) {
-          auto intput_data_n = input_data + batch * inputC_ * inputW_ * inputH_ * inputD_;
-          auto output_data_n = output_data + batch * inputC_ * outputW_ * outputH_ * outputD_;
-          auto argmax_data_n = argmax_data + batch * inputC_ * outputW_ * outputH_ * outputD_;
+          auto intput_data_n = input_data + batch * LongToSize(inputC_ * inputW_ * inputH_ * inputD_);
+          auto output_data_n = output_data + batch * LongToSize(inputC_ * outputW_ * outputH_ * outputD_);
+          auto argmax_data_n = argmax_data + batch * LongToSize(inputC_ * outputW_ * outputH_ * outputD_);
           scalar_t *inputForPlane = intput_data_n + plane * inputD_ * inputH_ * inputW_;
           scalar_t *outputForPlane = output_data_n + plane * outputD_ * outputH_ * outputW_;
           argmax_t *argmaxForPlane = argmax_data_n + plane * outputD_ * outputH_ * outputW_;
-          auto random_samples_data_n = random_samples_data + batch * inputC_ * 3;
+          auto random_samples_data_n = random_samples_data + batch * LongToSize(inputC_ * 3);
           random_sample_t *random_samplesForPlane = random_samples_data_n + plane * 3;
           FractionalMaxPool3DWithFixedKsizeCompute<scalar_t, random_sample_t, argmax_t>(
             inputForPlane, random_samplesForPlane, argmaxForPlane, outputForPlane, outputD_, outputH_, outputW_,
