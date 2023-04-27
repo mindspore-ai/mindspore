@@ -158,6 +158,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
   shm_id_ = shmget(key_id, mem_size, IPC_CREAT | IPC_EXCL | 0600);
   if (shm_id_ == -1) {
     if (errno == EEXIST) {
+      MS_LOG(INFO) << "akg_build_tmp.key already exist.";
       shm_id_ = shmget(key_id, mem_size, 0);
     }
 
