@@ -42,7 +42,7 @@ namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("Meshgrid input num", SizeToLong(elements.size()), kGreaterThan, 1,
+  (void)CheckAndConvertUtils::CheckInteger("the number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
