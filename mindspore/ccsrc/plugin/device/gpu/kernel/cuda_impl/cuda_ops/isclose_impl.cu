@@ -22,37 +22,92 @@
 #include "include/cuda_fp16.h"
 
 template <typename T>
-__global__ void IsCloseTrueKernel(size_t size, const T* inputx, const T* inputy, const float rtol, const float atol,
-                              const bool equal_nan, bool* output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-       pos += blockDim.x * gridDim.x) {
-    if (isnan(static_cast<float>(inputx[pos])) && isnan(static_cast<float>(inputy[pos]))) {
-      output[pos] = true;
-    } else {
-      output[pos] = fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
-    }
-    }
+__device__ __forceinline__ T Abs(const T &input) {
+  return abs(input);
+}
+template <>
+__device__ __forceinline__ half Abs(const half &input) {
+  return abs(__half2float(input));
+}
+template <typename T>
+__device__ __forceinline__ bool IsNan(const T &input) {
+  return input != input;
+}
+template <typename T>
+__device__ __forceinline__ bool IsFinite(const T &input) {
+  return isfinite(input);
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const half &input) {
+  return isfinite(__half2float(input));
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const int8_t &input) {
+  return true;
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const int16_t &input) {
+  return true;
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const int32_t &input) {
+  return true;
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const int64_t &input) {
+  return true;
+}
+template <>
+__device__ __forceinline__ bool IsFinite(const uint8_t &input) {
+  return true;
+}
+template <typename T>
+__device__ __forceinline__ bool IsCloseFunc(const T &inputx, const T &inputy, const float rtol, const float atol) {
+  bool close = inputx == inputy;
+  if (atol == 0 && rtol == 0) return close;
+  auto diff = Abs(inputx - inputy);
+  auto limit = static_cast<T>(atol) + (static_cast<T>(rtol) * Abs(inputy));
+  close |= ((IsFinite(diff)) && (diff <= limit));
+  return close;
+}
+template <typename T>
+__device__ __forceinline__ bool IsCloseEqualNanFunc(const T &inputx, const T &inputy, const float rtol,
+                                                    const float atol) {
+  bool close = inputx == inputy;
+  close |= (IsNan(inputx) && IsNan(inputy));
+  if (atol == 0 && rtol == 0) return close;
+  auto diff = Abs(inputx - inputy);
+  auto limit = static_cast<T>(atol) + (static_cast<T>(rtol) * Abs(inputy));
+  close |= ((IsFinite(diff)) && (diff <= limit));
+  return close;
 }
 
 template <typename T>
-__global__ void IsCloseFalseKernel(size_t size, const T* inputx, const T* inputy, const float rtol, const float atol,
-                              const bool equal_nan, bool* output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
-       pos += blockDim.x * gridDim.x) {
-    output[pos] = fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
+__global__ void IsCloseEqualNanKernel(size_t size, const T *inputx, const T *inputy, const float rtol, const float atol,
+                                      const bool equal_nan, bool *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    output[pos] = IsCloseEqualNanFunc(inputx[pos], inputy[pos], rtol, atol);
+  }
+}
+
+template <typename T>
+__global__ void IsCloseKernel(size_t size, const T *inputx, const T *inputy, const float rtol, const float atol,
+                              const bool equal_nan, bool *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    output[pos] = IsCloseFunc(inputx[pos], inputy[pos], rtol, atol);
   }
 }
 
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
 template <typename T>
-__global__ void BroadcastIsCloseTrueKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                       const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                       const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                       const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                       const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                       const size_t d6, const T* inputx, const T* inputy, const float rtol,
-                                       const float atol, const bool equal_nan, bool* output) {
+__global__ void BroadcastIsCloseEqualNanKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                               const size_t d6, const T *inputx, const T *inputy, const float rtol,
+                                               const float atol, const bool equal_nan, bool *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
        pos += blockDim.x * gridDim.x) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
@@ -77,22 +132,18 @@ __global__ void BroadcastIsCloseTrueKernel(const size_t l0, const size_t l1, con
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    if (isnan(static_cast<float>(inputx[pos])) && isnan(static_cast<float>(inputy[r_index]))) {
-      output[pos] = true;
-    } else {
-      output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
-    }
+    output[pos] = IsCloseEqualNanFunc(inputx[l_index], inputy[r_index], rtol, atol);
   }
 }
 
 template <typename T>
-__global__ void BroadcastIsCloseFalseKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+__global__ void BroadcastIsCloseKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
                                        const size_t l4, const size_t l5, const size_t l6, const size_t r0,
                                        const size_t r1, const size_t r2, const size_t r3, const size_t r4,
                                        const size_t r5, const size_t r6, const size_t d0, const size_t d1,
                                        const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                       const size_t d6, const T* inputx, const T* inputy, const float rtol,
-                                       const float atol, const bool equal_nan, bool* output) {
+                                       const size_t d6, const T *inputx, const T *inputy, const float rtol,
+                                       const float atol, const bool equal_nan, bool *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < d0 * d1 * d2 * d3 * d4 * d5 * d6;
        pos += blockDim.x * gridDim.x) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
@@ -117,116 +168,116 @@ __global__ void BroadcastIsCloseFalseKernel(const size_t l0, const size_t l1, co
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
+    output[pos] = IsCloseFunc(inputx[l_index], inputy[r_index], rtol, atol);
   }
 }
 
 template <typename T>
-void IsClose(size_t size, const T* inputx, const T* inputy, const float atol, const float rtol, const bool equal_nan,
-            bool* output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+void IsClose(size_t size, const T *inputx, const T *inputy, const float atol, const float rtol, const bool equal_nan,
+             bool *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   if (equal_nan) {
-    IsCloseTrueKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, inputx, inputy,
-                              atol, rtol, equal_nan, output);
+    IsCloseEqualNanKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      size, inputx, inputy, atol, rtol, equal_nan, output);
   } else {
-    IsCloseFalseKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, inputx, inputy,
-                              atol, rtol, equal_nan, output);
+    IsCloseKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, inputx, inputy, atol,
+                                                                                             rtol, equal_nan, output);
   }
 }
 
 template <typename T>
 void BroadcastIsClose(const std::vector<size_t> &inputx_shape, const std::vector<size_t> &inputy_shape,
-                     const std::vector<size_t> &output_shape, const T* inputx, const T* inputy,
-                     const float atol, const float rtol, const bool equal_nan, bool* output,
-                     const uint32_t &device_id, cudaStream_t cuda_stream) {
+                      const std::vector<size_t> &output_shape, const T *inputx, const T *inputy, const float atol,
+                      const float rtol, const bool equal_nan, bool *output, const uint32_t &device_id,
+                      cudaStream_t cuda_stream) {
   size_t size = 1;
   for (auto d : output_shape) {
     size *= d;
   }
   if (equal_nan) {
-    BroadcastIsCloseTrueKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4], inputx_shape[5],
-    inputx_shape[6], inputy_shape[0], inputy_shape[1], inputy_shape[2], inputy_shape[3], inputy_shape[4],
-    inputy_shape[5], inputy_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
-    output_shape[4], output_shape[5], output_shape[6], inputx, inputy, atol, rtol, equal_nan, output);
+    BroadcastIsCloseEqualNanKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4], inputx_shape[5],
+      inputx_shape[6], inputy_shape[0], inputy_shape[1], inputy_shape[2], inputy_shape[3], inputy_shape[4],
+      inputy_shape[5], inputy_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
+      output_shape[4], output_shape[5], output_shape[6], inputx, inputy, atol, rtol, equal_nan, output);
   } else {
-    BroadcastIsCloseFalseKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4], inputx_shape[5],
-    inputx_shape[6], inputy_shape[0], inputy_shape[1], inputy_shape[2], inputy_shape[3], inputy_shape[4],
-    inputy_shape[5], inputy_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
-    output_shape[4], output_shape[5], output_shape[6], inputx, inputy, atol, rtol, equal_nan, output);
+    BroadcastIsCloseKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      inputx_shape[0], inputx_shape[1], inputx_shape[2], inputx_shape[3], inputx_shape[4], inputx_shape[5],
+      inputx_shape[6], inputy_shape[0], inputy_shape[1], inputy_shape[2], inputy_shape[3], inputy_shape[4],
+      inputy_shape[5], inputy_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
+      output_shape[4], output_shape[5], output_shape[6], inputx, inputy, atol, rtol, equal_nan, output);
   }
 }
 
-template CUDA_LIB_EXPORT void IsClose<half>(size_t size, const half* inputx, const half* inputy, const float atol,
-                                           const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<float>(size_t size, const float* inputx, const float* inputy, const float atol,
-                                           const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<double>(size_t size, const double* inputx, const double* inputy, const float atol,
-                                           const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<int8_t>(size_t size, const int8_t* inputx, const int8_t* inputy, const float atol,
-                                           const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<int16_t>(size_t size, const int16_t* inputx, const int16_t* inputy,
-                                           const float atol, const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<int32_t>(size_t size, const int32_t* inputx, const int32_t* inputy,
-                                           const float atol, const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<int64_t>(size_t size, const int64_t* inputx, const int64_t* inputy,
-                                           const float atol, const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void IsClose<uint8_t>(size_t size, const uint8_t* inputx, const uint8_t* inputy,
-                                           const float atol, const float rtol, const bool equal_nan, bool* output,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<half>(size_t size, const half *inputx, const half *inputy, const float atol,
+                                            const float rtol, const bool equal_nan, bool *output,
+                                            const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<float>(size_t size, const float *inputx, const float *inputy, const float atol,
+                                             const float rtol, const bool equal_nan, bool *output,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<double>(size_t size, const double *inputx, const double *inputy, const float atol,
+                                              const float rtol, const bool equal_nan, bool *output,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<int8_t>(size_t size, const int8_t *inputx, const int8_t *inputy, const float atol,
+                                              const float rtol, const bool equal_nan, bool *output,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<int16_t>(size_t size, const int16_t *inputx, const int16_t *inputy,
+                                               const float atol, const float rtol, const bool equal_nan, bool *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<int32_t>(size_t size, const int32_t *inputx, const int32_t *inputy,
+                                               const float atol, const float rtol, const bool equal_nan, bool *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<int64_t>(size_t size, const int64_t *inputx, const int64_t *inputy,
+                                               const float atol, const float rtol, const bool equal_nan, bool *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IsClose<uint8_t>(size_t size, const uint8_t *inputx, const uint8_t *inputy,
+                                               const float atol, const float rtol, const bool equal_nan, bool *output,
+                                               const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void BroadcastIsClose<half>(const std::vector<size_t> &inputx_shape,
                                                      const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const half* inputx, const half* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                     const std::vector<size_t> &output_shape, const half *inputx,
+                                                     const half *inputy, const float atol, const float rtol,
+                                                     const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<float>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const float* inputx, const float* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                      const std::vector<size_t> &inputy_shape,
+                                                      const std::vector<size_t> &output_shape, const float *inputx,
+                                                      const float *inputy, const float atol, const float rtol,
+                                                      const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<double>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const double* inputx, const double* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                       const std::vector<size_t> &inputy_shape,
+                                                       const std::vector<size_t> &output_shape, const double *inputx,
+                                                       const double *inputy, const float atol, const float rtol,
+                                                       const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<int8_t>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const int8_t* inputx, const int8_t* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                       const std::vector<size_t> &inputy_shape,
+                                                       const std::vector<size_t> &output_shape, const int8_t *inputx,
+                                                       const int8_t *inputy, const float atol, const float rtol,
+                                                       const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                       cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<int16_t>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const int16_t* inputx, const int16_t* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                        const std::vector<size_t> &inputy_shape,
+                                                        const std::vector<size_t> &output_shape, const int16_t *inputx,
+                                                        const int16_t *inputy, const float atol, const float rtol,
+                                                        const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<int32_t>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const int32_t* inputx, const int32_t* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                        const std::vector<size_t> &inputy_shape,
+                                                        const std::vector<size_t> &output_shape, const int32_t *inputx,
+                                                        const int32_t *inputy, const float atol, const float rtol,
+                                                        const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<int64_t>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const int64_t* inputx, const int64_t* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                        const std::vector<size_t> &inputy_shape,
+                                                        const std::vector<size_t> &output_shape, const int64_t *inputx,
+                                                        const int64_t *inputy, const float atol, const float rtol,
+                                                        const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void BroadcastIsClose<uint8_t>(const std::vector<size_t> &inputx_shape,
-                                                     const std::vector<size_t> &inputy_shape,
-                                                     const std::vector<size_t> &output_shape,
-                                                     const uint8_t* inputx, const uint8_t* inputy, const float atol,
-                                                     const float rtol, const bool equal_nan, bool* output,
-                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+                                                        const std::vector<size_t> &inputy_shape,
+                                                        const std::vector<size_t> &output_shape, const uint8_t *inputx,
+                                                        const uint8_t *inputy, const float atol, const float rtol,
+                                                        const bool equal_nan, bool *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
