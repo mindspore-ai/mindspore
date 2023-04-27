@@ -53,9 +53,9 @@ uint64_t GetSeed(const CpuKernelContext &ctx, uint64_t count, uint64_t state) {
   if (count != 0) {
     final_seed = state;
   } else if (attr_seed2 != nullptr && attr_seed2->GetInt() != 0) {
-    final_seed = attr_seed2->GetInt();
+    final_seed = static_cast<uint64_t>(attr_seed2->GetInt());
   } else if (attr_seed != nullptr && attr_seed->GetInt() != 0) {
-    final_seed = attr_seed->GetInt();
+    final_seed = static_cast<uint64_t>(attr_seed->GetInt());
   } else {
     std::random_device r;
     final_seed = r();
@@ -74,7 +74,7 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *input_count, Tensor 
   // count the execution times of the op
   uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
   // seed of the op, passed between executions, which make op stateful
-  uint64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
+  uint64_t state = *(reinterpret_cast<uint64_t *>(input_state->GetData()));
 
   // setup random engine
   RNG_Engine rng;

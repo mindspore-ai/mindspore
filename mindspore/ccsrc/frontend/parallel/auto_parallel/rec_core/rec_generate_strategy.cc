@@ -1285,11 +1285,11 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
       stra.push_back(broadcast_revise_s);
     }
     // Push back the second tensor's strategy after applying broadcast.
-    stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+    stra.push_back(ApplyBroadcast(s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
   } else if (second_tensor_dim > first_tensor_dim) {  // Do Broadcasting in the first tensor.
     bool broadcast_first_tensor = true;
     // Push back the first tensor's strategy after applying broadcast.
-    stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+    stra.push_back(ApplyBroadcast(s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
     // Push back the second tensor's strategy.
     if (s_dim == second_tensor_dim) {
       stra.push_back(s);
@@ -1313,8 +1313,8 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
   return stra;
 }
 
-Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s,
-                          size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor) {
+Dimensions ApplyBroadcast(Dimensions s, size_t first_tensor_dim, size_t second_tensor_dim,
+                          bool broadcast_first_tensor) {
   Dimensions s_empty = {};
   Dimensions s_broadcast;
   size_t target_tensor_dim;

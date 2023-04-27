@@ -414,7 +414,7 @@ std::string AscendGraphExecutor::GetRandomStatus(const std::vector<FuncGraphPtr>
         continue;
       }
       auto random_node = list.add_nodes();
-      std::string key = "";
+      std::string key = {};
       auto debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
       if (debug_info != nullptr) {
         auto location = debug_info->location();
