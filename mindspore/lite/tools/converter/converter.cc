@@ -56,6 +56,7 @@
 #include "tools/common/parse_config_utils.h"
 #include "tools/converter/converter_packed_node.h"
 #include "tools/converter/config_parser/cpu_option_param_parser.h"
+#include "ir/func_graph_cloner.h"
 
 namespace mindspore {
 std::map<std::string, Format> StrToEnumFormatMap = {{"NHWC", Format::NHWC}, {"NCHW", Format::NCHW}};
@@ -1069,10 +1070,16 @@ int ConverterImpl::SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<Con
     auto new_param = std::make_shared<ConverterPara>();
     new_param->fmk_type = converter::kFmkTypeMs;
     new_param->save_type = kMindIR;
-    meta_graph = lite::ConverterToMetaGraph::Build(new_param, graph);
+
+    auto mirror_graph = BasicClone(graph, true);
+    if (mirror_graph == nullptr) {
+      MS_LOG(ERROR) << "Mirror graph is nullptr";
+      return RET_ERROR;
+    }
+    meta_graph = lite::ConverterToMetaGraph::Build(new_param, mirror_graph);
     if (meta_graph == nullptr) {
       MS_LOG(ERROR) << "FuncGraph convert to meta graph failed";
-      return false;
+      return RET_ERROR;
     }
     status = PreInference(*meta_graph, param->train_model);
     if (status != RET_OK) {
