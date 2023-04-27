@@ -786,6 +786,8 @@ def set_offload_context(offload_config):
             aio_block_size (str): The size of aio block. The format is "xxGB"
             aio_queue_depth (int): The depth of aio queue.
             enable_pinned_mem (bool): The flag of whether enabling pinned memory.
+            auto_offload (bool): The flag of whether auto offload.
+            host_mem_block_size (str): The memory block size of host memory pool. The format is "xxGB"
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

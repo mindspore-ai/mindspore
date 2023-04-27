@@ -451,7 +451,12 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("aio_queue_depth", &OffloadContext::aio_queue_depth, "Get the depth of aio queue.")
     .def("set_enable_pinned_mem", &OffloadContext::set_enable_pinned_mem,
          "Set the flag of whether enabling pinned memory.")
-    .def("enable_pinned_mem", &OffloadContext::enable_pinned_mem, "Get the flag of whether enabling pinned memory.");
+    .def("enable_pinned_mem", &OffloadContext::enable_pinned_mem, "Get the flag of whether enabling pinned memory.")
+    .def("set_auto_offload", &OffloadContext::set_auto_offload,
+         "Set whether to automatically generate the offload strategy")
+    .def("auto_offload", &OffloadContext::auto_offload, "Get the flag of whether auto offload")
+    .def("set_host_mem_block_size", &OffloadContext::set_host_mem_block_size, "Set the block size for host memory pool")
+    .def("host_mem_block_size", &OffloadContext::host_mem_block_size, "Get the block size of host memory pool");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
     mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);

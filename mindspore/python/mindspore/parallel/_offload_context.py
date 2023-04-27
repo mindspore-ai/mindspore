@@ -39,6 +39,8 @@ class _OffloadConfig:
     AIO_BLOCK_SIZE = "aio_block_size"
     AIO_QUEUE_DEPTH = "aio_queue_depth"
     ENABLE_PINNED_MEM = "enable_pinned_mem"
+    AUTO_OFFLOAD = "auto_offload"
+    HOST_MEM_BLOCk_SIZE = "host_mem_block_size"
 
 
 class _OffloadContext:
@@ -72,6 +74,75 @@ class _OffloadContext:
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
 
+    def set_offload_param(self, offload_param):
+        Validator.check_string(offload_param.lower(), ["cpu", "disk"])
+        self._context_handle.set_offload_param(offload_param.lower())
+
+    def set_offload_path(self, offload_path):
+        if not isinstance(offload_path, str):
+            raise TypeError("For 'set_offload_path', "
+                            "the argument 'offload_path' must be str, but got the type : {}."
+                            .format(type(offload_path)))
+        self._context_handle.set_offload_path(offload_path)
+
+    def set_offload_checkpoint(self, offload_checkpoint):
+        Validator.check_string(offload_checkpoint.lower(), ["cpu", "disk"])
+        self._context_handle.set_offload_checkpoint(offload_checkpoint.lower())
+
+    def set_offload_ddr_size(self, offload_ddr_size):
+        if not Validator.check_str_by_regular(offload_ddr_size, K_RE_PATTERN):
+            raise ValueError("The argument 'offload_ddr_size' should be in correct "
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(offload_ddr_size))
+        ddr_size = float(offload_ddr_size[:-2])
+        self._context_handle.set_offload_ddr_size(int(ddr_size * K_GBTOBYTE))
+
+    def set_offload_disk_size(self, offload_disk_size):
+        if not Validator.check_str_by_regular(offload_disk_size, K_RE_PATTERN):
+            raise ValueError("The argument 'offload_disk_size' should be in correct "
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(offload_disk_size))
+        disk_size = float(offload_disk_size[:-2])
+        self._context_handle.set_offload_disk_size(int(disk_size * K_GBTOBYTE))
+
+    def set_enable_aio(self, enable_aio):
+        Validator.check_bool(enable_aio)
+        self._context_handle.set_enable_aio(enable_aio)
+
+    def set_aio_block_size(self, aio_block_size):
+        if not Validator.check_str_by_regular(aio_block_size, K_RE_PATTERN):
+            raise ValueError("The argument 'aio_block_size' should be in correct "
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(aio_block_size))
+        aio_size = float(aio_block_size[:-2])
+        self._context_handle.set_aio_block_size(int(aio_size * K_GBTOBYTE))
+
+    def set_aio_queue_depth(self, aio_queue_depth):
+        Validator.check_positive_int(aio_queue_depth)
+        self._context_handle.set_aio_queue_depth(aio_queue_depth)
+
+    def set_enable_pinned_mem(self, enable_pinned_mem):
+        Validator.check_bool(
+            enable_pinned_mem, enable_pinned_mem, enable_pinned_mem)
+        self._context_handle.set_enable_pinned_mem(enable_pinned_mem)
+
+    def set_auto_offload(self, auto_offload):
+        Validator.check_bool(auto_offload)
+        self._context_handle.set_auto_offload(auto_offload)
+
+    def set_host_mem_block_size(self, host_mem_block_size):
+        if not Validator.check_str_by_regular(host_mem_block_size, K_RE_PATTERN):
+            raise ValueError("The argument 'host_mem_block_size' should be in correct "
+                             " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             .format(host_mem_block_size))
+        block_size = float(host_mem_block_size[:-2])
+        self._context_handle.set_host_mem_block_size(
+            int(block_size * K_GBTOBYTE))
+
     def set_offload_config(self, offload_config):
         """Set offfload context"""
         self.check_context_handle()
@@ -84,80 +155,23 @@ class _OffloadContext:
         aio_block_size = _OffloadConfig.AIO_BLOCK_SIZE
         aio_queue_depth = _OffloadConfig.AIO_QUEUE_DEPTH
         enable_pinned_mem = _OffloadConfig.ENABLE_PINNED_MEM
+        auto_offload = _OffloadConfig.AUTO_OFFLOAD
+        host_mem_block_size = _OffloadConfig.HOST_MEM_BLOCk_SIZE
 
         for config_name in offload_config:
             unknown_config = []
             if config_name not in [offload_param, offload_path, offload_checkpoint,
                                    offload_ddr_size, offload_disk_size, enable_aio, aio_block_size,
-                                   aio_queue_depth, enable_pinned_mem]:
+                                   aio_queue_depth, enable_pinned_mem, auto_offload, host_mem_block_size]:
                 unknown_config.append(config_name)
 
             if unknown_config:
                 raise ValueError("Unknown config: {}".format(unknown_config))
-
-        if offload_param in offload_config:
-            Validator.check_string(
-                offload_config[offload_param].lower(), ["cpu", "disk"])
-            self._context_handle.set_offload_param(
-                offload_config[offload_param].lower())
-
-        if offload_path in offload_config:
-            if not isinstance(offload_config[offload_path], str):
-                raise TypeError("For 'set_offload_path', "
-                                "the argument 'offload_path' must be str, but got the type : {}."
-                                .format(type(offload_config[offload_path])))
-            self._context_handle.set_offload_path(
-                offload_config[offload_path])
-        if offload_checkpoint in offload_config:
-            Validator.check_string(
-                offload_config[offload_checkpoint].lower(), ["cpu", "disk"])
-            self._context_handle.set_offload_checkpoint(
-                offload_config[offload_checkpoint].lower())
-
-        if offload_ddr_size in offload_config:
-            ddr_size = offload_config[offload_ddr_size]
-            if not Validator.check_str_by_regular(ddr_size, K_RE_PATTERN):
-                raise ValueError("The argument 'offload_ddr_size' should be in correct "
-                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
-                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
-                                 .format(ddr_size))
-            ddr_size = float(ddr_size[:-2])
-            self._context_handle.set_offload_ddr_size(int(ddr_size * K_GBTOBYTE))
-
-        if offload_disk_size in offload_config:
-            disk_size = offload_config[offload_disk_size]
-            if not Validator.check_str_by_regular(disk_size, K_RE_PATTERN):
-                raise ValueError("The argument 'offload_disk_size' should be in correct "
-                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
-                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
-                                 .format(disk_size))
-            disk_size = float(disk_size[:-2])
-            self._context_handle.set_offload_disk_size(
-                int(disk_size * K_GBTOBYTE))
-
-        if enable_aio in offload_config:
-            Validator.check_bool(
-                offload_config[enable_aio], enable_aio, enable_aio)
-            self._context_handle.set_enable_aio(
-                offload_config[enable_aio])
-        if aio_block_size in offload_config:
-            aio_size = offload_config[aio_block_size]
-            if not Validator.check_str_by_regular(aio_size, K_RE_PATTERN):
-                raise ValueError("The argument 'aio_block_size' should be in correct "
-                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
-                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
-                                 .format(aio_size))
-            aio_size = float(aio_size[:-2])
-            self._context_handle.set_aio_block_size(int(aio_size * K_GBTOBYTE))
-        if aio_queue_depth in offload_config:
-            Validator.check_positive_int(offload_config[aio_queue_depth])
-            self._context_handle.set_aio_queue_depth(
-                offload_config[aio_queue_depth])
-        if enable_pinned_mem in offload_config:
-            Validator.check_bool(
-                offload_config[enable_pinned_mem], enable_pinned_mem, enable_pinned_mem)
-            self._context_handle.set_enable_pinned_mem(
-                offload_config[enable_pinned_mem])
+            func = _set_offload_context_func_map.get(config_name, None)
+            if not func:
+                raise ValueError(
+                    "Can not find set function: {}".format(config_name))
+            func(offload_config[config_name])
 
     def offload_config(self):
         """Get config of offload"""
@@ -171,7 +185,9 @@ class _OffloadContext:
             _OffloadConfig.ENABLE_AIO: self._context_handle.enable_aio(),
             _OffloadConfig.AIO_BLOCK_SIZE: self._context_handle.aio_block_size(),
             _OffloadConfig.AIO_QUEUE_DEPTH: self._context_handle.aio_queue_depth(),
-            _OffloadConfig.ENABLE_PINNED_MEM: self._context_handle.enable_pinned_mem()
+            _OffloadConfig.ENABLE_PINNED_MEM: self._context_handle.enable_pinned_mem(),
+            _OffloadConfig.AUTO_OFFLOAD: self._context_handle.auto_offload(),
+            _OffloadConfig.HOST_MEM_BLOCk_SIZE: self._context_handle.host_mem_block_size(),
         }
         return offload_config
 
@@ -194,3 +210,18 @@ def _set_offload_context(offload_config):
 
 def _get_offload_context():
     return offload_context().offload_config()
+
+
+_set_offload_context_func_map = {
+    _OffloadConfig.OFFLOAD_PARAM: offload_context().set_offload_param,
+    _OffloadConfig.OFFLOAD_PATH: offload_context().set_offload_path,
+    _OffloadConfig.OFFLOAD_CHECKPOINT: offload_context().set_offload_checkpoint,
+    _OffloadConfig.OFFLOAD_DDR_SIZE: offload_context().set_offload_ddr_size,
+    _OffloadConfig.OFFLOAD_DISK_SIZE: offload_context().set_offload_disk_size,
+    _OffloadConfig.ENABLE_AIO: offload_context().set_enable_aio,
+    _OffloadConfig.AIO_BLOCK_SIZE: offload_context().set_aio_block_size,
+    _OffloadConfig.AIO_QUEUE_DEPTH: offload_context().set_aio_queue_depth,
+    _OffloadConfig.ENABLE_PINNED_MEM: offload_context().set_enable_pinned_mem,
+    _OffloadConfig.AUTO_OFFLOAD: offload_context().set_auto_offload,
+    _OffloadConfig.HOST_MEM_BLOCk_SIZE: offload_context().set_host_mem_block_size,
+}

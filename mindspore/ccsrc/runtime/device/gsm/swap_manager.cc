@@ -156,7 +156,7 @@ void SwapManager::FreeDeviceMemory(void *ptr) {
 
 void *SwapManager::AllocHostMemorySimply(const size_t &size) {
   MS_EXCEPTION_IF_NULL(pin_mem_pool_);
-  return pin_mem_pool_->AllocTensorMem(size);
+  return pin_mem_pool_->AllocPinMem(size);
 }
 
 void *SwapManager::AllocHostMemory(size_t size) {

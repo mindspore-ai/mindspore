@@ -29,6 +29,8 @@ constexpr char kOffloadPath[] = "./offload/";
 constexpr char kOffloadParam[] = "";
 constexpr size_t kAioBlockSize = 1 << 20;
 constexpr size_t kAioQueueDepth = 1024;
+constexpr size_t kGBToByte = 1024 << 20;
+constexpr float kMemRetentionTate = 0.2f;
 }  // namespace
 std::shared_ptr<OffloadContext> OffloadContext::GetInstance() {
   static std::once_flag init_flag;
@@ -50,14 +52,18 @@ void OffloadContext::set_offload_checkpoint(const std::string &offload_checkpoin
   offload_checkpoint_ = offload_checkpoint;
 }
 
-void OffloadContext::set_offload_ddr_size(size_t offload_ddr_size) { offload_ddr_size_ = offload_ddr_size; }
+void OffloadContext::set_offload_ddr_size(size_t offload_ddr_size) {
+  offload_ddr_size_ = offload_ddr_size;
+  ddr_size_configured_ = true;
+}
 
 size_t OffloadContext::offload_ddr_size() {
   if (offload_ddr_size_ == 0) {
     offload_ddr_size_ = mindspore::GetSystemMemorySize(kMemAvailable);
     MS_LOG(WARNING) << "Offload ddr size is not set, please set this via the context.set_offload_context() method.";
   }
-  return offload_ddr_size_;
+  auto retention_mem_size = std::min(kGBToByte, static_cast<size_t>(offload_ddr_size_ * kMemRetentionTate));
+  return offload_ddr_size_ - retention_mem_size;
 }
 
 void OffloadContext::set_offload_disk_size(size_t offload_disk_size) { offload_disk_size_ = offload_disk_size; }
@@ -83,6 +89,10 @@ void OffloadContext::set_aio_queue_depth(size_t aio_queue_depth) { aio_queue_dep
 
 void OffloadContext::set_enable_pinned_mem(bool enable_pinned_mem) { enable_pinned_mem_ = enable_pinned_mem; }
 
+void OffloadContext::set_auto_offload(bool auto_offload) { auto_offload_ = auto_offload; }
+
+void OffloadContext::set_host_mem_block_size(size_t host_mem_block_size) { host_mem_block_size_ = host_mem_block_size; }
+
 OffloadContext::OffloadContext()
     : offload_param_(kOffloadParam),
       offload_path_(kOffloadPath),
@@ -92,5 +102,8 @@ OffloadContext::OffloadContext()
       enable_aio_(true),
       aio_block_size_(kAioBlockSize),
       aio_queue_depth_(kAioQueueDepth),
-      enable_pinned_mem_(true) {}
+      enable_pinned_mem_(true),
+      auto_offload_(true),
+      host_mem_block_size_(kGBToByte),
+      ddr_size_configured_(false) {}
 }  // namespace mindspore

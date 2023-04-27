@@ -109,7 +109,11 @@ def _offload_if_config(data):
     offload_file_path = data.offload_file_path()
     if offload_file_path is None or offload_file_path == "":
         import time
+        import os
         offload_dir = offload_context.get("offload_path", "./offload")
+        offload_dir = os.path.relpath(offload_dir)
+        if not os.path.exists(offload_dir):
+            os.makedirs(offload_dir)
         offload_file_path = offload_dir + "/" + str(_get_global_rank()) + "_" + str(
             _get_unique_parameter_key()) + "_" + str(time.time()) + ".data"
     data.offload(offload_file_path)

@@ -150,12 +150,14 @@ std::shared_ptr<device::SwapContext> GetSwapContext() {
   swap_context->hbm_mem_size_ = FloatToSize(max_hbm_size * kGBToByte);
   swap_context->ddr_mem_size_ = offload_context->offload_ddr_size();
   swap_context->disk_mem_size_ = offload_context->offload_disk_size();
-  const auto &offload_param = offload_context->offload_param();
-  swap_context->offload_param_to_ddr_ = (offload_param == kOffloadTargetDDR);
-  swap_context->offload_param_to_disk_ = (offload_param == kOffloadTargetDisk);
-  const auto &offload_checkpoint = offload_context->offload_checkpoint();
-  swap_context->offload_checkpoint_to_ddr_ = (offload_checkpoint == kOffloadTargetDDR);
-  swap_context->offload_checkpoint_to_disk_ = (offload_checkpoint == kOffloadTargetDisk);
+  if (!offload_context->auto_offload()) {
+    const auto &offload_param = offload_context->offload_param();
+    swap_context->offload_param_to_ddr_ = (offload_param == kOffloadTargetDDR);
+    swap_context->offload_param_to_disk_ = (offload_param == kOffloadTargetDisk);
+    const auto &offload_checkpoint = offload_context->offload_checkpoint();
+    swap_context->offload_checkpoint_to_ddr_ = (offload_checkpoint == kOffloadTargetDDR);
+    swap_context->offload_checkpoint_to_disk_ = (offload_checkpoint == kOffloadTargetDisk);
+  }
   return swap_context;
 }
 }  // namespace
