@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <tuple>
+#include <functional>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
@@ -31,11 +32,32 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
+struct Edge {
+  size_t from;
+  size_t to;
+  bool operator<(const Edge &other) const { return from == other.from ? to < other.to : from < other.from; }
+  friend std::ostream &operator<<(std::ostream &os, const Edge &e) {
+    return os << "[" << e.from << " -> " << e.to << "]";
+  }
+};
+inline std::ostream &operator<<(std::ostream &os, FormatType fmt) {
+  return os << (fmt == FormatType::kFlexFormat ? "kFlexFormat"
+                                               : (fmt == FormatType::kFormatA ? "kFormatA" : "kFormatB"));
+}
+inline std::ostream &operator<<(std::ostream &os, TransOpType trans) {
+  return os << (trans == TransOpType::kTransAB ? "kTransAB" : "kTransBA");
+}
+
+// For format-inflexible nodes, index -1 represent its output field, and index 0~n represent its input field.
+// for format-flexible nodes, only index -1 represent its all inputs and output fields.
+using NodeWithIndex = std::pair<NodePtr, int>;
+using NodeIdWithFormat = std::pair<size_t, FormatType>;
+
 namespace {
 constexpr size_t INF = static_cast<size_t>(1) << 30;
 class MinCut {
  private:
-  struct Edge {
+  struct MinCutEdge {
     size_t to;
     size_t capacity;
   };
@@ -51,10 +73,10 @@ class MinCut {
   // we can use (i xor 1) to get the inverse edge for any edge i.
   // e.g. edge_0 and edge_1 are a couple, 0^1=1, 1^1=0.
   void AddEdge(size_t from, size_t to, size_t capacity, size_t inv_capacity) {
-    (void)edges_.emplace_back(Edge{to, capacity});
+    (void)edges_.emplace_back(MinCutEdge{to, capacity});
     (void)nodes_[from].out_edges.emplace_back(edges_.size() - 1);
     // inverse edge
-    (void)edges_.emplace_back(Edge{from, inv_capacity});
+    (void)edges_.emplace_back(MinCutEdge{from, inv_capacity});
     (void)nodes_[to].out_edges.emplace_back(edges_.size() - 1);
   }
 
@@ -104,8 +126,10 @@ class MinCut {
     }
   }
 
+  // set the nodes that connected with source node to kFormatA, the remaining nodes are seen as kFormatB.
   void SetFormat(size_t node_id) {
     nodes_[node_id].format = FormatType::kFormatA;
+    MS_LOG(DEBUG) << "Set node_id " << node_id << " to kFormatA.";
     for (size_t i : nodes_[node_id].out_edges) {
       if (edges_[i].capacity > 0 && nodes_[edges_[i].to].format != FormatType::kFormatA) {
         SetFormat(edges_[i].to);
@@ -113,7 +137,7 @@ class MinCut {
     }
   }
 
-  void BuildGraph(const std::vector<std::pair<size_t, FormatType>> &original_nodes) {
+  void BuildGraph(const std::vector<NodeIdWithFormat> &original_nodes) {
     for (size_t i = 0; i < origin_nodes_num_; ++i) {
       // link the source node to the nodes with FormatA,
       // link the nodes with FormatB to the sink node.
@@ -127,14 +151,12 @@ class MinCut {
       AddEdge(original_nodes[i].first, original_nodes[i].first + origin_nodes_num_, 1, 1);
     }
     for (auto e : original_edges_) {
-      auto from = e.first, to = e.second;
-      AddEdge(from + origin_nodes_num_, to, 1, 1);
+      AddEdge(e.from + origin_nodes_num_, e.to, 1, 1);
     }
   }
 
  public:
-  MinCut(const std::vector<std::pair<size_t, FormatType>> &original_nodes,
-         const std::vector<std::pair<size_t, size_t>> &original_edges)
+  MinCut(const std::vector<NodeIdWithFormat> &original_nodes, const std::vector<Edge> &original_edges)
       : origin_nodes_num_(original_nodes.size()),
         source_id_(0),
         sink_id_(2 * original_nodes.size() + 1),
@@ -155,23 +177,27 @@ class MinCut {
       auto tmpi = i;  // to evade pclint warning "for statement index variable modified in body."
       if (nodes_[i].format == FormatType::kFormatA && nodes_[i + origin_nodes_num_].format != FormatType::kFormatA) {
         (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransAB);
+        MS_LOG(DEBUG) << "Inserted kTransAB for node_id " << tmpi;
       } else if (nodes_[i].format != FormatType::kFormatA &&
                  nodes_[i + origin_nodes_num_].format == FormatType::kFormatA) {
         (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransBA);
+        MS_LOG(DEBUG) << "Inserted kTransBA for node_id " << tmpi;
       }
     }
     return one_node_ops;
   }
 
-  std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> GetTwoNodeOps() const {
-    std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> two_node_ops;
-    for (auto i : original_edges_) {
-      if (nodes_[i.first + origin_nodes_num_].format == FormatType::kFormatA &&
-          nodes_[i.second].format != FormatType::kFormatA) {
-        (void)two_node_ops.emplace_back(i, TransOpType::kTransAB);
-      } else if (nodes_[i.first + origin_nodes_num_].format != FormatType::kFormatA &&
-                 nodes_[i.second].format == FormatType::kFormatA) {
-        (void)two_node_ops.emplace_back(i, TransOpType::kTransBA);
+  std::vector<std::pair<Edge, TransOpType>> GetTwoNodeOps() const {
+    std::vector<std::pair<Edge, TransOpType>> two_node_ops;
+    for (auto e : original_edges_) {
+      if (nodes_[e.from + origin_nodes_num_].format == FormatType::kFormatA &&
+          nodes_[e.to].format != FormatType::kFormatA) {
+        (void)two_node_ops.emplace_back(e, TransOpType::kTransAB);
+        MS_LOG(DEBUG) << "Inserted kTransAB for edge " << e;
+      } else if (nodes_[e.from + origin_nodes_num_].format != FormatType::kFormatA &&
+                 nodes_[e.to].format == FormatType::kFormatA) {
+        (void)two_node_ops.emplace_back(e, TransOpType::kTransBA);
+        MS_LOG(DEBUG) << "Inserted kTransBA for edge " << e;
       }
     }
     return two_node_ops;
@@ -182,8 +208,8 @@ class MinCut {
   size_t source_id_;
   size_t sink_id_;
   std::vector<Vertex> nodes_;
-  std::vector<Edge> edges_;
-  std::vector<std::pair<size_t, size_t>> original_edges_;
+  std::vector<MinCutEdge> edges_;
+  std::vector<Edge> original_edges_;
 };
 }  // namespace
 
@@ -193,10 +219,19 @@ using inner::NodePtrList;
 using inner::NType;
 using inner::PrimOp;
 using inner::PrimOpPtr;
-using NodeWithIndex = std::pair<NodePtr, int>;
 
 TransformOp::TransformOp(const NodePtr &node)
     : op_(node->As<PrimOp>()->op()), format_a_(node->input(0)->format), format_b_(node->format) {}
+
+size_t TransformOp::Hash() const {
+  // TransAB and TransBA are seen as the same trans op.
+  auto fmt1 = format_a_;
+  auto fmt2 = format_b_;
+  if (fmt1 > fmt2) {
+    std::swap(fmt1, fmt2);
+  }
+  return std::hash<std::string>{}(op_ + fmt1 + fmt2);
+}
 
 std::string TransformOp::GetFormat(const NodePtr &node) const { return node->format; }
 
@@ -220,6 +255,7 @@ bool TransformOp::NeedInsert(const NodePtr &input_node) const {
 }
 
 FormatType TransformOp::GetFormatType(const std::string &fmt) {
+  // nodes that are not flexible and not FormatA will be set to FormatB (include "others" format)
   return fmt == format_a_ ? FormatType::kFormatA : FormatType::kFormatB;
 }
 
@@ -332,12 +368,12 @@ class ReshapeHandle : public TransformOp {
 constexpr int kOutputIndex = -1;
 class Mutator {
  public:
-  enum class ResultStatus { kChanged, kUnchanged, kRollback };
+  enum class ResultStatus { kUnchanged, kChanged, kRollback };
   Mutator(const NodePtr &node, const TransformOpPtr &handle) : op_handle_(handle), basenode_(node), ori_node_(1) {}
   ~Mutator() = default;
 
   ResultStatus Run(std::set<NodePtr> *changed_nodes) {
-    VisitNode(basenode_);
+    VisitNode(basenode_, kOutputIndex);
     if (flexible_ops_.empty() && trans_ops_.size() <= 1) {
       return ResultStatus::kUnchanged;
     }
@@ -351,40 +387,60 @@ class Mutator {
     return ResultStatus::kChanged;
   }
 
+  size_t new_trans_op_num() const { return new_trans_op_num_; }
+
  private:
-  // visit nodes bidirectionally
-  void VisitNode(const NodePtr &node) {
-    if (visited_.count(node) > 0) {
+  void VisitNode(const NodePtr &node, int index) {
+    if (visited_.count(node) > 0 && inflexible_ops_.count(node) == 0) {
       return;
     }
     (void)visited_.insert(node);
     if (op_handle_->IsTransformOp(node)) {
       (void)trans_ops_.insert(node);
     } else if (!IsFlexibleOp(node)) {
+      VisitInflexibleOp(node, index);
+      return;
+    } else {
+      (void)flexible_ops_.insert(node);
+      fmt_type[{node, kOutputIndex}] = FormatType::kFlexFormat;
+    }
+    // for trans op or format-flexible op, visit node bidirectionally.
+    for (auto &input : node->inputs()) {
+      if (input->NodeType() != NType::Value) {
+        VisitNode(input, kOutputIndex);
+      }
+    }
+    for (auto &user : node->users()) {
+      for (auto user_idx : user.second) {
+        VisitNode(user.first->shared_from_this(), user_idx);
+      }
+    }
+  }
+
+  void VisitInflexibleOp(const NodePtr &node, int index) {
+    auto &visited_index = inflexible_ops_[node];
+    if (!visited_index.insert(index).second) {
+      return;
+    }
+    if (visited_index.size() == 1) {
       if (node->NodeType() != NType::Output) {
         fmt_type[{node, kOutputIndex}] = op_handle_->GetFormatType(op_handle_->GetFormat(node));
       }
       if (node->NodeType() != NType::Parameter) {
         for (size_t i = 0; i < node->inputs().size(); i++) {
-          if (node->input(i)->NodeType() == NType::Value) {
-            continue;
+          if (node->input(i)->NodeType() != NType::Value) {
+            fmt_type[{node, i}] = op_handle_->GetFormatType(op_handle_->GetFormat(node->input(i)));
           }
-          fmt_type[{node, i}] = op_handle_->GetFormatType(op_handle_->GetFormat(node->input(i)));
         }
       }
-      return;
-    } else {
-      (void)flexible_ops_.insert(node);
-      fmt_type[{node, kOutputIndex}] = FormatType::kFormatUnknown;
     }
-
-    for (auto &input : node->inputs()) {
-      if (input->NodeType() != NType::Value) {
-        VisitNode(input);
+    // this node is visited from output direction, visit its other users
+    if (index < 0) {
+      for (const auto &user : node->users()) {
+        for (auto user_idx : user.second) {
+          VisitNode(user.first->shared_from_this(), user_idx);
+        }
       }
-    }
-    for (auto &user : node->users()) {
-      VisitNode(user.first->shared_from_this());
     }
   }
 
@@ -406,17 +462,17 @@ class Mutator {
       bool is_flexible = (flexible_ops_.find(node) != flexible_ops_.cend());
       size_t cur_id = 0;
       if (is_flexible) {
-        cur_id = GetId({node, kOutputIndex});
+        cur_id = GetNodeId({node, kOutputIndex});
       }
       for (size_t i = 0; i < node->inputs().size(); i++) {
         if (visited_.count(node->input(i)) == 0) {
           continue;
         }
         if (!is_flexible) {
-          cur_id = GetId({node, SizeToInt(i)});
+          cur_id = GetNodeId({node, SizeToInt(i)});
         }
-        auto input_id = GetId({node->input(i), kOutputIndex});
-        (void)graph_edges_.emplace_back(input_id, cur_id);
+        auto input_id = GetNodeId({node->input(i), kOutputIndex});
+        (void)graph_edges_.emplace_back(Edge{input_id, cur_id});
       }
     }
   }
@@ -430,14 +486,58 @@ class Mutator {
     if (trans_op == nullptr) {
       return std::make_pair(false, trans_op);
     }
+    static size_t inc_id = 0;
+    trans_op->SetDebugName("new_trans_op_" + std::to_string(inc_id++));
+    MS_LOG(DEBUG) << "Create " << trans_op->debug_name() << " of " << trans_type << " with input node "
+                  << input->debug_name();
     (void)changed_nodes->insert(trans_op);
+    new_trans_op_num_++;
     return std::make_pair(true, trans_op);
+  }
+
+  void RefineEdges(std::vector<std::pair<size_t, TransOpType>> *one_node_edge,
+                   std::vector<std::pair<Edge, TransOpType>> *two_node_edge) const {
+    std::map<size_t, TransOpType> one_node_edge_map;
+    for (auto &one : *one_node_edge) {
+      one_node_edge_map[one.first] = one.second;
+    }
+    std::set<Edge> removed_edges;
+    std::set<size_t> removed_edges_from;
+    for (auto iter = two_node_edge->begin(); iter != two_node_edge->end();) {
+      if (one_node_edge_map.count(iter->first.from) == 0) {
+        ++iter;
+        continue;
+      }
+      auto from = iter->first.from;
+      (void)removed_edges_from.insert(from);
+      // remove node from one_node_edge.
+      auto rm_iter = std::find_if(one_node_edge->begin(), one_node_edge->end(),
+                                  [from](const std::pair<size_t, TransOpType> &no) { return from == no.first; });
+      if (rm_iter != one_node_edge->end()) {
+        (void)one_node_edge->erase(rm_iter);
+        MS_LOG(DEBUG) << "Removed edge for node_id " << from;
+      }
+      // remove node from two_node_edge.
+      (void)removed_edges.insert(iter->first);
+      iter = two_node_edge->erase(iter);
+      MS_LOG(DEBUG) << "Removed edge " << iter->first.from << " -> " << iter->first.to;
+    }
+    for (auto &e : graph_edges_) {
+      if (removed_edges_from.count(e.from) != 0 && removed_edges.count(e) == 0) {
+        two_node_edge->push_back(std::make_pair(e, one_node_edge_map[e.from]));
+        MS_LOG(DEBUG) << "Inserted " << (one_node_edge_map[e.from] == TransOpType::kTransAB ? "kTransAB" : "kTransBA")
+                      << " for edge " << e.from << " -> " << e.to;
+      }
+    }
   }
 
   bool RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
     MinCut min_cut(graph_vertex_, graph_edges_);
     min_cut.Run();
-    for (auto [node_id, trans_type] : min_cut.GetOneNodeOps()) {
+    auto one_node_edge = min_cut.GetOneNodeOps();
+    auto two_node_edge = min_cut.GetTwoNodeOps();
+    RefineEdges(&one_node_edge, &two_node_edge);
+    for (auto [node_id, trans_type] : one_node_edge) {
       if (ori_node_[node_id].second != kOutputIndex) {
         MS_LOG(EXCEPTION) << "OneNodeOp should be the output edge. node_id:" << node_id
                           << " index:" << ori_node_[node_id].second;
@@ -452,19 +552,18 @@ class Mutator {
       }
       input_node->ReplaceWith(trans_op);
       trans_op->SetInputs({input_node});
+      MS_LOG(DEBUG) << "Inserted " << trans_op->debug_name() << " after " << input_node->debug_name();
     }
 
     std::map<size_t, NodePtr> trans_op_cache;
-    for (auto [edge, trans_type] : min_cut.GetTwoNodeOps()) {
-      auto node_id_from = edge.first;
-      auto node_id_to = edge.second;
-      if (ori_node_[node_id_from].second != kOutputIndex) {
-        MS_LOG(EXCEPTION) << "node_from should be the output edge. node_id:" << node_id_from
-                          << " index:" << ori_node_[node_id_from].second;
+    for (auto [insert_edge, trans_type] : two_node_edge) {
+      if (ori_node_[insert_edge.from].second != kOutputIndex) {
+        MS_LOG(EXCEPTION) << "node_from should be the output insert_edge. node_id:" << insert_edge.from
+                          << " index:" << ori_node_[insert_edge.from].second;
       }
-      auto node_from = ori_node_[node_id_from].first;
-      auto node_to = ori_node_[node_id_to].first;
-      if (trans_op_cache.count(node_id_from) == 0) {
+      auto node_from = ori_node_[insert_edge.from].first;
+      auto node_to = ori_node_[insert_edge.to].first;
+      if (trans_op_cache.count(insert_edge.from) == 0) {
         auto [result, trans_op] = NewTransOp(node_from, trans_type, changed_nodes);
         if (!result) {
           return false;
@@ -472,16 +571,21 @@ class Mutator {
         if (trans_op == nullptr) {
           continue;
         }
-        trans_op_cache[node_id_from] = trans_op;
+        trans_op_cache[insert_edge.from] = trans_op;
         trans_op->SetInputs({node_from});
       }
-      auto trans_op = trans_op_cache[node_id_from];
-      if (ori_node_[node_id_to].second >= 0) {
-        node_to->SetInput(IntToSize(ori_node_[node_id_to].second), trans_op);
+      auto trans_op = trans_op_cache[insert_edge.from];
+      if (ori_node_[insert_edge.to].second >= 0) {
+        node_to->SetInput(IntToSize(ori_node_[insert_edge.to].second), trans_op);
+        MS_LOG(DEBUG) << "Inserted " << trans_op->debug_name() << " before " << node_to->debug_name() << " (input "
+                      << ori_node_[insert_edge.to].second << ")";
       } else {
+        // "node_to" is flexible.
         for (size_t i = 0; i < node_to->inputs().size(); i++) {
           if (node_to->input(i) == node_from) {
             node_to->SetInput(i, trans_op);
+            MS_LOG(DEBUG) << "Inserted " << trans_op->debug_name() << " before " << node_to->debug_name() << " (input "
+                          << i << ")";
           }
         }
       }
@@ -489,7 +593,7 @@ class Mutator {
     return true;
   }
 
-  size_t GetId(const NodeWithIndex &node_with_index) {
+  size_t GetNodeId(const NodeWithIndex &node_with_index) {
     // the nodes are indexed from 1 in the MinCut model.
     auto &id = node_id_[node_with_index];
     if (id == 0) {
@@ -497,6 +601,8 @@ class Mutator {
       ori_node_.push_back(node_with_index);
       // set format_type for new id.
       (void)graph_vertex_.emplace_back(id, fmt_type[node_with_index]);
+      MS_LOG(DEBUG) << "Allot node_id " << id << " to " << node_with_index.first->debug_name() << " (index "
+                    << node_with_index.second << ").";
     }
     return id;
   }
@@ -517,51 +623,58 @@ class Mutator {
     return true;
   }
 
+  size_t new_trans_op_num_{0};
+
   TransformOpPtr op_handle_;
   NodePtr basenode_;
   std::set<NodePtr> flexible_ops_;
   std::set<NodePtr> trans_ops_;
   std::set<NodePtr> visited_;
+  std::map<NodePtr, std::set<size_t>> inflexible_ops_;  // no transop and no flexibleop, record the visit index.
 
   std::map<NodeWithIndex, FormatType> fmt_type;
   std::map<NodeWithIndex, size_t> node_id_;
   std::vector<NodeWithIndex> ori_node_;  // node_id to NodePtr, this vector is indexed from 1
-  std::vector<std::pair<size_t, FormatType>> graph_vertex_;
-  std::vector<std::pair<size_t, size_t>> graph_edges_;
+  std::vector<NodeIdWithFormat> graph_vertex_;
+  std::vector<Edge> graph_edges_;
 };
 
-bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const TransformOpCreator &creator) const {
+bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const TransformOpPtr &op_handle) const {
+  MS_LOG(DEBUG) << "Process begin, handle is " << *op_handle << ". litegraph: \n" << litegraph->ToString();
   auto &ops = litegraph->ops();
   bool changed = false;
-  auto check_is_trans_op = [&creator](const NodePtr &node) { return creator.IsTransOp(node); };
-  auto ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
+  auto check_is_trans_op = [&op_handle](const NodePtr &node) { return op_handle->IsTransformOp(node); };
+  size_t ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
+  size_t new_trans_op_num = 0;
   std::set<NodePtr> nodes_may_change;
   for (auto &op : ops) {
     if (check_is_trans_op(op) && !op->inputs().empty()) {
-      auto op_handle = creator.CreateHandle(op);
       if (op_handle->GetFormat(op->input(0)) != op_handle->GetFormat(op)) {
         auto mutator = Mutator(op, op_handle);
+        MS_LOG(DEBUG) << "Run mutator with basenode " << op->debug_name();
         auto ret = mutator.Run(&nodes_may_change);
+        MS_LOG(DEBUG) << "Run mutator result: " << ret;
         if (ret == Mutator::ResultStatus::kRollback) {
           return false;
         }
+        new_trans_op_num += mutator.new_trans_op_num();
         changed = changed || (ret == Mutator::ResultStatus::kChanged);
       }
     }
   }
-  if (!changed) {
+  if (!changed || new_trans_op_num >= ori_trans_op_num) {
+    MS_LOG(DEBUG) << "The changed=" << changed << ", new_trans_op_num=" << new_trans_op_num
+                  << ", ori_trans_op_num=" << ori_trans_op_num << ". graph is dropped.";
     return false;
   }
   auto &new_ops = litegraph->GetOrderedNodes();
-  auto new_trans_op_num = std::count_if(new_ops.begin(), new_ops.end(), check_is_trans_op);
-  if (new_trans_op_num >= ori_trans_op_num) {
-    return false;
-  }
+  MS_LOG(DEBUG) << "The changed graph before InferShape: \n" << litegraph->ToString();
   for (auto &op : new_ops) {
     if (nodes_may_change.count(op) != 0) {
       op->SetBaseInfo(op->As<PrimOp>()->Infer(op->inputs(), op->attrs()));
     }
   }
+  MS_LOG(DEBUG) << "Final graph: \n" << litegraph->ToString();
   return true;
 }
 
@@ -571,23 +684,42 @@ void TransformOpOptimizer::Init() {
   (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Reshape", ReshapeHandle));
 }
 
+std::vector<TransformOpPtr> TransformOpOptimizer::CreateOpHandles(const LiteGraphPtr &litegraph) const {
+  HashSet<size_t> handle_hash;
+  std::vector<TransformOpPtr> handles;
+  for (auto &creator : supported_ops_) {
+    for (auto &op : litegraph->ops()) {
+      if (creator.IsTransOp(op)) {
+        auto handle = creator.CreateHandle(op);
+        if (handle_hash.insert(handle->Hash()).second) {
+          (void)handles.emplace_back(handle);
+        }
+      }
+    }
+  }
+  return handles;
+}
+
 bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  auto todos = TopoSort(func_graph->get_return());
+  auto todos = GkUtils::GetGraphKernelNodes(func_graph);
   bool changed = false;
   for (auto node : todos) {
-    if (!AnfUtils::IsGraphKernel(node)) {
-      continue;
-    }
-    for (const auto &creator : supported_ops_) {
-      auto sub_func_graph = GetCNodeFuncGraph(node);
-      auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
-      if (Process(litegraph, creator)) {
+    auto sub_func_graph = GetCNodeFuncGraph(node);
+    auto node_name = sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+    auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
+    auto handles = CreateOpHandles(litegraph);
+    for (size_t i = 0; i < handles.size(); i++) {
+      // rebuild litegraph for every process
+      if (i > 0) {
+        litegraph = GkUtils::AnfGraph2LiteGraph(GetCNodeFuncGraph(node));
+      }
+      if (Process(litegraph, handles[i])) {
         changed = true;
         auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
         MS_EXCEPTION_IF_NULL(new_funcgraph);
-        new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+        new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, node_name);
         auto cnode = node->cast<CNodePtr>();
         AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
         auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);

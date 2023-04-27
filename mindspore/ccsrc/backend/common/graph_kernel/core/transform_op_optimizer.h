@@ -26,14 +26,19 @@
 
 namespace mindspore::graphkernel {
 using inner::NodePtr;
-enum class FormatType { kFormatUnknown, kFormatA, kFormatB };
+enum class FormatType { kFlexFormat, kFormatA, kFormatB };
 enum class TransOpType { kTransAB, kTransBA };
 
+/**
+ * @brief Handle for transform op interfaces, which is called in Mutator.
+ * @note Subclass should NOT save the NodePtr in constructor.
+ */
 class TransformOp {
  public:
   explicit TransformOp(const NodePtr &node);
   virtual ~TransformOp() = default;
 
+  // get the output format of `node`
   virtual std::string GetFormat(const NodePtr &node) const;
   // check the node is TransAB or TransBA
   virtual bool IsTransformOp(const NodePtr &node);
@@ -43,6 +48,12 @@ class TransformOp {
   virtual NodePtr GenTransformOp(const NodePtr &input_node, TransOpType trans_type) = 0;
   // check the input format is kFormatA or kFormatB
   virtual FormatType GetFormatType(const std::string &fmt);
+  // get hash value for this transform op
+  size_t Hash() const;
+
+  friend std::ostream &operator<<(std::ostream &os, const TransformOp &t) {
+    return os << t.op_ << "(" << t.format_a_ << " <-> " << t.format_b_ << ")";
+  }
 
  protected:
   std::string op_;
@@ -101,7 +112,8 @@ class TransformOpOptimizer : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  bool Process(const inner::LiteGraphPtr &litegraph, const TransformOpCreator &creator) const;
+  std::vector<TransformOpPtr> CreateOpHandles(const inner::LiteGraphPtr &litegraph) const;
+  bool Process(const inner::LiteGraphPtr &litegraph, const TransformOpPtr &op_handle) const;
   void Init();
   std::vector<TransformOpCreator> supported_ops_;
 };

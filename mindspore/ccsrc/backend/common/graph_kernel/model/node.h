@@ -127,7 +127,7 @@ class ParamNode : public Node {
 // the OutputNode's inputs are the real outputs of graph, like the `make_tuple` in FuncGraph.
 class OutputNode : public Node {
  public:
-  OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}) {}
+  OutputNode() : Node({{1}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}) { debug_name_ = "Output"; }
   ~OutputNode() = default;
 
   NType NodeType() override { return NType::Output; }
