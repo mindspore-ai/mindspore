@@ -38,6 +38,7 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/convert_utils.h"
+#include "frontend/expander/pack/pack_expander.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -796,9 +797,14 @@ ValuePtr PyStubNodeCast(const py::handle &obj) {
   return stub;
 }
 
-std::pair<ShapeVector, TypeId> GetStubTensorInfo(const py::handle &obj) {
+std::pair<ShapeVector, TypePtr> GetStubTensorInfo(const py::handle &obj) {
   auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
-  auto stub = py_stub.cast<stub::StubNodePtr>();
+  ValuePtr stub;
+  if (py::isinstance<expander::PackNode>(py_stub)) {
+    stub = py_stub.cast<expander::PackNodePtr>();
+  } else {
+    stub = py_stub.cast<stub::StubNodePtr>();
+  }
   AbstractBasePtr stub_abs;
   if (stub == nullptr) {
     auto tensor_ptr = py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
@@ -808,7 +814,7 @@ std::pair<ShapeVector, TypeId> GetStubTensorInfo(const py::handle &obj) {
     stub_abs = stub->ToAbstract();
   }
   MS_EXCEPTION_IF_NULL(stub_abs);
-  return {dyn_cast<abstract::Shape>(stub_abs->BuildShape())->shape(), stub_abs->BuildType()->type_id()};
+  return {dyn_cast<abstract::Shape>(stub_abs->BuildShape())->shape(), stub_abs->BuildType()};
 }
 
 ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {

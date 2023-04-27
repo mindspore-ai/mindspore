@@ -13,14 +13,23 @@
 # limitations under the License.
 # ============================================================================
 """Context for PackFunc"""
+import functools
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
 from mindspore.common._stub_tensor import StubTensor
+from mindspore.common._register_for_tensor import tensor_operator_registry
 
 
 class _PackTensor(StubTensor):
     """stub tensor for expander trace"""
+
+    def __setitem__(self, index, value):
+        out = tensor_operator_registry.get('__setitem__')(self, index, value)
+        self.stub = out.stub
+        if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
+            self.parent_tensor_.__setitem__(self.index_of_parent_, self)
+        return self
 
     def stub_sync(self):
         """subclass hook for Tensor"""
@@ -72,6 +81,7 @@ def pack(fn):
     """Create an pack func from a python function"""
     pack_func = PackFunc(fn, id(fn))
 
+    @functools.wraps(fn)
     def _pack_wrap(*args):
         global _PACK_EXECUTING
         if _PACK_EXECUTING:
@@ -88,4 +98,5 @@ def pack(fn):
             _PACK_EXECUTING = False
         return res
     _pack_wrap.fn = fn
+    _pack_wrap.is_pack = True
     return _pack_wrap

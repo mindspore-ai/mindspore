@@ -1346,7 +1346,7 @@ py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std:
   if (need_expand_dim) {
     data_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kReshape));
     new_data_shape = std::get<new_data_shape_index>(expand_dim_info);
-    data_transfer_args.emplace_back(py::cast(new_data_shape));
+    data_transfer_args.emplace_back(VectorToPyTuple(new_data_shape));
     new_tuple_indexes = std::get<new_tuple_indexes_index>(expand_dim_info);  // NOLINT
   }
   constexpr int min_data_dim = 1;
@@ -1699,13 +1699,22 @@ py::object TensorIndex::SetItemBySlice(const ShapeVector &data_shape, const Type
 
 py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::object &py_index,
                                          const py::object &py_value, const py::bool_ &is_ascend) {
-  if (!py::isinstance<Tensor>(py_data)) {
+  if (!py::isinstance<Tensor>(py_data) && !IsStubTensor(py_data)) {
     MS_EXCEPTION(TypeError) << "First input of Tensor index must be tensor but got " << py_data;
   }
-  TensorPtr data = py_data.cast<TensorPtr>();
-  MS_EXCEPTION_IF_NULL(data);
-  const ShapeVector data_shape = data->shape();
-  const TypePtr data_type = data->Dtype();
+  ShapeVector data_shape;
+  TypePtr data_type;
+  bool is_parameter = false;
+  if (IsStubTensor(py_data)) {  // PackTensor have not real Tensor.
+    std::tie(data_shape, data_type) = GetStubTensorInfo(py_data);
+  } else {
+    TensorPtr data = py_data.cast<TensorPtr>();
+    MS_EXCEPTION_IF_NULL(data);
+    data_shape = data->shape();
+    data_type = data->Dtype();
+    is_parameter = data->is_parameter();
+  }
+
   MS_LOG(DEBUG) << "Set item data shape is: " << data_shape << ", index is: " << py_index << ", value is: " << py_value;
   TensorIndex::py_index_handle_ = py_index;
   TensorIndex::py_value_handle_ = py_value;
@@ -1726,11 +1735,11 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
                    py::make_tuple(py::none()));
   switch (index.type()) {
     case TensorIndexType::Integer: {
-      output = SetItemByNumber(data_shape, data_type, data->is_parameter(), index, value_type);
+      output = SetItemByNumber(data_shape, data_type, is_parameter, index, value_type);
       break;
     }
     case TensorIndexType::Tensor: {
-      output = SetItemByTensor(data_shape, data->is_parameter(), index, value_type);
+      output = SetItemByTensor(data_shape, is_parameter, index, value_type);
       break;
     }
     case TensorIndexType::Tuple: {

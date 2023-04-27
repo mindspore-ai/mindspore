@@ -190,7 +190,7 @@ class Slice final {
       MS_EXCEPTION_IF_NULL(tensor_index);
       return tensor_index->data_type() == kMetaTypeNone;
     } else if (IsStubTensor(index)) {
-      auto type_id = GetStubTensorInfo(index).second;
+      auto type_id = GetStubTensorInfo(index).second->type_id();
       return type_id == kMetaTypeNone;
     } else if (py::isinstance<py::none>(index)) {
       return true;

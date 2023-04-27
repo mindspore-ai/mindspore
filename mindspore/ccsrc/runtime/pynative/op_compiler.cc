@@ -75,6 +75,7 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
     graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.input_tensor,
                                              op_run_info->base_op_run_info.input_mask,
                                              device_context->GetDeviceType() == device::DeviceType::kAscend);
+    graph->set_is_from_single_op(true);
   }
   return graph;
 }
@@ -101,7 +102,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   MS_EXCEPTION_IF_NULL(graph);
 
   graph->set_run_mode(device::RunMode::kKernelMode);
-  graph->set_is_from_single_op(true);
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
   auto deprecated_kernel_executor =

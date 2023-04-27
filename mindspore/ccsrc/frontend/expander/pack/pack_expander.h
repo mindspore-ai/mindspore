@@ -21,23 +21,29 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/value.h"
 
 namespace mindspore {
 namespace expander {
-class PackNode {
+class COMMON_EXPORT PackNode : public Value {
  public:
   explicit PackNode(AnfNodePtr node) : node_(node) {}
-  ~PackNode() = default;
+  PackNode() = default;
+  virtual ~PackNode() = default;
+  MS_DECLARE_PARENT(PackNode, Value);
 
   py::object GetShape() const;
   py::object GetDtype() const;
   py::object GetValue() const;
 
   AnfNodePtr Get() const { return node_; }
+  AbstractBasePtr ToAbstract() override { return node_->abstract(); }
+  bool operator==(const Value &other) const override { return other.isa<PackNode>() && &other == this; }
 
  private:
   AnfNodePtr node_;
 };
+using PackNodePtr = std::shared_ptr<PackNode>;
 
 class PackExpander {
  public:
@@ -58,6 +64,7 @@ class PackExpander {
   AnfNodePtr ConvertInput(const py::object &arg) const;
   AnfNodePtr CNodeInfer(const CNodePtr &cnode) const;
   py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
+  py::object ConvertAbstractToParameter(const AbstractBasePtr &abs) const;
 
   FuncGraphPtr graph_{nullptr};
 };
