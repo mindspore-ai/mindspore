@@ -827,12 +827,13 @@ ModelImpl::~ModelImpl() {
 }
 
 bool ModelImpl::CheckModelSupport(DeviceType device_type, ModelType model_type) {
-  if (model_type != kMindIR) {
-    return false;
-  }
   if (device_type == kCPU) {
     return true;
   }
+  if (model_type != kMindIR) {
+    return false;
+  }
+
   if (device_type == kGPU) {
     return lite::TensorRTExecutorPlugin::GetInstance().TryRegister().IsOk();
   }
