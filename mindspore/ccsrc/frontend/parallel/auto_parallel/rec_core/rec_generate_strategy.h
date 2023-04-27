@@ -60,6 +60,7 @@ class RecStrategyPropagator {
   size_t GenerateEliminatedOperatorStrategyBackward(size_t min_devices = 1);
   size_t GenerateRemainingOperatorStrategy();
   size_t ModifyParamSharingOpsStrategy();
+  size_t AssignStandaloneAndBatchParallelOpStrategy();
 
  public:
   RecStrategyPropagator(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,

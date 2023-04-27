@@ -79,15 +79,15 @@ double GetWeights(const Graph::NodeType &node) {
     return cost_ptr->GetMinCostIn();
   } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
              op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecUnsortedSegmentOp ||
-             op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecSoftmax || op.op_type == OperatorType::kRecBatchParallel ||
              op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
              op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
     // For BatchParallel op
     auto cost_ptr = std::make_shared<CostBatchParallel>();
 
     return cost_ptr->GetMaxCostIn();
-  } else if (op.op_type == OperatorType::kRecUnknownType) {
-    // For Unknown type
+  } else if (op.op_type == OperatorType::kRecUnknownType || op.op_type == OperatorType::kRecStandAlone) {
+    // For Unknown and StandAlone type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -181,7 +181,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
   } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
              node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
              node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
-             node.apply.op_type == kRecUnsortedSegmentOp) {
+             node.apply.op_type == kRecUnsortedSegmentOp || node.apply.op_type == OperatorType::kRecBatchParallel) {
     // For BatchParallel type
     auto cost_ptr = std::make_shared<CostBatchParallel>();
     return cost_ptr->GetOptimalStr(node);
@@ -189,7 +189,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     // For SoftmaxCrossEntropyWithLogits type
     auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
     return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecUnknownType) {
+  } else if (node.apply.op_type == OperatorType::kRecUnknownType ||
+             node.apply.op_type == OperatorType::kRecStandAlone) {
     // For Unknown type
     StrategyRec default_strategy;
     return default_strategy;
