@@ -17,16 +17,15 @@ import sys
 from akg.ms import compilewithjson
 
 
-def run_compiler(info_path, compile_attr=None):
+def run_compiler(info_path):
     """invoke akg to compile the info"""
     with open(info_path, 'r') as f:
         info_str = f.read()
-        compilewithjson(info_str, compile_attr)
+        compilewithjson(info_str)
 
 
-# pylint: disable=too-many-function-args
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
-        run_compiler(sys.argv[1], *sys.argv[2:])
-    else:
+    if len(sys.argv) == 2:
         run_compiler(sys.argv[1])
+    else:
+        raise ValueError("The input args length should be 2, but got {}.".format(len(sys.argv)))

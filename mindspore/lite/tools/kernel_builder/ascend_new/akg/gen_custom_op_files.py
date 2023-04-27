@@ -26,27 +26,27 @@ SUPPORTED_OUTPUT_NUM = [1, 2, 3, 4, 5]
 SUPPORTED_DEVICE_ARCH = ["ascend910", "ascend310p", "ascend310"]
 
 
-# pylint: disable=get-dict-value-exception
 def gen_ops_info():
     """Generate the custom akg op registration information."""
     ops_info = {}
     # supported_io_num: [(1, 1), (1, 2), ...], list of (input_num, output_num)
     supported_io_num = list(product(SUPPORTED_INPUT_NUM, SUPPORTED_OUTPUT_NUM))
     for input_num, output_num in supported_io_num:
-        op_type = "Fused_x{}_y{}".format(input_num, output_num)
-        ops_info[op_type] = {"attr": {"list": "info_path"},
-                             "attr_info_path": {"paramType": "required", "type": "str", "value": "all"},
-                             "opFile": {"value": "custom"},
-                             "opInterface": {"value": "custom"},
-                             "dynamicFormat": {"flag": "true"}}
+        op_info = {"attr": {"list": "info_path"},
+                   "attr_info_path": {"paramType": "required", "type": "str", "value": "all"},
+                   "opFile": {"value": "custom"},
+                   "opInterface": {"value": "custom"},
+                   "dynamicFormat": {"flag": "true"}}
         for i in range(input_num):
-            ops_info[op_type]["input" + str(i)] = {"name": "x" + str(i),
-                                                   "paramType": "required",
-                                                   "shape": "all"}
+            op_info["input" + str(i)] = {"name": "x" + str(i),
+                                         "paramType": "required",
+                                         "shape": "all"}
         for i in range(output_num):
-            ops_info[op_type]["output" + str(i)] = {"name": "y" + str(i),
-                                                    "paramType": "required",
-                                                    "shape": "all"}
+            op_info["output" + str(i)] = {"name": "y" + str(i),
+                                          "paramType": "required",
+                                          "shape": "all"}
+        op_type = "Fused_x{}_y{}".format(input_num, output_num)
+        ops_info[op_type] = op_info
     return ops_info
 
 

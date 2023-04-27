@@ -67,7 +67,7 @@ static ge::graphStatus CustomAkgOpInferFunc(Operator &op) {
   for (size_t i = 0; i < output_names.size(); ++i) {
     ge::TensorDesc output_desc(ge::Shape(output_shapes[i]), static_cast<ge::Format>(output_formats[i]),
                                static_cast<ge::DataType>(output_types[i]));
-    op.UpdateOutputDesc(output_names[i], output_desc);
+    (void)op.UpdateOutputDesc(output_names[i], output_desc);
   }
 
   return 0;
@@ -465,9 +465,9 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     std::vector<std::vector<int64_t>> out_shapes{desc->GetShape().GetDims()};
     std::vector<int32_t> out_formats{static_cast<int32_t>(desc->GetFormat())};
     std::vector<int32_t> out_types{static_cast<int32_t>(desc->GetDataType())};
-    cus_op->SetAttr("output_shapes", out_shapes);
-    cus_op->SetAttr("output_formats", out_formats);
-    cus_op->SetAttr("output_types", out_types);
+    (void)cus_op->SetAttr("output_shapes", out_shapes);
+    (void)cus_op->SetAttr("output_formats", out_formats);
+    (void)cus_op->SetAttr("output_types", out_types);
   } else {
     if (!output_map_.empty()) {
       output_map_.begin()->second.update_out_desc(op, *desc);
@@ -563,9 +563,9 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     }
   }
   if (is_custom_op) {
-    op->SetAttr("output_shapes", out_shapes);
-    op->SetAttr("output_formats", out_formats);
-    op->SetAttr("output_types", out_types);
+    (void)op->SetAttr("output_shapes", out_shapes);
+    (void)op->SetAttr("output_formats", out_formats);
+    (void)op->SetAttr("output_types", out_types);
   }
   return SUCCESS;
 }
