@@ -27,7 +27,7 @@ mindspore.nn.MSELoss
         - **labels** (Tensor) - 输入标签，任意维度的Tensor，在通常情况下与 `logits` 的shape相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
 
     输出：
-        Tensor，为float类型的loss，如果 `reduction` 为"mean"或"sum"，则shape为0；
+        Tensor，预测值与标签值之间的均方误差，如果 `reduction` 为"mean"或"sum"，则shape为0；
         如果 `reduction` 为"none"，则输出的shape为输入Tensor广播后的shape。
 
     异常：
