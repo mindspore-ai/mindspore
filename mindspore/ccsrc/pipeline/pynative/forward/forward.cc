@@ -103,6 +103,7 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   buf << op_run_info->base_op_run_info.op_name << "_";
   const auto &op_prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(op_prim);
+  bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
   if (AnfAlgo::NeedEraseCache(op_prim)) {
     op_run_info->base_op_run_info.need_earse_cache = true;
     op_run_info->base_op_run_info.graph_info = buf.str();
@@ -126,7 +127,7 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
     buf << input_tensor->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
     auto tensor_addr = input_tensor->device_address();
-    if (tensor_addr != nullptr) {
+    if (tensor_addr != nullptr && !has_hidden_side_effect) {
       auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
       MS_EXCEPTION_IF_NULL(p_address);
       buf << p_address->type_id();
@@ -143,6 +144,10 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   (void)std::for_each(attr_map.begin(), attr_map.end(),
                       [&buf](const auto &element) { buf << element.second->ToString(); });
 
+  // Operator with hidden side effect.
+  if (has_hidden_side_effect) {
+    buf << "_r" << std::to_string(op_prim->id());
+  }
   op_run_info->base_op_run_info.graph_info = buf.str();
 }
 
