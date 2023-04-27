@@ -16,12 +16,25 @@
 MindSpore Lite Python API.
 """
 from __future__ import absolute_import
+import os
 
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
 from mindspore_lite.model import ModelType, Model, ModelParallelRunner
 from mindspore_lite.tensor import DataType, Format, Tensor
+
+
+def install_custom_kernels():
+    custom_kernel_path = __path__[0] + "/custom_kernels/"
+    if os.path.exists(custom_kernel_path):
+        ascend_custom_kernel_path = custom_kernel_path + "ascend/"
+        install_script_path = ascend_custom_kernel_path + "install.sh"
+        cmd_str = "bash " + install_script_path
+        out = os.popen(cmd_str).read()
+        print(out)
+    else:
+        print("no custom kernel " + custom_kernel_path)
 
 __all__ = []
 __all__.extend(__version__)

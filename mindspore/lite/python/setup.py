@@ -48,7 +48,7 @@ setup(
     packages=find_packages(),
     package_data={'': ['*.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*',
                        'include/api/metrics/*', 'include/mindapi/base/*', 'include/registry/converter_context.h',
-                       'include/converter.h']},
+                       'include/converter.h', 'custom_kernels/**']},
     include_package_data=True,
     cmdclass={},
     entry_points={},

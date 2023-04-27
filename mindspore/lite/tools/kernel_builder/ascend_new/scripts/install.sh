@@ -193,6 +193,10 @@ found_vendor=$(echo $found_vendors | sed "s/$vendor_name//g" | tr ',' ' ')
 vendor=$(echo $found_vendor | tr -s ' ' ',')
 if [ "$vendor" != "" ]; then
     sed -i "/load_priority=$found_vendors/s@load_priority=$found_vendors@load_priority=$vendor_name,$vendor@g" "$config_file"
+else
+    chmod 660 ${config_file}
+    echo "load_priority=${vendor_name}" > ${config_file}
+    chmod 550 ${config_file}
 fi
 
 chmod u-w ${targetdir}/vendors

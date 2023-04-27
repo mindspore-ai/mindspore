@@ -13,6 +13,8 @@ endif()
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 set(EXTENDRT_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt)
 set(EXECUTOR_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt/unified_executor)
+set(ACL_CUSTOM_OPP_DIR ${TOP_DIR}/mindspore/lite/build/tools/kernel_builder/ascend_new/makepkg/packages)
+set(ACL_OPP_DST_DIR ${RUNTIME_PKG_NAME}/tools/custom_kernels/ascend)
 
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
 set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include)
@@ -438,6 +440,9 @@ if(PLATFORM_ARM64)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -663,6 +668,9 @@ elseif(PLATFORM_ARM32)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -859,6 +867,9 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR} DESTINATION ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(DIRECTORY ${ACL_CUSTOM_OPP_DIR}/../install.sh DESTINATION
+                                ${ACL_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so

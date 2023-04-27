@@ -54,24 +54,5 @@ endif()
 
 add_custom_target(config_json ALL DEPENDS ${OUTPUT_FILES}
         COMMAND mkdir -p ${TF_PLUGIN_TARGET_OUT_DIR}
-        COMMAND bash ${CMAKE_SOURCE_DIR}/cmake/util/gen_ops_filter.sh ${INI_PATH} ${TF_PLUGIN_TARGET_OUT_DIR})
-
-if(NOT "x$ENV{ADD_TESTCASE}" STREQUAL "x")
-  # add testcases subdirectory
-  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/testcases/bbit")
-    add_subdirectory(testcases/bbit)
-  endif()
-  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/testcases/st")
-    add_subdirectory(testcases/st)
-  endif()
-  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/testcases/acl_op/src")
-    add_subdirectory(testcases/acl_op/src)
-  endif()
-  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/testcases/st_cases/out/*")
-  foreach(file ${files})
-    message(STATUS ${file})
-    if(IS_DIRECTORY ${file})
-        add_subdirectory(${file})
-    endif()
-  endforeach()
-endif()
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/util/gen_ops_filter.sh
+                        ${INI_PATH} ${TF_PLUGIN_TARGET_OUT_DIR})

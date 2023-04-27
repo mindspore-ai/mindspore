@@ -985,6 +985,8 @@ if(NOT WIN32 AND MSLITE_ENABLE_TESTCASES)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/kernel_builder)
+
 if(NOT APPLE)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/file_list.cmake)
     include(${TOP_DIR}/cmake/package_lite.cmake)

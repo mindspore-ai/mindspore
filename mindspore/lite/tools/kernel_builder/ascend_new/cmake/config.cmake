@@ -5,13 +5,15 @@ set(CMAKE_CXX_STANDARD 11)
 # set compile option -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(OPP_CUSTOM_VENDOR "$ENV{OPP_CUSTOM_VENDOR}")
-set(TOP_DIR ${CMAKE_SOURCE_DIR}/../..)
+#set(TOP_DIR ${CMAKE_SOURCE_DIR}/../..)
 
 if(NOT DEFINED ASCEND_TENSOR_COMPILER_INCLUDE)
     if(NOT "x$ENV{ASCEND_TENSOR_COMPILER_INCLUDE}" STREQUAL "x")
         set(ASCEND_TENSOR_COMPILER_INCLUDE $ENV{ASCEND_TENSOR_COMPILER_INCLUDE})
+        set(ASCEND_COMPILER_LIB ${ASCEND_TENSOR_COMPILER_INCLUDE}/../lib64)
     else()
-        set(ASCEND_TENSOR_COMPILER_INCLUDE /usr/local/Ascend/compiler/include)
+        set(ASCEND_TENSOR_COMPILER_INCLUDE /usr/local/Ascend/latest/include)
+        set(ASCEND_COMPILER_LIB /usr/local/Ascend/latest/lib64)
     endif()
 endif()
 message(STATUS "ASCEND_TENSOR_COMPILER_INCLUDE=${ASCEND_TENSOR_COMPILER_INCLUDE}")
@@ -48,21 +50,8 @@ message(STATUS "OUT_DIR=${OUT_DIR}")
 set(TF_PLUGIN_TARGET "cust_tf_parsers")
 set(TF_PLUGIN_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/framework/tensorflow/)
 
-set(ONNX_PLUGIN_TARGET "cust_onnx_parsers")
-set(ONNX_PLUGIN_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/framework/onnx/)
-
-set(TF_SCOPE_FUSION_PASS_TARGET "cust_tf_scope_fusion")
-set(TF_SCOPE_FUSION_PASS_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/framework/tensorflow/)
-
-set(CAFFE_PARSER_TARGET "_caffe_parser")
-set(CAFFE_PLUGIN_TARGET "cust_caffe_parsers")
-set(CAFFE_PLUGIN_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/framework/caffe/)
-
 set(OP_PROTO_TARGET "cust_op_proto")
 set(OP_PROTO_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/op_proto/)
-
-set(OP_TILING_TARGET "optiling")
-set(OP_TILING_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/op_tiling)
 
 set(AIC_FUSION_PASS_TARGET "cust_aic_fusion_pass")
 set(AIC_FUSION_PASS_TARGET_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/fusion_pass/ai_core)
@@ -77,8 +66,8 @@ set(AICPU_CONFIG_JSON_TARGET "aicpu_config_json")
 set(AICPU_OP_INFO_CFG_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/op_impl/cpu/config)
 set(AICPU_OP_IMPL_OUT_DIR ${OUT_DIR}/packages/${PROJECT_DIR}/op_impl/cpu/aicpu_kernel/impl/)
 
-set(INI_2_JSON_PY "${CMAKE_SOURCE_DIR}/cmake/util/parse_ini_to_json.py")
-set(AICPU_INI_2_JSON_PY "${CMAKE_SOURCE_DIR}/cmake/util/aicpu_parser_ini.py")
+set(INI_2_JSON_PY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/parse_ini_to_json.py")
+set(AICPU_INI_2_JSON_PY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/aicpu_parser_ini.py")
 
 set(AICPU_KERNEL_TARGET $ENV{AICPU_KERNEL_TARGET})
 
