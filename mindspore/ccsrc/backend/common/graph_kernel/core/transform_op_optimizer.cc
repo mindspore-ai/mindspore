@@ -155,9 +155,11 @@ class MinCut {
       auto tmpi = i;  // to evade pclint warning "for statement index variable modified in body."
       if (nodes_[i].format == FormatType::kFormatA && nodes_[i + origin_nodes_num_].format != FormatType::kFormatA) {
         (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransAB);
+        MS_LOG(DEBUG) << "Inserted kTransAB for node " << tmpi;
       } else if (nodes_[i].format != FormatType::kFormatA &&
                  nodes_[i + origin_nodes_num_].format == FormatType::kFormatA) {
         (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransBA);
+        MS_LOG(DEBUG) << "Inserted kTransBA for node " << tmpi;
       }
     }
     return one_node_ops;
@@ -169,9 +171,11 @@ class MinCut {
       if (nodes_[i.first + origin_nodes_num_].format == FormatType::kFormatA &&
           nodes_[i.second].format != FormatType::kFormatA) {
         (void)two_node_ops.emplace_back(i, TransOpType::kTransAB);
+        MS_LOG(DEBUG) << "Inserted kTransAB for edge " << i.first << " -> " << i.second;
       } else if (nodes_[i.first + origin_nodes_num_].format != FormatType::kFormatA &&
                  nodes_[i.second].format == FormatType::kFormatA) {
         (void)two_node_ops.emplace_back(i, TransOpType::kTransBA);
+        MS_LOG(DEBUG) << "Inserted kTransBA for edge " << i.first << " -> " << i.second;
       }
     }
     return two_node_ops;
@@ -434,10 +438,49 @@ class Mutator {
     return std::make_pair(true, trans_op);
   }
 
+  void RefineEdges(std::vector<std::pair<size_t, TransOpType>> *one_node_edge,
+                   std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> *two_node_edge) const {
+    std::map<size_t, TransOpType> one_node_edge_map;
+    for (auto &one : *one_node_edge) {
+      one_node_edge_map[one.first] = one.second;
+    }
+    std::set<std::pair<size_t, size_t>> removed_edges;
+    std::set<size_t> removed_edges_from;
+    for (auto iter = two_node_edge->begin(); iter != two_node_edge->end();) {
+      if (one_node_edge_map.count(iter->first.first) == 0) {
+        ++iter;
+        continue;
+      }
+      auto from = iter->first.first;
+      (void)removed_edges_from.insert(from);
+      // remove node from one_node_edge.
+      auto rm_iter = std::find_if(one_node_edge->begin(), one_node_edge->end(),
+                                  [from](const std::pair<size_t, TransOpType> &no) { return from == no.first; });
+      if (rm_iter != one_node_edge->end()) {
+        (void)one_node_edge->erase(rm_iter);
+        MS_LOG(DEBUG) << "Removed edge for node " << from;
+      }
+      // remove node from two_node_edge.
+      (void)removed_edges.insert(iter->first);
+      iter = two_node_edge->erase(iter);
+      MS_LOG(DEBUG) << "Removed edge " << iter->first.first << " -> " << iter->first.second;
+    }
+    for (auto &e : graph_edges_) {
+      if (removed_edges_from.count(e.first) != 0 && removed_edges.count(e) == 0) {
+        two_node_edge->push_back(std::make_pair(e, one_node_edge_map[e.first]));
+        MS_LOG(DEBUG) << "Inserted " << (one_node_edge_map[e.first] == TransOpType::kTransAB ? "kTransAB" : "kTransBA")
+                      << " for edge " << e.first << " -> " << e.second;
+      }
+    }
+  }
+
   bool RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
     MinCut min_cut(graph_vertex_, graph_edges_);
     min_cut.Run();
-    for (auto [node_id, trans_type] : min_cut.GetOneNodeOps()) {
+    auto one_node_edge = min_cut.GetOneNodeOps();
+    auto two_node_edge = min_cut.GetTwoNodeOps();
+    RefineEdges(&one_node_edge, &two_node_edge);
+    for (auto [node_id, trans_type] : one_node_edge) {
       if (ori_node_[node_id].second != kOutputIndex) {
         MS_LOG(EXCEPTION) << "OneNodeOp should be the output edge. node_id:" << node_id
                           << " index:" << ori_node_[node_id].second;
@@ -455,7 +498,7 @@ class Mutator {
     }
 
     std::map<size_t, NodePtr> trans_op_cache;
-    for (auto [edge, trans_type] : min_cut.GetTwoNodeOps()) {
+    for (auto [edge, trans_type] : two_node_edge) {
       auto node_id_from = edge.first;
       auto node_id_to = edge.second;
       if (ori_node_[node_id_from].second != kOutputIndex) {
