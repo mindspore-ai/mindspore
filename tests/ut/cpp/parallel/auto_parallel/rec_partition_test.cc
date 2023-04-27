@@ -224,8 +224,8 @@ TEST_F(TestPartition, test_PartitionNode) {
   std::vector<std::pair<std::string, StrategyRec>> nameToStrategy;
   bool isTraining = true;
   StrategyRec str = PartitionNode(node2, nameToStrategy, graph, isTraining);
-  ASSERT_EQ(str.outputTensor.str_h, 0.5);
-  ASSERT_EQ(str.outputTensor.str_w, 1);
+  ASSERT_EQ(str.outputTensor.str_h, 1);
+  ASSERT_EQ(str.outputTensor.str_w, 0.5);
 }
 
 TEST_F(TestPartition, test_PartitionForAllDevices) {
