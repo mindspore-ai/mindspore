@@ -87,7 +87,7 @@ def test_if_in_while_3():
     assert res == 6
 
 
-@case_register.level1
+@case_register.level0
 @case_register.target_gpu
 @case_register.target_ascend
 def test_if_in_while_4():

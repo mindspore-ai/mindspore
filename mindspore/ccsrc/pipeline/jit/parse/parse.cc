@@ -2127,7 +2127,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   AnfNodePtr while_condition_node = nullptr;
   {
     TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(condition_node->debug_info()));
-    while_condition_node = header_block->ForceToCondNode(condition_node);
+    while_condition_node = header_block->ForceToCondNode(condition_node, true);
   }
   UpdateInterpretForUserNode(while_condition_node, condition_node);
   while_condition_node = HandleInterpret(header_block, while_condition_node, test_node);

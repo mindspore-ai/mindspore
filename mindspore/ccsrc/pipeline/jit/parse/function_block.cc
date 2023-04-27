@@ -512,9 +512,10 @@ void FunctionBlock::Mature() {
 }
 
 // Get the truth value testing for cond node.
-CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond) {
+CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond, bool is_while_cond) {
   MS_EXCEPTION_IF_NULL(cond);
-  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimCond), cond});
+  CNodePtr op_apply_node =
+    func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimCond), cond, NewValueNode(MakeValue(is_while_cond))});
   return op_apply_node;
 }
 

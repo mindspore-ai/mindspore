@@ -92,3 +92,23 @@ def test_single_while():
         input_y = Tensor([2], mstype.int32)
         res = control_flow_while(input_x, input_y)
         print("res:", res)
+
+
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
+def test_single_while_tensor():
+    """
+    Feature: The else branches of while loops aren't supported.
+    Description: The else branches of while loops aren't supported.
+    Expectation: No exception.
+    """
+    @jit
+    def control_flow_while_tensor(x):
+        while x:
+            x -= 1
+        return x
+
+    x = Tensor(1)
+    out = control_flow_while_tensor(x)
+    assert out == 0
