@@ -874,6 +874,7 @@ def get_local_variable(name):
 
 
 def get_dtype(name: str):
+    """get mstype from name"""
     if not hasattr(mstype, name):
         return None
     return getattr(mstype, name)
