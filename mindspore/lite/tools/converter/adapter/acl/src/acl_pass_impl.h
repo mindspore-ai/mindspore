@@ -88,6 +88,7 @@ class AclPassImpl {
   STATUS Quantization(const FuncGraphPtr &func_graph);
   STATUS PreQuantization(const FuncGraphPtr &func_graph);
   STATUS PostQuantization(const FuncGraphPtr &func_graph);
+  STATUS AscendDistributeFakeQuantDeparse(const FuncGraphPtr &func_graph);
 
  private:
   std::shared_ptr<ConverterPara> param_;

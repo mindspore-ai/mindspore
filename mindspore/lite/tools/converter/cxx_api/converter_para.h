@@ -88,6 +88,7 @@ struct ConverterPara {
   std::string device;
   CpuOptionCfg cpuOptionCfgParam;
   lite::quant::TransformQuantParam transformQuantParam;
+  lite::quant::AscendQuantParam ascendQuantParam;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_

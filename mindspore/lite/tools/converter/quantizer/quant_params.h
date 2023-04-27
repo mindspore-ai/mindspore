@@ -58,9 +58,9 @@ constexpr auto kMeanCorrList = "mean_corr_list";
 constexpr auto kNumBitList = "num_bit_list";
 constexpr auto kNarrowRangeList = "narrow_range_list";
 
-const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                 prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                 prim::kPrimLayerNormFusion};
+const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion,    prim::kPrimConv2dTransposeFusion,
+                                                 prim::kPrimMatMulFusion,    prim::kPrimFullConnection,
+                                                 prim::kPrimLayerNormFusion, prim::kPrimMatMul};
 const std::set<PrimitivePtr> kUint8toFP32Operator = {prim::kPrimDetectionPostProcess};
 const std::set<TypeId> kFullQuantDType = {kNumberTypeInt8, kNumberTypeUInt8, kNumberTypeFloat32};
 
@@ -111,6 +111,12 @@ enum PrecisionMode {
   FLOAT32,
 };
 
+enum AscendQuantMode {
+  NONE,
+  ACL,
+  GE,
+};
+
 struct CommonQuantParam {
   QuantType quant_type = QUANT_NONE;
   int bit_num = 8;
@@ -147,6 +153,10 @@ struct FullQuantParam {
 
 struct TransformQuantParam {
   PrecisionMode precision_mode = QUANT;
+};
+
+struct AscendQuantParam {
+  AscendQuantMode mode = NONE;
 };
 }  // namespace mindspore::lite::quant
 

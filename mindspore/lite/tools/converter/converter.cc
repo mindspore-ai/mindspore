@@ -502,6 +502,11 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     MS_LOG(ERROR) << "Parse transform quant param failed.";
     return ret;
   }
+  ret = lite::QuantParamParser::ParseAscendQuant(config_parser.GetAscendQuantString(), &param->ascendQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse ascend quant param failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
