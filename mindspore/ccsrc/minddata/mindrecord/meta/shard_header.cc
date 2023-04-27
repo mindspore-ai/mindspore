@@ -299,7 +299,9 @@ Status ShardHeader::ParseSchema(const json &schemas) {
     std::vector<std::string> blob_fields = schema["blob_fields"].get<std::vector<std::string>>();
     json schema_body = schema["schema"];
     std::shared_ptr<Schema> parsed_schema = Schema::Build(schema_description, schema_body);
-    RETURN_UNEXPECTED_IF_NULL_MR(parsed_schema);
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      parsed_schema != nullptr,
+      "[Internal ERROR] Failed to build schema, Please check the [ERROR] logs before for more details.");
     AddSchema(parsed_schema);
   }
   return Status::OK();
