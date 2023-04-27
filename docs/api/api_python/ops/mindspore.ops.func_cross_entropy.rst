@@ -7,7 +7,7 @@
 
     cross_entropy方法支持两种不同的目标值(target)：
 
-    - 类别索引 (int)，取值范围为 :math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
+    - 类别索引 (int)，取值范围为 :math:`[0, C)` ，其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
 
       .. math::
 
@@ -15,7 +15,7 @@
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
           \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
-      其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
+      其中， :math:`x` 表示预测值， :math:`y` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]` ，表示类索引，其中 :math:`C` 表示类的数量。
 
       若reduction不为'none'（默认为'mean'），则
 
@@ -35,7 +35,7 @@
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - \sum_{c=1}^C w_c \log \frac{\exp(x_{n,c})}{\sum_{i=1}^C \exp(x_{n,i})} y_{n,c}
 
-      其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
+      其中， :math:`x` 表示预测值， :math:`y` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]` ，表示类索引，其中 :math:`C` 表示类的数量。
 
       若reduction不为'none'（默认为'mean'），则
 
