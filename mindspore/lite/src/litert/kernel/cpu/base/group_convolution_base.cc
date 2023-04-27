@@ -35,6 +35,8 @@ int GroupConvolutionBaseCPUKernel::Prepare() {
       return ret;
     }
   }
+  conv_param_->input_channel_ *= group_num_;
+  conv_param_->output_channel_ *= group_num_;
   // if infer shape is done, resize func will be invoked in sub kernels
   return RET_OK;
 }
@@ -50,8 +52,6 @@ int GroupConvolutionBaseCPUKernel::ReSize() {
   if (group_num_ == 0) {
     return RET_ERROR;
   }
-  conv_param_->input_channel_ /= group_num_;
-  conv_param_->output_channel_ /= group_num_;
   return RET_OK;
 }
 
@@ -98,28 +98,20 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
       // in
       auto in_tensor = in_tensors_.front();
       CHECK_NULL_RETURN(in_tensor);
-      in_shape = {in_tensor->Batch(), in_tensor->Height(), in_tensor->Width(), conv_param_->input_channel_};
+      in_shape = {in_tensor->Batch(), in_tensor->Height(), in_tensor->Width(),
+                  conv_param_->input_channel_ / group_num_};
       auto sub_kernel_in_tensor = group_convs_.at(i)->in_tensors().front();
       CHECK_NULL_RETURN(sub_kernel_in_tensor);
       sub_kernel_in_tensor->set_shape(in_shape);
-      ret = sub_kernel_in_tensor->MallocData();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "sub kernel in tensor malloc data failed.";
-        return ret;
-      }
       // out
       auto out_tensor = out_tensors_.front();
       CHECK_NULL_RETURN(out_tensor);
-      out_shape = {out_tensor->Batch(), out_tensor->Height(), out_tensor->Width(), conv_param_->output_channel_};
+      out_shape = {out_tensor->Batch(), out_tensor->Height(), out_tensor->Width(),
+                   conv_param_->output_channel_ / group_num_};
       auto sub_kernel_out_tensors = group_convs_.at(i)->out_tensors();
       for (auto tensor : sub_kernel_out_tensors) {
         CHECK_NULL_RETURN(tensor);
         tensor->set_shape(out_shape);
-        ret = tensor->MallocData();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "sub kernel out tensor malloc data failed.";
-          return ret;
-        }
       }
     }
     ret = ReSize();
@@ -150,9 +142,8 @@ int GroupConvolutionBaseCPUKernel::InitGroupParam() {
     MS_LOG(ERROR) << "get in_plane_ from in_tensor failed.";
     return RET_ERROR;
   }
-  sub_in_channel_ = conv_param_->input_channel_;
-  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(sub_in_channel_, group_num_), RET_ERROR, "Mul overflow.");
-  ori_in_channel_ = sub_in_channel_ * group_num_;
+  sub_in_channel_ = conv_param_->input_channel_ / group_num_;
+  ori_in_channel_ = conv_param_->input_channel_;
   in_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), in_plane_);
 
   auto out_tensor = out_tensors_.front();
@@ -162,9 +153,8 @@ int GroupConvolutionBaseCPUKernel::InitGroupParam() {
     MS_LOG(ERROR) << "get out_plane_ from out_tensor failed.";
     return RET_ERROR;
   }
-  sub_out_channel_ = conv_param_->output_channel_;
-  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(sub_out_channel_, group_num_), RET_ERROR, "Mul overflow.");
-  ori_out_channel_ = sub_out_channel_ * group_num_;
+  sub_out_channel_ = conv_param_->output_channel_ / group_num_;
+  ori_out_channel_ = conv_param_->output_channel_;
   out_thread_num_ = MSMIN(MSMAX(1, ctx_->thread_num_), out_plane_);
   return RET_OK;
 }
@@ -181,7 +171,22 @@ int GroupConvolutionBaseCPUKernel::Run() {
   ori_out_data_ = out_tensors_[0]->data();
   CHECK_NULL_RETURN(ori_out_data_);
   for (int i = 0; i < group_num_; ++i) {
-    // first, separate group conv input into several parts. This step must be in runtime stage.
+    // first, malloc data for sub_kernel's tensors.
+    auto sub_kernel_in_tensor = group_convs_.at(i)->in_tensors().front();
+    ret = sub_kernel_in_tensor->MallocData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "b kernel in tensor malloc data failed.";
+      return ret;
+    }
+    auto sub_kernel_out_tensors = group_convs_.at(i)->out_tensors();
+    for (auto tensor : sub_kernel_out_tensors) {
+      ret = tensor->MallocData();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "b kernel t tensor malloc data failed.";
+        return ret;
+      }
+    }
+    // second, separate group conv input into several parts. This step must be in runtime stage.
     ret = SeparateInput(i);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Separate input failed.";
@@ -198,6 +203,11 @@ int GroupConvolutionBaseCPUKernel::Run() {
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Concat output failed.";
       return ret;
+    }
+    // free data
+    sub_kernel_in_tensor->FreeData();
+    for (auto tensor : sub_kernel_out_tensors) {
+      tensor->FreeData();
     }
   }
   return RET_OK;

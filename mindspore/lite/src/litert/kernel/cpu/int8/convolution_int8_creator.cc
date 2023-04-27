@@ -107,7 +107,7 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
                   << conv_param->input_channel_;
     return nullptr;
   }
-  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, true, kNumberTypeInt8);
+  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, true, kNumberTypeInt8, ctx);
   if (group_conv_creator == nullptr) {
     MS_LOG(ERROR) << "group_conv_creator is nullptr.";
     return nullptr;

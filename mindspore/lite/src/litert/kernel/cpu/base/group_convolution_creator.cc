@@ -53,15 +53,6 @@ void FreeCurrentConv(ConvParameter *conv_param, std::vector<lite::Tensor *> *new
   }
 }
 
-static inline lite::Tensor *TensorMalloc(lite::Tensor *tensor) {
-  if (tensor->MallocData() != lite::RET_OK) {
-    delete tensor;
-    MS_LOG(ERROR) << "malloc tensor data failed.";
-    return nullptr;
-  }
-  return tensor;
-}
-
 lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<int> &shape, const int index) {
   auto new_tensor =
     new (std::nothrow) lite::Tensor(tensor->data_type(), shape, mindspore::NHWC, lite::Category::CONST_TENSOR);
@@ -107,17 +98,8 @@ lite::Tensor *CreateVarTensor(const TensorInfo &tensor_info, bool inferred) {
   tensor->set_data_type(tensor_info.data_type_);
   tensor->set_format(tensor_info.format_);
   tensor->set_category(tensor_info.tensor_type_);
-  if (tensor_info.is_in_) {
-    tensor->set_shape(tensor_info.shape_);
-  }
-
-  if (inferred) {
-    // set shape of out tensor
-    if (!tensor_info.is_in_) {
-      tensor->set_shape(tensor_info.shape_);
-    }
-    return TensorMalloc(tensor);
-  }
+  tensor->set_shape(tensor_info.shape_);
+  tensor->set_allocator(tensor_info.allocator_);
   return tensor;
 }
 
@@ -145,7 +127,9 @@ void GroupConvCreator::FreeGroupConvs() {
 }
 
 int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
-  auto in_tensor = CreateVarTensor({input_shape_, mindspore::NHWC, data_type_, lite::Category::VAR, true}, infered_);
+  auto allocator = ms_context_ != nullptr ? ms_context_->allocator : nullptr;
+  auto in_tensor =
+    CreateVarTensor({input_shape_, allocator, mindspore::NHWC, data_type_, lite::Category::VAR, true}, infered_);
   if (in_tensor == nullptr) {
     return lite::RET_ERROR;
   }
@@ -154,7 +138,9 @@ int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
 }
 
 int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, const lite::Tensor *output) const {
-  auto out_tensor = CreateVarTensor({output_shape_, output->format(), data_type_, output->category(), false}, infered_);
+  auto allocator = ms_context_ != nullptr ? ms_context_->allocator : nullptr;
+  auto out_tensor =
+    CreateVarTensor({output_shape_, allocator, output->format(), data_type_, output->category(), false}, infered_);
   if (out_tensor == nullptr) {
     return lite::RET_ERROR;
   }
@@ -206,13 +192,16 @@ int GroupConvCreator::SetShapeOfTensors() {
   /* set shape */
   set_filter_shape({new_out_channel, conv_param_->kernel_h_, conv_param_->kernel_w_, new_in_channel});
   set_bias_shape({new_out_channel});
+  conv_param_->input_channel_ = new_in_channel;
+  conv_param_->output_channel_ = new_out_channel;
   if (infered_) {
-    conv_param_->input_channel_ = new_in_channel;
-    conv_param_->output_channel_ = new_out_channel;
     set_input_shape({origin_inputs_.front()->Batch(), origin_inputs_.front()->Height(), origin_inputs_.front()->Width(),
                      new_in_channel});
     set_output_shape({origin_inputs_.front()->Batch(), origin_outputs_.front()->Height(),
                       origin_outputs_.front()->Width(), new_out_channel});
+  } else {
+    set_input_shape({-1});
+    set_output_shape({-1});
   }
   return lite::RET_OK;
 }
