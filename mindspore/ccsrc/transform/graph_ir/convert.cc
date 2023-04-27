@@ -1464,6 +1464,7 @@ void DfGraphConvertor::GetCallNodeInputs(const CNodePtr &node) {
 
   auto op = Convert(node);
   auto adpt = FindAdapter(node, training_);
+  MS_EXCEPTION_IF_NULL(adpt);
   adpt->setDynamicOutputNum(op, cur_while_node_out_size_);
   call_input_handle_cache_[node] = call_input_items;
   return;
@@ -2532,6 +2533,7 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   auto input_value = value_ptr->value();
   auto int64_value = GetValue<int64_t>(input_value);
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
+  MS_EXCEPTION_IF_NULL(adpt);
   auto op = adpt->generate(value_ptr);
   (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
   op_cache_[value_ptr.get()] = op;
