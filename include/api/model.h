@@ -52,9 +52,10 @@ class MS_API Model {
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kMindIR_Lite. Only
+  /// ModelType::kMindIR_Lite is valid for Device-side Inference. Cloud-side Inference supports options
+  /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
+  /// iterations. \param[in] model_context Define the context used to store options during execution.
   ///
   /// \return Status.
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -63,9 +64,10 @@ class MS_API Model {
   /// \brief Load and build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_path Define the model path.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kMindIR_Lite. Only
+  /// ModelType::kMindIR_Lite is valid for Device-side Inference. Cloud-side Inference supports options
+  /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
+  /// iterations. \param[in] model_context Define the context used to store options during execution.
   ///
   /// \return Status.
   inline Status Build(const std::string &model_path, ModelType model_type,
@@ -80,12 +82,12 @@ class MS_API Model {
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
-  /// \param[in] cropto_lib_path Define the openssl library path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kMindIR_Lite. Only
+  /// ModelType::kMindIR_Lite is valid for Device-side Inference. Cloud-side Inference supports options
+  /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
+  /// iterations. \param[in] model_context Define the context used to store options during execution. \param[in] dec_key
+  /// Define the key used to decrypt the ciphertext model. The key length is 16. \param[in] dec_mode Define the
+  /// decryption mode. Options: AES-GCM. \param[in] cropto_lib_path Define the openssl library path.
   ///
   /// \return Status.
   inline Status Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -95,12 +97,12 @@ class MS_API Model {
   /// \brief Load and build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_path Define the model path.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
-  /// \param[in] cropto_lib_path Define the openssl library path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kMindIR_Lite. Only
+  /// ModelType::kMindIR_Lite is valid for Device-side Inference. Cloud-side Inference supports options
+  /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
+  /// iterations. \param[in] model_context Define the context used to store options during execution. \param[in] dec_key
+  /// Define the key used to decrypt the ciphertext model. The key length is 16. \param[in] dec_mode Define the
+  /// decryption mode. Options: AES-GCM. \param[in] cropto_lib_path Define the openssl library path.
   ///
   /// \return Status.
   inline Status Build(const std::string &model_path, ModelType model_type,
