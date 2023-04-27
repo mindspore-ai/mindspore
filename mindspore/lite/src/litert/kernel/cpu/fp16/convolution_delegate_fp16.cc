@@ -205,7 +205,7 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                   const InnerContext *ctx) {
   auto *group_conv_creator =
-    new (std::nothrow) GroupConvCreator(inputs, outputs, op_parameter, false, kNumberTypeFloat16);
+    new (std::nothrow) GroupConvCreator(inputs, outputs, op_parameter, false, kNumberTypeFloat16, ctx);
   if (group_conv_creator == nullptr) {
     MS_LOG(ERROR) << "new GroupConvCreator fail";
     free(op_parameter);
