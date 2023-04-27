@@ -32,6 +32,7 @@ class IgammaGradAHelperGpuKernel : public GpuKernelHelperBase {
       : GpuKernelHelperBase(kernel_name, device_id) {
     is_null_input_ = false;
     need_broadcast_ = false;
+    nobroadcast_type_ = 0;
   }
 
   virtual ~IgammaGradAHelperGpuKernel() = default;
@@ -50,13 +51,20 @@ class IgammaGradAHelperGpuKernel : public GpuKernelHelperBase {
       return out_flag;
     }
     is_null_input_ = (inp_flag == 1 || out_flag == 1);
-
+    need_broadcast_ = false;
+    nobroadcast_type_ = 0;
     auto inputa_shape = input_shapes[0];
     auto inputx_shape = input_shapes[1];
     auto output_shape = output_shapes[0];
     auto a_size = std::accumulate(inputa_shape.begin(), inputa_shape.end(), 1, std::multiplies{});
     auto x_size = std::accumulate(inputx_shape.begin(), inputx_shape.end(), 1, std::multiplies{});
     auto output_num = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies{});
+
+    if (inputa_shape == inputx_shape || a_size == 1 || x_size == 1) {
+      nobroadcast_type_ = a_size == x_size ? kLgammaSameShape : (a_size == 1 ? kLgammaAOneElement : kLgammaXOneElement);
+      return 0;
+    }
+
     if (a_size < output_num || x_size < output_num) {
       need_broadcast_ = true;
     }
@@ -68,27 +76,8 @@ class IgammaGradAHelperGpuKernel : public GpuKernelHelperBase {
     lhs_shape_.resize(MAX_DIMS, 1);
     rhs_shape_.resize(MAX_DIMS, 1);
     output_shape_.resize(MAX_DIMS, 1);
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      if (need_broadcast_) {
-        output_shape_[i] = output_shape[i];
-      }
-    }
-    int lhs_offset = output_shape.size() - inputa_shape.size();
-    for (size_t j = 0; j < inputa_shape.size(); j++) {
-      if (need_broadcast_) {
-        if ((j + lhs_offset) >= 0 && (j + lhs_offset) < MAX_DIMS) {
-          lhs_shape_[j + lhs_offset] = inputa_shape[j];
-        }
-      }
-    }
-    int rhs_offset = output_shape.size() - inputx_shape.size();
-    for (size_t k = 0; k < inputx_shape.size(); k++) {
-      if (need_broadcast_) {
-        if ((k + rhs_offset) >= 0 && (k + rhs_offset) < MAX_DIMS) {
-          rhs_shape_[k + rhs_offset] = inputx_shape[k];
-        }
-      }
+    if (need_broadcast_) {
+      CalBroadCastShape(inputa_shape, inputx_shape, output_shape);
     }
     return 0;
   }
@@ -119,18 +108,38 @@ class IgammaGradAHelperGpuKernel : public GpuKernelHelperBase {
       CalBroadcastIgammaGradA(lhs_shape_, rhs_shape_, output_shape_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
                               reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      CalIgammaGradA(size, inputa_ptr, inputx_ptr, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      CalIgammaGradA(size, nobroadcast_type_, inputa_ptr, inputx_ptr, output_ptr, device_id_,
+                     reinterpret_cast<cudaStream_t>(cuda_stream));
     }
 
     return 0;
   }
 
  private:
+  void CalBroadCastShape(const std::vector<int64_t> &inputa_shape, const std::vector<int64_t> &inputx_shape,
+                         const std::vector<int64_t> &output_shape) {
+    for (size_t i = 0; i < output_shape.size(); i++) {
+      output_shape_[i] = output_shape[i];
+    }
+    int lhs_offset = output_shape.size() - inputa_shape.size();
+    for (size_t j = 0; j < inputa_shape.size(); j++) {
+      if ((j + lhs_offset) >= 0 && (j + lhs_offset) < MAX_DIMS) {
+        lhs_shape_[j + lhs_offset] = inputa_shape[j];
+      }
+    }
+    int rhs_offset = output_shape.size() - inputx_shape.size();
+    for (size_t k = 0; k < inputx_shape.size(); k++) {
+      if ((k + rhs_offset) >= 0 && (k + rhs_offset) < MAX_DIMS) {
+        rhs_shape_[k + rhs_offset] = inputx_shape[k];
+      }
+    }
+  }
   bool is_null_input_;
+  bool need_broadcast_;
+  int64_t nobroadcast_type_;
   std::vector<size_t> lhs_shape_;
   std::vector<size_t> rhs_shape_;
   std::vector<size_t> output_shape_;
-  bool need_broadcast_;
 };
 }  // namespace cukernel
 }  // namespace mindspore
