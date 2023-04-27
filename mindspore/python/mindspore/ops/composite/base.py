@@ -28,14 +28,15 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
-    ZerosLike_
+    ZerosLike_, TensorIndexGetitem_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import signature as sig
 
-__all__ = [TupleAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_, ListSliceSetItem_, ZerosLike_]
+__all__ = [TupleAdd_, UnpackCall_, TupleGetItemTensor_,
+           SequenceSliceGetItem_, ListSliceSetItem_, ZerosLike_, TensorIndexGetitem_]
 
 
 def add_flags(fn=None, **flags):

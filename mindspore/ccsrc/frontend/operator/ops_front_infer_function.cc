@@ -979,7 +979,9 @@ bool PrimNeedFrontendInferValue(const PrimitivePtr &primitive) {
     prim::kPrimSub, prim::kPrimStridedSlice, prim::kPrimStack, prim::kPrimTensorScatterUpdate,
     prim::kPrimTile};
   if (std::any_of(skip_frontend_registration_list.begin(), skip_frontend_registration_list.end(),
-                  [&primitive](const PrimitivePtr &item) { return IsPrimitiveEquals(primitive, item); })) {
+                  [&primitive](const PrimitivePtr &item) {
+                    return IsPrimitiveEquals(primitive, item) && primitive->HasPyEvaluator();
+                  })) {
     return true;
   }
   return false;
