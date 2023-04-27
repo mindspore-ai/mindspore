@@ -139,10 +139,10 @@ class SearchSubGraph {
   const InnerContext *context_ = nullptr;
   LiteModel *model_ = nullptr;
   std::vector<Tensor> tensors_;
+  std::vector<lite::Tensor *> *src_tensors_ = nullptr;
 
  private:
   std::vector<size_t> *output_nodes_ = nullptr;
-  std::vector<lite::Tensor *> *src_tensors_ = nullptr;
   const std::map<int, OpParameter *> *op_parameters_ = nullptr;
   std::vector<Subgraph> sub_graphs_;
   std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;

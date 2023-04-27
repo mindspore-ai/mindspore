@@ -46,6 +46,7 @@ class OnlineFusionPass {
   int InitOnlineFusion();
   int CreateCustomNode(LiteGraph::Node *node, SearchSubGraph::Subgraph *subgraph, SplitParameter *split_param);
   OpParameter *GetNodeOpParameter(LiteGraph::Node *node);
+  std::vector<std::vector<uint32_t>> GetFrontNodeIndex(LiteGraph::Node *cur_node);
   std::vector<std::vector<uint32_t>> GetNextNodeIndex(LiteGraph::Node *cur_node);
   flatbuffers::Offset<mindspore::schema::Attribute> SetDataToUint8Vector(void *src, size_t len,
                                                                          flatbuffers::FlatBufferBuilder *fbb,
@@ -55,6 +56,7 @@ class OnlineFusionPass {
   const InnerContext *context_ = nullptr;
   LiteModel *model_ = nullptr;
   SearchSubGraph *search_subgrap_ = nullptr;
+  std::vector<lite::Tensor *> *src_tensors_ = nullptr;
   std::vector<SearchSubGraph::Tensor> *tensors_ = nullptr;
   std::vector<SearchSubGraph::Subgraph> sub_graphs_;
   std::vector<LiteGraph::Node *> node_list_;

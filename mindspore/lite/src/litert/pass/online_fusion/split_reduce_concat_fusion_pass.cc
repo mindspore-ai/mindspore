@@ -238,7 +238,8 @@ int SplitReduceConcatOnlineFusionPass::CreateCustomNode(LiteGraph::Node *node, S
   fbb.Clear();
   model_->node_bufs_.push_back(prim);
 
-  node->name_ = "SplitReduceConcatFusion";
+  static uint64_t index = 0;
+  node->name_ = "SplitReduceConcatFusion" + std::to_string(index++);
   node->primitive_ = online_fusion_prim;
   node->node_type_ = PrimType::PrimType_Inner_SplitReduceConcatFusion;
   node->input_indices_ = model_->graph_.all_nodes_.at(subgraph->heads_.front())->input_indices_;

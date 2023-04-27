@@ -908,7 +908,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
 
 SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::vector<lite::Tensor *> *src_tensors,
                                const std::map<int, OpParameter *> *op_parameters, std::vector<size_t> *output_nodes)
-    : context_(context), output_nodes_(output_nodes), src_tensors_(src_tensors), op_parameters_(op_parameters) {
+    : context_(context), src_tensors_(src_tensors), output_nodes_(output_nodes), op_parameters_(op_parameters) {
   model_ = reinterpret_cast<LiteModel *>(model);
 
   major_dt_ = DT_CPU;
