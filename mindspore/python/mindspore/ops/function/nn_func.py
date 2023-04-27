@@ -6012,7 +6012,11 @@ def mse_loss(input, target, reduction='mean'):
         raise ValueError("For ops.mse_loss, `reduction` value should be either 'mean', 'none' or 'sum'.")
 
     x = _get_cache_prim(P.Square)()(input - target)
-    input_dtype = x.dtype
+    float_type = (mstype.float16, mstype.float32, mstype.float64)
+    if x.dtype not in float_type:
+        input_dtype = mstype.float32
+    else:
+        input_dtype = x.dtype
     x = _get_cache_prim(P.Cast)()(x, mstype.float32)
 
     average_flag = True
@@ -6022,8 +6026,9 @@ def mse_loss(input, target, reduction='mean'):
     if reduction == 'none':
         reduce_flag = False
 
+    limit = ops.fill(mstype.int32, (), len(x.shape))
     perm = _get_cache_prim(P.Range)()(Tensor(0, mstype.int32),
-                                      Tensor(len(x.shape), mstype.int32),
+                                      limit,
                                       Tensor(1, mstype.int32))
 
     if reduce_flag and average_flag:
