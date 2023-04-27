@@ -43,8 +43,17 @@ FILE_DATA_STRUCT_DICT = {
     FileDataType.TASK_DESC_INFO.value: TASK_DESC_STRUCT
 }
 
+TASK_TYPE_TO_KERNEL_TYPE = {
+    0: 'AI_CORE',
+    1: 'AI_CPU',
+    2: 'MSPROF_AIV',
+    10: 'MSPROF_HCCL',
+    11: 'MSPROF_RTS',
+    1000: 'MSPROF_UNKNOWN_TYPE'
+}
+
 COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info',
-             'graph_id']
+             'graph_id', 'kernel_type']
 OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
@@ -405,7 +414,8 @@ class FrameworkParser:
                              op_type=task_desc['opType'],
                              subgraph=subgraph,
                              op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})),
-                             graph_id=task_desc['modelId'])
+                             graph_id=task_desc['modelId'],
+                             kernel_type=TASK_TYPE_TO_KERNEL_TYPE.get(task_desc.get('taskType')))
             graph_ids.add(task_desc['modelId'])
             all_op_data.append(op_data)
         ProfilerInfo.set_graph_ids(list(graph_ids))
