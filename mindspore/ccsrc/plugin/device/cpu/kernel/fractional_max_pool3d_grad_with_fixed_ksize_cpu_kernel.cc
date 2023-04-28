@@ -153,9 +153,9 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
   if (input_shape_.size() == kDimSize4) {
     auto shard_fractional_max_pool3d_grad_with_fixed_ksize = [&](size_t start, size_t end) {
       for (auto plane = start; plane < end; ++plane) {
-        backprop_t *outputForPlane = output_data + plane * inputD_ * inputH_ * inputW_;
-        backprop_t *outbackpropForPlane = out_backprop_data + plane * outputD_ * outputH_ * outputW_;
-        argmax_t *argmaxForPlane = argmax_data + plane * outputD_ * outputH_ * outputW_;
+        backprop_t *outputForPlane = output_data + plane * LongToSize(inputD_ * inputH_ * inputW_);
+        backprop_t *outbackpropForPlane = out_backprop_data + plane * LongToSize(outputD_ * outputH_ * outputW_);
+        argmax_t *argmaxForPlane = argmax_data + plane * LongToSize(outputD_ * outputH_ * outputW_);
         int64_t h, w, t;
         for (t = 0; t < outputD_; ++t) {
           for (h = 0; h < outputH_; ++h) {
@@ -176,9 +176,9 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
     auto shard_fractional_max_pool3d_grad_with_fixed_ksize = [&](size_t start, size_t end) {
       for (auto batch = start; batch < end; ++batch) {
         for (int64_t plane = 0; plane < inputC_; ++plane) {
-          auto output_data_n = output_data + batch * inputC_ * inputW_ * inputH_ * inputD_;
-          auto out_backprop_data_n = out_backprop_data + batch * inputC_ * outputW_ * outputH_ * outputD_;
-          auto argmax_data_n = argmax_data + batch * inputC_ * outputW_ * outputH_ * outputD_;
+          auto output_data_n = output_data + batch * LongToSize(inputC_ * inputW_ * inputH_ * inputD_);
+          auto out_backprop_data_n = out_backprop_data + batch * LongToSize(inputC_ * outputW_ * outputH_ * outputD_);
+          auto argmax_data_n = argmax_data + batch * LongToSize(inputC_ * outputW_ * outputH_ * outputD_);
           backprop_t *outputForPlane = output_data_n + plane * inputD_ * inputH_ * inputW_;
           backprop_t *outbackpropForPlane = out_backprop_data_n + plane * outputD_ * outputH_ * outputW_;
           argmax_t *argmaxForPlane = argmax_data_n + plane * outputD_ * outputH_ * outputW_;
