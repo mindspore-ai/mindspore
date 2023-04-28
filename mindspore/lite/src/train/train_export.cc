@@ -30,6 +30,8 @@
 #include "src/train/graph_fusion.h"
 #include "src/train/graph_dropout.h"
 #include "src/litert/weight_decoder.h"
+#include "src/litert/kernel/cpu/fp16/fp16_op_handler.h"
+#include "base/float16.h"
 
 namespace mindspore {
 namespace lite {
@@ -642,6 +644,40 @@ int TrainExport::SaveToBuffer() {
   MS_CHECK_FALSE_MSG(content == nullptr, RET_ERROR, "context cannot be empty.");
   MS_CHECK_FALSE_MSG(model_buffer_ == nullptr, RET_ERROR, "context cannot be empty.");
   model_buffer_->SetData(content, size);
+  return RET_OK;
+}
+int TrainExport::SaveWeightsToFile(bool enable_fp16, const std::vector<std::string> &changeable_weights_name) {
+  const auto &all_tensors = meta_graph_->allTensors;
+  std::ofstream weights(file_name_, std::ios::out | std::ios::trunc | std::ios::binary);
+  for (auto &tensor : all_tensors) {
+    MS_CHECK_TRUE_MSG(tensor != nullptr, RET_NULL_PTR, "Exist tensor is a nullptr.");
+    if (tensor->data.empty()) {
+      continue;
+    }
+    if (std::find(changeable_weights_name.begin(), changeable_weights_name.end(), tensor->name) !=
+        changeable_weights_name.end()) {
+      auto shape = tensor->dims;
+      weights.write(reinterpret_cast<const char *>(shape.data()), shape.size() * sizeof(uint32_t));
+    }
+    if (!enable_fp16 || tensor->dataType != kNumberTypeFloat32) {
+      weights.write(reinterpret_cast<const char *>(tensor->data.data()), tensor->data.size());
+    } else {
+      std::vector<uint16_t> data_fp16(tensor->data.size() / sizeof(float));
+#ifndef ENABLE_ARM
+      auto fp32_data = reinterpret_cast<const float *>(tensor->data.data());
+      auto fp16_data = reinterpret_cast<float16 *>(data_fp16.data());
+      CHECK_NULL_RETURN(fp32_data);
+      CHECK_NULL_RETURN(fp16_data);
+      for (size_t j = 0; j < data_fp16.size(); ++j) {
+        fp16_data[j] = float16(fp32_data[j]);
+      }
+#else
+      Float32ToFloat16_fp16_handler(tensor->data.data(), data_fp16.data(), data_fp16.size(), true);
+#endif
+      weights.write(reinterpret_cast<const char *>(data_fp16.data()), data_fp16.size() * sizeof(uint16_t));
+    }
+  }
+  weights.close();
   return RET_OK;
 }
 

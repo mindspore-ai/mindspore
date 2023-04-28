@@ -214,4 +214,34 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
 
   return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
 }
+
+Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, ModelType model_type,
+                                                        const std::vector<char> &weight_file, bool is_inference,
+                                                        bool enable_fp16,
+                                                        const std::vector<std::vector<char>> &changeable_weights_name) {
+  if (model.impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  if (!model.impl_->IsTrainModel()) {
+    MS_LOG(ERROR) << "Model is not TrainModel.";
+    return kLiteError;
+  }
+  if (model_type != kMindIR && model_type != kMindIR_Lite) {
+    MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
+    return kLiteParamInvalid;
+  }
+  if (model.impl_->session_ == nullptr) {
+    MS_LOG(ERROR) << "Model session is nullptr.";
+    return kLiteError;
+  }
+  if (!is_inference) {
+    MS_LOG(ERROR) << "Currently, can only export inference-model's weights.";
+  }
+  auto ret = model.impl_->session_->ExportWeightsCollaborateWithMicro(CharToString(weight_file), lite::MT_INFERENCE,
+                                                                      lite::FT_FLATBUFFERS, enable_fp16,
+                                                                      VectorCharToString(changeable_weights_name));
+
+  return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
+}
 }  // namespace mindspore

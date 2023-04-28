@@ -342,4 +342,10 @@ Status Serialization::ExportModel(const Model &, ModelType, const std::vector<ch
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
+
+Status Serialization::ExportWeightsCollaborateWithMicro(const Model &, ModelType, const std::vector<char> &, bool, bool,
+                                                        const std::vector<std::vector<char>> &) {
+  MS_LOG(ERROR) << "Unsupported feature.";
+  return kMEFailed;
+}
 }  // namespace mindspore

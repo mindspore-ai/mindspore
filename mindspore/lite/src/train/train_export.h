@@ -52,6 +52,7 @@ class TrainExport {
   int ExportInit(const std::string model_name, std::string version);
   int SaveToFile();
   int SaveToBuffer();
+  int SaveWeightsToFile(bool enable_fp16 = false, const std::vector<std::string> &changeable_weights_name = {});
   void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
   int LoadModel(void *buf, size_t buf_size);
   int AddTransformNode();

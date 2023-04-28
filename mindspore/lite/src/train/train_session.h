@@ -100,6 +100,9 @@ class TrainSession : virtual public lite::LiteSession {
              std::vector<std::string> out_put_tensor_name = {}) override;
   int Export(Buffer *model_buffer, ModelType model_type, QuantizationType quant_type, FormatType,
              std::vector<std::string> out_put_tensor_name = {}) override;
+  int ExportWeightsCollaborateWithMicro(const std::string &file_name, lite::ModelType model_type, FormatType,
+                                        bool enable_fp16,
+                                        const std::vector<std::string> &changeable_weights_name) override;
   std::vector<lite::Tensor *> GetFeatureMaps() const override;
   std::vector<lite::Tensor *> GetTrainableParams() const override;
 
