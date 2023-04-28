@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ class ConverterImpl {
   int LoadPluginLib(const std::shared_ptr<ConverterPara> &param);
   int HandleGraphCommon(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
                         bool not_save, bool is_multi_model);
+  int ExecuteMicro(const schema::MetaGraphT *meta_graph, const std::shared_ptr<ConverterPara> &param,
+                   bool is_multi_model);
 };
 }  // namespace lite
 }  // namespace mindspore

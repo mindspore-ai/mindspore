@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,9 @@ constexpr auto kInputDataType = "inputDataType";
 constexpr auto kOutputDataType = "outputDataType";
 constexpr auto kInfer = "infer";
 std::map<std::string, FmkType> StrToEnumFmkTypeMap = {
-  {"CAFFE", FmkType::kFmkTypeCaffe}, {"MINDIR", FmkType::kFmkTypeMs}, {"TFLITE", FmkType::kFmkTypeTflite},
-  {"ONNX", FmkType::kFmkTypeOnnx},   {"TF", FmkType::kFmkTypeTf},     {"PYTORCH", FmkType::kFmkTypePytorch}};
+  {"CAFFE", FmkType::kFmkTypeCaffe},  {"MINDIR", FmkType::kFmkTypeMs}, {"TFLITE", FmkType::kFmkTypeTflite},
+  {"ONNX", FmkType::kFmkTypeOnnx},    {"TF", FmkType::kFmkTypeTf},     {"PYTORCH", FmkType::kFmkTypePytorch},
+  {"MSLITE", FmkType::kFmkTypeMsLite}};
 std::map<std::string, DataType> StrToEnumDataTypeMap = {{"FLOAT", DataType::kNumberTypeFloat32},
                                                         {"INT8", DataType::kNumberTypeInt8},
                                                         {"UINT8", DataType::kNumberTypeUInt8},
@@ -111,7 +112,7 @@ int InitModelFmk(const std::string &value, const std::shared_ptr<ConverterPara> 
   if (StrToEnumFmkTypeMap.find(value) != StrToEnumFmkTypeMap.end()) {
     param->fmk_type = StrToEnumFmkTypeMap.at(value);
   } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
+    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX|MSLITE" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -666,10 +667,12 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
 
 int CheckFmkType(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr) {
-    std::set valid_values = {FmkType::kFmkTypeTf, FmkType::kFmkTypeCaffe,  FmkType::kFmkTypeOnnx,
-                             FmkType::kFmkTypeMs, FmkType::kFmkTypeTflite, FmkType::kFmkTypePytorch};
+    std::set valid_values = {FmkType::kFmkTypeTf,    FmkType::kFmkTypeCaffe,  FmkType::kFmkTypeOnnx,
+                             FmkType::kFmkTypeMs,    FmkType::kFmkTypeTflite, FmkType::kFmkTypePytorch,
+                             FmkType::kFmkTypeMsLite};
     if (std::find(valid_values.begin(), valid_values.end(), param->fmk_type) == valid_values.end()) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: fmk_type must be kFmkTypeTf|kFmkTypeCaffe|kFmkTypeOnnx|kFmkTypeMs|kFmkTypeTflite"
+      MS_LOG(ERROR) << "INPUT ILLEGAL: fmk_type must be "
+                       "kFmkTypeTf|kFmkTypeCaffe|kFmkTypeOnnx|kFmkTypeMs|kFmkTypeTflite|kFmkTypeMsLite"
                     << ", but got " << param->fmk_type;
       return RET_INPUT_PARAM_INVALID;
     }
@@ -973,6 +976,18 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
 
 int ConverterImpl::HandleGraphCommon(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size,
                                      bool not_save, bool is_multi_model) {
+  if (param->fmk_type == converter::kFmkTypeMsLite) {
+    if (!param->microParam.enable_micro) {
+      MS_LOG(ERROR) << "When fmk is set to MSLITE, only support micronization.";
+      return RET_NOT_SUPPORT;
+    }
+    auto ret = ExecuteMicro(nullptr, param, is_multi_model);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Micronize msLite-model failed.";
+      return ret;
+    }
+    return ret;
+  }
   auto graph = ConverterFuncGraph::Build(param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Build func graph failed";
@@ -992,6 +1007,32 @@ int ConverterImpl::HandleGraphCommon(const std::shared_ptr<ConverterPara> &param
   }
 
   return RET_OK;
+}
+
+int ConverterImpl::ExecuteMicro(const schema::MetaGraphT *meta_graph, const std::shared_ptr<ConverterPara> &param,
+                                bool is_multi_model) {
+  std::string output_path = param->output_file;
+  if (!is_multi_model) {
+    param->microParam.is_last_model = true;
+  } else {
+    if (param->microParam.save_path.empty() || param->microParam.project_name.empty()) {
+      MS_LOG(ERROR) << "Micro param for invalid: save_path or project name is needed";
+      return RET_ERROR;
+    }
+    output_path = param->microParam.save_path + param->microParam.project_name;
+    if (param->microParam.save_path[param->microParam.save_path.size() - 1] != '/' ||
+        param->microParam.save_path[param->microParam.save_path.size() - 1] != '\\') {
+      output_path = param->microParam.save_path + kSlash + param->microParam.project_name;
+    }
+  }
+  auto status =
+    meta_graph != nullptr
+      ? micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam, param->weight_fp16)
+      : micro::Coder::MicroSourceCodeGeneration(param->model_file, output_path, param->microParam, param->weight_fp16);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Execute Micro failed.";
+  }
+  return status;
 }
 
 int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<ConverterPara> &param, void **model_data,
@@ -1033,22 +1074,7 @@ int ConverterImpl::SaveGraph(FuncGraphPtr graph, const std::shared_ptr<Converter
   }
 
   if (param->microParam.enable_micro) {
-    if (!is_multi_model) {
-      param->microParam.is_last_model = true;
-      status =
-        micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam, param->weight_fp16);
-    } else {
-      if (param->microParam.save_path.empty() || param->microParam.project_name.empty()) {
-        MS_LOG(ERROR) << "Micro param for invalid: save_path or project name is needed";
-        return RET_ERROR;
-      }
-      auto output_path = param->microParam.save_path + param->microParam.project_name;
-      if (param->microParam.save_path[param->microParam.save_path.size() - 1] != '/' ||
-          param->microParam.save_path[param->microParam.save_path.size() - 1] != '\\') {
-        output_path = param->microParam.save_path + kSlash + param->microParam.project_name;
-      }
-      status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, output_path, param->microParam, param->weight_fp16);
-    }
+    status = ExecuteMicro(meta_graph, param, is_multi_model);
   } else {
     status = ConverterToMetaGraph::Save(meta_graph, param, model_data, data_size, not_save);
   }

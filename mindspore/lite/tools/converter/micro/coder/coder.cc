@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,31 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
+  if (ExecuteMicroGeneration(builder.GetBufferPointer(), size, output_path, param, enable_fp16) != RET_OK) {
+    MS_LOG(ERROR) << "Execute Micro failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Coder::MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path,
+                                     const MicroParam &param, bool enable_fp16) {
+  size_t buffer_size;
+  auto model_buf = lite::ReadFile(model_file.c_str(), &buffer_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model-file failed.";
+    return RET_NULL_PTR;
+  }
+  auto ret = ExecuteMicroGeneration(model_buf, buffer_size, output_path, param, enable_fp16);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Execute Micro failed.";
+  }
+  delete[] model_buf;
+  return ret;
+}
+
+int Coder::ExecuteMicroGeneration(const void *model_buf, size_t size, const std::string &output_path,
+                                  const MicroParam &param, bool enable_fp16) {
   micro::Coder code_gen;
   if (!code_gen.InitPath(output_path)) {
     MS_LOG(ERROR) << "Init path failed";
@@ -135,7 +160,7 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
     MS_LOG(ERROR) << "Codegen init Error";
     return RET_ERROR;
   }
-  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_, param.is_last_model, enable_fp16);
+  status = code_gen.Run(model_buf, size, code_gen.model_name_, param.is_last_model, enable_fp16);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen Run Error";
     return RET_ERROR;
