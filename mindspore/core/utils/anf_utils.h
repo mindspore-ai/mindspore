@@ -40,6 +40,7 @@ constexpr size_t kSizeTwo = 2;
 constexpr size_t kSizeThree = 3;
 constexpr size_t kSizeFour = 4;
 constexpr size_t kSizeFive = 5;
+constexpr size_t kSizeEight = 8;
 
 // Define constant about index number here.
 constexpr size_t kIndexZero = 0;
