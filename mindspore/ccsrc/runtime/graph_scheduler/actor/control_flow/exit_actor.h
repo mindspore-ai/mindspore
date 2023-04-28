@@ -80,6 +80,8 @@ class ExitActor : public ControlActor {
   // Output data.
   //  The output branch data corresponds to the output_data_arrows_ one by one.
   mindspore::HashMap<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;
+  // The value of haspmap indicates the output data flag. See constant prefixed with kOutputDataFalg for details.
+  mindspore::HashMap<int, std::vector<size_t>> output_branch_data_flag_;
 };
 
 using ExitActorPtr = std::shared_ptr<ExitActor>;
