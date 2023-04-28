@@ -28,8 +28,7 @@ extern "C" {
 
 /* Element Squared Difference */
 int ElementSquaredDifference(const float *in0, const float *in1, float *out, int size);
-int ElementOptSquaredDifference(const float *in0, const float *in1, float *out, int size,
-                                const ArithmeticParameter *param);
+int ElementOptSquaredDifference(const float *in0, const float *in1, float *out, int size, bool scale);
 #ifdef __cplusplus
 }
 #endif

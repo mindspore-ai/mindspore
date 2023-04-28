@@ -45,7 +45,7 @@ class ArithmeticBaseCPUKernel : public LiteKernel {
   template <class T>
   using ArithmeticFunc = std::function<int(const T *, const T *, T *, const int)>;
   template <class T>
-  using ArithmeticOptFunc = std::function<int(const T *, const T *, T *, const int, const ArithmeticParameter *)>;
+  using ArithmeticOptFunc = std::function<int(const T *, const T *, T *, const int, bool first_scalar)>;
   struct MatricInfo {
     bool is_const{false};
     bool is_valid{false};

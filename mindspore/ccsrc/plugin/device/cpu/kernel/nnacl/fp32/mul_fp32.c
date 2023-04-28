@@ -86,9 +86,9 @@ int ElementMulRelu6Int(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptMul(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMul(const float *in0, const float *in1, float *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -104,9 +104,9 @@ int ElementOptMul(const float *in0, const float *in1, float *out, int size, cons
   return NNACL_OK;
 }
 
-int ElementOptMulRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMulRelu(const float *in0, const float *in1, float *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulReluNum0, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = MSMAX(in0[0] * in1[index], 0);
@@ -120,9 +120,9 @@ int ElementOptMulRelu(const float *in0, const float *in1, float *out, int size, 
   return NNACL_OK;
 }
 
-int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulRelu6Num0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -138,9 +138,9 @@ int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size,
   return NNACL_OK;
 }
 
-int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulIntNum0, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = in0[0] * in1[index];
@@ -154,9 +154,9 @@ int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, const A
   return NNACL_OK;
 }
 
-int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulReluIntNum0, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = MSMAX(in0[0] * in1[index], 0);
@@ -170,9 +170,9 @@ int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, con
   return NNACL_OK;
 }
 
-int ElementOptMulRelu6Int(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptMulRelu6Int(const int *in0, const int *in1, int *out, int size, bool scale) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (scale) {
     SIMD_RUN_NO_SCALAR(ElementOptMulRelu6IntNum0, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = MSMIN(MSMAX(in0[0] * in1[index], 0), 6);

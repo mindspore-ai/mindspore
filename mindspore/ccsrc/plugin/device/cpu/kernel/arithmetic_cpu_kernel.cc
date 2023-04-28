@@ -300,9 +300,9 @@ void ArithmeticCpuTypeFunc<T>::Add(const T *input1, const T *input2, T *out) {
     if (op_para_.in_elements_num0_ == 1 || op_para_.in_elements_num1_ == 1) {
       auto task = [this, input1, input2, out](size_t start, size_t end) {
         if (op_para_.in_elements_num0_ == 1) {
-          (void)ElementOptAdd(input1, input2 + start, out + start, end - start, &op_para_);
+          (void)ElementOptAdd(input1, input2 + start, out + start, end - start, true);
         } else {
-          (void)ElementOptAdd(input1 + start, input2, out + start, end - start, &op_para_);
+          (void)ElementOptAdd(input1 + start, input2, out + start, end - start, false);
         }
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -346,9 +346,9 @@ void ArithmeticCpuTypeFunc<T>::Sub(const T *input1, const T *input2, T *out) {
     if (op_para_.in_elements_num0_ == 1 || op_para_.in_elements_num1_ == 1) {
       auto task = [this, input1, input2, out](size_t start, size_t end) {
         if (op_para_.in_elements_num0_ == 1) {
-          (void)ElementOptSub(input1, input2 + start, out + start, end - start, &op_para_);
+          (void)ElementOptSub(input1, input2 + start, out + start, end - start, true);
         } else {
-          (void)ElementOptSub(input1 + start, input2, out + start, end - start, &op_para_);
+          (void)ElementOptSub(input1 + start, input2, out + start, end - start, false);
         }
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -379,9 +379,9 @@ void ArithmeticCpuTypeFunc<T>::Mul(const T *input1, const T *input2, T *out) {
     if (op_para_.in_elements_num0_ == 1 || op_para_.in_elements_num1_ == 1) {
       auto task = [this, input1, input2, out](size_t start, size_t end) {
         if (op_para_.in_elements_num0_ == 1) {
-          (void)ElementOptMul(input1, input2 + start, out + start, end - start, &op_para_);
+          (void)ElementOptMul(input1, input2 + start, out + start, end - start, true);
         } else {
-          (void)ElementOptMul(input1 + start, input2, out + start, end - start, &op_para_);
+          (void)ElementOptMul(input1 + start, input2, out + start, end - start, false);
         }
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);

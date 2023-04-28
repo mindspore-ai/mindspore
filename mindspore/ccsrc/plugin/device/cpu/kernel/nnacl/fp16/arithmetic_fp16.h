@@ -25,61 +25,61 @@
 extern "C" {
 #endif
 
-void TileOneDimensionFp16(const float16_t *inData, float16_t *outData, int dim, size_t ndim, const int *inShape,
+void TileOneDimensionFp16(const void *input, void *output, int dim, size_t ndim, const int *inShape,
                           const int *inStrides, const int *outStrides, const int *multiple);
 void TileDimensionsFp16(const float16_t *data0, const float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
                         ArithmeticParameter *param);
 
 int ElementOptMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      const ArithmeticParameter *param);
+                      bool first_scalar);
 int ElementOptMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      const ArithmeticParameter *param);
+                      bool first_scalar);
 int ElementOptAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      const ArithmeticParameter *param);
+                      bool first_scalar);
 int ElementOptSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      const ArithmeticParameter *param);
+                      bool first_scalar);
 int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                             const ArithmeticParameter *param);
+                             bool first_scalar);
 int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                            const ArithmeticParameter *param);
+                            bool first_scalar);
 int ElementOptSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output,
-                                    int element_size, const ArithmeticParameter *param);
+                                    int element_size, bool first_scalar);
 int ElementOptMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementOptEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                        const ArithmeticParameter *param);
+                        bool first_scalar);
 int ElementOptLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                       const ArithmeticParameter *param);
+                       bool first_scalar);
 int ElementOptLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                            const ArithmeticParameter *param);
+                            bool first_scalar);
 int ElementOptGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementOptGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                               const ArithmeticParameter *param);
+                               bool first_scalar);
 
 int ElementMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 int ElementMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);

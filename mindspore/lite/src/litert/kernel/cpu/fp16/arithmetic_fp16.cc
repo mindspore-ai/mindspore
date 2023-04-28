@@ -176,7 +176,7 @@ int ArithmeticFP16CPUKernel::DoExecute(const void *input0, const void *input1, v
     CHECK_NULL_RETURN(arithmetic_opt_run_fp16_);
     ret =
       arithmetic_opt_run_fp16_(reinterpret_cast<const float16_t *>(input0), reinterpret_cast<const float16_t *>(input1),
-                               reinterpret_cast<float16_t *>(output), size, param_);
+                               reinterpret_cast<float16_t *>(output), size, param_->in_elements_num0_ == 1);
   } else {
     CHECK_NULL_RETURN(arithmetic_run_fp16_);
     ret = arithmetic_run_fp16_(reinterpret_cast<const float16_t *>(input0), reinterpret_cast<const float16_t *>(input1),

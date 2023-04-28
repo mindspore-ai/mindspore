@@ -260,8 +260,8 @@ int ElementLogicalAnd@SIMD_INSTRUCTION@(int index, const float *in0, const float
   return index;
 }
 
-int ElementOptLogicalAnd@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-  if (param->in_elements_num0_ == 1) {
+int ElementOptLogicalAnd@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, float *out, int size, bool first_scalar) {
+  if (first_scalar) {
     SIMD_F32 in0_tmp = SIMD_MOV_F32(*in0);
     for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
       SIMD_F32 in1_tmp = SIMD_LD_F32(in1 + index);
