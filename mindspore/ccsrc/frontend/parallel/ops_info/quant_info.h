@@ -76,7 +76,7 @@ class MinMaxUpdatePerLayerInfo : public FakeQuantPerLayerInfo {
   Status GetAttrs() override;
   Status InferTensorMap() override;  // it has two outputs
   Status InferAsLossDivisor() override;
-  Status InferForwardGroup();
+  virtual Status InferForwardGroup();
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   bool ema_ = False;
@@ -100,7 +100,7 @@ class MinMaxUpdatePerChannelInfo : public MinMaxUpdatePerLayerInfo {
   Status GetAttrs() override;
   Status InferTensorMap() override;  // it has two outputs
   Status InferAsLossDivisor() override;
-  Status InferForwardGroup();
+  Status InferForwardGroup() override;
   int64_t channel_axis_ = -1;
 };
 }  // namespace parallel
