@@ -167,6 +167,8 @@ std::vector<KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
 
 bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim);
 
+STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
