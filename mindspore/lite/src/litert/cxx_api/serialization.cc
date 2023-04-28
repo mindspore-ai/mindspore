@@ -237,6 +237,7 @@ Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, Mode
   }
   if (!is_inference) {
     MS_LOG(ERROR) << "Currently, can only export inference-model's weights.";
+    return kLiteNotSupport;
   }
   auto ret = model.impl_->session_->ExportWeightsCollaborateWithMicro(CharToString(weight_file), lite::MT_INFERENCE,
                                                                       lite::FT_FLATBUFFERS, enable_fp16,
