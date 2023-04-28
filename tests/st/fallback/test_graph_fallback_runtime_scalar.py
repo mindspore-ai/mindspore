@@ -50,7 +50,7 @@ def test_return_scalar_tuple():
     """
     @ms.jit
     def func(x, y):
-        return (x + y, x - y, x * y)
+        return x + y, x - y, x * y
 
     out = func(ms.mutable(6), ms.mutable(4))
     assert isinstance(out[0], int) and out[0] == 10

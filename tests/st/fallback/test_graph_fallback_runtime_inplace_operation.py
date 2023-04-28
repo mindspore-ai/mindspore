@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 
 import mindspore as ms
+from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.common import mutable
 
@@ -65,7 +66,7 @@ def test_change_net_number_2():
     Expectation: No exception.
     """
     net = NumberNet()
-    net(mutable(10))
+    ret = net(mutable(10))
     assert net.a == 20
     assert ret == 200
 
@@ -182,7 +183,6 @@ def test_change_net_list_5():
     ret = net(Tensor([5, 6, 7]), mutable(2))
     assert np.all(net.a == np.array([1, 2, 3, 4, 5]))
     assert np.all(ret == np.array([1, 2, 3, 4, 5]))
-
 
 
 class TensorNet(Cell):
