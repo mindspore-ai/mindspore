@@ -594,11 +594,9 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
 
 DEF_PURE_SHAPE_CALC(g_min_or_max_grad)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    auto x_shape = inputs.at(0);
+    auto input_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
-    auto r_shape = ReduceShape(x_shape, axis_value);
-    auto scaling = TupleDiv(x_shape, r_shape);
-    return {r_shape, scaling};
+    return {ReduceShape(input_shape, axis_value)};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
