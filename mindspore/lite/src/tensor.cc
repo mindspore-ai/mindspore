@@ -44,9 +44,8 @@ static const size_t max_malloc_size_ = GetMaxMallocSize();
                          : (((y) >= 0) ? (INT64_MAX / (x)) > (-1 * (y)) : (INT64_MAX / (x)) > (y))))
 #endif
 
-Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const mindspore::Format &format, Category category)
-    : category_(category) {
-  tensor_c_ = {false, data_type, static_cast<int>(format), nullptr, shape.size()};
+Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const mindspore::Format &format, Category category) {
+  tensor_c_ = {false, data_type, static_cast<int>(format), category, nullptr, shape.size()};
   if (shape.size() > MAX_SHAPE_SIZE) {
     tensor_c_.shape_size_ = 0;
     MS_LOG(WARNING) << "The shape-size has exceeded the limit 8, now is " << shape.size();
@@ -88,7 +87,6 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
   }
   (void)memcpy(&result->tensor_c_, &src_tensor.tensor_c_, sizeof(TensorC));
   result->tensor_c_.data_ = nullptr;
-  result->category_ = src_tensor.category_;
   result->compress_type_ = src_tensor.compress_type_;
   result->compressed_size_ = src_tensor.compressed_size_;
   result->set_allocator(allocator);
@@ -280,7 +278,7 @@ size_t Tensor::Size() const {
 }
 
 int64_t Tensor::ElementsNum() const {
-  if (this->category_ == CONST_SCALAR) {
+  if (this->tensor_c_.category_ == CONST_SCALAR) {
     return 1;
   }
   if (tensor_c_.format_ == mindspore::NC4HW4) {
@@ -301,7 +299,7 @@ int64_t Tensor::ElementsNum() const {
 }
 
 int64_t Tensor::ElementsC4Num() const {
-  if (this->category_ == CONST_SCALAR) {
+  if (this->tensor_c_.category_ == CONST_SCALAR) {
     return 1;
   }
   int64_t result = 1;
@@ -337,7 +335,7 @@ int64_t Tensor::ElementsC4Num() const {
 }
 
 int64_t Tensor::ElementsC8Num() const {
-  if (this->category_ == CONST_SCALAR) {
+  if (this->tensor_c_.category_ == CONST_SCALAR) {
     return 1;
   }
   int64_t result = 1;
@@ -375,7 +373,7 @@ std::string Tensor::ToString() const {
   oss << "Tensor name: " << this->tensor_name();
   oss << " schema::Format: " << EnumNameFormat(static_cast<schema::Format>(this->tensor_c_.format_));
   oss << " DataType: " << this->tensor_c_.data_type_;
-  oss << " Category: " << this->category_;
+  oss << " Category: " << this->tensor_c_.category_;
   oss << " Shape:";
   for (auto &dim : this->shape()) {
     oss << " " << dim;
@@ -456,7 +454,7 @@ void Tensor::FreeData() {
       free(this->tensor_c_.data_);
       this->tensor_c_.data_ = nullptr;
     }
-  } else if (this->category_ == Category::VAR) {
+  } else if (this->tensor_c_.category_ == Category::VAR) {
     if (!IS_STATIC_ALLOCATOR(allocator_) || allocator_->RefCount(this->tensor_c_.data_) != 0) {
       if (this->init_ref_count_ == 1) {
         this->tensor_c_.data_ = nullptr;
