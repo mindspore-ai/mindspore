@@ -98,6 +98,7 @@ from .acos_grad import _acos_grad_aicpu
 from .expand import _expand_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
+from .randperm_v2 import _randperm_v2_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .rsqrt import _rsqrt_aicpu
 from .sqrt import _sqrt_aicpu
