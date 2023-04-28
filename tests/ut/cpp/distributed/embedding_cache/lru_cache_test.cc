@@ -50,20 +50,24 @@ TEST_F(TestLRUCache, test_lru_cache) {
   EXPECT_EQ(origin_elements.size(), cache.size());
   EXPECT_FALSE(cache.IsFull());
 
-  std::list<Element> cache_elements = cache.Dump();
+  std::list<Element> cache_elements = cache.Export();
   auto vec_reverse_iter = origin_elements.rbegin();
   for (auto list_iter = cache_elements.begin(); list_iter != cache_elements.end(); ++list_iter, ++vec_reverse_iter) {
     EXPECT_EQ((*list_iter), (*vec_reverse_iter));
   }
 
-  EXPECT_EQ((cache.Get(1)), 11);
-  EXPECT_EQ((cache.Dump().front()), (std::pair<int, int>(1, 11)));
+  int value = 0;
+  EXPECT_EQ(cache.Get(1, &value), true);
+  EXPECT_EQ(value, 11);
+  EXPECT_EQ((cache.Export().front()), (std::pair<int, int>(1, 11)));
 
-  EXPECT_EQ((cache.Get(2)), 22);
-  EXPECT_EQ((cache.Dump().front()), (std::pair<int, int>(2, 22)));
+  EXPECT_EQ(cache.Get(2, &value), true);
+  EXPECT_EQ(value, 22);
+  EXPECT_EQ((cache.Export().front()), (std::pair<int, int>(2, 22)));
 
-  EXPECT_EQ(cache.Get(3), 33);
-  EXPECT_EQ((cache.Dump().front()), (std::pair<int, int>(3, 33)));
+  EXPECT_EQ(cache.Get(3, &value), true);
+  EXPECT_EQ(value, 33);
+  EXPECT_EQ((cache.Export().front()), (std::pair<int, int>(3, 33)));
 
   std::vector<Element> evict_elements;
   EXPECT_NO_THROW(cache.TryEvict(3, &evict_elements));
@@ -71,17 +75,18 @@ TEST_F(TestLRUCache, test_lru_cache) {
   EXPECT_EQ(evict_elements.size(), 1);
   EXPECT_EQ((evict_elements.front()), (std::pair<int, int>(1, 11)));
 
-  EXPECT_EQ((cache.Dump().front()), (std::pair<int, int>(3, 33)));
-  EXPECT_EQ((cache.Get(2)), 22);
+  EXPECT_EQ((cache.Export().front()), (std::pair<int, int>(3, 33)));
+  EXPECT_EQ(cache.Get(2, &value), true);
+  EXPECT_EQ(value, 22);
   EXPECT_NO_THROW(cache.Put(1, 11));
 
-  std::list<Element> new_cache_elements = cache.Dump();
+  std::list<Element> new_cache_elements = cache.Export();
   auto vec_iter = origin_elements.begin();
   for (auto list_iter = new_cache_elements.begin(); list_iter != new_cache_elements.end(); ++list_iter, ++vec_iter) {
     EXPECT_EQ((*list_iter), (*vec_iter));
   }
 
-  EXPECT_THROW(cache.Get(4), std::runtime_error);
+  EXPECT_EQ(cache.Get(4, &value), false);
   EXPECT_THROW(cache.TryEvict(6, &evict_elements), std::runtime_error);
 }
 }  // namespace distributed

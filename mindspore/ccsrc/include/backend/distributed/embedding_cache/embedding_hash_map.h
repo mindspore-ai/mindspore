@@ -21,26 +21,30 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <list>
+#include <mutex>
 #include "utils/hash_map.h"
 #include "utils/convert_utils_base.h"
 #include "include/backend/visible.h"
+#include "distributed/embedding_cache/cache_strategy/cache.h"
 
 namespace mindspore {
 namespace distributed {
 // Define the value of an invalid step.
-static constexpr size_t INVALID_STEP_VALUE = 0;
+static constexpr size_t kInvalidStepValue = 0;
 // Define the value of an invalid index.
-static constexpr int INVALID_INDEX_VALUE = -1;
+static constexpr int kInvalidIndexValue = -1;
+
+// The minimum valid capacity.
+static constexpr size_t kMinimumCapacity = 2;
 
 struct HashMapElement {
-  int id_{INVALID_INDEX_VALUE};
   // The current global step of cache prefetching operation.
-  size_t step_{INVALID_STEP_VALUE};
+  size_t step_{kInvalidStepValue};
 
-  bool IsEmpty() const { return step_ == INVALID_STEP_VALUE; }
+  bool IsEmpty() const { return step_ == kInvalidStepValue; }
   bool IsExpired(size_t graph_running_step) const { return graph_running_step > step_; }
   bool StepEqual(size_t step) const { return step_ == step; }
-  void set_id(int id) { id_ = id; }
   void set_step(size_t step) { step_ = step; }
 };
 
@@ -48,7 +52,9 @@ struct HashMapElement {
 // side. The cache content can be stored on the device or host side.
 class BACKEND_EXPORT EmbeddingHashMap {
  public:
-  EmbeddingHashMap(size_t hash_count, size_t hash_capacity);
+  using Element = typename Cache<int, int>::Element;
+
+  explicit EmbeddingHashMap(size_t hash_capacity);
 
   ~EmbeddingHashMap() = default;
 
@@ -63,53 +69,43 @@ class BACKEND_EXPORT EmbeddingHashMap {
   size_t hash_step(const int hash_index) const;
   // Set the global step of a element in hash map.
   void set_hash_step(const int hash_index, const size_t step);
-  // Get the id -> index mapping.
-  const mindspore::HashMap<int, int> &hash_id_to_index() const;
+
   // Get capacity of hash map.
   size_t hash_capacity() const;
+
+  // Get index by id.
+  bool GetIndex(const int id, int *index) const;
+
+  const std::list<Element> &Export() const;
+
   // Reset the hash map.
-  void Reset();
+  void Reset() {}
 
   void DumpHashMap();
 
  private:
   // Find the insertion position (index) in the hash map for an id.
   int FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *const need_swap,
-                       bool *const need_wait_graph);
+                       bool *const need_wait_graph, int *swap_out_id);
 
   int InsertDataUnsafe(const int key);
 
   int FindPosUnsafe(const int key);
 
-  // Statistics on the usage of hash map capacity.
-  size_t hash_count_;
-
   // The hash map capacity.
   size_t hash_capacity_;
+
+  // The hash map valid capacity(less than hash_capacity_).
+  size_t valid_capacity_;
 
   // Record all elements in this hash map.
   std::vector<HashMapElement> hash_map_elements_;
 
   // The id -> index mapping.
-  mindspore::HashMap<int, int> hash_id_to_index_;
+  std::unique_ptr<Cache<int, int>> ids_to_indices_;
 
-  // The cursor that records the current slot.
+  // The cursor that records the current used index.
   size_t current_pos_;
-  // The cursor that records the start position of current_pos_.
-  size_t current_batch_start_pos_;
-
-  // The number of ids which need to wait for the calculation graph to finish executing the current step and need be
-  // swapped out.
-  size_t graph_running_index_num_;
-  // The index in array 'graph_running_index_', and the value on this index is the hash index for new id,
-  // but need to wait for the calculation graph to finish executing the current step and swap out the expired data.
-  size_t graph_running_index_pos_;
-  // Record the index information of the feature id that needs to be swapped out after the calculation graph finishes
-  // executing the current step.
-  std::unique_ptr<int[]> graph_running_index_;
-
-  // The flag indicates hash map is full.
-  bool expired_element_full_;
 };
 }  // namespace distributed
 }  // namespace mindspore

@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <tuple>
 #include <random>
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -35,12 +36,14 @@
 #include "utils/hash_map.h"
 #include "include/common/random.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/blocking_queue.h"
 
 // Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
 // the follow include file and using declaration of ps will be removed.
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/ps/ps_context.h"
 using mindspore::ps::PSContext;
+using mindspore::ps::PsDataChannel;
 using mindspore::ps::PsDataPrefetch;
 
 namespace mindspore {
@@ -61,8 +64,15 @@ using distributed::EmbeddingCacheStatisticsInfo;
 using distributed::EmbeddingDeviceCache;
 using distributed::EmbeddingHostCache;
 using distributed::HashTableInfo;
-using distributed::INVALID_INDEX_VALUE;
-using distributed::INVALID_STEP_VALUE;
+using distributed::kInvalidIndexValue;
+
+using distributed::BlockingQueue;
+using distributed::CacheAnalysis;
+using distributed::IdsAndIndices;
+using distributed::UniqueIds;
+using BlockingQueueTuple =
+  std::tuple<std::shared_ptr<BlockingQueue<UniqueIds>>, std::shared_ptr<BlockingQueue<CacheAnalysis>>,
+             std::shared_ptr<BlockingQueue<IdsAndIndices>>>;
 
 using distributed::cluster::ActorRouteTableProxy;
 using distributed::cluster::ActorRouteTableProxyPtr;
@@ -73,6 +83,12 @@ using DataType = float;
 using Generator = random::Philox;
 using NormalDistribution = random::NormalDistribution<double>;
 using ConstantDistribution = random::ConstantDistribution<DataType>;
+
+constexpr size_t kPipelineStageNum = 4;
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
 
 // The EmbeddingCachePrefetchActor is used to cache large embedding table scenarios. The cache level is: Device
 // Cache->Local Host Cache->Remote Cache. This Actor is used to perform Local and Device Cache hit analysis and cache
@@ -119,23 +135,22 @@ class EmbeddingCachePrefetchActor : public ActorBase {
                             const int *indices_addr, float *output_addr);
 
  private:
-  // Perform Local and Device Cache hit/miss analysis and prefetch cache for missing embeddings.
-  bool PrefetchCache();
-
   // Increase the current global step of cache prefetching operation.
   bool IncreaseStep();
 
   // Update the current computed graph's step to real global step at the time when this actor starts to prefetch cache
   // for a batch ids.
-  void set_current_graph_step() { graph_running_step_ = graph_step_; }
+  void set_current_graph_step() { graph_running_step_ = graph_step_.load(); }
 
   // Push non-hotspot embeddings on local host cache to remote.
-  bool PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info);
+  bool PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis);
+
   // Pull missing embeddings on local cache from remote.
-  bool PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info);
+  bool PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis);
 
   // Initialize local cache values using the random number generator.
   bool InitLocalCacheForNewIds(const HashTableInfo &hash_info);
+  bool InitLocalCacheForNewIds(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis);
 
   // Lookup embedding from Remote and get embeddings via RPC.
   bool PullEembeddingsFromRemote(int32_t param_key, const int *ids, size_t ids_num, std::vector<float> *outputs);
@@ -185,9 +200,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   void LinkRpcOperators();
 
   // Get dataset channel name.
-  std::string channel_name();
+  const std::string &channel_name();
   // Set dataset channel name.
-  void set_channel_name(const std::string channel_name);
+  void set_channel_name(const std::string &channel_name);
 
   // When the device cache does not reach 100% hit, the cache needs to be updated, which involves cache insertion and
   // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
@@ -206,8 +221,27 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // the remote side.
   void WaitInitParametersOnRemote();
 
+  void CreateChannelLock(const std::string &channel_name);
+  void CreateBlockQueue(const std::string &channel_name);
+
+  // Perform Local and Device Cache hit/miss analysis and prefetch cache for missing embeddings by multi-stage pipeline.
+  // Data flow: unique id queue -> cache analysis queue->id and indices queue
+  void StartPrefetchCachePipeline(const std::string &channel_name);
+  void StopPrefetchCachePipeline();
+  void WaitPrefetchCacheFinish();
+
+  // The four stage pipeline task.
+  void UniqueIdsTask(const std::string &channel_name);
+  void AnalyseCacheTask(const std::string &channel_name);
+  void UpdateCacheTask(const std::string &channel_name);
+  void TransformIdsToIndicesTask(const std::string &channel_name);
+
   // Set current error information before finalizing actor.
   void SetErrorInfo(const std::string &error_info);
+
+  mindspore::HashMap<std::string, std::shared_ptr<PsDataChannel>> channel_locks_;
+  mindspore::HashMap<std::string, std::shared_ptr<std::vector<std::thread>>> pipeline_stages_;
+  mindspore::HashMap<std::string, BlockingQueueTuple> channel_to_queues_;
 
   // The operations for the embedding on the device.
   DeviceEmbeddingOperation *emb_ops_{nullptr};
@@ -268,7 +302,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // The current global step of the computed graph.
   std::atomic_ulong graph_step_{0};
   // The computed graph's global step at the time when this actor starts to prefetch cache for a batch ids.
-  size_t graph_running_step_{0};
+  std::atomic_ulong graph_running_step_{0};
   // The current global step of cache prefetching operation.
   size_t data_step_{0};
 
@@ -293,6 +327,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // enough free memory space in the cache.
   bool host_cache_need_wait_graph_{false};
 
+  std::mutex pipeline_mutex_;
   // Record latest error information user related.
   std::string error_info_{""};
 };

@@ -150,11 +150,11 @@ void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const Key
   MS_EXCEPTION_IF_NULL(cache_hit);
   MS_EXCEPTION_IF_NULL(this->cache_);
 
+  int fake_index;
   for (size_t i = 0; i < key_num; i++) {
-    if (this->cache_->Exists(keys[i])) {
+    if (this->cache_->Get(keys[i], &fake_index)) {
       // Touch keys to affect the location or order of the elements in the cache, the return value for hash table is
       // useless.
-      (void)this->cache_->Get(keys[i]);
       cache_hit[i] = true;
       continue;
     }

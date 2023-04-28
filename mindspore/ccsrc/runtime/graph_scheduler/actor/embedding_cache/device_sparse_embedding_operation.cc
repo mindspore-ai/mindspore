@@ -29,90 +29,46 @@ bool DeviceSparseEmbeddingOperation::Initialize() {
   return true;
 }
 
-bool DeviceSparseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const size_t batch_ids_num, size_t data_step,
-                                                       size_t graph_running_step, bool *device_cache_need_wait_graph,
-                                                       bool *host_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(batch_ids);
-  MS_EXCEPTION_IF_NULL(statistics_info_);
-  statistics_info_->batch_id_count_ = batch_ids_num;
-  std::unique_ptr<bool[]> in_device = std::make_unique<bool[]>(batch_ids_num);
-  auto ret = memset_s(in_device.get(), batch_ids_num * sizeof(bool), 0, batch_ids_num * sizeof(bool));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
-    return false;
-  }
+bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info,
+                                                                    const CacheAnalysis *cache_analysis) {
+  MS_ERROR_IF_NULL(cache_analysis);
+  auto statistics_info = cache_analysis->statistics_info_;
+  auto embedding_device_cache = cache_analysis->embedding_device_cache_;
+  auto embedding_host_cache = cache_analysis->embedding_host_cache_;
+  MS_ERROR_IF_NULL(statistics_info);
+  MS_ERROR_IF_NULL(embedding_device_cache);
+  MS_ERROR_IF_NULL(embedding_host_cache);
 
-  // 1. Analyze the hit/miss info of the local host cache and device cache.
-  RETURN_IF_FALSE_WITH_LOG(CheckCacheHit(batch_ids, batch_ids_num, in_device.get(), data_step),
-                           "Check cache hit or out range failed.");
-  MS_EXCEPTION_IF_NULL(actor_);
-  RETURN_IF_FALSE_WITH_LOG(actor_->ResetEmbeddingHashMap(), "Reset embedding hash map failed.");
-
-  // 2.calculate the swapping and mapping(feature id to cache index) information of the missing feature id that needs to
-  // be inserted into the cache.
-  for (size_t i = 0; i < batch_ids_num; i++) {
-    if (in_device[i]) {
-      continue;
-    }
-    bool need_swap_host_to_device = true;
-    bool need_swap_device_to_host = true;
-    RETURN_IF_FALSE_WITH_LOG(ParseDeviceData(batch_ids[i], &need_swap_device_to_host, &need_swap_host_to_device,
-                                             data_step, graph_running_step, device_cache_need_wait_graph),
-                             "Parse device cache data failed.");
-
-    if (need_swap_host_to_device) {
-      RETURN_IF_FALSE_WITH_LOG(
-        ParseHostDataHostToDevice(batch_ids[i], data_step, graph_running_step, host_cache_need_wait_graph),
-        "Parse local host cache data(swap local host cache to device) failed.");
-    }
-    if (need_swap_device_to_host) {
-      RETURN_IF_FALSE_WITH_LOG(ParseHostDataDeviceToHost(data_step, graph_running_step, host_cache_need_wait_graph),
-                               "Parse local host cache data(swap device cache to local host) failed.");
-    }
-  }
-
-  return true;
-}
-
-bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) {
-  MS_EXCEPTION_IF_NULL(statistics_info_);
-  auto swap_indices_size = statistics_info_->device_to_host_size_;
+  auto swap_indices_size = statistics_info->device_to_host_size_;
   if (swap_indices_size == 0) {
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-
-  auto device_cache_device_to_host_ids =
-    embedding_cache_table_manager.embedding_device_cache_->device_to_host_ids.get();
-  auto host_cache_device_to_host_index =
-    embedding_cache_table_manager.embedding_host_cache_->device_to_host_index.get();
+  auto device_cache_device_to_host_ids = embedding_device_cache->device_to_host_ids.get();
+  auto host_cache_device_to_host_index = embedding_host_cache->device_to_host_index.get();
   MS_ERROR_IF_NULL(device_cache_device_to_host_ids);
   MS_ERROR_IF_NULL(host_cache_device_to_host_index);
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
-  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto host_hash_table_addr = hash_info.host_address;
   auto embedding_size = hash_info.embedding_size;
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
 
   // Copy origin id to temp buffer of indices.
-  int *tmp_swap_ids = embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_;
+  int *tmp_swap_ids = embedding_cache_table_manager.hash_swap_index_addr_;
   RETURN_IF_FALSE_WITH_LOG(MemcpyHostToDeviceAsync(tmp_swap_ids, device_cache_device_to_host_ids,
                                                    swap_indices_size * sizeof(int), device_context_, stream_id_),
                            "Memcpy host to device asynchronously failed.");
 
-  RETURN_IF_FALSE_WITH_LOG(
-    LookupDeviceCache(hash_info.device_address, tmp_swap_ids, hash_table_addr, swap_indices_size, embedding_size,
-                      embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_),
-    "Lookup device cache failed.");
+  RETURN_IF_FALSE_WITH_LOG(LookupDeviceCache(hash_info.device_address, tmp_swap_ids, hash_table_addr, swap_indices_size,
+                                             embedding_size, embedding_cache_table_manager.hash_swap_value_addr_),
+                           "Lookup device cache failed.");
 
   // Erase swap out id from device hash table.
   RETURN_IF_FALSE_WITH_LOG(EraseDeviceCache(tmp_swap_ids, swap_indices_size, hash_table_addr, hash_info.device_address),
                            "Erase device cache failed");
 
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyDeviceToHostAsync(swap_out_data.get(),
-                            embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_,
+    MemcpyDeviceToHostAsync(swap_out_data.get(), embedding_cache_table_manager.hash_swap_value_addr_,
                             swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
     "Memcpy device to host asynchronously failed.");
 
@@ -126,20 +82,23 @@ bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTa
   return true;
 }
 
-bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) {
-  MS_EXCEPTION_IF_NULL(statistics_info_);
-  auto swap_indices_size = statistics_info_->host_to_device_size_;
+bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info,
+                                                                    const CacheAnalysis *cache_analysis) {
+  MS_ERROR_IF_NULL(cache_analysis);
+  auto statistics_info = cache_analysis->statistics_info_;
+  auto embedding_device_cache = cache_analysis->embedding_device_cache_;
+  auto embedding_host_cache = cache_analysis->embedding_host_cache_;
+  MS_ERROR_IF_NULL(statistics_info);
+  MS_ERROR_IF_NULL(embedding_device_cache);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+
+  auto swap_indices_size = statistics_info->host_to_device_size_;
   if (swap_indices_size == 0) {
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-
-  auto host_cache_host_to_device_index =
-    embedding_cache_table_manager.embedding_host_cache_->host_to_device_index.get();
-  auto device_cache_host_to_device_ids =
-    embedding_cache_table_manager.embedding_device_cache_->host_to_device_ids.get();
+  auto host_cache_host_to_device_index = embedding_host_cache->host_to_device_index.get();
+  auto device_cache_host_to_device_ids = embedding_device_cache->host_to_device_ids.get();
   MS_ERROR_IF_NULL(host_cache_host_to_device_index);
   MS_ERROR_IF_NULL(device_cache_host_to_device_ids);
 
@@ -147,29 +106,26 @@ bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTa
   MS_ERROR_IF_NULL(hash_info.address.addr);
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
   MS_ERROR_IF_NULL(hash_info.host_address);
-  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto host_hash_table_addr = hash_info.host_address;
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
   RETURN_IF_FALSE_WITH_LOG(actor_->LookupLocalHostCache(embedding_size, swap_indices_size, host_hash_table_addr,
                                                         host_cache_host_to_device_index, swap_out_data.get()),
                            "Lookup local host cache failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyHostToDeviceAsync(embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_,
-                            swap_out_data.get(), swap_indices_size * embedding_size * sizeof(float), device_context_,
-                            stream_id_),
+    MemcpyHostToDeviceAsync(embedding_cache_table_manager.hash_swap_value_addr_, swap_out_data.get(),
+                            swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
     "Memcpy host to device asynchronously failed.");
   // Copy origin id to temp buffer of indices.
   RETURN_IF_FALSE_WITH_LOG(
-    MemcpyHostToDeviceAsync(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
-                            device_cache_host_to_device_ids, swap_indices_size * sizeof(int), device_context_,
-                            stream_id_),
+    MemcpyHostToDeviceAsync(embedding_cache_table_manager.hash_swap_index_addr_, device_cache_host_to_device_ids,
+                            swap_indices_size * sizeof(int), device_context_, stream_id_),
     "Memcpy host to device asynchronously failed.");
 
-  RETURN_IF_FALSE_WITH_LOG(
-    UpdateDeviceCache(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
-                      embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_, swap_indices_size,
-                      embedding_size, hash_table_addr, hash_info.device_address),
-    "Update device embedding cache failed.");
+  RETURN_IF_FALSE_WITH_LOG(UpdateDeviceCache(embedding_cache_table_manager.hash_swap_index_addr_,
+                                             embedding_cache_table_manager.hash_swap_value_addr_, swap_indices_size,
+                                             embedding_size, hash_table_addr, hash_info.device_address),
+                           "Update device embedding cache failed.");
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->device_res_manager_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
@@ -391,111 +347,6 @@ bool DeviceSparseEmbeddingOperation::EraseDeviceCache(void *ids, size_t ids_num,
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_erase_node_->fullname_with_scope() << " failed.";
     return false;
   }
-  return true;
-}
-
-bool DeviceSparseEmbeddingOperation::CheckCacheHit(const int *batch_ids, const size_t batch_ids_num, bool *in_device,
-                                                   size_t data_step) const {
-  MS_ERROR_IF_NULL(batch_ids);
-  MS_ERROR_IF_NULL(in_device);
-
-  size_t thread_num = batch_ids_num / kMaxIdsPerThread + 1;
-  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
-  std::thread threads[kMaxThreadNum];
-  size_t hash_hit_count[kMaxThreadNum] = {0};
-  size_t i = 0;
-  size_t offset = 0;
-
-  for (; i < thread_num; ++i) {
-    if (offset >= batch_ids_num) {
-      break;
-    }
-    size_t proc_len = batch_ids_num / thread_num + (i < (batch_ids_num % thread_num) ? 1 : 0);
-    threads[i] = std::thread(&DeviceSparseEmbeddingOperation::CheckCacheHitFunc, this, batch_ids + offset, proc_len,
-                             in_device + offset, hash_hit_count + i, data_step);
-    offset += proc_len;
-  }
-  if (offset != batch_ids_num) {
-    MS_LOG(WARNING) << "Check id in device inadequate, total:" << batch_ids_num << " checked:" << offset;
-  }
-
-  for (size_t j = 0; j < i; j++) {
-    threads[j].join();
-  }
-  for (size_t j = 0; j < i; j++) {
-    statistics_info_->hash_hit_count_ += hash_hit_count[j];
-  }
-  return true;
-}
-
-bool DeviceSparseEmbeddingOperation::CheckCacheHitFunc(const int *batch_ids, const size_t batch_ids_num,
-                                                       bool *in_device, size_t *hash_hit_count,
-                                                       size_t data_step) const {
-  MS_ERROR_IF_NULL(batch_ids);
-  MS_ERROR_IF_NULL(in_device);
-  MS_ERROR_IF_NULL(hash_hit_count);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
-  MS_ERROR_IF_NULL(device_hash_map);
-  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
-
-  // Count how many feature ids reside in the device cache.
-  for (size_t i = 0; i < batch_ids_num; ++i) {
-    auto iter = hash_id_to_index.find(batch_ids[i]);
-    if (iter != hash_id_to_index.end()) {
-      if (device_hash_map->hash_step(iter->second) != data_step) {
-        ++(*hash_hit_count);
-        device_hash_map->set_hash_step(iter->second, data_step);
-      }
-      in_device[i] = true;
-    }
-  }
-  return true;
-}
-
-bool DeviceSparseEmbeddingOperation::ParseDeviceData(int id, bool *need_swap_device_to_host,
-                                                     bool *need_swap_host_to_device, size_t data_step,
-                                                     size_t graph_running_step, bool *device_cache_need_wait_graph) {
-  MS_ERROR_IF_NULL(need_swap_device_to_host);
-  MS_ERROR_IF_NULL(need_swap_host_to_device);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
-  MS_ERROR_IF_NULL(device_hash_map);
-
-  int index;
-  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
-  const auto &iter = hash_id_to_index.find(id);
-  if (iter != hash_id_to_index.end()) {
-    *need_swap_device_to_host = false;
-    *need_swap_host_to_device = false;
-    index = iter->second;
-    if (device_hash_map->hash_step(index) != data_step) {
-      statistics_info_->hash_hit_count_++;
-      device_hash_map->set_hash_step(index, data_step);
-    }
-  } else {
-    int *device_to_host_index = embedding_cache_table_manager.embedding_device_cache_->device_to_host_index.get();
-    int *device_to_host_ids = embedding_cache_table_manager.embedding_device_cache_->device_to_host_ids.get();
-    int *host_to_device_ids = embedding_cache_table_manager.embedding_device_cache_->host_to_device_ids.get();
-    MS_ERROR_IF_NULL(host_to_device_ids);
-    auto tmp_device_to_host_size = statistics_info_->device_to_host_size_;
-    while (true) {
-      // Calculate the mapping of id to index.
-      index = device_hash_map->ParseData(id, device_to_host_index, device_to_host_ids, data_step, graph_running_step,
-                                         &statistics_info_->device_to_host_size_, device_cache_need_wait_graph);
-      if (index == INVALID_INDEX_VALUE) {
-        if (!actor_->WaitGraphRun()) {
-          return false;
-        }
-        continue;
-      }
-      host_to_device_ids[statistics_info_->host_to_device_size_] = id;
-      statistics_info_->host_to_device_size_++;
-      *need_swap_device_to_host = statistics_info_->device_to_host_size_ > tmp_device_to_host_size;
-      break;
-    }
-  }
-
   return true;
 }
 }  // namespace runtime

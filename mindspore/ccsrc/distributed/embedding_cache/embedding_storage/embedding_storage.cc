@@ -49,11 +49,6 @@ template <typename KeyType, typename ValueType, typename Allocator>
 void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAddress *device_address) {
   // 1. Get rank id.
 #if defined(__linux__) && defined(WITH_BACKEND)
-  if (!ps::PSContext::instance()->cache_enable() || !distributed::cluster::ClusterContext::instance()->initialized() ||
-      !ps::PSContext::instance()->is_server()) {
-    return;
-  }
-
   auto node = distributed::cluster::ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
   uint32_t rank_id = node->rank_id();

@@ -46,6 +46,8 @@ using mindspore::session::KernelGraph;
 using distributed::kMaxThreadNum;
 // Maximum number of feature ids processed per thread.
 using distributed::kMaxIdsPerThread;
+// Maximum number for retry find valid slot in device or host cache.
+constexpr size_t kMaxRetryNum = 12000;
 
 class DeviceEmbeddingOperation {
  public:
@@ -66,15 +68,19 @@ class DeviceEmbeddingOperation {
 
   // Analyze the hit/miss info of the local host cache and device cache, and calculate the swapping and
   // mapping information of the missing feature id that needs to be inserted into the cache.
-  virtual bool CountCacheMissIds(int *batch_ids, const size_t batch_ids_len, size_t data_step,
-                                 size_t graph_running_step, bool *device_cache_need_wait_graph,
-                                 bool *host_cache_need_wait_graph) = 0;
+  virtual bool AnalyseCache(int *batch_ids, const size_t batch_ids_num, size_t data_step,
+                            const std::atomic_ulong *graph_running_step, bool *device_cache_need_wait_graph,
+                            bool *host_cache_need_wait_graph, int *indices,
+                            EmbeddingDeviceCache *embedding_device_cache, EmbeddingHostCache *embedding_host_cache,
+                            EmbeddingCacheStatisticsInfo *statistics_info) {
+    return true;
+  }
 
   // Pull missing embeddings on the device cache from the local host.
-  virtual bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) = 0;
+  virtual bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) = 0;
 
   // Push non-hotspot embeddings on the device cache to the local host cache.
-  virtual bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) = 0;
+  virtual bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) = 0;
 
   // Get the id range of each server's embedding table slice.
   virtual void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
@@ -89,14 +95,20 @@ class DeviceEmbeddingOperation {
                                       size_t stream_id);
 
   // Get all modified ids.
-  mindspore::HashSet<int> modified_ids() const { return modified_ids_; }
+  const mindspore::HashSet<int> &modified_ids() const { return modified_ids_; }
 
  protected:
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
-  bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
+  bool ParseHostDataHostToDevice(int id, size_t data_step, size_t *cur_graph_running_step,
+                                 const std::atomic_ulong *latest_graph_running_step, bool *host_cache_need_wait_graph,
+                                 EmbeddingHostCache *embedding_host_cache,
+                                 EmbeddingCacheStatisticsInfo *statistics_info);
 
   // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
-  bool ParseHostDataDeviceToHost(size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
+  bool ParseHostDataDeviceToHost(size_t data_step, size_t *cur_graph_running_step,
+                                 const std::atomic_ulong *latest_graph_running_step, bool *host_cache_need_wait_graph,
+                                 EmbeddingDeviceCache *embedding_device_cache, EmbeddingHostCache *embedding_host_cache,
+                                 EmbeddingCacheStatisticsInfo *statistics_info);
 
   // Build a CNode of embedding cache look up kernel, which is used to look up local device
   // embedding cache.
@@ -134,7 +146,7 @@ class DeviceEmbeddingOperation {
   CNodePtr embedding_cache_update_node_{nullptr};
 
   // The feature ids that have been initialized already.
-  std::set<int> initialized_ids_;
+  mindspore::HashSet<int> initialized_ids_;
 
   // The feature ids whose embedding vectors are modified(trained).
   mindspore::HashSet<int> modified_ids_;

@@ -19,10 +19,11 @@
 #include <memory>
 #include <string>
 #include <condition_variable>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
-class PsDataChannel {
+class BACKEND_EXPORT PsDataChannel {
  public:
   PsDataChannel(const std::string &channel_name, size_t step_num)
       : channel_name_(channel_name),
@@ -39,9 +40,9 @@ class PsDataChannel {
   void ResetData() { data_ = nullptr; }
   void set_step_num(size_t step_num) { step_num_ = step_num; }
   void TryWakeChannel(bool force_wake = false);
+  void TryLockChannel();
 
  private:
-  void TryLockChannel();
   std::string channel_name_;
   // The step num of each epoch.
   size_t step_num_;

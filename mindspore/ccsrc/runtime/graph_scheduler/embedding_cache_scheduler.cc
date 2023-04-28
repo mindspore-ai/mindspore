@@ -41,7 +41,8 @@ bool CheckEnableEmbeddingCache() {
 }
 
 bool CheckEmbeddingCacheServer() {
-  return ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
+  return ps::PSContext::instance()->cache_enable() && distributed::cluster::ClusterContext::instance()->initialized() &&
+         ps::PSContext::instance()->is_server();
 }
 
 // Whether device address exist.
@@ -466,6 +467,7 @@ void EmbeddingCacheScheduler::Finalize(bool sync_embedding_table) {
     return;
   }
 
+  MS_LOG(INFO) << "Begin finalize EmbeddingCacheScheduler";
   if (sync_embedding_table) {
     SyncEmbeddingTable();
   }
@@ -475,12 +477,22 @@ void EmbeddingCacheScheduler::Finalize(bool sync_embedding_table) {
   bool finalize_remote = sync_embedding_table;
   embedding_cache_prefetch_actor_->Finalize(finalize_remote);
 
-  embedding_cache_table_manager.Finalize();
+  // Get or Create device context.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  DeviceContext *device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
+  embedding_cache_table_manager.Finalize(device_context);
 
   embedding_storage_manager.Clear();
 
   initialized_ = false;
   finalized_ = true;
+  MS_LOG(INFO) << "End finalize EmbeddingCacheScheduler";
 }
 }  // namespace runtime
 }  // namespace mindspore

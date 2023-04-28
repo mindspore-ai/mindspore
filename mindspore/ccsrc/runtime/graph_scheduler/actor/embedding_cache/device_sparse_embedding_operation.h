@@ -40,14 +40,11 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   bool Initialize() override;
 
-  bool CountCacheMissIds(int *batch_ids, const size_t batch_ids_num, size_t data_step, size_t graph_running_step,
-                         bool *device_cache_need_wait_graph, bool *host_cache_need_wait_graph) override;
-
   // Push non-hotspot embeddings on the device cache to the local host cache.
-  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) override;
+  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) override;
 
   // Pull missing embeddings on the device cache from the local host.
-  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) override;
+  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info, const CacheAnalysis *cache_analysis) override;
 
   // Get the id range of each server's embedding table slice.
   void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
@@ -79,18 +76,6 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Erase feature embeddings on device embedding cache.
   bool EraseDeviceCache(void *ids, size_t ids_num, void *embedding_cache, const DeviceAddress *embed_device_address);
-
-  // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
-  // slice corresponding to the process.
-  bool CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, bool *in_device, size_t data_step) const;
-
-  // Thread execution function of method 'CheckCacheHitOrOutRange'.
-  bool CheckCacheHitFunc(const int *batch_ids, const size_t batch_ids_len, bool *in_device, size_t *hash_hit_count,
-                         size_t data_step) const;
-
-  // Parse the hit and swap information of the currently preprocessed id in the device cache.
-  bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, size_t data_step,
-                       size_t graph_running_step, bool *device_cache_need_wait_graph);
 
   // The embedding cache erase kernel node(operator name: 'MapTensorErase').
   CNodePtr embedding_cache_erase_node_{nullptr};

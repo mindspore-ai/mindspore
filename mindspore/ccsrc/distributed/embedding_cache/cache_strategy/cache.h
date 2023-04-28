@@ -19,6 +19,7 @@
 
 #include <utility>
 #include <vector>
+#include <list>
 
 namespace mindspore {
 namespace distributed {
@@ -39,10 +40,16 @@ class Cache {
   virtual void Put(const KeyType &key, const ValueType &value) = 0;
 
   // Query the corresponding Value from the cache according to the Key. If the element exists, the corresponding Value
-  // is returned. If the element does not exist, an exception is thrown.
+  // is assigned to parameter value and return true. If the element does not exist, return false.
   // Access an element of the cache generally affects the location or order of the elements in the cache, depending
   // on different cache strategies.
-  virtual const ValueType &Get(const KeyType &key) = 0;
+  virtual bool Get(const KeyType &key, ValueType *value) = 0;
+
+  // Get the most recently used element.
+  virtual const Element &Front() const = 0;
+
+  // Get the least recently used element.
+  virtual const Element &Back() const = 0;
 
   // Query whether the element corresponding to a particular key exists in the cache.
   virtual bool Exists(const KeyType &key) const = 0;
@@ -60,6 +67,9 @@ class Cache {
 
   // Get the current number of elements in the cache.
   virtual size_t size() const = 0;
+
+  // Dump all elements in the cache.
+  virtual const std::list<Element> &Export() const = 0;
 
   // Get the maximum number of elements that the cache can hold.
   size_t capacity() const { return capacity_; }

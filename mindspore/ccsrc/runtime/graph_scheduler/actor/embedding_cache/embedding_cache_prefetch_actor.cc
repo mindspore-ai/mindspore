@@ -24,11 +24,17 @@
 #include "include/backend/distributed/rpc/tcp/constants.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_dense_embedding_operation.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_sparse_embedding_operation.h"
+#include "include/backend/distributed/embedding_cache/data_queue_manager.h"
 
 namespace mindspore {
 namespace runtime {
+using distributed::IdDataInfo;
+using distributed::IndexDataInfo;
+
+using distributed::DataQueueManager;
 using distributed::cluster::ClusterContext;
 using mindspore::session::KernelGraph;
+constexpr size_t kDefaultQueueCapacity = 128;
 
 namespace {
 // Generate unique inter process edge name, format:
@@ -127,6 +133,75 @@ void GenerateDistributionParallel(size_t size, T *output, Args... args) {
     threads[j].join();
   }
 }
+
+void DeduplicateId(UniqueIds *unique_ids) {
+  MS_EXCEPTION_IF_NULL(unique_ids);
+
+  constexpr size_t kMaxParallelNum = 32;
+  size_t parallel_num = unique_ids->multi_batch_data_.size();
+  if (parallel_num > kMaxParallelNum) {
+    MS_LOG(EXCEPTION) << "The parallel num: " << parallel_num
+                      << " can not be greater than max parallel num: " << kMaxParallelNum;
+  }
+  std::thread threads[kMaxParallelNum];
+
+  std::vector<mindspore::HashSet<int>> unique_batch_ids_sets(parallel_num);
+  auto unique_task = [&](int *origin_batch_ids, size_t proc_len, mindspore::HashSet<int> *unique_set) {
+    (void)std::for_each(origin_batch_ids, origin_batch_ids + proc_len,
+                        [&unique_set](int id) { (void)unique_set->insert(id); });
+  };
+
+  size_t i = 0;
+  for (; i < parallel_num; ++i) {
+    threads[i] = std::thread(unique_task, reinterpret_cast<int *>(unique_ids->multi_batch_data_.at(i)),
+                             unique_ids->multi_batch_size_.at(i), &unique_batch_ids_sets[i]);
+  }
+
+  for (size_t j = 0; j < i; j++) {
+    threads[j].join();
+  }
+
+  for (size_t k = 1; k < parallel_num; ++k) {
+    auto end_iter = unique_batch_ids_sets[k].end();
+    for (auto iter = unique_batch_ids_sets[k].begin(); iter != end_iter; ++iter) {
+      unique_batch_ids_sets[0].insert(*iter);
+    }
+  }
+  const auto &unique_ids_set = unique_batch_ids_sets.front();
+  unique_ids->ids_num_ = unique_ids_set.size();
+  unique_ids->ids_ = new int[unique_ids->ids_num_];
+  MS_EXCEPTION_IF_NULL(unique_ids->ids_);
+  size_t index = 0;
+  auto unique_ids_ptr = unique_ids->ids_;
+  (void)std::for_each(unique_ids_set.begin(), unique_ids_set.end(), [&](int id) { unique_ids_ptr[index++] = id; });
+}
+
+void TransformIdsToIndices(mindspore::HashMap<int, int> *unique_ids_to_indices, size_t batch_ids_num, int *batch_ids) {
+  auto change_id_to_index_func = [&](int *batch_ids_ptr, size_t proc_len) {
+    for (size_t i = 0; i < proc_len; i++) {
+      batch_ids_ptr[i] = (*unique_ids_to_indices)[batch_ids_ptr[i]];
+    }
+  };
+
+  size_t thread_num = batch_ids_num / kMaxIdsPerThread + 1;
+  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
+  std::thread threads[kMaxThreadNum];
+  size_t i = 0;
+  size_t offset = 0;
+
+  for (; i < thread_num; ++i) {
+    size_t proc_len = batch_ids_num / thread_num + (i < (batch_ids_num % thread_num) ? 1 : 0);
+    threads[i] = std::thread(change_id_to_index_func, batch_ids + offset, proc_len);
+    offset += proc_len;
+  }
+  if (offset != batch_ids_num) {
+    MS_LOG(WARNING) << "Check id in device inadequate, total:" << batch_ids_num << " checked:" << offset;
+  }
+
+  for (size_t j = 0; j < i; j++) {
+    threads[j].join();
+  }
+}
 }  // namespace
 
 void EmbeddingCachePrefetchActor::Initialize() {
@@ -181,7 +256,14 @@ void EmbeddingCachePrefetchActor::Finalize(bool finalize_remote) {
     return;
   }
 
-  running_ = false;
+  StopPrefetchCachePipeline();
+  for (const auto &item : channel_locks_) {
+    const auto &channel_ptr = item.second;
+    MS_EXCEPTION_IF_NULL(channel_ptr);
+    channel_ptr->TryWakeChannel(true);
+  }
+  WaitPrefetchCacheFinish();
+
   PsDataPrefetch::GetInstance().NotifyFinalize();
 
   if (finalize_remote) {
@@ -222,9 +304,23 @@ void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_n
     MS_LOG(INFO) << "Graph running waiting embedding table init end.";
   }
   graph_step_++;
-  set_channel_name(channel_name);
-  if (!PsDataPrefetch::GetInstance().TryWakeChannel(channel_name)) {
-    MS_LOG(EXCEPTION) << "TryWakeChannel failed, channel name: " << channel_name;
+  if (embedding_cache_table_manager.enable_pipeline()) {
+    if (channel_name != channel_name_) {
+      set_channel_name(channel_name);
+      // Create pipeline tasks for this channel
+      StartPrefetchCachePipeline(channel_name);
+    }
+    const auto &iter = channel_locks_.find(channel_name);
+    if (iter == channel_locks_.end()) {
+      MS_LOG(EXCEPTION) << "Can not find channel lock for channel: " << channel_name;
+    }
+    MS_EXCEPTION_IF_NULL(iter->second);
+    iter->second->TryWakeChannel();
+  } else {
+    set_channel_name(channel_name);
+    if (!PsDataPrefetch::GetInstance().TryWakeChannel(channel_name)) {
+      MS_LOG(EXCEPTION) << "TryWakeChannel failed, channel name: " << channel_name;
+    }
   }
   data_parser_.notify_one();
 }
@@ -249,61 +345,329 @@ void EmbeddingCachePrefetchActor::Run() {
 
   // Wait data channel ready.
   WaitDataChannelInit();
-
-  MS_LOG(INFO) << "Begin prefetching cache.";
-  while (running_) {
-    if (!PrefetchCache()) {
-      running_ = false;
-      // If prefetch cache failed, need to finalize data prefetch thread which is executing
-      // PsDataPrefetch::PrefetchData(), so as to the minddata can release resource normally.
-      PsDataPrefetch::GetInstance().NotifyFinalize();
-    }
-  }
-  MS_LOG(INFO) << "End prefetching cache.";
 }
 
-bool EmbeddingCachePrefetchActor::PrefetchCache() {
-  // 1. Acquire batch ids
-  void *data = nullptr;
-  RETURN_IF_FALSE_WITH_LOG(PsDataPrefetch::GetInstance().QueryData(channel_name_, &data), "Query input data failed.");
+void EmbeddingCachePrefetchActor::CreateChannelLock(const std::string &channel_name) {
+  if (channel_locks_.find(channel_name) != channel_locks_.end()) {
+    return;
+  }
+  auto sink_size = DataQueueManager::GetInstance().GetSinkSize(channel_name);
+  channel_locks_.emplace(channel_name, std::make_shared<PsDataChannel>(channel_name, sink_size));
+}
 
-  if (data == nullptr) {
-    MS_LOG(INFO) << "There is no input data of dataset channel name:" << channel_name_;
-    std::unique_lock<std::mutex> locker(data_mutex_);
-    const int64_t longest_time_to_wait = 100;
-    (void)data_parser_.wait_for(locker, std::chrono::milliseconds(longest_time_to_wait));
-    return true;
+void EmbeddingCachePrefetchActor::CreateBlockQueue(const std::string &channel_name) {
+  auto unique_ids_queue = std::make_shared<BlockingQueue<UniqueIds>>(kDefaultQueueCapacity);
+  auto cache_analysis_queue = std::make_shared<BlockingQueue<CacheAnalysis>>(kDefaultQueueCapacity);
+  auto ids_and_indices_queue = std::make_shared<BlockingQueue<IdsAndIndices>>(kDefaultQueueCapacity);
+  (void)channel_to_queues_.emplace(channel_name,
+                                   std::make_tuple(unique_ids_queue, cache_analysis_queue, ids_and_indices_queue));
+}
+
+void EmbeddingCachePrefetchActor::StartPrefetchCachePipeline(const std::string &channel_name) {
+  MS_LOG(INFO) << "Begin StartPrefetchCachePipeline for channel name: " << channel_name;
+  std::lock_guard<std::mutex> lock(pipeline_mutex_);
+  if (pipeline_stages_.find(channel_name) != pipeline_stages_.end()) {
+    return;
   }
 
-  RETURN_IF_FALSE_WITH_LOG(IncreaseStep(), "Increase step failed.");
-  auto data_size = PsDataPrefetch::GetInstance().data_size(channel_name_);
-  if (data_size == 0) {
-    MS_LOG(ERROR) << "The data size of batch ids can not be zero.";
-    return false;
+  CreateChannelLock(channel_name);
+  CreateBlockQueue(channel_name);
+
+  auto thread_list = std::make_shared<std::vector<std::thread>>(kPipelineStageNum);
+  pipeline_stages_.emplace(channel_name, thread_list);
+
+  thread_list->at(kIndex0) = std::thread(&EmbeddingCachePrefetchActor::UniqueIdsTask, this, channel_name);
+  thread_list->at(kIndex1) = std::thread(&EmbeddingCachePrefetchActor::AnalyseCacheTask, this, channel_name);
+  thread_list->at(kIndex2) = std::thread(&EmbeddingCachePrefetchActor::UpdateCacheTask, this, channel_name);
+  thread_list->at(kIndex3) = std::thread(&EmbeddingCachePrefetchActor::TransformIdsToIndicesTask, this, channel_name);
+  MS_LOG(INFO) << "End StartPrefetchCachePipeline for channel name: " << channel_name;
+}
+
+void EmbeddingCachePrefetchActor::StopPrefetchCachePipeline() {
+  MS_LOG(INFO) << "Begin StopPrefetchCachePipeline";
+  std::lock_guard<std::mutex> lock(pipeline_mutex_);
+  running_ = false;
+  DataQueueManager::GetInstance().CloseAllQueues();
+  for (const auto &item : channel_to_queues_) {
+    const BlockingQueueTuple &queues_tuple = item.second;
+    const auto &unique_ids_queue = std::get<std::shared_ptr<BlockingQueue<UniqueIds>>>(queues_tuple);
+    MS_EXCEPTION_IF_NULL(unique_ids_queue);
+    unique_ids_queue->Close();
+
+    const auto &cache_analysis_queue = std::get<std::shared_ptr<BlockingQueue<CacheAnalysis>>>(queues_tuple);
+    MS_EXCEPTION_IF_NULL(cache_analysis_queue);
+    cache_analysis_queue->Close();
+
+    const auto &ids_and_indices_queue = std::get<std::shared_ptr<BlockingQueue<IdsAndIndices>>>(queues_tuple);
+    MS_EXCEPTION_IF_NULL(ids_and_indices_queue);
+    ids_and_indices_queue->Close();
   }
-  auto batch_ids = reinterpret_cast<int *>(data);
-  auto batch_ids_num = data_size / sizeof(int);
-  auto ret = memset_s(&statistics_info_, sizeof(statistics_info_), 0, sizeof(statistics_info_));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Memset for cache statistics info failed, errno[" << ret << "]";
-    return false;
+  MS_LOG(INFO) << "End StopPrefetchCachePipeline";
+}
+
+void EmbeddingCachePrefetchActor::WaitPrefetchCacheFinish() {
+  std::lock_guard<std::mutex> lock(pipeline_mutex_);
+  for (auto &item : pipeline_stages_) {
+    const std::string &channel_name = item.first;
+    MS_LOG(INFO) << "Begin stop pipeline for channel: " << channel_name;
+    auto stage_threads = item.second;
+    MS_EXCEPTION_IF_NULL(stage_threads);
+    for (size_t i = 0; i < kPipelineStageNum; ++i) {
+      if (stage_threads->at(i).joinable()) {
+        stage_threads->at(i).join();
+      }
+    }
+    MS_LOG(INFO) << "End stop pipeline for channel: " << channel_name;
+  }
+}
+
+void EmbeddingCachePrefetchActor::UniqueIdsTask(const std::string &channel_name) {
+  const auto &iter = channel_locks_.find(channel_name);
+  if (iter == channel_locks_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find channel lock for channel: " << channel_name;
+  }
+  auto channel_lock = iter->second;
+  MS_EXCEPTION_IF_NULL(channel_lock);
+
+  const auto &id_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name).first;
+  MS_EXCEPTION_IF_NULL(id_data_queue);
+
+  const auto &queue_iter = channel_to_queues_.find(channel_name);
+  if (queue_iter == channel_to_queues_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find queue for channel: " << channel_name;
+  }
+  const auto &unique_ids_queue = std::get<std::shared_ptr<BlockingQueue<UniqueIds>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(unique_ids_queue);
+
+  size_t sink_size = DataQueueManager::GetInstance().GetSinkSize(channel_name);
+  size_t multi_batch_counter = 0;
+  UniqueIds *unique_ids = nullptr;
+  while (running_) {
+    IdDataInfo *data = id_data_queue->Pop();
+    if (!running_) {
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(data);
+    int *batch_ids = reinterpret_cast<int *>(data->data_);
+    if (batch_ids) {
+      // Lock in first stage to support multi-channel case for real input data.
+      channel_lock->TryLockChannel();
+      MS_EXCEPTION_IF_CHECK_FAIL(IncreaseStep(), "Increase step failed.");
+    }
+
+    if (data->end_of_file_ || data->end_of_epoch_) {
+      // Push empty data for epoch or file end flag.
+      UniqueIds *empty_unique_ids = new UniqueIds();
+      MS_EXCEPTION_IF_NULL(empty_unique_ids);
+      empty_unique_ids->end_of_epoch_ = data->end_of_epoch_;
+      empty_unique_ids->end_of_file_ = data->end_of_file_;
+      unique_ids_queue->Push(empty_unique_ids);
+      delete data;
+      continue;
+    }
+
+    if (unique_ids == nullptr) {
+      unique_ids = new UniqueIds();
+      MS_EXCEPTION_IF_NULL(unique_ids);
+    }
+
+    ++multi_batch_counter;
+    if (multi_batch_counter < sink_size &&
+        multi_batch_counter % embedding_cache_table_manager.multi_batch_threshold_ != 0) {
+      unique_ids->multi_batch_data_.push_back(batch_ids);
+      unique_ids->multi_batch_size_.push_back(data->size_ / sizeof(int));
+      unique_ids->multi_batch_items_.push_back(data->items_);
+      continue;
+    }
+    unique_ids->multi_batch_data_.push_back(batch_ids);
+    unique_ids->multi_batch_size_.push_back(data->size_ / sizeof(int));
+    unique_ids->multi_batch_items_.push_back(data->items_);
+
+    if (multi_batch_counter == sink_size) {
+      multi_batch_counter = 0;
+    }
+
+    // Unique for each batch and store unique ids
+    DeduplicateId(unique_ids);
+    // Push to next stage pipeline queue.
+    unique_ids->data_step_ = data_step_;
+
+    unique_ids_queue->Push(unique_ids);
+    unique_ids = nullptr;
+    delete data;
+  }
+}
+
+void EmbeddingCachePrefetchActor::AnalyseCacheTask(const std::string &channel_name) {
+  const auto &queue_iter = channel_to_queues_.find(channel_name);
+  if (queue_iter == channel_to_queues_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find queue for channel: " << channel_name;
   }
 
-  // 2. Count cache miss ids.
-  RETURN_IF_FALSE_WITH_LOG(emb_ops_->CountCacheMissIds(batch_ids, batch_ids_num, data_step_, graph_running_step_,
-                                                       &device_cache_need_wait_graph_, &host_cache_need_wait_graph_),
-                           "Count cache miss ids failed.");
+  const auto &unique_ids_queue = std::get<std::shared_ptr<BlockingQueue<UniqueIds>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(unique_ids_queue);
+  const auto &cache_analysis_queue = std::get<std::shared_ptr<BlockingQueue<CacheAnalysis>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(cache_analysis_queue);
 
-  if ((device_cache_need_wait_graph_ || host_cache_need_wait_graph_) && (!WaitGraphRun())) {
-    MS_LOG(ERROR) << "Cache prefetching waits graph finish failed.";
-    return false;
+  while (running_) {
+    UniqueIds *unique_ids = unique_ids_queue->Pop();
+    if (!running_) {
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(unique_ids);
+    if (unique_ids->end_of_file_ || unique_ids->end_of_epoch_) {
+      // Push empty data for epoch or file end flag.
+      CacheAnalysis *cache_analysis = new CacheAnalysis();
+      MS_EXCEPTION_IF_NULL(cache_analysis);
+      cache_analysis->end_of_epoch_ = unique_ids->end_of_epoch_;
+      cache_analysis->end_of_file_ = unique_ids->end_of_file_;
+      cache_analysis_queue->Push(cache_analysis);
+      delete unique_ids;
+      continue;
+    }
+    size_t unique_ids_num = unique_ids->ids_num_;
+    int *indices = new int[unique_ids_num];
+    MS_EXCEPTION_IF_NULL(indices);
+
+    EmbeddingDeviceCache *embedding_device_cache = new EmbeddingDeviceCache(unique_ids_num);
+    MS_EXCEPTION_IF_NULL(embedding_device_cache);
+    EmbeddingHostCache *embedding_host_cache = new EmbeddingHostCache(unique_ids_num);
+    MS_EXCEPTION_IF_NULL(embedding_host_cache);
+    EmbeddingCacheStatisticsInfo *statistics_info = new EmbeddingCacheStatisticsInfo();
+    MS_EXCEPTION_IF_NULL(statistics_info);
+
+    // Analyse cache hit/miss
+    if (!emb_ops_->AnalyseCache(unique_ids->ids_, unique_ids_num, unique_ids->data_step_, &graph_step_,
+                                &device_cache_need_wait_graph_, &host_cache_need_wait_graph_, indices,
+                                embedding_device_cache, embedding_host_cache, statistics_info)) {
+      MS_LOG(ERROR) << "Analyse cache failed.";
+      StopPrefetchCachePipeline();
+      return;
+    }
+
+    // Push analyse result to update cache queue
+    CacheAnalysis *cache_analysis =
+      new CacheAnalysis(embedding_device_cache, embedding_host_cache, statistics_info, unique_ids, indices,
+                        unique_ids->end_of_epoch_, unique_ids->end_of_file_);
+    MS_EXCEPTION_IF_NULL(cache_analysis);
+    cache_analysis_queue->Push(cache_analysis);
+  }
+}
+
+void EmbeddingCachePrefetchActor::UpdateCacheTask(const std::string &channel_name) {
+  const auto &queue_iter = channel_to_queues_.find(channel_name);
+  if (queue_iter == channel_to_queues_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find queue for channel: " << channel_name;
   }
 
-  // 3. If the device cache does not reach 100% hit rate, the cache needs to be updated.
-  RETURN_IF_FALSE_WITH_LOG(UpdateCache(), "Update local cache failed.");
+  const auto &cache_analysis_queue = std::get<std::shared_ptr<BlockingQueue<CacheAnalysis>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(cache_analysis_queue);
 
-  RETURN_IF_FALSE_WITH_LOG(PsDataPrefetch::GetInstance().FinalizeData(channel_name_), "Finalize data failed.");
-  return true;
+  const auto &ids_and_indices_queue = std::get<std::shared_ptr<BlockingQueue<IdsAndIndices>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(ids_and_indices_queue);
+
+  while (running_) {
+    CacheAnalysis *cache_analysis = cache_analysis_queue->Pop();
+    if (!running_) {
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(cache_analysis);
+    if (cache_analysis->end_of_file_ || cache_analysis->end_of_epoch_) {
+      // Push empty data for epoch end flag.
+      IdsAndIndices *ids_and_indices = new IdsAndIndices();
+      MS_EXCEPTION_IF_NULL(ids_and_indices);
+      ids_and_indices->end_of_epoch_ = cache_analysis->end_of_epoch_;
+      ids_and_indices->end_of_file_ = cache_analysis->end_of_file_;
+      ids_and_indices_queue->Push(ids_and_indices);
+      delete cache_analysis;
+      continue;
+    }
+
+    for (const auto &item : embedding_cache_table_manager.hash_tables_) {
+      const auto &hash_info = item.second;
+      MS_EXCEPTION_IF_CHECK_FAIL(PushCacheFromLocalHostToRemote(hash_info, cache_analysis),
+                                 "Push cache from local host to remote failed.");
+      MS_EXCEPTION_IF_CHECK_FAIL(emb_ops_->PushCacheFromDeviceToLocalHost(hash_info, cache_analysis),
+                                 "Push cache from device to local host failed.");
+      MS_EXCEPTION_IF_CHECK_FAIL(InitLocalCacheForNewIds(hash_info, cache_analysis),
+                                 "Initialize the local cache values using random generator.");
+      MS_EXCEPTION_IF_CHECK_FAIL(PullCacheFromRemoteToLocalHost(hash_info, cache_analysis),
+                                 "Pull cache from remote to local host failed.");
+      MS_EXCEPTION_IF_CHECK_FAIL(emb_ops_->PullCacheFromLocalHostToDevice(hash_info, cache_analysis),
+                                 "Pull cache from local host to device failed.");
+    }
+
+    IdsAndIndices *ids_and_indices = new IdsAndIndices(cache_analysis->unique_ids_, cache_analysis->indices_,
+                                                       cache_analysis->end_of_epoch_, cache_analysis->end_of_file_);
+
+    ids_and_indices_queue->Push(ids_and_indices);
+
+    delete cache_analysis->embedding_host_cache_;
+    delete cache_analysis->embedding_device_cache_;
+    delete cache_analysis->statistics_info_;
+    delete cache_analysis;
+  }
+}
+
+void EmbeddingCachePrefetchActor::TransformIdsToIndicesTask(const std::string &channel_name) {
+  const auto &queue_iter = channel_to_queues_.find(channel_name);
+  if (queue_iter == channel_to_queues_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find queue for channel: " << channel_name;
+  }
+  const auto &ids_and_indices_queue = std::get<std::shared_ptr<BlockingQueue<IdsAndIndices>>>(queue_iter->second);
+  MS_EXCEPTION_IF_NULL(ids_and_indices_queue);
+
+  const auto &index_data_queue = DataQueueManager::GetInstance().GetDataQueue(channel_name).second;
+  MS_EXCEPTION_IF_NULL(index_data_queue);
+  while (running_) {
+    IdsAndIndices *ids_and_indices = ids_and_indices_queue->Pop();
+    if (!running_) {
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(ids_and_indices);
+    // Push empty data for epoch end flag.
+    if (ids_and_indices->end_of_file_ || ids_and_indices->end_of_epoch_) {
+      IndexDataInfo *indices_info = new IndexDataInfo();
+      MS_EXCEPTION_IF_NULL(indices_info);
+      indices_info->end_of_epoch_ = ids_and_indices->end_of_epoch_;
+      indices_info->end_of_file_ = ids_and_indices->end_of_file_;
+      index_data_queue->Push(indices_info);
+      delete ids_and_indices;
+      continue;
+    }
+
+    auto *unique_ids = ids_and_indices->unique_ids_;
+    MS_EXCEPTION_IF_NULL(unique_ids);
+    auto *unique_ids_ptr = unique_ids->ids_;
+    auto unique_ids_num = unique_ids->ids_num_;
+    auto *unique_indices_ptr = ids_and_indices->indices_;
+
+    mindspore::HashMap<int, int> unique_ids_to_indices;
+    for (size_t i = 0; i < unique_ids_num; i++) {
+      (void)unique_ids_to_indices.try_emplace(unique_ids_ptr[i], unique_indices_ptr[i]);
+    }
+
+    for (size_t i = 0; i < unique_ids->multi_batch_data_.size(); ++i) {
+      if (!embedding_cache_table_manager.is_sparse_format()) {
+        TransformIdsToIndices(&unique_ids_to_indices, unique_ids->multi_batch_size_.at(i),
+                              reinterpret_cast<int *>(unique_ids->multi_batch_data_.at(i)));
+      }
+      IndexDataInfo *indices_info =
+        new IndexDataInfo(unique_ids->multi_batch_data_.at(i), unique_ids->multi_batch_items_.at(i),
+                          ids_and_indices->end_of_epoch_, ids_and_indices->end_of_file_);
+
+      if (unique_ids->multi_batch_data_.at(i) != unique_ids->multi_batch_items_.at(i)->at(0).data_ptr) {
+        MS_LOG(EXCEPTION) << "The id data ptr is valid";
+      }
+
+      index_data_queue->Push(indices_info);
+    }
+
+    delete[] ids_and_indices->unique_ids_->ids_;
+    delete ids_and_indices->unique_ids_;
+    delete[] ids_and_indices->indices_;
+    delete ids_and_indices;
+  }
 }
 
 bool EmbeddingCachePrefetchActor::IncreaseStep() {
@@ -339,31 +703,14 @@ bool EmbeddingCachePrefetchActor::WaitGraphRun() {
 }
 
 bool EmbeddingCachePrefetchActor::ResetEmbeddingHashMap() {
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  const auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
+  const auto &device_hash_map = embedding_cache_table_manager.device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  const auto &host_hash_map = embedding_cache_table_manager.embedding_host_cache_->host_hash_map_;
+  const auto &host_hash_map = embedding_cache_table_manager.host_hash_map_;
   MS_ERROR_IF_NULL(host_hash_map);
   device_hash_map->Reset();
   host_hash_map->Reset();
   device_cache_need_wait_graph_ = false;
   host_cache_need_wait_graph_ = false;
-  return true;
-}
-
-bool EmbeddingCachePrefetchActor::UpdateCache() {
-  for (const auto &item : embedding_cache_table_manager.hash_tables_) {
-    auto hash_info = item.second;
-    RETURN_IF_FALSE_WITH_LOG(PushCacheFromLocalHostToRemote(hash_info), "Push cache from local host to remote failed.");
-    RETURN_IF_FALSE_WITH_LOG(emb_ops_->PushCacheFromDeviceToLocalHost(hash_info),
-                             "Push cache from device to local host failed.");
-    RETURN_IF_FALSE_WITH_LOG(InitLocalCacheForNewIds(hash_info),
-                             "Initialize the local cache values using random generator.");
-    RETURN_IF_FALSE_WITH_LOG(PullCacheFromRemoteToLocalHost(hash_info), "Pull cache from remote to local host failed.");
-    RETURN_IF_FALSE_WITH_LOG(emb_ops_->PullCacheFromLocalHostToDevice(hash_info),
-                             "Pull cache from local host to device failed.");
-  }
   return true;
 }
 
@@ -383,14 +730,14 @@ void EmbeddingCachePrefetchActor::LookupEmbeddingTable(size_t indices_num, size_
       auto ret = memcpy_s(output_addr, (indices_num - i) * lens, input_addr + pos, lens);
       if (ret != EOK) {
         MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
-        running_ = false;
+        StopPrefetchCachePipeline();
         return;
       }
     } else {
       auto ret = memset_s(output_addr, (indices_num - i) * lens, 0, lens);
       if (ret != EOK) {
         MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
-        running_ = false;
+        StopPrefetchCachePipeline();
         return;
       }
     }
@@ -398,22 +745,28 @@ void EmbeddingCachePrefetchActor::LookupEmbeddingTable(size_t indices_num, size_
   }
 }
 
-bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info) {
-  auto swap_indices_size = statistics_info_.host_to_server_size_;
+bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info,
+                                                                 const CacheAnalysis *cache_analysis) {
+  MS_ERROR_IF_NULL(cache_analysis);
+  auto statistics_info = cache_analysis->statistics_info_;
+  auto embedding_host_cache = cache_analysis->embedding_host_cache_;
+  MS_ERROR_IF_NULL(statistics_info);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+
+  auto swap_indices_size = statistics_info->host_to_server_size_;
   if (swap_indices_size == 0) {
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  auto host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
+  auto host_to_server_ids = embedding_host_cache->host_to_server_ids.get();
   MS_ERROR_IF_NULL(host_to_server_ids);
-  auto host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
+  auto host_to_server_index = embedding_host_cache->host_to_server_index.get();
   MS_ERROR_IF_NULL(host_to_server_index);
 
   std::vector<float> swap_out_data;
   auto embedding_size = hash_info.embedding_size;
   swap_out_data.resize(swap_indices_size * embedding_size);
-  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto host_hash_table_addr = hash_info.host_address;
 
   RETURN_IF_FALSE_WITH_LOG(LookupLocalHostCache(embedding_size, swap_indices_size, host_hash_table_addr,
                                                 host_to_server_index, swap_out_data.data()),
@@ -424,19 +777,25 @@ bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTable
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info) {
-  auto swap_indices_size = statistics_info_.server_to_host_size_;
+bool EmbeddingCachePrefetchActor::PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info,
+                                                                 const CacheAnalysis *cache_analysis) {
+  MS_ERROR_IF_NULL(cache_analysis);
+  auto statistics_info = cache_analysis->statistics_info_;
+  auto embedding_host_cache = cache_analysis->embedding_host_cache_;
+  MS_ERROR_IF_NULL(statistics_info);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+
+  auto swap_indices_size = statistics_info->server_to_host_size_;
   if (swap_indices_size == 0) {
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  auto server_to_host_ids = embedding_cache_table_manager.embedding_host_cache_->server_to_host_ids.get();
+  auto server_to_host_ids = embedding_host_cache->server_to_host_ids.get();
   MS_ERROR_IF_NULL(server_to_host_ids);
-  auto server_to_host_index = embedding_cache_table_manager.embedding_host_cache_->server_to_host_index.get();
+  auto server_to_host_index = embedding_host_cache->server_to_host_index.get();
   MS_ERROR_IF_NULL(server_to_host_index);
 
-  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto host_hash_table_addr = hash_info.host_address;
   MS_ERROR_IF_NULL(host_hash_table_addr);
   auto embedding_size = hash_info.embedding_size;
   std::vector<float> lookup_result(swap_indices_size * embedding_size, 0);
@@ -450,14 +809,20 @@ bool EmbeddingCachePrefetchActor::PullCacheFromRemoteToLocalHost(const HashTable
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &hash_info) {
-  auto new_id_size = statistics_info_.new_id_size_;
+bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &hash_info,
+                                                          const CacheAnalysis *cache_analysis) {
+  MS_ERROR_IF_NULL(cache_analysis);
+  auto statistics_info = cache_analysis->statistics_info_;
+  auto embedding_host_cache = cache_analysis->embedding_host_cache_;
+  MS_ERROR_IF_NULL(statistics_info);
+  MS_ERROR_IF_NULL(embedding_host_cache);
+
+  auto new_id_size = statistics_info->new_id_size_;
   if (new_id_size == 0) {
     return true;
   }
 
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  auto new_id_index = embedding_cache_table_manager.embedding_host_cache_->new_id_index.get();
+  auto new_id_index = embedding_host_cache->new_id_index.get();
   MS_ERROR_IF_NULL(new_id_index);
 
   // Compute the feature values size needed to be initialized.
@@ -477,7 +842,7 @@ bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &h
   }
 
   // Insert initialized feature values into the local hash cache.
-  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto host_hash_table_addr = hash_info.host_address;
   MS_ERROR_IF_NULL(host_hash_table_addr);
   RETURN_IF_FALSE_WITH_LOG(InsertLocalHostCache(embedding_size, IntToSize(new_id_size), new_id_index,
                                                 init_result.data(), host_hash_table_addr),
@@ -512,7 +877,7 @@ bool EmbeddingCachePrefetchActor::InsertLocalHostCache(size_t embedding_size, si
           memcpy_s(hash_table_addr + index * embedding_size, dest_len, insert_data + i * embedding_size, copy_len);
         if (ret != EOK) {
           MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
-          running_ = false;
+          StopPrefetchCachePipeline();
           return;
         }
       }
@@ -923,11 +1288,9 @@ void EmbeddingCachePrefetchActor::SyncEmbeddingTable() {
 }
 
 bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_);
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_host_cache_->host_hash_map_);
-  const auto &hash_id_to_index =
-    embedding_cache_table_manager.embedding_host_cache_->host_hash_map_->hash_id_to_index();
-  size_t swap_indices_lens = hash_id_to_index.size();
+  MS_ERROR_IF_NULL(embedding_cache_table_manager.host_hash_map_);
+  const auto &ids_indices_pairs = embedding_cache_table_manager.host_hash_map_->Export();
+  size_t swap_indices_lens = ids_indices_pairs.size();
   if (swap_indices_lens == 0) {
     return true;
   }
@@ -939,19 +1302,22 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
   size_t idx = 0;
   MS_EXCEPTION_IF_NULL(emb_ops_);
   const auto &modified_ids = emb_ops_->modified_ids();
-  for (const auto &item : hash_id_to_index) {
+  for (const auto &item : ids_indices_pairs) {
     if (modified_ids.find(item.first) != modified_ids.end()) {
       host_to_server_ids_ptr[idx] = item.first;
       host_to_server_indices_ptr[idx++] = item.second;
     }
   }
   swap_indices_lens = idx;
+  if (swap_indices_lens == 0) {
+    return true;
+  }
   for (const auto &item : embedding_cache_table_manager.hash_tables_) {
     const auto &hash_info = item.second;
     std::vector<float> swap_out_data;
     auto embedding_size = hash_info.embedding_size;
     swap_out_data.resize(swap_indices_lens * embedding_size);
-    auto host_hash_table_addr = hash_info.host_address.get();
+    auto host_hash_table_addr = hash_info.host_address;
     MS_ERROR_IF_NULL(host_hash_table_addr);
     RETURN_IF_FALSE(LookupLocalHostCache(embedding_size, swap_indices_lens, host_hash_table_addr,
                                          host_to_server_indices_ptr.get(), swap_out_data.data()));
@@ -965,11 +1331,10 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
 }
 
 bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
-  MS_ERROR_IF_NULL(embedding_cache_table_manager.embedding_device_cache_);
-  const auto &device_hash_map = embedding_cache_table_manager.embedding_device_cache_->device_hash_map_;
+  const auto &device_hash_map = embedding_cache_table_manager.device_hash_map_;
   MS_ERROR_IF_NULL(device_hash_map);
-  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
-  size_t swap_indices_lens = hash_id_to_index.size();
+  const auto &ids_indices_pairs = device_hash_map->Export();
+  size_t swap_indices_lens = ids_indices_pairs.size();
   if (swap_indices_lens == 0) {
     return true;
   }
@@ -980,7 +1345,7 @@ bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
   std::unique_ptr<int[]> device_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
   MS_ERROR_IF_NULL(device_to_server_indices_ptr);
   size_t idx = 0;
-  for (const auto &item : hash_id_to_index) {
+  for (const auto &item : ids_indices_pairs) {
     device_to_server_ids_ptr[idx] = item.first;
     device_to_server_indices_ptr[idx++] = item.second;
   }
@@ -1026,12 +1391,12 @@ bool EmbeddingCachePrefetchActor::FinalizeRemote() {
   return true;
 }
 
-std::string EmbeddingCachePrefetchActor::channel_name() {
+const std::string &EmbeddingCachePrefetchActor::channel_name() {
   std::lock_guard<std::mutex> locker(channel_mutex_);
   return channel_name_;
 }
 
-void EmbeddingCachePrefetchActor::set_channel_name(const std::string channel_name) {
+void EmbeddingCachePrefetchActor::set_channel_name(const std::string &channel_name) {
   if (channel_name_ == channel_name) {
     return;
   }

@@ -173,8 +173,7 @@ void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const KeyT
   MS_EXCEPTION_IF_NULL(this->cache_);
 
   for (size_t i = 0; i < key_num; i++) {
-    if (this->cache_->Exists(keys[i])) {
-      indices_in_cache[i] = this->cache_->Get(keys[i]);
+    if (this->cache_->Get(keys[i], indices_in_cache + i)) {
       continue;
     }
 

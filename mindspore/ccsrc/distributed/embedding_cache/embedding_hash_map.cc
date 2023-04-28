@@ -15,39 +15,38 @@
  */
 
 #include "include/backend/distributed/embedding_cache/embedding_hash_map.h"
+#include "distributed/embedding_cache/cache_strategy/lru_cache.h"
 
 namespace mindspore {
 namespace distributed {
-EmbeddingHashMap::EmbeddingHashMap(size_t hash_count, size_t hash_capacity)
-    : hash_count_(hash_count),
-      hash_capacity_(hash_capacity),
-      current_pos_(0),
-      current_batch_start_pos_(0),
-      graph_running_index_num_(0),
-      graph_running_index_pos_(0),
-      expired_element_full_(false) {
+EmbeddingHashMap::EmbeddingHashMap(size_t hash_capacity) : hash_capacity_(hash_capacity), current_pos_(0) {
   hash_map_elements_.resize(hash_capacity);
   // In multi-device mode, embedding table are distributed on different devices by id interval,
-  // and ids outside the range of local device will use the front and back positions of the table,
-  // the positions are reserved for this.
+  // and ids outside the range of local device will use the front and back positions of the table(for Ascend platform,
+  // out-of-range ids will be Rectified by ReLU and Minimal operaotrs), so these two positions should be reserved for
+  // out-of-range ids, otherwise, the in range ids' embedding will be dirtied when optimizer updates the embeddings of
+  // out-of-range ids.
   hash_map_elements_.front().set_step(SIZE_MAX);
   hash_map_elements_.back().set_step(SIZE_MAX);
-  graph_running_index_ = std::make_unique<int[]>(hash_capacity);
+  valid_capacity_ = hash_capacity > kMinimumCapacity ? (hash_capacity - kMinimumCapacity) : 0;
+  if (valid_capacity_ == 0) {
+    MS_LOG(ERROR) << "The invalid capacity is zero, please enlarge the capacity.";
+  }
+  ids_to_indices_ = std::make_unique<LRUCache<int, int>>(valid_capacity_);
 }
 
-size_t EmbeddingHashMap::hash_step(const int hash_index) const {
-  return hash_map_elements_[IntToSize(hash_index)].step_;
-}
+size_t EmbeddingHashMap::hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
 
 void EmbeddingHashMap::set_hash_step(const int hash_index, const size_t step) {
-  hash_map_elements_[IntToSize(hash_index)].set_step(step);
+  hash_map_elements_[hash_index].set_step(step);
 }
-
-// Get the id -> index mapping.
-const mindspore::HashMap<int, int> &EmbeddingHashMap::hash_id_to_index() const { return hash_id_to_index_; }
 
 // Get capacity of hash map.
 size_t EmbeddingHashMap::hash_capacity() const { return hash_capacity_; }
+
+bool EmbeddingHashMap::GetIndex(const int id, int *index) const { return ids_to_indices_->Get(id, index); }
+
+const std::list<EmbeddingHashMap::Element> &EmbeddingHashMap::Export() const { return ids_to_indices_->Export(); }
 
 int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *const swap_out_ids,
                                 const size_t data_step, const size_t graph_running_step, size_t *const swap_out_size,
@@ -56,110 +55,95 @@ int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *co
   MS_EXCEPTION_IF_NULL(swap_out_ids);
   MS_EXCEPTION_IF_NULL(swap_out_size);
   bool need_swap = false;
-  auto hash_index = FindInsertionPos(data_step, graph_running_step, &need_swap, need_wait_graph);
-  if (hash_index == INVALID_INDEX_VALUE) {
+  int swap_out_id;
+  auto hash_index = FindInsertionPos(data_step, graph_running_step, &need_swap, need_wait_graph, &swap_out_id);
+  if (hash_index == kInvalidIndexValue) {
     return hash_index;
   }
 
   if (!need_swap) {
-    hash_count_++;
-    (void)hash_id_to_index_.emplace(id, hash_index);
-    hash_map_elements_[hash_index].set_id(id);
+    ids_to_indices_->Put(id, hash_index);
     hash_map_elements_[hash_index].set_step(data_step);
     return hash_index;
   }
 
   swap_out_index[*swap_out_size] = hash_index;
-  swap_out_ids[*swap_out_size] = hash_map_elements_[hash_index].id_;
-  (*swap_out_size)++;
-  (void)hash_id_to_index_.erase(hash_map_elements_[hash_index].id_);
-  (void)hash_id_to_index_.emplace(id, hash_index);
-  hash_map_elements_[hash_index].set_id(id);
+  swap_out_ids[*swap_out_size] = swap_out_id;
+  ++(*swap_out_size);
+  ids_to_indices_->Put(id, hash_index);
   hash_map_elements_[hash_index].set_step(data_step);
   return hash_index;
 }
 
 int EmbeddingHashMap::GetOrInsertDataUnsafe(const int key) {
-  if (auto it = hash_id_to_index_.find(key); it != hash_id_to_index_.end()) {
-    return it->second;
+  int index = kInvalidIndexValue;
+  if (GetIndex(key, &index)) {
+    return index;
   }
+
   return InsertDataUnsafe(key);
 }
 
 int EmbeddingHashMap::InsertDataUnsafe(const int key) {
   auto hash_index = FindPosUnsafe(key);
-  if (hash_index == INVALID_INDEX_VALUE) {
+  if (hash_index == kInvalidIndexValue) {
     MS_LOG(WARNING) << "Insert data unsafe failed as map is full.";
     return hash_index;
   }
-  // Remove hash_count_++.
-  (void)hash_id_to_index_.emplace(key, hash_index);
-  hash_map_elements_[hash_index].set_id(key);
+
+  ids_to_indices_->Put(key, hash_index);
   hash_map_elements_[hash_index].set_step(1);
   return hash_index;
 }
 
 int EmbeddingHashMap::FindPosUnsafe(const int key) {
-  if (current_pos_ >= hash_capacity_) {
-    return INVALID_INDEX_VALUE;
+  if (current_pos_ >= valid_capacity_) {
+    return kInvalidIndexValue;
   }
   return ++current_pos_;
 }
 
 int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
-                                       bool *const need_wait_graph) {
-  MS_EXCEPTION_IF_NULL(need_swap);
-  MS_EXCEPTION_IF_NULL(need_wait_graph);
-  int hash_index = INVALID_INDEX_VALUE;
-  while (!expired_element_full_) {
-    if (hash_map_elements_[current_pos_].IsEmpty()) {
-      hash_index = current_pos_;
-    } else if (hash_map_elements_[current_pos_].IsExpired(graph_running_step)) {
-      hash_index = current_pos_;
-      *need_swap = true;
-    } else if (hash_map_elements_[current_pos_].StepEqual(graph_running_step)) {
-      graph_running_index_[graph_running_index_num_++] = current_pos_;
-    }
-    current_pos_ = (current_pos_ + 1) % hash_capacity_;
-    if (hash_index != INVALID_INDEX_VALUE) {
-      return hash_index;
-    }
-    if (current_pos_ == current_batch_start_pos_) {
-      expired_element_full_ = true;
-      MS_LOG(INFO) << "Running step:" << graph_running_step << "(num:" << graph_running_index_num_
-                   << ") will be used, index swap will wait until the graph completed.";
-    }
+                                       bool *const need_wait_graph, int *swap_out_id) {
+  if (current_pos_ < valid_capacity_) {
+    // Start from index 1.
+    return ++current_pos_;
+  }
+  if (valid_capacity_ == 0) {
+    return kInvalidIndexValue;
   }
 
-  if (graph_running_index_pos_ != graph_running_index_num_) {
-    *need_swap = true;
-    *need_wait_graph = true;
-    return graph_running_index_[graph_running_index_pos_++];
+  *need_swap = true;
+  int id = ids_to_indices_->Back().first;
+  int index = ids_to_indices_->Back().second;
+  if (hash_map_elements_[index].IsExpired(graph_running_step)) {
+    std::vector<Element> evicted_elements;
+    ids_to_indices_->TryEvict(1, &evicted_elements);
+    if (evicted_elements.size() != 1) {
+      MS_LOG(EXCEPTION) << "Failed to evict tail element in cache, evict element number: " << evicted_elements.size()
+                        << ", cache size: " << ids_to_indices_->size()
+                        << ", cache capacity: " << ids_to_indices_->capacity();
+    }
+
+    *swap_out_id = evicted_elements.front().first;
+    if (*swap_out_id != id) {
+      MS_LOG(EXCEPTION) << "The evicted id should be: " << id << ", but got: " << *swap_out_id;
+    }
+    return index;
   }
-  return INVALID_INDEX_VALUE;
+  return kInvalidIndexValue;
 }
 
 void EmbeddingHashMap::DumpHashMap() {
-  MS_LOG(INFO) << "Dump hash map info begin, hash_capacity: " << hash_capacity_ << " hash_count: " << hash_count_;
+  MS_LOG(INFO) << "Dump hash map info begin, hash_capacity: " << hash_capacity_;
   MS_LOG(INFO) << "Dump hash_id_to_index: ";
-  for (auto iter = hash_id_to_index_.begin(); iter != hash_id_to_index_.end(); ++iter) {
-    MS_LOG(INFO) << "  id: " << iter->first << " index: " << iter->second;
-  }
   MS_LOG(INFO) << "Dump hash_map_unit: ";
   for (size_t i = 0; i < hash_map_elements_.size(); i++) {
     if (!hash_map_elements_[i].IsEmpty()) {
-      MS_LOG(INFO) << "  index: " << i << " id: " << hash_map_elements_[i].id_
-                   << " step: " << hash_map_elements_[i].step_;
+      MS_LOG(INFO) << "  index: " << i << " step: " << hash_map_elements_[i].step_;
     }
   }
   MS_LOG(INFO) << "Dump hash map info end.";
-}
-
-void EmbeddingHashMap::Reset() {
-  current_batch_start_pos_ = current_pos_;
-  graph_running_index_num_ = 0;
-  graph_running_index_pos_ = 0;
-  expired_element_full_ = false;
 }
 }  // namespace distributed
 }  // namespace mindspore
