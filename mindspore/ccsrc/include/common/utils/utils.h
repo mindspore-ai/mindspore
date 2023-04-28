@@ -458,6 +458,7 @@ constexpr auto kIsInfOpName = "IsInf";
 constexpr auto kKLDivLossOpName = "KLDivLoss";
 constexpr auto kKLDivOpName = "KLDiv";
 constexpr auto kROIAlignName = "ROIAlign";
+constexpr auto kRightShiftOpName = "RightShift";
 constexpr auto kKLDivLossGradOpName = "KLDivLossGrad";
 constexpr auto kKlDivLossGradOpName = "KlDivLossGrad";
 constexpr auto kL2NormalizeOpName = "L2Normalize";

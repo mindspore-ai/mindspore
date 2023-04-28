@@ -77,8 +77,8 @@ int ReverseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   if (base_operator->HasAttr("axis")) {
     auto axis = GetValue<std::vector<int64_t>>(base_operator->GetAttr("axis"));
-    std::transform(axis.begin(), axis.end(), std::inserter(axis_, axis_.begin()),
-                   [input_dims = input_dims_](int64_t x) { return x >= 0 ? x : input_dims + x; });
+    (void)std::transform(axis.begin(), axis.end(), std::inserter(axis_, axis_.begin()),
+                         [input_dims = input_dims_](int64_t x) { return x >= 0 ? x : input_dims + x; });
   }
   input_dims_ = SizeToLong(input_shape_.size());
   axis_dims_ = SizeToLong(axis_.size());
