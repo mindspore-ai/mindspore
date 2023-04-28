@@ -130,7 +130,7 @@ bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {
   }
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimAddN)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimAddN) || common::AnfAlgo::IsDynamicShape(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
