@@ -29,18 +29,17 @@ __global__ void IsCloseTrueKernel(size_t size, const T* inputx, const T* inputy,
     if (isnan(static_cast<float>(inputx[pos])) && isnan(static_cast<float>(inputy[pos]))) {
       output[pos] = true;
     } else {
-      output[pos] = std::isfinite(fabsf(inputx[pos] - inputy[pos])) &&
-                    fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
+      output[pos] = fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
     }
-  }
+    }
 }
 
 template <typename T>
-__global__ void IsCloseFalseKernel(size_t size, const T *inputx, const T *inputy, const float rtol, const float atol,
-                                   const bool equal_nan, bool *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    output[pos] = std::isfinite(fabsf(inputx[pos] - inputy[pos])) &&
-                  fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
+__global__ void IsCloseFalseKernel(size_t size, const T* inputx, const T* inputy, const float rtol, const float atol,
+                              const bool equal_nan, bool* output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
+       pos += blockDim.x * gridDim.x) {
+    output[pos] = fabsf(inputx[pos] - inputy[pos]) <= atol + rtol * fabsf(inputy[pos]);
   }
 }
 
@@ -81,8 +80,7 @@ __global__ void BroadcastIsCloseTrueKernel(const size_t l0, const size_t l1, con
     if (isnan(static_cast<float>(inputx[pos])) && isnan(static_cast<float>(inputy[r_index]))) {
       output[pos] = true;
     } else {
-      output[pos] = std::isfinite(fabsf(inputx[l_index] - inputy[r_index])) &&
-                    fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
+      output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
     }
   }
 }
@@ -119,8 +117,7 @@ __global__ void BroadcastIsCloseFalseKernel(const size_t l0, const size_t l1, co
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    output[pos] = std::isfinite(fabsf(inputx[l_index] - inputy[r_index])) &&
-                  fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
+    output[pos] = fabsf(inputx[l_index] - inputy[r_index]) <= atol + rtol * fabsf(inputy[r_index]);
   }
 }
 
