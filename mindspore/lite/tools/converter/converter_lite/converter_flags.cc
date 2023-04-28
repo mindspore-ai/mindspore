@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,14 @@ using mindspore::lite::RET_INPUT_PARAM_INVALID;
 using mindspore::lite::RET_OK;
 
 Flags::Flags() {
-  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX | PYTORCH", "");
+  AddFlag(&Flags::fmkIn, "fmk",
+          "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX | PYTORCH | MSLITE. When set MSLITE, micro "
+          "must be enabled.",
+          "");
   AddFlag(&Flags::modelFile, "modelFile",
-          "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
+          "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx | "
+          "MSLITE: *.ms",
+          "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path.", "");
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");
@@ -129,9 +134,9 @@ int Flags::InitInputOutputDataType() {
 
 int Flags::InitFmk() {
   // value check not here, it is in converter c++ API's CheckValueParam method.
-  std::map<std::string, FmkType> StrToEnumFmkTypeMap = {{"CAFFE", kFmkTypeCaffe},   {"MINDIR", kFmkTypeMs},
-                                                        {"TFLITE", kFmkTypeTflite}, {"ONNX", kFmkTypeOnnx},
-                                                        {"TF", kFmkTypeTf},         {"PYTORCH", kFmkTypePytorch}};
+  std::map<std::string, FmkType> StrToEnumFmkTypeMap = {
+    {"CAFFE", kFmkTypeCaffe}, {"MINDIR", kFmkTypeMs},       {"TFLITE", kFmkTypeTflite}, {"ONNX", kFmkTypeOnnx},
+    {"TF", kFmkTypeTf},       {"PYTORCH", kFmkTypePytorch}, {"MSLITE", kFmkTypeMsLite}};
   if (StrToEnumFmkTypeMap.find(this->fmkIn) != StrToEnumFmkTypeMap.end()) {
     this->fmk = StrToEnumFmkTypeMap.at(this->fmkIn);
   } else {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,12 @@ class Coder final {
   ~Coder() = default;
   static int MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path,
                                        const MicroParam &param, bool enable_fp16);
+  static int MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path,
+                                       const MicroParam &param, bool enable_fp16);
 
  private:
+  static int ExecuteMicroGeneration(const void *model_buf, size_t size, const std::string &output_path,
+                                    const MicroParam &param, bool enable_fp16);
   int Init(const MicroParam &param) const;
   int Run(const void *model_buff, size_t size, const std::string &model_name, bool end_flag, bool enable_fp16);
   bool InitPath(const std::string &output_path);
