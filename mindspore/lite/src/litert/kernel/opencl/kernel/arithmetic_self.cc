@@ -49,7 +49,8 @@ int ArithmeticSelfOpenCLKernel::CheckSpecs() {
 
 void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
-  const int max_x = 4, max_y = 8;
+  const int max_x = 4;
+  const int max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[CLIDX_X], max_divider), max_x);
   if (x == 0) {
     MS_LOG(ERROR) << "div num shouldn't be 0";

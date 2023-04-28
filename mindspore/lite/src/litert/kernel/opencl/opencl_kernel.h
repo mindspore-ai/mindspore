@@ -231,8 +231,9 @@ struct GpuTensorInfo {
   }
 
   int AlignAxis(int oriAxis) const {
+    const int axis = 3;
     if (NDim == 0 || NDim == 1) {
-      return 3;
+      return axis;
     }
     int no_neg_axis = static_cast<int>((oriAxis + NDim) % NDim);
     if (no_neg_axis == 0) {
