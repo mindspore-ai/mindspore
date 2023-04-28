@@ -7,7 +7,7 @@ mindspore.ops.unfold
     
     考虑一个batch的输入Tensor，其shape为 :math:`(N, C, *)` ，其中 :math:`N` 是batch维度，
     :math:`C` 是channel维度， :math:`*` 表示任意的空间维度。此操作将展平输入 `x` 空间维度内每个滑动的
-    `kernel_size` 大小的滑块为输出的3-D Tensor中的一列(如，最后一维)，输出Tensor的shape为 :math:`(N, C\times\prod(\text{kernel_size}), L)` ，
+    `kernel_size` 大小的滑块为输出的3-D Tensor中的一列(如，最后一维)，输出Tensor的shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` ，
     其中 :math:`C \times \prod(\text{kernel_size})` 为每个滑块内值的总数量(一个滑块有 :math:`\prod(\text{kernel_size})` 个空间位置，
     每个位置都包含一个 `C` 通道的向量)，共有 :math:`L` 个这样的滑块：
 
