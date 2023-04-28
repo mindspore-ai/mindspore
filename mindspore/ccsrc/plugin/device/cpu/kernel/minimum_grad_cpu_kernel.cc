@@ -79,11 +79,11 @@ int MinimumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = inputs[kIndex1]->GetShapeVector();
-  dout_shape = inputs[kIndex2]->GetShapeVector();
+  dout_shape_ = inputs[kIndex2]->GetShapeVector();
 
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);
-  CheckShape(&dout_shape);
+  CheckShape(&dout_shape_);
 
   return KRET_OK;
 }
@@ -215,15 +215,15 @@ bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset 'y' failed. Error no: " << ret;
   }
 
-  std::vector<size_t> x_shape(dout_shape.size(), 1);
-  std::vector<size_t> y_shape(dout_shape.size(), 1);
-  std::vector<size_t> x_cargo(dout_shape.size(), 0);
-  std::vector<size_t> y_cargo(dout_shape.size(), 0);
-  std::vector<size_t> dout_cargo(dout_shape.size(), 0);
-  auto dout_shape_sizet = Convert2SizeT(dout_shape);
+  std::vector<size_t> x_shape(dout_shape_.size(), 1);
+  std::vector<size_t> y_shape(dout_shape_.size(), 1);
+  std::vector<size_t> x_cargo(dout_shape_.size(), 0);
+  std::vector<size_t> y_cargo(dout_shape_.size(), 0);
+  std::vector<size_t> dout_cargo(dout_shape_.size(), 0);
+  auto dout_shape_sizet = Convert2SizeT(dout_shape_);
 
-  GetShape(&x_shape, x_shape_, dout_shape);
-  GetShape(&y_shape, y_shape_, dout_shape);
+  GetShape(&x_shape, x_shape_, dout_shape_);
+  GetShape(&y_shape, y_shape_, dout_shape_);
 
   GetCargo(&x_cargo, x_shape, dout_shape_sizet);
   GetCargo(&y_cargo, y_shape, dout_shape_sizet);
