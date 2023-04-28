@@ -73,6 +73,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     expander = WrapExpander(expander, iter->second);
   }
   if (common::AnfAlgo::IsDynamicShape(node)) {
+    MS_LOG(INFO) << "try expander dynamic shape node.";
     expander = SetDynamicShapeAttrDeco::Creator(expander);
   }
   return expander;
