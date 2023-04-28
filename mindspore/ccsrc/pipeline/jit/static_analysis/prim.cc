@@ -3228,21 +3228,25 @@ class CondEvaluator : public TransitionPrimEvaluator {
   CondEvaluator() : TransitionPrimEvaluator("CondEvaluator") {}
   ~CondEvaluator() override = default;
   MS_DECLARE_PARENT(CondEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
     auto node = out_conf->node()->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
-    constexpr size_t input_size = 1;
+    constexpr size_t input_size = 2;
     if (args_abs_list.size() != input_size) {
       MS_LOG(EXCEPTION) << "The input size to cond node should be " << std::to_string(input_size) << ", but got "
                         << std::to_string(args_abs_list.size());
     }
 
     AnfNodePtr new_node = nullptr;
-    auto cond_abs = args_abs_list[0];
-    auto cond_node = node->input(1);
+    constexpr size_t cond_abs_index = 0;
+    constexpr size_t cond_input_index = 1;
+    constexpr size_t flag_input_index = 2;
+    auto cond_abs = args_abs_list[cond_abs_index];
+    auto cond_node = node->input(cond_input_index);
+    auto flag_node = node->input(flag_input_index);
     if (cond_abs->isa<AbstractAny>()) {
       // If the input to cond node is AbstractAny, genenrate pyexecute node 'bool(input)';
       const auto script_str = std::make_shared<StringImm>("bool(__input__)");
@@ -3256,6 +3260,14 @@ class CondEvaluator : public TransitionPrimEvaluator {
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
       new_node = cur_graph->NewCNodeInOrder(
         {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
+      // When the condition of while is a tensor, do not use standard_method.tensor_bool
+      // to avoid turning the tensor into scalar to cause a loop.
+      constexpr auto operations_module = "mindspore.ops.operations";
+      auto cast_op = python_adapter::GetPyFn(operations_module, kCastOpName)();
+      auto cast_node = NewValueNode(parse::data_converter::PyDataToValue(cast_op));
+      auto type_node = NewValueNode(TypeIdToType(kNumberTypeBool));
+      new_node = cur_graph->NewCNodeInOrder({cast_node, cond_node, type_node});
     } else {
       // The logic of truth value testing:
       //   1. If the object has __bool__ attribute, call __bool__()
@@ -3266,26 +3278,31 @@ class CondEvaluator : public TransitionPrimEvaluator {
       auto cond_type_id = cond_type->type_id();
       constexpr auto bool_attr_str = "__bool__";
       constexpr auto len_attr_str = "__len__";
-      constexpr auto standard_method_module = "mindspore._extends.parse.standard_method";
-      py::function prim_func;
+      ValuePtr prim_func;
       if (!pipeline::Resource::GetMethodPtr(cond_type_id, bool_attr_str).empty()) {
-        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_BOOL);
+        prim_func = prim::GetPythonOps(parse::NAMED_PRIMITIVE_BOOL);
       } else if (!pipeline::Resource::GetMethodPtr(cond_type_id, len_attr_str).empty()) {
-        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_CHECK_LEN);
+        prim_func = prim::GetPythonOps(parse::NAMED_PRIMITIVE_CHECK_LEN);
       } else {
-        prim_func = python_adapter::GetPyFn(standard_method_module, parse::NAMED_PRIMITIVE_REAL_BOOL);
+        prim_func = prim::GetPythonOps(parse::NAMED_PRIMITIVE_REAL_BOOL);
       }
-      auto prim_fg = parse::ParsePythonCode(prim_func);
+      auto prim_fg = dyn_cast<FuncGraph>(prim_func);
+      MS_EXCEPTION_IF_NULL(prim_fg);
       auto mng = cur_graph->manager();
       MS_EXCEPTION_IF_NULL(mng);
       prim_fg->set_manager(mng);
       new_node = cur_graph->NewCNodeInOrder({NewValueNode(prim_fg), cond_node});
     }
     cur_graph->ReplaceInOrder(node, new_node);
-    AnalysisEnginePtr eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf);
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+    return engine->ForwardConfig(out_conf, fn_conf);
+  }
+
+  bool is_while_condition(const AnfNodePtr &flag_node) {
+    MS_EXCEPTION_IF_NULL(flag_node);
+    auto vnode = GetValueNode(flag_node);
+    MS_EXCEPTION_IF_NULL(vnode);
+    return GetValue<bool>(vnode);
   }
 };
 

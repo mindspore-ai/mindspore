@@ -59,7 +59,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void CollectRemovablePhi(const ParameterPtr &phi);
   // A block is matured if all its predecessors is generated
   void Mature();
-  CNodePtr ForceToCondNode(const AnfNodePtr &cond);
+  CNodePtr ForceToCondNode(const AnfNodePtr &cond, bool is_while_cond = false);
   void Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args);
   std::set<AnfNodePtr> SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi);
   CNodePtr ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
