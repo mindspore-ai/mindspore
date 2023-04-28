@@ -17,7 +17,7 @@ mindspore.nn.FractionalMaxPool3d
         - **_random_samples** (Tensor，可选) - 随机步长。支持的数据类型：float16、float32、double。shape为 :math:`(N, C, 3)` 或 :math:`(1, C, 3)` 的Tensor。数值范围[0, 1)。默认值： ``None`` ， `_random_samples` 的值由区间[0, 1)上的均匀分布随机生成。
 
     输入：
-        - **input** (Tensor) - 四维或五维的Tensor，支持的数据类型：float16、float32、float64、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。
+        - **input** (Tensor) - 四维或五维的Tensor，支持的数据类型：float16、float32、float64、int32、int64。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{in}, H_{in}, W_{in})` 。
 
     输出：
         - **y** (Tensor) - 3D分数最大池化的输出，是一个Tensor。数据类型和 `input` 相同，shape是 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(C, D_{out}, H_{out}, W_{out})` 。其中，:math:`(D_{out}, H_{out}, W_{out})` = `output_size` 或 :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` 。
