@@ -55,7 +55,6 @@ class AscendProfiler : public Profiler {
 
  private:
   uint32_t device_id_ = 0;
-  uint32_t aicpu_kernel_type_ = 2;
   uint32_t max_op_taskid_limit_ = 65536;
   aclprofConfig *acl_config_{nullptr};
 };
