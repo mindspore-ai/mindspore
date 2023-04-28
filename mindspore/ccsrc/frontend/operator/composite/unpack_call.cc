@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,11 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
   }
   // Add to order list to trace if fn_node had side effect.
   res_graph->set_output(res_graph->NewCNodeInOrder(elems));
+
+  auto abs_fn = args_abs_list[0]->cast<abstract::FuncGraphAbstractClosurePtr>();
+  if (abs_fn != nullptr) {
+    res_graph->set_has_side_effect_node(abs_fn->func_graph()->has_side_effect_node());
+  }
   return res_graph;
 }
 }  // namespace prim
