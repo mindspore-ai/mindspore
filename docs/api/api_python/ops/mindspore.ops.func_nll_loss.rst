@@ -13,7 +13,7 @@
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
         \{c \not= \text{ignore_index}\},
 
-    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
+    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]`，表示类索引，其中 :math:`C` 表示类的数量。
 
     若reduction不为'none'（默认为'mean'），则
 
