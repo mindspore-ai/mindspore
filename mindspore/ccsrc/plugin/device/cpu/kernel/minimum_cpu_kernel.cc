@@ -196,20 +196,20 @@ void MinimumCpuKernelMod::BroadcastArithKernel(const int64_t l0, const int64_t l
       int64_t n = pos_signed / d6 % d5;
       int64_t o = pos_signed % d6;
 
-      size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-      l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-      l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-      l_index += Index(l, l3) * l4 * l5 * l6;
-      l_index += Index(m, l4) * l5 * l6;
-      l_index += Index(n, l5) * l6;
-      l_index += Index(o, l6);
-      size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-      r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-      r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-      r_index += Index(l, r3) * r4 * r5 * r6;
-      r_index += Index(m, r4) * r5 * r6;
-      r_index += Index(n, r5) * r6;
-      r_index += Index(o, r6);
+      size_t l_index = static_cast<size_t>(Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6);
+      l_index += static_cast<size_t>(Index(j, l1) * l2 * l3 * l4 * l5 * l6);
+      l_index += static_cast<size_t>(Index(k, l2) * l3 * l4 * l5 * l6);
+      l_index += static_cast<size_t>(Index(l, l3) * l4 * l5 * l6);
+      l_index += static_cast<size_t>(Index(m, l4) * l5 * l6);
+      l_index += static_cast<size_t>(Index(n, l5) * l6);
+      l_index += static_cast<size_t>(Index(o, l6));
+      size_t r_index = static_cast<size_t>(Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6);
+      r_index += static_cast<size_t>(Index(j, r1) * r2 * r3 * r4 * r5 * r6);
+      r_index += static_cast<size_t>(Index(k, r2) * r3 * r4 * r5 * r6);
+      r_index += static_cast<size_t>(Index(l, r3) * r4 * r5 * r6);
+      r_index += static_cast<size_t>(Index(m, r4) * r5 * r6);
+      r_index += static_cast<size_t>(Index(n, r5) * r6);
+      r_index += static_cast<size_t>(Index(o, r6));
       output[pos] = MinimumFunc(input_x[l_index], input_y[r_index]);
     }
   };
