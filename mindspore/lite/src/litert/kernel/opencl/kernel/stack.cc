@@ -56,7 +56,8 @@ int StackOpenCLKernel::RunAxis0() {
 
 void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
-  const int max_x = 4, max_y = 8;
+  const int max_x = 4;
+  const int max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
   int yz = max_size / x;
   int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
@@ -105,7 +106,8 @@ int StackOpenCLKernel::CheckSpecs() {
 
 int StackOpenCLKernel::SetConstArgs() {
   int arg_cn = in_tensors_.size() + 1;
-  cl_int4 inshape_tmp = {}, outshape_tmp = {};
+  cl_int4 inshape_tmp = {};
+  cl_int4 outshape_tmp = {};
   for (size_t i = 0; i < in_tensors_[0]->shape().size(); ++i) {
     inshape_tmp.s[i] = in_tensors_[0]->shape()[i];
   }

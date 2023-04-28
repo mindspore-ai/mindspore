@@ -246,7 +246,8 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   auto data_size = enable_fp16_ ? sizeof(int16_t) : sizeof(float);
   int co = out_tensors_[0]->shape()[3];
   int div_co = UP_DIV(co, C4NUM);
-  size_t im_dst_x, im_dst_y;
+  size_t im_dst_x;
+  size_t im_dst_y;
   im_dst_x = div_co;
   im_dst_y = 1;
   size_t img_dtype = CL_FLOAT;
