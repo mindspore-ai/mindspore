@@ -126,7 +126,7 @@ class AkgKernelPool {
   inline void IncListSize(int32_t list_idx, size_t val) { kernel_lists_[list_idx][kMaxKernelNum_] += val; }
 
   void *CreateSharedMem(const std::string &path);
-  std::string GetCurrentPath() const;
+  std::string GetTmpKeyPath() const;
 
   inline void InitKernelLists(void *addr) {
     kernel_lists_[kToDoIdx_] = static_cast<size_t *>(addr);
