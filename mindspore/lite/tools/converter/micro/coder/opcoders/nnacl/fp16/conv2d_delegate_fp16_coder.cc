@@ -95,7 +95,7 @@ int SelectOutUnit(const ConvParameter *conv_param) {
     }
   }
   if (max_rate < 1.0f) {
-    return 1;
+    unit = 1;
   }
   // If output_unit is 1, then it is conventional convolution
   return unit;
