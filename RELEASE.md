@@ -883,9 +883,7 @@ Contributions of any kind are welcome!
 
 The original MindSpore Lite is mainly used for edge devices such as mobile phones and head units. Cloud inference is added to support scenarios with multiple backend hardware resources on the cloud, supports Ascend and NVIDIA GPU inference cards, and efficiently utilizes multi-core resources on the cloud.
 
-Cloud inference supported by MindSpore tar packages and whl lacks inference fusion and optimization and will be replaced by MindSpore Lite cloud inference. Currently, the two cloud inference capabilities coexist. For details, see (https://gitee.com/mindspore/models/tree/r2.0/utils/cpp_infer).
-
-The original cloud inference integrated through MindSpore training can be changed to MindSpore Lite. For details, see (https://mindspore.cn/lite/docs/en/r2.0/quick_start/one_hour_introduction_cloud.html). To retain the original integration method, see (https://mindspore.cn/docs/en/r2.0/faq/inference.html).
+The original cloud inference integrated through MindSpore training can be changed to MindSpore Lite. For details, see [Quick Start to Cloud-side Inference](https://mindspore.cn/lite/docs/en/r2.0/quick_start/one_hour_introduction_cloud.html). To retain the original integration method, see [Inference](https://mindspore.cn/docs/en/r2.0/faq/inference.html).
 
 - [STABLE] Support MindIR model files.
 - [STABLE] Third-party Onnx, TensorFlow, and Caffe models can be converted to MindIR model files using the MindSpore Lite conversion tool.
