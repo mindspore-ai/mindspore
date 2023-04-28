@@ -120,7 +120,7 @@ template <typename T1, typename T2>
 static inline T2 calc_polygamma(T1 a, T2 x) {
   const auto one = T1{1};
   const auto two = T1{2};
-  return ((a % two) ? one : -one) * ::exp(::lgamma(static_cast<T1>(a) + one)) * zeta<float>(static_cast<T2>(a + 1), x);
+  return ((a % two) ? one : -one) * ::exp(::lgamma(static_cast<T1>(a) + one)) * zeta<T2>(static_cast<T2>(a + 1), x);
 }
 
 template <typename T1, typename T2>
