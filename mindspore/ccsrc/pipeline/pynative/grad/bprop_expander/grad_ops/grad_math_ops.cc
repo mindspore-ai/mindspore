@@ -1841,7 +1841,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto std = ib->TupleGetItem(out, 0);
   auto mean_d = ib->TupleGetItem(dout, 1);
   auto mean = ib->TupleGetItem(out, 1);
-  auto res = ib->ShapeCalc(std::make_shared<ReduceStdShapeCalc>(), {x});
+  auto res = ib->ShapeCalc(std::make_shared<ReduceStdShapeCalc>(axis), {x});
   res[1] = ib->TupleToTensor(res[1]);
   res[2] = ib->TupleToTensor(res[2]);
   if (!keep_dims && !ib->GetShape(x).empty()) {
