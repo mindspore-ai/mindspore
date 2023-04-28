@@ -96,8 +96,8 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   ComputeStrides(output_shape_, output_stride_, ndim_);
   auto task = [this, input0, input1, output](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      const T *in = input0 + i * outer_stride_;
-      T *out = output + i * outer_stride_;
+      const T *in = input0 + i * LongToSize(outer_stride_);
+      T *out = output + i * LongToSize(outer_stride_);
       for (int batch = 0; batch < input0_shape_[batch_dim_]; batch++) {
         const T *in_batch = in + batch * input_stride_[batch_dim_];
         T *out_batch = out + batch * output_stride_[batch_dim_];

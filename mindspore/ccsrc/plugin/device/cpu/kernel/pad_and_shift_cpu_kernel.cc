@@ -72,7 +72,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   size_t output_size = static_cast<size_t>(cum_sum_arr[cum_sum_size_ - 1]);
   size_t shift_size = static_cast<size_t>(cum_sum_arr[shift_idx]);
-  size_t valid_size = static_cast<size_t>(cum_sum_arr[shift_idx + 1] - shift_size);
+  size_t valid_size = static_cast<size_t>(cum_sum_arr[shift_idx + 1]) - shift_size;
   int ret = memset_s(output, outputs[0]->size, -1, type_size_ * output_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
