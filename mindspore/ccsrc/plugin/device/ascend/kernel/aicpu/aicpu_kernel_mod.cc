@@ -351,7 +351,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 #ifndef ENABLE_SECURITY
   if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
     uint32_t task_id;
-    rtGetTaskIdAndStreamID(&task_id, &stream_id_);
+    (void)rtGetTaskIdAndStreamID(&task_id, &stream_id_);
     task_id_ = static_cast<int32_t>(task_id);
   }
 #endif

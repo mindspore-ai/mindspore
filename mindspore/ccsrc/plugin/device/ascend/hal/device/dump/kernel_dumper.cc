@@ -314,7 +314,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
 
 void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) {
   dump_task->set_end_graph(false);
-  rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
+  (void)rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
   dump_task->set_task_id(task_id_);
   dump_task->set_stream_id(stream_id_);
   MS_EXCEPTION_IF_NULL(dump_task->mutable_op());
