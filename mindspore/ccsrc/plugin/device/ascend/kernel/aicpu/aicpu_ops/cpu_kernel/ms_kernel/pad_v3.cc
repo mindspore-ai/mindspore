@@ -405,7 +405,7 @@ int64_t PadV3CpuKernel::CircularIndexCaculate(int64_t pad_value, int64_t pad_end
 }
 
 template <typename T>
-uint32_t PadV3CpuKernel::CircularModeCompute(CpuKernelContext &ctx, int64_t p) {
+void PadV3CpuKernel::CircularModeCompute(const CpuKernelContext &ctx, int64_t p) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   if (paddings_num == kPadding1D) {
@@ -415,7 +415,6 @@ uint32_t PadV3CpuKernel::CircularModeCompute(CpuKernelContext &ctx, int64_t p) {
   } else if (paddings_num == kPadding3D) {
     CircularCompute3D<T>(input, output, p);
   }
-  return KERNEL_STATUS_OK;
 }
 
 template <typename T>

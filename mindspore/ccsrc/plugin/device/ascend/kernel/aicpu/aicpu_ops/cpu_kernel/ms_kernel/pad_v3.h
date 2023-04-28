@@ -83,7 +83,7 @@ class PadV3CpuKernel : public CpuKernel {
   int64_t ReflectIndexCaculate(int64_t pad_value, int64_t now, int64_t input_value, int64_t o_start, int64_t i_start);
 
   template <typename T>
-  uint32_t CircularModeCompute(CpuKernelContext &ctx, int64_t p);
+  void CircularModeCompute(const CpuKernelContext &ctx, int64_t p);
 
   template <typename T>
   void CircularCompute3D(T *input, T *output, int64_t p) const;
