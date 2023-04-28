@@ -514,9 +514,12 @@ bool HasSideEffectNode(const FuncGraphPtr &func_graph) {
   } else {
     // Process call function
     if (isolated_node->isa<CNode>()) {
-      auto first_input = isolated_node->cast<CNodePtr>()->input(0);
-      if (IsValueNode<FuncGraph>(first_input)) {
-        auto func = GetValueNode<FuncGraphPtr>(first_input);
+      auto fn_input = isolated_node->cast<CNodePtr>()->input(0);
+      if (IsValueNode<prim::UnpackCall>(fn_input)) {
+        fn_input = isolated_node->cast<CNodePtr>()->input(1);
+      }
+      if (IsValueNode<FuncGraph>(fn_input)) {
+        auto func = GetValueNode<FuncGraphPtr>(fn_input);
         if (IsSideEffectCNode(func->output()) || HasSideEffectNode(func)) {
           return true;
         }
