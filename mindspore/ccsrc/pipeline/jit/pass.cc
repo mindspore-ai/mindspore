@@ -136,7 +136,16 @@ bool RewriterAfterOptAPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::RewriterAfterOptA(func_graph, resource);
+  (void)opt::RewriterAfterOptA(func_graph, resource, true);
+  UpdateArgsSpec(func_graph, resource);
+  return true;
+}
+
+bool RewriterAfterOptAPassGe(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  (void)opt::RewriterAfterOptA(func_graph, resource, false);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -951,7 +960,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
 std::vector<PassItem> kGePasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
                                    {"rewriter_before_opt_a", RewriterBeforeOptAPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"rewriter_after_opt_a", RewriterAfterOptAPass},
+                                   {"rewriter_after_opt_a", RewriterAfterOptAPassGe},
                                    {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
                                    {"opt_b", OptPassBGroup},
                                    {"opt_control", ControlGroup},

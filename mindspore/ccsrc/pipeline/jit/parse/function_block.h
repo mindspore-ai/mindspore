@@ -76,9 +76,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
-  AnfNodePtr GetResolveNode(const py::tuple &info);
-  AnfNodePtr HandleNamespaceInfo(const py::tuple &info);
-  AnfNodePtr HandleBuiltinNamespaceInfo(const py::tuple &info);
+  AnfNodePtr HandleNamespaceSymbol(const std::string &var_name);
   AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
   const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_args() const { return phi_args_; }

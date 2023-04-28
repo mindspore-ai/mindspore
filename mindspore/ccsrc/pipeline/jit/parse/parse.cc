@@ -1301,7 +1301,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
                 << ", call_function_node: " << call_function_node->DebugString();
 
   // Process bulitin function, for example, sum(np.array(xx))
-  py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, name_id);
+  py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, name_id);
   constexpr size_t namespace_info_size = 4;
   constexpr size_t flag_index = 3;
   if (namespace_info.size() == namespace_info_size) {
@@ -2721,12 +2721,13 @@ AnfNodePtr Parser::ParseFormattedValue(const FunctionBlockPtr &block, const py::
   return value_node;
 }
 
-void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &targ,
-                              const AnfNodePtr &assigned_node) const {
+void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &target,
+                              const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(assigned_node);
-  py::str name = python_adapter::GetPyObjAttr(targ, "id");
+  py::str name = python_adapter::GetPyObjAttr(target, "id");
   std::string name_id = name;
+
   MS_EXCEPTION_IF_NULL(assigned_node->debug_info());
   assigned_node->debug_info()->set_name(name_id);
   // Set the debug name of the constant graph
@@ -2742,10 +2743,11 @@ void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &t
   block->WriteVariable(name_id, assigned_node);
 }
 
-void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node) {
+void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &target,
+                               const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
-  py::list items = python_adapter::GetPyObjAttr(targ, "elts");
+  py::list items = python_adapter::GetPyObjAttr(target, "elts");
   for (size_t i = 0; i < items.size(); i++) {
     // Use the Primitive replace the operation resolve node (getitem),
     // because the getitem will eventually be converted to Primitive node
@@ -2803,38 +2805,20 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
   return true;
 }
 
-void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &target,
-                                     const AnfNodePtr &value_node) {
-  MS_EXCEPTION_IF_NULL(block);
-  const py::object attr_value = python_adapter::GetPyObjAttr(target, "value");
-  const auto &attr_value_id_str = python_adapter::GetPyObjAttr(attr_value, "id").cast<std::string>();
-  AnfNodePtr attr_value_node = nullptr;
-  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && attr_value_id_str == "self") {
-    const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
-    attr_value_node = NewValueNode(interpreted_obj);
-  } else {
-    attr_value_node = ParseExprNode(block, attr_value);
-  }
-  MS_EXCEPTION_IF_NULL(attr_value_node);
-  const auto &attr_str = python_adapter::GetPyObjAttr(target, "attr").cast<std::string>();
-  if (!py::hasattr(attr_value, "id")) {
-    MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
-  }
-  MS_LOG(DEBUG) << "target node: " << attr_value_node->DebugString() << ", target name: " << attr_value_id_str
-                << ", attr: " << attr_str;
-
+void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &target_node, const AnfNodePtr &value_node,
+                             const std::string &target_id_str, const std::string &attr_str) {
   std::vector<AnfNodePtr> setattr_node_inputs{NewValueNode(prim::kPrimSetAttr)};
-  (void)setattr_node_inputs.emplace_back(attr_value_node);
+  (void)setattr_node_inputs.emplace_back(target_node);
   (void)setattr_node_inputs.emplace_back(NewValueNode(attr_str));
   (void)setattr_node_inputs.emplace_back(value_node);
   auto setattr_node = block->func_graph()->NewCNodeInOrder(setattr_node_inputs);
 
   // Update setattr_nodes_map.
-  auto iter = setattr_nodes_map_.find(attr_value_id_str);
+  auto iter = setattr_nodes_map_.find(target_id_str);
   if (iter == setattr_nodes_map_.end()) {
     auto attr_map = std::map<std::string, AnfNodePtr>();
     attr_map.emplace(std::make_pair(attr_str, setattr_node));
-    setattr_nodes_map_.emplace(std::make_pair(attr_value_id_str, attr_map));
+    setattr_nodes_map_.emplace(std::make_pair(target_id_str, attr_map));
   } else {
     // Force update the setattr node to keep the newest one.
     iter->second.insert_or_assign(attr_str, setattr_node);
@@ -2842,12 +2826,35 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   block->AddIsolatedNode(setattr_node);
 }
 
-void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ,
+void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &target,
+                                     const AnfNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(block);
+  const py::object target_obj = python_adapter::GetPyObjAttr(target, "value");
+  const auto &target_id_str = python_adapter::GetPyObjAttr(target_obj, "id").cast<std::string>();
+  AnfNodePtr target_node = nullptr;
+  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && target_id_str == "self") {
+    const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+    target_node = NewValueNode(interpreted_obj);
+  } else {
+    target_node = ParseExprNode(block, target_obj);
+  }
+  MS_EXCEPTION_IF_NULL(target_node);
+  const auto &attr_str = python_adapter::GetPyObjAttr(target, "attr").cast<std::string>();
+  if (!py::hasattr(target_obj, "id")) {
+    MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
+  }
+  MS_LOG(DEBUG) << "target node: " << target_node->DebugString() << ", target name: " << target_id_str
+                << ", attr: " << attr_str;
+
+  MakeSetAttrNode(block, target_node, value_node, target_id_str, attr_str);
+}
+
+void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &target,
                                    const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_setitem = block->MakeResolveOperation(NAMED_PRIMITIVE_SETITEM);
-  py::object value_obj = python_adapter::GetPyObjAttr(targ, "value");
-  py::object slice_obj = python_adapter::GetPyObjAttr(targ, "slice");
+  py::object value_obj = python_adapter::GetPyObjAttr(target, "value");
+  py::object slice_obj = python_adapter::GetPyObjAttr(target, "slice");
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
   value_node = HandleInterpret(block, value_node, value_obj);
   AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
@@ -2893,8 +2900,9 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
 void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object,
                              const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(value_node);
-  MS_LOG(DEBUG) << "Process WriteAssignVars";
   auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, target_object)));
+  MS_LOG(DEBUG) << "target_object: " << target_object << ", value_node: " << value_node->DebugString()
+                << ", ast_type: " << ast_type;
   if (ast_type == AST_SUB_TYPE_NAME) {
     HandleAssignName(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_TUPLE) {

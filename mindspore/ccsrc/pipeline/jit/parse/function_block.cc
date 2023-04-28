@@ -280,51 +280,39 @@ AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_o
   return MakeResolve(name_space, symbol);
 }
 
-AnfNodePtr FunctionBlock::GetResolveNode(const py::tuple &info) {
-  constexpr size_t namespace_index = 0;
-  constexpr size_t symbol_index = 1;
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, info[namespace_index]);
-  SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
-  return MakeResolve(name_space, symbol);
-}
+AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
+  const py::tuple &info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, var_name);
 
-AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &info) {
-  constexpr size_t namespace_index = 0;
-  constexpr size_t symbol_index = 1;
-  constexpr size_t namespace_info_size = 2;
-  if (info.size() != namespace_info_size) {
-    MS_EXCEPTION(NameError) << "namespace info size should be 2, but got " << info.size();
-  }
-
-  // If namespace is None, the symbol is an undefined name.
-  if (info[namespace_index].is_none()) {
-    MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
-  }
-  return GetResolveNode(info);
-}
-
-AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
   constexpr size_t closure_info_size = 2;
-  constexpr size_t namespace_info_size = 4;
+  constexpr size_t global_info_size = 4;
   constexpr size_t namespace_index = 0;
   constexpr size_t symbol_index = 1;
   constexpr size_t value_index = 2;
   constexpr size_t flag_index = 3;
-  if (info.size() != closure_info_size && info.size() != namespace_info_size) {
+  if (info.size() != closure_info_size && info.size() != global_info_size) {
     MS_EXCEPTION(NameError) << "namespace info size should be 2 or 4, but got " << info.size();
   }
+  // If namespace is None, the symbol is an undefined name.
+  if (info[namespace_index].is_none()) {
+    MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
+  }
+
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, info[namespace_index]);
+  SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
+  auto resolved_node = MakeResolve(name_space, symbol);
 
   // Handle closure namespace info.
   if (info.size() == closure_info_size) {
-    // If namespace is None, the symbol is an undefined name.
-    if (info[namespace_index].is_none()) {
-      MS_EXCEPTION(NameError) << info[symbol_index].cast<std::string>();
-    }
-    return GetResolveNode(info);
+    return resolved_node;
   }
 
   // Handle global namespace info.
-  auto resolved_node = GetResolveNode(info);
+  static const auto use_fallback = (parser_.support_fallback() != "0");
+  if (!use_fallback) {
+    return resolved_node;
+  }
   auto syntax_support = info[flag_index].cast<int32_t>();
   if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
@@ -332,10 +320,9 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
       resolved_node->set_interpret_internal_type(true);
     }
   }
+
   // The value may not be supported to do ConvertData such as api `mutable`,
   // and we get its converted object from python.
-  auto ast = parser_.ast();
-  MS_EXCEPTION_IF_NULL(ast);
   py::object py_obj = ast->CallParserObjMethod(PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE, info[value_index]);
 
   auto symbol_name = info[symbol_index].cast<std::string>();
@@ -351,7 +338,8 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (parser_.support_fallback() != "0");
-  // The prefix of var_name is "self.".
+
+  // Handle self. The prefix of var_name is "self".
   constexpr auto self_name = "self";
   const auto self_name_len = strlen(self_name);
   if (var_name.compare(0, self_name_len, self_name) == 0) {
@@ -380,15 +368,9 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
       return resolve_node;
     }
   }
-  auto ast = parser_.ast();
-  MS_EXCEPTION_IF_NULL(ast);
-  if (!use_fallback) {
-    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, var_name);
-    return HandleNamespaceInfo(namespace_info);
-  } else {
-    py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, var_name);
-    return HandleBuiltinNamespaceInfo(namespace_info);
-  }
+
+  // Handle non-self.
+  return HandleNamespaceSymbol(var_name);
 }
 
 AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {

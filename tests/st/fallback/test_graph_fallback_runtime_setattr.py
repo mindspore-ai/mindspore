@@ -77,7 +77,6 @@ def test_setattr_self_non_param_2():
     assert test_net.data == [1, 2, 3, 4]
 
 
-@pytest.mark.skip(reason="PyInterpret object in ValueTuple is not converted.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -104,7 +103,6 @@ def test_setattr_self_non_param_3():
     assert np.all(test_net.data == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.skip(reason="self.data is not in order list")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -131,7 +129,6 @@ def test_setattr_self_non_param_not_used():
     assert test_net.data == 2
 
 
-@pytest.mark.skip(reason="PyExecute node is not supported in multi-type fg")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -182,3 +179,57 @@ def test_setattr_self_non_param_used_in_operator_2():
     ret = test_net(Tensor([1, 1, 1, 1]))
     assert np.all(ret.asnumpy() == np.array([2, 3, 4, 5]))
     assert np.all(test_net.data.asnumpy() == np.array([1, 2, 3, 4]))
+
+
+class AssignTarget:
+    def __init__(self):
+        self.x = 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_global_obj_attr1():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    data_obj1 = AssignTarget()
+    data_obj1.x = 100
+
+    @ms.jit
+    def simple_assign_global_obj_attr1():
+        data_obj1.x = 99
+        return data_obj1.x
+
+    res = simple_assign_global_obj_attr1()
+    assert data_obj1.x == 99
+    assert res == 99
+
+
+data_obj2 = AssignTarget()
+data_obj2.x = 100
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_global_obj_attr2():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def simple_assign_global_obj_attr2():
+        data_obj2.x = 101
+        return data_obj2.x
+
+    res = simple_assign_global_obj_attr2()
+    assert data_obj2.x == 101
+    assert res == 101

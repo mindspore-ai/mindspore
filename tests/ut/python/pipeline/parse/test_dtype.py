@@ -14,15 +14,17 @@
 # ============================================================================
 """ test_dtype """
 from mindspore._c_expression import typing
+import mindspore as ms
 
-from mindspore.common.api import jit
+ms.set_context(mode=ms.GRAPH_MODE)
+
 
 number = typing.Number()
 int64 = typing.Int(64)
 t1 = typing.Tuple((int64, int64))
 
 
-@jit
+@ms.jit
 def try_type():
     return (number, int64, t1)
 

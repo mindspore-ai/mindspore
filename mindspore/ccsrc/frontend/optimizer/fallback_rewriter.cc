@@ -24,6 +24,7 @@
 #include <functional>
 #include <utility>
 #include <memory>
+#include <unordered_map>
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "mindspore/core/ops/core_ops.h"
@@ -118,7 +119,7 @@ class BaseRewriter : protected SimpleRewriter {
   }
 
  protected:
-  virtual AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) = 0;
+  virtual AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) = 0;
   virtual AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) = 0;
   virtual AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) = 0;
 
@@ -140,13 +141,8 @@ class BaseRewriter : protected SimpleRewriter {
       if (cnode->size() == 0) {
         return nullptr;
       }
-      // Get primitive from cnode.
-      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      if (prim == nullptr) {
-        return nullptr;
-      }
       // Call primitive cnode converter.
-      return ConvertPrimitiveCNode(cnode, prim);
+      return ConvertPrimitiveCNode(cnode);
     }
     auto value_node = node->cast<ValueNodePtr>();
     if (value_node != nullptr) {
@@ -514,7 +510,12 @@ class BeforeOptARewriter : public BaseRewriter {
     {prim::kPrimDictItems, &ThisClass::EraseDictItems},
   };
 
-  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
+  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) override {
+    // Get primitive from cnode.
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      return nullptr;
+    }
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
     if (iter == converters_.end()) {
@@ -634,8 +635,8 @@ class BeforeOptARewriter : public BaseRewriter {
 class AfterOptARewriter : public BaseRewriter {
  public:
   using ThisClass = AfterOptARewriter;
-  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager) {}
+  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager, bool vm_pipeline)
+      : BaseRewriter(root_graph, manager), vm_pipeline_(vm_pipeline) {}
   ~AfterOptARewriter() override = default;
 
  protected:
@@ -1024,7 +1025,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice}};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
-  AnfNodePtr NoneConvertPyExecute(const FuncGraphPtr &func_graph) {
+  AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
     auto str_value = std::make_shared<StringImm>("None");
     auto script_node = NewValueNode(str_value);
@@ -1042,7 +1043,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // Convert ValueNode<ClassType> to PyExecute("type", ("None"), ("None")).
-  AnfNodePtr ClassTypeConvertPyExecute(const FuncGraphPtr &func_graph, const ClassTypePtr &clt) {
+  AnfNodePtr ConvertClassTypeToPyExecute(const FuncGraphPtr &func_graph, const ClassTypePtr &clt) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(clt);
     const auto &class_name = clt->name();
@@ -1086,13 +1087,27 @@ class AfterOptARewriter : public BaseRewriter {
     return value_node;
   }
 
+  AnfNodePtr ConvertTypeToPyExecute(const ValueNodePtr &node, const TypePtr &type) const {
+    // Support convert type to PyExecute.
+    const auto py_type = ValueToPyData(type);
+    MS_LOG(DEBUG) << "py_type: " << py_type;
+    auto res = fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node);
+    fallback::SetRealType(res, type);
+    return res;
+  }
+
   AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
                                    bool py_execute_input) {
     MS_EXCEPTION_IF_NULL(fg);
     MS_EXCEPTION_IF_NULL(value_node);
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<None>()) {
-      return NoneConvertPyExecute(fg);
+      return ConvertNoneToPyExecute(fg);
+    }
+    if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
+      if (value->isa<Type>()) {
+        return ConvertTypeToPyExecute(value_node, value->cast<TypePtr>());
+      }
     }
     if (value->isa<parse::InterpretedObject>()) {
       return fallback::ConvertInterpretedObjectToPyExecute(fg, value, value_node);
@@ -1133,7 +1148,14 @@ class AfterOptARewriter : public BaseRewriter {
       if (value_node == nullptr) {
         continue;
       }
-      auto new_input = GetPyExecuteFromValue(cur_func, value_node, value_node->value(), false);
+      const auto &value = value_node->value();
+      if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
+        // Not convert the 'type' used by Cast primitive.
+        if (value->isa<Type>() && IsPrimitiveCNode(cnode, prim::kPrimCast)) {
+          continue;
+        }
+      }
+      auto new_input = GetPyExecuteFromValue(cur_func, value_node, value, false);
       if (new_input == input) {
         continue;
       }
@@ -1163,7 +1185,7 @@ class AfterOptARewriter : public BaseRewriter {
           for (auto value : value_tuple) {
             if (value->isa<parse::ClassType>()) {
               auto class_type = value->cast<ClassTypePtr>();
-              auto type_py_execute = ClassTypeConvertPyExecute(cur_func, class_type);
+              auto type_py_execute = ConvertClassTypeToPyExecute(cur_func, class_type);
               (void)make_tuple.emplace_back(type_py_execute);
               found_clt = true;
             } else {
@@ -1184,14 +1206,19 @@ class AfterOptARewriter : public BaseRewriter {
         if (class_type == nullptr) {
           continue;
         }
-        auto type_py_execute = ClassTypeConvertPyExecute(cur_func, class_type);
+        auto type_py_execute = ConvertClassTypeToPyExecute(cur_func, class_type);
         (void)manager_->Replace(input, type_py_execute);
         set_need_renormalized(true);
       }
     }
   }
 
-  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
+  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) override {
+    // Get primitive from cnode.
+    const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      return nullptr;
+    }
     ConvertValueInputToPyExecute(cnode);
     CheckCNodeInputsHasClassType(cnode);
     // Find cnode converter by primitive.
@@ -1288,15 +1315,6 @@ class AfterOptARewriter : public BaseRewriter {
     return fallback::ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
   }
 
-  AnfNodePtr ConvertTypeObjectValue(const ValueNodePtr &node, const TypePtr &type) const {
-    // Support convert type to PyExecute.
-    const auto py_type = ValueToPyData(type);
-    MS_LOG(DEBUG) << "py_type: " << py_type;
-    auto res = fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node);
-    fallback::SetRealType(res, type);
-    return res;
-  }
-
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
@@ -1304,10 +1322,6 @@ class AfterOptARewriter : public BaseRewriter {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {
         return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
-      } else if (value->isa<Type>()) {
-        // If the type value node is used by Cast primitive, should not convert.
-        // Add convert next PR.
-        return nullptr;
       }
     }
     return nullptr;
@@ -1370,6 +1384,9 @@ class AfterOptARewriter : public BaseRewriter {
     // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
     return ConvertToAbstractTuple(abs, 0);
   }
+
+ private:
+  bool vm_pipeline_{true};
 };
 
 // ===========================================================================
@@ -1447,7 +1464,12 @@ class ExportRewriter : public BaseRewriter {
     {prim::kPrimListGetItem, &ThisClass::ConvertListGetItemToTupleGetItem},
     {prim::kPrimListSetItem, &ThisClass::ConvertListSetItemToTupleSetItem},
   };
-  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
+  AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode) override {
+    // Get primitive from cnode.
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      return nullptr;
+    }
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
     if (iter == converters_.end()) {
@@ -1553,13 +1575,13 @@ bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &man
   return rewriter.Execute();
 }
 
-bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource, bool vm_pipeline) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(resource);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
-  AfterOptARewriter rewriter(root, manager);
+  AfterOptARewriter rewriter(root, manager, vm_pipeline);
   bool change = rewriter.Execute();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
