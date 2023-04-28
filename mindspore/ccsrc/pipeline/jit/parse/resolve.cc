@@ -284,7 +284,7 @@ AnfNodePtr ConvertInterpretedObjForResolve(const AnfNodePtr &origin_node, const 
   if (convert_result->isa<InterpretedObject>() && !origin_node->has_user_data("__py_interpret_local_value_flag__")) {
     constexpr auto recursive_level = 2;
     MS_LOG(DEBUG) << "Convert InterpretedObj for resolve, node: " << origin_node->DebugString(recursive_level);
-    return ConvertInterpretedObjectToPyExecute(func_graph, convert_result, origin_node);
+    return fallback::ConvertInterpretedObjectToPyExecute(func_graph, convert_result, origin_node);
   }
   return nullptr;
 }
@@ -742,6 +742,21 @@ AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfN
     }
   }
   return nullptr;
+}
+
+AnfNodePtr ResolveInterpretedObjectOfSetAttr(const AnfNodePtr &target_node, const AnfNodePtr &attr_node,
+                                             const AnfNodePtr &value_node) {
+  auto [name_space, symbol] = GetNamespaceAndSymbol(target_node);
+  MS_EXCEPTION_IF_NULL(name_space);
+  MS_EXCEPTION_IF_NULL(symbol);
+  auto symbol_obj = GetSymbolObject(name_space, symbol, target_node);
+  auto interpreted_obj = std::make_shared<InterpretedObject>(symbol_obj, py::str(symbol_obj));
+  MS_EXCEPTION_IF_NULL(interpreted_obj);
+  MS_LOG(DEBUG) << "Created a interpreted object: " << interpreted_obj->ToString();
+  const auto &resolve_node = ConvertInterpretedObjForResolve(target_node, interpreted_obj, target_node->func_graph());
+
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimSetAttr), resolve_node, attr_node, value_node};
+  return target_node->func_graph()->NewCNodeInOrder(std::move(inputs));
 }
 
 namespace {

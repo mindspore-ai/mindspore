@@ -23,13 +23,13 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimGetAttr, object, attr}
+// {prim::kPrimSetAttr, object, attr, assigned}
 // {prim::kPrimResolve, namespace, symbol}
 AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  PatternNode<AnfNodePtr> object, attr, ns_node, sym_node;
+  PatternNode<AnfNodePtr> object, attr, setattr_target, setattr_attr, setattr_assigned, ns_node, sym_node;
   auto GetAttrLambda = [&node, &object, &attr, &optimizer]() -> AnfNodePtr {
     auto object_node = object.GetNode(node);
     auto attr_node = attr.GetNode(node);
-
     // {prim::kPrimGetAttr, {getitem, {prim::kPrimResolve, namespace, symbol}, index}, attr}
     // {prim::kPrimGetAttr, {getitem, {prim::kPrimGetAttr, ResolveNode, member}, index}, attr}
     if (parse::IsGetItemCNode(object_node)) {
@@ -37,7 +37,7 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     }
     // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
     if (IsPrimitiveCNode(object_node, prim::kPrimResolve)) {
-      // node is get_attr node
+      // 'node' is getattr node.
       return parse::ResolveSymbolWithAttr(optimizer->manager(), object_node, attr_node, node);
     }
     // {prim::kPrimGetAttr, namespace, attr}
@@ -61,6 +61,25 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     return nullptr;
   };
 
+  auto SetAttrLambda = [&node, &setattr_target, &setattr_attr, &setattr_assigned, &optimizer]() -> AnfNodePtr {
+    auto target_node = setattr_target.GetNode(node);
+    auto attr_node = setattr_attr.GetNode(node);
+    auto assigned_node = setattr_assigned.GetNode(node);
+    MS_LOG(DEBUG) << "Found setattr: " << target_node->DebugString() << ", " << attr_node->DebugString() << ", "
+                  << assigned_node->DebugString();
+    // If target_node is not a InterpretedObject, but a resolve CNode, we should convert it here.
+    // {prim::kPrimSetAttr, {prim::kPrimResolve, namespace, symbol}, attr, assigned}
+    if (IsPrimitiveCNode(target_node, prim::kPrimResolve)) {
+      // 'node' is setattr node.
+      const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+      if (!allow_fallback_runtime) {
+        MS_LOG(EXCEPTION) << "Not support setattr during JIT Fallback disabled.";
+      }
+      return parse::ResolveInterpretedObjectOfSetAttr(target_node, attr_node, assigned_node);
+    }
+    return nullptr;
+  };
+
   auto ResolveLambda = [&node, &ns_node, &sym_node, &optimizer]() -> AnfNodePtr {
     auto name_space = GetValueNode<parse::NameSpacePtr>(ns_node.GetNode(node));
     auto symbol = GetValueNode<parse::SymbolPtr>(sym_node.GetNode(node));
@@ -77,6 +96,9 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
   // {prim::kPrimGetAttr, object, attr}
   MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimGetAttr, object, attr), GetAttrLambda,
                           attr.CheckFunc(IsValueNode<StringImm>, node));
+  // {prim::kPrimSetAttr, object, attr, assigned_value}
+  MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSetAttr, setattr_target, setattr_attr, setattr_assigned),
+                          SetAttrLambda, setattr_attr.CheckFunc(IsValueNode<StringImm>, node));
   // {prim::kPrimResolve, namespace, symbol}
   MATCH_REPLACE_LAMBDA_IF(
     node, PPrimitive(prim::kPrimResolve, ns_node, sym_node), ResolveLambda,

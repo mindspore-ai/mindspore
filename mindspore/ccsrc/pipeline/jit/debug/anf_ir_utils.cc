@@ -392,7 +392,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr &func_graph, const Value
     } else {
       oss << ", ";
     }
-    oss << "\"" << elem.first << "\": " << GetValueText(func_graph, elem.second);
+    oss << "\"" << elem.first->ToString() << "\": " << GetValueText(func_graph, elem.second);
   }
   oss << "}";
   return oss.str();

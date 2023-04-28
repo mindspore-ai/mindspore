@@ -145,11 +145,7 @@ class PyExecuteInitializer {
       MS_LOG(DEBUG) << "input[" << i << "], value : " << value->ToString();
       const auto &tuple_abs = values_tuple_abs->cast<abstract::AbstractSequencePtr>();
       const auto &value_abs = (*tuple_abs)[i];
-
-      if (value_abs->has_user_data(kPyObject)) {
-        auto obj = *(value_abs->user_data<py::object>(kPyObject));
-        local_dict[py::str(key_str->value())] = obj;
-      } else if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
+      if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
         auto obj = output_data->obj;
         MS_LOG(DEBUG) << "input[" << i << "] convert value from user data, obj: " << obj;
@@ -173,7 +169,7 @@ class PyExecuteInitializer {
         MS_EXCEPTION(TypeError) << "PyExecute node output can not contain stub tensor.";
       }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
-      PushPyExecuteOutput(output);
+      fallback::PushPyExecuteOutput(output);
       if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
         const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());

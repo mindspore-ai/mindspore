@@ -176,7 +176,7 @@ def test_setattr_self_non_param_used_in_operator_2():
 
         def construct(self, x):
             self.data = Tensor([1, 2, 3, 4])
-            return ops.add(self.data, x)
+            return ops.add(self.data, x)  # @jit.typing: () -> tensor[int64]
 
     test_net = TestNet(1)
     ret = test_net(Tensor([1, 1, 1, 1]))

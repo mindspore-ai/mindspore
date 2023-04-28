@@ -28,17 +28,22 @@
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/fallback.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace abstract {
 namespace {
-inline AbstractBasePtr GetEvaluatedValue(const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(conf);
-  const auto &eval_result = conf->ObtainEvalResult();
-  MS_EXCEPTION_IF_NULL(eval_result);
-  return eval_result->abstract();
+EvalResultPtr GetEvalResult(const AnfNodeConfigPtr &conf) {
+  try {
+    MS_EXCEPTION_IF_NULL(conf);
+    const auto &eval_result = conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    return eval_result;
+  } catch (const std::exception &) {
+    MS_LOG(EXCEPTION) << "Fail to get eval result with conf " << conf->ToString();
+  }
 }
 
 AnfNodePtr BuildValueNode(const ValuePtr &v, const AbstractBasePtr &abs_base) {
@@ -804,14 +809,8 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                       << (new_node->func_graph() ? new_node->func_graph()->ToString() : "FG(Null)")
                       << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
   }
-  EvalResultPtr conf_eval_result = nullptr;
-  try {
-    conf_eval_result = conf->ObtainEvalResult();
-    MS_EXCEPTION_IF_NULL(conf_eval_result);
-    new_node->set_abstract(conf_eval_result->abstract());
-  } catch (const std::exception &) {
-    MS_LOG(EXCEPTION) << "Fail to get abstract value with " << conf->ToString() << ", for " << new_node->DebugString();
-  }
+  const EvalResultPtr &conf_eval_result = GetEvalResult(conf);
+  new_node->set_abstract(conf_eval_result->abstract());
   if (new_node->isa<CNode>() && new_node->abstract()->isa<PartialAbstractClosure>()) {
     auto partial_abstract = dyn_cast_ptr<PartialAbstractClosure>(new_node->abstract());
     if (partial_abstract->node() == node) {
@@ -835,13 +834,9 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   for (size_t i = 0; i < old_inputs.size(); ++i) {
     auto node_input = old_inputs[i];
     AnfNodeConfigPtr input_conf = MakeConfig(node_input);
-    AbstractBasePtr abs;
-    try {
-      abs = GetEvaluatedValue(input_conf);
-    } catch (const std::exception &) {
-      MS_LOG(EXCEPTION) << "Fail to get input's abstract value, with input config: " << input_conf->ToString()
-                        << ", in old node: " << c_old->DebugString();
-    }
+    MS_EXCEPTION_IF_NULL(input_conf);
+    const auto &eval_result = GetEvalResult(input_conf);
+    const AbstractBasePtr &abs = eval_result->abstract();
     bool ignore_build_value = false;
     AnfNodePtr replace_node = nullptr;
     if (specializer_->engine()->check_side_effect()) {
@@ -1203,10 +1198,37 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   return std::make_pair(AbstractBasePtrList(), nullptr);
 }
 
+namespace {
 bool IsHighOrderCall(const AnfNodePtr &func) {
   return !func->isa<ValueNode>() && func->abstract()->isa<AbstractFunction>() &&
          !func->abstract()->isa<AbstractFuncUnion>();
 }
+
+// Update inputs' user data from their abstracts to nodes.
+void UpdateInputsUserData(const CNodePtr &cnode, const std::vector<AnfNodePtr> &new_inputs) {
+  const auto &old_inputs = cnode->inputs();
+  if (old_inputs.size() != new_inputs.size()) {
+    MS_LOG(DEBUG) << "Old inputs size is not equal to new inputs size, node: " << cnode->DebugString();
+    return;
+  }
+  // Update real type and shape info.
+  for (size_t i = 0; i < cnode->size(); ++i) {
+    const auto &old_input = old_inputs[i];
+    MS_EXCEPTION_IF_NULL(old_input);
+    const auto &old_input_abs = old_input->abstract();
+    MS_EXCEPTION_IF_NULL(old_input_abs);
+    MS_EXCEPTION_IF_NULL(new_inputs[i]);
+    if (fallback::HasRealType(old_input_abs)) {
+      const auto &real_type = fallback::GetRealType<AbstractBase, Type>(old_input_abs);
+      fallback::SetRealType<AnfNode, Type>(new_inputs[i], real_type);
+    }
+    if (fallback::HasRealShape(old_input_abs)) {
+      const auto &real_type = fallback::GetRealShape<AbstractBase, BaseShape>(old_input_abs);
+      fallback::SetRealShape<AnfNode, BaseShape>(new_inputs[i], real_type);
+    }
+  }
+}
+}  // namespace
 
 bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1297,6 +1319,9 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
       new_inputs[i] = new_node;
     }
   }
+
+  // Update inputs' user data from their abstracts to nodes.
+  UpdateInputsUserData(cnode, new_inputs);
 
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
@@ -1502,13 +1527,11 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     if (IsPrimitiveCNode(origin_node, prim::kPrimDepend)) {
       return nullptr;
     }
-
-    auto ret = BuildValueNode(val, ival);
-    if (ival->has_user_data(kPyObject)) {
-      MS_LOG(DEBUG) << "When build possible value node, the origin has python object, attach it to new node abs.";
-      ret->abstract()->set_user_data<PyExecObject>(kPyObject, ival->user_data<PyExecObject>(kPyObject));
+    // Keep primitive 'PyExecute' not to be optimized
+    if (IsPrimitiveCNode(origin_node, prim::kPrimPyExecute)) {
+      return nullptr;
     }
-    return ret;
+    return BuildValueNode(val, ival);
   }
 }
 

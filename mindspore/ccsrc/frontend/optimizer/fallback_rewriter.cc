@@ -31,6 +31,7 @@
 #include "pipeline/jit/action.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "pipeline/jit/fallback.h"
@@ -738,10 +739,10 @@ class AfterOptARewriter : public BaseRewriter {
     const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
     if (tensor_val != nullptr) {
       const auto &tensor_type = tensor_val->element()->BuildType();
-      dict_getitem_node->set_user_data<Type>("__py_execute_tensor_type__", tensor_type);
+      fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
       const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
       MS_EXCEPTION_IF_NULL(tensor_shape);
-      dict_getitem_node->set_user_data<abstract::Shape>("__py_execute_tensor_shape__", tensor_shape);
+      fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
       MS_LOG(DEBUG) << "key: " << key->abstract()->BuildValue()->ToString() << ", type: " << tensor_type->ToString()
                     << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
     }
@@ -776,7 +777,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     // Script
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils.dict_setitem(" << kInternalDictSelfStr << ", "
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_dict_setitem(" << kInternalDictSelfStr << ", "
                   << kInternalDictKeyStr << ", " << kInternalDictValueStr << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1094,7 +1095,7 @@ class AfterOptARewriter : public BaseRewriter {
       return NoneConvertPyExecute(fg);
     }
     if (value->isa<parse::InterpretedObject>()) {
-      return ConvertInterpretedObjectToPyExecute(fg, value, value_node);
+      return fallback::ConvertInterpretedObjectToPyExecute(fg, value, value_node);
     }
     if (value->isa<ValueTuple>()) {
       return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeTuple,
@@ -1284,7 +1285,16 @@ class AfterOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) const {
     // Convert InterpretedObject value node to PyExecute CNode.
-    return ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
+    return fallback::ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
+  }
+
+  AnfNodePtr ConvertTypeObjectValue(const ValueNodePtr &node, const TypePtr &type) const {
+    // Support convert type to PyExecute.
+    const auto py_type = ValueToPyData(type);
+    MS_LOG(DEBUG) << "py_type: " << py_type;
+    auto res = fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node);
+    fallback::SetRealType(res, type);
+    return res;
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
@@ -1294,6 +1304,10 @@ class AfterOptARewriter : public BaseRewriter {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {
         return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
+      } else if (value->isa<Type>()) {
+        // If the type value node is used by Cast primitive, should not convert.
+        // Add convert next PR.
+        return nullptr;
       }
     }
     return nullptr;

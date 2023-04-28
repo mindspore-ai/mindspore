@@ -139,8 +139,8 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   const auto &input0_str = dyn_cast<StringImm>(input0_value);
   MS_LOG(DEBUG) << "Script: " << input0_str->ToString();
   // Check if output exists created by 'CppInferShapeAndType'.
-  if (HasPyExecuteOutput()) {
-    const auto &output = PopPyExecuteOutput();
+  if (fallback::HasPyExecuteOutput()) {
+    const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
     if (py::isinstance<tensor::Tensor>(output)) {

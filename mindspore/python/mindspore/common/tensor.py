@@ -74,6 +74,15 @@ class _TensorMeta(type(Tensor_), abc.ABCMeta):
     """
 
 
+def make_tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
+    """
+    Create a new Tensor in Cell.construct() or function decorated by @jit.
+
+    The arguments are the same as class 'Tensor'. Also see: :class:`mindspore.common.Tensor`.
+    """
+    return Tensor(input_data, dtype, shape, init, internal, const_arg)  # @jit.typing: () -> tensor[{dtype}]
+
+
 class Tensor(Tensor_, metaclass=_TensorMeta):
     """
     Tensor is a data structure that stores an n-dimensional array.
