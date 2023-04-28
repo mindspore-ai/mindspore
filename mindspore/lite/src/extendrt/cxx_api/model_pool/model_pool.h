@@ -100,7 +100,8 @@ class ModelPool {
 
   std::shared_ptr<Context> CopyContext(const std::shared_ptr<Context> &context);
 
-  Status CreateWorkers(const char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config, bool copy_model);
+  Status CreateWorkers(const char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config, bool copy_model,
+                       ModelType model_type);
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 

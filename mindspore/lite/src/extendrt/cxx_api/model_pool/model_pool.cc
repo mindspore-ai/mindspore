@@ -688,7 +688,7 @@ Status ModelPool::CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_
 }
 
 Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config,
-                                bool copy_model) {
+                                bool copy_model, ModelType model_type) {
   std::shared_ptr<ModelWorker> model_worker = nullptr;
   bool create_worker_success = true;
   runner_id_ = ResourceManager::GetInstance()->GenRunnerID();
@@ -729,12 +729,13 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
                  << " | worker thread num: " << model_pool_config[i]->context->GetThreadNum()
                  << " | inter op parallel num: " << model_pool_config[i]->context->GetInterOpParallelNum();
     if (i == 0) {
-      model_worker->InitModelWorker(graph_buf, size, model_pool_config[i], predict_task_queue_, &create_worker_success);
+      model_worker->InitModelWorker(graph_buf, size, model_pool_config[i], predict_task_queue_, &create_worker_success,
+                                    model_type);
       thread_ = std::thread(&ModelWorker::Run, model_worker);
       model_worker->WaitCreateWorkerDone();
     } else {
       InitWorkerManager::GetInstance()->InitModelWorker(model_worker, graph_buf, size, model_pool_config[i],
-                                                        predict_task_queue_, &create_worker_success);
+                                                        predict_task_queue_, &create_worker_success, model_type);
     }
     if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
       all_model_workers_[task_queue_id].push_back(model_worker);
@@ -809,7 +810,8 @@ Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shar
     MS_LOG(ERROR) << "InitModelPoolConfig failed.";
     return kLiteFileError;
   }
-  auto status = CreateWorkers(model_data, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1));
+  auto status =
+    CreateWorkers(model_data, size, model_pool_config, numa_available_ && (used_numa_node_num_ > 1), kMindIR);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
@@ -838,7 +840,15 @@ Status ModelPool::InitByPath(const std::string &model_path, const std::shared_pt
     MS_LOG(ERROR) << "read model failed, model path: " << model_path;
     return kLiteNullptr;
   }
-  auto status = CreateWorkers(graph_buf_, size, model_pool_config, numa_copy_buf);
+  auto dir_pos = model_path.find_last_of('/');
+  auto mindir_name = dir_pos != std::string::npos ? model_path.substr(dir_pos + 1) : model_path;
+  auto dot_pos = mindir_name.find_last_of('.');
+  auto model_type_str = mindir_name.substr(dot_pos + 1);
+  ModelType model_type = kMindIR;
+  if (model_type_str == "ms") {
+    model_type = kMindIR_Lite;
+  }
+  auto status = CreateWorkers(graph_buf_, size, model_pool_config, numa_copy_buf, model_type);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;

@@ -62,7 +62,7 @@ class InitWorkerThread {
 
   void Launch(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
               const std::shared_ptr<WorkerConfig> &worker_config,
-              const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
+              const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success, ModelType model_type);
 
   bool IsIdle() { return is_idle_; }
 
@@ -75,6 +75,7 @@ class InitWorkerThread {
   std::shared_ptr<WorkerConfig> worker_config_;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_;
   bool *create_success_;
+  ModelType model_type_;
 
   bool is_destroy_ = false;
   bool is_idle_ = true;
@@ -91,7 +92,8 @@ class InitWorkerManager {
 
   void InitModelWorker(std::shared_ptr<ModelWorker> worker, const char *model_buf, size_t size,
                        const std::shared_ptr<WorkerConfig> &worker_config,
-                       const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
+                       const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success,
+                       ModelType model_type);
 
  private:
   InitWorkerManager() = default;

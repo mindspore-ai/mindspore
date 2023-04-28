@@ -101,7 +101,11 @@ class MS_API ModelParallelRunner {
   ModelParallelRunner();
   ~ModelParallelRunner();
 
-  /// \brief build a model parallel runner from model path so that it can run on a device.
+  /// \brief build a model parallel runner from model path so that it can run on a device. Supports importing the `ms`
+  /// model (exported by the `converter_lite` tool) and the `mindir` model (exported by MindSpore or exported by the
+  /// `converter_lite` tool). The support for the `ms` model will be removed in future iterations, and it is recommended
+  /// to use the `mindir` model for inference. When using the `ms` model for inference, please keep the suffix name of
+  /// the model as `.ms`, otherwise it will not be recognized.
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] runner_config Define the config used to store options during model pool init.
@@ -109,7 +113,8 @@ class MS_API ModelParallelRunner {
   /// \return Status.
   inline Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
-  /// \brief build a model parallel runner from model buffer so that it can run on a device.
+  /// \brief build a model parallel runner from model buffer so that it can run on a device. This interface only
+  /// supports passing in `mindir` model file data.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.

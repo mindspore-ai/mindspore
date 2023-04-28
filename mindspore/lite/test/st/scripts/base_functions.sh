@@ -93,6 +93,19 @@ function Convert() {
           if [[ ${model_fmk} != "TF" &&! ${cfg_file_name} =~ "_ge" &&  -z ${input_format} ]]; then
             input_format="NHWC"
           fi
+        elif [[ ${cfg_file_name} =~ "_cloud_ms" ]]; then
+          save_type="MINDIR_LITE"
+          if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+            if [[ ${input_num} == "" ]]; then
+              input_num=1
+            fi
+            IFS="," read -r -a name_array <<< ${input_names}
+            IFS=":" read -r -a shape_array <<< ${input_shapes}
+            for i in $(seq 0 $((${input_num}-1)))
+            do
+              spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+            done
+          fi
         elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
           save_type="MINDIR"
           if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
@@ -244,7 +257,7 @@ function Push_Files() {
 function Run_Benchmark() {
   # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:failNotReturn;
   local cfg_file_list cfg_file_name line_info model_info spec_acc_limit model_name input_num input_shapes spec_threads \
-        extra_info benchmark_mode infix mode model_file input_files output_file data_path threads acc_limit enableFp16 \
+        extra_info benchmark_mode infix mode model_file ms_model_type input_files output_file data_path threads acc_limit enableFp16 \
         run_result cfg_file input_data_mode enableGLTexture
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
@@ -306,10 +319,15 @@ function Run_Benchmark() {
       elif [[ ${cfg_file_name} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
         benchmark_mode="loop"
       fi
-      if [[ ${cfg_file_name} =~ "_cloud" ]]; then
+      if [[ ${cfg_file_name} =~ "_cloud_ms" ]]; then
+        model_file=$2"/${model_name}${infix}.ms"
+        ms_model_type="MindIR_Lite"
+      elif [[ ${cfg_file_name} =~ "_cloud" ]]; then
         model_file=$2"/${model_name}${infix}.mindir"
+        ms_model_type="MindIR"
       else
         model_file=$2"/${model_name}${infix}.ms"
+        ms_model_type="MindIR_Lite"
       fi
       if [[ ${use_parallel_predict} == "true" ]]; then
         export BENCHMARK_WEIGHT_PATH=${model_file}
@@ -385,8 +403,8 @@ function Run_Benchmark() {
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads} >> "$4"
-          MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} >> "$4"
+          echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads}' --modelType='${ms_model_type} >> "$4"
+          MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --modelType=${ms_model_type} >> "$4"
         fi
         if [ $? = 0 ]; then
           if [[ ${extra_info} == "parallel_predict" ]]; then

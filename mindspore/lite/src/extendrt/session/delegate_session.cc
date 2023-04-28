@@ -69,6 +69,56 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
   return kSuccess;
 }
 
+Status GraphSinkSession::InitGraphInfo() {
+  auto new_inputs = graph_executor_->GetInputInfos(kernel_graph_);
+  if (new_inputs.empty()) {
+    MS_LOG(ERROR) << "Input is empty.";
+    return kCoreFailed;
+  }
+  inputs_.clear();
+  input_names_.clear();
+  inputs_.reserve(new_inputs.size());
+  input_names_.reserve(new_inputs.size());
+  for (size_t i = 0; i < new_inputs.size(); i++) {
+    auto &input = new_inputs[i];
+    input_names_.push_back(input.name());
+    auto data_type = static_cast<enum DataType>(input.data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input.shape_c());
+    inputs_.push_back(impl);
+  }
+
+  auto new_outputs = graph_executor_->GetOutputInfos(kernel_graph_);
+  if (new_outputs.empty()) {
+    MS_LOG(ERROR) << "Output is empty.";
+    return kCoreFailed;
+  }
+
+  outputs_.clear();
+  output_names_.clear();
+  outputs_.reserve(new_outputs.size());
+  output_names_.reserve(new_outputs.size());
+  for (size_t i = 0; i < new_outputs.size(); i++) {
+    auto &output = new_outputs[i];
+    output_names_.push_back(output.name());
+    auto data_type = static_cast<enum DataType>(output.data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output.shape_c());
+    outputs_.push_back(impl);
+  }
+  return kSuccess;
+}
+
+Status GraphSinkSession::CompileGraph(const void *model_data, size_t data_size) {
+  MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
+  // This lock can be removed when LiteRT supports concurrent multithreading compilation.
+  std::lock_guard<std::mutex> lock(g_build_graph_mutex);
+  auto ret = graph_executor_->CompileGraph(model_data, data_size, options_);
+  if (!ret) {
+    MS_LOG(ERROR) << "GraphSinkSession::CompileGraph compile graph failed";
+    return kCoreFailed;
+  }
+  return InitGraphInfo();
+}
+
 Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphSinkSession::CompileGraph";
   // This lock can be removed when LiteRT supports concurrent multithreading compilation.

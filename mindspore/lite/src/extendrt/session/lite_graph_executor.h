@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #include "include/api/types.h"
 #include "runtime/hardware/device_context.h"
@@ -30,6 +31,12 @@ class LiteGraphExecutor : public device::GraphExecutor {
   LiteGraphExecutor() = default;
   ~LiteGraphExecutor() = default;
 
+  bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override {
+    return false;
+  }
+  virtual bool CompileGraph(const void *model_data, size_t data_size, const std::map<string, string> &compile_options) {
+    return false;
+  }
   virtual bool Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
                       const std::vector<std::vector<int64_t>> &new_shapes) {
     (void)inputs;

@@ -40,6 +40,7 @@ class GraphSinkSession : public InferSession {
 
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
+  Status CompileGraph(const void *model_data, size_t data_size) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
@@ -55,6 +56,7 @@ class GraphSinkSession : public InferSession {
 
  private:
   Status GeDeviceContextInit();
+  Status InitGraphInfo();
 
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;

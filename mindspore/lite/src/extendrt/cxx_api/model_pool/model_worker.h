@@ -43,7 +43,7 @@ class ModelWorker {
 
   ~ModelWorker() = default;
 
-  Status Init(const char *model_buf, size_t size);
+  Status Init(const char *model_buf, size_t size, ModelType model_type);
 
   Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
@@ -59,7 +59,8 @@ class ModelWorker {
   bool IsAvailable();
 
   void InitModelWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
-                       const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
+                       const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success,
+                       ModelType model_type);
 
   inline bool ModelIsNull() { return model_is_nullptr_; }
 

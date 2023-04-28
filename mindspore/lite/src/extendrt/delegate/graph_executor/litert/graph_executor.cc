@@ -81,6 +81,30 @@ LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Contex
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()), config_infos_);
 }
 
+bool LiteRTGraphExecutor::CompileGraph(const void *model_data, size_t data_size,
+                                       const std::map<string, string> &compile_options) {
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "model_data is nullptr.";
+    return false;
+  }
+
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return false;
+  }
+  if (lite_session_ == nullptr) {
+    MS_LOG(ERROR) << "lite session is nullptr.";
+    return false;
+  }
+  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<const char *>(model_data), kMindIR_Lite, data_size,
+                                                    helpers_.get());
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Load model by meta graph failed";
+    return false;
+  }
+  return true;
+}
+
 bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
   if (graph->isa<mindspore::session::KernelGraph>()) {
@@ -270,7 +294,9 @@ std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(const FuncGraphPt
     std::vector<int64_t> lite_shape;
     std::transform(shape.begin(), shape.end(), std::back_inserter(lite_shape),
                    [](int c) { return static_cast<int64_t>(c); });
-    input_tensors.push_back(tensor::Tensor(type_id, lite_shape));
+    auto tmp = tensor::Tensor(type_id, lite_shape);
+    tmp.set_name(inputs[i]->tensor_name());
+    input_tensors.push_back(tmp);
   }
   return input_tensors;
 }
@@ -280,7 +306,9 @@ std::vector<tensor::Tensor> LiteRTGraphExecutor::GetOutputInfos(const FuncGraphP
   std::vector<tensor::Tensor> output_tensors;
   for (size_t i = 0; i < outputs.size(); ++i) {
     auto type_id = static_cast<enum TypeId>(outputs[i].DataType());
-    output_tensors.push_back(tensor::Tensor(type_id, outputs[i].Shape()));
+    auto tmp = tensor::Tensor(type_id, outputs[i].Shape());
+    tmp.set_name(outputs[i].Name());
+    output_tensors.push_back(tmp);
   }
   return output_tensors;
 }
