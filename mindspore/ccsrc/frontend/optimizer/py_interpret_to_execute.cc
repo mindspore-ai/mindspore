@@ -101,7 +101,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     const auto &global_dict = GetValueNode<ValueDictionaryPtr>(cnode->input(input_index_two));
     auto value_dict = global_dict->cast<ValueDictionaryPtr>();
     py::object py_global_dict = ValueToPyData(global_dict);
-    (void)FuncGraphToPyData(value_dict, &py_global_dict);
+    FuncGraphToPyData(value_dict, &py_global_dict);
     MS_LOG(DEBUG) << "py_global_dict: " << py::str(py_global_dict);
     (void)CallPythonPushGlobalParams(py_global_dict);
 

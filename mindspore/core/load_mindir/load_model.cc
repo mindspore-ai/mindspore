@@ -89,7 +89,7 @@ class MSANFModelParser {
   abstract::AbstractCOOTensorPtr BuildAbstractCOOTensorFromAttrProto(const mind_ir::AttributeProto &attr_proto);
   abstract::AbstractCSRTensorPtr BuildAbstractCSRTensorFromAttrProto(const mind_ir::AttributeProto &attr_proto);
   abstract::AbstractSequencePtr BuildAbstractSequence(const mind_ir::AttributeProto &attr_proto);
-  abstract::AbstractScalarPtr BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto);
+  abstract::AbstractScalarPtr BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto) const;
   bool SetValueForTopGraphParameter(const FuncGraphPtr &topGraph, const std::map<std::string, ValuePtr> &weights);
   bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
@@ -805,7 +805,7 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
   return std::make_shared<abstract::AbstractMapTensor>(map_tensor);
 }
 
-abstract::AbstractScalarPtr MSANFModelParser::BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto) {
+abstract::AbstractScalarPtr MSANFModelParser::BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto) const {
   const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(0);
   auto iter = kDefaultValueSwitchMap.find(attr_tensor.data_type());
   if (iter == kDefaultValueSwitchMap.end()) {
