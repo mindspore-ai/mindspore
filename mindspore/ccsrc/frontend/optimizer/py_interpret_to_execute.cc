@@ -128,7 +128,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
       const auto &input = make_tuple_cnode->input(i);
       const auto &value = GetValueNode<parse::InterpretedObjectPtr>(input);
       if (value != nullptr) {
-        const auto &interpreted_node = ConvertInterpretedObjectToPyExecute(fg, value, input);
+        const auto &interpreted_node = fallback::ConvertInterpretedObjectToPyExecute(fg, value, input);
         interpreted_node->set_debug_info(input->debug_info());
         (void)transact.Replace(input, interpreted_node);
       }

@@ -815,7 +815,7 @@ std::string Parser::GetExprStr(const AnfNodePtr &node, const py::object &ast_nod
   if (node_name == "Name") {
     return py::cast<std::string>(python_adapter::GetPyObjAttr(ast_node, "id"));
   }
-  return GetNodeExprSrc(node);
+  return fallback::GetNodeExprSrc(node);
 }
 
 // Process the expr statement and expand it
@@ -847,7 +847,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       // list_x.pop(a) does not write the return value of pop.
       // -->  list_x = list_x.pop(a) need renew the list_x.
       if (IsPopOperation(call_node)) {
-        if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(list_pop_target_obj_)) {
+        if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_)) {
           // self.list_x = [xx, xx]
           // self.list_x.pop()
           MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
@@ -865,7 +865,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       // e.g.: print(x)
       // We save it as an isolated node.
       auto &no_return_node = call_node;
-      MS_LOG(INFO) << "Isolated node found(NoReturn), no_return_node: " << no_return_node->DebugString(2)
+      MS_LOG(INFO) << "Isolated node found(NoReturn), no_return_node: " << no_return_node->DebugString()
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
@@ -1055,8 +1055,8 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
-  SetNodeExprSrc(new_node, new_expr_src);
+  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
+  fallback::SetNodeExprSrc(new_node, new_expr_src);
 
   return new_node;
 }
@@ -1225,7 +1225,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   if (py::isinstance<py::none>(function_ast_node)) {
     auto name = python_adapter::GetPyObjAttr(node, "id");
     auto name_id = py::cast<std::string>(name);
-    if (support_fallback() != "0" && block->IsLocalVariable(name_id)) {
+    if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
       auto error_node = block->ReadVariable(name_id);
       error_node = HandleInterpret(block, error_node, name);
       return {NewValueNode(name_id), error_node};
@@ -1248,7 +1248,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     auto node_list = ParseException(block, args, name_id);
-    if (support_fallback() != "0" && block->IsLocalVariable(name_id)) {
+    if (support_fallback() != "0" && block->ReadLocalVariable(name_id) != nullptr) {
       auto error_node = block->ReadVariable(name_id);
       error_node = HandleInterpret(block, error_node, name);
       (void)node_list.emplace_back(error_node);
@@ -1432,14 +1432,6 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
 AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const {
   std::string var_name = "self.";
   std::string attr_name = node.attr("attr").cast<std::string>();
-  auto changed_non_param_attr = block->GetChangedNonParamAttr(attr_name);
-  auto attr_node = changed_non_param_attr.first;
-  if (attr_node != nullptr) {
-    if (!changed_non_param_attr.second) {
-      block->SetChangedNonParamAttrs(attr_name, attr_node, true);
-    }
-    return attr_node;
-  }
   (void)var_name.append(attr_name);
   auto attr_obj = ast()->obj().attr(attr_name.c_str());
   MS_EXCEPTION_IF_NULL(block);
@@ -1500,48 +1492,59 @@ AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &va
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
-  // Process class value, eg: self.xx
-  if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE) {
-    if (ast_->IsClassMember(node)) {
-      return ProcessAttributeWithClassMember(block, node);
-    }
-  }
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  MS_EXCEPTION_IF_NULL(block->func_graph());
 
   // Process the get attr
   // Use the Primitive replace the operation resolve node (getattr),
   // because the getattr will eventually be converted to Primitive node
   AnfNodePtr op_node = NewValueNode(prim::kPrimGetAttr);
 
+  // Process the node attr
+  auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
+  AnfNodePtr attr_node = NewValueNode(attr_str);
+
   // Process the attr body
   py::object value_body = python_adapter::GetPyObjAttr(node, "value");
+  MS_LOG(DEBUG) << "node: " << node << ", attr: " << attr_str << ", value: " << value_body;
+  // Process class value, eg: self.xx
+  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast()->IsClassMemberOfSelf(node)) {
+    AnfNodePtr setattr_node = nullptr;
+    auto iter = setattr_nodes_map_.find("self");
+    if (iter != setattr_nodes_map_.end()) {
+      auto attr_iter = iter->second.find(attr_str);
+      if (attr_iter != iter->second.end()) {
+        setattr_node = attr_iter->second;
+      }
+    }
+    if (setattr_node != nullptr) {  // If setattr before, should make the getattr call into PyExecute also.
+      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+      AnfNodePtr value_node = NewValueNode(interpreted_obj);
+      return block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
+    } else {
+      return ProcessAttributeWithClassMember(block, node);
+    }
+  }
   AnfNodePtr value_node = ParseExprNode(block, value_body);
   if (value_node == nullptr) {
     MS_LOG(EXCEPTION) << "Parse attribute failed";
   }
-
-  // Process the node attr
-  auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
-  MS_LOG(DEBUG) << "node: " << node << ", attr: " << attr_str << ", value: " << value_body;
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
+  // Process xxx.Tensor() and xxx is mindspore.
   if (use_fallback && attr_str == "Tensor") {
-    // Process xxx.Tensor() and xxx is mindspore.
     auto ret = ParseMsTensor(block, node, value_body, value_node);
     if (ret != nullptr) {
       return ret;
     }
   }
+  // For stype._null, return TypeNull value node directly.
   if (attr_str == "_null") {
-    // For stype._null, return TypeNull value node directly.
     auto ret = ParseNull(block, value_body);
     if (ret != nullptr) {
       return ret;
     }
   }
-
-  MS_EXCEPTION_IF_NULL(block->func_graph());
   // Create the apply node
-  AnfNodePtr attr_node = NewValueNode(attr_str);
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
   if (use_fallback) {
     // Check whether it is constant, constant does not need interpret.
@@ -1592,8 +1595,8 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, comparators[0]);
-  auto new_expr_src = GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
-  SetNodeExprSrc(new_node, new_expr_src);
+  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
+  fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1765,8 +1768,8 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   auto slice_type = ast_->GetNodeType(slice_node);
   std::string slice_type_name = slice_type->node_name();
   bool is_slice = slice_type_name == "Slice";
-  auto new_expr_src = GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
-  SetNodeExprSrc(new_node, new_expr_src);
+  auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
+  fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1835,8 +1838,8 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   // Generate expression script for binary operation node.
   std::string operand_str = GetExprStr(operand_node, operand);
-  auto new_expr_src = GeneratePyExecuteScriptForUnary(operand_str, op_node_pair.second);
-  SetNodeExprSrc(new_node, new_expr_src);
+  auto new_expr_src = fallback::GeneratePyExecuteScriptForUnary(operand_str, op_node_pair.second);
+  fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
 
@@ -1912,7 +1915,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
     target_node = ParseName(block, target_object);
   } else if (ast_type == AST_SUB_TYPE_SUBSCRIPT) {
     target_node = ParseSubscript(block, target_object);
-  } else if (ast_->IsClassMember(target_object)) {
+  } else if (ast_->IsClassMemberOfSelf(target_object)) {
     target_node = ParseAttribute(block, target_object);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
     TraceGuard trace_guard(GetLocation(target_object));
@@ -2755,57 +2758,88 @@ void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &
   }
 }
 
-void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &targ,
-                                     const AnfNodePtr &assigned_node) {
-  // Now only support the self.xx = xxxxx, can't support x.y = xxxx
-  AnfNodePtr target_node = ParseExprNode(block, targ);
-  target_node = HandleInterpret(block, target_node, targ);
-  MS_EXCEPTION_IF_NULL(target_node);
-
-  auto attr_name = targ.attr("attr").cast<std::string>();
-  std::string var_name = "self." + attr_name;
-
-  // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
+bool Parser::IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) {
+  auto attr_name = target_obj.attr("attr").cast<std::string>();
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
     MS_EXCEPTION(TypeError)
-      << "'" << var_name << "' should be initialized as a 'Parameter' in the '__init__' function before assigning.\n\n"
+      << "'" << attr_name
+      << "' should be initialized as a member variable in the '__init__' function before assigning.\n\n"
       << trace::GetDebugInfo(target_node->debug_info());
   }
+
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
-  auto obj_type = obj.attr("__class__").attr("__name__");
-  if (!py::hasattr(obj, "__parameter__")) {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  return (py::hasattr(obj, "__parameter__"));
+}
+
+bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, const py::object &target,
+                                              const AnfNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(block);
+  // Now only support the self.xx = xxxxx, can't support x.y = xxxx
+  AnfNodePtr target_node = ParseExprNode(block, target);
+  if (target_node == nullptr) {
+    return false;
+  }
+  target_node = HandleInterpret(block, target_node, target);
+  MS_EXCEPTION_IF_NULL(target_node);
+
+  if (!IsClassParameterMember(target, target_node)) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
+      auto attr_name = target.attr("attr").cast<std::string>();
+      std::string var_name = "self." + attr_name;
+      auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
+      auto obj_type = obj.attr("__class__").attr("__name__");
       MS_EXCEPTION(TypeError) << "'" << var_name
                               << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
                               << py::str(obj_type).cast<std::string>() << ".\n\n"
                               << trace::GetDebugInfo(target_node->debug_info());
     }
-    HandleAssignClassNonParamMember(block, assigned_node, attr_name);
-    return;
+    MS_LOG(DEBUG) << "Erase unused node: " << target_node->DebugString();
+    block->func_graph()->EraseUnusedNodeInOrder(target_node);
+    return false;
   }
-
-  MS_EXCEPTION_IF_NULL(block);
-  MS_LOG(DEBUG) << "SetState write " << var_name << " : " << target_node->ToString();
-  block->SetStateAssign(target_node, assigned_node);
+  block->SetStateAssign(target_node, value_node);
+  return true;
 }
 
-void Parser::HandleAssignClassNonParamMember(const FunctionBlockPtr &block, const AnfNodePtr &assigned_node,
-                                             const std::string &attr_name) {
-  auto fg = block->func_graph();
+void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &target,
+                                     const AnfNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(block);
+  const py::object attr_value = python_adapter::GetPyObjAttr(target, "value");
+  const auto &attr_value_id_str = python_adapter::GetPyObjAttr(attr_value, "id").cast<std::string>();
+  AnfNodePtr attr_value_node = nullptr;
+  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && attr_value_id_str == "self") {
+    const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+    attr_value_node = NewValueNode(interpreted_obj);
+  } else {
+    attr_value_node = ParseExprNode(block, attr_value);
+  }
+  MS_EXCEPTION_IF_NULL(attr_value_node);
+  const auto &attr_str = python_adapter::GetPyObjAttr(target, "attr").cast<std::string>();
+  if (!py::hasattr(attr_value, "id")) {
+    MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
+  }
+  MS_LOG(DEBUG) << "target node: " << attr_value_node->DebugString() << ", target name: " << attr_value_id_str
+                << ", attr: " << attr_str;
+
   std::vector<AnfNodePtr> setattr_node_inputs{NewValueNode(prim::kPrimSetAttr)};
-  auto class_node = NewValueNode(std::make_shared<StringImm>("class_obj"));
-  auto class_obj = ast()->obj();
-  auto py_class_object = std::make_shared<PyExecObject>();
-  py_class_object->obj = class_obj;
-  class_node->set_user_data<PyExecObject>(kPyObject, py_class_object);
-  (void)setattr_node_inputs.emplace_back(class_node);
-  (void)setattr_node_inputs.emplace_back(NewValueNode(attr_name));
-  (void)setattr_node_inputs.emplace_back(assigned_node);
-  auto setattr_node = fg->NewCNodeInOrder(setattr_node_inputs);
-  MS_LOG(DEBUG) << "Create setattr node: " << setattr_node->DebugString();
-  block->SetChangedNonParamAttrs(attr_name, setattr_node, false);
+  (void)setattr_node_inputs.emplace_back(attr_value_node);
+  (void)setattr_node_inputs.emplace_back(NewValueNode(attr_str));
+  (void)setattr_node_inputs.emplace_back(value_node);
+  auto setattr_node = block->func_graph()->NewCNodeInOrder(setattr_node_inputs);
+
+  // Update setattr_nodes_map.
+  auto iter = setattr_nodes_map_.find(attr_value_id_str);
+  if (iter == setattr_nodes_map_.end()) {
+    auto attr_map = std::map<std::string, AnfNodePtr>();
+    attr_map.emplace(std::make_pair(attr_str, setattr_node));
+    setattr_nodes_map_.emplace(std::make_pair(attr_value_id_str, attr_map));
+  } else {
+    // Force update the setattr node to keep the newest one.
+    iter->second.insert_or_assign(attr_str, setattr_node);
+  }
+  block->AddIsolatedNode(setattr_node);
 }
 
 void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &targ,
@@ -2822,7 +2856,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   CNodePtr setitem_app = block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
   // Getitem apply should return the sequence data structure itself
   std::string var_name;
-  if (ast_->IsClassMember(value_obj)) {
+  if (ast_->IsClassMemberOfSelf(value_obj)) {
     auto attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
@@ -2867,13 +2901,13 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
     HandleAssignTuple(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_SUBSCRIPT) {
     HandleAssignSubscript(block, target_object, value_node);
-  } else if (ast_->IsClassMember(target_object)) {
+  } else if (ast_->IsClassMemberOfSelf(target_object)) {
+    if (HandleAssignClassParameterMember(block, target_object, value_node)) {
+      return;
+    }
     HandleAssignClassMember(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
-    TraceGuard trace_guard(GetLocation(target_object));
-    MS_EXCEPTION(TypeError) << "Only support assign to attribute of self, but got attribute of "
-                            << py::str(target_object.attr("value").attr("id")) << ".\n"
-                            << "More details please refer to syntax support at https://www.mindspore.cn";
+    HandleAssignClassMember(block, target_object, value_node);
   } else {
     TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
@@ -3043,7 +3077,7 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   // b = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {
-    if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(list_pop_target_obj_)) {
+    if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_)) {
       // self.list_x = [xx, xx]
       // y = self.list_x.pop()
       MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
@@ -3587,8 +3621,8 @@ AstSubType ParseFunctionAst::GetOpType(const py::object &node) {
   return op_type;
 }
 
-bool ParseFunctionAst::IsClassMember(const py::object &node) {
-  py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER, node);
+bool ParseFunctionAst::IsClassMemberOfSelf(const py::object &node) {
+  py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_OF_SELF, node);
   if (!py::isinstance<py::bool_>(ret)) {
     MS_LOG(ERROR) << "The result of mod function parse, should be bool type.";
     return false;

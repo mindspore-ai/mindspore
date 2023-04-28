@@ -1334,7 +1334,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
                 << ", owner_value: " << owner_value->ToString();
   if (owner_value->isa<parse::InterpretedObject>()) {
-    owner_node = ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
+    owner_node = fallback::ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
   }
 
   constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
@@ -1363,7 +1363,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   } else {
     script_buffer << expr.substr(pos);
   }
-  MS_LOG(DEBUG) << "attr: " << script_buffer.str();
+  MS_LOG(DEBUG) << "script: " << script_buffer.str();
 
   const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
   std::vector<ValuePtr> key_list;
@@ -1375,14 +1375,76 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   (void)value_list.emplace_back(owner_node);
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_node = fg->NewCNode(
-    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
+  AnfNodePtr getattr_node = nullptr;
+  constexpr auto args_size = 3;
+  if (args_abs_list.size() == args_size) {  // Has setattr node as input.
+    getattr_node = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str),
+                                 NewValueNode(key_tuple), value_tuple_node, cnode->input(args_size)});
+  } else {
+    getattr_node = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str),
+                                 NewValueNode(key_tuple), value_tuple_node});
+  }
   getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
 
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf, false);
+}
+
+EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
+  auto out_node = out_conf->node();
+  const auto cnode = dyn_cast<CNode>(out_node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = cnode->func_graph();
+
+  auto owner_abs = args_abs_list[0];
+  auto owner_value = owner_abs->BuildValue();
+  auto owner_node = cnode->input(1);
+  constexpr auto debug_recursive_level = 2;
+  MS_LOG(DEBUG) << "node: " << out_conf->node()->DebugString(debug_recursive_level)
+                << ", owner_value: " << owner_value->ToString();
+  if (owner_value->isa<parse::InterpretedObject>()) {
+    owner_node = fallback::ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
+  }
+
+  ValuePtr attr_str_value = args_abs_list[1]->BuildValue();
+  if (!attr_str_value->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "Expect a string, but got: " << attr_str_value->ToString();
+  }
+  auto attr_str = attr_str_value->cast<StringImmPtr>();
+  MS_EXCEPTION_IF_NULL(attr_str);
+
+  constexpr auto internal_setattr_owner_str = "__internal_setattr_owner__";
+  constexpr auto internal_setattr_value_str = "__internal_setattr_value__";
+  std::stringstream script_buffer;
+  script_buffer << "__import__('mindspore').common._utils._jit_fallback_setattr(" << internal_setattr_owner_str << ", "
+                << attr_str->value() << ", " << internal_setattr_value_str << ")";
+  MS_LOG(DEBUG) << "script: " << script_buffer.str();
+  const auto script_setattr_str = std::make_shared<StringImm>(script_buffer.str());
+
+  std::vector<ValuePtr> key_list;
+  (void)key_list.emplace_back(std::make_shared<StringImm>(internal_setattr_owner_str));
+  (void)key_list.emplace_back(attr_str);
+  (void)key_list.emplace_back(std::make_shared<StringImm>(internal_setattr_value_str));
+  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+
+  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)value_list.emplace_back(owner_node);
+  (void)value_list.emplace_back(NewValueNode(attr_str));
+  constexpr auto value_node_index = 3;
+  (void)value_list.emplace_back(cnode->input(value_node_index));
+  const auto value_tuple_node = fg->NewCNode(value_list);
+
+  const auto setattr_node = fg->NewCNode(
+    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_setattr_str), NewValueNode(key_tuple), value_tuple_node});
+  setattr_node->set_debug_info(cnode->debug_info());
+  MS_LOG(DEBUG) << "setattr_node: " << setattr_node->DebugString(debug_recursive_level);
+
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto fn_conf = eng->MakeConfig(setattr_node, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf, false);
 }
 
@@ -1826,6 +1888,87 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
   return GetEvaluatedValueForNameSpace(args_abs_list, out_conf);
 }
+
+TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) {
+  fallback::FormatedVariableTypeFunc func = [&node, &args_abs_list](const std::string &type_var_str) -> TypePtr {
+    // For PyInterpret, the args[1] is global dict, and the args[2] is local dict.
+    // For PyExecute, the args[1] is local dict keys, and the args[2] is local dict values.
+    const auto &keys_tuple_abs = args_abs_list[1];
+    const auto &keys_tuple = keys_tuple_abs->BuildValue();
+    const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
+    ValuePtr type_value = nullptr;
+    bool isPyExecute = (keys != nullptr);
+    if (isPyExecute) {  // PyExecute.
+      bool found = false;
+      size_t i = 0;
+      for (; i < keys->value().size(); ++i) {
+        const auto &key = dyn_cast<StringImm>(keys->value()[i]);
+        MS_EXCEPTION_IF_NULL(key);
+        if (key->value() == type_var_str) {
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
+        constexpr auto values_index = 2;
+        const auto &values_tuple_abs = dyn_cast<AbstractSequence>(args_abs_list[values_index]);
+        MS_EXCEPTION_IF_NULL(values_tuple_abs);
+        const auto &type_value_abs = values_tuple_abs->elements()[i];
+        if (type_value_abs == nullptr) {
+          MS_LOG(INFO) << "Not valid PyExecute CNode. node: " << node->DebugString() << ", key: " << type_var_str
+                       << ", values_tuple_abs: " << values_tuple_abs->ToString();
+          return nullptr;
+        }
+        if (!fallback::HasRealShape(type_value_abs) &&
+            fallback::HasRealType(type_value_abs)) {  // Only real type exists.
+          type_value = fallback::GetRealType<AbstractBase, Type>(type_value_abs);
+        } else {
+          type_value = type_value_abs->BuildValue();
+        }
+      } else {
+        MS_LOG(INFO) << "Not valid PyExecute CNode. node: " << node->DebugString() << ", keys: " << keys->ToString()
+                     << ", not found " << type_var_str;
+        return nullptr;
+      }
+    } else {  // PyInterpret
+      constexpr auto local_dict_index = 2;
+      const auto &local_dict_abs = args_abs_list[local_dict_index];
+      const auto &dict = dyn_cast<AbstractDictionary>(local_dict_abs);
+      if (dict == nullptr || dict->elements().empty()) {
+        MS_LOG(INFO) << "Not valid PyInterpret CNode. node: " << node->DebugString() << ", key: " << type_var_str
+                     << ", local_dict_abs: " << local_dict_abs->ToString();
+        return nullptr;
+      }
+      for (const auto &element : dict->elements()) {
+        const auto &key = element.first->BuildValue();
+        if (key == nullptr || !key->isa<StringImm>()) {
+          continue;
+        }
+        if (key->cast<StringImmPtr>()->value() == type_var_str) {
+          type_value = element.second->BuildValue();
+          break;
+        }
+      }
+    }
+
+    if (type_value == nullptr) {
+      MS_LOG(INFO) << "Not valid " << (isPyExecute ? "PyExecute" : "PyInterpret")
+                   << " CNode. node: " << node->DebugString() << ", key: " << type_var_str << ", type value is null.";
+      return nullptr;
+    }
+    const auto &py_type = BuildValue(type_value);
+    MS_LOG(DEBUG) << "type_value: " << type_value->ToString() << ", py_type: " << py_type;
+    if (!py::isinstance<py::none>(py_type)) {
+      return py::cast<TypePtr>(py_type);
+    }
+    MS_LOG(INFO) << "Not valid " << (isPyExecute ? "PyExecute" : "PyInterpret")
+                 << " CNode. node: " << node->DebugString() << ", key: " << type_var_str << ", type value is None.";
+    return nullptr;
+  };
+  const auto &type = fallback::GetJitAnnotationTypeFromComment(node, func);
+  return type;
+}
 }  // namespace
 
 EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
@@ -1974,27 +2117,30 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   // Make abstract by type and shape.
   AbstractBasePtr res = nullptr;
   // Support Tensor annotation type. Add list and tuple here later.
-  const auto &type = GetJitAnnotationTypeFromComment(current_interpret_node);
   TypePtr dtype = nullptr;
+  TypePtr type = GetAnnotationType(current_interpret_node, args_abs_list);
   if (type != nullptr && type->isa<TensorType>()) {
     dtype = type->cast<TensorTypePtr>()->element();
   }
   if (dtype != nullptr) {
     res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
-  } else if (current_interpret_node->has_user_data("__py_execute_tensor_type__") &&
-             current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
-    const auto &preset_type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
+  } else if (fallback::HasRealType(current_interpret_node) && fallback::HasRealShape(current_interpret_node)) {
+    const auto &preset_type = fallback::GetRealType<AnfNode, Type>(current_interpret_node);
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
-    const auto &shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
+    const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(current_interpret_node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     res = std::make_shared<AbstractTensor>(preset_type, shape);
   } else {
     res = std::make_shared<AbstractAny>();
-  }
-
-  if (current_interpret_node->has_user_data(kPyObject)) {
-    MS_LOG(DEBUG) << "Current PyExecute node has python object, attach it to the abstract.";
-    res->set_user_data<py::object>(kPyObject, current_interpret_node->user_data<py::object>(kPyObject));
+    // Set input type for caller.
+    if (fallback::HasRealType(current_interpret_node)) {
+      const auto &real_type = fallback::GetRealType<AnfNode, Type>(current_interpret_node);
+      fallback::SetRealType<AbstractBase, Type>(res, real_type);
+    }
+    if (fallback::HasRealShape(current_interpret_node)) {
+      const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(current_interpret_node);
+      fallback::SetRealShape<AbstractBase, BaseShape>(res, real_type);
+    }
   }
 
   auto prim = GetCNodePrimitive(current_interpret_node);
@@ -2008,6 +2154,216 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
 }
 
 namespace {
+class PyInterpretEvaluator : public TransitionPrimEvaluator {
+ public:
+  PyInterpretEvaluator() : TransitionPrimEvaluator("PyInterpretEvaluator") {}
+  ~PyInterpretEvaluator() override = default;
+  MS_DECLARE_PARENT(PyInterpretEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    if (args_abs_list.empty()) {
+      MS_LOG(EXCEPTION) << "'args_abs_list' should not be empty";
+    }
+
+    auto current_interpret_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(current_interpret_node);
+    MS_LOG(DEBUG) << "The current interpret node: " << current_interpret_node->DebugString();
+    // Get the type parameter.
+    MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+    ValuePtr value_track = args_abs_list[0]->GetValueTrack();
+    MS_EXCEPTION_IF_NULL(value_track);
+
+    auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
+    if (script_obj == nullptr) {
+      MS_LOG(EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
+    }
+
+    // Make global and local parameters.
+    non_const_err_ = false;
+    const std::string &script = script_obj->script();
+    py::tuple params = MakeParameters(args_abs_list, script);
+    if (non_const_err_) {  // Would convert PyInterpret to PyExecute then.
+      // Make abstract by type and shape.
+      AbstractBasePtr res = nullptr;
+      // Support Tensor annotation type. Add list and tuple here later.
+      TypePtr dtype = nullptr;
+      TypePtr type = GetAnnotationType(current_interpret_node, args_abs_list);
+      if (type != nullptr && type->isa<TensorType>()) {
+        dtype = type->cast<TensorTypePtr>()->element();
+      }
+      if (dtype != nullptr) {
+        res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
+      } else {
+        res = std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
+      }
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
+    }
+
+    // Call python script string.
+    MS_LOG(DEBUG) << "Call script: " << script << ", params: " << py::str(params);
+    auto obj = parse::data_converter::CallPythonScript(py::str(script), params);
+    if (py::isinstance<py::none>(obj)) {
+      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
+      auto infer_result = std::make_shared<EvalResult>(res, nullptr);
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
+    }
+
+    ValuePtr converted_val = nullptr;
+    // converted_val could be a InterpretedObject.
+    bool converted = parse::ConvertData(obj, &converted_val, true);
+    if (!converted) {
+      MS_LOG(EXCEPTION) << "Convert the python object failed";
+    }
+    MS_EXCEPTION_IF_NULL(converted_val);
+    if (converted_val->isa<tensor::Tensor>() && HasConstArgAttr(obj)) {
+      MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
+                      << " which is not used for network input argument should not be set const.";
+    }
+    AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
+
+  void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
+    // Check whether this node should be interpretive executed.
+    MS_EXCEPTION_IF_NULL(abstract_dict);
+    const auto &elements = abstract_dict->elements();
+    if (elements.empty()) {
+      return;
+    }
+    for (const auto &element : elements) {
+      const auto &name = element.first;
+      const auto &local_abs = element.second;
+      const auto &local_abs_val = local_abs->BuildValue();
+      MS_EXCEPTION_IF_NULL(local_abs_val);
+      auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
+      if (local_abs_val == kValueAny) {
+        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+        if (allow_fallback_runtime) {
+          MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
+                       << "', the inputs should be constant, but found variable '" << py_data_name
+                       << "' to be nonconstant. To convert to PyExecute() afterwards";
+          non_const_err_ = true;
+        } else {
+          MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
+                                   << "', the inputs should be constant, but found variable '" << py_data_name
+                                   << "' to be nonconstant.";
+        }
+      }
+      if (local_abs->isa<abstract::AbstractTensor>()) {
+        MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '"
+                        << py_data_name << "' to be a tensor.";
+      }
+    }
+  }
+
+  void AddGlobalPythonFunction(const AbstractDictionaryPtr &global_dict, py::object *global_params_dict) const {
+    MS_EXCEPTION_IF_NULL(global_dict);
+    MS_EXCEPTION_IF_NULL(global_params_dict);
+    const auto &global_dict_elements = global_dict->elements();
+    for (const auto &element : global_dict_elements) {
+      const auto &element_name = element.first;
+      const auto &element_abs = element.second;
+      if (element_abs->isa<abstract::FuncGraphAbstractClosure>()) {
+        auto element_abs_fn = element_abs->cast_ptr<abstract::FuncGraphAbstractClosure>();
+        auto fg = element_abs_fn->func_graph();
+        MS_EXCEPTION_IF_NULL(fg);
+        auto wrapper_obj = fg->python_obj();
+        if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+          auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
+          (*global_params_dict)[ValueToPyData(element_name->BuildValue())] = fn_py_obj;
+          MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
+        }
+      }
+    }
+    return;
+  }
+
+  py::tuple MakeParameters(const AbstractBasePtrList &args_abs_list, const std::string &script) const {
+    constexpr int params_size = 3;
+    if (params_size != args_abs_list.size()) {
+      MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size
+                        << ", not equal to arguments.size:" << args_abs_list.size();
+    }
+    // The first argument is script string, ignore it.
+    auto params = py::tuple(params_size - 1);
+
+    // Make the global parameters.
+    auto global_dict = dyn_cast<AbstractDictionary>(args_abs_list[1]);  // Global parameters dict.
+    if (global_dict == nullptr) {
+      MS_LOG(EXCEPTION) << "The second argument should be a dictionary, but got " << args_abs_list[1]->ToString();
+    }
+    auto filtered_global_dict = FilterParameters(global_dict);
+    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
+                  << ", filtered_global_dict: " << filtered_global_dict->ToString();
+    ValuePtr global_dict_value = filtered_global_dict->BuildValue();
+    py::object global_params_dict = ValueToPyData(global_dict_value);
+    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
+                  << py::str(global_params_dict);
+
+    // Add global python function to global_params_dict.
+    AddGlobalPythonFunction(global_dict, &global_params_dict);
+    params[0] = global_params_dict;
+
+    // Make the local parameters.
+    constexpr size_t local_index = 2;
+    auto local_dict = dyn_cast<AbstractDictionary>(args_abs_list[local_index]);  // Local parameters dict.
+    if (local_dict == nullptr) {
+      MS_LOG(EXCEPTION) << "The third argument should be a dictionary, but got "
+                        << args_abs_list[local_index]->ToString();
+    }
+    auto filtered_local_dict = FilterParameters(local_dict);
+    MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()
+                  << ", filtered_local_dict: " << filtered_local_dict->ToString();
+    ValuePtr local_dict_value = filtered_local_dict->BuildValue();
+    py::dict local_params_dict = ReCheckLocalDict(filtered_local_dict);
+    MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
+                  << py::str(local_params_dict);
+    params[1] = local_params_dict;
+
+    CheckInterpretInput(filtered_local_dict, script);
+
+    return params;
+  }
+
+  py::dict ReCheckLocalDict(const AbstractDictionaryPtr &filtered_local_dict) const {
+    const auto &keys_values = filtered_local_dict->elements();
+    py::dict local_params_dict;
+    for (auto &key_value : keys_values) {
+      ValuePtr element_value = key_value.second->BuildValue();
+      MS_EXCEPTION_IF_NULL(element_value);
+      auto py_data = ValueToPyData(element_value);
+      local_params_dict[ValueToPyData(key_value.first->BuildValue())] = py_data;
+    }
+    return local_params_dict;
+  }
+
+  AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
+    MS_EXCEPTION_IF_NULL(abstract_dict);
+    std::vector<AbstractElementPair> kv;
+    const auto &keys_values = abstract_dict->elements();
+    // Filter out the element of Function type.
+    (void)std::copy_if(keys_values.cbegin(), keys_values.cend(), std::back_inserter(kv),
+                       [](const AbstractElementPair &item) {
+                         MS_EXCEPTION_IF_NULL(item.second);
+                         return (!item.second->isa<abstract::AbstractFunction>());
+                       });
+    return std::make_shared<AbstractDictionary>(kv);
+  }
+
+  bool HasConstArgAttr(const py::object &obj) const {
+    constexpr char const_arg_attr[] = "const_arg";
+    return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
+  }
+
+ private:
+  mutable bool non_const_err_{false};
+};
+
 class EmbedEvaluator : public SymbolicPrimEvaluator {
  public:
   EmbedEvaluator() : SymbolicPrimEvaluator("EmbedEvaluator") {}
@@ -2116,18 +2472,17 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
     constexpr auto args_min_size = 2;
     constexpr auto args_max_size = 3;
-    constexpr auto attr_index = 1;
-    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
-    if (res_abstract != nullptr) {
-      MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
-      return res_abstract;
-    }
-    // Inputs: data, item
     const auto args_size = args_abs_list.size();
     if (args_size != args_min_size && args_size != args_max_size) {
       MS_LOG(EXCEPTION) << "For Primitive GetAttr, the input size should be " << args_min_size << " or "
                         << args_max_size << ", but got size:" << args_size;
     }
+    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+    if (res_abstract != nullptr) {
+      return res_abstract;
+    }
+
+    constexpr auto attr_index = 1;
     auto attr_abs = args_abs_list[attr_index];
     auto attr_abs_type = attr_abs->BuildType();
     MS_EXCEPTION_IF_NULL(attr_abs_type);
@@ -2142,8 +2497,8 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     } else {
       res = StaticGetter(engine, args_abs_list, in_conf0, out_conf);
     }
-    // don't lookup from cache, as different out_conf with same node but different context
-    // may add different entry to anfnode_config_map, like getattr primitive;
+    // Don't lookup from cache, as different out_conf with same node but different context
+    // may add different entry to anfnode_config_map, like getattr primitive.
     evaluator_cache_mgr_->SetValue(args_abs_list, res);
     return res;
   }
@@ -2154,83 +2509,19 @@ class SetAttrEvaluator : public TransitionPrimEvaluator {
   SetAttrEvaluator() : TransitionPrimEvaluator("SetAttrEvaluator") {}
   ~SetAttrEvaluator() override = default;
   MS_DECLARE_PARENT(SetAttrEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
-                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
     constexpr size_t args_size = 3;
-    constexpr size_t obj_index = 0;
-    constexpr size_t attr_index = 1;
-    constexpr size_t target_index = 2;
-    constexpr auto class_obj_str = "__class_obj__";
-    constexpr auto attr_name_str = "__attr_name__";
-    constexpr auto target_obj_str = "__target_obj_str__";
-    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
-    if (res_abstract != nullptr) {
-      MS_LOG(DEBUG) << "SetAttrEvaluator eval Undetermined";
-      return res_abstract;
-    }
     if (args_abs_list.size() != args_size) {
       MS_LOG(EXCEPTION) << "For Primitive SetAttr, the input size should be " << args_size
-                        << ", but got size:" << args_abs_list.size();
+                        << ", but got size: " << args_abs_list.size();
     }
-    auto attr_abs = args_abs_list[attr_index];
-    auto attr_abs_type = attr_abs->BuildType();
-    MS_EXCEPTION_IF_NULL(attr_abs_type);
-    auto type_id = attr_abs_type->type_id();
-    if (type_id != TypeId::kObjectTypeString) {
-      MS_EXCEPTION(TypeError) << "setattr(): attribute name must be string but got: " << TypeIdToString(type_id);
+    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+    if (res_abstract != nullptr) {
+      return res_abstract;
     }
 
-    auto out_node = out_conf->node();
-    MS_EXCEPTION_IF_NULL(out_node);
-    auto out_cnode = dyn_cast<CNode>(out_node);
-    MS_EXCEPTION_IF_NULL(out_cnode);
-    FuncGraphPtr func_graph = out_node->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-
-    // Script
-    std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils.ms_setattr(" << class_obj_str << ", " << attr_name_str
-                  << ", " << target_obj_str << ")";
-    const std::string &script = script_buffer.str();
-    const auto script_str = std::make_shared<StringImm>(script);
-    auto script_node = NewValueNode(script_str);
-
-    // Pack local parameters keys.
-    const auto class_obj_node = NewValueNode(std::make_shared<StringImm>(class_obj_str));
-    const auto attr_name_node = NewValueNode(std::make_shared<StringImm>(attr_name_str));
-    const auto target_obj_node = NewValueNode(std::make_shared<StringImm>(target_obj_str));
-    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)key_value_names_list.emplace_back(class_obj_node);
-    (void)key_value_names_list.emplace_back(attr_name_node);
-    (void)key_value_names_list.emplace_back(target_obj_node);
-    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
-
-    // Pack the local parameters values
-    auto obj_node = out_cnode->input(obj_index + 1);
-    auto attr_node = out_cnode->input(attr_index + 1);
-    auto target_node = out_cnode->input(target_index + 1);
-    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple), obj_node, attr_node, target_node};
-    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
-    AnfNodePtrList ret_inputs{NewValueNode(prim::kPrimPyExecute), script_node, key_value_name_tuple, key_value_tuple};
-    auto new_node = func_graph->NewCNode(ret_inputs);
-    MS_LOG(DEBUG) << "create setattr pyexecute node: " << new_node->DebugString();
-
-    // Attach result abstract to pyexecute node user data.
-    auto obj_abs = args_abs_list[obj_index];
-    if (!obj_abs->has_user_data(kPyObject)) {
-      MS_LOG(EXCEPTION) << "For setattr, the first input should attach python object.";
-    }
-    auto origin_obj = obj_abs->user_data<PyExecObject>(kPyObject);
-    auto new_obj = std::make_shared<PyExecObject>();
-    new_obj->obj = origin_obj->obj;
-    new_obj->changed = true;
-    new_node->set_user_data<PyExecObject>(kPyObject, new_obj);
-
-    func_graph->ReplaceInOrder(out_node, new_node);
-    AnalysisEnginePtr eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf, false);
+    return InterpretSetAttrNode(args_abs_list, out_conf);
   }
 };
 
@@ -2436,206 +2727,6 @@ class CallInstanceEvaluator : public TransitionPrimEvaluator {
   }
 };
 
-class PyInterpretEvaluator : public TransitionPrimEvaluator {
- public:
-  PyInterpretEvaluator() : TransitionPrimEvaluator("PyInterpretEvaluator") {}
-  ~PyInterpretEvaluator() override = default;
-  MS_DECLARE_PARENT(PyInterpretEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
-                         const AnfNodeConfigPtr &out_conf) override {
-    if (args_abs_list.empty()) {
-      MS_LOG(EXCEPTION) << "'args_abs_list' should not be empty";
-    }
-
-    auto current_interpret_node = out_conf->node();
-    MS_EXCEPTION_IF_NULL(current_interpret_node);
-    MS_LOG(DEBUG) << "The current interpret node: " << current_interpret_node->DebugString();
-    // Get the type parameter.
-    MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-    ValuePtr value_track = args_abs_list[0]->GetValueTrack();
-    MS_EXCEPTION_IF_NULL(value_track);
-
-    auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
-    if (script_obj == nullptr) {
-      MS_LOG(EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
-    }
-
-    // Make global and local parameters.
-    non_const_err_ = false;
-    const std::string &script = script_obj->script();
-    py::tuple params = MakeParameters(args_abs_list, script);
-    if (non_const_err_) {  // Would convert PyInterpret to PyExecute then.
-      ShapeVector shp;
-      (void)shp.emplace_back(Shape::kShapeDimAny);
-      AbstractBasePtr res = std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(shp));
-      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-      return infer_result;
-    }
-
-    // Call python script string.
-    MS_LOG(DEBUG) << "Call script: " << script << ", params: " << py::str(params);
-    auto obj = parse::data_converter::CallPythonScript(py::str(script), params);
-    if (py::isinstance<py::none>(obj)) {
-      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-      auto infer_result = std::make_shared<EvalResult>(res, nullptr);
-      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-      return infer_result;
-    }
-
-    ValuePtr converted_val = nullptr;
-    // converted_val could be a InterpretedObject.
-    bool converted = parse::ConvertData(obj, &converted_val, true);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert the python object failed";
-    }
-    MS_EXCEPTION_IF_NULL(converted_val);
-    if (converted_val->isa<tensor::Tensor>() && HasConstArgAttr(obj)) {
-      MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
-                      << " which is not used for network input argument should not be set const.";
-    }
-    AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
-    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-    return infer_result;
-  }
-
-  void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
-    // Check whether this node should be interpretive executed.
-    MS_EXCEPTION_IF_NULL(abstract_dict);
-    const auto &elements = abstract_dict->elements();
-    if (elements.empty()) {
-      return;
-    }
-    for (const auto &element : elements) {
-      const auto &name = element.first;
-      const auto &local_abs = element.second;
-      const auto &local_abs_val = local_abs->BuildValue();
-      MS_EXCEPTION_IF_NULL(local_abs_val);
-      auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
-      if (local_abs_val == kValueAny) {
-        static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
-        if (allow_fallback_runtime) {
-          MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
-                       << "', the inputs should be constant, but found variable '" << py_data_name
-                       << "' to be nonconstant. To convert to PyExecute() afterwards";
-          non_const_err_ = true;
-        } else {
-          MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
-                                   << "', the inputs should be constant, but found variable '" << py_data_name
-                                   << "' to be nonconstant.";
-        }
-      }
-      if (local_abs->isa<abstract::AbstractTensor>()) {
-        MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '"
-                        << py_data_name << "' to be a tensor.";
-      }
-    }
-  }
-
-  void AddGlobalPythonFunction(const AbstractDictionaryPtr &global_dict, py::object *global_params_dict) const {
-    MS_EXCEPTION_IF_NULL(global_dict);
-    MS_EXCEPTION_IF_NULL(global_params_dict);
-    const auto &global_dict_elements = global_dict->elements();
-    for (const auto &element : global_dict_elements) {
-      const auto &element_name = element.first;
-      const auto &element_abs = element.second;
-      if (element_abs->isa<abstract::FuncGraphAbstractClosure>()) {
-        auto element_abs_fn = element_abs->cast_ptr<abstract::FuncGraphAbstractClosure>();
-        auto fg = element_abs_fn->func_graph();
-        MS_EXCEPTION_IF_NULL(fg);
-        auto wrapper_obj = fg->python_obj();
-        if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
-          auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
-          (*global_params_dict)[ValueToPyData(element_name->BuildValue())] = fn_py_obj;
-          MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
-        }
-      }
-    }
-    return;
-  }
-
-  py::tuple MakeParameters(const AbstractBasePtrList &args_abs_list, const std::string &script) const {
-    constexpr int params_size = 3;
-    if (params_size != args_abs_list.size()) {
-      MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size
-                        << ", not equal to arguments.size:" << args_abs_list.size();
-    }
-    // The first argument is script string, ignore it.
-    auto params = py::tuple(params_size - 1);
-
-    // Make the global parameters.
-    auto global_dict = dyn_cast<AbstractDictionary>(args_abs_list[1]);  // Global parameters dict.
-    if (global_dict == nullptr) {
-      MS_LOG(EXCEPTION) << "The second argument should be a dictionary, but got " << args_abs_list[1]->ToString();
-    }
-    auto filtered_global_dict = FilterParameters(global_dict);
-    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
-                  << ", filtered_global_dict: " << filtered_global_dict->ToString();
-    ValuePtr global_dict_value = filtered_global_dict->BuildValue();
-    py::object global_params_dict = ValueToPyData(global_dict_value);
-    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
-                  << py::str(global_params_dict);
-
-    // Add global python function to global_params_dict.
-    AddGlobalPythonFunction(global_dict, &global_params_dict);
-    params[0] = global_params_dict;
-
-    // Make the local parameters.
-    constexpr size_t local_index = 2;
-    auto local_dict = dyn_cast<AbstractDictionary>(args_abs_list[local_index]);  // Local parameters dict.
-    if (local_dict == nullptr) {
-      MS_LOG(EXCEPTION) << "The third argument should be a dictionary, but got "
-                        << args_abs_list[local_index]->ToString();
-    }
-    auto filtered_local_dict = FilterParameters(local_dict);
-    MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()
-                  << ", filtered_local_dict: " << filtered_local_dict->ToString();
-    ValuePtr local_dict_value = filtered_local_dict->BuildValue();
-    py::dict local_params_dict = ReCheckLocalDict(filtered_local_dict);
-    MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
-                  << py::str(local_params_dict);
-    params[1] = local_params_dict;
-
-    CheckInterpretInput(filtered_local_dict, script);
-
-    return params;
-  }
-
-  py::dict ReCheckLocalDict(const AbstractDictionaryPtr &filtered_local_dict) const {
-    const auto &keys_values = filtered_local_dict->elements();
-    py::dict local_params_dict;
-    for (auto &key_value : keys_values) {
-      ValuePtr element_value = key_value.second->BuildValue();
-      MS_EXCEPTION_IF_NULL(element_value);
-      auto py_data = ValueToPyData(element_value);
-      local_params_dict[ValueToPyData(key_value.first->BuildValue())] = py_data;
-    }
-    return local_params_dict;
-  }
-
-  AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
-    MS_EXCEPTION_IF_NULL(abstract_dict);
-    std::vector<AbstractElementPair> kv;
-    const auto &keys_values = abstract_dict->elements();
-    // Filter out the element of Function type.
-    (void)std::copy_if(keys_values.cbegin(), keys_values.cend(), std::back_inserter(kv),
-                       [](const AbstractElementPair &item) {
-                         MS_EXCEPTION_IF_NULL(item.second);
-                         return (!item.second->isa<abstract::AbstractFunction>());
-                       });
-    return std::make_shared<AbstractDictionary>(kv);
-  }
-
-  bool HasConstArgAttr(const py::object &obj) const {
-    constexpr char const_arg_attr[] = "const_arg";
-    return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
-  }
-
- private:
-  mutable bool non_const_err_{false};
-};
-
 class PartialEvaluator : public Evaluator {
  public:
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
@@ -2829,7 +2920,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
 
     // Build PyExecute node for raise
     const std::string error_msg =
-      "__import__('mindspore').common._utils.raise_func(" + exception_type + "," + exception_string + ")";
+      "__import__('mindspore').common._utils._jit_fallback_raise_func(" + exception_type + "," + exception_string + ")";
     const auto script_str = std::make_shared<StringImm>(error_msg);
     // Pack local parameter keys
     const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);

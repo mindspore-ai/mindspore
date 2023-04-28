@@ -83,18 +83,18 @@ def get_slice_shape(dtype, shape):
     return tuple(new_shape)
 
 
-def dict_setitem(dic, key, val):
+def _jit_fallback_dict_setitem(dic, key, val):
     """Set an element to dict."""
     dic.__setitem__(key, val)
     return dic
 
 
-def raise_func(type_name, script):
+def _jit_fallback_raise_func(type_name, script):
     """raise function for jit fallback."""
     raise type_name(script)
 
 
-def ms_setattr(class_obj, attr_name, target_obj):
+def _jit_fallback_setattr(class_obj, attr_name, target_obj):
     """Set attr for object and return the object for jit fallback."""
     setattr(class_obj, attr_name, target_obj)
     return target_obj

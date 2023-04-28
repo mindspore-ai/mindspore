@@ -702,7 +702,7 @@ std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
 
 void FuncGraph::EraseUnusedNodeInOrder() {
   auto mng = manager_.lock();
-  if (mng) {
+  if (mng != nullptr) {
     auto &all_nodes = nodes();
     // Erase unused cnode.
     for (auto it = order_.begin(); it != order_.end();) {
@@ -718,12 +718,13 @@ void FuncGraph::EraseUnusedNodeInOrder() {
 }
 
 void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
-  if (node) {
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode) {
-      (void)order_.erase(cnode);
-      MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
-    }
+  if (node == nullptr) {
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode != nullptr) {
+    (void)order_.erase(cnode);
+    MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
   }
 }
 

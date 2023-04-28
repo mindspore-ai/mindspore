@@ -160,18 +160,6 @@ std::string GetPrimitiveText(const PrimitivePtr &prim) {
   return oss.str();
 }
 
-std::string GetNameSpaceText(const parse::NameSpacePtr &ns) {
-  std::ostringstream oss;
-  if (ns == nullptr) {
-    return oss.str();
-  }
-
-  // Dump related module information in Namespace
-  oss << ns->module();
-
-  return oss.str();
-}
-
 std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst,
                                        const std::shared_ptr<SubGraphIRInfo> &gsub) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -234,7 +222,7 @@ std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
     } else {
       oss << ", ";
     }
-    oss << "\"" << elem.first << "\": " << GetValueText(func_graph, elem.second, gsub);
+    oss << "\"" << elem.first->ToString() << "\": " << GetValueText(func_graph, elem.second, gsub);
   }
   oss << "}";
   return oss.str();
@@ -242,10 +230,14 @@ std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value,
 
 std::string GetOtherValueText(const ValuePtr &value) {
   std::ostringstream oss;
-
-  oss << "[" << value->DumpText() << "]";
-
+  oss << value->type_name() << "[" << value->ToString() << "]";
   return oss.str();
+}
+
+static bool CanUseDumpText(const ValuePtr &value) {
+  return (value->isa<RefKey>() || value->isa<Scalar>() || value->isa<StringImm>() || value->isa<tensor::Tensor>() ||
+          value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>() || value->isa<ValueSlice>() ||
+          value->isa<Type>() || value->isa<KeywordArg>());
 }
 
 std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
@@ -269,11 +261,8 @@ std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
   if (value->isa<ValueDictionary>()) {
     return GetDictText(func_graph, value, gsub);
   }
-  if (value->isa<parse::NameSpace>()) {
-    return GetNameSpaceText(value->cast<parse::NameSpacePtr>());
-  }
-  if (value->isa<parse::PyObjectWrapper>()) {
-    return value->type_name();
+  if (CanUseDumpText(value)) {
+    return value->DumpText();
   }
   return GetOtherValueText(value);
 }

@@ -65,10 +65,10 @@ MS_CORE_API std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNod
 MS_CORE_API std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
                                              const IncludeFunc &include = AlwaysInclude);
 
-MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start);
+MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root);
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root);
 
-MS_CORE_API CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate);
+MS_CORE_API CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const MatchFunc &match_predicate);
 
 }  // namespace mindspore
 

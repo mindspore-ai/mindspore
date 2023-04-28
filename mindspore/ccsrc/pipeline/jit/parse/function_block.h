@@ -54,6 +54,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::string ToString() const { return func_graph_->ToString(); }
   void WriteVariable(const std::string &var_name, const AnfNodePtr &node);
   AnfNodePtr ReadVariable(const std::string &var_name);
+  AnfNodePtr ReadLocalVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
   void SetPhiArgument(const ParameterPtr &phi);
   void CollectRemovablePhi(const ParameterPtr &phi);
@@ -71,7 +72,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }
   bool IsGlobalVar(const std::string &var_name) { return global_vars_.find(var_name) != global_vars_.end(); }
   std::pair<AnfNodePtr, std::string> MakeResolveAstOp(const py::object &op);
-  AnfNodePtr MakeResolveClassMember(const std::string &attr);
+  AnfNodePtr MakeResolveClassMemberOrSelf(const std::string &attr_or_self);
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
@@ -97,7 +98,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
-  bool IsLocalVariable(const std::string &var_name);
+  bool HasGlobalPyParam(const std::string &name) const { return global_py_params_.contains(py::str(name)); }
   void AddGlobalPyParam(const std::string &name, const py::object &obj) {
     MS_LOG(DEBUG) << "Add global param '" << name << "', " << py::str(obj) << " for the block:" << ToString();
     global_py_params_[py::str(name)] = obj;
@@ -158,18 +159,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
-  void SetChangedNonParamAttrs(const std::string &attr, const AnfNodePtr &node, bool used) {
-    changed_non_param_attrs_[attr] = std::pair<AnfNodePtr, bool>(node, used);
-  }
-
-  std::pair<AnfNodePtr, bool> GetChangedNonParamAttr(const std::string &attr) {
-    auto iter = changed_non_param_attrs_.find(attr);
-    if (iter == changed_non_param_attrs_.end()) {
-      return std::pair(nullptr, false);
-    }
-    return iter->second;
-  }
-
  private:
   // Block graph
   FuncGraphPtr func_graph_;
@@ -225,7 +214,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   //    x = x - 1   #This after block is a dead block
   bool is_dead_block_{false};
 
-  AnfNodePtr ReadLocalVariable(const std::string &var_name);
   std::pair<AnfNodePtr, bool> FindPredInterpretNode(const std::string &var_name);
   // Flags help for determine if parallel-if transformation can be performed or not.
   // If inside this block include all inner block there is a return statement.

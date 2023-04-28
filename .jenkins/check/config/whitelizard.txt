@@ -27,6 +27,7 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/drop_out_g
 mindspore/model_zoo/official/recommend/wide_and_deep/src/wide_and_deep.py:__init__
 mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_deep.py:__init__
 mindspore/mindspore/ccsrc/pipeline/jit/resource.cc:mindspore::pipeline::GetMethodMap
+mindspore/mindspore/ccsrc/pipeline/jit/fallback.cc:mindspore::fallback::GetJitAnnotationTypeFromComment
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops/function/array_func.py:scatter_nd
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:interpolate

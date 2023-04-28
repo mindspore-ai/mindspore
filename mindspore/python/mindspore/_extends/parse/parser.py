@@ -315,7 +315,7 @@ def get_object_key(obj):
     return obj_id, obj_key
 
 
-def is_class_member(node):
+def is_class_member_of_self(node):
     """Check the attr is class member variable."""
     type_ = node.__class__.__name__
     if type_ == "Attribute":

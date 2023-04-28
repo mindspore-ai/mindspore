@@ -93,16 +93,16 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
   return res;
 }
 
-// Search the cnodes inside this graph only.
-std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
+// Search all CNode in root's graph only.
+std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root) {
   constexpr size_t kVecReserve = 64;
-  std::vector<CNodePtr> vec;
-  vec.reserve(kVecReserve);
+  std::vector<CNodePtr> cnodes;
+  cnodes.reserve(kVecReserve);
   auto seen = NewSeenGeneration();
-  start->seen_ = seen;
-  (void)vec.emplace_back(start);
-  for (size_t i = 0; i < vec.size(); ++i) {
-    CNodePtr &node = vec[i];
+  root->seen_ = seen;
+  (void)cnodes.emplace_back(root);
+  for (size_t i = 0; i < cnodes.size(); ++i) {
+    CNodePtr &node = cnodes[i];
     auto &inputs = node->inputs();
     for (auto &input : inputs) {
       if (input->seen_ == seen) {
@@ -111,17 +111,17 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
       input->seen_ = seen;
       auto input_cnode = input->cast<CNodePtr>();
       if (input_cnode != nullptr) {
-        (void)vec.emplace_back(std::move(input_cnode));
+        (void)cnodes.emplace_back(std::move(input_cnode));
       }
     }
   }
-  return vec;
+  return cnodes;
 }
 
-// search the cnode match the predicate inside this graph only
-CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate) {
+// Search all CNode match the predicate in roots' graph only.
+CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const MatchFunc &match_predicate) {
   std::deque<CNodePtr> todo;
-  todo.insert(todo.end(), starts.begin(), starts.end());
+  todo.insert(todo.end(), roots.begin(), roots.end());
   auto seen = NewSeenGeneration();
   while (!todo.empty()) {
     CNodePtr top = todo.front();

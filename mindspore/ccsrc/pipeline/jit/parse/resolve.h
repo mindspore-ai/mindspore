@@ -163,6 +163,9 @@ AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfN
                                   const AnfNodePtr &attr_node, const AnfNodePtr &node);
 AnfNodePtr ResolveMsClassWithAttr(const py::object &cls_obj, const AnfNodePtr &attr, const AnfNodePtr &node);
 
+AnfNodePtr ResolveInterpretedObjectOfSetAttr(const AnfNodePtr &target_node, const AnfNodePtr &attr_node,
+                                             const AnfNodePtr &value_node);
+
 // Check if node is cnode with getitem.
 bool IsGetItemCNode(const AnfNodePtr &node);
 

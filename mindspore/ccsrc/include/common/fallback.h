@@ -17,27 +17,17 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
 
-#include <memory>
 #include "include/common/visible.h"
 #include "pybind11/pybind11.h"
 #include "ir/value.h"
 namespace py = pybind11;
 
 namespace mindspore {
-constexpr char kPyObject[] = "__py_object__";
-struct PyExecObject {
-  py::object obj;
-  bool changed = false;
-};
-using PyExecObjectPtr = std::shared_ptr<PyExecObject>;
-
+namespace fallback {
 COMMON_EXPORT bool HasPyExecuteOutput();
 COMMON_EXPORT py::object PopPyExecuteOutput();
 COMMON_EXPORT void PushPyExecuteOutput(const py::object &output);
-// To be removed map function when PyExecute ops can be auto monad
-COMMON_EXPORT bool HasPyExecuteOutput(const ValuePtr &key);
-COMMON_EXPORT void PushPyExecuteOutput(const ValuePtr &key, const py::object &output);
-COMMON_EXPORT py::object PopPyExecuteOutput(const ValuePtr &key);
+}  // namespace fallback
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
