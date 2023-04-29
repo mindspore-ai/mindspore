@@ -20,10 +20,16 @@
 template <typename T>
 __inline__ __device__ void LpNormCoreOp(const T *input, size_t input_index, float *output, size_t output_index,
                                         float p) {
-  T abs_value = input[input_index] >= static_cast<T>(0) ? input[input_index] : -input[input_index];
+  int64_t int_p = p;
+  T template_zero = static_cast<T>(0);
+  T abs_value = input[input_index] >= template_zero ? input[input_index] : -input[input_index];
   // We do parallel LpNorm by input elements. So multiple input data will be reduce sum to output, which causes data
   // competition.
-  (void)MsAtomicAdd(output + output_index, pow(abs_value, p));
+  if (int_p != 0) {
+    (void)MsAtomicAdd(output + output_index, pow(abs_value, p));
+  } else if (input[input_index] != template_zero) {
+    (void)MsAtomicAdd(output + output_index, static_cast<float>(1));
+  }
 }
 
 template <typename T>
@@ -74,11 +80,14 @@ void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t inpu
                       size_t output_shape_length, size_t output_elements, float p, float eps,
                       float *middle_output, float *output, const uint32_t &device_id,
                       cudaStream_t cuda_stream) {
+  int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
     output);
-  NormCalKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    output, output_elements, p, eps);
+  if (int_p != 0) {
+    NormCalKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      output, output_elements, p, eps);
+  }
 }
 
 template <>
@@ -87,11 +96,14 @@ void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_
                      size_t output_shape_length, size_t output_elements, float p, float eps,
                      float *middle_output, half *output, const uint32_t &device_id,
                      cudaStream_t cuda_stream) {
+  int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
     middle_output);
-  NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    middle_output, output, output_elements, p, eps);
+  if (int_p != 0) {
+    NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      middle_output, output, output_elements, p, eps);
+  }
 }
 
 template CUDA_LIB_EXPORT

@@ -66,7 +66,6 @@ class LpNormGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
   bool is_null_input_{false};
   bool is_scalar_input_{false};
-  bool is_p_zero_{false};
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_axis_;

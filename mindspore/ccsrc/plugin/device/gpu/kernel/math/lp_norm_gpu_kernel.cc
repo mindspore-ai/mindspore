@@ -37,9 +37,7 @@ bool LpNormGpuKernelMod::GetLpNormAttr(const BaseOperatorPtr &base_operator) {
   auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
 
   axis_ = kernel_ptr->get_axis();
-  int64_t p = kernel_ptr->get_p();
-  is_p_zero_ = (p == 0);
-  p_ = LongToFloat(p);
+  p_ = kernel_ptr->get_p();
   epsilon_ = kernel_ptr->get_epsilon();
   return true;
 }
@@ -136,16 +134,8 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
-  auto host_template_one = static_cast<T>(1.0);
   if (is_scalar_input_) {
-    if (is_p_zero_) {
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(output, &host_template_one, outputs.at(kIndex0)->size, cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(cuda_stream_)),
-        "LpNormGpuKernelMod cudaMemcpyAsync host_template_one failed");
-    } else {
-      Abs(input, output, outputs.at(kIndex0)->size, reinterpret_cast<cudaStream_t>(cuda_stream_));
-    }
+    Abs(input, output, outputs.at(kIndex0)->size, reinterpret_cast<cudaStream_t>(cuda_stream_));
     return true;
   }
   auto device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
