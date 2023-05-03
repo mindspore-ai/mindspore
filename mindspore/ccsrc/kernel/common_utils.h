@@ -41,7 +41,6 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kAkgKernelMeta = "akg_kernel_meta/";
-constexpr auto kBishengKernelMeta = "bisheng_kernel_meta/";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";

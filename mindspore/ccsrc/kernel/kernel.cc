@@ -320,8 +320,15 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   }
   output_shapes_.clear();
   output_size_list_.clear();
-  auto primitive = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(primitive);
+  std::string prim_name;
+  if (base_operator != nullptr) {
+    auto primitive = base_operator->GetPrim();
+    MS_ERROR_IF_NULL(primitive);
+    prim_name = primitive->name();
+  } else {
+    prim_name = "Graph Kernel Fused Op";
+  }
+
   for (auto &output : outputs) {
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(output);
@@ -333,8 +340,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
       // and the output_size_list_ can be set by max_shape
       auto max_shape = output->GetMaxShape();
       if (max_shape.empty()) {
-        MS_LOG(DEBUG) << "For " << primitive->name()
-                      << ", the max_shape should not be empty when input shape is known.";
+        MS_LOG(DEBUG) << "For " << prim_name << ", the max_shape should not be empty when input shape is known.";
         ret = KRET_UNKNOWN_OUT_SHAPE;
       } else {
         tensor_size = SizeOf(max_shape) * type_size;
@@ -347,8 +353,8 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
         auto cur_out_shape_num = SizeOf(shape);
         tensor_size = cur_out_shape_num * type_size;
         if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
-          MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the shape of outputs["
-                                   << output_size_list_.size() << "]: " << shape
+          MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape of outputs[" << output_size_list_.size()
+                                   << "]: " << shape
                                    << " is too big, mindspore cannot apply for such a large amount of memory.";
         }
       }

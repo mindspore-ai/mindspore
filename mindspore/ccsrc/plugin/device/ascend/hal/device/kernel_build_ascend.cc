@@ -137,7 +137,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   bool akg_ret = true;
   if (!akg_nodes.empty()) {
     kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
-    akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+    akg_ret = akg_ascend_kernel_builder.SingleOpParallelBuild(akg_nodes);
   }
   for (const auto &anf_node : other_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);

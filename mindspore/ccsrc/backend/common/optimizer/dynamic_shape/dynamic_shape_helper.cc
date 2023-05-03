@@ -437,7 +437,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
 inline bool IsKernelModWithoutOperator(kernel::KernelModType kernel_mod_type) {
   return kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
          kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod ||
-         kernel_mod_type == kernel::KernelModType::BiShengCpuKernelMod;
+         kernel_mod_type == kernel::KernelModType::DynamicAkgCpuKernelMod;
 }
 
 inline bool IsCpuGpuKernelMod(kernel::KernelModType kernel_mod_type) {
@@ -445,7 +445,7 @@ inline bool IsCpuGpuKernelMod(kernel::KernelModType kernel_mod_type) {
          kernel_mod_type == kernel::KernelModType::NativeCpuKernelMod ||
          kernel_mod_type == kernel::KernelModType::DeprecatedNativeGpuKernelMod ||
          kernel_mod_type == kernel::KernelModType::DeprecatedNativeCpuKernelMod ||
-         kernel_mod_type == kernel::KernelModType::BiShengCpuKernelMod;
+         kernel_mod_type == kernel::KernelModType::DynamicAkgCpuKernelMod;
 }
 
 inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {

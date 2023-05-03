@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/graph_kernel/dynamic_akg/dynamic_akg_kernel_build.h"
 
-#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <chrono>
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <iostream>
+#include "ir/dtype.h"
+#include "ir/func_graph.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
-#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
-void AkgCpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
-                                       const AnfNodePtr &anf_node) {
-  auto kernel_mod_ptr = std::make_shared<AkgCpuKernelMod>(kernel_pack);
-  kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
-  kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
-  AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
-}
-
-void AkgCpuKernelBuilder::SaveJsonInfo(const string &kernel_name, const string &kernel_json) {
-  kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
-}
+bool DynamicAkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) { return true; }
 }  // namespace kernel
 }  // namespace mindspore

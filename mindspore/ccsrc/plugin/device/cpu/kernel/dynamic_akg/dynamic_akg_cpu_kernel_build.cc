@@ -21,15 +21,15 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
-#include "plugin/device/cpu/kernel/bisheng/bisheng_cpu_kernel_build.h"
-#include "plugin/device/cpu/kernel/bisheng/bisheng_cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/dynamic_akg/dynamic_akg_cpu_kernel_build.h"
+#include "plugin/device/cpu/kernel/dynamic_akg/dynamic_akg_cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-void BishengCpuKernelBuilder::BishengSetKernelMod(const string &kernel_name,
-                                                  const GraphKernelJsonGenerator &json_generator,
-                                                  const AnfNodePtr &anf_node) {
-  auto kernel_mod_ptr = std::make_shared<BishengCpuKernelMod>(kernel_name);
+void DynamicAkgCpuKernelBuilder::SetCpuKernelModByName(const string &kernel_name,
+                                                       const GraphKernelJsonGenerator &json_generator,
+                                                       const AnfNodePtr &anf_node) {
+  auto kernel_mod_ptr = std::make_shared<DynamicAkgCpuKernelMod>(kernel_name);
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
 
@@ -43,19 +43,19 @@ void BishengCpuKernelBuilder::BishengSetKernelMod(const string &kernel_name,
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 
-void BishengCpuKernelBuilder::AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) {
+void DynamicAkgCpuKernelBuilder::SaveJsonInfo(const string &kernel_name, const string &kernel_json) {
   auto config_path = GetCompilerCachePath();
-  auto kernel_meta_path = config_path + std::string(kBishengKernelMeta);
+  auto kernel_meta_path = config_path + std::string(kAkgKernelMeta);
   kernel::SaveJsonInfo(kernel_name, kernel_json, kernel_meta_path);
 }
 
-bool BishengCpuKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &json_and_node) {
+bool DynamicAkgCpuKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &json_and_node) {
   for (const auto &[json_generator, anf_node] : json_and_node) {
     auto kernel_name = json_generator.kernel_name();
     auto kernel_json = json_generator.kernel_json_str();
-    AkgSaveJsonInfo(kernel_name, kernel_json);
-    BishengSetKernelMod(kernel_name, json_generator, anf_node);
-    MS_LOG(DEBUG) << "Bisheng set " << kernel_name << " kernel successfully!";
+    SaveJsonInfo(kernel_name, kernel_json);
+    SetCpuKernelModByName(kernel_name, json_generator, anf_node);
+    MS_LOG(DEBUG) << "Akg set " << kernel_name << " kernel with dynamic shape support successfully!";
   }
   return true;
 }

@@ -23,8 +23,8 @@
 
 #include "utils/hash_set.h"
 #include "kernel/common_utils.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
-#include "kernel/akg/akg_kernel_json_decoder.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/akg/akg_kernel_json_decoder.h"
 #include "kernel/kernel.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

@@ -74,7 +74,7 @@
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/backend/distributed/init.h"
 #include "include/backend/debug/profiler/profiling.h"
-#include "kernel/akg/akg_kernel_build_manager.h"
+#include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 
@@ -2046,7 +2046,7 @@ void ClearSingleton() {
   MS_LOG(INFO) << "Start clear singleton...";
   profiler::Profiler::Clear();
 #ifdef ENABLE_AKG
-  kernel::AkgKernelBuildManager::Instance().Clear();
+  kernel::GraphKernelBuildManager::Instance().Clear();
 #endif
   somas::SomasManager::Instance().Clear();
   GraphKernelInfoManager::Instance().Clear();

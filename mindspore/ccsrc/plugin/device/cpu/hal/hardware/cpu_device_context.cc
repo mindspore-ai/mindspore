@@ -418,7 +418,7 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
-  (void)akg_cpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+  (void)akg_cpu_kernel_builder.SingleOpParallelBuild(akg_nodes);
 #endif
 }
 

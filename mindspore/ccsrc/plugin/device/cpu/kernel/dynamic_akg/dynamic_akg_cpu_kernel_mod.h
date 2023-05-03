@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_CPU_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_CPU_KERNEL_MOD_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -29,10 +29,10 @@
 
 namespace mindspore {
 namespace kernel {
-class BishengCpuKernelManager {
+class DynamicAkgCpuKernelManager {
  public:
-  BishengCpuKernelManager() = default;
-  ~BishengCpuKernelManager();
+  DynamicAkgCpuKernelManager() = default;
+  ~DynamicAkgCpuKernelManager();
 
   void *GetFunction(const std::string &kernel_name);
 
@@ -44,11 +44,11 @@ class BishengCpuKernelManager {
   std::unordered_map<std::string, std::pair<void *, void *>> cpu_func_map_;
   mutable std::shared_mutex mutex_;
 };
-using BishengCpuKernelManagerPtr = std::shared_ptr<BishengCpuKernelManager>;
-class BishengCpuKernelMod : public CpuKernelMod {
+using DynamicAkgCpuKernelManagerPtr = std::shared_ptr<DynamicAkgCpuKernelManager>;
+class DynamicAkgCpuKernelMod : public CpuKernelMod {
  public:
-  explicit BishengCpuKernelMod(const std::string &kernel_name);
-  ~BishengCpuKernelMod() = default;
+  explicit DynamicAkgCpuKernelMod(const std::string &kernel_name);
+  ~DynamicAkgCpuKernelMod() = default;
 
   bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -59,11 +59,11 @@ class BishengCpuKernelMod : public CpuKernelMod {
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
-  enum KernelModType GetKernelModType() const override { return KernelModType::BiShengCpuKernelMod; }
+  enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
 
   std::vector<KernelAttr> GetOpSupport() { return {}; }
 
-  static BishengCpuKernelManagerPtr kernel_manager_;
+  static DynamicAkgCpuKernelManagerPtr kernel_manager_;
 
  private:
   void *launch_func_;
@@ -73,7 +73,7 @@ class BishengCpuKernelMod : public CpuKernelMod {
   std::vector<size_t> ndims_;
 };
 
-using BishengCpuKernelModPtr = std::shared_ptr<BishengCpuKernelMod>;
+using DynamicAkgCpuKernelModPtr = std::shared_ptr<DynamicAkgCpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_CPU_KERNEL_MOD_H_

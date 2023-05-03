@@ -27,8 +27,8 @@ namespace mindspore {
 namespace kernel {
 constexpr int32_t ARGS_SIZE = 1;
 
-void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
-                                          const GraphKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
+void AkgGpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
+                                       const AnfNodePtr &anf_node) {
   const auto &flags = graphkernel::GraphKernelFlags::GetInstance();
   auto kernel_mod_ptr = flags.enable_debug_mode ? std::make_shared<AkgGpuKernelModDebug>(kernel_pack)
                                                 : std::make_shared<AkgGpuKernelMod>(kernel_pack);
@@ -39,7 +39,7 @@ void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 
-void AkgGpuKernelBuilder::AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) {
+void AkgGpuKernelBuilder::SaveJsonInfo(const string &kernel_name, const string &kernel_json) {
   kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
 }
 }  // namespace kernel

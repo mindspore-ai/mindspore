@@ -142,6 +142,11 @@ class BACKEND_EXPORT GraphKernelFlags {
   bool enable_csr_fusion{false};
 
   /**
+   * Enable fusion for operators with dynamic shape inputs/outputs.
+   */
+  bool enable_dynamic_shape_fusion{false};
+
+  /**
    * Optimization level, value from 0 to 3.
    * 0: Disable GraphKernel
    * 1: Enable GraphKernel with basic features only.
@@ -205,7 +210,7 @@ class BACKEND_EXPORT GraphKernelFlags {
 
   /**
    * Kernel Generator.
-   * The generator used to compile kernels, AKG or BISHENG.
+   * The generator used to compile kernels, AKG or MLIR.
    */
   std::string kernel_generator{"AKG"};
 

@@ -26,7 +26,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "kernel/common_utils.h"
 #include "kernel/kernel.h"
-#include "kernel/akg/akg_kernel_build.h"
+#include "kernel/graph_kernel/graph_kernel_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_splitter.h"
 
 namespace mindspore {
@@ -72,7 +72,7 @@ class GraphKernelBuild : public opt::Pass {
 
   SafeGraphKernelSplitter splitter_;  // used to split nodes that compile failed
   kernel::KernelMeta *bin_map_{nullptr};
-  std::shared_ptr<kernel::AkgKernelBuilder> kernel_builder_{nullptr};
+  std::shared_ptr<kernel::GraphKernelBuilder> kernel_builder_{nullptr};
   std::unordered_map<std::string, kernel::KernelPackPtr> kernel_pack_;  // compile cache
 };
 }  // namespace graphkernel
