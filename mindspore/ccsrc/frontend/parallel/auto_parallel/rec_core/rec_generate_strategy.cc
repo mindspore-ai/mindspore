@@ -1285,11 +1285,11 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
       stra.push_back(broadcast_revise_s);
     }
     // Push back the second tensor's strategy after applying broadcast.
-    stra.push_back(ApplyBroadcast(s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+    stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
   } else if (second_tensor_dim > first_tensor_dim) {  // Do Broadcasting in the first tensor.
     bool broadcast_first_tensor = true;
     // Push back the first tensor's strategy after applying broadcast.
-    stra.push_back(ApplyBroadcast(s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+    stra.push_back(ApplyBroadcast(ops, iter_ops, s, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
     // Push back the second tensor's strategy.
     if (s_dim == second_tensor_dim) {
       stra.push_back(s);
@@ -1313,18 +1313,24 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
   return stra;
 }
 
-Dimensions ApplyBroadcast(Dimensions s, size_t first_tensor_dim, size_t second_tensor_dim,
-                          bool broadcast_first_tensor) {
+Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops, const Dimensions &s,
+                          size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor) {
   Dimensions s_empty = {};
   Dimensions s_broadcast;
+  size_t target_tensor_index = 0;
+  size_t refer_tensor_index = 0;
   size_t target_tensor_dim;
   size_t refer_tensor_dim;
 
   // Indexing target and refer tensor.
   if (broadcast_first_tensor) {
+    target_tensor_index = 0;
+    refer_tensor_index = 1;
     target_tensor_dim = first_tensor_dim;
     refer_tensor_dim = second_tensor_dim;
   } else {
+    target_tensor_index = 1;
+    refer_tensor_index = 0;
     target_tensor_dim = second_tensor_dim;
     refer_tensor_dim = first_tensor_dim;
   }
@@ -1332,10 +1338,27 @@ Dimensions ApplyBroadcast(Dimensions s, size_t first_tensor_dim, size_t second_t
   // When target tensor with an empty dim.
   if (target_tensor_dim == 0) {
     return s_empty;
+  } else if (target_tensor_dim == 1) {  // When target tensor with a single dim.
+    bool broadcast_dim_found = false;
+    for (size_t iter = 0; iter < refer_tensor_dim; iter++) {
+      // Find and copy that dim's strategy from the refer tensor.
+      if ((ops[iter_ops]->inputs_tensor_info()[refer_tensor_index].shape()[iter] ==
+           ops[iter_ops]->inputs_tensor_info()[target_tensor_index].shape()[0]) &&
+          (ops[iter_ops]->inputs_tensor_info()[refer_tensor_index].shape()[iter] > 1) &&
+          (refer_tensor_dim == s.size())) {
+        s_broadcast.push_back(s.at(iter));
+        broadcast_dim_found = true;
+        break;
+      }
+    }
+    // Cannot decide which dim it is, push back one.
+    if (broadcast_dim_found == false) {
+      s_broadcast.push_back(1);
+    }
   } else {
-    size_t offset = refer_tensor_dim - target_tensor_dim;
-    for (size_t i = offset; i < refer_tensor_dim; ++i) {
-      s_broadcast.push_back(s.at(i));
+    // Cannot decide which dim needs to do broadcast, push back one(s).
+    for (size_t iter = 0; iter < target_tensor_dim; iter++) {
+      s_broadcast.push_back(1);
     }
   }
 

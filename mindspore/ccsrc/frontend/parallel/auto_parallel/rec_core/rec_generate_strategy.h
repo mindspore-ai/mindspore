@@ -108,7 +108,8 @@ Strategies MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
                                  const size_t iter_ops);
 Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                           const Dimensions &s);
-Dimensions ApplyBroadcast(Dimensions s, size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor);
+Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops, const Dimensions &s,
+                          size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor);
 Strategies CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                           const Dimensions &s);
 Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
