@@ -225,7 +225,7 @@ void FastTopK(const int outer_size, const int inner_size, const T *input, S k_cu
     TOPK_HELPER(256, 128, 3, true);
   } else {
     // cuda 11.6 has lower # threads.  Set lower number for all platforms for consistency
-    TOPK_HELPER(256, 512, 3, true);
+    TOPK_HELPER(512, 256, 3, true);
   }
 }
 
