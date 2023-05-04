@@ -131,44 +131,39 @@ void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 void InferOperation::SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
-  // Check whether constant flag exists.
-  const auto &input_const_flag = CheckPrimitiveConstFlag(op_run_info);
   // Get input abstract by input value and set it to `op_run_info`.
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_value_id.resize(op_run_info->input_size);
   op_run_info->input_abs.resize(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_abs[i] = GetInputValueAbs(op_run_info, op_run_info->input_value[i], i, input_const_flag[i]);
+    op_run_info->input_abs[i] = GetInputValueAbs(op_run_info, op_run_info->input_value[i], i);
   }
 }
 
 AbstractBasePtr InferOperation::GetInputValueAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &input_value,
-                                                 size_t input_index, bool marked_const) {
+                                                 size_t input_index) {
   // Get tuple or list abs
   MS_EXCEPTION_IF_NULL(input_value);
   op_run_info->input_value_id[input_index] = PyNativeAlgo::Common::GetIdByValue(input_value);
   if (input_value->isa<ValueSequence>()) {
     const auto &tuple_value = input_value->cast<ValueSequencePtr>();
-    return GetInputTupleValueAbstract(op_run_info, tuple_value, input_index, marked_const);
+    return GetInputTupleValueAbstract(op_run_info, tuple_value, input_index);
   }
   // Get non-tuple and non-list abs.
-  const auto &abs =
-    GetAbstractByValue(input_value, input_index, op_run_info->input_value_id[input_index], marked_const);
+  const auto &abs = GetAbstractByValue(input_value, input_index, op_run_info->input_value_id[input_index]);
   MS_LOG(DEBUG) << "Get abstract of input " << input_index << " is " << abs->ToString() << ", id "
                 << op_run_info->input_value_id[input_index];
   return abs;
 }
 
 AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunInfoPtr &op_run_info,
-                                                           const ValueSequencePtr &tuple_value, size_t input_index,
-                                                           bool marked_const) {
-  if (!marked_const) {
-    auto cache_abs = GetNodeAbsById(op_run_info->input_value_id[input_index]);
-    if (cache_abs != nullptr) {
-      MS_LOG(DEBUG) << "The abstract of tuple input " << input_index << " hits cache.";
-      return cache_abs;
-    }
+                                                           const ValueSequencePtr &tuple_value, size_t input_index) {
+  auto cache_abs = GetNodeAbsById(op_run_info->input_value_id[input_index]);
+  if (cache_abs != nullptr) {
+    MS_LOG(DEBUG) << "The abstract of tuple input " << input_index << " hits cache.";
+    return cache_abs;
   }
+
   // Create abstract list for tuple input.
   MS_EXCEPTION_IF_NULL(tuple_value);
   size_t tuple_value_size = tuple_value->size();
@@ -176,7 +171,7 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
   for (size_t i = 0; i < tuple_value_size; ++i) {
     const auto &item = tuple_value->value()[i];
     const auto &item_id = PyNativeAlgo::Common::GetIdByValue(item);
-    abs_list[i] = GetAbstractByValue(item, input_index, item_id, marked_const);
+    abs_list[i] = GetAbstractByValue(item, input_index, item_id);
   }
   // Create output abstract by value type.
   AbstractBasePtr abs;
@@ -191,21 +186,18 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
 }
 
 AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t input_index,
-                                                   const std::string &input_id, bool marked_const) {
-  if (!marked_const) {
-    auto cache_abs = GetNodeAbsById(input_id);
-    if (cache_abs != nullptr) {
-      MS_LOG(DEBUG) << "The abstract of input " << input_index << " hits cache.";
-      return cache_abs;
-    }
+                                                   const std::string &input_id) {
+  auto cache_abs = GetNodeAbsById(input_id);
+  if (cache_abs != nullptr) {
+    MS_LOG(DEBUG) << "The abstract of input " << input_index << " hits cache.";
+    return cache_abs;
   }
+
   // Get abstract by input value.
   MS_EXCEPTION_IF_NULL(value);
   const auto &abs = value->ToAbstract();
-  if (!marked_const) {
-    if (value->isa<tensor::Tensor>() || value->isa<mindspore::Type>()) {
-      SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
-    }
+  if (value->isa<tensor::Tensor>() || value->isa<mindspore::Type>()) {
+    SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
   }
   return abs;
 }
@@ -275,34 +267,6 @@ void InferOperation::SaveOutputAbstractToCache(const FrontendOpRunInfoPtr &op_ru
   auto &out = prim_abs_list_[key];
   out[op_run_info->input_abs].abs = op_run_info->base_op_run_info.abstract;
   out[op_run_info->input_abs].attrs = prim->evaluate_added_attrs();
-}
-
-std::vector<bool> InferOperation::CheckPrimitiveConstFlag(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(prim);
-
-  if (no_const_flag_prims_.find(prim->name()) != no_const_flag_prims_.end()) {
-    return std::vector<bool>(op_run_info->input_size, false);
-  }
-  // Check whether primitive has constant flag.
-  if (prim->is_const_prim()) {
-    MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " has const prim flag.";
-    return std::vector<bool>(op_run_info->input_size, true);
-  }
-  // Check whether input position has been marked constant.
-  std::vector<bool> input_const_flag(op_run_info->input_size, false);
-  const auto &const_input_index = prim->get_const_input_indexes();
-  for (const auto &index : const_input_index) {
-    input_const_flag[index] = true;
-    MS_LOG(DEBUG) << "The input " << index << " value of op " << op_run_info->base_op_run_info.op_name
-                  << " marked constant.";
-  }
-  // Cache no constant flag primitive.
-  if (const_input_index.empty()) {
-    (void)no_const_flag_prims_.emplace(prim->name());
-  }
-  return input_const_flag;
 }
 
 void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info) {

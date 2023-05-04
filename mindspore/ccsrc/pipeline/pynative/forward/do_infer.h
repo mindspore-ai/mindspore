@@ -51,20 +51,16 @@ class InferOperation {
   // Set abstract for each input value.
   void SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   AbstractBasePtr GetInputValueAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &input_value,
-                                   size_t input_index, bool marked_const);
+                                   size_t input_index);
   AbstractBasePtr GetInputTupleValueAbstract(const FrontendOpRunInfoPtr &op_run_info,
-                                             const ValueSequencePtr &tuple_value, size_t input_index,
-                                             bool marked_const);
-  AbstractBasePtr GetAbstractByValue(const ValuePtr &value, size_t input_index, const std::string &input_id,
-                                     bool marked_const);
+                                             const ValueSequencePtr &tuple_value, size_t input_index);
+  AbstractBasePtr GetAbstractByValue(const ValuePtr &value, size_t input_index, const std::string &input_id);
   // Infer output abstract.
   void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   bool GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run_info) const;
   void SaveOutputAbstractToCache(const FrontendOpRunInfoPtr &op_run_info);
   void SaveSpecifiedOutputToCache(const std::string &op_name, const ValuePtrList &value_list,
                                   const AbstractBasePtrList &abs_list);
-  // Check whether primitive has constant flag or input position has been marked constant.
-  std::vector<bool> CheckPrimitiveConstFlag(const FrontendOpRunInfoPtr &op_run_info);
 
   bool only_single_op_run_{true};
   // The primitive has no constant flag(const prim or const input) will be saved in this map.

@@ -668,7 +668,6 @@ class SparseTensorDenseMatmul(Primitive):
         self.add_prim_attr('adjoint_b', self.adjoint_dt)
         validator.check_value_type("adjoint_st", adjoint_st, [bool], self.name)
         validator.check_value_type("adjoint_dt", adjoint_dt, [bool], self.name)
-        self.set_const_input_indexes([2])
 
 
 class CSRSparseMatrixToSparseTensor(Primitive):

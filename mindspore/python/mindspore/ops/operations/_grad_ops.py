@@ -2182,7 +2182,6 @@ class StridedSliceV2Grad(Primitive):
                  new_axis_mask=0,
                  shrink_axis_mask=0):
         """Initialize StridedSliceV2Grad"""
-        self.set_const_input_indexes([0])
         self.init_prim_io_names(inputs=['shapex', 'begin', 'end', 'strides', 'dy'], outputs=['output'])
 
 
@@ -2240,7 +2239,6 @@ class MirrorPadGrad(Primitive):
     @prim_attr_register
     def __init__(self, mode="REFLECT"):
         """Initialize MirrorPad"""
-        self.set_const_input_indexes([1])
         self.init_prim_io_names(inputs=['dy', 'paddings'], outputs=['output'])
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
@@ -2256,7 +2254,6 @@ class PadV3Grad(Primitive):
         self.init_prim_io_names(inputs=['x', 'paddings'], outputs=['y'])
         validator.check_string(mode, ['reflect', 'edge', 'circular'], 'mode', self.name)
         validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
-        self.set_const_input_indexes([1])
         self.mode = mode
         self.paddings_contiguous = paddings_contiguous
 

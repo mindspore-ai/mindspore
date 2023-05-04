@@ -2013,7 +2013,6 @@ class InvertPermutation(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize InvertPermutation"""
-        self.set_const_prim(True)
 
     def __infer__(self, x):
         x_shp = x['shape']
@@ -6261,7 +6260,6 @@ class EditDistance(Primitive):
     def __init__(self, normalize=True):
         """Initialize EditDistance"""
         self.normalize = validator.check_value_type("normalize", normalize, [bool], self.name)
-        self.set_const_input_indexes([2, 5])
 
 
 class TransShape(PrimitiveWithInfer):
