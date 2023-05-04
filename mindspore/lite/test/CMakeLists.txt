@@ -92,11 +92,6 @@ if(MSLITE_ENABLE_INT8)
 endif()
 
 if(MSLITE_ENABLE_FP16)
-    file(GLOB_RECURSE TEST_FP16_UT_SRC
-            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/*.cc
-            )
-    list(APPEND TEST_UT_SRC ${TEST_FP16_UT_SRC})
-
     if(SUPPORT_TRAIN)
         file(GLOB_RECURSE TEST_TRAIN_FP16_SRC
                 ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)

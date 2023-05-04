@@ -19,7 +19,6 @@
 #include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
-#include "src/litert/kernel/cpu/fp32/reduce_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
