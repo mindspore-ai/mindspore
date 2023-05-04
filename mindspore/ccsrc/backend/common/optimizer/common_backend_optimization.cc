@@ -40,6 +40,7 @@
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
+#include "backend/common/pass/broadcast_to_fusion.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
@@ -68,6 +69,7 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
+  common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   return common_pm;
 }
 
@@ -105,6 +107,7 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
   common_pm->AddPass(std::make_shared<ReduceOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
