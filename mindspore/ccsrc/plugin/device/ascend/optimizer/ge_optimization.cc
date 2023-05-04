@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
+#include "plugin/device/ascend/optimizer/ge/adam_weight_decay_fission.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,6 +57,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("ge_optimization_pm");
   pm->AddPass(std::make_shared<opt::BatchNormTransform>());
+  pm->AddPass(std::make_shared<opt::AdamWeightDecayFissionForGE>());
   auto env_train = common::GetEnv("MS_GE_TRAIN");
   if (env_train == "1") {
     pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
@@ -75,6 +78,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
   pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
+  pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   optimizer->AddPassManager(pm);
 
   (void)optimizer->Optimize(func_graph);

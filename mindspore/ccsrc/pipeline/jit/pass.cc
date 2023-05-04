@@ -938,6 +938,13 @@ std::vector<PassItem> kGePasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
                                    {"cconv", CconvPass},
+                                   {"add_recomputation", AddRecomputationPass},
+                                   {"cse_after_recomputation", OptAfterRecomputeGroup},
+                                   {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
+                                   {"slice_recompute_activation", SliceRecomputeActivationPass},
+                                   {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
+                                   {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass}};
 

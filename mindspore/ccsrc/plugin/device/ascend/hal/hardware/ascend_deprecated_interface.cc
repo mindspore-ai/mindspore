@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
 #include <algorithm>
+#include <tuple>
+#include <utility>
 #include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include "include/transform/graph_ir/types.h"
@@ -79,7 +81,56 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     (void)tensors->emplace(name, tensor);
   }
 }
+
+void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params,
+                    std::vector<transform::GeTensorPtr> *ge_tensors) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  transform::TensorOrderMap init_input_map;
+  ConvertObjectToTensors(init_params, &init_input_map);
+  std::vector<tensor::TensorPtr> init_input;
+  (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
+                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
+  *ge_tensors = transform::ConvertInputTensors(init_input, kOpFormat_NCHW);
+}
 }  // namespace
+
+void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  transform::RunOptions run_options;
+  run_options.name = "init_subgraph." + anf_graph->ToString();
+  if (transform::GetGraphByName(run_options.name) == nullptr) {
+    MS_LOG(WARNING) << "Can not find " << run_options.name
+                    << " sub graph, don't need data init subgraph in INFER mode.";
+    return;
+  }
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
+  }
+
+  std::vector<transform::GeTensorPtr> ge_outputs;
+  std::vector<transform::GeTensorPtr> ge_tensors;
+  GetInputTensor(anf_graph, init_params, &ge_tensors);
+  {
+    // Release GIL before calling into (potentially long-running) C++ code
+    mindspore::ScopedLongRunning long_running;
+    transform::Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Exec " << run_options.name << " graph failed.";
+    }
+    MS_LOG(INFO) << "Exec " << run_options.name << " graph success.";
+
+    if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
+        (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
+      run_options.name = BROADCAST_GRAPH_NAME;
+      ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
+      if (ret != transform::Status::SUCCESS) {
+        MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
+      }
+      MS_LOG(INFO) << "Exec broadcast graph success.";
+    }
+  }
+}
 
 void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
   std::vector<GeTensorPtr> ge_tensors;

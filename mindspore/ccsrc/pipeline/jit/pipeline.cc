@@ -968,6 +968,13 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   if (is_parallel_mode) {
     ParallelPostProcess(phase_, use_compile_cache);
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef WITH_BACKEND
+  if (ms_context->backend_policy() == "ge") {
+    InitParams(GetParams(phase_), phase_);
+  }
+#endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
@@ -1464,6 +1471,23 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   MS_LOG(DEBUG) << "Run end";
   return res;
 }  // namespace pipeline
+
+void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string &phase) const {
+  MS_LOG(INFO) << "Init params when ge backend, phase = " << phase;
+  if (info_.count(phase) == 0) {
+    MS_LOG(EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
+  }
+  DeviceContext *device_context = nullptr;
+  try {
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+  } catch (const std::exception &) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+  device_context->GetDeprecatedInterface()->RunInitGraph(info_.at(phase)->func_graph, init_params);
+  return;
+}
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase) const {
   MS_LOG(INFO) << "Start build df graph, phase = " << phase;
