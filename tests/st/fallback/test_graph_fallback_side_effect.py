@@ -310,3 +310,35 @@ def test_fallback_side_effect_dict_3():
     assert out[0] == 13
     assert out[1] == 6
     assert out[2] == {'c': 3, 'b': 24, 'd': 13}
+
+
+class PrintPyExecuteNet(ms.nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+
+    def construct(self, x):
+        out = x * x
+        print("out1:", out)
+        out = self.net(x) + out
+        print("out2:", out)
+        return out
+
+
+@pytest.mark.skip("PyExecute node can not be used in meta fg.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_pyexecute():
+    """
+    Feature: Side effect in Fallback runtime.
+    Description: Side effect in Fallback runtime.
+    Expectation: No error.
+    """
+    net = PrintPyExecuteNet(UserDefinedNet())
+    x = np.array([10], np.float64)
+    output = net(ms.Tensor(x))
+    print(output)
+    assert output == 200
