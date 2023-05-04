@@ -6501,7 +6501,7 @@ class ApplyPowerSign(Primitive):
         float32 or float64.
         TypeError: If `lr`, `logbase`, `sign_decay` or `beta` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        RuntimeError: If the data type of `lr`, `logbase`, `sign_decay` and `grad` conversion of Parameter
+        TypeError: If the data type of `lr`, `logbase`, `sign_decay` and `grad` conversion of Parameter
                       is not supported.
 
     Supported Platforms:
