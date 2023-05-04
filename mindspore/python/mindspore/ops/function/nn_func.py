@@ -3982,8 +3982,8 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
     For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel
     locations `x` and `y`, which are used to interpolate the output value `output[n, :, h, w]`. In the case of 5D
     inputs, `grid[n, d, h, w]`, specifies the `x`, `y`, `z` pixel locations for interpolating
-    `output[n, :, d, h, w]`. And `mode` argument specifies "nearest" or "bilinear" or "bicubic"
-    (supported in 4D case only) interpolation method to sample the input pixels.
+    `output[n, :, d, h, w]`. And `mode` argument specifies "nearest" or "bilinear" ("bicubic" is not supported yet)
+    interpolation method to sample the input pixels.
 
     `grid` specifies the sampling pixel locations normalized by the `input` spatial dimensions. Therefore, it should
     have most values in the range of :math:`[-1, 1]`.
@@ -4000,7 +4000,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str): An optional string specifying the interpolation method. The optional values are
-            "bilinear", "nearest" or "bicubic". Default: "bilinear". Note: `bicubic` supports only 4-D input. When
+            "bilinear", "nearest". Default: "bilinear". Note: "bicubic" is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
@@ -4022,7 +4022,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         ValueError: If the rank of `input` or `grid` is not equal to 4(4-D case) or 5(5-D case).
         ValueError: If the first dimension of `input` is not equal to that of `grid`.
         ValueError: If the last dimension of `grid` is not equal to 2(4-D case) or 3(5-D case).
-        ValueError: If `mode` is not "bilinear", "nearest", "bicubic" or a string value.
+        ValueError: If `mode` is not "bilinear", "nearest" or a string value.
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
