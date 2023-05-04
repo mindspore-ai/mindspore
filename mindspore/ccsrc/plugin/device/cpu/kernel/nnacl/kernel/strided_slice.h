@@ -14,13 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_SOFTMAX_H_
-#define NNACL_KERNEL_SOFTMAX_H_
+#ifndef NNACL_KERNEL_STRIDED_SLICE_H_
+#define NNACL_KERNEL_STRIDED_SLICE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateSoftmax(OpParameter *param, int data_type);
+typedef struct StridedSliceStruct {
+  KernelBase base_;
+  TypeIdC data_type_;
+  bool fast_run_;
+  bool soft_copy_mode_;
+  bool parallel_on_outer_;
+  bool parallel_on_split_axis_;
 
-#endif  // NNACL_KERNEL_SOFTMAX_H_
+  int split_axis_;
+  int in_shape_size_;
+  int begins_[MAX_SHAPE_SIZE];
+  int ends_[MAX_SHAPE_SIZE];
+  int strides_[MAX_SHAPE_SIZE];
+  int in_shape_[MAX_SHAPE_SIZE];
+
+  size_t inner_;
+  size_t outer_;
+  size_t inner_size_;
+  int cal_num_per_thread_;
+} StridedSliceStruct;
+
+KernelBase *CreateStridedSlice(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_STRIDED_SLICE_H_

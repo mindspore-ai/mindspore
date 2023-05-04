@@ -21,6 +21,14 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+typedef struct ReshapeStruct {
+  KernelBase base_;
+  int block_size_;
+  int total_size_;
+} ReshapeStruct;
+
+int ParallelReshape(void *param, int task_id, float l, float r);
+
 KernelBase *CreateReshape(OpParameter *param, int data_type);
 
 #endif  // NNACL_KERNEL_RESHAPE_H_

@@ -48,6 +48,10 @@ static inline size_t DataTypeCSize(TypeIdC type) {
       return sizeof(uint32_t);
     case kNumberTypeUInt64:
       return sizeof(uint64_t);
+    case kNumberTypeComplex64:
+      return sizeof(float) + sizeof(float);
+    case kNumberTypeComplex128:
+      return sizeof(double) + sizeof(double);
     case kNumberTypeBool:
       return sizeof(bool);
     case kObjectTypeString:

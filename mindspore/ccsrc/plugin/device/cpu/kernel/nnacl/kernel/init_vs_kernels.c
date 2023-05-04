@@ -30,6 +30,7 @@
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/shape.h"
 #include "nnacl/kernel/stack.h"
+#include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/transpose.h"
@@ -64,6 +65,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
   creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat16)] = CreateSoftmax;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeFloat16)] = CreateStackF16;
+  creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeFloat16)] = CreateStridedSlice;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
@@ -146,6 +148,10 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeFloat32)] = CreateStack;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeInt32)] = CreateStack;
+  creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeFloat32)] = CreateStridedSlice;
+  creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt64)] = CreateStridedSlice;
+  creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt32)] = CreateStridedSlice;
+  creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt8)] = CreateStridedSlice;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;

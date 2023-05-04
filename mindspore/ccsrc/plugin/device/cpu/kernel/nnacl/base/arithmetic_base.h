@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_ARITHMETIC_BASE_H_
-#define MINDSPORE_NNACL_BASE_ARITHMETIC_BASE_H_
+#ifndef NNACL_BASE_ARITHMETIC_BASE_H_
+#define NNACL_BASE_ARITHMETIC_BASE_H_
 
 #include "nnacl/arithmetic.h"
 #include "nnacl/nnacl_utils.h"
