@@ -35,6 +35,8 @@
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/debug/common.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -92,26 +94,26 @@ void AkgKernelPool::LockMng::Unlock() const noexcept {
   MS_LOG(INFO) << "AkgKernelBuild successfully release lock called at " << calling_position_;
 }
 
-std::string AkgKernelPool::GetCurrentPath() const {
-  auto compile_cache = GetCompilerCachePath();
-  if (!compile_cache.empty()) {
-    return compile_cache;
+std::string AkgKernelPool::GetTmpKeyPath() const {
+  std::string config_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
+  if (config_path.empty()) {
+    config_path = common::GetEnv(kCOMPILER_CACHE_PATH);
   }
-  char cwd[PATH_MAX];
-  char *ret = getcwd(cwd, sizeof(cwd));
-  if (ret == nullptr) {
-    MS_LOG(ERROR) << "Get current work directory failed, error msg:" << GetErrorInfo();
-    return "";
+  if (config_path.empty()) {
+    char cwd[PATH_MAX];
+    char *ret = getcwd(cwd, sizeof(cwd));
+    if (ret == nullptr) {
+      MS_LOG(ERROR) << "Get current work directory failed, error msg:" << GetErrorInfo();
+      return "";
+    }
+    config_path = std::string(cwd);
   }
-
-  char abspath[PATH_MAX];
-  char *res = realpath(cwd, abspath);
-  if (res == nullptr) {
+  auto real_path = FileUtils::GetRealPath(common::SafeCStr(config_path));
+  if (!real_path.has_value()) {
     MS_LOG(ERROR) << "Change to realpath failed, error msg:" << GetErrorInfo();
     return "";
   }
-
-  return std::string(abspath);
+  return real_path.value();
 }
 
 void *AkgKernelPool::CreateSharedMem(const std::string &path) {
@@ -184,7 +186,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
 }
 
 int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
-  auto cp = GetCurrentPath();
+  auto cp = GetTmpKeyPath();
   if (cp.empty()) {
     return -1;
   }
