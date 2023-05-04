@@ -47,7 +47,8 @@ class DataPrepareActor : public DebugAwareActor {
         strategy_(GraphExecutionStrategy::kPipeline),
         real_strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
-        host_tensor_queue_(host_tensor_queue) {}
+        host_tensor_queue_(host_tensor_queue),
+        value_node_prepared_(false) {}
   ~DataPrepareActor() override = default;
 
   // The process entry of data prepare.
@@ -136,6 +137,7 @@ class DataPrepareActor : public DebugAwareActor {
 
   // Record the address modified input ndoes to refresh the ref node.
   std::set<AnfNode *> address_modified_input_nodes_;
+  bool value_node_prepared_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

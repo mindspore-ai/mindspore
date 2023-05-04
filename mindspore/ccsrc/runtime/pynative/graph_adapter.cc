@@ -259,7 +259,6 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
       address_ref_count[device_address] += value_node_ref_count;
       device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
     }
-    runtime::DeviceTensorStore::GetInstance().Remove(front_node.get());
     runtime::DeviceTensorStore::GetInstance().Insert(front_node.get(), device_address);
   }
 

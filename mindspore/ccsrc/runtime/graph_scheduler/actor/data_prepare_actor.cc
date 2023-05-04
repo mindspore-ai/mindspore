@@ -600,6 +600,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
   }
 
   PrepareDeviceTensorStoreForControlNode(parser, input_tensors.back(), context);
+  value_node_prepared_ = true;
 }
 
 void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
@@ -673,14 +674,23 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
       return;
     }
     if (tensor->is_forward_output()) {
+      auto device_tensor = tensor->device_address();
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      CopyDataFromDeviceTensorStore(front_node, node, std::dynamic_pointer_cast<device::DeviceAddress>(device_tensor),
+                                    device_context, context);
       continue;
+    }
+
+    if (value_node_prepared_) {
+      return;
     }
 
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
     if (device_tensor->IsPtrValid()) {
-      return;
+      CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+      continue;
     }
     MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope() << ", output index: " << i;
     tensor->set_device_address(device_tensor);
