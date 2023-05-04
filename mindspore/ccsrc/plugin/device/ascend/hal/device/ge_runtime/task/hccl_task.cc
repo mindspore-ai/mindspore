@@ -101,7 +101,8 @@ void HcclTask::Distribute() {
   auto result = ops_kernel_info_store->LoadTask(ge_task);
   // tagHcclResult::HCCL_SUCCESS is 0
   if (result != 0) {
-    MS_LOG(EXCEPTION) << "davinci_model : load task fail, return ret: " << result;
+    MS_LOG(EXCEPTION) << "davinci_model : load task fail, return ret: " << result << ", the task is "
+                      << task_info_->op_name();
   }
 
   MS_LOG(INFO) << "Call function LoadTask end.";
