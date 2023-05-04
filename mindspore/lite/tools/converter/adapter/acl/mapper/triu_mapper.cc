@@ -44,6 +44,10 @@ STATUS TriuMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GetValueNodeAndPrimFromCnode failed.";
     return RET_ERROR;
   }
+  if (value_node == nullptr || src_prim == nullptr) {
+    MS_LOG(ERROR) << "value_node or src_prim is nullptr.";
+    return RET_ERROR;
+  }
   cnode->set_inputs({cnode->input(0), cnode->input(1)});
   auto dst_prim = std::make_shared<acl::Triu>();
   if (dst_prim == nullptr) {

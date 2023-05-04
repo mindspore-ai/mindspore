@@ -22,6 +22,21 @@ import numpy as np
 
 
 def prepare_inputs_data(inputs, file_path, input_shapes):
+    if file_path[0] == "random":
+        print("use random data as input data.")
+        for i in range(len(inputs)):
+            dtype = inputs[i].dtype
+            if dtype == mslite.DataType.FLOAT32:
+                random_data = np.random.random(input_shapes[i]).astype(np.float32)
+            elif dtype == mslite.DataType.INT32:
+                random_data = np.random.random(input_shapes[i]).astype(np.int32)
+            elif dtype == mslite.DataType.INT64:
+                random_data = np.random.random(input_shapes[i]).astype(np.int64)
+            else:
+                raise RuntimeError('not support DataType!')
+            inputs[i].shape = input_shapes[i]
+            inputs[i].set_data_from_numpy(random_data)
+        return
     for i in range(len(inputs)):
         dtype = inputs[i].dtype
         if dtype == mslite.DataType.FLOAT32:
@@ -52,6 +67,11 @@ def model_common_predict(context, model_path, in_data_path, input_shapes):
     model = mslite.Model()
     model.build_from_file(model_path, mslite.ModelType.MINDIR, context)
     inputs = model.get_inputs()
+    for input_tensor in inputs:
+        input_shape = input_tensor.shape
+        if -1 in input_shape:
+            model.resize(inputs, input_shapes)
+            break
     prepare_inputs_data(inputs, in_data_path, input_shapes)
     outputs = model.predict(inputs)
     in_data_path_group2 = get_inputs_group2_if_exist(in_data_path)

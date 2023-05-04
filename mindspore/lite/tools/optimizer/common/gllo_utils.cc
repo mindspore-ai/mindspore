@@ -1500,13 +1500,22 @@ STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
     return RET_ERROR;
   }
   auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->inputs()[input_index]});
+  if (tensor_move_cnode == nullptr) {
+    MS_LOG(ERROR) << "new cnode failed.";
+    return RET_ERROR;
+  }
   auto manager = Manage(func_graph);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
     return RET_ERROR;
   }
-  tensor_move_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "tensor_move_1");
+  tensor_move_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "tensor_move" +
+                                             std::to_string(input_index));
   auto temp_abstract = cnode->input(input_index)->abstract()->Clone();
+  if (temp_abstract == nullptr) {
+    MS_LOG(ERROR) << "abstract clone failed.";
+    return RET_ERROR;
+  }
   tensor_move_cnode->set_abstract(temp_abstract);
   manager->SetEdge(cnode, input_index, tensor_move_cnode);
   return RET_OK;
