@@ -4740,7 +4740,8 @@ class NPUAllocFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUAllocFloatStatus"""
-        logger.warning("The 'NPUAllocFloatStatus' operator will be deprecated in the future. Please don't use it.")
+        logger.warning("The 'NPUAllocFloatStatus' operator will be deprecated in the future, "
+                       "please use 'nn.TrainOneStepWithLossScaleCell' or 'amp.all_finite'.")
 
 
 class NPUGetFloatStatus(Primitive):
@@ -4810,7 +4811,8 @@ class NPUGetFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUGetFloatStatus"""
-        logger.warning("The 'NPUGetFloatStatus' operator will be deprecated in the future. Please don't use it.")
+        logger.warning("The 'NPUGetFloatStatus' operator will be deprecated in the future, "
+                       "please use 'nn.TrainOneStepWithLossScaleCell' or 'amp.all_finite'.")
 
 
 class NPUClearFloatStatus(Primitive):
@@ -4874,7 +4876,8 @@ class NPUClearFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUClearFloatStatus"""
-        logger.warning("The 'NPUClearFloatStatus' operator will be deprecated in the future. Please don't use it.")
+        logger.warning("The 'NPUClearFloatStatus' operator will be deprecated in the future,"
+                       "please use 'nn.TrainOneStepWithLossScaleCell' or 'amp.all_finite'.")
 
 
 class NPUGetFloatStatusV2(Primitive):
@@ -4923,9 +4926,10 @@ class NPUGetFloatStatusV2(Primitive):
         ...         self.get_status = NPUGetFloatStatusV2()
         ...         self.sub = ops.Sub()
         ...         self.neg = ops.Neg()
-        ...         self.not_equal = ops.NotEqual()
-        ...         self.reduce_any = ops.ReduceAny(keep_dims=False)
+        ...         self.equal = ops.Equal()
+        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
         ...         self.base = Tensor([0], dtype=ms.int32)
+        ...         self.logic_not = ops.LogicalNot()
         ...
         ...     def construct(self, x):
         ...         init = Tensor([0]*8, dtype=ms.int32)
@@ -4934,8 +4938,9 @@ class NPUGetFloatStatusV2(Primitive):
         ...         res = self.sub(x, self.neg(x))
         ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         flag = self.not_equal(self.base, get_status)
-        ...         overflow = self.reduce_any(flag)
+        ...         flag = self.equal(self.base, get_status)
+        ...         overall_finite = self.reduce_all(flag)
+        ...         overflow = self.logic_not(overall_finite)
         ...         return overflow
         ...
         >>> value = 65504
@@ -5005,9 +5010,10 @@ class NPUClearFloatStatusV2(Primitive):
         ...         self.get_status = NPUGetFloatStatusV2()
         ...         self.sub = ops.Sub()
         ...         self.neg = ops.Neg()
-        ...         self.not_equal = ops.NotEqual()
-        ...         self.reduce_any = ops.ReduceAny(keep_dims=False)
+        ...         self.equal = ops.Equal()
+        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
         ...         self.base = Tensor([0], dtype=ms.int32)
+        ...         self.logic_not = ops.LogicalNot()
         ...
         ...     def construct(self, x):
         ...         init = Tensor([0]*8, dtype=ms.int32)
@@ -5016,8 +5022,9 @@ class NPUClearFloatStatusV2(Primitive):
         ...         res = self.sub(x, self.neg(x))
         ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         flag = self.not_equal(self.base, get_status)
-        ...         overflow = self.reduce_any(flag)
+        ...         flag = self.equal(self.base, get_status)
+        ...         overall_finite = self.reduce_all(flag)
+        ...         overflow = self.logic_not(overall_finite)
         ...         return overflow
         ...
         >>> value = 65504
