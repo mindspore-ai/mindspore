@@ -9074,7 +9074,7 @@ def all(input, axis=None, keep_dims=False):
         >>> # case 2: Reduces a dimension along axis 0.
         >>> output = ops.all(x, axis=0)
         >>> print(output)
-        [True False]
+        [ True False]
         >>> # case 3: Reduces a dimension along axis 1.
         >>> output = ops.all(x, axis=1)
         >>> print(output)
@@ -9128,11 +9128,11 @@ def any(input, axis=None, keep_dims=False):
         >>> # case 2: Reduces a dimension along axis 0.
         >>> output = ops.any(x, axis=0)
         >>> print(output)
-        [True True]
+        [ True True]
         >>> # case 3: Reduces a dimension along axis 1.
         >>> output = ops.any(x, axis=1)
         >>> print(output)
-        [True True]
+        [ True True]
     """
     if axis is None:
         axis = ()

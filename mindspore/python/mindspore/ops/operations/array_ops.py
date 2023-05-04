@@ -2601,7 +2601,8 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
 
     out_n = len(x_shape)
     for i in range(1, out_n):
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], validator.EQ, prim_name, TypeError)
+        if x_type[i] != x_type[i-1]:
+            raise ValueError("For \'{}\', all types should be same, but got {}".format(prim_name, x_type))
 
     new_x_shape = []
     for i, shp in enumerate(x_shape):
