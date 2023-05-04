@@ -226,6 +226,7 @@ constexpr const char kNameApplyAddSignD[] = "ApplyAddSign";
 constexpr const char kNameSparseApplyAdagradV2D[] = "SparseApplyAdagradV2";
 constexpr const char kNameDataFormatDimMap[] = "DataFormatDimMap";
 constexpr const char kNameTile[] = "Tile";
+constexpr const char kNameTileD[] = "TileD";
 constexpr const char kNameCos[] = "Cos";
 constexpr const char kNameCosh[] = "Cosh";
 constexpr const char kNameACos[] = "ACos";
