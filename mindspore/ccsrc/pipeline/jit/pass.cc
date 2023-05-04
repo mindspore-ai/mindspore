@@ -155,7 +155,7 @@ bool ConvertListToTupleForExportPass(const ResourcePtr &resource) {
     return true;
   } else if (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
     // Throw exception later.
-    MS_LOG(ERROR) << "Not allow to export when set JIT syntax level to Lax.";
+    MS_LOG(INFO) << "Not allow to export when set JIT syntax level to Lax.";
     return true;
   }
 
