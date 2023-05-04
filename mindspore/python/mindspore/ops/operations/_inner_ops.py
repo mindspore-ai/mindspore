@@ -35,7 +35,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
-
+from mindspore import ops
 
 # Bit operation
 bit_and = bit_and()
@@ -2424,7 +2424,7 @@ class ConvertToMsTensor(Primitive):
         """Run in PyNative mode"""
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
-        return Tensor(x)
+        return ops.deepcopy(x)
 
 convert_to_ms_tensor = ConvertToMsTensor()
 
