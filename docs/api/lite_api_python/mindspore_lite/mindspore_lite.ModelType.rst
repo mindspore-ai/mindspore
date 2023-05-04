@@ -7,9 +7,9 @@ mindspore_lite.ModelType
 
     适用于以下场景：
 
-    1. 调用 `mindspore_lite.Converter` 时，设置 `save_type` 参数， `ModelType` 用于定义转换生成的模型类型。推荐使用 `ModelType.MINDIR` 。
+    1. 调用 `mindspore_lite.Converter` 时，设置 `save_type` 参数， `ModelType` 用于定义转换生成的模型类型。推荐使用 ``ModelType.MINDIR`` 。
 
-    2. 调用 `mindspore_lite.Converter` 之后，当从文件加载或构建模型以进行推理时， `ModelType` 用于定义输入模型框架类型。只支持 `ModelType.MINDIR` 。
+    2. 调用 `mindspore_lite.Converter` 之后，当从文件加载或构建模型以进行推理时， `ModelType` 用于定义输入模型框架类型。只支持 ``ModelType.MINDIR`` 。
 
     目前，支持以下 `ModelType` ：
 

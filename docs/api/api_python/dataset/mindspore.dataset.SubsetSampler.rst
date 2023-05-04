@@ -7,7 +7,7 @@ mindspore.dataset.SubsetSampler
 
     参数：
         - **indices** (Iterable) - 索引的序列（包括除了string类型的任意Python可迭代对象类型）。
-        - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值：None，获取采样到的所有样本。
+        - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值： ``None`` ，获取采样到的所有样本。
 
     异常：
         - **TypeError** - `indices` 的类型不是int。

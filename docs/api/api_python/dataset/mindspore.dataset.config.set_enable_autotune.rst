@@ -13,7 +13,7 @@ mindspore.dataset.config.set_enable_autotune
         - **enable** (bool) - 是否开启自动数据加速。
         - **filepath_prefix** (str，可选) - 优化后的全局配置的保存路径+文件前缀。多卡环境时，设备ID号与JSON扩展名会自动添加到 `filepath_prefix`
           参数后面作为完整的文件路径，单卡默认设备ID号为0。例如，设置 `filepath_prefix="/path/to/some/dir/prefixname"` ，设备ID为1的训练进程
-          生成的调优文件将被命名为 `/path/to/some/dir/prefixname_1.json` 。默认值：None，表示不保存配置文件，但可以通过INFO日志查看调优配置。
+          生成的调优文件将被命名为 `/path/to/some/dir/prefixname_1.json` 。默认值： ``None`` ，表示不保存配置文件，但可以通过INFO日志查看调优配置。
 
     异常：
         - **TypeError** - 当 `enable` 的类型不为bool。
@@ -24,7 +24,7 @@ mindspore.dataset.config.set_enable_autotune
         - **RuntimeError** - 当 `json_filepath` 没有写入权限。
 
     .. note:: 
-        - 当 `enable` 为 False 时，`json_filepath` 值将会被忽略。
+        - 当 `enable` 为 ``False`` 时，`json_filepath` 值将会被忽略。
         - 生成的JSON文件可以通过 `mindspore.dataset.deserialize` 进行加载，得到调优后的数据处理管道。
     
     生成的JSON文件内容示例如下，"remark"字段将给出结论表明数据处理管道是否进行了调整，"summary"字段将展示数据处理管道的调优配置。

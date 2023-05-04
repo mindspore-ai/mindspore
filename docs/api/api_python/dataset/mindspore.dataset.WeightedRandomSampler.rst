@@ -7,8 +7,8 @@ mindspore.dataset.WeightedRandomSampler
 
     参数：
         - **weights** (list[float, int]) - 权重序列，总和不一定为1。
-        - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值：None，获取采样到的所有样本。
-        - **replacement** (bool) - 是否将样本ID放回下一次采样。默认值：True，有放回采样。
+        - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值： ``None`` ，获取采样到的所有样本。
+        - **replacement** (bool) - 是否将样本ID放回下一次采样。默认值： ``True`` ，有放回采样。
 
     异常：
         - **TypeError** - `weights` 元素的类型不是数值类型。

@@ -6,7 +6,7 @@ mindspore.dataset.Schema
     用于解析和存储数据列属性的类。
 
     参数：
-        - **schema_file** (str) - schema文件的路径。默认值：None。
+        - **schema_file** (str) - schema文件的路径。默认值： ``None`` 。
 
     返回：
         schema对象，关于数据集的行列配置的策略信息。
@@ -21,7 +21,7 @@ mindspore.dataset.Schema
         参数：
             - **name** (str) - 列的新名称。
             - **de_type** (str) - 列的数据类型。
-            - **shape** (list[int], 可选) - 列shape。默认值：None，-1表示该维度的shape是未知的。
+            - **shape** (list[int], 可选) - 列shape。默认值： ``None`` ， ``-1`` 表示该维度的shape是未知的。
 
         异常：
             - **ValueError** - 列类型未知。

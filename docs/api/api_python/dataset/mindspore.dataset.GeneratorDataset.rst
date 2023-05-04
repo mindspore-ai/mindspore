@@ -11,19 +11,19 @@
           - 如果 `source` 是可调用对象，要求 `source` 对象可以通过 `source().next()` 的方式返回一个由NumPy数组构成的元组。
           - 如果 `source` 是可迭代对象，要求 `source` 对象通过 `iter(source).next()` 的方式返回一个由NumPy数组构成的元组。
           - 如果 `source` 是支持随机访问的对象，要求 `source` 对象通过 `source[idx]` 的方式返回一个由NumPy数组构成的元组。
-        - **column_names** (Union[str, list[str]]，可选) - 指定数据集生成的列名。默认值：None，不指定。用户可以通过此参数或 `schema` 参数指定列名。
-        - **column_types** (list[mindspore.dtype]，可选) - 指定生成数据集各个数据列的数据类型。默认值：None，不指定。
+        - **column_names** (Union[str, list[str]]，可选) - 指定数据集生成的列名。默认值： ``None`` ，不指定。用户可以通过此参数或 `schema` 参数指定列名。
+        - **column_types** (list[mindspore.dtype]，可选) - 指定生成数据集各个数据列的数据类型。默认值： ``None`` ，不指定。
           如果未指定该参数，则自动推断类型；如果指定了该参数，将在数据输出时做类型匹配检查。
         - **schema** (Union[str, Schema], 可选) - 数据格式策略，用于指定读取数据列的数据类型、数据维度等信息。
-          支持传入JSON文件路径或 mindspore.dataset.Schema 构造的对象。默认值：None。
-        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值：1。
-        - **shuffle** (bool，可选) - 是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值：None。下表中会展示不同配置的预期行为。
-        - **sampler** (Union[Sampler, Iterable]，可选) - 指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值：None。下表中会展示不同配置的预期行为。
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
-        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-        - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
-        - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间。默认值：6，单位为MB。仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
+          支持传入JSON文件路径或 :class:`mindspore.dataset.Schema` 构造的对象。默认值： ``None`` 。
+        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值： ``1`` 。
+        - **shuffle** (bool，可选) - 是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值： ``None`` 。下表中会展示不同配置的预期行为。
+        - **sampler** (Union[Sampler, Iterable]，可选) - 指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值： ``None`` 。下表中会展示不同配置的预期行为。
+        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。
+        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
+        - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值： ``True`` 。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
+        - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间。默认值： ``6`` ，单位为MB。仅当参数 `python_multiprocessing` 设为 ``True`` 时，此参数才会生效。
 
     异常：
         - **RuntimeError** - Python对象 `source` 在执行期间引发异常。

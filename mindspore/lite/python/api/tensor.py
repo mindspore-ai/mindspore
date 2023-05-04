@@ -227,10 +227,11 @@ class Tensor:
     The `Tensor` class defines a Tensor in MindSpore Lite.
 
     Args:
-        tensor(Tensor, optional): The data to be stored in a new Tensor. It can be from another Tensor. Default: None.
+        tensor(Tensor, optional): The data to be stored in a new Tensor. It can be from another Tensor.
+            Default: ``None``.
 
     Raises:
-        TypeError: `tensor` is neither a Tensor nor None.
+        TypeError: `tensor` is neither a Tensor nor ``None``.
 
     Examples:
         >>> import mindspore_lite as mslite

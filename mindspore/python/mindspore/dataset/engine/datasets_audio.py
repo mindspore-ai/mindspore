@@ -51,7 +51,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -74,7 +74,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
+        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -187,7 +187,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -210,7 +210,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
+        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -323,7 +323,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -346,7 +346,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
+        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -468,7 +468,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
             Default: None, all audios.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -610,7 +610,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -741,7 +741,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             Default: None, all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -941,7 +941,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the

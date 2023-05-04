@@ -6,10 +6,10 @@ mindspore_lite.Tensor
     `Tensor` 类，在Mindspore Lite中定义一个张量。
 
     参数：
-        - **tensor** (Tensor，可选) - 被存储在新Tensor中的数据，数据可以是来自其它Tensor。默认值：None。
+        - **tensor** (Tensor，可选) - 被存储在新Tensor中的数据，数据可以是来自其它Tensor。默认值： ``None`` 。
 
     异常：
-        - **TypeError** - `tensor` 既不是Tensor类型也不是None。
+        - **TypeError** - `tensor` 既不是Tensor类型也不是 ``None`` 。
 
     .. py:method:: data_size
         :property:

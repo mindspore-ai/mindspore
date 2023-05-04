@@ -29,7 +29,7 @@ class Context:
     The `Context` class is used to transfer environment variables during execution.
 
     The context should be configured before running the program.
-    If it is not configured, it will be set cpu target, and automatically set cpu attributes by default.
+    If it is not configured, the `target` will be set to ``cpu``, and automatically set ``cpu`` attributes by default.
 
     Context.parallel defines the context and configuration of `ModelParallelRunner` class.
 
@@ -39,12 +39,12 @@ class Context:
           `workers_num` will be automatically adjusted based on computer performance and core numbers.
         - **config_info** (dict{str, dict{str, str}}) - Nested map for transferring user defined options during building
           `ModelParallelRunner` online. More configurable options refer to `config_path` .
-          For example, {"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}.
-          section is "model_file", one of the keys is "mindir_path",
-          the corresponding value in the map is "/home/user/model_graph.mindir".
+          For example, ``{"model_file": {"mindir_path": "/home/user/model_graph.mindir"}}``.
+          `section` is ``"model_file"``, one of the keys is ``"mindir_path"``,
+          the corresponding value in the map is ``"/home/user/model_graph.mindir"``.
         - **config_path** (str) - Set the config file path. The config file is used to transfer user-defined
           options during building `ModelParallelRunner` . In the following scenarios, users may need to set the
-          parameter. For example, "/home/user/config.txt".
+          parameter. For example, ``"/home/user/config.txt"``.
 
           - Usage 1: Set mixed precision inference. The content and description of the configuration file are as
             follows:
@@ -125,7 +125,7 @@ class Context:
         """
         Get the target device information of context.
 
-        Currently support target: ["cpu"] | ["gpu"] | ["ascend"].
+        Currently support target: ``"cpu"`` , ``"gpu"`` , ``"ascend"``.
 
         Note:
             After gpu is added to target, cpu will be added automatically as the backup target.
@@ -140,13 +140,13 @@ class Context:
         cpu properties:
             - **inter_op_parallel_num** (int) - Set the parallel number of operators at runtime.
               `inter_op_parallel_num` cannot be greater than `thread_num` . Setting `inter_op_parallel_num`
-              to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
+              to ``0`` represents `inter_op_parallel_num` will be automatically adjusted based on computer
               performance and core num.
-            - **precision_mode** (str) - Set the mix precision mode. Options are "preferred_fp16" |
-              "enforce_fp32".
+            - **precision_mode** (str) - Set the mix precision mode. Options are ``"preferred_fp16"`` ,
+              ``"enforce_fp32"``.
 
-              - "preferred_fp16": prefer to use fp16.
-              - "enforce_fp32": force use fp32.
+              - ``"preferred_fp16"`` : prefer to use fp16.
+              - ``"enforce_fp32"`` : force use fp32.
 
             - **thread_num** (int) - Set the number of threads at runtime. `thread_num` cannot be less than
               `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
@@ -154,9 +154,9 @@ class Context:
             - **thread_affinity_mode** (int) - Set the mode of the CPU core binding policy at runtime. The
               following `thread_affinity_mode` are supported.
 
-              - 0: no binding core.
-              - 1: binding big cores first.
-              - 2: binding middle cores first.
+              - ``0`` : no binding core.
+              - ``1`` : binding big cores first.
+              - ``2`` : binding middle cores first.
 
             - **thread_affinity_core_list** (list[int]) - Set the list of CPU core binding policies at runtime.
               For example, [0,1] represents the specified binding of CPU0 and CPU1.
@@ -164,28 +164,29 @@ class Context:
         gpu properties:
             - **device_id** (int) - The device id.
             - **group_size** (int) - the number of the clusters. Get only, not settable.
-            - **precision_mode** (str) - Set the mix precision mode. Options are "preferred_fp16" | "enforce_fp32".
+            - **precision_mode** (str) - Set the mix precision mode. Options are ``"preferred_fp16"`` ,
+              ``"enforce_fp32"``.
 
-              - "preferred_fp16": prefer to use fp16.
-              - "enforce_fp32": force use fp32.
+              - ``"preferred_fp16"``: prefer to use fp16.
+              - ``"enforce_fp32"``: force use fp32.
 
             - **rank_id** (int) - the ID of the current device in the cluster, which starts from 0. Get only,
               not settable.
 
         ascend properties:
             - **device_id** (int) - The device id.
-            - **precision_mode** (str) - Set the mix precision mode. Options are "enforce_fp32" | "preferred_fp32" |
-              "enforce_fp16" | "enforce_origin" | "preferred_optimal".
+            - **precision_mode** (str) - Set the mix precision mode. Options are ``"enforce_fp32"`` ,
+              ``"preferred_fp32"`` , ``"enforce_fp16"`` , ``"enforce_origin"`` , ``"preferred_optimal"``.
 
-              - "enforce_fp32": ACL option is force_fp32, force use fp32.
-              - "preferred_fp32": ACL option is allow_fp32_to_fp16, prefer to use fp32.
-              - "enforce_fp16": ACL option is force_fp16, force use fp16.
-              - "enforce_origin": ACL option is must_keep_origin_dtype, force use original type.
-              - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
+              - ``"enforce_fp32"``: ACL option is force_fp32, force use fp32.
+              - ``"preferred_fp32"``: ACL option is allow_fp32_to_fp16, prefer to use fp32.
+              - ``"enforce_fp16"``: ACL option is force_fp16, force use fp16.
+              - ``"enforce_origin"``: ACL option is must_keep_origin_dtype, force use original type.
+              - ``"preferred_optimal"``: ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
             - **provider** (str) - The provider that supports the inference capability of the target device,
-              can be "" or "ge". The default is "".
-            - **rank_id** (int) - The ID of the current device in the cluster, which starts from 0.
+              can be ``""`` or ``"ge"``. The default is ``""``.
+            - **rank_id** (int) - The ID of the current device in the cluster, which starts from ``0``.
 
         Returns:
             list[str], the target device information of context.
