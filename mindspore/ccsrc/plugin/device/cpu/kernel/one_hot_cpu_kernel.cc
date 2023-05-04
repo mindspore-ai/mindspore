@@ -147,6 +147,14 @@ void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     for (size_t i = start; i < end; i++) {
       size_t stride_num = i / stride_;
       size_t output_index = stride_num * depth_ * stride_ + i % stride_;
+      if (indices[i] < 0) {
+        for (size_t j = 0; j < depth_; j++) {
+          output[output_index] = off_value;
+          output_index += stride_;
+        }
+        continue;
+      }
+
       size_t index = IntToSize(indices[i]);
       for (size_t j = 0; j < depth_; j++) {
         if (index == j) {
