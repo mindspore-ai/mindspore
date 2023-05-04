@@ -23,10 +23,14 @@ typedef struct TensorC {
   bool shape_changed_;
   int data_type_;
   int format_;
+  int category_;
   void *data_;
   size_t shape_size_;
   int shape_[MAX_SHAPE_SIZE];
   char *name_;  // only used in micro now.
 } TensorC;
 
+inline bool IsConst(const TensorC *tensor) {
+  return (tensor->category_ == ConstTensor || tensor->category_ == ConstScalar) && tensor->data_ != NULL;
+}
 #endif  // MINDSPORE_NNACL_TENSOR_C_H_

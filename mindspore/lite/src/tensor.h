@@ -27,6 +27,7 @@
 #include "include/api/format.h"
 #include "include/lite_types.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/tensor_c_utils.h"
 #include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
@@ -66,7 +67,7 @@ enum CompressType {
 
 class Tensor {
  public:
-  Tensor() { tensor_c_ = {false, kTypeUnknown, NHWC, nullptr, 0}; }
+  Tensor() { tensor_c_ = {false, kTypeUnknown, NHWC, VarTensor, nullptr, 0}; }
 
   Tensor(TypeId data_type, std::vector<int> shape, const mindspore::Format &format = mindspore::NHWC,
          Category category = VAR);
@@ -165,9 +166,9 @@ class Tensor {
 
   void *device_data() const { return device_data_; }
 
-  Category category() const { return this->category_; }
+  Category category() const { return static_cast<Category>(tensor_c_.category_); }
 
-  void set_category(Category category) { this->category_ = category; }
+  void set_category(Category category) { tensor_c_.category_ = category; }
 
   void set_format(mindspore::Format format) { this->tensor_c_.format_ = format; }
 
@@ -200,15 +201,13 @@ class Tensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  virtual bool IsConst() const {
-    return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->tensor_c_.data_ != nullptr;
-  }
+  virtual bool IsConst() const { return ::IsConst(&tensor_c_); }
 
-  bool IsScalar() const { return this->category_ == CONST_SCALAR && this->tensor_c_.data_ != nullptr; }
+  bool IsScalar() const { return this->tensor_c_.category_ == CONST_SCALAR && this->tensor_c_.data_ != nullptr; }
 
-  bool IsGraphInput() const { return this->category_ == GRAPH_INPUT; }
+  bool IsGraphInput() const { return this->tensor_c_.category_ == GRAPH_INPUT; }
 
-  bool IsGraphOutput() const { return this->category_ == GRAPH_OUTPUT; }
+  bool IsGraphOutput() const { return this->tensor_c_.category_ == GRAPH_OUTPUT; }
 
   void Prepare() {
     if (allocator_ != nullptr) {
@@ -274,7 +273,6 @@ class Tensor {
  protected:
   TensorC tensor_c_;
   std::string tensor_name_;
-  Category category_ = VAR;
   std::atomic_int ref_count_ = {0};
   int init_ref_count_ = 0;
   std::vector<LiteQuantParam> quant_params_;

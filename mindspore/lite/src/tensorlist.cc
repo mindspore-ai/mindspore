@@ -283,7 +283,9 @@ STATUS TensorList::Decode(const int *data, size_t length) {
   return RET_OK;
 }
 
-bool TensorList::IsConst() const { return this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR; }
+bool TensorList::IsConst() const {
+  return this->tensor_c_.category_ == CONST_TENSOR || this->tensor_c_.category_ == CONST_SCALAR;
+}
 
 TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, const AllocatorPtr &allocator) {
   auto *result = new TensorList;
@@ -295,7 +297,6 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, co
   result->tensor_c_.data_ = nullptr;
   (void)memcpy(&result->tensor_list_c_, &src.tensor_list_c_, sizeof(TensorListC));
   result->tensor_list_c_.tensors_ = nullptr;
-  result->category_ = src.category_;
   result->set_allocator(allocator);
   result->set_tensor_name(src.tensor_name() + "_duplicate");
   std::vector<std::vector<int> > tensor_shape{};
