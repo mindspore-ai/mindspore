@@ -112,12 +112,10 @@ CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vect
   auto cnode_ptr_list = graph_ptr->execution_order();
   CNodePtr overflow_marker = nullptr;
   std::string kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
-  std::string kNPUGetFloatStatusV2OpName = "NPUGetFloatStatusV2";
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     auto cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    if (common::AnfAlgo::GetCNodeName(cur_cnode_ptr) == kNPUGetFloatStatusOpName ||
-        common::AnfAlgo::GetCNodeName(cur_cnode_ptr) == kNPUGetFloatStatusV2OpName) {
+    if (common::AnfAlgo::GetCNodeName(cur_cnode_ptr) == kNPUGetFloatStatusOpName) {
       overflow_marker = cur_cnode_ptr;
     } else if (AnfAlgo::GetKernelType(cur_cnode_ptr) == HCCL_KERNEL) {
       (void)hcom_nodes->emplace_back(cur_cnode_ptr);
