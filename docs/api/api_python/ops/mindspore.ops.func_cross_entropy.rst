@@ -49,7 +49,7 @@
               \end{cases}
 
     参数：
-        - **input** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`
+        - **input** (Tensor) - 输入预测值，shape为 :math:`(N)` 或 :math:`(N, C)` 或 :math:`(N, C, H, W)`
           (针对二维数据)，或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。`input` 需为对数概率。数据类型仅支持float32或float16。
         - **target** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)`
           (针对高维数据)。数据类型仅支持int32。
