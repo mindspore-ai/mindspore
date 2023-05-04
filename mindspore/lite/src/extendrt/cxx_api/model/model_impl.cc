@@ -158,6 +158,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     }
     return kSuccess;
   }
+  if (model_type != kMindIR) {
+    MS_LOG(ERROR) << "Invalid model type: " << model_type;
+    return kLiteError;
+  }
   // for model pool
   FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
   if (func_graph != nullptr) {
