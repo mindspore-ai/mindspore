@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_PACK_INT8_H_
-#define MINDSPORE_NNACL_INT8_PACK_INT8_H_
+#ifndef NNACL_INT8_PACK_INT8_H_
+#define NNACL_INT8_PACK_INT8_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -53,4 +53,4 @@ void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_PAD_INT8_H_
+#endif  // NNACL_INT8_PAD_INT8_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_QUANTIZATION_QUANTIZE_H_
-#define MINDSPORE_NNACL_QUANTIZATION_QUANTIZE_H_
+#ifndef NNACL_QUANTIZATION_QUANTIZE_H_
+#define NNACL_QUANTIZATION_QUANTIZE_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -219,4 +219,4 @@ void Dequantize(const int8_t *input_data, int length, float scale, int zero_poin
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_QUANTIZATION_QUANTIZE_H_
+#endif  // NNACL_QUANTIZATION_QUANTIZE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_
+#ifndef NNACL_INT8_UNSQUEEZE_INT8_H_
+#define NNACL_INT8_UNSQUEEZE_INT8_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -30,4 +30,4 @@ int Int8Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, const UnSqueezePa
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_
+#endif  // NNACL_INT8_UNSQUEEZE_INT8_H_

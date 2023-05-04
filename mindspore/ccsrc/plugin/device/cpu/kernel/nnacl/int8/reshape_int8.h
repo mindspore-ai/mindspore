@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_RESHAHPE_INT8_H_
-#define MINDSPORE_NNACL_INT8_RESHAHPE_INT8_H_
+#ifndef NNACL_INT8_RESHAHPE_INT8_H_
+#define NNACL_INT8_RESHAHPE_INT8_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -29,4 +29,4 @@ void Int8Reshape(const int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_c
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_RESHAHPE_INT8_H_
+#endif  // NNACL_INT8_RESHAHPE_INT8_H_

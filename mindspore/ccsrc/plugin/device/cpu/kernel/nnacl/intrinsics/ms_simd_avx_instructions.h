@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
-#define MINDSPORE_NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#ifndef NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#define NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
 
 #ifdef _MSC_VER
@@ -421,4 +421,4 @@ static inline MS_FLOAT32X8 MS256_ERF_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 dst##4 = _mm256_setzero_ps();
 
 #define MS_REDUCE_ADD256_F32(src) (src = _mm256_hadd_ps(src, src), src = _mm256_hadd_ps(src, src), src[0] + src[4]);
-#endif  // MINDSPORE_NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#endif  // NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

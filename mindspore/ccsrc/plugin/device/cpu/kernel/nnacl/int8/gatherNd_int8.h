@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+#ifndef NNACL_INT8_GATHERND_INT8_H_
+#define NNACL_INT8_GATHERND_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -29,4 +29,4 @@ int GatherNdInt8(int8_t *in_data, int8_t *out_data, const int32_t *in_offset, in
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+#endif  // NNACL_INT8_GATHERND_INT8_H_

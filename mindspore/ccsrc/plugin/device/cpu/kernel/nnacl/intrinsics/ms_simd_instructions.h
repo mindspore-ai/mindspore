@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
-#define MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#ifndef NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#define NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
 
@@ -548,4 +548,4 @@ static inline void simd_exp32(float src, float *dst) {
     MS_SIMD_RUN_SSE(function, __VA_ARGS__);      \
   } while (0)
 
-#endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#endif  // NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_QUANTDTYPECAST_H_
-#define MINDSPORE_NNACL_INT8_QUANTDTYPECAST_H_
+#ifndef NNACL_INT8_QUANTDTYPECAST_H_
+#define NNACL_INT8_QUANTDTYPECAST_H_
 
 #include "nnacl/op_base.h"
 
@@ -47,4 +47,4 @@ int UInt8ToInt8(const uint8_t *real_values, int8_t *quant_values, int size);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_QUANTDTYPECAST_H_
+#endif  // NNACL_INT8_QUANTDTYPECAST_H_

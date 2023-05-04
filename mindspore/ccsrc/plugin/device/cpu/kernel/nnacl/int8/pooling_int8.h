@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_POOLING_H_
-#define MINDSPORE_NNACL_INT8_POOLING_H_
+#ifndef NNACL_INT8_POOLING_H_
+#define NNACL_INT8_POOLING_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -41,4 +41,4 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_POOLING_H_
+#endif  // NNACL_INT8_POOLING_H_

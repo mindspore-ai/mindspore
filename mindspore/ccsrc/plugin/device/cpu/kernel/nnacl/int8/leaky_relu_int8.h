@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
+#ifndef NNACL_INT8_PRELU_INT8_H_
+#define NNACL_INT8_PRELU_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -28,4 +28,4 @@ int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, const LeakyReluQuan
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_PRELU_INT8_H_
+#endif  // NNACL_INT8_PRELU_INT8_H_

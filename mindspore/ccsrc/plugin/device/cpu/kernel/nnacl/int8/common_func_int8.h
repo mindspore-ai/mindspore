@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_COMMON_FUNC_H_
-#define MINDSPORE_NNACL_INT8_COMMON_FUNC_H_
+#ifndef NNACL_INT8_COMMON_FUNC_H_
+#define NNACL_INT8_COMMON_FUNC_H_
 
 #include <string.h>
 #ifdef ENABLE_NEON
@@ -92,4 +92,4 @@ void ConvDw3x3Int8Horizontal(int8_t *dst, const int8_t *src, const int16_t *weig
 }
 #endif
 
-#endif /* MINDSPORE_NNACL_FP32_COMMON_FUNC_H_ */
+#endif /* NNACL_FP32_COMMON_FUNC_H_ */

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_SOFTMAX_INT8_H_
-#define MINDSPORE_NNACL_INT8_SOFTMAX_INT8_H_
+#ifndef NNACL_INT8_SOFTMAX_INT8_H_
+#define NNACL_INT8_SOFTMAX_INT8_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -32,4 +32,4 @@ int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int32_t 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_SOFTMAX_INT8_H_
+#endif  // NNACL_INT8_SOFTMAX_INT8_H_

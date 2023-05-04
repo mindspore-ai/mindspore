@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_DYNAMIC_MATMUL_H_
-#define MINDSPORE_NNACL_INT8_DYNAMIC_MATMUL_H_
+#ifndef NNACL_INT8_DYNAMIC_MATMUL_H_
+#define NNACL_INT8_DYNAMIC_MATMUL_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -71,4 +71,4 @@ void DynamicMatmulSdot4x4x16AIWIForFp16(const int8_t *a, const int8_t *b, float1
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_DYNAMIC_MATMUL_H_
+#endif  // NNACL_INT8_DYNAMIC_MATMUL_H_

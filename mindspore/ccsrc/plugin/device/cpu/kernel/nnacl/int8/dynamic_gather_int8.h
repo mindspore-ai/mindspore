@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_DYNAMIC_GATHER_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_DYNAMIC_GATHER_INT8_H_
+#ifndef NNACL_INT8_DYNAMIC_GATHER_INT8_H_
+#define NNACL_INT8_DYNAMIC_GATHER_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -37,4 +37,4 @@ void DynamicGatherArm64ForFp16(const int8_t *src, float16_t *output, int count_1
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_DYNAMIC_GATHER_INT8_H_
+#endif  // NNACL_INT8_DYNAMIC_GATHER_INT8_H_

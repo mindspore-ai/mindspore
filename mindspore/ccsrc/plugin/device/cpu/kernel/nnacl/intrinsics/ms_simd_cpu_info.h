@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_MS_SIMD_CPU_INFO_H_
-#define MINDSPORE_NNACL_MS_SIMD_CPU_INFO_H_
+#ifndef NNACL_MS_SIMD_CPU_INFO_H_
+#define NNACL_MS_SIMD_CPU_INFO_H_
 
 #include <stdbool.h>
 
@@ -58,4 +58,4 @@ int IntelX86CpuInfoInit(void);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
+#endif  // NNACL_AVX_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_CONCAT_INT8_H_
-#define MINDSPORE_NNACL_INT8_CONCAT_INT8_H_
+#ifndef NNACL_INT8_CONCAT_INT8_H_
+#define NNACL_INT8_CONCAT_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/concat_parameter.h"
@@ -30,4 +30,4 @@ void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, in
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_CONCAT_INT8_H_
+#endif  // NNACL_INT8_CONCAT_INT8_H_

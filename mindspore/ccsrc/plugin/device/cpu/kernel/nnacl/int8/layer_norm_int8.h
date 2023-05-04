@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_LAYER_NORM_H_
-#define MINDSPORE_NNACL_INT8_LAYER_NORM_H_
+#ifndef NNACL_INT8_LAYER_NORM_H_
+#define NNACL_INT8_LAYER_NORM_H_
 
 #include "nnacl/errorcode.h"
 #include "nnacl/layer_norm_parameter.h"
@@ -31,4 +31,4 @@ int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_LAYER_NORM_H_
+#endif  // NNACL_INT8_LAYER_NORM_H_

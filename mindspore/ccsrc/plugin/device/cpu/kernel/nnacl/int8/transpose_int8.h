@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_TRANSPOSE_INT8_H_
-#define MINDSPORE_NNACL_INT8_TRANSPOSE_INT8_H_
+#ifndef NNACL_INT8_TRANSPOSE_INT8_H_
+#define NNACL_INT8_TRANSPOSE_INT8_H_
 
 #include <string.h>
 #include "nnacl/transpose_parameter.h"
@@ -33,4 +33,4 @@ void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int32_t *o
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_TRANSPOSE_INT8_H_
+#endif  // NNACL_INT8_TRANSPOSE_INT8_H_

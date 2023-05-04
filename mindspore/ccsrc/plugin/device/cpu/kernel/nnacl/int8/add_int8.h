@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_ADD_INT8_H_
-#define MINDSPORE_NNACL_ADD_INT8_H_
+#ifndef NNACL_ADD_INT8_H_
+#define NNACL_ADD_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -67,4 +67,4 @@ void AddOptInt8_AVX2(const int8_t *ptr_in, const int8_t element_in, int8_t *outp
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_ADD_INT8_H_
+#endif  // NNACL_ADD_INT8_H_

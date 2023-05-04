@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_RESIZE_H_
-#define MINDSPORE_NNACL_INT8_RESIZE_H_
+#ifndef NNACL_INT8_RESIZE_H_
+#define NNACL_INT8_RESIZE_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -47,4 +47,4 @@ void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_RESIZE_H_
+#endif  // NNACL_INT8_RESIZE_H_

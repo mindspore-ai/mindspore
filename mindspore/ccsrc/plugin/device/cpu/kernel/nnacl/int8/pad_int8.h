@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_PAD_INT8_H_
-#define MINDSPORE_NNACL_INT8_PAD_INT8_H_
+#ifndef NNACL_INT8_PAD_INT8_H_
+#define NNACL_INT8_PAD_INT8_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -32,4 +32,4 @@ void MirrorPadInt8(const int8_t *input_data, int8_t *output_data, const int32_t 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_PAD_INT8_H_
+#endif  // NNACL_INT8_PAD_INT8_H_

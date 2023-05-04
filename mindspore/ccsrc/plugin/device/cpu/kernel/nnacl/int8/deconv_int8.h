@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_DECONV_H_
-#define MINDSPORE_NNACL_INT8_DECONV_H_
+#ifndef NNACL_INT8_DECONV_H_
+#define NNACL_INT8_DECONV_H_
 
 #include <string.h>
 #include "nnacl/pack.h"
@@ -43,4 +43,4 @@ int DeConvPostInt8(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_DECONV_H_
+#endif  // NNACL_INT8_DECONV_H_

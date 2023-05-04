@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_QUANTIZATION_FIXED_POINT_H_
-#define MINDSPORE_NNACL_QUANTIZATION_FIXED_POINT_H_
+#ifndef NNACL_QUANTIZATION_FIXED_POINT_H_
+#define NNACL_QUANTIZATION_FIXED_POINT_H_
 
 #include <stdint.h>
 #include <limits.h>
@@ -71,4 +71,4 @@ int32x4_t RoundingDivideByPOTInt32x4(int32x4_t x, int exponent);
 int32x4_t SaturatingRoundingDoublingHighMulInt32x4(int32x4_t a, int32x4_t b);
 #endif
 
-#endif  // MINDSPORE_NNACL_QUANTIZATION_FIXED_POINT_H_
+#endif  // NNACL_QUANTIZATION_FIXED_POINT_H_
