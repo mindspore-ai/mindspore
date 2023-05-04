@@ -67,7 +67,8 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
   auto value_ptr = input_args[kInputIndex2]->BuildValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   if (is_dynamic || !IsValueKnown(value_ptr)) {
-    return std::make_shared<abstract::Shape>(x_shape);
+    ShapeVector out_shape(x_shape.size(), -1);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
 
   auto max_length_ptr = primitive->GetAttr("max_length");
