@@ -40,4 +40,4 @@
         - **TypeError** - 如果 `var` 、 `lr` 、 `logbase` 、 `sign_decay` 、 `beta` 或 `grad` 的数据类型不是float16、float32或者float64。
         - **TypeError** - 如果 `lr` 、 `logbase` 、 `sign_decay` 或 `beta` 既不是数值型也不是Tensor。
         - **TypeError** - 如果 `grad` 不是Tensor。
-        - **RuntimeError** - 如果 `lr` 、 `logbase` 、 `sign_decay` 和 `grad` 不支持数据类型转换。
+        - **TypeError** - 如果 `lr` 、 `logbase` 、 `sign_decay` 和 `grad` 不支持数据类型转换。
