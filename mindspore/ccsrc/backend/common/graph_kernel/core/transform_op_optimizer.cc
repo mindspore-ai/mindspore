@@ -611,7 +611,12 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
 void TransformOpOptimizer::Init() {
   (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Transpose", TransposeHandle));
   (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("LayoutTransform", LayoutTransformHandle));
-  (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Reshape", ReshapeHandle));
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto target = cb->GetTargetFromContext();
+  if (target.find("Ascend") != std::string::npos) {
+    (void)supported_ops_.emplace_back(TRANS_OP_CREATOR("Reshape", ReshapeHandle));
+  }
 }
 
 bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
