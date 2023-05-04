@@ -69,17 +69,6 @@ int MatMulFP16Coder::Prepare(CoderContext *const context) {
   params_->a_const_ = (input_tensor_->data() != nullptr);
   params_->b_const_ = (filter_tensor_->data() != nullptr);
   MS_CHECK_RET_CODE(MatMulFP16BaseCoder::Prepare(context), "MatMulFP16Coder prepare failed");
-  if (params_->row_ == 1) {
-    vec_matmul_ = true;
-  }
-  params_->row_align_ = vec_matmul_ ? 1 : UP_ROUND(params_->row_, row_tile_);
-  params_->col_align_ = vec_matmul_ ? params_->col_ : UP_ROUND(params_->col_, col_tile_);
-  if (!params_->a_const_) {
-    MS_CHECK_RET_CODE(InitBufferA(), "InitBufferA failed");
-  }
-  if (!params_->b_const_) {
-    MS_CHECK_RET_CODE(InitBufferB(), "InitBufferB failed");
-  }
   return RET_OK;
 }
 

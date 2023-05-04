@@ -87,7 +87,7 @@ int CoderGraph::ConvertTensors(bool enable_fp16) {
       if (enable_fp16 && origin_data_type == kNumberTypeFloat32) {
         dstTensor->set_data_type(kNumberTypeFloat16);
         auto data = dstTensor->MutableData();
-        MS_CHECK_RET_CODE_WITH_EXE(data != nullptr, "dst tensor malloc data failed!", delete dstTensor);
+        MS_CHECK_PTR_WITH_EXE(data, delete dstTensor);
         auto fp32_data = reinterpret_cast<const float *>(origin_tensor->data()->data());
         auto fp16_data = reinterpret_cast<float16 *>(data);
         CHECK_NULL_RETURN(fp32_data);
