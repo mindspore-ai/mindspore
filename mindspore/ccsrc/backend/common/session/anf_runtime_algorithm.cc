@@ -1397,7 +1397,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
     }
     auto kernel_mod = GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    if (common::AnfAlgo::GetCNodeName(kernel) == kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) == kMemSetOpName) {
       CacheAddrForAtomicClean(kernel, kernel_mod);
       continue;
     }

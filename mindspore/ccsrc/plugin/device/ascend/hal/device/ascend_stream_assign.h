@@ -102,7 +102,7 @@ class AscendStreamAssign {
   void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr) const;
 
-  void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const;
+  void UpdateMemSetStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void InsertStreamActive(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForCommon(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -134,7 +134,7 @@ class AscendStreamAssign {
   std::vector<std::pair<uint32_t, vector<size_t>>> GetStreamIDHcomMap(std::vector<CNodePtr> cnode_ptr_list,
                                                                       const std::string group, size_t graph_id) const;
 
-  void AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) const;
+  void AdjustMemSetOrder(const NotNull<KernelGraphPtr> &graph_ptr) const;
   vector<CNodePtr> GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr) const;
   vector<CNodePtr> GetIndependentNodesNeedsInsertActive(const std::vector<CNodePtr> exe_orders,
                                                         const uint32_t graph_id) const;

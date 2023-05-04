@@ -767,7 +767,7 @@ void Somas::InitSomasInputTensors(const session::KernelGraph &graph) {
   static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
   auto &kernel_cnodes = graph.execution_order();
   for (const auto &kernel : kernel_cnodes) {
-    if (common::AnfAlgo::GetCNodeName(kernel) != kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) != kMemSetOpName) {
       InitCommonNodeInputs(kernel);
     } else {
       InitAtomicCleanInputs(enable_fusion_clear, kernel);

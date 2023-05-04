@@ -24,6 +24,7 @@ bn_infer_op_info = TBERegOp("BNInfer") \
     .kernel_name("bn_infer") \
     .partial_flag(True) \
     .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .attr("epsilon", "required", "float", "all") \
     .input(0, "x", False, "required", "all", reshape_type="NC") \
     .input(1, "scale", False, "required", "all") \

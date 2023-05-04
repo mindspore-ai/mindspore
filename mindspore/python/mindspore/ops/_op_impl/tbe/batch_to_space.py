@@ -24,7 +24,7 @@ batch_to_space_op_info = TBERegOp("BatchToSpaceD") \
     .kernel_name("batch_to_space_d") \
     .partial_flag(True) \
     .attr("block_size", "required", "int", "all") \
-    .attr("crops", "required", "listListInt", "all") \
+    .attr("crops", "required", "listListInt", "all", "[[]]") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \

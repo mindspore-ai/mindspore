@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,21 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
-"""AtomicAddrClean op"""
+"""MemSet op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp
 
-atomic_addr_clean_op_info = TBERegOp("AtomicAddrClean") \
+mem_set_info = TBERegOp("MemSet") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("atomic_addr_clean.so") \
+    .binfile_name("mem_set.so") \
     .compute_cost(10) \
-    .kernel_name("atomic_addr_clean") \
+    .kernel_name("mem_set") \
     .partial_flag(True) \
-    .attr("automic_add_mem_size", "required", "listInt64", "all", "[]") \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
+    .attr("sizes", "required", "listInt64", "all") \
+    .attr("dtypes", "optional", "listInt", "all", "[]") \
+    .attr("values_int", "optional", "listInt", "all", "[]") \
+    .attr("values_float", "optional", "listFloat", "all", "[]") \
     .get_op_info()
 
 
-@op_info_register(atomic_addr_clean_op_info)
-def _atomic_addr_clean_tbe():
-    """AtomicAddrClean TBE register"""
+@op_info_register(mem_set_info)
+def _mem_set_tbe():
+    """MemSet TBE register"""
     return

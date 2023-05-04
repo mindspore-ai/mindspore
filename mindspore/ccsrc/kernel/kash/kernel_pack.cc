@@ -38,7 +38,6 @@ constexpr char kOpParaSize[] = "opParaSize";
 constexpr char kSHA256[] = "sha256";
 constexpr char kKBHit[] = "KBHit";
 constexpr char kKernelList[] = "kernelList";
-constexpr char kModeInArgsFirstField[] = "modeInArgsFirstField";
 constexpr char kBatchBindOnly[] = "batchBindOnly";
 constexpr char kArgsRemap[] = "args_remap";
 constexpr char kSize[] = "size";
@@ -336,12 +335,41 @@ void KernelPack::ParseParameters(const std::string &key, const nlohmann::json &j
     return;
   }
   try {
-    std::vector<size_t> parameters = js.at(key);
-    for (size_t i = 0; i < parameters.size(); i++) {
-      (void)kernel_json_info->parameters.emplace_back(parameters[i]);
+    nlohmann::json params = js.at(key);
+    constexpr int kDumpIndex = 4;
+    if (!params.is_array()) {
+      MS_LOG(INFO) << "Parameter should an array, " << params.dump(kDumpIndex);
+      return;
+    }
+    constexpr auto kIntType = "int";
+    for (auto item = params.begin(); item != params.end(); ++item) {
+      nlohmann::json obj = *item;
+      if (obj.is_null()) {
+        (void)kernel_json_info->parameters.emplace_back(0);
+        continue;
+      }
+      if (!obj.is_object()) {
+        auto in_param = params.get<std::vector<int64_t>>();
+        std::vector<size_t> tmp;
+        std::transform(in_param.begin(), in_param.end(), std::back_inserter(tmp),
+                       [](int64_t v) { return LongToSize(v); });
+        kernel_json_info->parameters = tmp;
+        return;
+      }
+      (void)kernel_json_info->parameters.emplace_back(1);
+      auto dtype = obj.at(kDtype).get<std::string>();
+      (void)kernel_json_info->atomic_init_info.dtype_list.emplace_back(dtype);
+      if (dtype.find(kIntType) != std::string::npos) {
+        (void)kernel_json_info->atomic_init_info.init_value_int64_list.emplace_back(obj.at(kInitValue).get<int64_t>());
+      } else if (dtype.find(kFloatType) != std::string::npos) {
+        (void)kernel_json_info->atomic_init_info.init_value_float_list.emplace_back(obj.at(kInitValue).get<float>());
+      } else {
+        MS_LOG(INFO) << "Unsupported dtype: " << dtype;
+        return;
+      }
     }
   } catch (std::exception &e) {
-    MS_LOG(ERROR) << "Parse json value failed, error info: " << e.what();
+    MS_LOG(INFO) << "Parse json value failed, error info: " << e.what();
   }
 }
 

@@ -36,6 +36,7 @@
 #define GRAPH(...) DoNothing()
 #define DYNAMIC_GRAPH(...) GRAPH(__VA_ARGS__)
 
+#define DATATYPE(...) DoNothing()
 #define INC_EXTERNAL_GRAPH_OPERATOR_REG_H_
 #include @OP_PROTO_INCLUDE_FILE@
 #undef INC_EXTERNAL_GRAPH_OPERATOR_REG_H_

@@ -36,6 +36,7 @@ from .trans_data_ds import _trans_data_ds_tbe # performance and accuracy
 from .scatter_nd_d import _scatter_nd_d_tbe # in python no check supported
 from .assign_add_ds import _assign_add_ds_tbe # "Frac_nz in pangu not support"
 from .atomic_addr_clean import _atomic_addr_clean_tbe # need to clean addr larger than 2G, int32 is not enough
+from .mem_set import _mem_set_tbe # need to clean addr larger than 2G, int32 is not enough
 from .assign import _assign_tbe # Different formats of assign inputs cause memory to increase
 from .npu_clear_float_status_v2 import _npu_clear_float_status_v2_tbe  # io mismatch
 from .npu_get_float_status_v2 import _npu_get_float_status_v2_tbe  # io mismatch
@@ -43,3 +44,4 @@ from .tensor_move import _tensor_move_tbe # not support uint32 in op json
 from .bn_infer_grad import _bn_infer_grad_tbe
 from .avg_pool import _avg_pool_tbe
 from .gather_nd import _gather_nd_tbe
+from .bn_infer_ds import _bn_infer_ds_tbe

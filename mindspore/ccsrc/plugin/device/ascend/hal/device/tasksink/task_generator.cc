@@ -153,7 +153,7 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
       MS_LOG(DEBUG) << "AtomicAddClean clean workspace size:" << clean_workspace_indexs.size();
     }
   }
-  auto clear_mems = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node_ptr, kAttrAtomicAddMemSize);
+  auto clear_mems = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node_ptr, kAttrSizes);
   if (kernel_inputs->size() != clear_mems.size()) {
     MS_LOG(EXCEPTION) << "AtomicAddClean kernel inputs size not equal clear memory size, kernel inputs size:"
                       << kernel_inputs->size() << ",clean mem size" << clear_mems.size();
@@ -164,7 +164,7 @@ AddressPtrList TaskGenerator::GetTaskInput(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   AddressPtrList kernel_inputs;
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name == kAtomicAddrCleanOpName) {
+  if (op_name == kMemSetOpName) {
     LaunchAddrCleanKernel(node, &kernel_inputs);
     return kernel_inputs;
   }
@@ -256,7 +256,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
 
-  if (op_name == kAtomicAddrCleanOpName) {
+  if (op_name == kMemSetOpName) {
     LaunchAddrCleanKernel(anf_node_ptr, &kernel_inputs);
   } else {
     kernel_inputs = GetTaskInput(anf_node_ptr);

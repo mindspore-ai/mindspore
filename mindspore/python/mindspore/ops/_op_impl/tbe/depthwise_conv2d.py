@@ -23,9 +23,9 @@ depthwise_conv2d_op_info = TBERegOp("DepthwiseConv2D") \
     .compute_cost(10) \
     .kernel_name("depthwise_conv2d") \
     .partial_flag(True) \
-    .attr("stride", "required", "listInt", "all") \
-    .attr("dilation", "required", "listInt", "all") \
-    .attr("pad_list", "required", "listInt", "all") \
+    .attr("stride", "required", "listInt", "all", "[]") \
+    .attr("dilation", "required", "listInt", "all", "[]") \
+    .attr("pad_list", "required", "listInt", "all", "[]") \
     .attr("format", "required", "str", "all") \
     .attr("offset_a", "optional", "int", "all", "0") \
     .input(0, "x", False, "required", "all") \

@@ -53,6 +53,26 @@ using TensorMap = mindspore::HashMap<std::string, std::shared_ptr<MeTensor>>;
 using OptionMap = std::map<std::string, std::string>;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 
+static std::map<std::string, GeDataType> ge_str_dtype_map = {{"float", GeDataType::DT_FLOAT},
+                                                             {"float32", GeDataType::DT_FLOAT},
+                                                             {"float16", GeDataType::DT_FLOAT16},
+                                                             {"int8", GeDataType::DT_INT8},
+                                                             {"int16", GeDataType::DT_INT16},
+                                                             {"int32", GeDataType::DT_INT32},
+                                                             {"int64", GeDataType::DT_INT64},
+                                                             {"uint1", GeDataType::DT_UINT1},
+                                                             {"uint8", GeDataType::DT_UINT8},
+                                                             {"uint16", GeDataType::DT_UINT16},
+                                                             {"uint32", GeDataType::DT_UINT32},
+                                                             {"uint64", GeDataType::DT_UINT64},
+                                                             {"bool", GeDataType::DT_BOOL},
+                                                             {"double", GeDataType::DT_DOUBLE},
+                                                             {"dual", GeDataType::DT_DUAL},
+                                                             {"dual_sub_int8", GeDataType::DT_DUAL_SUB_INT8},
+                                                             {"dual_sub_uint8", GeDataType::DT_DUAL_SUB_UINT8},
+                                                             {"int4", GeDataType::DT_INT4},
+                                                             {"bfloat16", GeDataType::DT_BF16}};
+
 struct DfGraphWrapper {
  public:
   DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);

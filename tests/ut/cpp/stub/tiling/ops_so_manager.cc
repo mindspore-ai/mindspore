@@ -22,5 +22,5 @@ OppSoManager &OppSoManager::GetInstance() {
   return inst;
 }
 
-void OppSoManager::LoadOppPackage() {}
+void OppSoManager::LoadOppPackage() const {}
 }  // namespace ge

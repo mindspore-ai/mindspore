@@ -344,7 +344,7 @@ std::vector<KernelWithIndex> GetInputNodeWithIndex(const CNodePtr &node, const T
                                                    std::set<std::pair<AnfNodePtr, size_t>> *node_to_offset) {
   std::vector<KernelWithIndex> input_node_with_indexs;
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  if (common::AnfAlgo::GetCNodeName(node) == kAtomicAddrCleanOpName) {
+  if (common::AnfAlgo::GetCNodeName(node) == kMemSetOpName) {
     // For atomic addr clean op, the args in task is not the input node of kernel, we should get the real input index
     // from the input node. The output and workspace addr should be reset, and the output addr should be collect.
     size_t workspace_size = 0;

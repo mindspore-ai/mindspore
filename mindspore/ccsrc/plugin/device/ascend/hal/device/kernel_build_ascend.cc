@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "include/transform/graph_ir/types.h"
 
 namespace mindspore {
 namespace device {
@@ -151,39 +152,50 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
 bool KernelBuild(const std::vector<CNodePtr> &kernels) { return device::ascend::KernelBuildParallelCompile(kernels); }
 
 namespace {
-void GetWorkspaceOrOutputIndex(const std::vector<size_t> &parameters_indexes, size_t input_num, size_t output_num,
-                               size_t target_obj_num, bool is_workspace, std::vector<size_t> *target_obj) {
-  size_t param_size = parameters_indexes.size();
-  size_t start_idx = is_workspace ? (input_num + output_num) : input_num;
-  std::vector<size_t> tmp_idx;
-  for (size_t i = 0; i < target_obj_num; ++i) {
-    if (start_idx + i >= param_size) {
-      continue;
-    }
-    (void)tmp_idx.emplace_back(parameters_indexes[start_idx + i]);
-  }
-  for (size_t i = 0; i < tmp_idx.size(); ++i) {
-    if (tmp_idx[i] == 1) {
-      (void)target_obj->emplace_back(i);
-    }
-  }
-}
-
-void GetAtomicWorkspaceAndOutputIndex(const std::vector<size_t> &parameters_indexes, size_t workspace_num,
-                                      size_t input_num, size_t output_num, std::vector<size_t> *output_indexes,
-                                      std::vector<size_t> *workspace_indexes, bool *output_index_flag,
-                                      bool *workspace_atomic_flag) {
+void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info,
+                                      const std::vector<size_t> &parameters_indexes,
+                                      std::vector<size_t> *output_indexes, std::vector<size_t> *workspace_indexes,
+                                      bool *output_index_flag, bool *workspace_atomic_flag) {
   MS_EXCEPTION_IF_NULL(output_indexes);
   MS_EXCEPTION_IF_NULL(workspace_indexes);
   MS_EXCEPTION_IF_NULL(output_index_flag);
   MS_EXCEPTION_IF_NULL(workspace_atomic_flag);
   // process workspace_indexes and workspace_atomic_flag
-  GetWorkspaceOrOutputIndex(parameters_indexes, input_num, output_num, workspace_num, true, workspace_indexes);
-  // process output_indexes and output_index_flag
-  GetWorkspaceOrOutputIndex(parameters_indexes, input_num, output_num, output_num, false, output_indexes);
-  // atomic flag
-  *workspace_atomic_flag = !workspace_indexes->empty();
-  *output_index_flag = !output_indexes->empty();
+  std::vector<size_t> tmp;
+  size_t params_size = parameters_indexes.size();
+  for (size_t i = 0; i < node_base_info.workspace_num; ++i) {
+    size_t idx = node_base_info.offset_index + node_base_info.input_num + node_base_info.output_num + i;
+    if (idx >= params_size) {
+      continue;
+    }
+    tmp.emplace_back(parameters_indexes[idx]);
+    if (parameters_indexes[idx] != 0) {
+      *workspace_atomic_flag = true;
+    }
+  }
+  for (size_t i = 0; i < tmp.size(); i++) {
+    if (tmp[i] == 1) {
+      workspace_indexes->emplace_back(i);
+    }
+  }
+  tmp.clear();
+  for (size_t i = 0; i < node_base_info.output_num; ++i) {
+    size_t idx = node_base_info.offset_index + node_base_info.input_num + i;
+    if (idx >= params_size) {
+      continue;
+    }
+    tmp.emplace_back(parameters_indexes[idx]);
+    if (parameters_indexes[idx] != 0) {
+      *output_index_flag = true;
+    }
+  }
+
+  for (size_t i = 0; i < tmp.size(); i++) {
+    if (tmp[i] == 1) {
+      output_indexes->emplace_back(i);
+    }
+  }
+  tmp.clear();
 }
 
 bool IsAtomicNode(const CNodePtr &kernel_node) {
@@ -197,10 +209,29 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
-  size_t total_num = input_num + output_num + workspace_num;
+
+  kernel::NodeBaseInfo node_base_info;
+  node_base_info.input_num = input_num;
+  node_base_info.output_num = output_num;
+  node_base_info.workspace_num = workspace_num;
+  node_base_info.offset_index = 0;
+  uint32_t mode = 0;
+  bool inter_core_sync = false;
+  if (common::AnfAlgo::HasNodeAttr(kernel::kModeInArgsFirstField, kernel_node)) {
+    mode = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_node, kernel::kModeInArgsFirstField);
+  }
+
+  if (common::AnfAlgo::HasNodeAttr(kernel::kInterCoreSync, kernel_node)) {
+    inter_core_sync = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kernel::kInterCoreSync);
+  }
+  if (mode == 1 || inter_core_sync) {
+    node_base_info.offset_index = 1;
+  }
+
+  size_t total_num = input_num + output_num + workspace_num + node_base_info.offset_index;
 
   if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    total_num = input_num + output_num + workspace_num + 1;
+    total_num += 1;
   }
 
   if (total_num >= parameters_indexes.size()) {
@@ -215,14 +246,31 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   bool workspace_atomic_flag = false;
   std::vector<size_t> output_indexes = {};
   std::vector<size_t> workspace_indexes = {};
-  GetAtomicWorkspaceAndOutputIndex(parameters_indexes, workspace_num, input_num, output_num, &output_indexes,
-                                   &workspace_indexes, &output_index_flag, &workspace_atomic_flag);
+  GetAtomicWorkspaceAndOutputIndex(node_base_info, parameters_indexes, &output_indexes, &workspace_indexes,
+                                   &output_index_flag, &workspace_atomic_flag);
 
   if (!output_indexes.empty()) {
     common::AnfAlgo::SetNodeAttr(kAttrAtomicOutputIndexs, MakeValue(output_indexes), kernel_node);
   }
   if (!workspace_indexes.empty()) {
     common::AnfAlgo::SetNodeAttr(kAttrAtomicWorkspaceIndexs, MakeValue(workspace_indexes), kernel_node);
+  }
+  kernel::AtomicInitInfo atomic_init_info;
+  kernel_mod->GenAtomicInitInfo(&atomic_init_info);
+  if (!atomic_init_info.dtype_list.empty()) {
+    std::vector<int64_t> dtype_list;
+    std::transform(
+      atomic_init_info.dtype_list.begin(), atomic_init_info.dtype_list.end(), std::back_inserter(dtype_list),
+      [](const std::string &str_type) { return static_cast<int32_t>(transform::ge_str_dtype_map.at(str_type)); });
+    common::AnfAlgo::SetNodeAttr(kAttrTbeOpAtomicDtypes, MakeValue(dtype_list), kernel_node);
+  }
+  if (!atomic_init_info.init_value_int64_list.empty()) {
+    common::AnfAlgo::SetNodeAttr(kAttrTbeOpAtomicInt64Values, MakeValue(atomic_init_info.init_value_int64_list),
+                                 kernel_node);
+  }
+  if (!atomic_init_info.init_value_float_list.empty()) {
+    common::AnfAlgo::SetNodeAttr(kAttrTbeOpAtomicFloatValues, MakeValue(atomic_init_info.init_value_float_list),
+                                 kernel_node);
   }
   return output_index_flag || workspace_atomic_flag;
 }
@@ -277,7 +325,7 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
   if (is_dynamic) {
     clear_zero_prim = std::make_shared<Primitive>(kDynamicAtomicAddrCleanOpName);
   } else {
-    clear_zero_prim = std::make_shared<Primitive>(kAtomicAddrCleanOpName);
+    clear_zero_prim = std::make_shared<Primitive>(kMemSetOpName);
   }
   MS_EXCEPTION_IF_NULL(clear_zero_prim);
   auto new_value_node = NewValueNode(clear_zero_prim);
@@ -307,7 +355,14 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
   MS_EXCEPTION_IF_NULL(first_clear_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
   auto clear_zero = NewAtomicOp(first_clear_node, fusion_clear_inputs);
-  common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
+  if (common::AnfAlgo::GetCNodeName(clear_zero) == kMemSetOpName) {
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size_list), clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
+  }
+  common::AnfAlgo::CopyNodeAttr(kAttrDtypes, first_clear_node, clear_zero);
+  common::AnfAlgo::CopyNodeAttr(kAttrValuesInt, first_clear_node, clear_zero);
+  common::AnfAlgo::CopyNodeAttr(kAttrValuesFloat, first_clear_node, clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), clear_zero.get());
   (void)(*clean_ops)[first_clear_node].emplace_back(clear_zero);
 }
@@ -317,7 +372,26 @@ void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap 
   MS_EXCEPTION_IF_NULL(clean_ops);
   auto clear_zero = NewAtomicOp(pre_node, {pre_node});
   auto clean_size = GetClearSize(pre_node);
-  common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
+  if (common::AnfAlgo::GetCNodeName(clear_zero) == kMemSetOpName) {
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size), clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicDtypes, pre_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicDtypes, kAttrDtypes, pre_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), clear_zero);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicInt64Values, pre_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicInt64Values, kAttrValuesInt, pre_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), clear_zero);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicFloatValues, pre_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicFloatValues, kAttrValuesFloat, pre_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), clear_zero);
+  }
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clear_zero.get());
   (void)(*clean_ops)[pre_node].emplace_back(clear_zero);
 }

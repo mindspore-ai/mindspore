@@ -38,6 +38,9 @@
 
 namespace mindspore::kernel {
 namespace {
+const int kAscii_0 = 48;
+const int kAscii_9 = 57;
+constexpr int kDec = 10;
 constexpr auto kAICORE = "AiCore";
 constexpr auto kVectorCore = "VectorCore";
 static std::unordered_map<std::string, ATTR_DTYPE> type_attr_dtype_map = {
@@ -200,6 +203,47 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
   return true;
 }
 
+std::vector<int64_t> ParseListIntDefaultValue(const std::string &value) {
+  std::vector<int64_t> attr_values;
+  int k = 0;
+  for (size_t i = 0; i < value.size(); i++) {
+    if (static_cast<int>(value[i]) >= kAscii_0 && static_cast<int>(value[i]) <= kAscii_9) {
+      k = k * kDec + (value[i] - '0');
+    }
+    if (value[i] == ',') {
+      (void)attr_values.emplace_back(k);
+      k = 0;
+    }
+  }
+  return attr_values;
+}
+
+std::vector<std::vector<int64_t>> ParseListListDefaultValue(const std::string &value) {
+  std::string res = value;
+  auto pos = value.find('[');
+  if (pos != std::string::npos) {
+    const size_t remove_len = 2;
+    res = value.substr(1, value.length() - remove_len);
+  }
+  std::vector<std::vector<int64_t>> attr_values;
+  std::vector<int64_t> tmp;
+  int k = 0;
+  for (size_t i = 0; i < res.size(); i++) {
+    if (static_cast<int>(res[i]) >= kAscii_0 && static_cast<int>(res[i]) <= kAscii_9) {
+      k = k * kDec + (res[i] - '0');
+    }
+    if (res[i] == ',') {
+      (void)tmp.emplace_back(k);
+      k = 0;
+    }
+    if (res[i] == ']') {
+      (void)attr_values.emplace_back(tmp);
+      tmp.clear();
+    }
+  }
+  return attr_values;
+}
+
 bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nlohmann::json *attr_obj) {
   MS_EXCEPTION_IF_NULL(attr_obj);
   auto result = type_attr_dtype_map.find(type);
@@ -236,13 +280,11 @@ bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nl
       break;
     case ATTR_DTYPE::ATTR_LIST_INT32:
     case ATTR_DTYPE::ATTR_LIST_INT64: {
-      std::stringstream string_value(value);
-      std::string list_elem;
-      std::vector<int64_t> attrs_value;
-      while (std::getline(string_value, list_elem, ',')) {
-        attrs_value.push_back(std::stoi(list_elem));
-      }
-      (*attr_obj)[kJValue] = attrs_value;
+      (*attr_obj)[kJValue] = ParseListIntDefaultValue(value);
+      break;
+    }
+    case ATTR_DTYPE::ATTR_LIST_LIST_INT64: {
+      (*attr_obj)[kJValue] = ParseListListDefaultValue(value);
       break;
     }
     default:
