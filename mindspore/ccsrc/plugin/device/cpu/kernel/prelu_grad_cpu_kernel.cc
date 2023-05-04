@@ -98,13 +98,16 @@ bool PReLUGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', workspace buffer memset failed. Error no: " << ret;
   }
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  auto task = [this, dy, x, w, dx, dw, dw_array](size_t start, size_t end) {
+  std::mutex task_mutex;
+  auto task = [this, dy, x, w, dx, dw, dw_array, &task_mutex](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       size_t channel_id = weight_length_ == 1 ? 0 : (i / per_channel_length_) % weight_length_;
       T threshold = static_cast<T>(0);
       dx[i] = x[i] <= threshold ? w[channel_id] * dy[i] : dy[i];
       if (x[i] < threshold) {
-        dw_array[channel_id] += static_cast<float>(x[i] * dy[i]);
+        auto increment_grad = static_cast<float>(x[i] * dy[i]);
+        std::lock_guard<std::mutex> task_guard(task_mutex);
+        dw_array[channel_id] += increment_grad;
         dw[channel_id] = static_cast<T>(dw_array[channel_id]);
       }
     }
