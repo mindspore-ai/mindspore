@@ -32,6 +32,11 @@ void ExitActor::Init() {
       MS_EXCEPTION_IF_NULL(data_arrow);
       auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
       (void)output_branch_data_[i].emplace_back(data_arrow->from_output_index_, std::move(data));
+
+      // Identify whether the output data flag is kOutputDataFlagToStack.
+      bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+      size_t output_data_flag = is_to_stack ? kOutputDataFlagToStack : kOutputDataFlagInit;
+      (void)output_branch_data_flag_[i].emplace_back(output_data_flag);
     }
   }
 
@@ -80,9 +85,23 @@ void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   // 2.Send output data in output branch.
   const auto &branch_data_iter = output_branch_data_.find(output_branch_id_);
   if (branch_data_iter != output_branch_data_.end()) {
-    for (const auto &output_data : branch_data_iter->second) {
+    MS_EXCEPTION_IF_CHECK_FAIL((output_branch_data_flag_.count(output_branch_id_) > 0),
+                               "The output branch id is invalid.");
+    const auto &output_data_flags = output_branch_data_flag_[output_branch_id_];
+    MS_EXCEPTION_IF_CHECK_FAIL((output_data_flags.size() == branch_data_iter->second.size()),
+                               "The output data flag size is wrong.");
+    for (size_t i = 0; i < branch_data_iter->second.size(); ++i) {
+      const auto &output_data = branch_data_iter->second[i];
       MS_EXCEPTION_IF_NULL(output_data.second);
-      ActorDispatcher::Send(output_data.second->op_id_, &OpActor::RunOpData, output_data.second.get(), context);
+      // Create a new op data for stack actor.
+      if (TEST_FLAG(output_data_flags[i], kOutputDataFlagToStack)) {
+        auto to_stack_data = std::make_unique<OpData<DeviceTensor>>(
+          output_data.second->op_id_, output_data.second->data_, output_data.second->index_);
+        (void)to_stack_data_.emplace_back(std::move(to_stack_data));
+        ActorDispatcher::Send(output_data.second->op_id_, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      } else {
+        ActorDispatcher::Send(output_data.second->op_id_, &OpActor::RunOpData, output_data.second.get(), context);
+      }
     }
   }
 
