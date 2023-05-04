@@ -80,11 +80,8 @@ void GruStepUnit(float *output, float *update_gate, float *reset_gate, float *hi
 
   ElementMul(update_gate, hidden_state, hidden_state, gru_param->batch_ * gru_param->hidden_size_);
 
-  ArithmeticParameter parameter;
-  parameter.in_elements_num0_ = 1;
-  parameter.in_elements_num1_ = gru_param->batch_ * gru_param->hidden_size_;
   const float one = 1.0f;
-  ElementOptSub(&one, update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_, &parameter);
+  ElementOptSub(&one, update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_, true);
 
   ElementMulAcc(update_gate, hidden_buffer, hidden_state, gru_param->batch_ * gru_param->hidden_size_);
 

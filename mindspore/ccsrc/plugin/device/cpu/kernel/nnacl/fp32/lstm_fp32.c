@@ -160,10 +160,7 @@ void UpdataState(float *cell_state, const float *forget_gate, const float *input
                  float *state_buffer, int batch, int hidden_size, const float zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // zoneout * old_cell_state
     memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float));
-    ArithmeticParameter parameter;
-    parameter.in_elements_num0_ = batch * hidden_size;
-    parameter.in_elements_num1_ = 1;
-    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
   }
 
   ElementMul(forget_gate, cell_state, cell_state, batch * hidden_size);
@@ -178,10 +175,7 @@ void UpdataOutput(const float *cell_state, const float *output_gate, float *hidd
                   int batch, int hidden_size, const float zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
     memcpy(state_buffer, hidden_state, batch * hidden_size * sizeof(float));
-    ArithmeticParameter parameter;
-    parameter.in_elements_num0_ = batch * hidden_size;
-    parameter.in_elements_num1_ = 1;
-    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
   }
 
   Tanh(cell_state, batch * hidden_size, hidden_state);

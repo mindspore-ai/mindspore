@@ -51,10 +51,10 @@ typedef struct {
 
 typedef int (*ArithmeticRun)(const float *input0, const float *input1, float *output, const int element_size);
 typedef int (*ArithmeticOptRun)(const float *input0, const float *input1, float *output, const int element_size,
-                                const ArithmeticParameter *param);
+                                bool first_scalar);
 typedef int (*ArithmeticIntRun)(const int *input0, const int *input1, int *output, const int element_size);
 typedef int (*ArithmeticOptIntRun)(const int *input0, const int *input1, int *output, const int element_size,
-                                   const ArithmeticParameter *param);
+                                   bool first_scalar);
 typedef int (*ArithmeticBoolRun)(const bool *input0, const bool *input1, bool *output, const int element_size);
 
 void ArithmeticExecute(const void *input0, const void *input1, void *output, int size, bool is_opt,

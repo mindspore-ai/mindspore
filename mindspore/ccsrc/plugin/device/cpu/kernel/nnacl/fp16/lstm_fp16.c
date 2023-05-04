@@ -136,10 +136,7 @@ void UpdataStateFp16(float16_t *cell_state, const float16_t *forget_gate, const 
                      float16_t zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // zoneout * old_cell_state
     memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float16_t));
-    ArithmeticParameter parameter;
-    parameter.in_elements_num0_ = batch * hidden_size;
-    parameter.in_elements_num1_ = 1;
-    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
   }
 
   ElementMulFp16(forget_gate, cell_state, cell_state, batch * hidden_size);
@@ -154,10 +151,7 @@ void UpdataOutputFp16(const float16_t *cell_state, float16_t *output_gate, float
                       float16_t *state_buffer, int batch, int hidden_size, float16_t zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
     memcpy(state_buffer, hidden_state, batch * hidden_size * sizeof(float16_t));
-    ArithmeticParameter parameter;
-    parameter.in_elements_num0_ = batch * hidden_size;
-    parameter.in_elements_num1_ = 1;
-    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
   }
 
   TanhFp16(cell_state, hidden_state, batch * hidden_size);

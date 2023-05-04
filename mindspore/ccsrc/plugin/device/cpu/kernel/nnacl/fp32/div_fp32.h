@@ -29,10 +29,10 @@ extern "C" {
 int ElementDiv(const float *in0, const float *in1, float *out, int size);
 int ElementDivRelu(const float *in0, const float *in1, float *out, int size);
 int ElementDivRelu6(const float *in0, const float *in1, float *out, int size);
-int ElementOptDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
+int ElementOptDiv(const float *in0, const float *in1, float *out, int size, bool scalar);
+int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, bool scalar);
+int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, bool scalar);
+int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, bool scalar);
 int BroadcastDiv(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param);
 

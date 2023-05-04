@@ -659,7 +659,7 @@ KernelBase *CreateMatmulFp32Base() {
   InitMatrixInfo(&(matmul->matrix_a_));
   InitMatrixInfo(&(matmul->matrix_b_));
   InitMatrixInfo(&(matmul->matrix_c_));
-  matmul->is_sharing_pack_ = true;
+  matmul->is_sharing_pack_ = false;
   matmul->pack_opt_ = false;
   matmul->a_const_ = false;
   matmul->b_const_ = false;

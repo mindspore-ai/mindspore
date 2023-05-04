@@ -72,12 +72,7 @@ int AddNCPUKernel::Run() {
     if (in_tensors_[0]->shape() == in_tensors_[1]->shape()) {
       ElementAdd(input0_data, input1_data, output_data, elements_num_);
     } else {
-      ArithmeticParameter param;
-      param.in_elements_num0_ = in_tensors_[0]->ElementsNum();
-      param.in_elements_num1_ = in_tensors_[1]->ElementsNum();
-      param.out_elements_num_ = out_tensors_[0]->ElementsNum();
-      param.broadcasting_ = true;
-      ElementOptAdd(input0_data, input1_data, output_data, elements_num_, &param);
+      ElementOptAdd(input0_data, input1_data, output_data, elements_num_, in_tensors_[FIRST_INPUT]->ElementsNum() == 1);
     }
 
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
@@ -86,12 +81,7 @@ int AddNCPUKernel::Run() {
       if (in_tensors_[i]->shape() == out_tensors_[0]->shape()) {
         ElementAdd(in_data, output_data, output_data, elements_num_);
       } else {
-        ArithmeticParameter param;
-        param.in_elements_num0_ = in_tensors_[i]->ElementsNum();
-        param.in_elements_num1_ = out_tensors_[0]->ElementsNum();
-        param.out_elements_num_ = out_tensors_[0]->ElementsNum();
-        param.broadcasting_ = true;
-        ElementOptAdd(in_data, output_data, output_data, elements_num_, &param);
+        ElementOptAdd(in_data, output_data, output_data, elements_num_, in_tensors_[i]->ElementsNum() == 1);
       }
     }
     return RET_OK;

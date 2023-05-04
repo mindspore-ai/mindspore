@@ -75,11 +75,8 @@ void GruStepUnitFp16(float16_t *output, float16_t *update_gate, float16_t *reset
 
   ElementMulFp16(update_gate, hidden_state, hidden_state, gru_param->batch_ * gru_param->hidden_size_);
 
-  ArithmeticParameter parameter;
-  parameter.in_elements_num0_ = 1;
-  parameter.in_elements_num1_ = gru_param->batch_ * gru_param->hidden_size_;
   float16_t one = 1.0f;
-  ElementOptSubFp16(&one, update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_, &parameter);
+  ElementOptSubFp16(&one, update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_, true);
 
   ElementMulAccFp16(update_gate, hidden_buffer, hidden_state, gru_param->batch_ * gru_param->hidden_size_);
 

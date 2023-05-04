@@ -31,10 +31,10 @@ int ElementFloorMod(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptFloorMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptFloorMod(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int i = 0;
 
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_X86_NO_SCALAR(ElementOptFloorModNum0, i, in0, in1, out, size);  // neon no floor instruction
     for (; i < size; i++) {
       out[i] = in0[0] - floorf(in0[0] / in1[i]) * in1[i];
@@ -58,9 +58,9 @@ int ElementFloorModInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptFloorModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptFloorModInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int i = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; i < size; i++) {
       NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
       int remainder = in0[0] - (in0[0] / in1[i]) * in1[i];
@@ -84,9 +84,9 @@ int ElementMod(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMod(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = fmodf(in0[0], in1[index]);
     }
@@ -106,8 +106,8 @@ int ElementModInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
-  if (param->in_elements_num0_ == 1) {
+int ElementOptModInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+  if (first_scalar) {
     for (int index = 0; index < size; index++) {
       NNACL_CHECK_ZERO_RETURN_ERR(in1[index]);
       out[index] = in0[0] % in1[index];
@@ -132,10 +132,10 @@ int ElementFloorDiv(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptFloorDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptFloorDiv(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int i = 0;
 
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_X86_NO_SCALAR(ElementOptFloorDivNum0, i, in0, in1, out, size);  // neon no floor instruction
 
     for (; i < size; i++) {
@@ -164,9 +164,9 @@ int ElementFloorDivInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptFloorDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptFloorDivInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int i = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptFloorDivIntNum0, i, in0, in1, out, size);
 
     for (; i < size; i++) {
@@ -196,10 +196,10 @@ int ElementLogicalAnd(const float *in0, const float *in1, float *out, int size) 
   return NNACL_OK;
 }
 
-int ElementOptLogicalAnd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptLogicalAnd(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  SIMD_RUN_NO_SCALAR(ElementOptLogicalAnd, index, in0, in1, out, size, param);
-  if (param->in_elements_num0_ == 1) {
+  SIMD_RUN_NO_SCALAR(ElementOptLogicalAnd, index, in0, in1, out, size, first_scalar);
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = (float)((bool)(in0[0]) & (bool)(in1[index]));
     }
@@ -220,9 +220,9 @@ int ElementLogicalAndInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptLogicalAndInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptLogicalAndInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = (int)((unsigned int)(in0[0]) & (unsigned int)(in1[index]));
     }
@@ -244,9 +244,9 @@ int ElementLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size)
   return NNACL_OK;
 }
 
-int ElementOptLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param) {
+int ElementOptLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = (bool)((unsigned int)(in0[0]) & (unsigned int)(in1[index]));
     }
@@ -279,9 +279,9 @@ int ElementLogicalOr(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptLogicalOr(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptLogicalOr(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = (float)((bool)(in0[0]) | (bool)(in1[index]));
     }
@@ -302,9 +302,9 @@ int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size) 
   return NNACL_OK;
 }
 
-int ElementOptLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param) {
+int ElementOptLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     for (; index < size; index++) {
       out[index] = (bool)(in0[0] | in1[index]);
     }
@@ -328,10 +328,10 @@ int ElementMaximum(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptMaximum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMaximum(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
 
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMaximumNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -359,9 +359,9 @@ int ElementMaximumInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptMaximumInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptMaximumInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMaximumIntNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -389,10 +389,9 @@ int ElementMinimumInt(const int *input0, const int *input1, int *output, int siz
   return NNACL_OK;
 }
 
-int ElementOptMinimumInt(const int *input0, const int *input1, int *output, int size,
-                         const ArithmeticParameter *param) {
+int ElementOptMinimumInt(const int *input0, const int *input1, int *output, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMinimumIntNum0, index, input0, input1, output, size);
 
     for (; index < size; index++) {
@@ -420,9 +419,9 @@ int ElementMinimum(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementOptMinimum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptMinimum(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMinimumNum0, index, in0, in1, out, size);
 
     for (; index < size; index++) {
@@ -441,8 +440,11 @@ int ElementOptMinimum(const float *in0, const float *in1, float *out, int size, 
 
 #undef ACCURACY_DATA
 
-void TileOneDimensionFp32(const float *inData, float *outData, int dim, size_t ndim, const int *inShape,
+void TileOneDimensionFp32(const void *inPtr, void *outPtr, int dim, size_t ndim, const int *inShape,
                           const int *inStrides, const int *outStrides, const int *multiple) {
+  const float *inData = (const float *)inPtr;
+  float *outData = (float *)outPtr;
+
   int srcDimSize = inShape[dim];
   if (dim == ndim - 1) {
     for (int i = 0; i < multiple[dim]; i++) {

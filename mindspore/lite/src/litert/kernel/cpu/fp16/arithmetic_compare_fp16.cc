@@ -139,9 +139,11 @@ int ArithmeticCompareFP16CPUKernel::DoArithmetic(int task_id) {
   if (param_->broadcasting_) {
     ret = BroadcastRun(input0_fp16_, input1_fp16_, output_fp16_, 0, cur_count, cur_offset);
   } else if (param_->in_elements_num0_ == 1) {
-    ret = arithmetic_opt_func_(input0_fp16_, input1_fp16_ + cur_offset, output_fp16_ + cur_offset, cur_count, param_);
+    ret = arithmetic_opt_func_(input0_fp16_, input1_fp16_ + cur_offset, output_fp16_ + cur_offset, cur_count,
+                               param_->in_elements_num0_ == 1);
   } else if (param_->in_elements_num1_ == 1) {
-    ret = arithmetic_opt_func_(input0_fp16_ + cur_offset, input1_fp16_, output_fp16_ + cur_offset, cur_count, param_);
+    ret = arithmetic_opt_func_(input0_fp16_ + cur_offset, input1_fp16_, output_fp16_ + cur_offset, cur_count,
+                               param_->in_elements_num0_ == 1);
   } else {
     ret = arithmetic_func_(input0_fp16_ + cur_offset, input1_fp16_ + cur_offset, output_fp16_ + cur_offset, cur_count);
   }

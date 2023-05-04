@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 typedef int (*ArithmeticCompareFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
                                          int element_size);
 typedef int (*ArithmeticCompareOptFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
-                                            int element_size, const ArithmeticParameter *param);
+                                            int element_size, bool first_scalar);
 typedef struct {
   int primitive_type_;
   int activation_type_;

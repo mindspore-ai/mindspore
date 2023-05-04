@@ -25,7 +25,8 @@ void ArithmeticExecute(const void *input0, const void *input1, void *output, int
   if (arithmetic_func_type == kArithmeticFuncFloat) {
     if (is_opt) {
       ArithmeticOptRun arithmetic_opt_run = (ArithmeticOptRun)(arithmetic_func);
-      arithmetic_opt_run((const float *)(input0), (const float *)(input1), (float *)(output), size, param);
+      arithmetic_opt_run((const float *)(input0), (const float *)(input1), (float *)(output), size,
+                         param->in_elements_num0_ == 1);
     } else {
       ArithmeticRun arithmetic_run = (ArithmeticRun)(arithmetic_func);
       arithmetic_run((const float *)(input0), (const float *)(input1), (float *)(output), size);
@@ -36,7 +37,8 @@ void ArithmeticExecute(const void *input0, const void *input1, void *output, int
   } else if (arithmetic_func_type == kArithmeticFuncInt) {
     if (is_opt) {
       ArithmeticOptIntRun arithmetic_opt_run_int = (ArithmeticOptIntRun)(arithmetic_func);
-      arithmetic_opt_run_int((const int *)(input0), (const int *)(input1), (int *)(output), size, param);
+      arithmetic_opt_run_int((const int *)(input0), (const int *)(input1), (int *)(output), size,
+                             param->in_elements_num0_ == 1);
     } else {
       ArithmeticIntRun arithmetic_run_int = (ArithmeticIntRun)(arithmetic_func);
       arithmetic_run_int((const int *)(input0), (const int *)(input1), (int *)(output), size);

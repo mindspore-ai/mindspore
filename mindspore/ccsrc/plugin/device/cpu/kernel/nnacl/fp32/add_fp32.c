@@ -18,9 +18,9 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/add_fp32_simd.h"
 
-int ElementOptAdd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptAdd(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptAdd, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
@@ -34,9 +34,9 @@ int ElementOptAdd(const float *in0, const float *in1, float *out, int size, cons
   return NNACL_OK;
 }
 
-int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptAddInt, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
@@ -50,9 +50,9 @@ int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const A
   return NNACL_OK;
 }
 
-int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptAddRelu, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = MSMAX(in0[0] + in1[index], 0);
@@ -66,9 +66,9 @@ int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, 
   return NNACL_OK;
 }
 
-int ElementOptAddRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+int ElementOptAddRelu6(const float *in0, const float *in1, float *out, int size, bool first_scalar) {
   int index = 0;
-  if (param->in_elements_num0_ == 1) {
+  if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptAddRelu6, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = MSMIN(MSMAX(in0[0] + in1[index], 0), 6);

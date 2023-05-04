@@ -25,9 +25,8 @@ int ElementSquaredDifference(const float *in0, const float *in1, float *out, int
   return ElementMul(out, out, out, size);
 }
 
-int ElementOptSquaredDifference(const float *in0, const float *in1, float *out, int size,
-                                const ArithmeticParameter *param) {
-  ElementOptSub(in0, in1, out, size, param);
+int ElementOptSquaredDifference(const float *in0, const float *in1, float *out, int size, bool scale) {
+  ElementOptSub(in0, in1, out, size, scale);
   return ElementMul(out, out, out, size);
 }
 #endif  // MINDSPORE_NNACL_SQUARED_DIFFERENCE_H_

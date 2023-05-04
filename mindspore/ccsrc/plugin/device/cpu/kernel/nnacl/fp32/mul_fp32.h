@@ -29,12 +29,12 @@ int ElementMulRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementMulInt(const int *in0, const int *in1, int *out, int size);
 int ElementMulReluInt(const int *in0, const int *in1, int *out, int size);
 int ElementMulRelu6Int(const int *in0, const int *in1, int *out, int size);
-int ElementOptMul(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptMulRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
-int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
-int ElementOptMulRelu6Int(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
+int ElementOptMul(const float *in0, const float *in1, float *out, int size, bool scale);
+int ElementOptMulRelu(const float *in0, const float *in1, float *out, int size, bool scale);
+int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size, bool scale);
+int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, bool scale);
+int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, bool scale);
+int ElementOptMulRelu6Int(const int *in0, const int *in1, int *out, int size, bool scale);
 int BroadcastMul(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param);
 
