@@ -2507,7 +2507,6 @@ def scatter_add(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do add operation whose data type must be int32 or int64.
         updates (Tensor): The tensor doing the add operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.

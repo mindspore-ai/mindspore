@@ -912,12 +912,15 @@ class Custom(ops.PrimitiveWithInfer):
         """Save input_names and attr_names of current func."""
         if not isinstance(reg_info, dict):
             return
-        tensor_inputs = reg_info.get("inputs", [])
-        attr = reg_info.get("attr", [])
-        if not isinstance(tensor_inputs, (list, tuple)):
-            tensor_inputs = [tensor_inputs]
-        if not isinstance(attr, (list, tuple)):
-            attr = [attr]
+
+        def _get_value_list(key):
+            value = reg_info.get(key, [])
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+            return value
+
+        tensor_inputs = _get_value_list("inputs")
+        attr = _get_value_list("attr")
         # input_names include tensor input names and attr input names
         input_names = []
         # attr_names only includes attr input names

@@ -54,9 +54,6 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   auto input_shape = inputs[0]->GetShapeVector();
   auto indices_shape = inputs[1]->GetShapeVector();
-  if (kernel_name_ != "ScatterUpdate" && input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' can not be empty.";
-  }
 
   first_dim_size_ = 1;
   if (!input_shape.empty()) {

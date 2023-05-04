@@ -54,14 +54,10 @@ int ScatterFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  auto input_shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
-  if (kernel_type_ != "ScatterUpdate" && input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the input can not be empty";
-  }
-
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  auto input_shape = inputs[0]->GetShapeVector();
   first_dim_size_ = 1;
   if (!input_shape.empty()) {
     first_dim_size_ = input_shape[0];
