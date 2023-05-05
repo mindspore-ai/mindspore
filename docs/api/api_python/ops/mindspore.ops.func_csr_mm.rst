@@ -6,7 +6,7 @@ mindspore.ops.csr_mm
     返回稀疏矩阵a与稀疏矩阵或稠密矩阵b的矩阵乘法结果。
 
     .. note::
-        若右矩阵为Tensor，则仅支持安装了LLVM12.0.1的CPU后端或GPU后端。
+        若右矩阵为Tensor，则仅支持安装了LLVM12.0.1及以上版本的CPU后端或GPU后端。
         若右矩阵为CSRTensor， 则仅支持GPU后端。
 
     参数：
