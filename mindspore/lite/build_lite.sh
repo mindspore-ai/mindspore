@@ -447,6 +447,10 @@ build_lite() {
       else
         # CPU : Android-aarch32
         checkndk
+        if [ -n "${MS_CCACHE_PATH}" ]; then
+          echo "use ${MS_CCACHE_PATH} to speed up compilation."
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_CCACHE=${MS_CCACHE_PATH}"
+        fi
         export PATH=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin:${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:${PATH}
         CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=full"
@@ -496,6 +500,10 @@ build_lite() {
         else
           # CPU/GPU : Android-aarch64
           checkndk
+          if [ -n "${MS_CCACHE_PATH}" ]; then
+            echo "use ${MS_CCACHE_PATH} to speed up compilation."
+            LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_CCACHE=${MS_CCACHE_PATH}"
+          fi
           export PATH=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin:${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:${PATH}
           CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
           LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_NATIVE_API_LEVEL=19 -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang -DANDROID_STL=${MSLITE_ANDROID_STL}"
@@ -692,6 +700,10 @@ build_lite_arm64_and_jni() {
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
+    if [ -n "${MS_CCACHE_PATH}" ]; then
+      echo "use ${MS_CCACHE_PATH} to speed up compilation."
+      ARM64_CMAKE_ARGS="$ARM64_CMAKE_ARGS -DANDROID_CCACHE=${MS_CCACHE_PATH}"
+    fi
     cmake ${ARM64_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM64=on  \
           -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
@@ -750,6 +762,10 @@ build_lite_arm32_and_jni() {
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
+    if [ -n "${MS_CCACHE_PATH}" ]; then
+      echo "use ${MS_CCACHE_PATH} to speed up compilation."
+      ARM32_CMAKE_ARGS="$ARM32_CMAKE_ARGS -DANDROID_CCACHE=${MS_CCACHE_PATH}"
+    fi
     cmake ${ARM32_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM32=on \
           -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
