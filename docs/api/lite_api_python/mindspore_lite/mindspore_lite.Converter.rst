@@ -136,16 +136,16 @@ mindspore_lite.Converter
 
         获取是否融合优化的状态。
 
-        optimize是用来设定在离线转换的过程中需要完成哪些特定的优化。如果该属性设置为 ``"none"`` ，那么在模型的离线转换阶段将不进行相关的图优化操作，相关的图优化操作将会在执行推理阶段完成。该参数的优点在于转换出来的模型由于没有经过特定的优化，可以直接部署到CPU/GPU/Ascend任意硬件后端；而带来的缺点是推理执行时模型的初始化时间增长。如果设置成 ``"general"`` ，表示离线转换过程会完成通用优化，包括常量折叠，算子融合等（转换出的模型只支持CPU/GPU后端，不支持Ascend后端）。如果设置成 ``"ascend_oriented"`` ，表示转换过程中只完成针对Ascend后端的优化（转换出来的模型只支持Ascend后端）。
+        optimize是用来设定在离线转换的过程中需要完成哪些特定的优化。如果该属性设置为 ``"none"`` ，那么在模型的离线转换阶段将不进行相关的图优化操作，相关的图优化操作将会在执行推理阶段完成。该参数的优点在于转换出来的模型由于没有经过特定的优化，可以直接部署到CPU/GPU/Ascend任意硬件后端；而带来的缺点是推理执行时模型的初始化时间增长。如果设置成 ``"general"`` ，表示离线转换过程会完成通用优化，包括常量折叠，算子融合等（转换出的模型只支持CPU/GPU后端，不支持Ascend后端）。如果设置成 ``"gpu_oriented"`` ，表示转换过程中会完成通用优化和针对GPU后端的额外优化（转换出来的模型只支持GPU后端）。如果设置成 ``"ascend_oriented"`` ，表示转换过程中只完成针对Ascend后端的优化（转换出来的模型只支持Ascend后端）。
 
         针对MindSpore模型，由于已经是mindir模型，建议两种做法：
 
         1. 不需要经过离线转换，直接进行推理执行。
 
-        2. 使用离线转换， `CPU/GPU` 后端设置optimize为 ``"general"`` ， `NPU` 后端设置optimize为 ``"ascend_oriented"`` ，在离线阶段完成相关优化，减少推理执行的初始化时间。
+        2. 使用离线转换， `CPU/GPU` 后端设置optimize为 ``"general"`` （使能通用优化）， `GPU` 后端设置optimize为 ``"gpu_oriented"`` （在通用优化的基础上，使能针对GPU的额外优化）， `NPU` 后端设置optimize为 ``"ascend_oriented"`` ，在离线阶段完成相关优化，减少推理执行的初始化时间。
 
         返回：
-            str，是否融合优化。选项有 ``"none"`` 、 ``"general"`` 、 ``"ascend_oriented"`` 。 ``"none"`` 表示不允许融合优化。 ``"general"`` 和 ``"ascend_oriented"`` 表示允许融合优化。
+            str，是否融合优化。选项有 ``"none"`` 、 ``"general"`` 、 ``"gpu_oriented"`` 、 ``"ascend_oriented"`` 。 ``"none"`` 表示不允许融合优化。 ``"general"`` 、 ``"gpu_oriented"`` 和 ``"ascend_oriented"`` 表示允许融合优化。
 
     .. py:method:: output_data_type
         :property:
