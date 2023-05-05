@@ -341,9 +341,10 @@ class Cell(Cell_):
         raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
 
     def __del__(self):
-        # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
-        # here using pop(id(self), None) to avoid KeyError exception
-        cells_compile_cache.pop(id(self), None)
+        if isinstance(cells_compile_cache, dict):
+            # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
+            # here using pop(id(self), None) to avoid KeyError exception
+            cells_compile_cache.pop(id(self), None)
         try:
             if self.compile_cache:
                 logger.info(f"Recycle for Cell <{type(self).__name__}>, compile_cache = {self.compile_cache}")

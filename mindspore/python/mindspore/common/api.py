@@ -48,9 +48,9 @@ from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 
-# store jit compiled cache
+# Store jit function compiled cache.
 jit_compile_cache = {}
-# store cell compiled cache,
+# Store Cell compiled cache.
 cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
@@ -359,7 +359,8 @@ class _MindsporeFunctionExecutor:
         return output
 
     def __del__(self):
-        jit_compile_cache.pop(id(self), None)
+        if isinstance(jit_compile_cache, dict):
+            jit_compile_cache.pop(id(self), None)
         if hasattr(self, "compile_cache") and self.compile_cache:
             logger.info(f"Recycle for Function <{self.fn.__name__}>, compile_cache = {self.compile_cache}")
             _cell_graph_executor.del_net_res(self.fn, self.compile_cache)
