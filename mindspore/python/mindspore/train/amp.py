@@ -274,15 +274,46 @@ def _auto_black_list(network, black_list):
 
 def auto_mixed_precision(network, amp_level="O0"):
     """
-    auto mixed precision function.
+    Returns a network processed with auto mixed precision.
+
+    This interface will automatically perform mixed-precision processing on the input network, and the cells
+    and operators in the processed network will add precision conversion operations to calculate with float16 accuracy.
+    Inputs and parameters of cells and operators are converted to float16 type, and calculation results are converted
+    back to float32 type.
+
+    The framework has a set of built-in blacklists and whitelists, and the `amp_level` determines which cells and
+    operators are specifically converted:
+
+    - When `amp_level=O0` , no precision conversion is performed.
+    - When `amp_level=O1` , only the cells and operators in the whitelist will be converted.
+    - When `amp_level=O2` , all cells and operators except those in the blacklist will be converted.
+    - When `amp_level=O3` , all cells and operators in the network are converted.
+
+    The current built-in whitelist contents are:
+    [:class:`mindspore.nn.Conv1d` , :class:`mindspore.nn.Conv2d` , :class:`mindspore.nn.Conv3d` ,
+     :class:`mindspore.nn.Conv1dTranspose` , :class:`mindspore.nn.Conv2dTranspose` ,
+     :class:`mindspore.nn.Conv3dTranspose` , :class:`mindspore.nn.Dense` , :class:`mindspore.nn.LSTMCell` ,
+     :class:`mindspore.nn.RNNCell` , :class:`mindspore.nn.GRUCell` , :class:`mindspore.ops.Conv2D` ,
+     :class:`mindspore.ops.Conv3D` , :class:`mindspore.ops.Conv2DTranspose` ,
+     :class:`mindspore.ops.Conv3DTranspose` , :class:`mindspore.ops.MatMul` , :class:`mindspore.ops.BatchMatMul` ,
+     :class:`mindspore.ops.PReLU` , :class:`mindspore.ops.ReLU` , :class:`mindspore.ops.Ger` ]
+
+    The current built-in blacklist contents are:
+    [:class:`mindspore.nn.BatchNorm1d` , :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d` ,
+     :class:`mindspore.nn.LayerNorm` ]
+
+    For details on automatic mixed precision, refer to
+    [Automatic Mix Precision](https://www.mindspore.cn/tutorials/en/r2.0/advanced/mixed_precision.html).
 
     Args:
         network (Cell): Definition of the network.
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: "O0".
 
             - "O0": Do not change.
-            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
-            - "O2": Cast network to float16, keep operators in black_list run in float32,
+            - "O1": Convert cells and operators in whitelist to float16 precision operations, and keep float32
+              precision operations for the rest.
+            - "O2": Keep float32 precision operations for cells and operators in blacklist, and convert the rest
+              to float16 precision operations.
             - "O3": Cast network to float16.
 
     Raises:
