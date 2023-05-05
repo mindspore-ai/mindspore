@@ -28,6 +28,7 @@ namespace mindspore {
 namespace device {
 constexpr size_t kFileHeadOffset = 0;
 constexpr char kReadFileMode[] = "r+";
+constexpr size_t kAlignSize = 0x1ff;
 
 void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string &instance_func_name) {
 #ifdef _MSC_VER
@@ -65,7 +66,7 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
 }
 
 bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
-  if (aio_ != nullptr) {
+  if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->Read(file_name, data, byte_num);
   }
   const auto &fs = system::Env::GetFileSystem();
@@ -76,7 +77,7 @@ bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
 }
 
 bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte_num) {
-  if (aio_ != nullptr) {
+  if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->Write(file_name, data, byte_num);
   }
   const auto &fs = system::Env::GetFileSystem();
@@ -87,7 +88,7 @@ bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte
 }
 
 bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token) {
-  if (aio_ != nullptr) {
+  if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->ReadAsync(file_name, data, byte_num, token);
   }
   const auto &fs = system::Env::GetFileSystem();
@@ -99,7 +100,7 @@ bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_n
 }
 
 bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token) {
-  if (aio_ != nullptr) {
+  if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->WriteAsync(file_name, data, byte_num, token);
   }
   const auto &fs = system::Env::GetFileSystem();
@@ -108,6 +109,9 @@ bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t
   MS_EXCEPTION_IF_NULL(file);
   *token = kInvalidAsyncIOToken;
   return file->PWrite(data, byte_num, kFileHeadOffset);
+}
+bool IOHandle::IsAligned(const void *data, size_t byte_num) {
+  return ((byte_num & kAlignSize) == 0) && ((reinterpret_cast<size_t>(data) & kAlignSize) == 0);
 }
 
 bool IOHandle::Wait(AsyncIOToken token) { return aio_ == nullptr || aio_->Wait(token); }
