@@ -355,6 +355,9 @@ class DeprecatedShapeCalcFunctor : public ShapeCalcFunctor {
     return infer_func_(shape_array, std::unordered_set<size_t>(unknown_inputs.begin(), unknown_inputs.end()));
   }
 
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &) override {}
+
  protected:
   ShapeFunc shape_func_{nullptr};
   InferFunc infer_func_{nullptr};
