@@ -105,7 +105,7 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
   const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
   const auto &location = debug_info->location();
   if (location == nullptr) {
-    MS_LOG(WARNING) << "Location info is null, node: " << node->DebugString();
+    MS_LOG(INFO) << "Location info is null, node: " << node->DebugString();
     return nullptr;
   }
   const auto &comments = location->comments();

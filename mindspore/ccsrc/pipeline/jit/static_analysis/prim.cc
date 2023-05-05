@@ -2194,7 +2194,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       if (dtype != nullptr) {
         res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
       } else {
-        res = std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
+        res = std::make_shared<AbstractAny>();
       }
       auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);

@@ -1023,22 +1023,6 @@ class Parser:
         return False
 
     def get_namespace_symbol(self, var: str):
-        """Get symbol type and namespace and symbol."""
-        if var in self.closure_namespace:
-            logger.debug(f"Found '{var}' in closure_namespace {self.closure_namespace.__str__()}")
-            return self.closure_namespace, var
-        if var in self.global_namespace:
-            logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}")
-            value = self.global_namespace[var]
-            if self.is_unsupported_namespace(value):
-                error_info = f"The builtin function '{var}' of python is not supported in graph mode."
-                return None, error_info
-            return self.global_namespace, var
-
-        error_info = f"The name '{var}' is not defined in function '{self.function_name}'."
-        return None, error_info
-
-    def get_builtin_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""
         if var in self.closure_namespace:
             logger.debug(f"Found '{var}' in closure_namespace {self.closure_namespace.__str__()}.")

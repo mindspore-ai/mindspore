@@ -25,7 +25,7 @@ ms.set_context(mode=ms.GRAPH_MODE)
 
 class ConstNet(ms.nn.Cell):
     def np_function(self, a, b):
-        return np.exp(a.asnumpy() + b.asnumpy())  # @jit.typing: () -> tensor[int32]
+        return np.exp(a.asnumpy() + b.asnumpy())
 
     def construct(self):
         a = ms.Tensor(np.array(4), ms.int32)
@@ -35,7 +35,7 @@ class ConstNet(ms.nn.Cell):
 
 class Net(ms.nn.Cell):
     def np_function(self, a, b):
-        return np.exp(a.asnumpy() + b.asnumpy())
+        return np.exp(a.asnumpy() + b.asnumpy())  # @jit.typing: () -> tensor[int32]
 
     def np_function2(self, a, b):
         x = np.exp(a.asnumpy())

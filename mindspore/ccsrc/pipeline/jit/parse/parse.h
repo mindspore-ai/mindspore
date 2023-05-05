@@ -293,8 +293,12 @@ class Parser {
   // Write a new var.
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node);
 
+  // Create a setattr CNode.
+  void MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &target_node, const AnfNodePtr &value_node,
+                       const std::string &target_id_str, const std::string &attr_str);
+
   // Assign value to single variable name.
-  void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node) const;
+  void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
 
   // Assign value to tuple.
   void HandleAssignTuple(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
