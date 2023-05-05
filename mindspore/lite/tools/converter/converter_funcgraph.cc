@@ -57,6 +57,7 @@
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/offline_packing_optimizer.h"
+#include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
 
 namespace mindspore {
 namespace lite {
@@ -309,6 +310,20 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
     return RET_ERROR;
+  }
+
+  if (param->ascendQuantParam.mode == lite::quant::GE) {
+    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+    if (acl_pass_ptr == nullptr) {
+      MS_LOG(ERROR) << "Failed to create acl pass";
+      return RET_ERROR;
+    }
+    if (!acl_pass_ptr->Run(func_graph)) {
+      MS_LOG(ERROR) << "Acl pass failed.";
+      return RET_ERROR;
+    }
+    MS_LOG(INFO) << "GE offline";
+    return RET_OK;
   }
 
   bool is_optimized = IsOptimizedFuncGraph(func_graph);

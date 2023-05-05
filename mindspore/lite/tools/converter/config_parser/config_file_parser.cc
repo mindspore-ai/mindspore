@@ -40,6 +40,7 @@ constexpr auto kMicroParam = "micro_param";
 constexpr auto kCpuOptionParam = "cpu_option_cfg_param";
 constexpr auto kCustomOppPath = "custom_opp_path";
 constexpr auto kTransformQuantParam = "transform_quant_param";
+constexpr auto kAscendQuantParam = "ascend_quant_param";
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -353,6 +354,13 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "ParseTransformQuantString failed.";
     return ret;
   }
+
+  ret = ParseAscendQuantString(*maps);
+  (void)maps->erase(kAscendQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseAscendQuantString failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -538,6 +546,17 @@ int ConfigFileParser::ParseTransformQuantString(const std::map<std::string, std:
       {"export_precision_mode", transform_quant_string_.export_precision_mode},
     };
     return SetMapData(map, parse_map, kTransformQuantParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseAscendQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kAscendQuantParam) != maps.end()) {
+    const auto &map = maps.at(kAscendQuantParam);
+    std::map<std::string, std::string &> parse_map{
+      {"mode", ascend_quant_string_.mode},
+    };
+    return SetMapData(map, parse_map, kAscendQuantParam);
   }
   return RET_OK;
 }

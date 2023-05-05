@@ -29,6 +29,7 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore {
+using mindspore::ops::kNameBatchMatMul;
 namespace lite {
 namespace {
 constexpr size_t kInputSizeWithoutBias = 3;  // primitive, x1, x2
@@ -41,6 +42,8 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
   auto quant_holder = GetCNodeQuantHolder(cnode);
   if (quant_holder->quant_type() != quant::QUANT_NONE) {
     return QuantMapper(cnode);
+  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimBatchMatMul)) {
+    return RET_OK;
   }
   if (cnode->size() < kInputSizeWithoutBias) {
     MS_LOG(ERROR) << "Input size cannot < " << kInputSizeWithoutBias << ", node " << cnode->fullname_with_scope();
@@ -145,5 +148,6 @@ STATUS MatMulFusionMapper::QuantMapper(const CNodePtr &cnode) {
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameMatMulFusion, MatMulFusionMapper)
+REGISTER_PRIMITIVE_MAPPER(kNameBatchMatMul, MatMulFusionMapper)
 }  // namespace lite
 }  // namespace mindspore

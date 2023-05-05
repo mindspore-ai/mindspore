@@ -305,5 +305,25 @@ int QuantParamParser::ParseTransformQuant(const TransformQuantString &transform_
   }
   return RET_OK;
 }
+
+int QuantParamParser::ParseAscendQuant(const AscendQuantString &ascend_quant_string,
+                                       quant::AscendQuantParam *ascend_quant) {
+  if (!ascend_quant_string.mode.empty()) {
+    if (ascend_quant_string.mode == "NONE") {
+      ascend_quant->mode = quant::NONE;
+      return RET_OK;
+    } else if (ascend_quant_string.mode == "ACL") {
+      ascend_quant->mode = quant::ACL;
+      return RET_OK;
+    } else if (ascend_quant_string.mode == "GE") {
+      ascend_quant->mode = quant::GE;
+      return RET_OK;
+    } else {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: AscendQuantMode must be NONE, ACL or GE.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

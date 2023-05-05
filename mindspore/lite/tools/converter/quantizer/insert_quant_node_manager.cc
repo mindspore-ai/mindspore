@@ -846,68 +846,76 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
   return RET_OK;
 }
 
+int InsertQuantNodeManager::AdjustTransposeNodeForSingleMatMulNode(const FuncGraphPtr &func_graph,
+                                                                   const CNodePtr &cnode) {
+  const std::set<PrimitivePtr> support_transpose_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul,
+                                                          prim::kPrimBatchMatMul};
+  if (!CheckNodeInSet(cnode, support_transpose_types)) {
+    return RET_OK;
+  }
+  auto prim_ptr = GetCNodePrimitive(cnode);
+  CHECK_NULL_RETURN(prim_ptr);
+
+  auto transpose_a = prim_ptr->GetAttr(mindspore::ops::kTransposeA);
+  auto transpose_b = prim_ptr->GetAttr(mindspore::ops::kTransposeB);
+
+  if (transpose_a != nullptr && GetValue<bool>(transpose_a)) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " transposeA is true.";
+    return RET_ERROR;
+  }
+  if (transpose_b != nullptr && GetValue<bool>(transpose_b)) {
+    int ret = RET_ERROR;
+    MS_LOG(INFO) << cnode->fullname_with_scope() << ":" << cnode->input(kWeightIndex + kPrimOffset)->type_name();
+    if (cnode->input(kWeightIndex + kPrimOffset)->isa<CNode>()) {
+      ret = InsertTransposeNode(func_graph, cnode, kWeightQuant + kPrimOffset);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " insert transpose node failed";
+        return ret;
+      }
+    } else if (cnode->input(kWeightIndex + kPrimOffset)->isa<Parameter>()) {
+      auto manager = Manage(func_graph);
+      CHECK_NULL_RETURN(manager);
+      auto weight_input = cnode->input(kWeightIndex + 1);
+      auto dst_prim = GetCNodePrimitive(cnode);
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " transpose_b is true.";
+      dst_prim->AddAttr(mindspore::ops::kTransposeB, MakeValue(false));
+      ParameterPtr param_node;
+      tensor::TensorPtr tensor_info;
+      GetParameterAndTensor(weight_input, &param_node, &tensor_info);
+      if (tensor_info->shape_c().size() != DIMENSION_2D) {
+        MS_LOG(ERROR) << weight_input->fullname_with_scope() << " shape is " << tensor_info->shape_c()
+                      << " is large than 2.";
+        return RET_ERROR;
+      }
+
+      if (tensor_info->data_type_c() == kNumberTypeFloat32) {
+        ret = TransposeData<float>(param_node, tensor_info);
+      } else if (tensor_info->data_type_c() == kNumberTypeFloat16) {
+        ret = TransposeData<Float16>(param_node, tensor_info);
+      } else {
+        MS_LOG(ERROR) << "transpose data only support Float32 or Float16.";
+        return RET_OK;
+      }
+
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << weight_input->fullname_with_scope() << " transposeData failed.";
+        return ret;
+      }
+    } else {
+      MS_LOG(ERROR) << "Dont support type is " << cnode->input(kWeightIndex + kPrimOffset)->type_name();
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int InsertQuantNodeManager::AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
-      auto prim_ptr = GetCNodePrimitive(cnode);
-      CHECK_NULL_RETURN(prim_ptr);
-
-      auto transpose_a = prim_ptr->GetAttr(mindspore::ops::kTransposeA);
-      auto transpose_b = prim_ptr->GetAttr(mindspore::ops::kTransposeB);
-
-      if (transpose_a != nullptr && GetValue<bool>(transpose_a)) {
-        MS_LOG(ERROR) << cnode->fullname_with_scope() << " transposeA is true.";
-        return RET_ERROR;
-      }
-      if (transpose_b != nullptr && GetValue<bool>(transpose_b)) {
-        int ret = RET_ERROR;
-        MS_LOG(INFO) << cnode->fullname_with_scope() << ":" << cnode->input(kWeightIndex + kPrimOffset)->type_name();
-        if (cnode->input(kWeightIndex + kPrimOffset)->isa<CNode>()) {
-          ret = InsertTransposeNode(func_graph, cnode, kWeightQuant + kPrimOffset);
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << cnode->fullname_with_scope() << " insert transpose node failed";
-            return ret;
-          }
-        } else if (cnode->input(kWeightIndex + kPrimOffset)->isa<Parameter>()) {
-          auto manager = Manage(func_graph);
-          CHECK_NULL_RETURN(manager);
-          auto users = manager->node_users();
-          if (users[cnode->input(kWeightIndex + kPrimOffset)].size() > 1) {
-            MS_LOG(ERROR) << "Dont support share weight.";
-            return RET_ERROR;
-          }
-          auto weight_input = cnode->input(kWeightIndex + 1);
-          auto dst_prim = GetCNodePrimitive(cnode);
-          MS_LOG(INFO) << cnode->fullname_with_scope() << " transpose_b is true.";
-          dst_prim->AddAttr(mindspore::ops::kTransposeB, MakeValue(false));
-          ParameterPtr param_node;
-          tensor::TensorPtr tensor_info;
-          GetParameterAndTensor(weight_input, &param_node, &tensor_info);
-          if (tensor_info->shape_c().size() != DIMENSION_2D) {
-            MS_LOG(ERROR) << weight_input->fullname_with_scope() << " shape is " << tensor_info->shape_c()
-                          << " is large than 2.";
-            return RET_ERROR;
-          }
-
-          if (tensor_info->data_type_c() == kNumberTypeFloat32) {
-            ret = TransposeData<float>(param_node, tensor_info);
-          } else if (tensor_info->data_type_c() == kNumberTypeFloat16) {
-            ret = TransposeData<Float16>(param_node, tensor_info);
-          } else {
-            MS_LOG(ERROR) << "transpose data only support Float32 or Float16.";
-            return RET_OK;
-          }
-
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << weight_input->fullname_with_scope() << " transposeData failed.";
-            return ret;
-          }
-        } else {
-          MS_LOG(ERROR) << "Dont support type is " << cnode->input(kWeightIndex + kPrimOffset)->type_name();
-          return RET_ERROR;
-        }
-      }
+    auto ret = AdjustTransposeNodeForSingleMatMulNode(func_graph, cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " Adjust Transpose Node failed.";
+      return ret;
     }
   }
   return RET_OK;

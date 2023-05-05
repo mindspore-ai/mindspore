@@ -55,6 +55,7 @@
 #include "tools/converter/adapter/acl/src/acl_custom_opp_installer.h"
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/lite_exporter/fetch_content.h"
+#include "tools/converter/quantizer/quant_helper/ascend_distribute_fake_quant_transform.h"
 
 namespace mindspore {
 namespace opt {
@@ -195,9 +196,11 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Remove single input concat node failed.";
     return lite::RET_ERROR;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
-    MS_LOG(ERROR) << "Remove redundant op pass failed.";
-    return lite::RET_ERROR;
+  if (param_->ascendQuantParam.mode == lite::quant::NONE) {
+    if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
+      MS_LOG(ERROR) << "Remove redundant op pass failed.";
+      return lite::RET_ERROR;
+    }
   }
   if (fmk_type_ == converter::kFmkTypeMs) {
     MS_LOG(INFO) << "Ms model no need to run const fold pass.";
@@ -343,7 +346,7 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
-  if (!is_ascend_quant_ && fmk_type_ == converter::kFmkTypeMs) {
+  if (param_->ascendQuantParam.mode == lite::quant::NONE && !is_ascend_quant_ && fmk_type_ == converter::kFmkTypeMs) {
     MapperForOrgMindIR(func_graph);
     return lite::RET_OK;
   }
@@ -901,12 +904,50 @@ STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
+STATUS AclPassImpl::AscendDistributeFakeQuantDeparse(const FuncGraphPtr &func_graph) {
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+      continue;
+    }
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " will mapper to ascend quant or dequant";
+    auto prim = GetCNodePrimitive(cnode);
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "prim is nullptr.";
+      return RET_ERROR;
+    }
+    std::string name = prim->name();
+    auto mapper = lite::PrimitiveMapperRegister::GetInstance().GetPrimitiveMapper(name);
+    if (mapper == nullptr) {
+      MS_LOG(DEBUG) << "Name: " << name << " not need to mapper.";
+      return RET_ERROR;
+    }
+    MS_LOG(INFO) << "Deparser cnode: " << name;
+    auto status = mapper->Mapper(cnode);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "Deparser primitive failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 STATUS AclPassImpl::Quantization(const FuncGraphPtr &func_graph) {
+  if (param_->ascendQuantParam.mode != lite::quant::NONE) {
+    auto ascend_distribute_fake_quant_transform = lite::quant::AscendDistributeFakeQuantTransform(func_graph);
+    auto status = ascend_distribute_fake_quant_transform.Transform();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do AscendDistributeFakeQuantTransform failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+
   auto ret = PreQuantization(func_graph);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre quantization execution failed.";
     return ret;
   }
+
   lite::quant::FullQuantQuantizer quantizer(param_);
   ret = quantizer.DoQuantize(func_graph);
   if (ret != lite::RET_OK) {
@@ -932,8 +973,9 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     AclCustomOppInstaller::InstallCustomOpp(user_options_cfg_.custom_opp_path, "");
   }
 
-  is_ascend_quant_ = param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
-                     param_->fullQuantParam.target_device == lite::quant::ASCEND;
+  is_ascend_quant_ = (param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                      param_->fullQuantParam.target_device == lite::quant::ASCEND) ||
+                     (param_->ascendQuantParam.mode != lite::quant::NONE);
 
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
@@ -943,6 +985,15 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   if (is_ascend_quant_ && Quantization(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Quantization failed.";
     return false;
+  }
+
+  if (param_->ascendQuantParam.mode == lite::quant::GE) {
+    auto status = AscendDistributeFakeQuantDeparse(func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "GE Quantization Offline: Do AscendDistributeFakeQuantDeparse failed.";
+      return false;
+    }
+    return true;
   }
 
   if (DeparseGraph(func_graph, manager) != lite::RET_OK) {

@@ -54,7 +54,7 @@ STATUS QATTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Run quant type determine failed.";
     return ret;
   }
-  ret = QuantWeight(func_graph);
+  ret = StaticWeightQuantInfo(func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Quant Weight failed.";
     return RET_ERROR;
@@ -128,8 +128,11 @@ bool QATTransform::CheckWeightQuantExist(const CNodePtr &cnode) {
   return false;
 }
 
-int QATTransform::QuantWeight(const FuncGraphPtr &func_graph) {
-  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+int QATTransform::StaticWeightQuantInfo(const FuncGraphPtr &func_graph,
+                                        std::set<PrimitivePtr> per_channel_primitive_types) {
+  if (per_channel_primitive_types.empty()) {
+    per_channel_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+  }
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto quant_param_holder = GetCNodeQuantHolder(cnode);
     if (quant_param_holder == nullptr) {
@@ -144,6 +147,11 @@ int QATTransform::QuantWeight(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "Weight quant param exist, cnode name: " << cnode->fullname_with_scope();
       continue;
     }
+    auto ret = ConvertCNodeFp16ToFp32(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fail to convert cnode fp16 to fp32";
+      return ret;
+    }
     for (size_t i = 1; i < cnode->size(); ++i) {
       auto input = cnode->input(i);
       ParameterPtr parameter;
@@ -153,24 +161,25 @@ int QATTransform::QuantWeight(const FuncGraphPtr &func_graph) {
       if (parameter == nullptr || tensor_info == nullptr ||
           tensor_info->compression_type() != mindspore::kNoCompression ||
           tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
-        MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+        MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << "'input[" << i - 1
+                     << "] is not parameter, dont need quant weight";
         continue;
       }
       int preferred_dim = GetPreferredDim(cnode, i - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
       QuantStrategy quant_strategy(0, 0, {});
       if (!quant_strategy.CanTensorQuantized(cnode, input, preferred_dim)) {
-        MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+        MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << "'input[" << i - 1 << "] dont need quant weight";
         continue;
       }
       FixedBitWeightQuantization fixed_bit_quant;
       auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
       CHECK_NULL_RETURN(primitive);
       auto weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
-      if (CheckNodeInSet(cnode, per_layer_primitive_types)) {
+      if (CheckNodeInSet(cnode, per_channel_primitive_types)) {
         weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
       }
-      auto ret = fixed_bit_quant.StatisticsFilter(tensor_info, primitive, quant::QUANT_ALL, INT8_MAX, -INT8_MAX, k8Bit,
-                                                  weight_quant_type, kNumberTypeInt8, i - 1, preferred_dim, true);
+      ret = fixed_bit_quant.StatisticsFilter(tensor_info, primitive, quant::QUANT_ALL, INT8_MAX, -INT8_MAX, k8Bit,
+                                             weight_quant_type, kNumberTypeInt8, i - 1, preferred_dim, true);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Statistics failed.";
         return ret;

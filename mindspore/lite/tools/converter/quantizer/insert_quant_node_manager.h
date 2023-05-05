@@ -61,6 +61,8 @@ class InsertQuantNodeManager {
 
   int AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph);
 
+  int AdjustTransposeNodeForSingleMatMulNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
  private:
   int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index);
 

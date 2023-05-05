@@ -27,10 +27,10 @@ class QATTransform {
       : func_graph_(func_graph), param_(param) {}
   ~QATTransform() = default;
   int Transform();
+  int StaticWeightQuantInfo(const FuncGraphPtr &func_graph, std::set<PrimitivePtr> per_channel_primitive_types = {});
 
  private:
   int DoSingleGraphQATTransform(const FuncGraphPtr &func_graph);
-  int QuantWeight(const FuncGraphPtr &func_graph);
   bool CheckWeightQuantExist(const CNodePtr &cnode);
   FuncGraphPtr func_graph_ = nullptr;
   std::shared_ptr<ConverterPara> param_ = nullptr;
