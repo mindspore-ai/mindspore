@@ -191,8 +191,7 @@ class FTRL(Optimizer):
 
     FTRL is an online convex optimization algorithm that adaptively chooses its regularization function
     based on the loss functions. Refer to paper `Adaptive Bound Optimization for Online Convex Optimization
-    <https://arxiv.org/abs/1002.4908>`_. Refer to paper `Ad Click Prediction: a View from the Trenches
-    <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_ for engineering document.
+    <https://arxiv.org/abs/1002.4908>`_.
 
     The updating formulas are as follows,
 
