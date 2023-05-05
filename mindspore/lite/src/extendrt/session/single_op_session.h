@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <tuple>
 #include "src/extendrt/infer_session.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
@@ -51,6 +52,7 @@ class SingleOpInferSession : public InferSession {
  private:
   Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
   Status BuildCustomAscendKernel(const CNodePtr &node);
+  std::tuple<kernel::KernelModPtr, kernel::KernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);
   Status InitInputOutputInfos(const FuncGraphPtr &graph);
   void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
   Status InitInputOutputData(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);

@@ -112,12 +112,13 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
   }
 }
 
-Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
+std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
+  const CNodePtr &cnode) {
   auto kernel_name = kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Kernel mod is nullptr, kernel name: " << kernel_name;
-    return mindspore::kLiteError;
+    return std::make_tuple(nullptr, kernel::KernelArgs{});
   }
   MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
   kernel_mod->SetDevicedId(device_id_);
@@ -135,7 +136,7 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   kernel::KernelArgs args;
   if (!FuncGraphUtils::GetCNodeOperator(cnode, &args.op)) {
     MS_LOG(ERROR) << "Failed to create operator for cnode " << cnode->fullname_with_scope();
-    return mindspore::kLiteError;
+    return std::make_tuple(nullptr, kernel::KernelArgs{});
   }
   std::vector<tensor::TensorPtr> tensor_cache;
   std::map<AnfWithOutIndex, kernel::KernelTensorPtr> kernel_tensor_map;
@@ -173,11 +174,22 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
   if (!ret) {
     MS_LOG(ERROR) << "kernel init failed " << kernel_name;
-    return mindspore::kLiteError;
+    return std::make_tuple(nullptr, kernel::KernelArgs{});
   }
   // remove const input, OM graph data input
   args.inputs = kernel_mod->GetInputKernelTensor();
   args.outputs = kernel_mod->RetrieveOutputShape();
+  return std::make_tuple(kernel_mod, args);
+}
+
+Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
+  kernel::KernelModPtr kernel_mod;
+  kernel::KernelArgs args;
+  std::tie(kernel_mod, args) = BuildCustomAscendKernelImpl(cnode);
+  if (kernel_mod == nullptr) {
+    MS_LOG(ERROR) << "Build ascend kernel failed for node: " << cnode->fullname_with_scope();
+    return kLiteError;
+  }
   kernel_mod_ = kernel_mod;
   kernel_args_ = args;
   return kSuccess;
