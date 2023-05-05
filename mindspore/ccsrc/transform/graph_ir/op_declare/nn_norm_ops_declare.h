@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nn_norm_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(SmoothL1LossV2)
 DECLARE_OP_USE_OUTPUT(SmoothL1LossV2)
 
@@ -116,5 +115,4 @@ DECLARE_OP_USE_OUTPUT(SoftmaxGradExt)
 
 DECLARE_OP_ADAPTER(ConfusionSoftmaxGrad)
 DECLARE_OP_USE_OUTPUT(ConfusionSoftmaxGrad)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/split_combination_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(SplitD)
 DECLARE_OP_USE_DYN_OUTPUT(SplitD)
 
@@ -49,5 +48,4 @@ DECLARE_OP_USE_OUTPUT(Pack)
 
 DECLARE_OP_ADAPTER(SplitV)
 DECLARE_OP_USE_DYN_OUTPUT(SplitV)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_SPLIT_COMBINATION_OPS_DECLARE_H_

@@ -21,8 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/rpn_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(NMSWithMask)
 DECLARE_OP_USE_OUTPUT(NMSWithMask)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RPN_OPS_DECLARE_H_

@@ -204,6 +204,8 @@ class MIND_API AGDropoutGenMaskInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return DropoutGenMaskInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(DropoutGenMask, prim::kPrimDropoutGenMask, AGDropoutGenMaskInfer, false);

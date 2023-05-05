@@ -16,6 +16,7 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
+#include "include/common/debug/anf_ir_dump.h"
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/ir_fission/split_fission.h"
@@ -39,6 +40,10 @@ TEST_F(TestHWSplitFission, test_split_fission_divided_by_3) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   args_spec_list.push_back(x_abstract);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto orig_deivce = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   auto kg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -51,6 +56,7 @@ TEST_F(TestHWSplitFission, test_split_fission_divided_by_3) {
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_split_fission", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, orig_deivce);
 }
 }  // namespace opt
 }  // namespace mindspore

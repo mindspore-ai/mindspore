@@ -1030,7 +1030,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   }
   auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
-    CompileSingleOpGraph(graph, device_context);
+    CompileSingleOpGraph(graph, device_context, true);
   }
   const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
@@ -1096,10 +1096,11 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
-void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
+void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                                         bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  pynative::OpCompiler::BatchBuild({graph}, device_context);
+  pynative::OpCompiler::BatchBuild({graph}, device_context, is_dynamic_shape);
 }
 
 void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes,

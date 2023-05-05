@@ -32,6 +32,7 @@
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
 #include "graph/tensor.h"
+#include "graph/types.h"
 
 namespace ge {
 class CustomOperator : public Operator {
@@ -76,20 +77,34 @@ struct AttrDesc {
   std::string name;
   AttrFunc set_attr;
   GetAttrFunc get_attr;
+  enum {
+    REQUIRED = 0,
+    OPTIONAL = 1,
+    DEFAULT = OPTIONAL,
+  } type = DEFAULT;
 };
 
 struct InputDesc {
   std::string name;
+  size_t index;
   InputOpFunc set_op;
   InputHandleFunc set_handle;
   UpdateOutputDescFunc update_input_desc;
+  enum {
+    REQUIRED = 0,
+    OPTIONAL = 1,
+    DEFAULT = REQUIRED,
+  } type = DEFAULT;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct DynInputDesc {
   std::string name;
+  size_t index;
   CreateDynInputOpFunc create_dyn_input;
   DynInputOpFunc set_op;
   DynInputHandleFunc set_handle;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct SubGraphDesc {
@@ -105,13 +120,17 @@ struct DynSubGraphDesc {
 
 struct OutputDesc {
   std::string name;
+  size_t index;
   UpdateOutputDescFunc update_out_desc;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 struct DynOutputDesc {
   std::string name;
+  size_t index;
   CreateDynOutputOpFunc create_dyn_output;
   UpdateDynOutputDescFunc update_dyn_output_desc;
+  std::vector<enum ::ge::DataType> supported_dtypes;
 };
 
 class BaseOpAdapter {
@@ -130,6 +149,10 @@ class BaseOpAdapter {
   virtual int setAttr(const OperatorPtr &op, const std::string &attrKey, const ValuePtr &attrValue) = 0;
   virtual int setAttr(const OperatorPtr &op, const PrimitivePtr &prim) = 0;
   virtual int setAttr(const OperatorPtr &op, const AnfNodePtr &node) = 0;
+  virtual int setAttr(const std::string &attrKey, const ValuePtr &attrValue) = 0;
+  virtual int setAttr(const uint32_t &input_idx, const ValuePtr &attrValue) = 0;
+  virtual int getAttr(const std::string &attrKey, ValuePtr *attrValue) = 0;
+  virtual int getAttr(const uint32_t &input_idx, ValuePtr *attrValue) = 0;
   virtual mindspore::HashMap<std::string, ValuePtr> GetExtraAttr() = 0;
   template <typename T, typename _ = typename std::enable_if<!std::is_base_of<Value, T>::value>::type>
   int setAttr(const OperatorPtr &op, const std::string &attrKey, const std::shared_ptr<T> &attrValue) {
@@ -146,6 +169,7 @@ class BaseOpAdapter {
                                 const AnfNodePtr &node) = 0;
   virtual const mindspore::HashMap<int, InputDesc> &getInputMap() = 0;
   virtual const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() = 0;
+  virtual const mindspore::HashMap<std::string, AttrDesc> &getAttrMap() = 0;
   virtual const mindspore::HashMap<std::string, std::string> &getAttrInputMap() = 0;
   virtual const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() = 0;
   virtual const std::map<int, OutputDesc> &getOutputMap() = 0;
@@ -153,6 +177,7 @@ class BaseOpAdapter {
   virtual const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() = 0;
   virtual const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
   virtual std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) = 0;
+  virtual std::map<std::string, ValuePtr> GetOpAttrList() = 0;
   virtual bool IsDynInputOp(uint64_t index) = 0;
   virtual bool IsDyOutputOp(uint64_t index) = 0;
   virtual bool IsMultipleOutputOp(const AnfNodePtr &anf) = 0;

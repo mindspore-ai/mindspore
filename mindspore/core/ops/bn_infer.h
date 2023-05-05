@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBNInfer = "ABNInfer";
+constexpr auto kNameBNInfer = "BNInfer";
 class MIND_API BNInfer : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BNInfer);

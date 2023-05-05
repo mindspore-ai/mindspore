@@ -71,7 +71,7 @@ def run_tacotron2_dynamic_case(cur_model_path):
     return loss_list, has_overflow
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

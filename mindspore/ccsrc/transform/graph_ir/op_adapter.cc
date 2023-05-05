@@ -20,6 +20,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/split_combination_ops.h"
 #include "graph/operator_factory_impl.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -700,6 +701,35 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const std::string &attr_key, c
   return static_cast<int>(NOT_FOUND);
 }
 
+int OpAdapterImpl::setAttr(const OperatorPtr &op, const uint32_t &input_idx, const ValuePtr &attr_value) {
+  auto it = input_attr_map_.find(input_idx);
+  if (it != input_attr_map_.end()) {
+    it->second.set_attr(op, attr_value);
+    return static_cast<int>(SUCCESS);
+  }
+  return static_cast<int>(NOT_FOUND);
+}
+
+int OpAdapterImpl::getAttr(const OperatorPtr &op, const std::string &attr_key, ValuePtr *attr_value) {
+  MS_EXCEPTION_IF_NULL(attr_value);
+  auto it = attr_map_.find(attr_key);
+  if (it != attr_map_.end()) {
+    it->second.get_attr(op, attr_value);
+    return static_cast<int>(SUCCESS);
+  }
+  return static_cast<int>(NOT_FOUND);
+}
+
+int OpAdapterImpl::getAttr(const OperatorPtr &op, uint32_t input_idx, ValuePtr *attr_value) {
+  MS_EXCEPTION_IF_NULL(attr_value);
+  auto it = input_attr_map_.find(input_idx);
+  if (it != input_attr_map_.end()) {
+    it->second.get_attr(op, attr_value);
+    return static_cast<int>(SUCCESS);
+  }
+  return static_cast<int>(NOT_FOUND);
+}
+
 int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) const {
   enum ValueType {
     SINGLE_VALUE = 0,
@@ -750,6 +780,21 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
     }
   }
   return 0;
+}
+
+std::map<std::string, ValuePtr> OpAdapterImpl::GetOpAttrList(const OperatorPtr &op) const {
+  std::map<std::string, ValuePtr> attr_list;
+  for (auto &it : attr_map_) {
+    ValuePtr value = nullptr;
+    it.second.get_attr(op, &value);
+    (void)attr_list.emplace(it.second.name, value);
+  }
+  for (auto &it : input_attr_map_) {
+    ValuePtr value = nullptr;
+    it.second.get_attr(op, &value);
+    (void)attr_list.emplace(it.second.name, value);
+  }
+  return attr_list;
 }
 
 std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const OperatorPtr &op,
@@ -900,11 +945,17 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
       continue;
     }
+
     auto const_value = GetValueNode(inputs[it.first]);
     MS_LOG(INFO) << "Set attr: input_" << it.first << "(" << it.second.name << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
     }
+    if (const_value->isa<mindspore::tensor::Tensor>()) {
+      auto tensorptr = const_value->cast<mindspore::tensor::TensorPtr>();
+      const_value = CreateValueFromTensor(tensorptr);
+    }
+
     adpt_->AddAttrToDrawGraph(it.second.name + std::string("=") + const_value->ToString());
     it.second.set_attr(op, const_value);
   }

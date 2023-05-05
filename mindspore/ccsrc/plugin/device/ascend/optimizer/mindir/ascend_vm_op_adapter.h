@@ -27,6 +27,14 @@
 
 namespace mindspore {
 namespace opt {
+class AscendMindIROpAdapter : public PatternProcessPass {
+ public:
+  explicit AscendMindIROpAdapter(bool multigraph = true) : PatternProcessPass("ascend_mindir_op_adapter", multigraph) {}
+  ~AscendMindIROpAdapter() override = default;
+
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+};
+
 class AscendVmOpAdapter : public PatternProcessPass {
  public:
   explicit AscendVmOpAdapter(bool multigraph = true) : PatternProcessPass("ascend_vm_op_adapter", multigraph) {}

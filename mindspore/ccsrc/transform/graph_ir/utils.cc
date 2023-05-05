@@ -46,7 +46,8 @@ OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) {
     if (it_adpt != OpAdapterMap::get().end()) {
       return it_adpt->second->Get(train);
     }
-    MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
+    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+    return OpAdapterPtr(nullptr);
   }
 
   if (node->isa<ValueNode>()) {
@@ -63,7 +64,8 @@ OpAdapterPtr FindAdapter(const std::string &name, bool train) {
   if (it != OpAdapterMap::get().end()) {
     return it->second->Get(train);
   }
-  MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
+  MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+  return nullptr;
 }
 
 void ClearGeSessionAndRunner() {
@@ -254,9 +256,9 @@ MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type) {
 
 std::shared_ptr<transform::GraphRunner> GetGraphRunner() { return DfGraphManager::GetInstance().GetGraphRunner(); }
 
-std::shared_ptr<ge::Session> GetGeSession() { return DfGraphManager::GetInstance().GetGeSession(); }
+std::shared_ptr<::ge::Session> GetGeSession() { return DfGraphManager::GetInstance().GetGeSession(); }
 
-void SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr) {
+void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr) {
   DfGraphManager::GetInstance().SetGeSession(sess_ptr);
 }
 
@@ -326,7 +328,7 @@ DfGraphPtr GetBroadcastGraph(const DfGraphConvertorPtr &converter) {
   return converter->GetBroadcastGraph();
 }
 
-std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options) {
+std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options) {
   return transform::GraphRunner::NewSession(sess_options);
 }
 

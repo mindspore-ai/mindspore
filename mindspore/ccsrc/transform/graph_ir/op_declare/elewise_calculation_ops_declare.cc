@@ -390,7 +390,7 @@ REG_ADPT_DESC(RealDiv, kNameRealDiv, ADPT_DESC(RealDiv))
 
 // Cast
 INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
+INPUT_ATTR_MAP(Cast) = {};
 ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cast, prim::kPrimCast->name(), ADPT_DESC(Cast))
@@ -662,6 +662,7 @@ ATTR_MAP(ArgMin) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))
+REG_ADPT_DESC(ArgMinV2, kArgminV2OpName, ADPT_DESC(ArgMin))
 
 // Threshold
 INPUT_MAP(Threshold) = {{1, INPUT_DESC(x)}};

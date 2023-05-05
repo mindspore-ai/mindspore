@@ -1076,7 +1076,6 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     graph->set_summary_node_exist(true);
   }
 #endif
-
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     UnifyMindIR(graph);

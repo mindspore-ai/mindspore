@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/elewise_calculation_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ClipByValue)
 DECLARE_OP_USE_OUTPUT(ClipByValue)
 
@@ -345,5 +344,4 @@ DECLARE_OP_USE_OUTPUT(IsClose)
 
 DECLARE_OP_ADAPTER(CosineSimilarity)
 DECLARE_OP_USE_OUTPUT(CosineSimilarity)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_

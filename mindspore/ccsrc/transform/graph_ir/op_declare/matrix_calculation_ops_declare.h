@@ -22,7 +22,6 @@
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "ops/matrix_calculation_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(TensorScatterUpdate)
 DECLARE_OP_USE_OUTPUT(TensorScatterUpdate)
 
@@ -74,6 +73,9 @@ DECLARE_OP_USE_OUTPUT(MatrixDiag)
 DECLARE_OP_ADAPTER(MatrixDiagPartD)
 DECLARE_OP_USE_OUTPUT(MatrixDiagPartD)
 
+DECLARE_OP_ADAPTER(MatrixDiagPartV3)
+DECLARE_OP_USE_OUTPUT(MatrixDiagPartV3)
+
 DECLARE_OP_ADAPTER(MatrixSetDiagD)
 DECLARE_OP_USE_OUTPUT(MatrixSetDiagD)
 
@@ -104,7 +106,9 @@ DECLARE_OP_USE_OUTPUT(MatrixDiagPart)
 DECLARE_OP_ADAPTER(MatrixSetDiag)
 DECLARE_OP_USE_OUTPUT(MatrixSetDiag)
 
+DECLARE_OP_ADAPTER(MatrixSetDiagV3)
+DECLARE_OP_USE_OUTPUT(MatrixSetDiagV3)
+
 DECLARE_OP_ADAPTER(TensorScatterAdd)
 DECLARE_OP_USE_OUTPUT(TensorScatterAdd)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_

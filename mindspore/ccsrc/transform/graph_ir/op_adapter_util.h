@@ -19,10 +19,31 @@
 
 #include <string>
 #include <vector>
-
+#include <memory>
 #include "transform/graph_ir/op_adapter_base.h"
-
+#include "ir/scalar.h"
 namespace mindspore {
+class GeDataTypeImm final : public IntegerImm {
+ public:
+  GeDataTypeImm();
+  explicit GeDataTypeImm(::ge::DataType v);
+  ~GeDataTypeImm() override = default;
+  MS_DECLARE_PARENT(GeDataTypeImm, IntegerImm)
+  std::size_t hash() const override { return hash_; }
+  bool IsZero() override { return v_ == 0; }
+  bool IsOne() override { return v_ == 1; }
+  ::ge::DataType value() const { return v_; }
+  bool operator==(const Value &other) const override;
+  bool operator==(const GeDataTypeImm &other) const;
+  std::string ToString() const override { return scalar_to_string(v_); }
+  std::string DumpText() const override;
+
+ private:
+  ::ge::DataType v_;
+};
+using GeDataTypeImmPtr = std::shared_ptr<GeDataTypeImm>;
+IMM_TRAITS(GeDataTypeImmPtr, ::ge::DataType)
+
 namespace transform {
 template <typename T>
 inline ValuePtr GetRealValue(const T &value) {
@@ -31,7 +52,7 @@ inline ValuePtr GetRealValue(const T &value) {
 
 template <>
 inline ValuePtr GetRealValue<GeDataType>(const GeDataType &value) {
-  return MakeValue(static_cast<int64_t>(value));
+  return MakeValue<GeDataType>(value);
 }
 
 template <>

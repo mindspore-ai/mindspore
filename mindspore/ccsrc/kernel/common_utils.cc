@@ -110,6 +110,8 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
     ListInfo list_info{new_abstract};
     res_tensor->SetListInfo(list_info);
     res_tensor->SetMetaType(kObjectTypeList);
+  } else if (tag_abstract->isa<abstract::AbstractNone>()) {
+    res_tensor->SetMetaType(kMetaTypeNone);
   } else {
     // Tensor
     auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
@@ -131,22 +133,34 @@ inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   auto kernel_name = prim->name();
+  auto ori_kernel_name = kernel_name;
+  if (prim->HasAttr(kAttrMeOpName)) {
+    ori_kernel_name = GetValue<std::string>(prim->GetAttr(kAttrMeOpName));
+  }
   // Create PrimtiveC from map and create BaseOperator.
   ops::PrimitiveCPtr primc_ptr = nullptr;
   static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  if (primc_fns.find(kernel_name) != primc_fns.end()) {
-    primc_ptr = primc_fns[kernel_name]();
+  if (primc_fns.find(ori_kernel_name) != primc_fns.end()) {
+    primc_ptr = primc_fns[ori_kernel_name]();
     (void)primc_ptr->SetAttrs(prim->attrs());
     AdditionalAttrProcess(primc_ptr, cnode);
+  }
+
+  if (!primc_ptr) {
+    MS_LOG(ERROR) << "Get primtive c failed, node name: " << cnode->DebugString() << ", ori name: " << ori_kernel_name
+                  << ", key name: " << kernel_name;
   }
   MS_EXCEPTION_IF_NULL(primc_ptr);
 
   static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(kernel_name) == operator_fns.end()) {
-    MS_LOG(EXCEPTION) << "Cannot create BaseOperator for " << kernel_name;
+  if (operator_fns.find(ori_kernel_name) == operator_fns.end()) {
+    MS_LOG(EXCEPTION) << "Cannot create BaseOperator for " << ori_kernel_name;
   }
-  auto base_operator = operator_fns[kernel_name](primc_ptr);
+  auto base_operator = operator_fns[ori_kernel_name](primc_ptr);
   MS_EXCEPTION_IF_NULL(base_operator);
+  if (ori_kernel_name != kernel_name) {
+    base_operator->GetPrim()->set_name(kernel_name);
+  }
   return base_operator;
 }
 
@@ -527,6 +541,12 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (primitive->GetAttr("dyn_input_sizes") != nullptr) {
     dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr("dyn_input_sizes"));
+  }
+  if (dyn_input_sizes.empty() && inputs.size() < real_input_num) {
+    MS_LOG(WARNING) << "The size of inputs in OpIOInfo should be great than real input. Inputs size in OpIOInfo:"
+                    << inputs.size() << ", real input num: " << real_input_num
+                    << ", node: " << kernel_node->fullname_with_scope();
+    return false;
   }
   if (inputs.size() > 0) {
     if (inputs[0] == nullptr) {

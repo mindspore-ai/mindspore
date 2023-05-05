@@ -108,6 +108,8 @@ TypeId KernelTensor::GetDtype() const {
     // List
     const ListInfo &info = std::get<ListInfo>(meta_);
     return GetSeqElementsDtype(info.base_);
+  } else if (meta_type_ == kMetaTypeNone) {
+    return TypeId::kMetaTypeNone;
   } else {
     // Tensor
     const TensorInfo &info = std::get<TensorInfo>(meta_);

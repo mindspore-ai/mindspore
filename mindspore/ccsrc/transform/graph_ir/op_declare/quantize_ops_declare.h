@@ -21,11 +21,9 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/quantize_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(AscendQuant)
 DECLARE_OP_USE_OUTPUT(AscendQuant)
 
 DECLARE_OP_ADAPTER(AscendDequant)
 DECLARE_OP_USE_OUTPUT(AscendDequant)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_QUANTIZE_OPS_DECLARE_H_

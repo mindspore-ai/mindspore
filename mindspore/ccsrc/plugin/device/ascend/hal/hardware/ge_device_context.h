@@ -26,56 +26,14 @@
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
+#include "plugin/device/ascend/hal/hardware/ge_graph_executor.h"
+#include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-class GeDeviceResManager : public DeviceResManager {
- public:
-  GeDeviceResManager() : mem_manager_(nullptr) {}
-  ~GeDeviceResManager() override = default;
-
-  void Initialize() override;
-
-  void Destroy() override;
-
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
-
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
-
-  static void CreateSessionAndGraphRunner(bool is_training);
-
-  bool LoadCollectiveCommLib() override {
-    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
-    return true;
-  }
-
-  // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
-  void FreeMemory(void *ptr) const override;
-
- private:
-  static void GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr, transform::SessionOptions *options);
-  std::shared_ptr<MemoryManager> mem_manager_;
-};
-
-class GeGraphExecutor : public GraphExecutor {
- public:
-  ~GeGraphExecutor() override = default;
-  bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
-  bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
-                std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
-
-  static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
-                                   bool export_air);
-
- private:
-  void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
-  void AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const;
-};
-
-class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManager> {
+class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor, GeDeviceResManager> {
  public:
   explicit GeDeviceContext(const DeviceContextKey &device_context_key)
       : DeviceInterface(device_context_key), initialized_(false) {}

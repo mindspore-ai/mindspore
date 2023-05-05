@@ -196,8 +196,8 @@ void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
-  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
-  device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
+  MS_EXCEPTION_IF_NULL(device_context_->GetKernelExecutor(false));
+  device_context_->GetKernelExecutor(false)->CreateKernel({embedding_cache_lookup_node_});
   AnfAlgo::SetStreamId(stream_id_, embedding_cache_lookup_node_.get());
 }
 
@@ -224,8 +224,8 @@ void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheUpdateKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
-  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
-  device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
+  MS_EXCEPTION_IF_NULL(device_context_->GetKernelExecutor(false));
+  device_context_->GetKernelExecutor(false)->CreateKernel({embedding_cache_update_node_});
   AnfAlgo::SetStreamId(stream_id_, embedding_cache_update_node_.get());
 }
 
@@ -252,8 +252,8 @@ void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheEraseKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
-  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
-  device_context_->kernel_executor_->CreateKernel({embedding_cache_erase_node_});
+  MS_EXCEPTION_IF_NULL(device_context_->GetKernelExecutor(false));
+  device_context_->GetKernelExecutor(false)->CreateKernel({embedding_cache_erase_node_});
   AnfAlgo::SetStreamId(stream_id_, embedding_cache_erase_node_.get());
 }
 
@@ -303,9 +303,9 @@ bool DeviceSparseEmbeddingOperation::LookupDeviceCache(const DeviceAddress *embe
 
   // Do embedding cache look up on device.
   MS_ERROR_IF_NULL(device_context_);
-  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
-  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {},
-                                                             kernel_outputs, stream_id_);
+  MS_ERROR_IF_NULL(device_context_->GetKernelExecutor(false));
+  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {},
+                                                                     kernel_outputs, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
     return false;
@@ -336,9 +336,9 @@ bool DeviceSparseEmbeddingOperation::UpdateDeviceCache(void *ids, void *update_v
 
   // Do update cache on device.
   MS_ERROR_IF_NULL(device_context_);
-  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
-  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {},
-                                                             kernel_outputs, stream_id_);
+  MS_ERROR_IF_NULL(device_context_->GetKernelExecutor(false));
+  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {},
+                                                                     kernel_outputs, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;
@@ -366,9 +366,9 @@ bool DeviceSparseEmbeddingOperation::EraseDeviceCache(void *ids, size_t ids_num,
 
   // Erase embedding cache on device.
   MS_ERROR_IF_NULL(device_context_);
-  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
-  auto ret = device_context_->kernel_executor_->LaunchKernel(embedding_cache_erase_node_, kernel_inputs, {},
-                                                             kernel_outputs, stream_id_);
+  MS_ERROR_IF_NULL(device_context_->GetKernelExecutor(false));
+  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_erase_node_, kernel_inputs, {},
+                                                                     kernel_outputs, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_erase_node_->fullname_with_scope() << " failed.";
     return false;

@@ -21,12 +21,12 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/functional_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Case)
 DECLARE_OP_USE_DYN_INPUT(Case)
 DECLARE_OP_USE_DYN_SUBGRAPH(Case)
 DECLARE_OP_USE_DYN_OUTPUT(Case)
 
+DECLARE_CANN_OP_PROTO(While)
 DECLARE_OP_TYPE(While)
 DECLARE_OP_ATTR(While)
 DECLARE_OP_USE_DYN_INPUT(While)
@@ -42,5 +42,4 @@ DECLARE_OP_ADAPTER(If)
 DECLARE_OP_USE_DYN_INPUT(If)
 DECLARE_OP_USE_SUBGRAPH(If)
 DECLARE_OP_USE_DYN_OUTPUT(If)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_FUNCTIONAL_OPS_DECLARE_H_

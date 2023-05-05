@@ -26,6 +26,25 @@
 #include "transform/graph_ir/io_format_map.h"
 
 namespace mindspore {
+GeDataTypeImm::GeDataTypeImm() : IntegerImm(kInt32), v_(::ge::DataType::DT_FLOAT) {}
+GeDataTypeImm::GeDataTypeImm(::ge::DataType v) : IntegerImm(kInt32), v_(v) {
+  hash_ = hash_combine({tid(), std::hash<int>{}(v_)});
+}
+bool GeDataTypeImm::operator==(const Value &other) const {
+  if (other.isa<GeDataTypeImm>()) {
+    auto other_ = static_cast<const GeDataTypeImm &>(other);
+    return *this == other_;
+  } else {
+    return false;
+  }
+}
+bool GeDataTypeImm::operator==(const GeDataTypeImm &other) const { return v_ == other.v_; }
+std::string GeDataTypeImm::DumpText() const {
+  std::ostringstream oss;
+  oss << "GeDataType(" << int(v_) << ")";
+  return oss.str();
+}
+
 namespace transform {
 GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<mindspore::tensor::Tensor> &) {
   // To-DO the format may read from ME tensor
@@ -135,7 +154,7 @@ GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
   size_t attr_size1 = vec.size();
   size_t attr_size2 = vec_item.size();
   std::vector<T1> attr_list;
-  for (const auto item : vec) {
+  for (const auto &item : vec) {
     auto value_list = GetValue<std::vector<T1>>(item);
     (void)std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
   }

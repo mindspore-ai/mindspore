@@ -21,7 +21,6 @@
 #include "ops/nonlinear_fuc_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ReluGrad)
 DECLARE_OP_USE_OUTPUT(ReluGrad)
 
@@ -126,5 +125,4 @@ DECLARE_OP_USE_OUTPUT(LogSigmoid)
 
 DECLARE_OP_ADAPTER(HardSigmoidGrad)
 DECLARE_OP_USE_OUTPUT(HardSigmoidGrad)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NONLINEAR_FUC_OPS_DECLARE_H_

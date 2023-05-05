@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/nn_calculation_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BiasAddGrad)
 DECLARE_OP_USE_OUTPUT(BiasAddGrad)
 
@@ -48,13 +47,8 @@ DECLARE_OP_USE_OUTPUT(Conv3DTransposeD)
 DECLARE_OP_ADAPTER(Conv3D)
 DECLARE_OP_USE_OUTPUT(Conv3D)
 
-DECLARE_OP_ADAPTER(Conv3DBackpropInputD)
-DECLARE_OP_USE_INPUT_ATTR(Conv3DBackpropInputD)
-DECLARE_OP_USE_OUTPUT(Conv3DBackpropInputD)
-
-DECLARE_OP_ADAPTER(Conv3DBackpropFilterD)
-DECLARE_OP_USE_INPUT_ATTR(Conv3DBackpropFilterD)
-DECLARE_OP_USE_OUTPUT(Conv3DBackpropFilterD)
+DECLARE_OP_ADAPTER(Conv3DBackpropInput)
+DECLARE_OP_USE_OUTPUT(Conv3DBackpropInput)
 
 DECLARE_OP_ADAPTER(DepthwiseConv2D)
 DECLARE_OP_USE_OUTPUT(DepthwiseConv2D)
@@ -84,5 +78,4 @@ DECLARE_OP_USE_OUTPUT(Conv3DBackpropFilter)
 
 DECLARE_OP_ADAPTER(Conv3DTranspose)
 DECLARE_OP_USE_OUTPUT(Conv3DTranspose)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_CALCULATION_OPS_DECLARE_H_

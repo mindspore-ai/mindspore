@@ -88,6 +88,7 @@ class OpAdapterImpl {
                                 const std::string &format);
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const;
   std::map<std::string, ValuePtr> GetNormalOpAttrList(const OperatorPtr &op, const AnfNodePtr &node) const;
+  std::map<std::string, ValuePtr> GetOpAttrList(const OperatorPtr &op) const;
   std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
                                                  const std::string &format) const;
   Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
@@ -103,6 +104,9 @@ class OpAdapterImpl {
   int SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node);
+  int setAttr(const OperatorPtr &op, const uint32_t &input_idx, const ValuePtr &attr_value);
+  int getAttr(const OperatorPtr &op, const std::string &attr_key, ValuePtr *attr_value);
+  int getAttr(const OperatorPtr &op, uint32_t input_idx, ValuePtr *attr_value);
 
  private:
   const mindspore::HashMap<int, InputDesc> &input_map_;
@@ -234,6 +238,7 @@ class OpAdapter : public BaseOpAdapter {
   }
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
+  const mindspore::HashMap<std::string, AttrDesc> &getAttrMap() override { return attr_map_; }
   const mindspore::HashMap<std::string, std::string> &getAttrInputMap() override { return attr_input_map_; }
   const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
   const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
@@ -243,6 +248,7 @@ class OpAdapter : public BaseOpAdapter {
   std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) override {
     return impl_->GetNormalOpAttrList(getOp(), node);
   }
+  std::map<std::string, ValuePtr> GetOpAttrList() override { return impl_->GetOpAttrList(getOp()); }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
   bool IsMultipleOutputOp(const AnfNodePtr &anf) override {
@@ -362,6 +368,22 @@ class OpAdapter : public BaseOpAdapter {
 
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node) override { return impl_->setAttr(op, node); }
 
+  int setAttr(const std::string &attr_key, const ValuePtr &attr_value) {
+    return impl_->setAttr(getOp(), attr_key, attr_value);
+  }
+
+  int setAttr(const uint32_t &input_idx, const ValuePtr &attr_value) {
+    return impl_->setAttr(getOp(), input_idx, attr_value);
+  }
+
+  int getAttr(const std::string &attr_key, ValuePtr *attr_value) {
+    MS_EXCEPTION_IF_NULL(attr_value);
+    return impl_->getAttr(getOp(), attr_key, attr_value);
+  }
+  int getAttr(const uint32_t &input_idx, ValuePtr *attr_value) {
+    MS_EXCEPTION_IF_NULL(attr_value);
+    return impl_->getAttr(getOp(), input_idx, attr_value);
+  }
   mindspore::HashMap<std::string, ValuePtr> GetExtraAttr() override { return extra_attr_; }
 
  private:
@@ -460,13 +482,43 @@ class OpAdapter : public BaseOpAdapter {
       auto vec = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
-        list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
+        if (it->type()->type_id() == TypeId::kNumberTypeInt32) {
+          list.push_back(static_cast<int64_t>(GetValue<int32_t>(it)));
+        } else {
+          list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
+        }
       }
       return list;
     }
     if (value->isa<Scalar>()) {
-      list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
+      if (value->type()->type_id() == TypeId::kNumberTypeInt32) {
+        list.push_back(static_cast<int64_t>(GetValue<int32_t>(value)));
+      } else {
+        list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
+      }
       return list;
+    }
+    if (value->isa<MeTensor>()) {
+      auto tensor_ptr = value->cast<MeTensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
+      auto type = tensor_ptr->data_type();
+      std::vector<int64_t> v;
+      if (type == kNumberTypeInt64) {
+        int64_t *data = static_cast<int64_t *>(tensor_ptr->data_c());
+        auto size = tensor_ptr->Size() / sizeof(int64_t);
+        for (size_t i = 0; i < size; i++) {
+          (void)v.emplace_back(data[i]);
+        }
+        return v;
+      }
+      if (type == kNumberTypeInt32) {
+        int32_t *data = static_cast<int32_t *>(tensor_ptr->data_c());
+        auto size = tensor_ptr->Size() / sizeof(int32_t);
+        for (size_t i = 0; i < size; i++) {
+          (void)v.emplace_back(IntToLong(data[i]));
+        }
+        return v;
+      }
     }
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
   }
@@ -530,7 +582,7 @@ class OpAdapter : public BaseOpAdapter {
     return output_size;
   }
 
-  OperatorPtr getOp() {
+  static OperatorPtr getOp() {
     if (op_ == nullptr) {
       op_ = std::make_shared<OpType>();
     }
@@ -556,7 +608,7 @@ class OpAdapter : public BaseOpAdapter {
   const std::shared_ptr<OpAdapterImpl> impl_;
   std::string op_type_;
   // cache the Operator to avoid memory leak caused by 'std::make_shared<OpType>()'
-  OperatorPtr op_{nullptr};
+  inline static OperatorPtr op_ = nullptr;
 };
 
 template <typename T>

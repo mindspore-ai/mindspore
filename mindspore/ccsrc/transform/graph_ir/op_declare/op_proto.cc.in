@@ -1,0 +1,41 @@
+/**
+ * Copyright 2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "transform/graph_ir/op_declare/op_proto.h"
+
+#define REG_OP(name)                                                                        \
+  mindspore::transform::OpProto &Get##name##OpProto() {                                     \
+    auto &op_proto = mindspore::transform::OpProtoStorage::GetInstance().GetOpProto(#name); \
+    op_proto
+
+#define OP_END_FACTORY_REG(...) \
+  DoNothing();                  \
+  return op_proto;              \
+  }
+
+#define INPUT(name, t) SetInput(#name, #t, false)
+#define OPTIONAL_INPUT(name, t) SetInput(#name, #t, true)
+#define DYNAMIC_INPUT(...) INPUT(__VA_ARGS__)
+#define OUTPUT(name, t) SetOutput(#name, #t)
+#define DYNAMIC_OUTPUT(...) OUTPUT(__VA_ARGS__)
+#define ATTR(name, ...) SetAttr(#name, true)
+#define REQUIRED_ATTR(name, ...) SetAttr(#name, false)
+#define GRAPH(...) DoNothing()
+#define DYNAMIC_GRAPH(...) GRAPH(__VA_ARGS__)
+
+#define INC_EXTERNAL_GRAPH_OPERATOR_REG_H_
+#include @OP_PROTO_INCLUDE_FILE@
+#undef INC_EXTERNAL_GRAPH_OPERATOR_REG_H_

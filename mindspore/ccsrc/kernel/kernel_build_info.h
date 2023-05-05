@@ -47,7 +47,7 @@ enum OpType : int {
 };
 
 std::string KernelObjectTypeLabel(const KernelObjectType &obj_type);
-std::string KernelTypeLabel(const KernelType &kernel_type);
+BACKEND_EXPORT std::string KernelTypeLabel(const KernelType &kernel_type);
 std::string OpTypeLabel(const OpType &op_type);
 
 class BACKEND_EXPORT KernelBuildInfo {

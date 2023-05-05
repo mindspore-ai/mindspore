@@ -151,33 +151,17 @@ ATTR_MAP(Conv3D) = {
 OUTPUT_MAP(Conv3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv3D, kNameConv3D, ADPT_DESC(Conv3D))
 
-// Conv3DBackpropInputD
-INPUT_MAP(Conv3DBackpropInputD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(filter)}};
-INPUT_ATTR_MAP(Conv3DBackpropInputD) = {
-  {3, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(Conv3DBackpropInputD) = {
+// Conv3DBackpropInput
+INPUT_MAP(Conv3DBackpropInput) = {{1, INPUT_DESC(filter)}, {2, INPUT_DESC(out_backprop)}, {3, INPUT_DESC(input_size)}};
+ATTR_MAP(Conv3DBackpropInput) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>())},
   {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"groups", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
-OUTPUT_MAP(Conv3DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv3DBackpropInputD, kNameConv3DBackpropInput, ADPT_DESC(Conv3DBackpropInputD))
-
-// Conv3DBackpropFilterD
-INPUT_MAP(Conv3DBackpropFilterD) = {{1, INPUT_DESC(out_backprop)}, {2, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(Conv3DBackpropFilterD) = {
-  {3, ATTR_DESC(filter_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(Conv3DBackpropFilterD) = {
-  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"groups", ATTR_DESC(groups, AnyTraits<int64_t>())},
-  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-};
-OUTPUT_MAP(Conv3DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv3DBackpropFilterD, kNameConv3DBackpropFilter, ADPT_DESC(Conv3DBackpropFilterD))
+OUTPUT_MAP(Conv3DBackpropInput) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Conv3DBackpropInput, kNameConv3DBackpropInput, ADPT_DESC(Conv3DBackpropInput))
 
 // DepthwiseConv2D
 INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}};
@@ -274,5 +258,5 @@ ATTR_MAP(Conv3DBackpropFilter) = {
   {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(Conv3DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Conv3DBackpropFilter, kConv3DBackpropFilterDOpName, ADPT_DESC(Conv3DBackpropFilter))
+REG_ADPT_DESC(Conv3DBackpropFilter, kConv3DBackpropFilterOpName, ADPT_DESC(Conv3DBackpropFilter))
 }  // namespace mindspore::transform

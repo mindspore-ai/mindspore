@@ -51,6 +51,11 @@ OpAdaptationInfo &OpAdaptationInfo::set_input_attr_info(size_t input_index, cons
   return *this;
 }
 
+OpAdaptationInfo &OpAdaptationInfo::set_is_ascend_mindir() {
+  is_ascend_mindir_ = True;
+  return *this;
+}
+
 OpAdaptationInfoRegister &OpAdaptationInfoRegister::GetInstance() {
   static OpAdaptationInfoRegister inst;
   return inst;
@@ -71,7 +76,7 @@ std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMa
   return op_info_map;
 }
 
-void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) const {
+void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
   MS_EXCEPTION_IF_NULL(reg_info);
   auto key = GenerateKey(reg_info->me_op_name(), reg_info->device_name(), reg_info->flag());
   auto find = GetOpInfoMap().find(key);
@@ -85,7 +90,7 @@ void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) c
 }
 
 OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &me_op_name,
-                                                                const std::string &device_name, bool flag) const {
+                                                                const std::string &device_name, bool flag) {
   auto key = GenerateKey(me_op_name, device_name, flag);
   auto iter = GetOpInfoMap().find(key);
   if (iter == GetOpInfoMap().end()) {

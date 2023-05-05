@@ -40,12 +40,26 @@ ATTR_MAP(MaxPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), An
 OUTPUT_MAP(MaxPool3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3D, kNameMaxPool3D, ADPT_DESC(MaxPool3D))
 
+// MaxPool3DWithArgmax
+INPUT_MAP(MaxPool3DWithArgmax) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPool3DWithArgmax) = {
+  {"ksize", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilation, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"argmax_type", ATTR_DESC(argmax_type, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPool3DWithArgmax) = {{0, OUTPUT_DESC(y)}, {0, OUTPUT_DESC(argmax)}};
+REG_ADPT_DESC(MaxPool3DWithArgmax, prim::kPrimMaxPool3DWithArgmax->name(), ADPT_DESC(MaxPool3DWithArgmax))
+
 // MaxPool3DGrad
 INPUT_MAP(MaxPool3DGrad) = {{1, INPUT_DESC(orig_x)}, {2, INPUT_DESC(orig_y)}, {3, INPUT_DESC(grads)}};
 ATTR_MAP(MaxPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                            {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                            {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                           {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+                           {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                           {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPool3DGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3DGrad, kNameMaxPool3DGrad, ADPT_DESC(MaxPool3DGrad))
 
@@ -72,7 +86,7 @@ REG_ADPT_DESC(AvgPool, kNameAvgPool, ADPT_DESC(AvgPool))
 INPUT_MAP(AvgPool3D) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AvgPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                        {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                       {"pad", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                       {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                        {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                        {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
                        {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
@@ -84,7 +98,7 @@ REG_ADPT_DESC(AvgPool3D, kAvgPool3DOpName, ADPT_DESC(AvgPool3D))
 INPUT_MAP(AvgPool3DD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(multiplier)}};
 ATTR_MAP(AvgPool3DD) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                         {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                        {"pad", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())},
+                        {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                         {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                         {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
                         {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},

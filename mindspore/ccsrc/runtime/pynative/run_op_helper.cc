@@ -573,13 +573,11 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto inputs = CreateKernelInputAddress(runtime_info, node);
-
     InferNodeRealShape(node);
 
     runtime::DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context, graph, is_gradient_out);
     runtime::DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(graph);
     runtime::DeviceAddressUtils::UpdateDeviceAddressForRefNode(graph);
-
     ResizeNodeInput(node);
     UpdateKernelWorkspace(node);
 
@@ -591,7 +589,7 @@ void LaunchKernelsDynamic(const KernelGraphPtr &graph, const device::DeviceConte
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
     const size_t stream_id = AnfAlgo::GetStreamId(node);
-    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
+    if (!device_context->GetKernelExecutor(true)->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 
@@ -644,7 +642,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
     const size_t stream_id = AnfAlgo::GetStreamId(node);
-    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
+    if (!device_context->GetKernelExecutor(false)->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 
