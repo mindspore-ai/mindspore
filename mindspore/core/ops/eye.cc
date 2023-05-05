@@ -113,6 +113,10 @@ ValuePtr EyeInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   auto n_pt = input_args[0]->BuildValue();
   auto m_pt = input_args[1]->BuildValue();
   auto dtype_value_ = input_args[2]->BuildValue();
+  auto output_type = dtype_value_->cast<TypePtr>();
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
+  CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_types, prim_name);
   if (n_pt == nullptr || m_pt == nullptr || dtype_value_ == nullptr) {
     return nullptr;
   }
