@@ -3217,7 +3217,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> output = ops.cross_entropy(inputs, target)
     """
     class_dim = 0 if input.ndim == 1 else 1
-    if input.size == target.size:
+    if target.dtype in [mstype.float32, mstype.float16]:
         return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
     return nll_loss(_innner_log_softmax(input, class_dim), target, weight, ignore_index, reduction, label_smoothing)
 
