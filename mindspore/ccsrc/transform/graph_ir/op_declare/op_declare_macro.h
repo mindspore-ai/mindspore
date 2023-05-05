@@ -111,7 +111,7 @@
 #define INPUT_OPTIONAL_TYPE(x)                                      \
   OpProtoStorage::GetInstance()                                     \
     .GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()) \
-    .GetInputOptionalTypeByName(#x)
+    .IsInputOptionalTypeByName(#x)
 #define INPUT_DTYPES(x) \
   OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()).GetInputTypesByName(#x)
 #define OUTPUT_DTYPES(x) \
@@ -119,7 +119,7 @@
 #define ATTR_OPTIONAL_TYPE(x)                                       \
   OpProtoStorage::GetInstance()                                     \
     .GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()) \
-    .GetAttrOptionalTypeByName(#x)
+    .IsAttrOptionalTypeByName(#x)
 
 #define INPUT_MAP(T) \
   template <>        \

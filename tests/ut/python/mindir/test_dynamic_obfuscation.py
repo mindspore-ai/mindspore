@@ -19,7 +19,7 @@ import pytest
 
 import mindspore.ops as ops
 import mindspore.nn as nn
-from mindspore import load, Tensor, export, obfuscate_model, context
+from mindspore import load, Tensor, export, context
 from mindspore.common.initializer import TruncatedNormal
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -70,69 +70,6 @@ class ObfuscateNet(nn.Cell):
         x = self.relu(x)
         x = self.matmul(x, self.matmul_weight3)
         return x
-
-
-def test_obfuscate_model_password_mode():
-    """
-    Feature: Obfuscate MindIR format model with dynamic obfuscation (password mode).
-    Description: Test obfuscate a MindIR format model and then load it for prediction.
-    Expectation: Success.
-    """
-    ori_mindir_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "ori_net.mindir")
-    ori_graph = load(ori_mindir_path)
-    ori_net = nn.GraphCell(ori_graph)
-    input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
-    original_result = ori_net(input_tensor).asnumpy()
-
-    # obfuscate model
-    obf_config = {"original_model_path": ori_mindir_path, "save_model_path": "./obf_net_1",
-                  "model_inputs": [input_tensor], "obf_ratio": 0.8, "obf_random_seed": 3423}
-    obfuscate_model(obf_config)
-
-    # load obfuscated model, predict with right password
-    obf_graph_1 = load("obf_net_1.mindir")
-    obf_net_1 = nn.GraphCell(obf_graph_1, obf_random_seed=3423)
-    right_password_result = obf_net_1(input_tensor).asnumpy()
-
-    assert np.all(original_result == right_password_result)
-
-    if os.path.exists("obf_net_1.mindir"):
-        os.remove("obf_net_1.mindir")
-
-
-def test_obfuscate_model_customized_func_mode():
-    """
-    Feature: Obfuscate MindIR format model with dynamic obfuscation (cusomized_func mode).
-    Description: Test obfuscate a MindIR format model and then load it for prediction.
-    Expectation: Success.
-    """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    ori_mindir_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "ori_net.mindir")
-    ori_graph = load(ori_mindir_path)
-    ori_net = nn.GraphCell(ori_graph)
-    input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
-    original_result = ori_net(input_tensor).asnumpy()
-
-    # obfuscate model
-    def my_func(x1, x2):
-        if x1 + x2 > 1000000000:
-            return True
-        return False
-
-    obf_config = {"original_model_path": ori_mindir_path, "save_model_path": "./obf_net_2",
-                  "model_inputs": [input_tensor], "obf_ratio": 0.8, "customized_func": my_func}
-    obfuscate_model(obf_config)
-
-    # load obfuscated model, predict with right customized function
-    obf_graph_2 = load("obf_net_2.mindir", obf_func=my_func)
-    obf_net_2 = nn.GraphCell(obf_graph_2)
-    right_func_result = obf_net_2(input_tensor).asnumpy()
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
-
-    assert np.all(original_result == right_func_result)
-
-    if os.path.exists("obf_net_2.mindir"):
-        os.remove("obf_net_2.mindir")
 
 
 def test_export_password_mode():

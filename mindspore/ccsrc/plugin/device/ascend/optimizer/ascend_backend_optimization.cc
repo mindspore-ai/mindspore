@@ -176,6 +176,7 @@
 #include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 #include "plugin/device/ascend/optimizer/mindir/quant_dtype_cast_adjust.h"
 #include "plugin/device/ascend/optimizer/mindir/fse_decode_adjust.h"
+#include "plugin/device/ascend/optimizer/mindir/trans_depend_value_to_int32.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/padd_update_fusion.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
@@ -190,6 +191,19 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/format_type/replace_transdata_with_transpose.h"
+#include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
+#include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
+#include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
+#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
+#include "plugin/device/ascend/optimizer/ge/convert_attr_to_input.h"
+#include "plugin/device/ascend/optimizer/ge/batchnorm_transform.h"
+#include "plugin/device/ascend/optimizer/ge/dropout_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
+#include "plugin/device/ascend/optimizer/ge/ge_tensor_array.h"
+#include "plugin/device/ascend/optimizer/ge/sparse_softmax_cross_entropy_with_logits_split.h"
+#include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -229,9 +243,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
   ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
   ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV2>());
@@ -257,15 +268,10 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
@@ -375,25 +381,26 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<opt::LambFission>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::StridedSliceGradUpdateInputNames>());
   ir_fusion_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
-  ir_fusion_pm->AddPass(std::make_shared<AscendClipByNormFission>());
-  ir_fusion_pm->AddPass(std::make_shared<LambFission>());
   if (kernel_graph->is_dynamic_shape()) {
     ir_fusion_pm->AddPass(std::make_shared<MaximumGradFission>());
   }
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
@@ -444,23 +451,16 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<opt::LambFission>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
-  ir_fusion_pm->AddPass(std::make_shared<AscendClipByNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
@@ -471,7 +471,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
-  ir_fusion_pm->AddPass(std::make_shared<LambFission>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AdaptiveMaxPool2DFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPoolFusion>());
@@ -479,10 +478,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFission>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicBroadcastToFission>());
@@ -499,6 +494,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   const auto &pass_creators =
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
@@ -547,6 +543,68 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+}
+
+void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+  PROF_START(ascend_backend_optimize_acl);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_before_opt_acl_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
+  opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
+  opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
+  opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
+  opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
+  optimizer->AddPassManager(opt_acl_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_end_opt_acl_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  PROF_END(ascend_backend_optimize_acl);
+  MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+}
+
+void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
+               << kernel_graph->graph_id();
+  PROF_START(ascend_backend_optimize_acl_after_kernel_select);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_before_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_end_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  PROF_END(ascend_backend_optimize_acl_after_kernel_select);
+  MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -682,21 +740,37 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
 
 PassManagerPtr GetAscendUnifyMindIRPassManager() {
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::ClipByNormFissionGe>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond1>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond2>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayPrepare>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::StridedSliceGradUpdateInputNames>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
+
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+
+  if (env_ge == "1") {
+    auto env_train = common::GetEnv("MS_GE_TRAIN");
+    if (env_train == "1" && device::ascend::GetPhasePrefix() != "eval") {
+      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
+      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
+    } else {
+      unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
+    }
+  } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -711,14 +785,27 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   }
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::QuantDTypeCastAdjust>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FSEDecodeAdjust>());
+  // batchnorm
+  unify_mindir_pm->AddPass(std::make_shared<BnSplit>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<BnGradSplit>());
+  unify_mindir_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
+  unify_mindir_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
+  unify_mindir_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::TensorShapeForGE>());
+  unify_mindir_pm->AddPass(std::make_shared<TensorScatterAddFission>());
+  unify_mindir_pm->AddPass(std::make_shared<TensorScatterSubFission>());
+  unify_mindir_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
+  unify_mindir_pm->AddPass(std::make_shared<TensorScatterMinFission>());
+  // just rename primitive name
+  unify_mindir_pm->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
+
   return unify_mindir_pm;
 }
 

@@ -764,13 +764,10 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
   compile::SetMindRTEnable();
-  if (use_vm && backend != "ge" && !is_air) {
-    if (IsPhaseLoadFromMindIR(phase)) {
-      return MindIRPipeline();
-    }
-    return VmPipeline(resource);
+  if (use_vm && backend != "ge" && !is_air && IsPhaseLoadFromMindIR(phase)) {
+    return MindIRPipeline();
   }
-  return GePipeline();
+  return VmPipeline(resource);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {

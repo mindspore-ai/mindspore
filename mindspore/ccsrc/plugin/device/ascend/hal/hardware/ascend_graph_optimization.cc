@@ -219,6 +219,40 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::OptimizeACLGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Status record: start optimize acl graph. graph id: " << graph->graph_id();
+  // empty graph dont entry to backend
+  if (graph->execution_order().empty()) {
+    MS_LOG(INFO) << graph->ToString() << " is empty graph.";
+    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
+    graph->set_executable(false);
+    MS_LOG(INFO) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
+  }
+  opt::AscendBackendOptimizeACL(graph);
+  memo_.clear();
+  // clear and reset graph_manager_ after optimization
+  graph_manager_ = MakeManager();
+  MS_LOG(INFO) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
+}
+
+void AscendGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Status record: start optimize acl graph after kernel select. graph id: " << graph->graph_id();
+  // empty graph dont entry to backend
+  if (graph->execution_order().empty()) {
+    MS_LOG(INFO) << graph->ToString() << " is empty graph.";
+    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
+    graph->set_executable(false);
+    MS_LOG(INFO) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
+  }
+  opt::AscendBackendOptimizeACLAfterKernelSelect(graph);
+  memo_.clear();
+  // clear and reset graph_manager_ after optimization
+  graph_manager_ = MakeManager();
+  MS_LOG(INFO) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
+}
+
 void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -561,10 +595,7 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
-  opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
-  opt->AddPassManager(opt::GetAscendUnifyMindIRPassManager());
-}
+void AscendGraphOptimization::AscendMindIRPass(const KernelGraphPtr &graph) const { opt::AscendUnifyMindIR(graph); }
 
 void AscendGraphOptimization::OpAdaptation(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);

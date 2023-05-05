@@ -26,13 +26,13 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 
 namespace mindspore::opt {
-AnfNodePtr CreateNodeHelper::CreateNodeWithCheck(const AnfNodePtr &node) {
+AnfNodePtr CreateNodeHelper::CreateNodeWithCheck(const AnfNodePtr &node, bool is_ascend_mindir) {
   if (!node || !AnfUtils::IsRealCNodeKernel(node)) {
     return node;
   }
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  auto op_adaptation_info = OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, true);
-  if (!op_adaptation_info) {
+  auto op_adaptation_info = OpAdaptationInfoRegister::GetOpAdaptationInfo(op_name, kAscendDevice, true);
+  if (!op_adaptation_info || op_adaptation_info->is_ascend_mindir() != is_ascend_mindir) {
     return node;
   }
   auto cnode = node->cast<CNodePtr>();

@@ -61,7 +61,6 @@ REG_ADPT_DESC(TransDataRNN, prim::kPrimTransDataRNN->name(), ADPT_DESC(TransData
 
 // Transpose
 INPUT_MAP(Transpose) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(perm)}};
-ATTR_INPUT_MAP(Transpose) = {{"perm", "perm"}};
 ATTR_MAP(Transpose) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
 OUTPUT_MAP(Transpose) = {{0, OUTPUT_DESC(y)}};

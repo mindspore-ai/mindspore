@@ -116,6 +116,9 @@ void RemovePlaceHolder(const KernelGraphPtr &graph) {
 }  // namespace
 
 void AscendKernelExecutor::Initialize() {
+  if (initialized_) {
+    return;
+  }
   kernel::ascend::TbeKernelCompileManager::GetInstance().TbeInitialize();
   res_manager_ = dynamic_cast<AscendDeviceResManager *>(device_context_->device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(res_manager_);
@@ -124,12 +127,17 @@ void AscendKernelExecutor::Initialize() {
 #ifndef ENABLE_SECURITY
   DumpInit(res_manager_->rank_id_);
 #endif
+  initialized_ = true;
 }
 
 void AscendKernelExecutor::Destroy() {
+  if (!initialized_) {
+    return;
+  }
   AscendGraphOptimization::GetInstance().Reset();
   res_manager_ = nullptr;
   graph_executor_ = nullptr;
+  initialized_ = false;
 }
 
 void AscendKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const {
@@ -137,8 +145,8 @@ void AscendKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const {
   AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
-void AscendKernelExecutor::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
-  AscendGraphOptimization::GetInstance().AddUnifyMindIRPass(opt);
+void AscendKernelExecutor::AddMindIRPass(const KernelGraphPtr &graph) const {
+  AscendGraphOptimization::GetInstance().AscendMindIRPass(graph);
 }
 
 void AscendKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {

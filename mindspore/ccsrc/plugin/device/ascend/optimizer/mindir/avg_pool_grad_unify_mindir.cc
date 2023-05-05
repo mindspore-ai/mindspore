@@ -199,7 +199,7 @@ class BuildXShapeVNode {
     auto avgpool_grad = CheckAnfNodeIfCNodeAndInputSize(node, kAvgPoolGradInputNum);
     auto x_shape = GetInputXShape(avgpool_grad);
     auto graph = avgpool_grad->func_graph();
-    auto x_shape_vnode = CreateShapeValueNode(graph, x_shape);
+    auto x_shape_vnode = CreateShapeValueNode(graph, x_shape, true);  // true ?
     return x_shape_vnode;
   }
 };

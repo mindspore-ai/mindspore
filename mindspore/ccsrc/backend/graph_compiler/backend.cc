@@ -1074,7 +1074,8 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(outputs);
 
-  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
+  bool is_dynamic_shape =
+    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process;
 
   auto async_exec_disabled = is_dynamic_shape || !op_run_info->base_op_run_info.lazy_build ||
                              OpInBlackList(op_run_info) || GetExecutionMode() == kGraphMode ||
@@ -1097,7 +1098,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
 
   auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
-    CompileSingleOpGraph(op_compiler_info->graph_, device_context);
+    CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
   }
 
   std::vector<device::DeviceAddressPtr> device_address_list;
@@ -1161,10 +1162,11 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
-void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
+void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                                         bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  pynative::OpCompiler::GetInstance().BatchBuild({graph}, device_context);
+  pynative::OpCompiler::GetInstance().BatchBuild({graph}, device_context, is_dynamic_shape);
 }
 
 void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes,

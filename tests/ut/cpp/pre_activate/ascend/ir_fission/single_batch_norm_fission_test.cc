@@ -40,6 +40,8 @@ TEST_F(TestHWSingleBatchNormFission, test_fission) {
   for (size_t i = 0; i < 4; ++i) {
     args_spec_list.push_back(y_abstract);
   }
+  bool origin_mindrt = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+  MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   auto kg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -50,6 +52,7 @@ TEST_F(TestHWSingleBatchNormFission, test_fission) {
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_single_batch_norm_fission", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+  MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_MINDRT, origin_mindrt);
 }
 
 TEST_F(TestHWSingleBatchNormFission, test_no_fission) {
@@ -63,6 +66,8 @@ TEST_F(TestHWSingleBatchNormFission, test_no_fission) {
   for (size_t i = 0; i < 4; ++i) {
     args_spec_list.push_back(y_abstract);
   }
+  bool origin_mindrt = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT);
+  MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
   auto kg = GetKernelGraph(g, args_spec_list);
   auto origin_graph = std::make_shared<session::KernelGraph>(*kg);
 
@@ -73,6 +78,7 @@ TEST_F(TestHWSingleBatchNormFission, test_no_fission) {
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
   EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
+  MsContext::GetInstance()->set_param<bool>(MS_CTX_ENABLE_MINDRT, origin_mindrt);
 }
 }  // namespace opt
 }  // namespace mindspore

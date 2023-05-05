@@ -41,6 +41,16 @@ abstract::ShapePtr AvgPoolGradInferShape(const PrimitivePtr &primitive,
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x_shape = x->BuildShape();
   MS_EXCEPTION_IF_NULL(x_shape);
+  auto value = x->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  if (x->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
+    // The first input is Tensor(convert from a tuple), the value of Tuple is the real "x_origin" shape.
+    auto check_shape = x_shape->cast<abstract::ShapePtr>()->shape();
+    auto x_origin = CheckAndConvertUtils::CheckTensorIntValue("x_origin", value, prim_name);
+    if (check_shape != x_origin) {
+      return std::make_shared<abstract::Shape>(x_origin);
+    }
+  }
   auto shape_element = x_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
@@ -79,6 +89,8 @@ class MIND_API AGAvgPoolGradInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return AvgPoolGradInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(AvgPoolGrad, prim::kPrimAvgPoolGrad, AGAvgPoolGradInfer, false);

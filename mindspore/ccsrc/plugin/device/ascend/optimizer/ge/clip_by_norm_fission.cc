@@ -30,13 +30,20 @@ ShapeVector GetOutputInferShape(const AnfNodePtr &node) {
   return shape;
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
+ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
-  auto new_node = std::make_shared<ValueNode>(value_ptr);
-  MS_EXCEPTION_IF_NULL(new_node);
-  auto value_abstract = value_ptr->ToAbstract();
-  new_node->set_abstract(value_abstract);
-  return new_node;
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph == nullptr) {
+    auto new_node = std::make_shared<ValueNode>(value_ptr);
+    MS_EXCEPTION_IF_NULL(new_node);
+    auto value_abstract = value_ptr->ToAbstract();
+    new_node->set_abstract(value_abstract);
+    return new_node;
+  } else {
+    ValueNodePtr value_node = kernel_graph->NewValueNode(value_ptr->ToAbstract(), value_ptr);
+    kernel_graph->AddValueNodeToGraph(value_node);
+    return value_node;
+  }
 }
 
 std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
@@ -85,10 +92,10 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   return range;
 }
 
-ValueNodePtr GetAxisNode(const AnfNodePtr &node) {
+ValueNodePtr GetAxisNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto range = GetAxis(node);
-  auto axis_node = CreateValueNode(MakeValue(range));
+  auto axis_node = CreateValueNode(graph, MakeValue(range));
   MS_EXCEPTION_IF_NULL(axis_node);
   return axis_node;
 }
@@ -121,7 +128,7 @@ AnfNodePtr ClipByNormFissionGe::CreateSquareNode(const FuncGraphPtr &func_graph,
 AnfNodePtr ClipByNormFissionGe::CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
                                                     const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
                                                     const TypeId &type_id) const {
-  auto axis_node = GetAxisNode(clip_by_norm);
+  auto axis_node = GetAxisNode(func_graph, clip_by_norm);
 
   MS_EXCEPTION_IF_NULL(axis_node);
   auto reduce_sum = CreateCNodeBase(func_graph, {square, axis_node}, kReduceSumOpName, square);
@@ -132,6 +139,10 @@ AnfNodePtr ClipByNormFissionGe::CreateReduceSumNode(const FuncGraphPtr &func_gra
   auto axis_value = clip_by_norm_prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(true), reduce_sum);
+  auto input_names = std::vector<std::string>{"input_x", "axis"};
+  auto output_names = std::vector<std::string>{"y"};
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), reduce_sum);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), reduce_sum);
   // Get `axis` vector
   const auto dim = shape_vec.size();
   std::vector<int64_t> axis;
@@ -170,7 +181,7 @@ AnfNodePtr ClipByNormFissionGe::CreateConstantNode(const FuncGraphPtr &func_grap
                                                    const std::string &op_name) const {
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape_vec);
   MS_EXCEPTION_IF_NULL(func_graph);
-  ValueNodePtr value_node = CreateValueNode(tensor);
+  ValueNodePtr value_node = CreateValueNode(func_graph, tensor);
   MS_EXCEPTION_IF_NULL(value_node);
   auto constant_node = CreateCNodeBase(func_graph, {value_node}, op_name, inp);
   MS_EXCEPTION_IF_NULL(constant_node);

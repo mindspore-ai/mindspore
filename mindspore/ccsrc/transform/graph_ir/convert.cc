@@ -147,6 +147,11 @@ std::vector<T> GetAllValues(const ValuePtr &value) {
 
 TypeId GetElemType(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor_ptr = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    return tensor_ptr->data_type();
+  }
   if (!value->isa<ValueList>() && !value->isa<ValueTuple>()) {
     return value->type()->type_id();
   }
@@ -165,6 +170,17 @@ ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
     return nullptr;
   }
   if (src_type == kNumberTypeInt64) {
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor_ptr = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
+      auto tensor_size = tensor_ptr->Size() / sizeof(int64_t);
+      int64_t *data = static_cast<int64_t *>(tensor_ptr->data_c());
+      std::vector<int32_t> v;
+      for (size_t i = 0; i < tensor_size; i++) {
+        (void)v.emplace_back(LongToInt(data[i]));
+      }
+      return MakeValue(v);
+    }
     auto values = GetAllValues<int64_t>(value);
     return CreateNewValue<int64_t>(value, values, dst_type);
   } else {
@@ -2601,24 +2617,6 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
   return nullptr;
 }
 
-void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
-  auto value_ptr = node->input(2)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  std::ostringstream ss;
-  ss << "op" << value_ptr.get();
-  op_draw_name_[value_ptr.get()] = ss.str();
-  compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  auto input_value = value_ptr->value();
-  auto int64_value = GetValue<int64_t>(input_value);
-  OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
-  MS_EXCEPTION_IF_NULL(adpt);
-  auto op = adpt->generate(value_ptr);
-  (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
-  op_cache_[value_ptr.get()] = op;
-}
-
 AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {
   auto func_graph = input->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -2862,6 +2860,9 @@ void DfGraphConvertor::ConvertConv2D(const CNodePtr &node) {
     if (value->isa<StringImm>()) {
       pad_mode = GetValue<std::string>(value);
       (void)std::transform(pad_mode.cbegin(), pad_mode.cend(), pad_mode.begin(), toupper);
+      if (pad_mode != "SAME" && pad_mode != "VALID") {
+        return;
+      }
     } else if (auto it = pad_mode_map.find(GetValue<int64_t>(value)); it != pad_mode_map.cend()) {
       // 'pad_mode' attr could be an enumeration
       pad_mode = it->second;
@@ -2946,8 +2947,6 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
 
   const mindspore::HashMap<std::string, std::function<void(decltype(this), const CNodePtr &)>>
     auxiliary_node_converters{
-      // Convert TopK second input from int64 to int32.
-      {prim::kPrimTopK->name(), &DfGraphConvertor::ConvertTopK},
       // Convert Reshape add const input to attr(shape)
       {prim::kPrimReshape->name(), &DfGraphConvertor::ConvertReshape},
       {prim::kPrimOCRRecognitionPreHandle->name(), &DfGraphConvertor::ConvertOCRRecPreHandle},

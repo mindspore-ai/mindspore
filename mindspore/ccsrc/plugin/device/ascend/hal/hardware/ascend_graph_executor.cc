@@ -274,7 +274,7 @@ void AscendGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) const
   // Insert profiling point, this function must be executed after assign stream.
   device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
 #endif
-  device_context_->kernel_executor_->CreateKernel(graph->execution_order());
+  device_context_->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
   AllocateGraphMemory(NOT_NULL(graph));
   LoadModel(NOT_NULL(graph));
   AssignOutputNopNodeDeviceAddress(graph, device_context_);

@@ -56,8 +56,8 @@ MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
 
 // df graph manager
 std::shared_ptr<transform::GraphRunner> GetGraphRunner();
-BACKEND_EXPORT std::shared_ptr<ge::Session> GetGeSession();
-BACKEND_EXPORT void SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr);
+BACKEND_EXPORT std::shared_ptr<::ge::Session> GetGeSession();
+BACKEND_EXPORT void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr);
 BACKEND_EXPORT GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options);
 BACKEND_EXPORT void SetGraphRunner(const GraphRunnerPtr &runner);
 BACKEND_EXPORT void ClearGraph();
@@ -83,7 +83,7 @@ BACKEND_EXPORT DfGraphPtr GetSaveCheckpointGraph(const DfGraphConvertorPtr &conv
 BACKEND_EXPORT DfGraphPtr GetBroadcastGraph(const DfGraphConvertorPtr &converter);
 
 // new session
-BACKEND_EXPORT std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
+BACKEND_EXPORT std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
 
 Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
                 const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
