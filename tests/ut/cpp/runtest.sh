@@ -34,6 +34,8 @@ export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
 ## set op info config path
 export MINDSPORE_OP_INFO_PATH=${PROJECT_PATH}/tests/ut/cpp/stub/config/op_info.config
+## set jit modules path in graph mode
+export MS_DEV_JIT_DIR=${PROJECT_PATH}
 
 ## prepare data for dataset & mindrecord
 cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/

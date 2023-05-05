@@ -19,6 +19,9 @@ from mindspore import nn, context, jit, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
+np_array_data = np.array([1, 2, 3])
+
+
 def test_use_numpy_constant():
     class Net(nn.Cell):
         def __init__(self):
@@ -72,3 +75,16 @@ def test_np_calculate():
         z = Tensor(y)
         return z
     assert np.all(np_calculate().asnumpy() == np.array([1, 1, 0, 0, 1]))
+
+
+def test_np_array():
+    """
+    Feature: Fallback feature.
+    Description: Support numpy calculation.
+    Expectation: No exception.
+    """
+    @jit
+    def func():
+        return Tensor(np_array_data)
+
+    assert np.all(func().asnumpy() == np_array_data)

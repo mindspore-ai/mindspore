@@ -17,8 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, jit
-from . import test_graph_fallback
+from mindspore import Tensor, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -112,20 +111,3 @@ def test_fallback_self_method():
     out = net()
     expect = np.array([4, 6, 8])
     assert np.all(out.asnumpy() == expect)
-
-
-def test_fallback_import_modules():
-    """
-    Feature: JIT Fallback
-    Description: Check whether the call to the third-party library is correct. It has nothing to do with class.
-    Expectation: No exception.
-    """
-    @jit
-    def use_imported_module(x, y):
-        out = test_graph_fallback.add_func(x, y)
-        return out
-
-    x = Tensor(2, dtype=mstype.int32)
-    y = Tensor(3, dtype=mstype.int32)
-    out = use_imported_module(x, y)
-    print(out)
