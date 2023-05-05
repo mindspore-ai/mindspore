@@ -257,6 +257,7 @@ mindspore.Tensor
     mindspore.Tensor.resize
     mindspore.Tensor.reverse
     mindspore.Tensor.reverse_sequence
+    mindspore.Tensor.roll
     mindspore.Tensor.round
     mindspore.Tensor.rot90
     mindspore.Tensor.rsqrt
@@ -309,6 +310,7 @@ mindspore.Tensor
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
     mindspore.Tensor.tril
+    mindspore.Tensor.triu
     mindspore.Tensor.true_divide
     mindspore.Tensor.trunc
     mindspore.Tensor.unbind

@@ -1592,7 +1592,7 @@ class MatrixBandPart(Primitive):
         Tensor, has the same type and shape as `x`.
 
     Supported Platforms:
-
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> matrix_band_part = ops.MatrixBandPart()

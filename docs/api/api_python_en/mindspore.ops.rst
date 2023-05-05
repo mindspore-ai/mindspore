@@ -401,6 +401,7 @@ Linear Algebraic Functions
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
+    mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
@@ -548,6 +549,7 @@ Array Operation
     mindspore.ops.reshape
     mindspore.ops.reverse
     mindspore.ops.reverse_sequence
+    mindspore.ops.roll
     mindspore.ops.scatter
     mindspore.ops.scatter_nd
     mindspore.ops.select
@@ -576,6 +578,7 @@ Array Operation
     mindspore.ops.tensor_split
     mindspore.ops.tile
     mindspore.ops.tril
+    mindspore.ops.triu
     mindspore.ops.transpose
     mindspore.ops.unbind
     mindspore.ops.unique
