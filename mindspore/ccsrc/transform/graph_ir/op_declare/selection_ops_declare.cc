@@ -44,7 +44,7 @@ REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
 INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
 ATTR_MAP(Tile) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Tile) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Tile, "TileV1", ADPT_DESC(Tile))
+REG_ADPT_DESC(Tile, kNameTile, ADPT_DESC(Tile))
 
 INPUT_MAP(Slice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}, {3, INPUT_DESC(size)}};
 ATTR_MAP(Slice) = EMPTY_ATTR_MAP;
@@ -68,7 +68,7 @@ INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(TileD) = {{2, ATTR_DESC(multiples, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(TileD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TileD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(TileD, kNameTile, ADPT_DESC(TileD))
+REG_ADPT_DESC(TileD, kNameTileD, ADPT_DESC(TileD))
 
 // OneHot
 INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
