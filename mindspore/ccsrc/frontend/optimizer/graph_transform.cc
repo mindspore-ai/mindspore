@@ -38,10 +38,24 @@ bool IsTuple(const AnfNodePtr &param) {
   return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>();
 }
 
-bool IsConstantTuple(const AnfNodePtr &param) {
-  auto abs = param->abstract();
-  return abs != nullptr && abs->isa<abstract::AbstractTuple>() &&
-         !abs->cast<abstract::AbstractTuplePtr>()->dynamic_len();
+bool IsSequenceExpandable(const AbstractBasePtr &abs) {
+  if (abs == nullptr) {
+    return false;
+  }
+  auto abs_seq = abs->cast<abstract::AbstractTuplePtr>();
+  if (abs_seq == nullptr) {
+    return false;
+  }
+  // Not expand SparseTensor.
+  if (common::AnfAlgo::CheckAbsSparseTensor(abs)) {
+    return false;
+  }
+  // Not expand dynamic len sequence.
+  if (abs_seq->dynamic_len()) {
+    return false;
+  }
+  // Not expand node which is arg of dynamic len parameter.
+  return !abs_seq->dyn_len_arg();
 }
 
 bool ParamContainSparseTensor(const AnfNodePtr &param) {
@@ -54,7 +68,8 @@ bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
 }
 
 bool FuncGraphHasConstantTupleInput(const FuncGraphPtr &fg) {
-  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsConstantTuple);
+  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(),
+                     [](const AnfNodePtr &param) { return IsSequenceExpandable(param->abstract()); });
 }
 
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
@@ -67,7 +82,7 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
     idx->set_abstract(abstract_scalar);
     auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     elem_node->set_abstract(elements[i]);
-    if (elements[i]->isa<abstract::AbstractTuple>()) {
+    if (IsSequenceExpandable(elements[i])) {
       auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());
       (void)tuple_node_expanded.insert(tuple_node_expanded.cend(), nodes.cbegin(), nodes.cend());
     } else {

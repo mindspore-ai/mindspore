@@ -183,6 +183,17 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
                          return arg;
                        });
 }
+
+// These abstract sequence can't handled by DDE.
+bool IsInvalidAbstractSequence(const AbstractSequencePtr &abs) {
+  if (abs == nullptr || abs->sequence_nodes() == nullptr || abs->sequence_nodes()->empty()) {
+    return true;
+  }
+  if (abs->dyn_len_arg() || abs->dynamic_len()) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
@@ -674,6 +685,10 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   MS_EXCEPTION_IF_NULL(old_input_abs);
   auto old_sequence_abs = dyn_cast<AbstractSequence>(old_input_abs);
   MS_EXCEPTION_IF_NULL(old_sequence_abs);
+  // Dynamic len abstract sequence no need purify.
+  if (IsInvalidAbstractSequence(old_sequence_abs)) {
+    return;
+  }
 
   std::vector<size_t> dead_node_positions;
   ValuePtrList elements;
@@ -702,7 +717,6 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
       (void)elements_abs.emplace_back(old_sequence_abs->elements()[i]);
     }
   }
-
   auto new_sequence_value = std::make_shared<T>(elements);
   auto new_input = NewValueNode(new_sequence_value);
   auto new_sequence_abs = std::make_shared<S>(elements_abs);
@@ -710,6 +724,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
   new_sequence_abs->set_sequence_nodes(sequence_nodes);
   new_input->set_abstract(new_sequence_abs);
+
   // Always reset tuple value node's use flags as non-use.
   SetSequenceNodeElementsUseFlags(new_input, flags);
   MS_LOG(DEBUG) << "Update ValueTuple/ValueList, " << old_input->DebugString() << " --> " << new_input->DebugString()
@@ -720,10 +735,6 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
     (void)specializer->dead_node_list().emplace_back(std::pair(new_input, pos));
   }
   cnode->set_input(index, new_input);
-}
-
-bool CheckAbstractSequence(const AbstractSequencePtr &abs) {
-  return abs != nullptr && abs->sequence_nodes() != nullptr && !abs->sequence_nodes()->empty();
 }
 }  // namespace
 
@@ -741,7 +752,7 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
                       [&sequence_abstract_list](const AnfNodePtr &input) {
                         const AbstractBasePtr input_abs = input->abstract();
                         AbstractSequencePtr input_sequence_abs = dyn_cast<AbstractSequence>(input_abs);
-                        if (!CheckAbstractSequence(input_sequence_abs)) {
+                        if (IsInvalidAbstractSequence(input_sequence_abs)) {
                           return;
                         }
                         // Not call PurifyElements() here, just add to list.
@@ -751,7 +762,7 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   // Add CNode if it's sequence abstract, and sequence nodes exist.
   const AbstractBasePtr abs = cnode->abstract();
   AbstractSequencePtr sequence_abs = dyn_cast<AbstractSequence>(abs);
-  if (!CheckAbstractSequence(sequence_abs)) {
+  if (IsInvalidAbstractSequence(sequence_abs)) {
     return;
   }
   // Not call PurifyElements() here, just add to list.
