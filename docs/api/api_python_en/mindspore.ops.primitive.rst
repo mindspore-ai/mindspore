@@ -490,6 +490,7 @@ Array Operation
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
+    mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixSetDiagV3
