@@ -3823,9 +3823,9 @@ class UpsampleTrilinear3D(Primitive):
     Args:
         output_size (Union[tuple[int], list[int]], optional):  A tuple or list of 3 int
             elements :math:`(output\_depth, output\_height, output\_width)`.
-            Defaults to ``None`` . Only one of `scales` and `output_size` can be specified.
+            Default: ``None`` . Only one of `scales` and `output_size` can be specified.
         scales (Union[tuple[float], list[float]], optional): A tuple or list of 3 float
-           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to ``None`` .
+           elements :math:`(scale\_depth, scale\_height, scale\_width)`. Default: ``None`` .
         align_corners (bool, optional): An optional bool. Defaults to ``False``.
             If ``True`` , the input and output tensors are aligned by the center points of their corner pixels,
             preserving the values at the corner pixels.
@@ -9948,7 +9948,7 @@ class GridSampler2D(Primitive):
 
         align_corners (bool, optional): An optional bool. When set to ``True`` ,
             the centers of the corner pixels of the input
-            and output tensors are aligned. When set to ``False`` , it is not aligned. Defaults to ``False`` .
+            and output tensors are aligned. When set to ``False`` , it is not aligned. Default: ``False`` .
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of

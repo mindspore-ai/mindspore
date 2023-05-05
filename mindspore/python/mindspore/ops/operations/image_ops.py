@@ -191,11 +191,11 @@ class ExtractGlimpse(Primitive):
         centered (bool, optional): An optional `bool`. Indicates if the offset coordinates
             are centered relative to the image, in which case the (0, 0) offset is relative to the center of
             the center of the input images. If ``False`` , the (0, 0) offset corresponds to the upper left corner
-            of the input images. Defaults to ``True`` .
+            of the input images. Default: ``True`` .
         normalized (bool, optional): An optional `bool`. indicates if the offset
-            coordinates are normalized. Defaults to ``True`` .
+            coordinates are normalized. Default: ``True`` .
         uniform_noise (bool, optional): An optional `bool`. indicates if the noise should be
-            generated using a uniform distribution(aka. Gaussian distribution). Defaults to ``True`` .
+            generated using a uniform distribution(aka. Gaussian distribution). Default: ``True`` .
         noise (str, optional): An optional string specifies the type of noise to fill.
             The window is determined by size and offsets.
             When the window and input image tensor don't not overlap, random noise is filled.
@@ -875,7 +875,7 @@ class ResizeArea(Primitive):
             to align the centers of the four corner pixels of the input and output tensors.
             When this flag is set to ``True`` , the corner pixels of the output tensor are aligned
             with the corner pixels of the input tensor, which preserves the values at the corner pixels.
-            Defaults: ``False`` .
+            Default: ``False`` .
 
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape
@@ -1190,7 +1190,7 @@ class ResizeV2(Primitive):
         coordinate_transformation_mode (str): Default is ``'half_pixel'`` . Describes how to transform the
             coordinate in the resized tensor to the coordinate in the original tensor. Other optional:
             ``'align_corners'`` . In ``'nearest'`` mode, coordinate_transformation_mode must be ``'half_pixel'`` .
-        mode (str): Defaults to ``'nearest'`` . Other optional: ``'linear'`` and ``'cubic'`` .
+        mode (str): Default: ``'nearest'`` . Other optional: ``'linear'`` and ``'cubic'`` .
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor which to resize, with shape [batch, channel, width, height]. Must be one of the
