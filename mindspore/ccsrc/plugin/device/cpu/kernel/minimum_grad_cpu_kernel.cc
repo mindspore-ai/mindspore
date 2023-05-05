@@ -153,6 +153,9 @@ void MinimumGradCpuKernelMod::MinimumGradRecTask(const T *x, const T *y, const T
       if (dim == dout_shape.size() - 1) {
         if (*(x + x_index + x_i) < *(y + y_index + y_i)) {
           *(dx + x_index + x_i) += *(dout + dout_index + i);
+        } else if (*(x + x_index + x_i) == *(y + y_index + y_i)) {
+          *(dx + x_index + x_i) += *(dout + dout_index + i) / 2;
+          *(dy + y_index + y_i) += *(dout + dout_index + i) / 2;
         } else {
           *(dy + y_index + y_i) += *(dout + dout_index + i);
         }
