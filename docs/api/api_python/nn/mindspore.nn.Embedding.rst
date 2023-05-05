@@ -13,10 +13,10 @@ mindspore.nn.Embedding
     参数：
         - **vocab_size** (int) - 词典的大小。
         - **embedding_size** (int) - 每个嵌入向量的大小。
-        - **use_one_hot** (bool) - 指定是否使用one-hot形式。默认值：False。
-        - **embedding_table** (Union[Tensor, str, Initializer, numbers.Number]) - embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `mindspore.common.initializer` 。默认值：'normal'。
-        - **dtype** (mindspore.dtype) - x的数据类型。默认值：mindspore.float32。
-        - **padding_idx** (int, None) - 将 `padding_idx` 对应索引所输出的嵌入向量用零填充。默认值：None。该功能已停用。
+        - **use_one_hot** (bool) - 指定是否使用one-hot形式。默认值： ``False`` 。
+        - **embedding_table** (Union[Tensor, str, Initializer, numbers.Number]) - embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `mindspore.common.initializer` 。默认值： ``'normal'`` 。
+        - **dtype** (mindspore.dtype) - x的数据类型。默认值： ``mindspore.float32`` 。
+        - **padding_idx** (int, None) - 将 `padding_idx` 对应索引所输出的嵌入向量用零填充。默认值： ``None`` 。该功能已停用。
 
     输入：
         - **x** (Tensor) - Tensor的shape为 :math:`(\text{batch_size}, \text{x_length})` ，其元素为整型值，并且元素数目必须小于等于vocab_size，否则相应的嵌入向量将为零。该数据类型可以是int32或int64。

@@ -31,15 +31,15 @@ mindspore.nn.GRU
         - **bidirectional** (bool) - 是否为双向GRU。如果bidirectional=True，则num_directions=2，为双向GRU。否则为1，单向GRU。默认值： ``False`` 。
 
     输入：
-        - **x** (Tensor) - 数据类型为mindspore.float32、shape为(seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的tensor。     
-        - **hx** (Tensor) - 数据类型为mindspore.float32、shape为(num_directions * `num_layers` , batch_size, `hidden_size` )的tensor。 `hx` 的数据类型必须与 `x` 相同。
+        - **x** (Tensor) - 数据类型为mindspore.float32、shape为 :math:`(seq\_len, batch\_size, `input\_size`)` 或 :math:`(batch\_size, seq\_len, `input\_size`)` 的tensor。     
+        - **hx** (Tensor) - 数据类型为mindspore.float32、shape为 :math:`(num\_directions * `num\_layers` , batch\_size, `hidden\_size` )` 的tensor。 `hx` 的数据类型必须与 `x` 相同。
         - **seq_length** (Tensor) - 输入batch中每个序列的长度。shape为 :math:`(\text{batch_size})` 的Tensor。默认值： ``None`` 。此输入指示填充前的真实序列长度，避免填充元素被用于计算隐藏状态而影响最终输出。当 `x` 含填充元素时，建议使用此输入。
 
     输出：
         Tuple，包含(`output`, `h_n`)的tuple。
 
-        - **output** (Tensor) - shape为(seq_len, batch_size, num_directions * `hidden_size`)或(batch_size, seq_len, num_directions * `hidden_size`)的Tensor。
-        - **hx_n** (Tensor) - shape为(num_directions * `num_layers`, batch_size, `hidden_size`)的Tensor。
+        - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * `hidden\_size`)` 或 :math:`(batch\_size, seq\_len, num\_directions * `hidden\_size`)` 的Tensor。
+        - **hx_n** (Tensor) - shape为 :math:`(num\_directions * `num\_layers`, batch\_size, `hidden\_size`)` 的Tensor。
 
     异常：
         - **TypeError** - `input_size` ， `hidden_size` 或 `num_layers` 不是整数。

@@ -11,7 +11,7 @@ mindspore.nn.TrainOneStepCell
     参数：
         - **network** (Cell) - 训练网络。只支持单输出网络。
         - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
-        - **sens** (numbers.Number) - 反向传播的输入，缩放系数。默认值为1.0。
+        - **sens** (numbers.Number) - 反向传播的输入，缩放系数。默认值为 ``1.0`` 。
 
     输入：
         - **\*inputs** (Tuple(Tensor)) - shape为 :math:`(N, \ldots)` 的Tensor组成的元组。

@@ -992,12 +992,13 @@ class Unfold(Cell):
             - ``"valid"``: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
-        - **x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
-          data type is number.
+        - **x** (Tensor) - A 4-D tensor whose shape is :math:`[in\_batch, in\_depth, in\_row, in\_col]`
+          and data type is number.
 
     Outputs:
         Tensor, a 4-D tensor whose data type is same as `x`,
-        and the shape is [out_batch, out_depth, out_row, out_col] where `out_batch` is the same as the `in_batch`.
+        and the shape is :math:`(out\_batch, out\_depth, out\_row, out\_col)`
+            where `out_batch` is the same as the `in_batch`.
 
         - :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
         - :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
@@ -1005,7 +1006,7 @@ class Unfold(Cell):
 
     Raises:
         TypeError: If `ksizes`, `strides` or `rates` is neither a tuple nor list.
-        ValueError: If shape of `ksizes`, `strides` or `rates` is not (1, x_row, x_col, 1).
+        ValueError: If shape of `ksizes`, `strides` or `rates` is not :math:`(1, x_row, x_col, 1)`.
         ValueError: If the second and third element of `ksizes`, `strides` or `rates` is less than 1.
 
     Supported Platforms:
