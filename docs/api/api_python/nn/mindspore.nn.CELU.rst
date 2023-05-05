@@ -13,7 +13,7 @@ mindspore.nn.CELU
     更多详情，请查看： `CELU <https://arxiv.org/abs/1704.07483>`_ 。
 
     参数：
-        - **alpha** (float) - CELU公式中的 :math:`\alpha` 值。默认值：1.0。
+        - **alpha** (float) - CELU公式中的 :math:`\alpha` 值。默认值： ``1.0`` 。
 
     输入：
         - **x** (Tensor) - CELU的输入。其数据类型为float16或float32，shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
@@ -24,5 +24,5 @@ mindspore.nn.CELU
     异常：
         - **TypeError** - 如果 `α` 不是float。
         - **ValueError** - 如果 `α` 的值为0。
-        - **TypeError** - 如果 输入 `x` 不是Tensor。
+        - **TypeError** - 如果输入 `x` 不是Tensor。
         - **TypeError** - 如果输入 `x` 的数据类型既不是float16也不是float32。

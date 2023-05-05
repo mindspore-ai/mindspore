@@ -34,7 +34,7 @@ mindspore.nn.MultiheadAttention
         - **key_padding_mask** (Tensor, optional) - 如果指定此值，则表示Shape为 :math:`(N, S)`的掩码将被用于 `key`。当输入非Batch数据时，Shape为： :math:`(S)` 。
           如果输入Tensor为Bool类型，则 `key` 中对应为 ``True`` 的位置将在Attention计算时被忽略。如果输入Tensor为Float类型，则将直接与 `key` 相加。默认值：``None``。
         - **need_weights** (bool) - 是否需要返回 `attn_output_weights`，如果为 ``True``，则输出包含 `attn_output_weights`。默认值：``True``。
-        - **attn_mask** (Tensor, optional) - 如果指定此值，则表示Shape为 :math:`(L, S)` 或 :math:`(N\cdot\text{num\_heads}, L, S)` 的掩码将被用于Attention计算。其中 :math:`N` 为batch size，
+        - **attn_mask** (Tensor, optional) - 如果指定此值，则表示Shape为 :math:`(L, S)` 或 :math:`(N\cdot\text{num_heads}, L, S)` 的掩码将被用于Attention计算。其中 :math:`N` 为batch size，
           :math:`L` 为目标序列长度，:math:`S` 为源序列长度。如果输入为2维矩阵，则将自动沿batch维广播至3维矩阵。若为3维矩阵，则允许沿batch维使用不同的掩码。如果输入Tensor为Bool类型，则值为 ``True`` 对应位置允许被注意力计算。如果输入Tensor为Float类型，则将直接与注意力权重相加。默认值：``None``。
         - **average_attn_weights** (bool) - 如果为 ``True``， 则返回值 `attn_weights` 为注意力头的平均值。如果为 ``False``，则 ``attn_weights`` 分别返回每个注意力头的值。
           本参数仅在 `need_weights=True` 时生效。默认值： ``True`` 。
@@ -46,5 +46,5 @@ mindspore.nn.MultiheadAttention
           当 `batch_first=True` 时，Shape为 :math:`(N, L, E)`。其中， :math:`L` 为目标序列的长度， :math:`N` 为batch size， :math:`E` 为模型的总维数 `embed_dim`。
         - **attn_output_weights** - 仅当 ``need_weights=True`` 时返回。如果 `average_attn_weights=True`，则返回值 `attn_weights` 为注意力头的平均值。当输入非Batch数据时，
           Shape为： :math:`(L, S)` ，当输入Batch数据时，Shape为 :math:`(N, L, S)`。其中 :math:`N` 为batch size， :math:`L` 为目标序列的长度，:math:`S` 为源序列长度。
-          如果 `average_attn_weights=False` ，分别返回每个注意力头的值。当输入非Batch数据时，Shape为： :math:`(\text{num\_heads}, L, S)` ，当输入Batch数据时，Shape为
-          :math:`(N, \text{num\_heads}, L, S)`。
+          如果 `average_attn_weights=False` ，分别返回每个注意力头的值。当输入非Batch数据时，Shape为： :math:`(\text{num_heads}, L, S)` ，当输入Batch数据时，Shape为
+          :math:`(N, \text{num_heads}, L, S)`。

@@ -93,7 +93,7 @@ class MultiheadAttention(Cell):
         - **need_weights** (bool): Whether returns `attn_output_weights` in addition to `attn_outputs`.
           Default: ``True``.
         - **attn_mask** (Tensor, optional): If specified, a 2D or 3D mask preventing attention to certain positions.
-          Must be of shape :math:`(L, S)` or :math:`(N\cdot\text{num\_heads}, L, S)`, where :math:`N` is the
+          Must be of shape :math:`(L, S)` or :math:`(N\cdot\text{num_heads}, L, S)`, where :math:`N` is the
           batch size, :math:`L` is the target sequence length, and :math:`S` is the source sequence length.
           A 2D mask will be broadcasted across the batch while a 3D mask allows for a different mask for each entry
           in the batch. Binary, byte, and float masks are supported. For a binary mask, a ``True`` value indicates
@@ -116,8 +116,8 @@ class MultiheadAttention(Cell):
           :math:`(N, L, S)` when input is batched, where :math:`N` is the batch size, :math:`L` is
           the target sequence length, and :math:`S` is the source sequence length.
           If `average_attn_weights=False`, returns attention weights per
-          head of shape :math:`(\text{num\_heads}, L, S)` when input is unbatched or
-          :math:`(N, \text{num\_heads}, L, S)` when input is batched.
+          head of shape :math:`(\text{num_heads}, L, S)` when input is unbatched or
+          :math:`(N, \text{num_heads}, L, S)` when input is batched.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

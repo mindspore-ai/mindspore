@@ -16,9 +16,9 @@ mindspore.nn.Conv2dTranspose
         - **stride** (Union[int, tuple[int]]) - 二维卷积核的移动步长。数据类型为整型或两个整型的tuple。一个整数表示在高度和宽度方向的移动步长均为该值。两个整数的tuple分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
         - **pad_mode** (str) - 指定填充模式。可选值为 ``"same"`` 、 ``"valid"`` 、 ``"pad"`` 。默认值： ``"same"`` 。
 
-          - **same**：输出的高度和宽度分别与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
-          - **valid**：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
-          - **pad**：对输入进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
+          - ``"same"`` ：输出的高度和宽度分别与输入整除 `stride` 后的值相同。若设置该模式，`padding` 的值必须为0。
+          - ``"valid"`` ：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
+          - ``"pad"`` ：对输入进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union[int, tuple[int]]) - 输入的高度和宽度方向上填充的数量。数据类型为整型或包含四个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有四个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。值应该要大于等于0，默认值： ``0`` 。
         - **output_padding** (Union[int, tuple[int]]) - 输出的高度和宽度方向上填充的数量。数据类型为整型或包含两个整数的tuple。如果 `output_padding` 是一个整数，那么下、右的填充都等于 `output_padding` 。如果 `output_padding` 是一个有两个整数的tuple，那么下、右的填充分别等于 `output_padding[0]` 、 `output_padding[1]` 。如果 `output_padding` 不为0， `pad_mode` 必须为 `pad` 。 `output_padding` 取值范围为 `[0, max(stride, dilation))` ，默认值： ``0`` 。

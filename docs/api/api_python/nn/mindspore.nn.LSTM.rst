@@ -43,7 +43,7 @@ mindspore.nn.LSTM
     输出：
         Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。
 
-        - **output** (Tensor) - 形状为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
+        - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
         - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。
 
     异常：

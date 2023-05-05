@@ -18,8 +18,8 @@ mindspore.nn.Hardtanh
         在Ascend硬件上，float16数据类型场景下会有偶现的精度误差较大的问题。
 
     参数：
-        - **min_val** (Union[int, float]) - 线性区域范围的最小值。默认值：-1.0。
-        - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值：1.0。
+        - **min_val** (Union[int, float]) - 线性区域范围的最小值。默认值： ``-1.0`` 。
+        - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值： ``1.0`` 。
 
     输入：
         - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持零到七维。在GPU平台上支持零到四维。
