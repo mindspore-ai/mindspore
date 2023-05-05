@@ -20,8 +20,22 @@ template <typename T>
 __global__ void CalLeftShiftKernel(size_t size, const T *inputx, const T *inputy, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T y_clamped = inputy[pos];
-    if ((y_clamped > (sizeof(T) * CHAR_BIT)) || (y_clamped < -(sizeof(T) * CHAR_BIT))) {
-      y_clamped = y_clamped % (sizeof(T) * CHAR_BIT);
+    T charbit = static_cast<T>(4) * CHAR_BIT;
+    if ((sizeof(T) * CHAR_BIT) < charbit) {
+      if (y_clamped > (sizeof(T) * CHAR_BIT) || y_clamped < -(sizeof(T) * CHAR_BIT)) {
+        if (y_clamped < (static_cast<T>(0))) {
+          y_clamped = (y_clamped % charbit) + charbit;
+          if (y_clamped == charbit) {
+            y_clamped = 0;
+          }
+        } else {
+          y_clamped = y_clamped % charbit;
+        }
+      }
+    } else {
+      if ((y_clamped > (sizeof(T) * CHAR_BIT)) || (y_clamped < -(sizeof(T) * CHAR_BIT))) {
+        y_clamped = y_clamped % (sizeof(T) * CHAR_BIT);
+      }
     }
     output[pos] = inputx[pos] << y_clamped;
   }
@@ -61,10 +75,22 @@ __global__ void BroadcastLeftShiftKernel(const size_t l0, const size_t l1, const
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
     T y_clamped = inputy[r_index];
-    if (y_clamped < static_cast<T>(0)) {
-      y_clamped = static_cast<T>(0);
-    } else if (y_clamped > sizeof(T) * CHAR_BIT - 1) {
-      y_clamped = sizeof(T) * CHAR_BIT - 1;
+    T charbit = static_cast<T>(4) * CHAR_BIT;
+    if ((sizeof(T) * CHAR_BIT) < charbit) {
+      if (y_clamped > (sizeof(T) * CHAR_BIT) || y_clamped < -(sizeof(T) * CHAR_BIT)) {
+        if (y_clamped < (static_cast<T>(0))) {
+          y_clamped = (y_clamped % charbit) + charbit;
+          if (y_clamped == charbit) {
+            y_clamped = 0;
+          }
+        } else {
+          y_clamped = y_clamped % charbit;
+        }
+      }
+    } else {
+      if ((y_clamped > (sizeof(T) * CHAR_BIT)) || (y_clamped < -(sizeof(T) * CHAR_BIT))) {
+        y_clamped = y_clamped % (sizeof(T) * CHAR_BIT);
+      }
     }
     output[pos] = inputx[l_index] << y_clamped;
   }
