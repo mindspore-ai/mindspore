@@ -1113,8 +1113,12 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
       constexpr int true_index = 2;
       constexpr int false_index = 3;
       const auto &inputs = cnode->cast_ptr<CNode>()->inputs();
-      buffer << ", true branch: " << inputs.at(true_index)->ToString()
-             << ", false branch: " << inputs.at(false_index)->ToString();
+      auto true_out = GetValueNode<FuncGraphPtr>(inputs.at(true_index))->output();
+      auto false_out = GetValueNode<FuncGraphPtr>(inputs.at(false_index))->output();
+      buffer << ", true branch: " << inputs.at(true_index)->ToString() << "\n"
+             << trace::GetDebugInfo(true_out->debug_info())
+             << "\n, false branch: " << inputs.at(false_index)->ToString() << "\n"
+             << trace::GetDebugInfo(false_out->debug_info());
     } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
       constexpr int branch_index = 2;
@@ -1122,9 +1126,13 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
       if (IsPrimitiveCNode(tuple_node, prim::kPrimMakeTuple)) {
         const auto &tuple_inputs = tuple_node->cast_ptr<CNode>()->inputs();
         for (size_t i = 1; i < tuple_inputs.size(); i++) {
-          buffer << ", branch" << i << ": " << tuple_inputs.at(i);
+          auto out_node = GetValueNode<FuncGraphPtr>(tuple_inputs.at(i))->output();
+          buffer << ", branch" << i << ": " << tuple_inputs.at(i)->ToString() << "\n"
+                 << trace::GetDebugInfo(out_node->debug_info());
         }
       }
+    } else {
+      buffer << trace::GetDebugInfo(node->debug_info());
     }
   }
   buffer << "\n";

@@ -443,17 +443,6 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
 }
 
 namespace {
-std::string GetIfTheOtherBranchName(const std::string &v) {
-  static mindspore::HashMap<std::string, std::string> pair_branch_name{{"true branch", "false branch"},
-                                                                       {"false branch", "true branch"}};
-  auto iter = pair_branch_name.find(v);
-  if (iter != pair_branch_name.end()) {
-    return iter->second;
-  } else {
-    return v;
-  }
-}
-
 std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::string &var, int start_line) {
   HashSet<FunctionBlock *> visited;
   std::vector<FunctionBlock *> todo_list = {};
@@ -493,7 +482,7 @@ void FunctionBlock::CheckVariableNotDefined(const std::pair<std::string, AnfNode
   }
   if ((not_defined_branch_name == "true branch") || (not_defined_branch_name == "false branch")) {
     oss << "The local variable '" << var << "' is not defined in " << not_defined_branch_name << ", but defined in "
-        << GetIfTheOtherBranchName(not_defined_branch_name) << ".\n";
+        << (not_defined_branch_name == "true branch" ? "false branch" : "true branch") << ".\n";
   }
   oss << GetVariableDefinedLocation(this, var, start_line);
   MS_EXCEPTION(UnboundLocalError) << oss.str();
@@ -516,9 +505,9 @@ std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &va
       }
     }
     if (undefined_symbol_flag) {
-      not_defined_branch = std::make_pair(prev->get_block_name(), temp_node);
+      not_defined_branch = std::make_pair(prev->block_name(), temp_node);
     } else {
-      defined_branch.push_back(std::make_pair(prev->get_block_name(), temp_node));
+      defined_branch.push_back(std::make_pair(prev->block_name(), temp_node));
     }
   }
   if (defined_branch.size() == 1) {
@@ -755,7 +744,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     stop_grad_node->debug_info()->set_location(nullptr);
   }
   if (depend_node->debug_info()) {
-    depend_node->debug_info()->set_location(nullptr);
+    depend_node->debug_info()->set_location(old_output->debug_info()->location());
   }
   // We add this attribute for @constexpr use scene, since we must infer them before other nodes.
   // That means isolated nodes will be evaluated first. It's not complete, but works in most scenes.

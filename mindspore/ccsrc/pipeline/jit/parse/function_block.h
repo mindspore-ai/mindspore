@@ -95,7 +95,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   bool is_break_continue_statement_inside() const { return is_break_continue_statement_inside_; }
   void SetBreakContinueStatementInside();
 
-  const std::string get_block_name() const { return block_name_; }
+  const std::string block_name() const { return block_name_; }
   void set_block_name(const std::string &block_name) { block_name_ = block_name; }
   void CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node);
   void CheckVariableNotDefined(const std::pair<std::string, AnfNodePtr> &not_defined_branch, const std::string &var);
