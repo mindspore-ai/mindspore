@@ -20,8 +20,22 @@ template <typename T>
 __global__ void CalRightShiftKernel(size_t size, const T *inputx, const T *inputy, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T y1 = inputy[pos];
-    if ((y1 > (sizeof(T) * CHAR_BIT)) || (y1 < -(sizeof(T) * CHAR_BIT))) {
-      y1 = y1 % (sizeof(T) * CHAR_BIT);
+    T charbit = static_cast<T>(4) * CHAR_BIT;
+    if ((sizeof(T) * CHAR_BIT) < charbit) {
+      if (y1 > (sizeof(T) * CHAR_BIT) || y1 < -(sizeof(T) * CHAR_BIT)) {
+        if (y1 < (static_cast<T>(0))) {
+          y1 = (y1 % charbit) + charbit;
+          if (y1 == charbit) {
+            y1 = 0;
+          }
+        } else {
+          y1 = y1 % charbit;
+        }
+      }
+    } else {
+      if ((y1 > (sizeof(T) * CHAR_BIT)) || (y1 < -(sizeof(T) * CHAR_BIT))) {
+        y1 = y1 % (sizeof(T) * CHAR_BIT);
+      }
     }
     output[pos] = inputx[pos] >> y1;
   }
@@ -60,7 +74,24 @@ __global__ void BroadcastRightShiftKernel(const size_t l0, const size_t l1, cons
     r_index += Index(m, r4) * r5 * r6;
     r_index += Index(n, r5) * r6;
     r_index += Index(o, r6);
-    T y1 = inputy[r_index] <= static_cast<T>(0) ? static_cast<T>(0) : inputy[r_index];
+    T y1 = inputy[r_index];
+    T charbit = static_cast<T>(4) * CHAR_BIT;
+    if ((sizeof(T) * CHAR_BIT) < charbit) {
+      if (y1 > (sizeof(T) * CHAR_BIT) || y1 < -(sizeof(T) * CHAR_BIT)) {
+        if (y1 < (static_cast<T>(0))) {
+          y1 = (y1 % charbit) + charbit;
+          if (y1 == charbit) {
+            y1 = 0;
+          }
+        } else {
+          y1 = y1 % charbit;
+        }
+      }
+    } else {
+      if ((y1 > (sizeof(T) * CHAR_BIT)) || (y1 < -(sizeof(T) * CHAR_BIT))) {
+        y1 = y1 % (sizeof(T) * CHAR_BIT);
+      }
+    }
     output[pos] = inputx[l_index] >> y1;
   }
 }
