@@ -497,6 +497,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   } else {
     cloned_func_graph = BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
   }
+  cloned_func_graph->set_has_side_effect_node(generated_func_graph->has_side_effect_node());
   func_graph_cache_[args_abs_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);
   engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
