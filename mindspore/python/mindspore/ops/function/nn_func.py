@@ -54,6 +54,9 @@ check_positive_int_sequence_const = constexpr(validator.check_positive_int_seque
 check_positive_float_const = constexpr(validator.check_positive_float)
 check_positive_float_sequence_const = constexpr(validator.check_positive_float_sequence)
 check_bool_const = constexpr(validator.check_bool)
+check_int_const = constexpr(validator.check_is_int)
+check_non_negative_float_const = constexpr(validator.check_non_negative_float)
+check_string_const = constexpr(validator.check_string)
 
 
 def adaptive_avg_pool2d(input, output_size):
@@ -3185,7 +3188,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
               \end{cases}
 
     Args:
-        input (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+        input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
             `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
@@ -3216,6 +3219,13 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> output = ops.cross_entropy(inputs, target)
     """
+    _check_is_tensor('input', input, "cross_entropy_loss")
+    _check_is_tensor('target', target, "cross_entropy_loss")
+    _check_is_tensor('weight', weight, "cross_entropy_loss")
+    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
+    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
+    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+
     class_dim = 0 if input.ndim == 1 else 1
     if target.dtype in [mstype.float32, mstype.float16]:
         return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
