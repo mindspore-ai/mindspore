@@ -50,13 +50,17 @@ TypePtr MultiMarginLossInferType(const PrimitivePtr &prim, const std::vector<Abs
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  if (input_args.size() == kInputIndex3 && input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
-    auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_type);
-    auto element = tensor_type->element();
-    MS_EXCEPTION_IF_NULL(element);
-    if (element->type_id() != kMetaTypeNone) {
-      (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
+  if (input_args.size() == kInputIndex3) {
+    if (input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
+      auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      auto element = tensor_type->element();
+      MS_EXCEPTION_IF_NULL(element);
+      if (element->type_id() != kMetaTypeNone) {
+        (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
+      }
+    } else if (!input_args[kInputIndex2]->isa<abstract::AbstractNone>()) {
+      MS_EXCEPTION(TypeError) << "For MultiMarginLoss, weight should be a tensor.";
     }
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
