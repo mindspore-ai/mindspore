@@ -136,6 +136,12 @@ AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEngin
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  for (size_t i = 0; i < input_args.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(input_args[i]->BuildShape());
+    if (input_args[i]->BuildShape()->IsDimZero()) {
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', input " << i << "'s shape should not be empty!";
+    }
+  }
   auto infer_type = CSRSparseMatrixToSparseTensorInferType(primitive, input_args);
   auto infer_shape = CSRSparseMatrixToSparseTensorInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
