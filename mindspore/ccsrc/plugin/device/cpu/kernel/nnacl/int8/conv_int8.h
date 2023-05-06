@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_CONV_INT8_H_
-#define MINDSPORE_NNACL_INT8_CONV_INT8_H_
+#ifndef NNACL_INT8_CONV_INT8_H_
+#define NNACL_INT8_CONV_INT8_H_
 
 #include <string.h>
 #ifdef ENABLE_NEON
@@ -41,4 +41,4 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, in
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_CONV_INT8_H_
+#endif  // NNACL_INT8_CONV_INT8_H_

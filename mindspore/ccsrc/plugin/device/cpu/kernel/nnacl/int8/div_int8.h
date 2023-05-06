@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_DIV_INT8_H_
-#define MINDSPORE_NNACL_INT8_DIV_INT8_H_
+#ifndef NNACL_INT8_DIV_INT8_H_
+#define NNACL_INT8_DIV_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -34,4 +34,4 @@ int DivScalarInt8(const int8_t *input0_data, const int8_t *input1_data, int8_t *
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_DIV_INT8_H_
+#endif  // NNACL_INT8_DIV_INT8_H_

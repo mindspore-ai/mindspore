@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_ARITHMETIC_SELF_INT8_H_
-#define MINDSPORE_NNACL_INT8_ARITHMETIC_SELF_INT8_H_
+#ifndef NNACL_INT8_ARITHMETIC_SELF_INT8_H_
+#define NNACL_INT8_ARITHMETIC_SELF_INT8_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -56,4 +56,4 @@ int Int8ElementReciprocal(const int8_t *input, int8_t *output, int element_size,
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_ARITHMETIC_SELF_INT8_H_
+#endif  // NNACL_INT8_ARITHMETIC_SELF_INT8_H_

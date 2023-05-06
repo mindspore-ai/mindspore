@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
-#define MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
+#ifndef NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
+#define NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
 #include <math.h>
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
@@ -155,4 +155,4 @@ static inline float32x4_t MS_VMLAL_F16(float16x4_t x, float16x4_t dy, float32x4_
   return vmlaq_f32(sum, x_fp32, dy_fp32);
 }
 
-#endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
+#endif  // NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_CONV1X1_INT8_H_
-#define MINDSPORE_NNACL_INT8_CONV1X1_INT8_H_
+#ifndef NNACL_INT8_CONV1X1_INT8_H_
+#define NNACL_INT8_CONV1X1_INT8_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -43,4 +43,4 @@ void Conv1x1Int8Opt(const int8_t *packed_input, const int8_t *packed_weight, int
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_CONV1X1_INT8_H_
+#endif  // NNACL_INT8_CONV1X1_INT8_H_

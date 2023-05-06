@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_CONV_DEPTHWISE_H_
-#define MINDSPORE_NNACL_INT8_CONV_DEPTHWISE_H_
+#ifndef NNACL_INT8_CONV_DEPTHWISE_H_
+#define NNACL_INT8_CONV_DEPTHWISE_H_
 
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
@@ -46,4 +46,4 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_CONV_DEPTHWISE_H_
+#endif  // NNACL_INT8_CONV_DEPTHWISE_H_

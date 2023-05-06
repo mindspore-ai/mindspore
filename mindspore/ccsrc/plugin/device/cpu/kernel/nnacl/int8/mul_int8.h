@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_MUL_INT8_H_
-#define MINDSPORE_NNACL_INT8_MUL_INT8_H_
+#ifndef NNACL_INT8_MUL_INT8_H_
+#define NNACL_INT8_MUL_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/mul_parameter.h"
@@ -36,4 +36,4 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_MUL_INT8_H_
+#endif  // NNACL_INT8_MUL_INT8_H_

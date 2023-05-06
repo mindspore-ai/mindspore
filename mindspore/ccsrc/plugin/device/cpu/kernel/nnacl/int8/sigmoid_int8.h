@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_Sigmoid_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_Sigmoid_INT8_H_
+#ifndef NNACL_INT8_SIGMOID_INT8_H_
+#define NNACL_INT8_SIGMOID_INT8_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -29,4 +29,4 @@ int SigmoidInt8(const int8_t *src, int length, int8_t *dst, int8_t *table);
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_Sigmoid_INT8_H_
+#endif  // NNACL_INT8_SIGMOID_INT8_H_

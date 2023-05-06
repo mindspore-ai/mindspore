@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_HSWISH_INT8_H_
-#define MINDSPORE_NNACL_INT8_HSWISH_INT8_H_
+#ifndef NNACL_INT8_HSWISH_INT8_H_
+#define NNACL_INT8_HSWISH_INT8_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -40,4 +40,4 @@ int HSwishInt8(const int8_t *src, int length, int8_t *dst, const HswishQuantArg 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_HSWISH_INT8_H_
+#endif  // NNACL_INT8_HSWISH_INT8_H_

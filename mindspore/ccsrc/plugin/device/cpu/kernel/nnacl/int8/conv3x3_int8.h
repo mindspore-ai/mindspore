@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_CONV_INT8_H_
-#define MINDSPORE_NNACL_INT8_CONV_INT8_H_
+#ifndef NNACL_INT8_CONV_INT8_H_
+#define NNACL_INT8_CONV_INT8_H_
 
 #include <string.h>
 #ifdef ENABLE_NEON
@@ -45,4 +45,4 @@ void Conv3x3Int8(const int16_t *input_data, const int16_t *transed_weight, const
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_CONV_INT8_H_
+#endif  // NNACL_INT8_CONV_INT8_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SCALE_INT8_H_
-#define MINDSPORE_NNACL_SCALE_INT8_H_
+#ifndef NNACL_SCALE_INT8_H_
+#define NNACL_SCALE_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/scale.h"
@@ -32,4 +32,4 @@ void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_SCALE_INT8_H_
+#endif  // NNACL_SCALE_INT8_H_

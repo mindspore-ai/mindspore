@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_INT8_ARITHMETIC_INT8_H_
-#define MINDSPORE_NNACL_INT8_ARITHMETIC_INT8_H_
+#ifndef NNACL_INT8_ARITHMETIC_INT8_H_
+#define NNACL_INT8_ARITHMETIC_INT8_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -48,4 +48,4 @@ int ElementGreaterEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_ARITHMETIC_INT8_H_
+#endif  // NNACL_INT8_ARITHMETIC_INT8_H_

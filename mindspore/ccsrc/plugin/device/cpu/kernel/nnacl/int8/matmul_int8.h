@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_MATMUL_H_
-#define MINDSPORE_NNACL_INT8_MATMUL_H_
+#ifndef NNACL_INT8_MATMUL_H_
+#define NNACL_INT8_MATMUL_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -90,4 +90,4 @@ void MatmulInt8Neon32(const int8_t *a, const int8_t *b, int8_t *dst, int row, in
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_INT8_MATMUL_H_
+#endif  // LITE_SRC_BACKEND_ARM_NNACL_INT8_MATMUL_H_

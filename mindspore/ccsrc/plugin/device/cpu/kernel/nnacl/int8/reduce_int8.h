@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_REDUCE_INT8_H_
-#define MINDSPORE_NNACL_INT8_REDUCE_INT8_H_
+#ifndef NNACL_INT8_REDUCE_INT8_H_
+#define NNACL_INT8_REDUCE_INT8_H_
 
 #include "nnacl/int8/quantize.h"
 
@@ -67,4 +67,4 @@ int ReduceSumSquareInt8(const int outer_size, const int inner_size, const int ax
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_INT8_REDUCE_INT8_H_
+#endif  // NNACL_INT8_REDUCE_INT8_H_
