@@ -623,8 +623,7 @@ def positive(input):
         >>> print(ops.positive(x))
         [ -5.    1.5   3.  100. ]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For positive, the input must be a Tensor, but got {type(input)}")
+    _check_is_tensor("input", input, "positive")
     return input
 
 
@@ -649,8 +648,7 @@ def numel(input):
         >>> print(ops.numel(input_x))
         4
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For numel, the input must be a Tensor, but got {type(input)}")
+    _check_is_tensor("input", input, "numel")
     return input.size
 
 
@@ -2916,6 +2914,7 @@ def inverse(input):
         [[-2.   1. ]
          [ 1.5 -0.5]]
     """
+    _check_is_tensor("input", input, "inverse")
     if input.dtype in mstype.int_type:
         _get_cache_prim(P.Cast)()(input, mstype.float64)
     return _get_cache_prim(P.MatrixInverse)()(input)
@@ -4216,8 +4215,7 @@ def isreal(input):
         [ True False True]
     """
 
-    if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError("the input must be Tensor!")
+    _check_is_tensor("input", input, "isreal")
 
     # Note: Integral and Floating tensor values are always real
     fillv2_op = _get_cache_prim(P.FillV2)()
@@ -4894,11 +4892,8 @@ def logaddexp2(input, other):
         >>> print(output)
         [3. 4.32 8.02]
     """
-
-    if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError(f"For logaddexp2, the input must be a Tensor, but got {type(input)}.")
-    if not isinstance(other, (Tensor, Tensor_)):
-        raise TypeError(f"For logaddexp2, the other must be a Tensor, but got {type(other)}.")
+    _check_is_tensor("input", input, "logaddexp2")
+    _check_is_tensor("other", other, "logaddexp2")
     if not ops.is_floating_point(input) or not ops.is_floating_point(other):
         raise TypeError(f"For logaddexp2, the dtype of 'input' and 'other' must be float,"
                         f"but got {input.dtype} and {other.dtype}.")
@@ -4917,8 +4912,7 @@ def _check_and_canonicalize_axes(axes, ndim):
 
 
 def _check_var_std_input(input, ddof, keepdims, axis, cls_name):
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For {cls_name}, input should be Tensor, but got {type(input)}")
+    _check_is_tensor("input", input, cls_name)
     _check_attr_dtype("ddof", ddof, [int, bool], cls_name)
     _check_attr_dtype("keepdims", keepdims, [bool], cls_name)
     if axis is None:
@@ -10369,8 +10363,7 @@ def isposinf(input):
         [[False  True]
          [False  True]]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For isposinf, the input must be a Tensor, but got {type(input)}")
+    _check_is_tensor("input", input, "isposinf")
     return _is_sign_inf(input, tensor_gt)
 
 
@@ -10396,8 +10389,7 @@ def isneginf(input):
         [[ True False]
          [False  True]]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For isneginf, the input must be a Tensor, but got {type(input)}")
+    _check_is_tensor("input", input, "isneginf")
     return _is_sign_inf(input, tensor_lt)
 
 
@@ -10516,8 +10508,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
         >>> print(output2)
         [[1. 4. 3.]]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For nansum, input must be Tensor, but got {type(input)}.")
+    _check_is_tensor("input", input, "nansum")
     _check_repeat_in_axis(axis, input.ndim, "nansum")
     if input.is_complex():
         raise TypeError(f'For nansum, input are not supported complex type, but got {input.dtype}.')
