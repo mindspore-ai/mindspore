@@ -164,9 +164,9 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     return false;
   }
 
-  std::string graph_name = anf_graph->ToString();
+  auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
-  std::string checkpoint_name = "save." + GetGraphName(anf_graph);
+  std::string checkpoint_name = "save." + graph_name;
   const auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
@@ -179,66 +179,6 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
 
   return true;
-}
-
-std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-  transform::TensorOrderMap init_input_map;
-  std::vector<tensor::TensorPtr> init_input;
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      auto value = para->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      (void)(init_input_map.emplace(para->name(), value->cast<std::shared_ptr<tensor::Tensor>>()));
-    }
-  }
-  (void)std::transform(init_input_map.begin(), init_input_map.end(), std::back_inserter(init_input),
-                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
-  return transform::ConvertInputTensors(init_input, kOpFormat_NCHW);
-}
-
-void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
-  MS_LOG(DEBUG) << "ExecInitGraph start.";
-
-  std::vector<transform::GeTensorPtr> ge_outputs;
-  transform::RunOptions run_options;
-
-  run_options.name = "init_subgraph." + anf_graph->ToString();
-  if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
-    return;
-  }
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
-  }
-
-  std::vector<transform::GeTensorPtr> ge_tensors;
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    mindspore::ScopedLongRunning long_running;
-    transform::Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec " << run_options.name << " graph failed.";
-    }
-
-    MS_LOG(INFO) << "Exec " << run_options.name << " graph success.";
-
-    if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
-        (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
-      run_options.name = BROADCAST_GRAPH_NAME;
-      ge_tensors = GetInputTensors(anf_graph);
-      ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-      if (ret != transform::Status::SUCCESS) {
-        MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
-      }
-      MS_LOG(INFO) << "Exec broadcast graph success.";
-    }
-  }
 }
 
 void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_type, const ShapeVector &output_shape) {
@@ -363,8 +303,6 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
     kg->set_is_loop_count_sink(true);
   }
-  // copy init weight to device
-  RunGEInitGraph(kg);
   return true;
 }
 
@@ -372,7 +310,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                std::vector<tensor::Tensor> *outputs,
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto graph_name = graph->ToString();
+  auto graph_name = GetGraphName(graph);
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
   // copy input from device to host
   const auto &cur_inputs = graph->get_inputs();
@@ -391,6 +329,10 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   auto ge_inputs = transform::ConvertInputTensors(input_tensors, kOpFormat_NCHW);
 
   // call ge rungraph
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  if (kg != nullptr) {
+    graph_name = kg->GetFuncGraph()->ToString();
+  }
   transform::RunOptions run_options;
   run_options.name = graph_name;
   auto graph_runner = transform::GetGraphRunner();

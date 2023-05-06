@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, 
     for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
+      val->set_abstract(param.first.second->ToAbstract());
       int64_t position = param.second;
       (void)new_node_input.insert(new_node_input.cbegin() + position, val);
     }

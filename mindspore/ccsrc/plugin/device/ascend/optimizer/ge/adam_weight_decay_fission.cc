@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
+#include "plugin/device/ascend/optimizer/ge/adam_weight_decay_fission.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -71,13 +71,13 @@ AnfNodePtr CreateCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input, co
 }
 }  // namespace
 
-const BaseRef AdamWeightDecayFission::DefinePattern() const {
+const BaseRef AdamWeightDecayFissionForGE::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimAdamWeightDecay, Xs});
 }
 
-const AnfNodePtr AdamWeightDecayFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                 const EquivPtr &) const {
+const AnfNodePtr AdamWeightDecayFissionForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                      const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto adam_weight_decay_cnode = node->cast<CNodePtr>();
