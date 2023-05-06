@@ -34,22 +34,22 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
             data should be ordered with (N, x, y, w, h).
         labels (numpy.ndarray): Labels of bboxes, shaped :math:`(N, 1)`.
         segm (numpy.ndarray): The segmentation masks of image in M classes, shaped :math:`(M, H, W)`.
-            Default: None.
+            Default: ``None``.
         class_names (list[str], tuple[str], dict): Names of each class to map label to class name.
-            Default: None, only display label.
-        score_threshold (float): Minimum score of bboxes to be shown. Default: 0.
+            Default: ``None``, only display label.
+        score_threshold (float): Minimum score of bboxes to be shown. Default: ``0``.
         bbox_color (tuple(int)): Color of bbox lines.
-            The tuple of color should be in BGR order. Default: (0, 255 ,0), means 'green'.
+            The tuple of color should be in BGR order. Default: ``(0, 255 ,0)``, means 'green'.
         text_color (tuple(int)): Color of texts.
-            The tuple of color should be in BGR order. Default: (203, 192, 255), means 'pink'.
+            The tuple of color should be in BGR order. Default: ``(203, 192, 255)``, means 'pink'.
         mask_color (tuple(int)): Color of mask.
-            The tuple of color should be in BGR order. Default: (128, 0, 128), means 'purple'.
-        thickness (int): Thickness of lines. Default: 2.
-        font_size (int, float): Font size of texts. Default: 0.8.
-        show (bool): Whether to show the image. Default: True.
-        win_name (str): The window name. Default: "win".
-        wait_time (int): Value of waitKey param. Default: 2000, means display interval is 2000ms.
-        out_file (str, optional): The filename to write the imagee. Default: None. File extension name
+            The tuple of color should be in BGR order. Default: ``(128, 0, 128)``, means 'purple'.
+        thickness (int): Thickness of lines. Default: ``2``.
+        font_size (int, float): Font size of texts. Default: ``0.8``.
+        show (bool): Whether to show the image. Default: ``True``.
+        win_name (str): The window name. Default: ``"win"``.
+        wait_time (int): Value of waitKey param. Default: ``2000``, means display interval is 2000ms.
+        out_file (str, optional): The filename to write the imagee. Default: ``None``. File extension name
             is required to indicate the image compression type, e.g. 'jpg', 'png'.
 
     Returns:

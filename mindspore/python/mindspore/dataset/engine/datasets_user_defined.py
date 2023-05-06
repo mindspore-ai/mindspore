@@ -519,30 +519,32 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             iter(source).next().
             Random accessible source is required to return a tuple of NumPy arrays as a row of the dataset on
             source[idx].
-        column_names (Union[str, list[str]], optional): List of column names of the dataset. Default: None. Users are
-            required to provide either column_names or schema.
-        column_types (list[mindspore.dtype], optional): List of column data types of the dataset. Default: None.
+        column_names (Union[str, list[str]], optional): List of column names of the dataset. Default: ``None`` .
+            Users are required to provide either column_names or schema.
+        column_types (list[mindspore.dtype], optional): List of column data types of the dataset. Default: ``None`` .
             If provided, sanity check will be performed on generator output.
         schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
             column to be read. Both JSON file path and objects constructed by :class:`mindspore.dataset.Schema` are
-            acceptable. Default: None.
+            acceptable. Default: ``None`` .
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: None, all images.
+            Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads/subprocesses used to
-            fetch the dataset in parallel. Default: 1.
+            fetch the dataset in parallel. Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            Default: None, expected order behavior shown in the table below.
+            Default: ``None`` , expected order behavior shown in the table below.
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
-            input is required. Default: None, expected order behavior shown in the table below.
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+            input is required. Default: ``None`` , expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             Random accessible input is required. When this argument is specified, `num_samples` reflects the maximum
             sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when `num_shards` is also specified. Random accessible input is required.
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
+            This argument must be specified only when `num_shards` is also specified.
+            Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
-            option could be beneficial if the Python operation is computational heavy. Default: True.
+            option could be beneficial if the Python operation is computational heavy. Default: ``True``.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes.  This is only used if python_multiprocessing is set to True. Default: 6 MB.
+            data between processes. This is only used if `python_multiprocessing` is set to ``True``.
+            Default: ``6`` MB.
 
     Raises:
         RuntimeError: If source raises an exception during execution.
@@ -887,20 +889,21 @@ class NumpySlicesDataset(GeneratorDataset):
             NumPy formats. Input data will be sliced along the first dimension and generate additional rows, if input is
             list, there will be one column in each row, otherwise there tends to be multi columns. Large data is not
             recommended to be loaded in this way as data is loading into memory.
-        column_names (list[str], optional): List of column names of the dataset. Default: None. If column_names is not
-            provided, the output column names will be named as the keys of dict when the input data is a dict,
+        column_names (list[str], optional): List of column names of the dataset. Default: ``None`` . If `column_names`
+            is not provided, the output column names will be named as the keys of dict when the input data is a dict,
             otherwise they will be named like column_0, column_1 ...
-        num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
+        num_samples (int, optional): The number of samples to be included in the dataset. Default: ``None`` ,
+            all samples.
         num_parallel_workers (int, optional): Number of worker subprocesses used to
-            fetch the dataset in parallel. Default: 1.
+            fetch the dataset in parallel. Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
-            Default: None, expected order behavior shown in the table below.
+            Default: ``None`` , expected order behavior shown in the table below.
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset.
-            Default: None, expected order behavior shown in the table below.
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+            Default: ``None`` , expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when `num_shards` is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This argument must be
+            specified only when `num_shards` is also specified.
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.

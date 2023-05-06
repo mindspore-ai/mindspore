@@ -10,7 +10,7 @@
 
     参数：
         - **data_dir** (str) - 加载数据集的目录，这里包含原始格式的数据，并将在 `process` 方法中被加载。
-        - **column_names** (Union[str, list[str]]，可选) - dataset包含的单个列名或多个列名组成的列表。默认值： ``'Graph'`` 。当实现类似 `__getitem__` 等方法时，列名的数量应该等于该方法中返回数据的条数，如下述示例，建议初始化时明确它的取值如：`column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]`。
+        - **column_names** (Union[str, list[str]]，可选) - dataset包含的单个列名或多个列名组成的列表。默认值： ``"graph"`` 。当实现类似 `__getitem__` 等方法时，列名的数量应该等于该方法中返回数据的条数，如下述示例，建议初始化时明确它的取值如：`column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]`。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值： ``1`` 。
         - **shuffle** (bool，可选) - 是否混洗数据集。当实现的Dataset带有可随机访问属性（ `__getitem__` ）时，才可以指定该参数。默认值： ``None`` 。
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值： ``True`` 。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。

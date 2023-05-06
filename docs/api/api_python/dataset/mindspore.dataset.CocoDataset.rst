@@ -66,7 +66,7 @@
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **RuntimeError** - 解析 `annotation_file` 指定的JSON文件失败。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `task` 参数取值不为 `Detection` 、 `Stuff` 、`Panoptic` 或 `Keypoint` 。
+        - **ValueError** - `task` 参数取值不为 ``'Detection'`` 、 ``'Stuff'`` 、 ``'Panoptic'`` 或 ``'Keypoint'`` 。
         - **ValueError** - `annotation_file` 参数对应的文件不存在。
         - **ValueError** - `dataset_dir` 参数路径不存在。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。

@@ -157,7 +157,7 @@ mindspore.dataset.Graph
         获取图中的所有节点。
 
         参数：
-            - **node_type** (str) - 指定节点的类型。默认值： ``'0'`` 。
+            - **node_type** (str) - 指定节点的类型。
 
         返回：
             numpy.ndarray，包含节点的数组。

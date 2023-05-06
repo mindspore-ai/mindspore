@@ -23,7 +23,7 @@ mindspore.dataset.Dataset.bucket_batch_by_length
           元组中第1个元素表示要扩展至的目标shape，第2个元素表示要填充的值。
           如果某一个数据列未指定将要填充后的shape和填充值，则该列中的每条数据都将填充至该批次中最长数据的长度，且填充值为0。
           注意，`pad_info` 中任何填充shape为None的列，其每条数据长度都将被填充为当前批处理中最长数据的长度，除非指定 `pad_to_bucket_boundary` 为 ``True`` 。默认值： ``None`` ，不填充。
-        - **pad_to_bucket_boundary** (bool, 可选) - 如果为True，则 `pad_info` 中填充shape为None的列，会被填充至由参数 `bucket_batch_sizes` 指定的对应分桶长度-1的长度。
+        - **pad_to_bucket_boundary** (bool, 可选) - 如果为 ``True`` ，则 `pad_info` 中填充shape为None的列，会被填充至由参数 `bucket_batch_sizes` 指定的对应分桶长度-1的长度。
           如果有任何数据落入最后一个分桶中，则将报错。默认值： ``False`` 。
         - **drop_remainder** (bool, 可选) - 当每个分桶中的最后一个批处理数据数据条目小于 `bucket_batch_sizes` 时，是否丢弃该批处理数据。默认值： ``False`` ，不丢弃。
 
