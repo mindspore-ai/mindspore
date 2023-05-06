@@ -13,7 +13,7 @@ mindspore.nn.BatchNorm3d
     .. note::
         BatchNorm的实现在图模式和PyNative模式下是不同的，因此不建议在网络初始化后更改其模式。
 
-        需要注意的是，更新running_mean和running_var的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ,其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。
+        需要注意的是，更新running_mean和running_var的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ，其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。
 
     参数：
         - **num_features** (int) - 指定输入Tensor的通道数量。输入Tensor的size为 :math:`(N, C, D, H, W)` 。

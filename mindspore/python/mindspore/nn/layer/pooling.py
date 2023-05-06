@@ -1618,7 +1618,7 @@ class AdaptiveMaxPool3d(Cell):
         TypeError: If `input` is not a Tensor.
         ValueError: If the dimensions number of `input` is not 4 or 5.
         TypeError: If dtype of `input` is not int, uint or float.
-        ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
+        ValueError: If `output_size` is neither an int nor a tuple with shape :math:`(3,)`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

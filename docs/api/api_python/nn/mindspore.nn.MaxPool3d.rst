@@ -13,7 +13,7 @@ mindspore.nn.MaxPool3d
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为整数或单元素tuple，则代表池化核的深度，高和宽。如果为tuple且长度不为1，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。默认值：1。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为整数或单元素tuple，则代表池化核的深度，高和宽。如果为tuple且长度不为1，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。默认值： ``1`` 。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数或单元素tuple，则代表池化核的深度，高和宽方向的移动步长。如果为tuple且长度不为1，其值必须包含三个正整数值分别表示池化核的深度，高和宽的移动步长。取值必须为正整数。如果值为 ``None`` ，则使用默认值 `kernel_size`。默认值： ``1`` 。
         - **pad_mode** (str) - 指定池化填充模式，取值为 ``"same"`` 、 ``"valid"`` 或者 ``"pad"`` ，不区分大小写。默认值： ``"valid"`` 。
 

@@ -20,8 +20,8 @@ mindspore.nn.MaxUnpool3d
           tuple类型中的三个值分别代表池化核的深度、长和宽。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，int类型表示深度、长和宽方向的移动步长相同。
           tuple中的三个值分别代表深度、长和宽方向移动的步长。若取值为 'None' ， `stride` 值与 `kernel_size` 相同。
-          默认值：None。
-        - **padding** (Union[int, tuple[int]]) - 填充值。默认值：0。若为int类型，则深度、长和宽方向的填充大小相同，均为 `padding` 。
+          默认值： ``None`` 。
+        - **padding** (Union[int, tuple[int]]) - 填充值。默认值： ``0`` 。若为int类型，则深度、长和宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的三个值分别代表深度、长和宽方向填充的大小。
 
     输入：
@@ -49,4 +49,4 @@ mindspore.nn.MaxUnpool3d
         - **ValueError** - `x` 的长度不为4或5。
         - **ValueError** - `output_size` 的类型不是tuple。
         - **ValueError** - `output_size` 的长度不为0、4或5。
-        - **ValueError** - `output_size` 的取值与根据 `kernel_size` , `stride` , `padding` 计算得到的结果差距太大。
+        - **ValueError** - `output_size` 的取值与根据 `kernel_size` 、 `stride` 、 `padding` 计算得到的结果差距太大。

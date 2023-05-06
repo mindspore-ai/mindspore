@@ -1135,7 +1135,7 @@ class HSigmoid(Cell):
     Hard sigmoid is defined as:
 
     .. math::
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
+        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6})),
 
     Inputs:
         - **input_x** (Tensor) - The input of HSigmoid. Tensor of any dimension.
@@ -1173,7 +1173,7 @@ class LogSigmoid(Cell):
     Logsigmoid is defined as:
 
     .. math::
-        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
     where :math:`x_{i}` is the element of the input.
 

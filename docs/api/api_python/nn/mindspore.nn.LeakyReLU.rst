@@ -16,7 +16,7 @@ mindspore.nn.LeakyReLU
    更多细节详见 `Rectifier Nonlinearities Improve Neural Network Acoustic Models <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_ 。
 
    参数：
-       - **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值：0.2。
+       - **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值： ``0.2`` 。
 
    输入：
        - **x** （Tensor） - 计算LeakyReLU的任意维度的Tensor。

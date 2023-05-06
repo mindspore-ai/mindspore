@@ -15,11 +15,11 @@ mindspore.nn.LayerNorm
 
     参数：
         - **normalized_shape** (Union(tuple[int], list[int])) - 沿轴 `begin_norm_axis ... R - 1` 执行归一化。
-        - **begin_norm_axis** (int) - 归一化开始计算的轴，取值范围是[-1, rank(x))。默认值：-1。
-        - **begin_params_axis** (int) - 第一个参数(beta, gamma)的维度：scale和centering参数有 `begin_params_axis: rank(x)` 个维度，并与输入一起广播，取值范围是[-1, rank(input))。默认值：-1。
-        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'ones'。
-        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'zeros'。
-        - **epsilon** (float) - :math:`\epsilon` 添加到分母中的值，以确保数值稳定。默认值：1e-7。
+        - **begin_norm_axis** (int) - 归一化开始计算的轴，取值范围是[-1, rank(x))。默认值： ``-1`` 。
+        - **begin_params_axis** (int) - 第一个参数(beta, gamma)的维度：scale和centering参数有 `begin_params_axis: rank(x)` 个维度，并与输入一起广播，取值范围是[-1, rank(input))。默认值： ``-1`` 。
+        - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 `initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'ones'`` 。
+        - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `initializer` ，包括``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'zeros'`` 。
+        - **epsilon** (float) - :math:`\epsilon` 添加到分母中的值，以确保数值稳定。默认值： ``1e-7`` 。
 
     输入：
         - **x** (Tensor) - `x` 的shape为 :math:`(x_1, x_2, ..., x_R)` ， `input_shape[begin_norm_axis:]` 等于 `normalized_shape` 。

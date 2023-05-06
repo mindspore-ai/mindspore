@@ -10,12 +10,12 @@ mindspore.nn.CosineEmbeddingLoss
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
         1-cos(x_1, x_2), & \text{if } y = 1\\
-        max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+        \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
         \end{cases}
 
     参数：
-        - **margin** (float) - 指定运算的调节因子，取值范围[-1.0, 1.0]。默认值：0.0。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值为"none"、"mean"或"sum"，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值："mean"。
+        - **margin** (float) - 指定运算的调节因子，取值范围[-1.0, 1.0]。默认值： ``0.0`` 。
+        - **reduction** (str) - 指定输出结果的计算方式。可选值为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` ，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值： ``"mean"`` 。
 
     输入：
         - **logits_x1** (Tensor) - 输入Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。

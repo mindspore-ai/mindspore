@@ -1597,13 +1597,14 @@ class CosineEmbeddingLoss(LossBase):
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
         1-cos(x_1, x_2), & \text{if } y = 1\\
-        max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+        \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
         \end{cases}
 
     Args:
-        margin (float): Should be in [-1.0, 1.0]. Default 0.0.
+        margin (float): Should be in [-1.0, 1.0]. Default: ``0.0`` .
         reduction (str): Specifies which reduction to be applied to the output. It must be one of
-          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
+            ``"none"`` , ``"mean"`` , and ``"sum"`` , meaning no reduction,
+            reduce mean and sum on output, respectively. Default: ``"mean"`` .
 
     Inputs:
         - **logits_x1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
@@ -1744,7 +1745,7 @@ class BCEWithLogitsLoss(LossBase):
         p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
 
     .. math::
-        L_{ij} = -[Y_{ij} \cdot log(p_{ij}) + (1 - Y_{ij}) \cdot log(1 - p_{ij})]
+        L_{ij} = -[Y_{ij} \cdot \log(p_{ij}) + (1 - Y_{ij}) \cdot \log(1 - p_{ij})]
 
     Then,
 
@@ -1868,13 +1869,14 @@ class FocalLoss(LossBase):
     The function is shown as follows:
 
     .. math::
-        FL(p_t) = -(1-p_t)^\gamma log(p_t)
+        FL(p_t) = -(1-p_t)^\gamma \log(p_t)
 
     Args:
         gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: ``2.0`` .
         weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. The dimension of
                                       weight should be 1. If None, no weight is applied. Default: ``None`` .
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+        reduction (str): Type of reduction to be applied to loss. The optional values
+                         are ``"mean"`` , ``"sum"`` , and ``"none"``.
                          If "none", do not perform reduction. Default: ``"mean"`` .
 
     Inputs:
@@ -2327,7 +2329,7 @@ class CrossEntropyLoss(LossBase):
               \end{cases}
 
     Args:
-        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is (C,).
+        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is :math`(C,)`.
             The data type only supports float32 or float16. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored (typically for padding value)
             and does not contribute to the gradient. Default: ``-100`` .
