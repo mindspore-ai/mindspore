@@ -1584,7 +1584,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
 
     Args:
         input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
-            Tensor of data type: float16, float32, double, int32, int64.
+            Tensor of data type: float16, float32, double.
             Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
@@ -1621,6 +1621,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         TypeError: If data type of `input` is not float16, float32, double, int32, int64.
         TypeError: If dtype of `_random_samples` is not float16, float32, double.
         TypeError: If dtype of `argmax` is not int32, int64.
+        TypeError: if _random_samples to have the different dtypes as input.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
         ValueError: If numbers in `output_size` or `kernel_size` is not positive.
@@ -1670,6 +1671,8 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         _check_float_range_inc_neither(output_ratio[2], 0.0, 1.0, "output_ratio[2]", "fractional_max_pool3d")
         output_size = (int(input.shape[-3] * output_ratio[0]), int(input.shape[-2] * output_ratio[1]),
                        int(input.shape[-1] * output_ratio[2]))
+    if input.dtype != _random_samples.dtype:
+        raise TypeError("Expect _random_samples to have the same dtypes as input")
     fractional_max_pool = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
     output = fractional_max_pool(input, _random_samples)
     if return_indices:
