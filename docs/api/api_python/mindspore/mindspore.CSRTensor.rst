@@ -84,7 +84,8 @@ mindspore.CSRTensor
         shape为 `[M, N]` 的CSRTensor，需要适配shape为 `[N, K]` 的稠密矩阵或稀疏矩阵，得到结果为 `[M, K]` 的稠密矩阵或稀疏矩阵。
 
         .. note::
-            如果运行后端是CPU，那么仅支持在安装了LLVM12.0.1的机器运行。
+            若右矩阵为Tensor，则仅支持安装了LLVM12.0.1及以上版本的CPU后端或GPU后端。
+            若右矩阵为CSRTensor，则仅支持GPU后端。
 
         参数：
             - **matrix** (Tensor or CSRTensor) - shape为 `[N，K]` 的二维矩阵，其中N等于CSRTensor的列数。

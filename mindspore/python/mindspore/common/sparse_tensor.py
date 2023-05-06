@@ -817,7 +817,7 @@ class CSRTensor(CSRTensor_):
 
         Note:
             If right matrix is CSRTensor, currently only supports GPU backend.
-            if right matrix is Tensor, currently supports CPU backend with LLVM 12.0.1 or GPU backend.
+            If right matrix is Tensor, currently supports CPU backend with LLVM no lower than 12.0.1, and GPU backend.
 
         Args:
             matrix (Tensor or CSRTensor): A dense Tensor or CSRTensor,

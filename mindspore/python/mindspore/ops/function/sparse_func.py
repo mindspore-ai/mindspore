@@ -251,7 +251,8 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     to get the dense matrix or CSRTensor with result `[M, K]`.
 
     Note:
-        Currently supports GPU backend with right matrix is CSRTensor.
+        If right matrix is CSRTensor, currently only supports GPU backend.
+        If right matrix is Tensor, currently supports CPU backend with LLVM no lower than 12.0.1, and GPU backend.
 
     Args:
         a (CSRTensor): Sparse CSR Tensor, rank should be 2.
