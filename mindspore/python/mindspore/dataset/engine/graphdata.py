@@ -85,32 +85,33 @@ class GraphData:
     Args:
         dataset_file (str): One of file names in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the dataset in parallel.
-            Default: None.
-        working_mode (str, optional): Set working mode, now supports 'local'/'client'/'server'. Default: 'local'.
+            Default: ``None`` .
+        working_mode (str, optional): Set working mode, now supports ``'local'``, ``'client'``,
+            ``'server'``. Default: ``'local'``.
 
-            - 'local', used in non-distributed training scenarios.
+            - ``'local'``, used in non-distributed training scenarios.
 
-            - 'client', used in distributed training scenarios. The client does not load data,
+            - ``'client'``, used in distributed training scenarios. The client does not load data,
               but obtains data from the server.
 
-            - 'server', used in distributed training scenarios. The server loads the data
+            - ``'server'``, used in distributed training scenarios. The server loads the data
               and is available to the client.
 
         hostname (str, optional): Hostname of the graph data server. This parameter is only valid when
-            `working_mode` is set to 'client' or 'server'. Default: '127.0.0.1'.
+            `working_mode` is set to ``'client'`` or ``'server'``. Default: ``'127.0.0.1'``.
         port (int, optional): Port of the graph data server. The range is 1024-65535. This parameter is
-            only valid when `working_mode` is set to 'client' or 'server'. Default: 50051.
+            only valid when `working_mode` is set to ``'client'`` or ``'server'``. Default: ``50051``.
         num_client (int, optional): Maximum number of clients expected to connect to the server. The server will
             allocate resources according to this parameter. This parameter is only valid when `working_mode`
-            is set to 'server'. Default: 1.
-        auto_shutdown (bool, optional): Valid when `working_mode` is set to 'server',
+            is set to ``'server'``. Default: ``1``.
+        auto_shutdown (bool, optional): Valid when `working_mode` is set to ``'server'``,
             when the number of connected clients reaches `num_client` and no client is being connected,
-            the server automatically exits. Default: True.
+            the server automatically exits. Default: ``True``.
 
     Raises:
         ValueError: If `dataset_file` does not exist or permission denied.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `working_mode` is not 'local', 'client' or 'server'.
+        ValueError: If `working_mode` is not ``'local'``, ``'client'`` or ``'server'``.
         TypeError: If `hostname` is illegal.
         ValueError: If `port` is not in range [1024, 65535].
         ValueError: If `num_client` is not in range [1, 255].
@@ -241,8 +242,8 @@ class GraphData:
     def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
         Get `neighbor_type` neighbors of the nodes in `node_list` .
-        We try to use the following example to illustrate the definition of these formats. 1 represents connected
-        between two nodes, and 0 represents not connected.
+        We try to use the following example to illustrate the definition of these formats. ``1`` represents connected
+        between two nodes, and ``0`` represents not connected.
 
         .. list-table:: Adjacent Matrix
            :widths: 20 20 20 20 20
@@ -331,14 +332,15 @@ class GraphData:
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor node.
-            output_format (OutputFormat, optional): Output storage format. Default: OutputFormat.NORMAL.
+            output_format (OutputFormat, optional): Output storage format.
+                Default: ``mindspore.dataset.OutputFormat.NORMAL``.
                 It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
 
         Returns:
             For NORMAL format or COO format
             numpy.ndarray which represents the array of neighbors will return.
             As if CSR format is specified, two numpy.ndarrays will return.
-            The first one is offset table, the second one is neighbors
+            The first one is offset table, the second one is neighbors.
 
         Examples:
             >>> from mindspore.dataset.engine import OutputFormat
@@ -379,11 +381,12 @@ class GraphData:
             neighbor_nums (Union[list, numpy.ndarray]): Number of neighbors sampled per hop.
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
                 neighbor_types should be int.
-            strategy (SamplingStrategy, optional): Sampling strategy. Default: SamplingStrategy.RANDOM.
+            strategy (SamplingStrategy, optional): Sampling strategy.
+                Default: ``mindspore.dataset.SamplingStrategy.RANDOM``.
                 It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
 
-                - SamplingStrategy.RANDOM, random sampling with replacement.
-                - SamplingStrategy.EDGE_WEIGHT, sampling with edge weight as probability.
+                - ``SamplingStrategy.RANDOM``, random sampling with replacement.
+                - ``SamplingStrategy.EDGE_WEIGHT``, sampling with edge weight as probability.
 
         Returns:
             numpy.ndarray, array of neighbors.
@@ -518,10 +521,10 @@ class GraphData:
         Args:
             target_nodes (list[int]): Start node list in random walk
             meta_path (list[int]): node type for each walk step
-            step_home_param (float, optional): return hyper parameter in node2vec algorithm. Default: 1.0.
-            step_away_param (float, optional): in out hyper parameter in node2vec algorithm. Default: 1.0.
-            default_node (int, optional): default node if no more neighbors found. Default: -1.
-                A default value of -1 indicates that no node is given.
+            step_home_param (float, optional): return hyper parameter in node2vec algorithm. Default: ``1.0``.
+            step_away_param (float, optional): in out hyper parameter in node2vec algorithm. Default: ``1.0``.
+            default_node (int, optional): default node if no more neighbors found. Default: ``-1``.
+                A default value indicates that no node is given.
 
         Returns:
             numpy.ndarray, array of nodes.
@@ -564,30 +567,31 @@ class Graph(GraphData):
             format should be dict, key is feature type, which is represented with string, value should be numpy.array,
             its shape is not restricted.
         node_type(Union[list, numpy.ndarray], optional): type of nodes, each element should be string which represent
-            type of corresponding node. Default: None, default type for each node is "0".
+            type of corresponding node. Default: ``None`` , default type for each node is "0".
         edge_type(Union[list, numpy.ndarray], optional): type of edges, each element should be string which represent
-            type of corresponding edge. Default: None, default type for each edge is "0".
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
-        working_mode (str, optional): Set working mode, now supports 'local'/'client'/'server'. Default: 'local'.
+            type of corresponding edge. Default: ``None`` , default type for each edge is "0".
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: ``None`` .
+        working_mode (str, optional): Set working mode, now supports ``'local'``, ``'client'``, ``'server'``.
+            Default: ``'local'``.
 
-            - 'local', used in non-distributed training scenarios.
+            - ``'local'``, used in non-distributed training scenarios.
 
-            - 'client', used in distributed training scenarios. The client does not load data,
+            - ``'client'``, used in distributed training scenarios. The client does not load data,
               but obtains data from the server.
 
-            - 'server', used in distributed training scenarios. The server loads the data
+            - ``'server'``, used in distributed training scenarios. The server loads the data
               and is available to the client.
 
         hostname (str, optional): Hostname of the graph data server. This parameter is only valid when
-            `working_mode` is set to 'client' or 'server'. Default: '127.0.0.1'.
+            `working_mode` is set to ``'client'`` or ``'server'``. Default: ``'127.0.0.1'``.
         port (int, optional): Port of the graph data server. The range is 1024-65535. This parameter is
-            only valid when `working_mode` is set to 'client' or 'server'. Default: 50051.
+            only valid when `working_mode` is set to ``'client'`` or ``'server'``. Default: ``50051``.
         num_client (int, optional): Maximum number of clients expected to connect to the server. The server will
             allocate resources according to this parameter. This parameter is only valid when `working_mode`
-            is set to 'server'. Default: 1.
-        auto_shutdown (bool, optional): Valid when `working_mode` is set to 'server',
+            is set to ``'server'``. Default: ``1``.
+        auto_shutdown (bool, optional): Valid when `working_mode` is set to ``'server'``,
             when the number of connected clients reaches `num_client` and no client is being connected,
-            the server automatically exits. Default: True.
+            the server automatically exits. Default: ``True``.
 
     Raises:
         TypeError: If `edges` not list or NumPy array.
@@ -600,7 +604,7 @@ class Graph(GraphData):
         TypeError: If `node_type` provided but its type not list or NumPy array.
         TypeError: If `edge_type` provided but its type not list or NumPy array.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `working_mode` is not 'local', 'client' or 'server'.
+        ValueError: If `working_mode` is not ``'local'``, ``'client'`` or ``'server'``.
         TypeError: If `hostname` is illegal.
         ValueError: If `port` is not in range [1024, 65535].
         ValueError: If `num_client` is not in range [1, 255].
@@ -715,7 +719,7 @@ class Graph(GraphData):
         Get all edges in the graph.
 
         Args:
-            edge_type (str): Specify the type of edge, default edge_type is "0" when init graph without specify
+            edge_type (str): Specify the type of edge, default `edge_type` is ``"0"`` when init graph without specify
                 edge_type.
 
         Returns:
@@ -740,8 +744,8 @@ class Graph(GraphData):
     def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
         Get `neighbor_type` neighbors of the nodes in `node_list` .
-        We try to use the following example to illustrate the definition of these formats. 1 represents connected
-        between two nodes, and 0 represents not connected.
+        We try to use the following example to illustrate the definition of these formats. ``1`` represents connected
+        between two nodes, and ``0`` represents not connected.
 
         .. list-table:: Adjacent Matrix
            :widths: 20 20 20 20 20
@@ -830,7 +834,8 @@ class Graph(GraphData):
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (str): Specify the type of neighbor node.
-            output_format (OutputFormat, optional): Output storage format. Default: OutputFormat.NORMAL.
+            output_format (OutputFormat, optional): Output storage format.
+                Default: ``mindspore.dataset.OutputFormat.NORMAL``.
                 It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
 
         Returns:
@@ -882,11 +887,12 @@ class Graph(GraphData):
             neighbor_nums (Union[list, numpy.ndarray]): Number of neighbors sampled per hop.
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
                 neighbor_types should be str.
-            strategy (SamplingStrategy, optional): Sampling strategy. Default: SamplingStrategy.RANDOM.
+            strategy (SamplingStrategy, optional): Sampling strategy.
+                Default: ``mindspore.dataset.SamplingStrategy.RANDOM``.
                 It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
 
-                - SamplingStrategy.RANDOM, random sampling with replacement.
-                - SamplingStrategy.EDGE_WEIGHT, sampling with edge weight as probability.
+                - ``SamplingStrategy.RANDOM``, random sampling with replacement.
+                - ``SamplingStrategy.EDGE_WEIGHT``, sampling with edge weight as probability.
 
         Returns:
             numpy.ndarray, array of neighbors.
@@ -1293,23 +1299,25 @@ class InMemoryGraphDataset(GeneratorDataset):
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
         save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir` .
-            Default: './processed'.
+            Default: ``'./processed'``.
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
             num of column name should be equal to num of item in return data when implement method like `__getitem__` .
-            Default: 'graph'.
-        num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
+            Default: ``'graph'``.
+        num_samples (int, optional): The number of samples to be included in the dataset.
+            Default: ``None`` , all samples.
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel.
+            Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. This parameter can only be
-            specified when the implemented dataset has a random access attribute ( `__getitem__` ). Default: None.
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+            specified when the implemented dataset has a random access attribute ( `__getitem__` ). Default: ``None`` .
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             When this argument is specified, `num_samples` reflects the max
             sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when `num_shards` is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
+            This argument must be specified only when `num_shards` is also specified.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
-            option could be beneficial if the Python operation is computational heavy. Default: True.
+            option could be beneficial if the Python operation is computational heavy. Default: ``True``.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-            data between processes. This is only used if python_multiprocessing is set to True. Default: 6 MB.
+            data between processes. This is only used if `python_multiprocessing` is set to ``True``. Default: ``6`` MB.
 
     Raises:
         TypeError: If `data_dir` is not of type str.
@@ -1411,16 +1419,19 @@ class ArgoverseDataset(InMemoryGraphDataset):
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
         column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset.
-            Default: "graph". Num of column name should be equal to num of item in return data when implement method
+            Default: ``"graph"``. Num of column name should be equal to num of item in return data when implement method
             like `__getitem__`, recommend to specify it with
             `column_names=["edge_index", "x", "y", "cluster", "valid_len", "time_step_len"]` like the following example.
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel.
+            Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. This parameter can only be
-            specified when the implemented dataset has a random access attribute ( `__getitem__` ). Default: None.
+            specified when the implemented dataset has a random access attribute ( `__getitem__` ).
+            Default: ``None``.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
-            option could be beneficial if the Python operation is computational heavy. Default: True.
+            option could be beneficial if the Python operation is computational heavy.
+            Default: ``True``.
         perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
-            `__getitem__` method in this process). Default True, will save all the data in graph
+            `__getitem__` method in this process). Default ``True``, will save all the data in graph
             (like edge index, node feature and graph feature) into graph feature.
 
     Raises:

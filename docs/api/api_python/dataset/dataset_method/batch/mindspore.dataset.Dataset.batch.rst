@@ -34,7 +34,7 @@ mindspore.dataset.Dataset.batch
           - output_columns (Union[str, list[str]], 可选) - 指定 `batch` 操作的输出数据列。如果输入数据列与输入数据列的长度不相等，则必须指定此参数。
             此列表中列名的数量必须与 `per_batch_map` 方法的返回值数量相匹配。默认值： ``None`` ，输出列将与输入列具有相同的名称。
           - python_multiprocessing (bool, 可选) - 是否启动Python多进程模式并行执行 `per_batch_map` ， ``True`` 意为Python多进程模式， ``False`` 意为Python多线程模式。如果 `per_batch_map` 是I/O密集型任务可以用多线程，CPU密集型任务建议使用多进程以避免GIL锁影响。默认值： ``False`` ，启用多线程模式。
-          - max_rowsize (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为True时，该选项有效。默认值： ``16`` ，单位为MB。
+          - max_rowsize (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为 ``True`` 时，该选项有效。默认值： ``16`` ，单位为MB。
 
     返回：
         Dataset， `batch` 操作后的数据集对象。

@@ -110,8 +110,12 @@ class BuiltinSampler:
 
         Args:
             sampler (Sampler): Object used to choose samples from the dataset. Only builtin
-                samplers(DistributedSampler, PKSampler, RandomSampler, SequentialSampler,
-                SubsetRandomSampler, WeightedRandomSampler) are supported.
+                samplers(:class:`mindspore.dataset.DistributedSampler` ,
+                :class:`mindspore.dataset.PKSampler`,
+                :class:`mindspore.dataset.RandomSampler`,
+                :class:`mindspore.dataset.SequentialSampler`,
+                :class:`mindspore.dataset.SubsetRandomSampler`,
+                :class:`mindspore.dataset.WeightedRandomSampler` ) are supported.
 
         Examples:
             >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
@@ -161,7 +165,7 @@ class BuiltinSampler:
     def get_num_samples(self):
         """
         Get num_samples value of the current sampler instance.
-        This parameter can be optionally passed in when defining the Sampler. Default: None.
+        This parameter can be optionally passed in when defining the Sampler. Default: ``None``.
         This method will return the num_samples value.
         If the current sampler has child samplers,
         it will continue to access the child samplers and process the obtained value according to certain rules.
@@ -329,12 +333,13 @@ class DistributedSampler(BuiltinSampler):
     Args:
         num_shards (int): Number of shards to divide the dataset into.
         shard_id (int): Shard ID of the current shard, which should within the range of [0, `num_shards` - 1].
-        shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled. Default: True.
-        num_samples (int, optional): The number of samples to draw. Default: None, which means sample all elements.
+        shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled.
+            Default: ``True``.
+        num_samples (int, optional): The number of samples to draw. Default: ``None``, which means sample all elements.
         offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
             should be no more than `num_shards` . This parameter is only valid when a ConcatDataset takes
-            a DistributedSampler as its sampler. It will affect the number of samples of per shard.
-            Default: -1, which means each shard has the same number of samples.
+            a :class:`mindspore.dataset.DistributedSampler` as its sampler. It will affect the number of
+            samples of per shard. Default: ``-1``, which means each shard has the same number of samples.
 
     Raises:
         TypeError: If `num_shards` is not of type int.
@@ -432,18 +437,17 @@ class PKSampler(BuiltinSampler):
 
     Args:
         num_val (int): Number of elements to sample for each class.
-        num_class (int, optional): Number of classes to sample. Default: None, sample all classes.
+        num_class (int, optional): Number of classes to sample. Default: ``None`` , sample all classes.
             The parameter does not support to specify currently.
-        shuffle (bool, optional): If True, the class IDs are shuffled, otherwise it will not be
-            shuffled. Default: False.
-        class_column (str, optional): Name of column with class labels for MindDataset. Default: 'label'.
-        num_samples (int, optional): The number of samples to draw. Default: None, which means sample all elements.
+        shuffle (bool, optional): Whether to shuffle the class IDs. Default: ``False``.
+        class_column (str, optional): Name of column with class labels for MindDataset. Default: ``'label'``.
+        num_samples (int, optional): The number of samples to draw. Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If `shuffle` is not of type bool.
         TypeError: If `class_column` is not of type str.
         TypeError: If `num_samples` is not of type int.
-        NotImplementedError: If `num_class` is not None.
+        NotImplementedError: If `num_class` is not ``None``.
         RuntimeError: If `num_val` is not a positive value.
         ValueError: If `num_samples` is a negative value.
 
@@ -519,8 +523,8 @@ class RandomSampler(BuiltinSampler):
     Samples the elements randomly.
 
     Args:
-        replacement (bool, optional): If True, put the sample ID back for the next draw. Default: False.
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
+        replacement (bool, optional): If True, put the sample ID back for the next draw. Default: ``False``.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If `replacement` is not of type bool.
@@ -584,8 +588,8 @@ class SequentialSampler(BuiltinSampler):
     Samples the dataset elements sequentially that is equivalent to not using a sampler.
 
     Args:
-        start_index (int, optional): Index to start sampling at. Default: None, start at first ID.
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
+        start_index (int, optional): Index to start sampling at. Default: ``None`` , start at first ID.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If `start_index` is not of type int.
@@ -653,7 +657,7 @@ class SubsetSampler(BuiltinSampler):
 
     Args:
         indices (Iterable): A sequence of indices (Any iterable Python object but string).
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If elements of `indices` are not of type number.
@@ -741,7 +745,7 @@ class SubsetRandomSampler(SubsetSampler):
 
     Args:
         indices (Iterable): A sequence of indices (Any iterable Python object but string).
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If elements of `indices` are not of type number.
@@ -786,7 +790,7 @@ class IterSampler(Sampler):
 
     Args:
         sampler (iterable object): an user defined iterable object.
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Examples:
         >>> class MySampler:
@@ -817,8 +821,8 @@ class WeightedRandomSampler(BuiltinSampler):
 
     Args:
         weights (list[float, int]): A sequence of weights, not necessarily summing up to 1.
-        num_samples (int, optional): Number of elements to sample. Default: None, which means sample all elements.
-        replacement (bool): If True, put the sample ID back for the next draw. Default: True.
+        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
+        replacement (bool): If ``True``, put the sample ID back for the next draw. Default: ``True``.
 
     Raises:
         TypeError: If elements of `weights` are not of type number.

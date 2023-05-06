@@ -32,7 +32,7 @@ class DSCallback:
 
     Args:
         step_size (int, optional): The number of steps between adjacent `ds_step_begin`/`ds_step_end`
-            calls. Default: 1, will be called at each step.
+            calls. Default: ``1``, will be called at each step.
 
     Examples:
         >>> from mindspore.dataset import DSCallback
@@ -152,7 +152,7 @@ class WaitedDSCallback(Callback, DSCallback):
         Note that the call is triggered only at the beginning of the second step or epoch.
 
     Args:
-       step_size (int, optional): The number of rows in each step, usually set equal to the batch size. Default: 1.
+       step_size (int, optional): The number of rows in each step, usually set equal to the batch size. Default: ``1``.
 
     Examples:
         >>> import mindspore.nn as nn

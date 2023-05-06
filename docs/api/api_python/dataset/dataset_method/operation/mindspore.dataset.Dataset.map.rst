@@ -26,7 +26,7 @@ mindspore.dataset.Dataset.map
         - **operations** (Union[list[TensorOperation], list[functions]]) - 一组数据增强操作，支持数据集增强操作或者用户自定义的Python Callable对象。map操作将按顺序将一组数据增强作用在数据集对象上。
         - **input_columns** (Union[str, list[str]], 可选) - 第一个数据增强操作的输入数据列。此列表的长度必须与 `operations` 列表中第一个数据增强的预期输入列数相匹配。默认值： ``None`` 。表示所有数据列都将传递给第一个数据增强操作。
         - **output_columns** (Union[str, list[str]], 可选) - 最后一个数据增强操作的输出数据列。如果 `input_columns` 长度不等于 `output_columns` 长度，则必须指定此参数。列表的长度必须必须与最后一个数据增强的输出列数相匹配。默认值： ``None`` ，输出列将与输入列具有相同的名称。
-        - **num_parallel_workers** (int, 可选) - 指定map操作的多进程/多线程并发数，加快处理速度。默认值：None，将使用 `set_num_parallel_workers` 设置的并发数。
+        - **num_parallel_workers** (int, 可选) - 指定map操作的多进程/多线程并发数，加快处理速度。默认值： ``None`` ，将使用 `set_num_parallel_workers` 设置的并发数。
         - **\*\*kwargs** - 其他参数。
 
           - python_multiprocessing (bool, 可选) - 启用Python多进程模式加速map操作。当传入的 `operations` 计算量很大时，开启此选项可能会有较好效果。默认值： ``False`` 。

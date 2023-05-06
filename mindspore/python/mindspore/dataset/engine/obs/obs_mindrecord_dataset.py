@@ -267,7 +267,7 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
     Wait util the dataset files required by all devices are downloaded.
 
     Note:
-        It should be used together with `mindspore.dataset.OBSMindDataset` and
+        It should be used together with :class:`mindspore.dataset.OBSMindDataset` and
         be called before each epoch.
 
     Args:

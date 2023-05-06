@@ -31,14 +31,14 @@ class DatasetCache:
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.
-        size (int, optional): Size of the memory set aside for the row caching. Default: 0, which means unlimited,
+        size (int, optional): Size of the memory set aside for the row caching. Default: ``0``, which means unlimited,
             note that it might bring in the risk of running out of memory on the machine.
-        spilling (bool, optional): Whether or not spilling to disk if out of memory. Default: False.
-        hostname (str, optional): Host name. Default: None, use default hostname '127.0.0.1'.
-        port (int, optional): Port to connect to server. Default: None, use default port 50052.
-        num_connections (int, optional): Number of tcp/ip connections. Default: None, use default value 12.
+        spilling (bool, optional): Whether or not spilling to disk if out of memory. Default: ``False``.
+        hostname (str, optional): Host name. Default: ``None`` , use default hostname '127.0.0.1'.
+        port (int, optional): Port to connect to server. Default: ``None`` , use default port 50052.
+        num_connections (int, optional): Number of tcp/ip connections. Default: ``None`` , use default value 12.
         prefetch_size (int, optional): The size of the cache queue between operations.
-            Default: None, use default value 20.
+            Default: ``None`` , use default value 20.
 
     Examples:
             >>> import mindspore.dataset as ds

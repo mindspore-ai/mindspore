@@ -49,38 +49,39 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
             for a pattern of files. The list will be sorted in a lexicographical order.
-        field_delim (str, optional): A string that indicates the char delimiter to separate fields. Default: ','.
-        column_defaults (list, optional): List of default values for the CSV field. Default: None. Each item
+        field_delim (str, optional): A string that indicates the char delimiter to separate fields.
+            Default: ``','``.
+        column_defaults (list, optional): List of default values for the CSV field. Default: ``None``. Each item
             in the list is either a valid type (float, int, or string). If this is not provided, treats all
             columns as string type.
-        column_names (list[str], optional): List of column names of the dataset. Default: None. If this
+        column_names (list[str], optional): List of column names of the dataset. Default: ``None``. If this
             is not provided, infers the column_names from the first row of CSV file.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: None, will include all images.
+            Default: ``None``, will include all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: None, will use global default workers(8), it can be set
+            Default: ``None``, will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+            Default: ``mindspore.dataset.Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
+            If `shuffle` is ``False`` , no shuffling will be performed.
+            If `shuffle` is ``True`` , performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
+            - ``Shuffle.GLOBAL`` : Shuffle both the files and samples, same as setting shuffle to True.
 
-            - Shuffle.FILES: Shuffle files only.
+            - ``Shuffle.FILES`` : Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None``. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
-            Default: None, which means no cache is used.
+            Default: ``None``, which means no cache is used.
 
     Raises:
-        RuntimeError: If dataset_files are not valid or do not exist.
-        ValueError: If field_delim is invalid.
+        RuntimeError: If `dataset_files` are not valid or do not exist.
+        ValueError: If `field_delim` is invalid.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
@@ -118,40 +119,41 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             a file name of one component of a mindrecord source, other files with identical source
             in the same path will be found and loaded automatically. If dataset_file is a list,
             it represents for a list of dataset files to be read directly.
-        columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
+        columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: None, will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: None, performs mindspore.dataset.Shuffle.GLOBAL.
+            Default: ``None``, performs `mindspore.dataset.Shuffle.GLOBAL`.
             Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+            If `shuffle` is ``False`` , no shuffling will be performed.
+            If `shuffle` is ``True`` , performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
 
-            - Shuffle.GLOBAL: Global shuffle of all rows of data in dataset, same as setting shuffle to True.
+            - ``Shuffle.GLOBAL`` : Global shuffle of all rows of data in dataset, same as setting shuffle to True.
 
-            - Shuffle.FILES: Shuffle the file sequence but keep the order of data within each file.
+            - ``Shuffle.FILES`` : Shuffle the file sequence but keep the order of data within each file.
 
-            - Shuffle.INFILE: Keep the file sequence the same but shuffle the data within each file.
+            - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
 
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
-            dataset. Default: None, sampler is exclusive
-            with shuffle and block_reader. Support list: SubsetRandomSampler,
-            PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+            dataset. Default: ``None`` , sampler is exclusive
+            with shuffle and block_reader. Support list: :class:`mindspore.dataset.SubsetRandomSampler`,
+            :class:`mindspore.dataset.PKSampler`, :class:`mindspore.dataset.RandomSampler`,
+            :class:`mindspore.dataset.SequentialSampler`, :class:`mindspore.dataset.DistributedSampler`.
         padded_sample (dict, optional): Samples will be appended to dataset, where
             keys are the same as column_list.
         num_padded (int, optional): Number of padding samples. Dataset size
-            plus num_padded should be divisible by num_shards.
+            plus num_padded should be divisible by num_shards. Default: ``None``.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: None, all samples.
+            Default: ``None`` , all samples.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
-            Default: None, which means no cache is used.
+            Default: ``None`` , which means no cache is used.
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
@@ -255,9 +257,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             pattern of files. The list will be sorted in lexicographical order.
         schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
             column to be read. Both JSON file path and objects constructed by :class:`mindspore.dataset.Schema` are
-            acceptable. Default: None.
-        columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
-        num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
+            acceptable. Default: ``None`` .
+        columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.
+        num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: ``None`` .
             When `num_shards` and `shard_id` are specified, it will be interpreted as number of rows per shard.
             Processing priority for `num_samples` is as the following:
 
@@ -268,36 +270,37 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             - If no `num_samples` and no `schema`, read the full dataset.
 
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: None, will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
-            If `shuffle` is False, no shuffling will be performed.
-            If `shuffle` is True, perform global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+            Default: ``mindspore.dataset.Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
+            If `shuffle` is ``False``, no shuffling will be performed.
+            If `shuffle` is ``True``, perform global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
 
-            - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting `shuffle` to True.
+            - ``Shuffle.GLOBAL`` : Shuffle both the files and samples, same as setting `shuffle` to ``True``.
 
-            - Shuffle.FILES: Shuffle files only.
+            - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into. Default: None. When this argument is specified, `num_samples` reflects
+            into. Default: ``None`` . When this argument is specified, `num_samples` reflects
             the maximum sample number per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
-        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: False. If `shard_equal_rows`
+        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: ``False``. If `shard_equal_rows`
             is False, the number of rows of each shard may not be equal, and may lead to a failure in distributed
-            training. When the number of samples per TFRecord file are not equal, it is suggested to set it to True.
+            training. When the number of samples per TFRecord file are not equal, it is suggested to set it to ``True``.
             This argument should only be specified when `num_shards` is also specified.
-            When `compression_type` is not None, and `num_samples` or numRows (parsed from `schema` ) is provided,
-            `shard_equal_rows` will be implied as true.
+            When `compression_type` is not ``None``, and `num_samples` or numRows (parsed from `schema` ) is provided,
+            `shard_equal_rows` will be implied as ``True``.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
-            Default: None, which means no cache is used.
-        compression_type (str, optional): The type of compression used for all files, must be either '', 'GZIP', or
-            'ZLIB'. Default: None, as in empty string. It is highly recommended to provide `num_samples` or
-            numRows (parsed from `schema`) when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation
-            caused by multiple decompressions of the same file to obtain the file size.
+            Default: ``None`` , which means no cache is used.
+        compression_type (str, optional): The type of compression used for all files, must be either ``''``,
+            ``'GZIP'``, or ``'ZLIB'``. Default: ``None`` , as in empty string. It is highly recommended to
+            provide `num_samples` or numRows (parsed from `schema`) when `compression_type` is ``"GZIP"`` or
+            ``"ZLIB"`` to avoid performance degradation caused by multiple decompressions of the same file
+            to obtain the file size.
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
@@ -305,7 +308,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
-        ValueError: If `compression_type` is invalid (other than '', 'GZIP', or 'ZLIB').
+        ValueError: If `compression_type` is not ``''``, ``'GZIP'`` or ``'ZLIB'`` .
         ValueError: If `compression_type` is provided, but the number of dataset files < `num_shards` .
         ValueError: If `num_samples` < 0.
 
@@ -369,32 +372,32 @@ class OBSMindDataset(GeneratorDataset):
             the format of s3://bucketName/objectKey.
         server (str): Endpoint for accessing cloud storage.
             If it's OBS Service of Huawei Cloud，the endpoint is
-            like <obs.cn-north-4.myhuaweicloud.com> (Region cn-north-4).
-            If it's Minio which starts locally, the endpoint is like <https://127.0.0.1:9000>.
+            like ``<obs.cn-north-4.myhuaweicloud.com>`` (Region cn-north-4).
+            If it's Minio which starts locally, the endpoint is like ``<https://127.0.0.1:9000>``.
         ak (str): Access key ID of cloud storage.
         sk (str): Secret key ID of cloud storage.
         sync_obs_path (str): Remote dir path used for synchronization, users need to
             create it on cloud storage in advance. Path is in the format of s3://bucketName/objectKey.
-        columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
+        columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: None, performs global shuffle. Bool type and Shuffle enum are both supported to pass in.
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, performs global shuffle.
-            There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
+            Default: ``None`` , performs global shuffle. Bool type and Shuffle enum are both supported to pass in.
+            If `shuffle` is ``False`` , no shuffling will be performed.
+            If `shuffle` is ``True`` , performs global shuffle.
+            There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
 
-            - Shuffle.GLOBAL: Global shuffle of all rows of data in dataset, same as setting shuffle to True.
+            - ``Shuffle.GLOBAL`` : Global shuffle of all rows of data in dataset, same as setting shuffle to True.
 
-            - Shuffle.FILES: Shuffle the file sequence but keep the order of data within each file.
+            - ``Shuffle.FILES`` : Shuffle the file sequence but keep the order of data within each file.
 
-            - Shuffle.INFILE: Keep the file sequence the same but shuffle the data within each file.
+            - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into. Default: None.
-        shard_id (int, optional): The shard ID within num_shards. Default: None. This
+            into. Default: ``None`` .
+        shard_id (int, optional): The shard ID within num_shards. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
-        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: True. If shard_equal_rows
+        shard_equal_rows (bool, optional): Get equal rows for all shards. Default: ``True``. If shard_equal_rows
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
-            When the number of samples of per MindRecord file are not equal, it is suggested to set to true.
+            When the number of samples of per MindRecord file are not equal, it is suggested to set to ``True``.
             This argument should only be specified when `num_shards` is also specified.
 
     Raises:

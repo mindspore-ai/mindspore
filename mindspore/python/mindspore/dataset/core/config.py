@@ -239,7 +239,7 @@ def get_num_parallel_workers():
 
 def set_numa_enable(numa_enable):
     """
-    Set the default state of numa enabled. If `numa_enable` is True, need to
+    Set the default state of numa enabled. If `numa_enable` is ``True``, need to
     ensure `numa library <http://rpmfind.net/linux/rpm2html/search.php?query=libnuma-devel>`_ is installed.
 
     Args:
@@ -318,7 +318,7 @@ def set_auto_num_workers(enable):
 
     If turned on, the num_parallel_workers in each op will be adjusted automatically, possibly overwriting the
     num_parallel_workers passed in by user or the default value (if user doesn't pass anything) set by
-    ds.config.set_num_parallel_workers().
+    :func:`mindspore.dataset.config.set_num_parallel_workers`.
 
     For now, this function is only optimized for YoloV3 dataset with per_batch_map (running map in batch).
     This feature aims to provide a baseline for optimized num_workers assignment for each operation.
@@ -471,7 +471,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
             rank id will be set to 0 in standalone training.
             For example, if filepath_prefix="/path/to/some/dir/prefixname" and rank_id is 1, then the path
             of the generated file will be "/path/to/some/dir/prefixname_1.json"
-            If the file already exists, it will be automatically overwritten. Default: None,
+            If the file already exists, it will be automatically overwritten. Default: ``None``,
             means not to save the configuration file, but the tuned result still can be checked through INFO log.
 
     Raises:
@@ -483,7 +483,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
         RuntimeError: If `json_filepath` does not have write permission.
 
     Note:
-        - When `enable` is False, `json_filepath` will be ignored.
+        - When `enable` is ``False``, `json_filepath` will be ignored.
         - The JSON file can be loaded by API `mindspore.dataset.deserialize` to build a tuned pipeline.
         - In distributed training scenario, set_enable_autotune() must be called after cluster communication has been
           initialized (mindspore.communication.management.init()), otherwise the AutoTune file will always suffix with
@@ -558,7 +558,7 @@ def set_autotune_interval(interval):
     """
     Set the configuration adjustment interval (in steps) for AutoTune.
 
-    The default setting is 0, which will adjust the configuration after each epoch.
+    The default setting is ``0``, which will adjust the configuration after each epoch.
     Otherwise, the configuration will be adjusted every `interval` steps.
 
     Args:
@@ -620,14 +620,14 @@ def get_enable_shared_mem():
 
 def set_enable_shared_mem(enable):
     """
-    Set the default state of shared memory flag. If shared_mem_enable is True, will use shared memory queues
-    to pass data to processes that are created for operations that set python_multiprocessing=True.
+    Set the default state of shared memory flag. If `shared_mem_enable` is ``True``, will use shared memory queues
+    to pass data to processes that are created for operations that set `python_multiprocessing` to ``True``.
 
     Note:
         `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
 
     Args:
-        enable (bool): Whether to use shared memory in operations when python_multiprocessing=True.
+        enable (bool): Whether to use shared memory in operations when `python_multiprocessing` is ``True``.
 
     Raises:
         TypeError: If `enable` is not a boolean data type.
@@ -654,7 +654,7 @@ def set_sending_batches(batch_num):
 
     Args:
         batch_num (int): the total sending batches, when batch_num is set, it will wait unless sending batches
-         increase, default is 0 which means will send all batches in dataset.
+         increase, default is ``0`` which means will send all batches in dataset.
 
     Raises:
         TypeError: If `batch_num` is not of type int.
@@ -986,8 +986,8 @@ def set_error_samples_mode(error_samples_mode):
 
     Note:
         - This error samples feature is only applicable to the Map operation in a dataset pipeline.
-        - For 'ErrorSamplesMode.REPLACE' mode, a cache of other samples will be used.
-        - If 'ErrorSamplesMode.SKIP' mode is used in a distributed setting, beware to manually ensure the
+        - For ``ErrorSamplesMode.REPLACE`` mode, a cache of other samples will be used.
+        - If ``ErrorSamplesMode.SKIP`` mode is used in a distributed setting, beware to manually ensure the
           number of valid samples are the same for each shard (otherwise one may encounter hangs).
           One technique is to manually concat a dataset of all valid samples plus a
           take operation for the number of skipped erroneous samples.
@@ -995,13 +995,13 @@ def set_error_samples_mode(error_samples_mode):
     Args:
         error_samples_mode (ErrorSamplesMode): The method in which erroneous samples should be processed in a dataset
             pipeline. It can be any of [ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP].
-            System default: ErrorSamplesMode.RETURN.
+            System default: ``ErrorSamplesMode.RETURN``.
 
-            - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
+            - ``ErrorSamplesMode.RETURN``: means erroneous sample results in error raised and returned.
 
-            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with a correct sample.
+            - ``ErrorSamplesMode.REPLACE``: means erroneous sample is replaced with a correct sample.
 
-            - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+            - ``ErrorSamplesMode.SKIP``: means erroneous sample is skipped.
 
     Raises:
         TypeError: If `error_samples_mode` is not of type ErrorSamplesMode.
