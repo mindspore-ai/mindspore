@@ -284,26 +284,28 @@ def auto_mixed_precision(network, amp_level="O0"):
     The framework has a set of built-in blacklists and whitelists, and the `amp_level` determines which cells and
     operators are specifically converted:
 
-    - When `amp_level=O0` , no precision conversion is performed.
-    - When `amp_level=O1` , only the cells and operators in the whitelist will be converted.
-    - When `amp_level=O2` , all cells and operators except those in the blacklist will be converted.
-    - When `amp_level=O3` , all cells and operators in the network are converted.
+    - When `amp_level="O0"` , no precision conversion is performed.
+    - When `amp_level="O1"` , only the cells and operators in the whitelist will be converted.
+    - When `amp_level="O2"` , all cells and operators except those in the blacklist will be converted.
+    - When `amp_level="O3"` , all cells and operators in the network are converted.
 
     The current built-in whitelist contents are:
-    [:class:`mindspore.nn.Conv1d` , :class:`mindspore.nn.Conv2d` , :class:`mindspore.nn.Conv3d` ,
-     :class:`mindspore.nn.Conv1dTranspose` , :class:`mindspore.nn.Conv2dTranspose` ,
-     :class:`mindspore.nn.Conv3dTranspose` , :class:`mindspore.nn.Dense` , :class:`mindspore.nn.LSTMCell` ,
-     :class:`mindspore.nn.RNNCell` , :class:`mindspore.nn.GRUCell` , :class:`mindspore.ops.Conv2D` ,
-     :class:`mindspore.ops.Conv3D` , :class:`mindspore.ops.Conv2DTranspose` ,
-     :class:`mindspore.ops.Conv3DTranspose` , :class:`mindspore.ops.MatMul` , :class:`mindspore.ops.BatchMatMul` ,
-     :class:`mindspore.ops.PReLU` , :class:`mindspore.ops.ReLU` , :class:`mindspore.ops.Ger` ]
+
+    [:class:`mindspore.nn.Conv1d`, :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.Conv3d`,
+    :class:`mindspore.nn.Conv1dTranspose`, :class:`mindspore.nn.Conv2dTranspose`,
+    :class:`mindspore.nn.Conv3dTranspose`, :class:`mindspore.nn.Dense`, :class:`mindspore.nn.LSTMCell`,
+    :class:`mindspore.nn.RNNCell`, :class:`mindspore.nn.GRUCell`, :class:`mindspore.ops.Conv2D`,
+    :class:`mindspore.ops.Conv3D`, :class:`mindspore.ops.Conv2DTranspose`,
+    :class:`mindspore.ops.Conv3DTranspose`, :class:`mindspore.ops.MatMul`, :class:`mindspore.ops.BatchMatMul`,
+    :class:`mindspore.ops.PReLU`, :class:`mindspore.ops.ReLU`, :class:`mindspore.ops.Ger`]
 
     The current built-in blacklist contents are:
-    [:class:`mindspore.nn.BatchNorm1d` , :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d` ,
-     :class:`mindspore.nn.LayerNorm` ]
+
+    [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
+    :class:`mindspore.nn.LayerNorm`]
 
     For details on automatic mixed precision, refer to
-    [Automatic Mix Precision](https://www.mindspore.cn/tutorials/en/r2.0/advanced/mixed_precision.html).
+    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.0/advanced/mixed_precision.html>`_ .
 
     Args:
         network (Cell): Definition of the network.
