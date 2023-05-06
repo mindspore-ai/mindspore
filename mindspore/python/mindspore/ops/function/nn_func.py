@@ -16,7 +16,6 @@
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
 from math import pi, log
-import numpy as np
 
 from mindspore import log as logger
 import mindspore.ops as ops
@@ -3053,18 +3052,20 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
          [ 2.          0.        ]]
     """
     if not isinstance(upper, (float, int)):
-        raise TypeError(f"For 'ops.rrelu', `upper` must be an int or a float, but got {type(upper)}")
+        raise TypeError(f"For 'rrelu', 'upper' must be an int or a float, but got {type(upper)}")
     if not isinstance(lower, (float, int)):
-        raise TypeError(f"For 'ops.rrelu', `lower` must be an int or a float, but got {type(lower)}")
+        raise TypeError(f"For 'rrelu', 'lower' must be an int or a float, but got {type(lower)}")
     if lower > upper:
-        raise ValueError(f"For 'ops.rrelu', the value of `upper` must be greater than `lower`, "
+        raise ValueError(f"For 'rrelu', the value of 'upper' must be greater than or equal to 'lower', "
                          f"but got upper: {upper}, lower: {lower}. ")
-    size = input.shape
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'rrelu', the 'input' must be a Tensor but got {type(input)}.")
+    _size = input.shape
     sign_matrix = _get_cache_prim(P.Sign)()(input)
     negative_filter = sign_matrix.clip(None, 0)
     positive_filter = sign_matrix.clip(0, None)
-    dtype = _get_cache_prim(P.DType)()(input)
-    mask = _get_cache_prim(P.Cast)()(Tensor(np.random.uniform(lower, upper, size=size)), dtype)
+    _dtype = _get_cache_prim(P.DType)()(input)
+    mask = ops.uniform(_size, lower, upper).astype(_dtype)
     negative_mask = negative_filter * mask * -1
     total_mask = negative_mask + positive_filter
     out = total_mask * input
