@@ -34,17 +34,17 @@ bool process_dim_one(T *outputs_addr, T *inputs_addr, int64_t *paddings, const i
   int ret =
     memcpy_s(outputs_addr, paddings[0] * int64_t(sizeof(T)), inputs_addr + mode, paddings[0] * int64_t(sizeof(T)));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
   }
   ret = memcpy_s(outputs_addr + paddings[0] + input_elements, paddings[1] * int64_t(sizeof(T)),
                  inputs_addr + input_elements - paddings[1] - mode, paddings[1] * int64_t(sizeof(T)));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
   }
   ret = memcpy_s(outputs_addr + paddings[0], input_elements * int64_t(sizeof(T)), inputs_addr,
                  input_elements * int64_t(sizeof(T)));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    MS_EXCEPTION(TypeError) << "memcpy_s error, errorno(" << ret << ")";
   }
   std::reverse(outputs_addr, outputs_addr + paddings[0]);
   std::reverse(outputs_addr + paddings[0] + input_elements, outputs_addr + paddings[0] + input_elements + paddings[1]);
