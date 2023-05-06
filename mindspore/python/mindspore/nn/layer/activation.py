@@ -559,13 +559,15 @@ class RReLU(Cell):
         validator.check_value_type('upper', upper, [float, int], self.cls_name)
         validator.check_value_type('lower', lower, [float, int], self.cls_name)
         if lower > upper:
-            raise ValueError(f"For {self.cls_name}, the value of 'upper' must be greater than 'lower', "
+            raise ValueError(f"For {self.cls_name}, the value of 'upper' must be greater than or equal to 'lower', "
                              f"but got upper: {upper}, lower: {lower}. ")
         self.lower = Tensor(lower, dtype=mstype.float32)
         self.upper = Tensor(upper, dtype=mstype.float32)
         self.sign = P.Sign()
 
     def construct(self, x):
+        if not isinstance(x, Tensor):
+            raise TypeError(f"For 'rrelu', the input must be a Tensor, but got {type(x)}.")
         _size = x.shape
         _dtype = x.dtype
         sign_matrix = self.sign(x)
