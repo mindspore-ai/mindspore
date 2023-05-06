@@ -10,25 +10,27 @@ mindspore.amp.auto_mixed_precision
 
     框架内置了一组黑名单和白名单， `amp_level` 决定了具体对哪些Cell和算子进行精度转换：
 
-    - 当 `amp_level=O0` 时，不进行精度转换。
-    - 当 `amp_level=O1` 时，仅将白名单内的Cell和算子进行精度转换。
-    - 当 `amp_level=O2` 时，将除了黑名单内的其他Cell和算子都进行精度转换。
-    - 当 `amp_level=O3` 时，将网络里的所有Cell和算子都进行精度转换。
+    - 当 `amp_level="O0"` 时，不进行精度转换。
+    - 当 `amp_level="O1"` 时，仅将白名单内的Cell和算子进行精度转换。
+    - 当 `amp_level="O2"` 时，将除了黑名单内的其他Cell和算子都进行精度转换。
+    - 当 `amp_level="O3"` 时，将网络里的所有Cell和算子都进行精度转换。
 
     当前的内置白名单内容为：
-    [:class:`mindspore.nn.Conv1d` , :class:`mindspore.nn.Conv2d` , :class:`mindspore.nn.Conv3d` ,
-    :class:`mindspore.nn.Conv1dTranspose` , :class:`mindspore.nn.Conv2dTranspose` ,
-    :class:`mindspore.nn.Conv3dTranspose` , :class:`mindspore.nn.Dense` , :class:`mindspore.nn.LSTMCell` ,
-    :class:`mindspore.nn.RNNCell` , :class:`mindspore.nn.GRUCell` , :class:`mindspore.ops.Conv2D` ,
-    :class:`mindspore.ops.Conv3D` , :class:`mindspore.ops.Conv2DTranspose` ,
-    :class:`mindspore.ops.Conv3DTranspose` , :class:`mindspore.ops.MatMul` , :class:`mindspore.ops.BatchMatMul` ,
-    :class:`mindspore.ops.PReLU` , :class:`mindspore.ops.ReLU` , :class:`mindspore.ops.Ger` ]
+
+    [:class:`mindspore.nn.Conv1d`, :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.Conv3d`,
+    :class:`mindspore.nn.Conv1dTranspose`, :class:`mindspore.nn.Conv2dTranspose`,
+    :class:`mindspore.nn.Conv3dTranspose`, :class:`mindspore.nn.Dense`, :class:`mindspore.nn.LSTMCell`,
+    :class:`mindspore.nn.RNNCell`, :class:`mindspore.nn.GRUCell`, :class:`mindspore.ops.Conv2D`,
+    :class:`mindspore.ops.Conv3D`, :class:`mindspore.ops.Conv2DTranspose`,
+    :class:`mindspore.ops.Conv3DTranspose`, :class:`mindspore.ops.MatMul`, :class:`mindspore.ops.BatchMatMul`,
+    :class:`mindspore.ops.PReLU`, :class:`mindspore.ops.ReLU`, :class:`mindspore.ops.Ger`]
 
     当前的内置黑名单内容为：
-    [:class:`mindspore.nn.BatchNorm1d` , :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d` ,
-    :class:`mindspore.nn.LayerNorm` ]
 
-    关于自动混合精度的详细介绍，请参考[自动混合精度](https://www.mindspore.cn/tutorials/zh-CN/r2.0/advanced/mixed_precision.html)。
+    [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
+    :class:`mindspore.nn.LayerNorm`]
+
+    关于自动混合精度的详细介绍，请参考 `自动混合精度 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/advanced/mixed_precision.html>`_ 。
 
     参数：
         - **network** (Cell) - 定义网络结构。
