@@ -484,10 +484,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   SomasInfo *MutableSomasInfo() const { return somas_info_.get(); }
   size_t somas_whole_block_size() const { return somas_info_->whole_block_size_; }
   const std::map<size_t, size_t> &somas_merged_blocks_map() const { return somas_info_->merged_blocks_map_; }
-
- private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
+
+ private:
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
 
