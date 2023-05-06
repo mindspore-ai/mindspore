@@ -2617,6 +2617,51 @@ def logsigmoid(x):
     return ret
 
 
+def dense(input, weight, bias=None):
+    r"""
+    Applies the dense connected operation to the `input`. The dense function is defined as:
+
+    .. math::
+        output = input * weight^{T} + bias
+
+    Args:
+        input (Union[Tensor, Parameter]): Input Tensor of shape :math:`(*, in\_channels)`,
+            where :math:`*` means any number of additional dimensions.
+        weight (Union[Tensor, Parameter]): The weight applied to the input.
+            The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
+        bias (Union[Tensor, Parameter], optional): Additive biases to the output.
+            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
+
+    Returns:
+        Output whose shape is determined by the shape of the input and the weight.
+
+    Raises:
+        TypeError: If `input` is not Tensor or Parameter.
+        TypeError: If `weight` is not Tensor or Parameter.
+        TypeError: If `bias` is not Tensor or Parameter.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``  ``CPU``
+
+    Examples:
+        >>> input = mindspore.Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
+        >>> weight = mindspore.Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
+        >>> bias = mindspore.Tensor([0., 1.], mindspore.float32)
+        >>> output = mindspore.ops.dense(input, weight, bias)
+        >>> print(output)
+        [[-4.  0.]
+         [10.  4.]]
+    """
+    _check_is_tensor("input", input, "dense")
+    _check_is_tensor("weight", weight, "dense")
+    _check_is_tensor("bias", bias, "dense")
+    weight = ops.t(weight)
+    input = ops.matmul(input, weight)
+    if bias is not None:
+        input = input + bias
+    return input
+
+
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
                       deformable_groups=1, modulated=True):
     r"""
@@ -6564,6 +6609,7 @@ __all__ = [
     'max_pool3d',
     'kl_div',
     'celu',
+    'dense',
     'deformable_conv2d',
     'dropout1d',
     'dropout2d',

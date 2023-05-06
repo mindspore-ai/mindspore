@@ -29,6 +29,7 @@ Neural Network
     mindspore.ops.conv2d
     mindspore.ops.conv3d
     mindspore.ops.deformable_conv2d
+    mindspore.ops.dense
     mindspore.ops.dropout
     mindspore.ops.dropout1d
     mindspore.ops.dropout2d
