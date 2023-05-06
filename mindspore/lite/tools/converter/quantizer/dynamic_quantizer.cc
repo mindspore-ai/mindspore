@@ -26,7 +26,15 @@ int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   auto quantizer = WeightQuantizer(param_);
   const std::set<PrimitivePtr> support_weight_quant_nodes = {prim::kPrimMatMulFusion, prim::kPrimGather};
   const std::set<PrimitivePtr> symmetric_nodes = {prim::kPrimMatMulFusion};
-  auto ret = quantizer.WeightQuant(func_graph, support_weight_quant_nodes, {}, symmetric_nodes, false);
+  int ret;
+  // when activation is perchannel quantization, weight perlayer quant
+  if (activation_channel_weight_layer_) {
+    const std::set<PrimitivePtr> support_per_layers_nodes = {prim::kPrimMatMulFusion};
+    ret =
+      quantizer.WeightQuant(func_graph, support_weight_quant_nodes, support_per_layers_nodes, symmetric_nodes, false);
+  } else {
+    ret = quantizer.WeightQuant(func_graph, support_weight_quant_nodes, {}, symmetric_nodes, false);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight Quant failed.";
     return ret;
@@ -35,7 +43,8 @@ int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   const std::set<PrimitivePtr> support_dynamic_quant_ops = {
     prim::kPrimMatMulFusion,
   };
-  ret = manager.InsertDynamicQuantNode(func_graph, support_dynamic_quant_ops, param_->commonQuantParam.skip_quant_node);
+  ret = manager.InsertDynamicQuantNode(func_graph, support_dynamic_quant_ops, param_->commonQuantParam.skip_quant_node,
+                                       activation_channel_weight_layer_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Insert dynamic quant failed.";
     return ret;

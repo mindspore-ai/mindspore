@@ -15,15 +15,15 @@
  */
 
 #include "nnacl/int8/dynamic_quant_int8.h"
+
 void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *real_max) {
+  if (count == 0) {
+    return;
+  }
 #ifndef ENABLE_ARM64
   for (int i = 0; i < count; ++i) {
-    if (data[i] < *real_min) {
-      *real_min = data[i];
-    }
-    if (data[i] > *real_max) {
-      *real_max = data[i];
-    }
+    *real_min = data[i] < *real_min ? data[i] : *real_min;
+    *real_max = data[i] > *real_max ? data[i] : *real_max;
   }
 #else
   // avoid to compile optimize.
@@ -54,12 +54,38 @@ void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *r
     : [ data ] "r"(data), [ count_4 ] "r"(count_4), [ real_min ] "r"(real_min), [ real_max ] "r"(real_max)
     : "x4", "w5", "s6", "s7", "v0", "v30", "v31");
   for (int i = count_4; i < count; ++i) {
-    if (data[i] < *real_min) {
-      *real_min = data[i];
-    }
-    if (data[i] > *real_max) {
-      *real_max = data[i];
-    }
+    *real_min = data[i] < *real_min ? data[i] : *real_min;
+    *real_max = data[i] > *real_max ? data[i] : *real_max;
   }
 #endif
+}
+
+void CalculateChannelRowMinMax(const float *data, int count, float *real_min, float *real_max, int row_length) {
+  if (row_length == 0) {
+    return;
+  }
+  int channel_total = count / row_length;
+  for (int i = 0; i < channel_total; i++) {
+    CalculateMinMaxFp32(data + i * row_length, row_length, real_min + i, real_max + i);
+  }
+}
+
+void CalculateChannelColMinMax(const float *data, int count, float *real_min, float *real_max, int row_length) {
+  if (row_length == 0) {
+    return;
+  }
+  int row_total = count / row_length;
+  for (int r = 0; r < row_total; r++) {
+    const float *data_current = data + r * row_length;
+    for (int c = 0; c < row_length; c++) {
+      float *real_min_channel = real_min + c;
+      float *real_max_channel = real_max + c;
+      if (data_current[c] < *real_min_channel) {
+        *real_min_channel = data_current[c];
+      }
+      if (data_current[c] > *real_max_channel) {
+        *real_max_channel = data_current[c];
+      }
+    }
+  }
 }

@@ -32,12 +32,18 @@ extern "C" {
 int DoDequantizeInt8ToFp32(const int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size,
                          int32_t min_value, int32_t max_value);
+int DoChannelRowFp32ToInt8(const float *real_values, int8_t *quant_values, float *scale, int32_t *zp, int size,
+                           int row_length, int32_t min_value, int32_t max_value);
+int DoChannelColFp32ToInt8(const float *real_values, int8_t *quant_values, float *scale, int32_t *zp, int size,
+                           int row_length, int32_t min_value, int32_t max_value);
 int DoQuantizeFp32ToInt8FromUint8Source(const float *real_values, int8_t *quant_values, float scale, int32_t zp,
                                         int size, int32_t min_value, int32_t max_value);
 #ifdef ENABLE_ARM64
 void Fp32ToInt8_arm64(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size,
                       int32_t min_value, int32_t max_value);
 void Int8ToFp32_arm64(const int8_t *quant_values, float *dst, float scale, int32_t zp, int size);
+void Fp32ToInt8Perchannel_arm64(const float *real_values, int8_t *quant_values, float *scales, int32_t *zps, int size,
+                                int row_length, int32_t min_value, int32_t max_value);
 #endif
 int DoDequantizeUInt8ToFp32(const uint8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int DoQuantizeFp32ToUInt8(const float *real_values, uint8_t *quant_values, float scale, int32_t zp, int size);

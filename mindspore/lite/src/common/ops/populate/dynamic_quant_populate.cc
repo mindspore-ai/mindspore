@@ -38,6 +38,9 @@ OpParameter *PopulateDynamicQuantParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   param->dst_type_ = value->dst_type();
   param->symmetric_ = value->symmetric();
+  param->activation_perchannel_ = value->activation_channel();
+  param->prefer_axis_ = value->prefer_axis();
+  param->transpose_ = value->transpose();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_DynamicQuant, PopulateDynamicQuantParameter, SCHEMA_CUR);

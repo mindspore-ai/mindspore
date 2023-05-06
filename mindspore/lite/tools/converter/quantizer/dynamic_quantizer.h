@@ -43,6 +43,8 @@ class DynamicQuantizer : public Quantizer {
  public:
   explicit DynamicQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
     bit_num_ = param->commonQuantParam.bit_num;
+    activation_channel_weight_layer_ =
+      (param->dynamicQuantParam.quant_strategy == quant::ACTIVATION_CHANNEL_WEIGHT_LAYER);
   }
   ~DynamicQuantizer() = default;
 
@@ -53,6 +55,7 @@ class DynamicQuantizer : public Quantizer {
   int quant_max_{127};
   int quant_min_{-128};
   TypeId type_id_{kNumberTypeInt8};
+  bool activation_channel_weight_layer_ = false;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

@@ -31,6 +31,7 @@
 #include "ops/fse_decode.h"
 #include "ops/op_name.h"
 #include "ir/dtype.h"
+#include "ops/fusion/mat_mul_fusion.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -39,6 +40,8 @@ constexpr size_t kMinSize3 = 3;
 constexpr size_t kTableExtend = 3;
 constexpr size_t kAlignOffset = 7;
 constexpr size_t kInt32Mask = 31;
+constexpr int kLastFisrtIndex = -1;
+constexpr int kLastSecondIndex = -2;
 }  // namespace
 int InsertQuantNodeManager::SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node,
                                                 const CNodePtr &cast_cnode) {
@@ -82,12 +85,18 @@ int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId c
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode,
-                                                        size_t index) {
+int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index,
+                                                        bool activation_channel) {
   auto primitive = std::make_shared<ops::DynamicQuant>();
   auto primitive_c = primitive->GetPrim();
   primitive->set_dst_type(dst_type_);
-  primitive->set_symmetric(symmetric_);
+  bool symmetric = activation_channel ? true : false;
+  primitive->set_symmetric(symmetric);
+  primitive->set_activation_channel(activation_channel);
+  if (activation_channel && SetPreferAxis(cnode, index, primitive) != RET_OK) {
+    MS_LOG(ERROR) << "Set prefer axis failed, " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
   auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(index)});
   auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + std::to_string(index);
   dynamic_quant_cnode->set_fullname_with_scope(name);
@@ -109,7 +118,40 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
   return RET_OK;
 }
 
-int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode) {
+int InsertQuantNodeManager::SetPreferAxis(const CNodePtr &cnode, size_t index,
+                                          const std::shared_ptr<ops::DynamicQuant> &dynamic_primitive) {
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul) {
+    auto matmul_prim = api::MakeShared<ops::MatMul>(primitive);
+    CHECK_NULL_RETURN(matmul_prim);
+    // For MatMul A
+    if (index == kInputIndex + kPrimOffset) {
+      if (matmul_prim->GetAttr(ops::kTransposeA) != nullptr && matmul_prim->get_transpose_a()) {
+        dynamic_primitive->set_prefer_axis(kLastFisrtIndex);
+        dynamic_primitive->set_transpose(true);
+      } else {
+        dynamic_primitive->set_prefer_axis(kLastSecondIndex);
+        dynamic_primitive->set_transpose(false);
+      }
+    }
+    // For MatMul B
+    if (index == kWeightIndex + kPrimOffset) {
+      if (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b()) {
+        dynamic_primitive->set_prefer_axis(kLastSecondIndex);
+        dynamic_primitive->set_transpose(true);
+      } else {
+        dynamic_primitive->set_prefer_axis(kLastFisrtIndex);
+        dynamic_primitive->set_transpose(false);
+      }
+    }
+  } else {
+    MS_LOG(WARNING) << "cnode don't need prefer axis, cnode name: " << cnode->fullname_with_scope();
+  }
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                bool activation_channel) {
   auto op_name = cnode->fullname_with_scope();
   if (cnode->size() < kMinSize3) {
     MS_LOG(ERROR) << op_name << " cnode size:" << cnode->size() << " < 3.";
@@ -117,14 +159,14 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
   }
   auto input = cnode->input(kInputIndex + kPrimOffset);
   if (input->isa<mindspore::CNode>() || IsGraphInput(input)) {
-    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimOffset, activation_channel);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
     }
   }
   auto weight = cnode->input(kWeightIndex + kPrimOffset);
   if (weight->isa<mindspore::CNode>() || IsGraphInput(weight)) {
-    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimOffset, activation_channel);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
     }
@@ -143,7 +185,8 @@ int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
 
 int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
                                                    const std::set<PrimitivePtr> &support_dynamic_quant_ops,
-                                                   const std::set<std::string> &skip_quant_node) {
+                                                   const std::set<std::string> &skip_quant_node,
+                                                   bool activation_channel) {
   CHECK_NULL_RETURN(graph);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
@@ -165,7 +208,34 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
       MS_LOG(INFO) << "node:" << op_name << " type:" << type << " will not quantify.";
       continue;
     }
-    ret = NewDynamicQuantNode(graph, cnode);
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
+      auto input_node = cnode->input(2);
+      MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "matmul 2nd input nullptr.");
+      bool is_activation = IsGraphInput(input_node) || input_node->isa<mindspore::CNode>();
+      if (is_activation) {
+        MS_LOG(WARNING) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is activation";
+      } else if (input_node->isa<mindspore::Parameter>()) {
+        MS_LOG(INFO) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is parameter";
+        auto tensor_info = input_node->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+        MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info nullptr.");
+        auto shape = tensor_info->shape();
+        for (size_t i = 0; i < shape.size(); i++) {
+          MS_LOG(INFO) << shape[i];
+        }
+      } else if (input_node->isa<mindspore::ValueNode>()) {
+        MS_LOG(INFO) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is valudenode";
+        auto tensor_info = input_node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
+        MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info nullptr.");
+        auto shape = tensor_info->shape();
+        for (size_t i = 0; i < shape.size(); i++) {
+          MS_LOG(INFO) << shape[i];
+        }
+      } else {
+        MS_LOG(WARNING) << "dynamic cnode name: " << cnode->fullname_with_scope()
+                        << " 2nd input type: " << input_node->type_name() << " is not supported.";
+      }
+    }
+    ret = NewDynamicQuantNode(graph, cnode, activation_channel);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "node:" << op_name << " new dynamic quant node failed.";
       return ret;

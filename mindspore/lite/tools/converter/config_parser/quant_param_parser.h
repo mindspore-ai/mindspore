@@ -31,6 +31,7 @@ class QuantParamParser {
   static int ParseTransformQuant(const TransformQuantString &transform_quant_string,
                                  quant::TransformQuantParam *transform_quant);
   static int ParseAscendQuant(const AscendQuantString &ascend_quant_string, quant::AscendQuantParam *ascend_quant);
+  static int ParseDynamicQuant(const DynamicQuantString &dynamic_quant_string, quant::DynamicQuantParam *dynamic_quant);
 
  private:
   static int ParseQuantType(const std::string &quant_type_str, quant::QuantType *quant_type);
@@ -42,6 +43,8 @@ class QuantParamParser {
   static int ParseBitNum(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
   static int ParseEnableEncode(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
   static int ParseExportPrecisionMode(const std::string &precision_modeL_str, quant::PrecisionMode *precision_mode);
+  static int ParseDynamicQuantStrategy(const std::string &dynamic_quant_strategy_str,
+                                       quant::DynamicQuantStrategy *dynamic_strategy);
 };
 }  // namespace lite
 }  // namespace mindspore
