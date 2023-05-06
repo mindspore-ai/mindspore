@@ -49,7 +49,7 @@ class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
   }
 
  private:
-  void ForwardPostExecute(const float *logits, const float *labels, float *output1, float *output2);
+  void ForwardPostExecute(const float *logits, const float *labels, float *output1, float *output2, float *workspace);
   size_t class_num_{0};
   size_t batch_size_{0};
 };

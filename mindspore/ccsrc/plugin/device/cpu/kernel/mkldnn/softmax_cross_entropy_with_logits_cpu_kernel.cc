@@ -56,36 +56,43 @@ int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  auto dnnl_dtype =
-    (inputs.at(0)->GetDtype() == kNumberTypeFloat32) ? dnnl::memory::data_type::f32 : dnnl::memory::data_type::f16;
-  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl_dtype, dnnl::memory::format_tag::nc);
 
-  auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
-  auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);
-  primitive_ = CreatePrimitive<dnnl::softmax_forward>(prim_desc);
-
-  AddArgument(DNNL_ARG_SRC, mem_desc);
-  AddArgument(DNNL_ARG_DST, mem_desc);
-
-  size_t type_size = (inputs.at(0)->GetDtype() == kNumberTypeFloat32) ? sizeof(float) : sizeof(float16);
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), sizeof(float), std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
   return KRET_OK;
 }
 
-void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *logits, const float *labels,
-                                                                   float *output1, float *output2) {
+void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *input0, const float *input1,
+                                                                   float *output0, float *output1, float *work) {
   float epsilon = std::numeric_limits<float>::min();
-  auto task = [this, logits, labels, output1, output2, epsilon](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
-      output1[i] = 0;
-      float loss = 0.0;
-      for (size_t j = 0; j < class_num_; ++j) {
-        float logit = logf(logits[i * class_num_ + j] <= 0.0 ? epsilon : logits[i * class_num_ + j]);
-        output2[i * class_num_ + j] = logits[i * class_num_ + j] - labels[i * class_num_ + j];
-        loss += labels[i * class_num_ + j] * logit;
+  auto task = [this, input0, input1, output0, output1, work, epsilon](size_t start, size_t end) {
+    for (size_t batch_index = start; batch_index < end; batch_index++) {
+      const float *logits = input0 + batch_index * class_num_;
+      const float *labels = input1 + batch_index * class_num_;
+      float *backprop = output1 + batch_index * class_num_;
+      float *workspace = work + batch_index * class_num_;
+
+      float maxv = logits[0];
+      for (size_t i = 0; i < class_num_; i++) {
+        maxv = maxv > logits[i] ? maxv : logits[i];
       }
-      output1[i] = -loss;
+
+      float sum = 0.0;
+      for (size_t i = 0; i < class_num_; i++) {
+        backprop[i] = logits[i] - maxv;
+        workspace[i] = exp(backprop[i]);
+        sum += workspace[i];
+      }
+
+      float logit = logf(sum);
+      float loss = 0.0;
+
+      for (size_t i = 0; i < class_num_; i++) {
+        loss += labels[i] * (backprop[i] - logit);
+        workspace[i] = workspace[i] / sum;
+        backprop[i] = workspace[i] - labels[i];
+      }
+      output0[batch_index] = -loss;
     }
   };
   ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
@@ -107,14 +114,13 @@ bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel:
   if (outputs[1]->size != batch_class_float_size || outputs[0]->size != batch_float_size) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);
-  ExecutePrimitive();
+
+  const auto *logits = reinterpret_cast<float *>(inputs[0]->addr);
   const auto *labels = reinterpret_cast<float *>(inputs[1]->addr);
-  const auto *logits = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *work = reinterpret_cast<float *>(workspace[0]->addr);
   auto *output1 = reinterpret_cast<float *>(outputs[0]->addr);
   auto *output2 = reinterpret_cast<float *>(outputs[1]->addr);
-  ForwardPostExecute(logits, labels, output1, output2);
+  ForwardPostExecute(logits, labels, output1, output2, work);
   return true;
 }
 
