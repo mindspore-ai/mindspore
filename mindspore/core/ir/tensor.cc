@@ -39,6 +39,7 @@ namespace mindspore {
 namespace tensor {
 constexpr auto kEllipsis = "...";
 constexpr auto kThreshold = 6;
+constexpr auto kThreshold1D = 1000;
 
 constexpr auto kThreshold1DFloat = kThreshold * 2;
 constexpr auto kThreshold1DInt = kThreshold * 4;
@@ -315,7 +316,7 @@ class TensorStringifier {
         }
         ss << ' ';
       }
-      if (!isScalar && ndim_ == 1 && (i + 1) % linefeedThreshold == 0) {
+      if (!isScalar && ndim_ == 1 && end - start > (kThreshold >> 1) && (i + 1) % linefeedThreshold == 0) {
         // Add a line feed every {threshold of type} for 1D tensor.
         ss << '\n' << ' ';
       }
@@ -330,7 +331,7 @@ class TensorStringifier {
     ss << '[';
     if (depth == static_cast<ssize_t>(ndim_) - 1) {  // Bottom dimension
       ssize_t num = shape[depth];
-      if (num > kThreshold && ndim_ > 1) {
+      if ((num > kThreshold && ndim_ > 1) || (num > kThreshold1D && ndim_ == 1)) {
         OutputDataString(ss, *cursor, 0, kThreshold >> 1, use_comma, max_width);
         ss << ' ' << kEllipsis << ' ';
         OutputDataString(ss, *cursor, num - (kThreshold >> 1), num, use_comma, max_width);
