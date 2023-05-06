@@ -20,6 +20,8 @@
 #include <utility>
 #include <memory>
 #include "mindspore/core/ops/grad/batch_norm_grad.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,10 +38,20 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(ERROR) << "Cast BatchNormGrad failed!";
     return false;
   }
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
+  if (activation_type_attr != nullptr) {
+    activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
+  }
+
   if (kernel_name_ == kBatchNormGradOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormGradWithActivation) {
+  } else if (kernel_name_ == kBatchNormGradWithActivation && activation_type_ == mindspore::ActivationType::RELU) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
+  } else if (kernel_name_ == kBatchNormGradWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+    // batch_norm grad + silu grad fusion
+    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
   } else if (kernel_name_ == kBatchNormGradWithAddAndActivation) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {
@@ -57,7 +69,7 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
   size_t input_num = inputs.size();
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
-    if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
+    if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM && activation_type_ != mindspore::ActivationType::SWISH) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                         << CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
     }
@@ -198,7 +210,10 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
     dz = GetDeviceAddress<T>(outputs, kIndex3);
   }
-
+  if (activation_type_ == mindspore::ActivationType::SWISH) {
+    y = GetDeviceAddress<T>(inputs, kIndex7);
+    SiLUGradOpt(y, dy, dy, x_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+  }
   if (is_train_) {
     auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, kIndex5);
     reserve_size_ = inputs[kIndex5]->size;
