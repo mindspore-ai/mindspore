@@ -117,6 +117,11 @@ enum AscendQuantMode {
   GE,
 };
 
+enum DynamicQuantStrategy {
+  ACTIVATION_LAYER_WEIGHT_CHANNEL,
+  ACTIVATION_CHANNEL_WEIGHT_LAYER,
+};
+
 struct CommonQuantParam {
   QuantType quant_type = QUANT_NONE;
   int bit_num = 8;
@@ -157,6 +162,10 @@ struct TransformQuantParam {
 
 struct AscendQuantParam {
   AscendQuantMode mode = NONE;
+};
+
+struct DynamicQuantParam {
+  DynamicQuantStrategy quant_strategy = quant::ACTIVATION_LAYER_WEIGHT_CHANNEL;
 };
 }  // namespace mindspore::lite::quant
 

@@ -22,6 +22,7 @@ namespace mindspore::ops {
 constexpr auto kAlpha = "alpha";
 constexpr auto kActivation = "activation";
 constexpr auto kActivationType = "activation_type";
+constexpr auto kActivationChannel = "activation_channel";
 constexpr auto kAttentionQActType = "attention_q_act_type";
 constexpr auto kAttentionKActType = "attention_k_act_type";
 constexpr auto kAttentionVActType = "attention_v_act_type";
@@ -202,6 +203,7 @@ constexpr auto kDivisorOverride = "divisor_override";
 constexpr auto kPostNmsTopn = "post_nms_topn";
 constexpr auto kPower = "power";
 constexpr auto kPreNmsTopn = "pre_nms_topn";
+constexpr auto kPreferAxis = "prefer_axis";
 constexpr auto kRankSize = "rank_size";
 constexpr auto kRatio = "ratio";
 constexpr auto kReduction = "reduction";

@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *real_max);
+void CalculateChannelRowMinMax(const float *data, int count, float *real_min, float *real_max, int row_length);
+void CalculateChannelColMinMax(const float *data, int count, float *real_min, float *real_max, int row_length);
 #ifdef __cplusplus
 }
 #endif

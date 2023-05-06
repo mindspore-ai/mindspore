@@ -35,7 +35,7 @@ class InsertQuantNodeManager {
   ~InsertQuantNodeManager() = default;
 
   int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops,
-                             const std::set<std::string> &skip_quant_node);
+                             const std::set<std::string> &skip_quant_node, bool activation_channel = false);
 
   int InsertDequantNode(const FuncGraphPtr &graph);
 
@@ -68,11 +68,14 @@ class InsertQuantNodeManager {
 
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
-  int NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode);
+  int NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, bool activation_channel = false);
 
   int MarkDynamicQuantize(const CNodePtr &cnode);
 
-  int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index);
+  int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index,
+                                  bool activation_channel = true);
+
+  int SetPreferAxis(const CNodePtr &cnode, size_t index, const std::shared_ptr<ops::DynamicQuant> &dynamic_primitive);
 
   int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
@@ -141,7 +144,6 @@ class InsertQuantNodeManager {
 
  private:
   TypeId dst_type_ = kNumberTypeInt8;
-  bool symmetric_ = false;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H_

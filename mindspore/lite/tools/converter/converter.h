@@ -56,6 +56,9 @@ class ConverterImpl {
  private:
   int InitConfigParam(const std::shared_ptr<ConverterPara> &param,
                       std::map<int, std::map<std::string, std::string>> *model_param_infos);
+  int ParseParam(lite::ConfigFileParser *config_parser, const std::shared_ptr<ConverterPara> &param,
+                 const std::map<int, std::map<std::string, std::string>> *model_param_infos,
+                 const std::map<std::string, std::map<std::string, std::string>> maps);
   int InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
                                   const lite::ConfigFileParser &config_file_parser);
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);

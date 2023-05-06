@@ -22,6 +22,9 @@ typedef struct DynamicQuantParameter {
   OpParameter op_parameter_;
   bool symmetric_;
   int64_t dst_type_;
+  bool activation_perchannel_;
+  int64_t prefer_axis_;
+  bool transpose_;
 } DynamicQuantParameter;
 
 #endif  // MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_

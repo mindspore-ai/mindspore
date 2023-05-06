@@ -430,34 +430,47 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     MS_LOG(ERROR) << "Parse config param failed.";
     return ret;
   }
+  ret = ParseParam(&config_parser, param, model_param_infos, maps);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse param failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int ConverterImpl::ParseParam(lite::ConfigFileParser *config_parser, const std::shared_ptr<ConverterPara> &param,
+                              const std::map<int, std::map<std::string, std::string>> *model_param_infos,
+                              const std::map<std::string, std::map<std::string, std::string>> maps) {
+  auto ret = RET_OK;
   if (model_param_infos->empty()) {
-    ret = lite::PreprocessParser::ParsePreprocess(config_parser.GetDataPreProcessString(), &param->dataPreProcessParam);
+    ret =
+      lite::PreprocessParser::ParsePreprocess(config_parser->GetDataPreProcessString(), &param->dataPreProcessParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse preprocess failed.";
       return ret;
     }
-    ret = lite::QuantParamParser::ParseCommonQuant(config_parser.GetCommonQuantString(), &param->commonQuantParam);
+    ret = lite::QuantParamParser::ParseCommonQuant(config_parser->GetCommonQuantString(), &param->commonQuantParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse common quant param failed.";
       return ret;
     }
-    ret = lite::QuantParamParser::ParseFullQuant(config_parser.GetFullQuantString(), &param->fullQuantParam);
+    ret = lite::QuantParamParser::ParseFullQuant(config_parser->GetFullQuantString(), &param->fullQuantParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse full quant param failed.";
       return ret;
     }
-    ret = lite::QuantParamParser::ParseWeightQuant(config_parser.GetWeightQuantString(), &param->weightQuantParam);
+    ret = lite::QuantParamParser::ParseWeightQuant(config_parser->GetWeightQuantString(), &param->weightQuantParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse full quant param failed.";
       return ret;
     }
-    ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser.GetMixedBitWeightQuantString(),
+    ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser->GetMixedBitWeightQuantString(),
                                                            &param->mixedBitWeightQuantParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
       return ret;
     }
-    ret = InitExtendedIntegrationInfo(param, config_parser);
+    ret = InitExtendedIntegrationInfo(param, *config_parser);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse extended integration info failed.";
       return ret;
@@ -468,7 +481,7 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     param->aclModelOptionCfgParam.dump_model_name =
       dir_pos != std::string::npos ? output_file.substr(dir_pos + 1) : output_file;
     lite::AclOptionParamParser acl_param_parser;
-    ret = acl_param_parser.ParseAclOptionCfg(config_parser.GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
+    ret = acl_param_parser.ParseAclOptionCfg(config_parser->GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse acl option param failed.";
       return ret;
@@ -476,14 +489,14 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     // parse ascend_context in config file, the priority is higher
     if (maps.find("ascend_context") != maps.end()) {
       auto map = maps.at("ascend_context");
-      config_parser.SetParamByConfigfile(param, map);
+      config_parser->SetParamByConfigfile(param, map);
     }
     if (!param->config_file.empty()) {
       (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
     }
 
     lite::CpuOptionParamParser cpu_param_parser;
-    ret = cpu_param_parser.ParseCpuOptionCfg(config_parser.GetCpuOptionCfgString(), &param->cpuOptionCfgParam);
+    ret = cpu_param_parser.ParseCpuOptionCfg(config_parser->GetCpuOptionCfgString(), &param->cpuOptionCfgParam);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse cpu option param failed.";
       return ret;
@@ -493,20 +506,25 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     << "If there are multi models, only support micro_param and model_param, other configure can not take effect";
 
   lite::MicroParamParser micro_param_parser;
-  ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
+  ret = micro_param_parser.ParseMicroParam(config_parser->GetMicroParamString(), &param->microParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse micro param failed.";
     return ret;
   }
   ret =
-    lite::QuantParamParser::ParseTransformQuant(config_parser.GetTransformQuantString(), &param->transformQuantParam);
+    lite::QuantParamParser::ParseTransformQuant(config_parser->GetTransformQuantString(), &param->transformQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse transform quant param failed.";
     return ret;
   }
-  ret = lite::QuantParamParser::ParseAscendQuant(config_parser.GetAscendQuantString(), &param->ascendQuantParam);
+  ret = lite::QuantParamParser::ParseAscendQuant(config_parser->GetAscendQuantString(), &param->ascendQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse ascend quant param failed.";
+    return ret;
+  }
+  ret = lite::QuantParamParser::ParseDynamicQuant(config_parser->GetDynamicQuantString(), &param->dynamicQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse dynamic quant param failed.";
     return ret;
   }
   return RET_OK;

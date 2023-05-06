@@ -32,9 +32,28 @@ bool DynamicQuant::get_symmetric() const {
 }
 void DynamicQuant::set_dst_type(const int64_t dst_type) { (void)AddAttr(kDstType, api::MakeValue(dst_type)); }
 int64_t DynamicQuant::get_dst_type() const { return GetValue<int64_t>(GetAttr(kDstType)); }
+void DynamicQuant::set_prefer_axis(const int64_t prefer_axis) {
+  (void)AddAttr(kPreferAxis, api::MakeValue(prefer_axis));
+}
+int64_t DynamicQuant::get_prefer_axis() const { return GetValue<int64_t>(GetAttr(kPreferAxis)); }
+void DynamicQuant::set_activation_channel(const bool activation_channel) {
+  (void)AddAttr(kActivationChannel, api::MakeValue(activation_channel));
+}
+bool DynamicQuant::get_activation_channel() const {
+  auto value_ptr = this->GetAttr(kActivationChannel);
+  return GetValue<bool>(value_ptr);
+}
+void DynamicQuant::set_transpose(const bool transpose) { (void)AddAttr(kTrans, api::MakeValue(transpose)); }
+bool DynamicQuant::get_transpose() const {
+  auto value_ptr = this->GetAttr(kTrans);
+  return GetValue<bool>(value_ptr);
+}
 void DynamicQuant::Init(const bool symmetric, const int64_t dst_type) {
   this->set_symmetric(symmetric);
   this->set_dst_type(dst_type);
+  this->set_activation_channel(false);
+  this->set_prefer_axis(0);
+  this->set_transpose(false);
 }
 
 REGISTER_PRIMITIVE_C(kNameDynamicQuant, DynamicQuant);

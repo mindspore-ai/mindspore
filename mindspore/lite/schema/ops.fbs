@@ -1246,6 +1246,9 @@ table ReduceScatter {
 table DynamicQuant {
     symmetric: bool = false;
     dst_type: long = 32;
+    activation_channel: bool = false;
+    prefer_axis: long = 0;
+    transpose: bool = false;
 }
 
 table LSTMGradData {

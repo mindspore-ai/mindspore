@@ -325,5 +325,30 @@ int QuantParamParser::ParseAscendQuant(const AscendQuantString &ascend_quant_str
   }
   return RET_OK;
 }
+
+int QuantParamParser::ParseDynamicQuant(const DynamicQuantString &dynamic_quant_string,
+                                        quant::DynamicQuantParam *dynamic_quant) {
+  if (!dynamic_quant_string.quant_strategy.empty()) {
+    auto ret = ParseDynamicQuantStrategy(dynamic_quant_string.quant_strategy, &dynamic_quant->quant_strategy);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse dynamic quant strategy failed.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+int QuantParamParser::ParseDynamicQuantStrategy(const std::string &dynamic_quant_strategy_str,
+                                                quant::DynamicQuantStrategy *dynamic_strategy) {
+  if (dynamic_quant_strategy_str == "ALWC") {
+    (*dynamic_strategy) = quant::ACTIVATION_LAYER_WEIGHT_CHANNEL;
+  } else if (dynamic_quant_strategy_str == "ACWL") {
+    (*dynamic_strategy) = quant::ACTIVATION_CHANNEL_WEIGHT_LAYER;
+  } else {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: dynamic_quant_strategy must be ALWC or ACWL.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

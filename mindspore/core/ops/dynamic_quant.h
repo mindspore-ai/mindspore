@@ -61,6 +61,36 @@ class MIND_API DynamicQuant : public BaseOperator {
   ///
   /// \return the data type of output.
   int64_t get_dst_type() const;
+
+  /// \brief Method to set prefer_axis attribute.
+  ///
+  /// \param[in] prefer_axis Define the preferred axis.
+  void set_prefer_axis(const int64_t prefer_axis);
+
+  /// \brief Method to get prefer_axis attribute.
+  ///
+  /// \return the preferred axis.
+  int64_t get_prefer_axis() const;
+
+  /// \brief Method to set activation_channel attribute.
+  ///
+  /// \param[in] activation_channel Define whether activation perchannel quantization.
+  void set_activation_channel(const bool activation_channel);
+
+  /// \brief Method to get activation_channel attribute.
+  ///
+  /// \return Whether activation perchannel quantization.
+  bool get_activation_channel() const;
+
+  /// \brief Method to set transpose attribute.
+  ///
+  /// \param[in] symmetric Define whether transpose matrix.
+  void set_transpose(const bool transpose);
+
+  /// \brief Method to get transpose attribute.
+  ///
+  /// \return Whether transpose matrix.
+  bool get_transpose() const;
 };
 MIND_API abstract::AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
