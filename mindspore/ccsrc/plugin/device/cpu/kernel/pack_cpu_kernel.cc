@@ -59,7 +59,9 @@ int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   // calculate elements while dim >= axis
   auto first_input_shape = inputs.at(kIndex0)->GetShapeVector();
   for (size_t i = IntToSize(axis_); i < first_input_shape.size(); i++) {
-    dims_behind_axis_ *= static_cast<size_t>(first_input_shape[i]);
+    if (first_input_shape[i] > 0) {
+      dims_behind_axis_ *= static_cast<size_t>(first_input_shape[i]);
+    }
   }
 
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
