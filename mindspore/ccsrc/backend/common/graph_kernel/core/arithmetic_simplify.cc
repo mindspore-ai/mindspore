@@ -504,7 +504,7 @@ class TransposePatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
     return attrs_map;
   }
 };
@@ -519,7 +519,7 @@ class ReshapePatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
     return attrs_map;
   }
 };
