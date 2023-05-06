@@ -282,7 +282,8 @@ class MSELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
+        Tensor, the mean squared error between the predicted value and the label value,
+        the shape is zero if `reduction` is 'mean' or 'sum',
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
