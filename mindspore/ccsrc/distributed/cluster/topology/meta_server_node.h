@@ -54,6 +54,9 @@ struct NodeInfo {
   // The local host name of this cluster node.
   std::string host_name;
 
+  // The host ip of this node in the cluster. Nodes use this address to create network communication with each other.
+  std::string host_ip;
+
   // The role name of this cluster node.
   std::string role;
 
@@ -66,6 +69,18 @@ struct NodeInfo {
 
   // Maintain the state of the node.
   NodeState state{NodeState::kNew};
+};
+
+// The key of nodes consists of node's ip and id.
+// This is used for sorting nodes and assign global rank ids.
+struct NodeKey {
+  std::string host_ip;
+  std::string node_id;
+
+  bool operator<(const NodeKey &node_key) const { return host_ip + node_id < node_key.host_ip + node_key.node_id; }
+  bool operator==(const NodeKey &node_key) const {
+    return (node_id == node_key.node_id) && (host_ip == node_key.host_ip);
+  }
 };
 
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status
@@ -134,6 +149,10 @@ class MetaServerNode : public NodeBase {
 
   // Allocate a new valid rank id for new registered compute graph node.
   uint32_t AllocateRankId(const std::string &role);
+
+  // Reassign node ranks. This method should be called only after cluster is successfully built. It sorts all nodes with
+  // their node ip and node id, then assign their rank ids.
+  void ReassignNodeRank();
 
   // Persist the required metadata of cluster into storage through configuration.
   bool Persist();

@@ -99,6 +99,10 @@ class BACKEND_EXPORT ClusterContext {
   void InitSchedulerIp();
   void InitSchedulerPort();
 
+  // After cluster is successfully built, some post process should be done. For example, port range assignment and
+  // client ip set, etc.
+  void PostProcess();
+
   // The flag that whether this cluster context instance is already initialized.
   std::atomic_bool inited_;
 
@@ -120,6 +124,9 @@ class BACKEND_EXPORT ClusterContext {
 
   // The compute graph node or meta server node according to the configuration of this process.
   std::shared_ptr<topology::NodeBase> node_base_;
+
+  // Node id of this process in the cluster.
+  std::string node_id_;
 
   // The role of this process in the cluster.
   std::string node_role_;
