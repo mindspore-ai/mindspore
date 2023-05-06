@@ -1095,13 +1095,13 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Num is float:" << (std::string)py::str(obj);
     auto data = py::cast<float>(obj);
-    auto ret = NewValueNode(data);
-    auto fp32_val = ret->value()->cast<FP32ImmPtr>();
+    auto res = NewValueNode(data);
+    auto fp32_val = res->value()->cast<FP32ImmPtr>();
     if (fp32_val != nullptr) {
       MS_LOG(DEBUG) << "Set float64 value to FP32Imm.";
       fp32_val->set_prim_value(py::cast<double>(obj));
     }
-    return ret;
+    return res;
   } else {
     // no else actually
     errcode_ = PARSE_NODE_TYPE_UNKNOWN;
@@ -1128,13 +1128,13 @@ AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &nod
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Constant is float:" << (std::string)py::str(obj);
     auto data = py::cast<float>(obj);
-    auto ret = NewValueNode(data);
-    auto fp32_val = ret->value()->cast<FP32ImmPtr>();
+    auto res = NewValueNode(data);
+    auto fp32_val = res->value()->cast<FP32ImmPtr>();
     if (fp32_val != nullptr) {
       MS_LOG(DEBUG) << "Set float64 value to FP32Imm.";
       fp32_val->set_prim_value(py::cast<double>(obj));
     }
-    return ret;
+    return res;
   } else if (py::isinstance<py::str>(obj)) {
     MS_LOG(INFO) << "The Constant is string:" << (std::string)py::str(obj);
     return NewValueNode(py::cast<std::string>(obj));
@@ -1508,7 +1508,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // Process the attr body
   py::object value_body = python_adapter::GetPyObjAttr(node, "value");
   MS_LOG(DEBUG) << "node: " << node << ", attr: " << attr_str << ", value: " << value_body;
-  // Process class value, eg: self.xx
+  // Process class value 'self', eg: self.xx
   if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast()->IsClassMemberOfSelf(node)) {
     AnfNodePtr setattr_node = nullptr;
     auto iter = setattr_nodes_map_.find("self");
@@ -1526,22 +1526,23 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       return ProcessAttributeWithClassMember(block, node);
     }
   }
+  // If not self.xx, process the obj, eg: obj.xx
   AnfNodePtr value_node = ParseExprNode(block, value_body);
   if (value_node == nullptr) {
     MS_LOG(EXCEPTION) << "Parse attribute failed";
   }
   // Process xxx.Tensor() and xxx is mindspore.
   if (use_fallback && attr_str == "Tensor") {
-    auto ret = ParseMsTensor(block, node, value_body, value_node);
-    if (ret != nullptr) {
-      return ret;
+    auto res = ParseMsTensor(block, node, value_body, value_node);
+    if (res != nullptr) {
+      return res;
     }
   }
   // For stype._null, return TypeNull value node directly.
   if (attr_str == "_null") {
-    auto ret = ParseNull(block, value_body);
-    if (ret != nullptr) {
-      return ret;
+    auto res = ParseNull(block, value_body);
+    if (res != nullptr) {
+      return res;
     }
   }
   // Create the apply node
@@ -2820,6 +2821,11 @@ void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &ta
     attr_map.emplace(std::make_pair(attr_str, setattr_node));
     setattr_nodes_map_.emplace(std::make_pair(target_id_str, attr_map));
   } else {
+    // If found setattr node before, set it as new setattr node's input.
+    auto iter_attr = iter->second.find(attr_str);
+    if (iter_attr != iter->second.end()) {
+      setattr_node->add_input(iter_attr->second);
+    }
     // Force update the setattr node to keep the newest one.
     iter->second.insert_or_assign(attr_str, setattr_node);
   }
@@ -2830,7 +2836,12 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
                                      const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(block);
   const py::object target_obj = python_adapter::GetPyObjAttr(target, "value");
-  const auto &target_id_str = python_adapter::GetPyObjAttr(target_obj, "id").cast<std::string>();
+  const py::object id_obj = python_adapter::GetPyObjAttr(target_obj, "id");
+  // To support nested setattr later.
+  if (!py::isinstance<py::str>(id_obj)) {
+    MS_LOG(EXCEPTION) << "Not found Name.id in Attribute.value, the value is not Name, but " << id_obj;
+  }
+  const auto &target_id_str = id_obj.cast<std::string>();
   AnfNodePtr target_node = nullptr;
   if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && target_id_str == "self") {
     const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
@@ -3604,13 +3615,13 @@ py::str ParseFunctionAst::GetAstNodeText(const py::object &node_obj) {
 }
 
 py::list ParseFunctionAst::GetArgs(const py::object &func_node) {
-  py::list ret = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS, func_node);
-  return ret;
+  py::list res = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS, func_node);
+  return res;
 }
 
 py::list ParseFunctionAst::GetArgsDefaultValues(const py::object &func_node) {
-  py::list ret = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES, func_node);
-  return ret;
+  py::list res = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES, func_node);
+  return res;
 }
 
 AstNodeTypePtr ParseFunctionAst::GetNodeType(const py::object &node) {
@@ -3630,21 +3641,21 @@ AstSubType ParseFunctionAst::GetOpType(const py::object &node) {
 }
 
 bool ParseFunctionAst::IsClassMemberOfSelf(const py::object &node) {
-  py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_OF_SELF, node);
-  if (!py::isinstance<py::bool_>(ret)) {
+  py::object res = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_OF_SELF, node);
+  if (!py::isinstance<py::bool_>(res)) {
     MS_LOG(ERROR) << "The result of mod function parse, should be bool type.";
     return false;
   }
-  return ret.cast<bool>();
+  return res.cast<bool>();
 }
 
 bool ParseFunctionAst::IsClassMemberRecursive(const py::object &node) {
-  py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_RECURSIVE, node);
-  if (!py::isinstance<py::bool_>(ret)) {
+  py::object res = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_RECURSIVE, node);
+  if (!py::isinstance<py::bool_>(res)) {
     MS_LOG(ERROR) << "The result of mod function parse, should be bool type.";
     return false;
   }
-  return ret.cast<bool>();
+  return res.cast<bool>();
 }
 
 void SetMixedPrecisionFlag(const py::object &obj, const FuncGraphPtr &func_graph) {
