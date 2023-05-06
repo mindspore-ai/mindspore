@@ -42,7 +42,7 @@ namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("the number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
+  (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
@@ -70,7 +70,7 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
 
 TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("Meshgrid input num", SizeToLong(elements.size()), kGreaterThan, 1,
+  (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
@@ -86,13 +86,13 @@ AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input_args tuple size", SizeToLong(input_args.size()), kGreaterEqual, 1,
+  (void)CheckAndConvertUtils::CheckInteger("input_args tuple size", SizeToLong(input_args.size()), kEqual, 1,
                                            prim_name);
   if (!input_args[0]->isa<abstract::AbstractTuple>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be tuple of tensors.";
   }
   auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("Meshgrid input num", SizeToLong(elements.size()), kGreaterThan, 1,
+  (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim_name);
   auto infer_type = MeshgridInferType(primitive, input_args);
   auto infer_shape = MeshgridInferShape(primitive, input_args);
