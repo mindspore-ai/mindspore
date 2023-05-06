@@ -214,7 +214,7 @@ void Cloner::CloneFuncGraphDefaultValues(const FuncGraphPtr &func_graph, const F
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   for (auto &item : func_graph->parameter_default_value()) {
-    auto nodes = DeepLinkedGraphSearch(item.second);
+    auto nodes = TopoSort(item.second, SuccDeeperSimple);
     for (auto &node : nodes) {
       MS_EXCEPTION_IF_NULL(node);
       if (node->isa<CNode>()) {

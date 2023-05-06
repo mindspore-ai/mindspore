@@ -62,9 +62,9 @@ void AddCommOpReuseTag(const FuncGraphPtr &graph) {
   if (!parallel::IsAutoParallelCareGraph(graph)) {
     return;
   }
-  AnfNodePtr return_node = graph->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(return_node);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &all_nodes = manager->all_nodes();
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!is_comm_ops(node)) {

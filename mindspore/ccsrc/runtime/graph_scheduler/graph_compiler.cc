@@ -103,48 +103,52 @@ AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
 
 // Recursively delete the nodes in the eliminate nodes list in the graph, check node records
 // the nodes that have been checked during the recursive process.
-void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_nodes,
+void EliminateNodesFromGraph(CNode *cnode, const std::set<AnfNodePtr> &eliminate_nodes,
                              std::set<CNode *> *checked_nodes) {
-  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(checked_nodes);
 
-  if (checked_nodes->find(node) != checked_nodes->end()) {
-    return;
-  }
-
-  (void)checked_nodes->emplace(node);
-  const auto &inputs = node->inputs();
-  std::vector<AnfNodePtr> new_inputs;
-  for (auto &input : inputs) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (!input->isa<CNode>()) {
-      (void)new_inputs.emplace_back(input);
+  std::list<CNode *> todo_list = {cnode};
+  while (!todo_list.empty()) {
+    auto cur_node = todo_list.back();
+    todo_list.pop_back();
+    if (checked_nodes->find(cur_node) != checked_nodes->end()) {
       continue;
     }
-
-    if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
-      (void)new_inputs.emplace_back(input);
-    } else {
-      // If input is an eliminate node, replace it by its real input.
-      const auto &real_input = FetchRealNodeByNopNode(input);
-      MS_EXCEPTION_IF_NULL(real_input);
-
-      // Since the output of previous node will be cached, the cache needs to be updated after eliminating the nopnode.
-      auto kernel_info = node->kernel_info();
-      if (kernel_info) {
-        auto runtime_cache = kernel_info->runtime_cache();
-        if (runtime_cache.runtime_cache().is_valid()) {
-          runtime_cache.runtime_cache().update_prev_node_output(
-            new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
-        }
+    (void)checked_nodes->emplace(cur_node);
+    const auto &inputs = cur_node->inputs();
+    std::vector<AnfNodePtr> new_inputs;
+    for (auto &input : inputs) {
+      MS_EXCEPTION_IF_NULL(input);
+      if (!input->isa<CNode>()) {
+        (void)new_inputs.emplace_back(input);
+        continue;
       }
-      (void)new_inputs.emplace_back(real_input);
+      if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
+        (void)new_inputs.emplace_back(input);
+      } else {
+        // If input is an eliminate node, replace it by its real input.
+        const auto &real_input = FetchRealNodeByNopNode(input);
+        MS_EXCEPTION_IF_NULL(real_input);
+
+        // Since the output of previous node will be cached, the cache needs to be updated after eliminating the
+        // nopnode.
+        auto kernel_info = cur_node->kernel_info();
+        if (kernel_info) {
+          auto runtime_cache = kernel_info->runtime_cache();
+          if (runtime_cache.runtime_cache().is_valid()) {
+            runtime_cache.runtime_cache().update_prev_node_output(
+              new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
+          }
+        }
+        (void)new_inputs.emplace_back(real_input);
+      }
+      const auto &cnode_input = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode_input);
+      todo_list.push_back(cnode_input.get());
     }
-    const auto &cnode = input->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    EliminateNodesFromGraph(cnode.get(), eliminate_nodes, checked_nodes);
+    cur_node->set_inputs(new_inputs);
   }
-  node->set_inputs(new_inputs);
 }
 
 void OptimizeNopNode(KernelGraph *graph) {

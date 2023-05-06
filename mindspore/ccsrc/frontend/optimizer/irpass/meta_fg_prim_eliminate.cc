@@ -33,7 +33,7 @@ bool ExpandMetaFgPrim::CheckIfEmbedMetaFgPrim(const CNodePtr &node) const {
   return func_graph_manager->func_graph_meta_fg_prim_total(func_graph);
 }
 
-void ExpandMetaFgPrim::GetMetaFgPrim(const std::vector<AnfNodePtr> &all_nodes) {
+void ExpandMetaFgPrim::GetMetaFgPrim(const AnfNodeSet &all_nodes) {
   MS_EXCEPTION_IF_NULL(prim_);
   prim_nodes_.clear();
   for (auto &node : all_nodes) {
