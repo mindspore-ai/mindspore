@@ -30,8 +30,16 @@ using TensorParams = transform::TensorParams;
 
 class AclKernelMod : public AscendKernelMod {
  public:
-  AclKernelMod() = default;
-  explicit AclKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {}
+  AclKernelMod() {
+    if (converter_ == nullptr) {
+      converter_ = std::make_shared<transform::AclConverter>();
+    }
+  }
+  explicit AclKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
+    if (converter_ == nullptr) {
+      converter_ = std::make_shared<transform::AclConverter>();
+    }
+  }
   ~AclKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

@@ -35,5 +35,11 @@ REGISTER_ACL_OP(Conv2DBackpropInput)
   .Input(1, {"NCHW"}, {"DefaultFormat", "NCHW", "FRACTAL_Z"})
   .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
   .Output(0, {"NCHW"}, {"NCHW", "NC1HWC0"});
+
+REGISTER_ACL_OP(Conv3DBackpropInput)
+  .Input(0, {"NCHW"}, {"ND"})
+  .Input(1, {"NCHW"}, {"ND", "FRACTAL_Z_3D"})
+  .Input(2, {"NCHW"}, {"NDC1HWC0"})
+  .Output(0, {"NCHW"}, {"NDC1HWC0"});
 }  // namespace transform
 }  // namespace mindspore

@@ -144,9 +144,11 @@ class AclRunner {
 
   const string &GetName() const { return op_type_; }
 
-  void SetStaticMode() { is_dynamic_ = false; }
+  void SetStaticMode();
 
-  void SetDynamicMode() { is_dynamic_ = true; }
+  void SetDynamicMode();
+
+  void SetRunMode(const std::string &mode);
 
   void ResizeOpInputs(size_t size) {
     acl_param_.input_desc.clear();

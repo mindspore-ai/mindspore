@@ -319,16 +319,6 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
   return default_format;
 }
 
-bool AclHelper::IsNeedRetrieveOutputShape(const std::string &name) {
-  auto opinfo = GeAdapterManager::GetInstance().GetInfo(name, true);
-  auto op_type = opinfo->op_type();
-  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
-    return false;
-  }
-  auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
-  return info.is_need_retrieve_output_shape();
-}
-
 bool AclHelper::NeedCheckAttrToInput(const CNodePtr &node,
                                      const mindspore::HashMap<size_t, std::string> &attr_input_map, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
