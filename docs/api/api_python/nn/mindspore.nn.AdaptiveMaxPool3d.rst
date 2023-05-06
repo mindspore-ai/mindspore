@@ -20,4 +20,4 @@ mindspore.nn.AdaptiveMaxPool3d
         - **TypeError** - `input` 不是Tensor。
         - **ValueError** - `input` 的维度不是4D或者5D。
         - **TypeError** - `input` 的数据类型不是int、uint或float。
-        - **ValueError** - `output_size` 不是一个int整数或者shape为(3,)的tuple。
+        - **ValueError** - `output_size` 不是一个int整数或者shape为 :math:`(3,)` 的tuple。

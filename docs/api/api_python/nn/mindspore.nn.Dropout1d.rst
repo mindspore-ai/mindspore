@@ -12,7 +12,7 @@ mindspore.nn.Dropout1d
     `Dropout1d` 可以提高通道特征映射之间的独立性。
 
     参数：
-        - **p** (float，可选) - 通道的丢弃概率，介于0和1之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
+        - **p** (float，可选) - 通道的丢弃概率，介于0和1之间，例如 `p` = 0.8，意味着80%的清零概率。默认值： ``0.5`` 。
 
     输入：
         - **x** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
@@ -23,5 +23,5 @@ mindspore.nn.Dropout1d
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `p` 的数据类型不是float。
-        - **ValueError** - `p` 值不在 `[0.0，1.0]` 之间。
+        - **ValueError** - `p` 值不在 `[0.0, 1.0]` 之间。
         - **ValueError** - `x` 的维度不是 `2D` 或 `3D`。

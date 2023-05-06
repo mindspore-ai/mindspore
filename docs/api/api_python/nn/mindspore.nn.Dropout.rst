@@ -15,9 +15,9 @@ mindspore.nn.Dropout
         - `dtype` 参数会在未来版本删除。不建议使用这个参数。
 
     参数：
-        - **keep_prob** (float) - 废弃。输入神经元保留率，数值范围介于(0, 1]之间。例如，`keep_prob` =0.9，删除10%的神经元。默认值：0.5。
-        - **p** (Union[float, int, None]) - 输入神经元丢弃率，数值范围介于[0, 1)之间。例如，`p` =0.9，删除90%的神经元。默认值：None。
-        - **dtype** (:class:`mindspore.dtype`) - `input` 的数据类型。默认值：mindspore.float32。
+        - **keep_prob** (float) - 废弃。输入神经元保留率，数值范围介于(0, 1]之间。例如，`keep_prob` =0.9，删除10%的神经元。默认值： ``0.5`` 。
+        - **p** (Union[float, int, None]) - 输入神经元丢弃率，数值范围介于[0, 1)之间。例如，`p` =0.9，删除90%的神经元。默认值： ``None`` 。
+        - **dtype** (:class:`mindspore.dtype`) - `input` 的数据类型。默认值： ``mindspore.float32`` 。
 
     输入：
         - **x** (Tensor) - Dropout的输入。数据类型必须为float16或float32。

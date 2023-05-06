@@ -14,7 +14,7 @@ mindspore.nn.DiceLoss
     :math:`pred` 表示 `logits` ，:math:`true` 表示 `labels` 。
 
     参数：
-        - **smooth** (float) - 将添加到分母中，以提高数值稳定性的参数。取值大于0。默认值：1e-5。
+        - **smooth** (float) - 将添加到分母中，以提高数值稳定性的参数。取值大于0。默认值： ``1e-5`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值。数据类型必须为float16或float32。

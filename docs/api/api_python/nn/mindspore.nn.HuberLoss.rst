@@ -28,8 +28,8 @@ mindspore.nn.HuberLoss
         \end{cases}
 
     参数：
-        - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"，或"none"。默认值："mean"。如果 `reduction` 为"mean"或"sum"，则输出一个标量Tensor；如果 `reduction` 为"none"，则输出Tensor的shape为广播后的shape。
-        - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须为正。默认值：1.0。
+        - **reduction** (str) - 应用于loss的reduction类型。取值为 ``"mean"`` 、 ``"sum"`` 和 ``"none"``。默认值： ``"mean"`` 。如果 `reduction` 为 ``"mean"`` 或 ``"sum"`` ，则输出一个标量Tensor；如果 `reduction` 为 ``"none"`` ，则输出Tensor的shape为广播后的shape。
+        - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须为正。默认值： ``1.0`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。

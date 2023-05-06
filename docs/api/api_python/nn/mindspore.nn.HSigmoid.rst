@@ -8,7 +8,7 @@ mindspore.nn.HSigmoid
     Hard Sigmoid定义为：
 
     .. math::
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
+        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6})),
 
     输入：
         - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。
