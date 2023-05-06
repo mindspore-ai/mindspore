@@ -288,14 +288,19 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
   return std::make_pair(need_reduce, out_shape);
 }
 
-std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
-                                                 bool skip_mode) const {
-  auto [shape_success, shape_value] = GetIntList(shape);
+std::pair<bool, NodePtr> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
+                                             bool skip_mode) const {
   auto [axis_success, axis_value] = GetIntList(axis);
-  if (shape_success && axis_success) {
-    return NeedReduce(shape_value, axis_value, keep_dim, skip_mode);
+  if (axis_success && skip_mode && axis_value.empty()) {
+    return std::make_pair(false, shape);
   }
-  ShapeVector v;
+  auto [shape_success, shape_value] = GetIntList(shape);
+  if (shape_success && axis_success) {
+    auto [need_reduce, shape_vec] = NeedReduce(shape_value, axis_value, keep_dim, skip_mode);
+    return std::make_pair(need_reduce, Value(shape_vec));
+  }
+
+  auto v = Value(ShapeVector{});
   return std::make_pair(true, v);
 }
 
@@ -366,13 +371,14 @@ class DeprecatedShapeCalcFunctor : public ShapeCalcFunctor {
 
 NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
                                const deprecated::InferFunc &infer_func,
-                               const std::vector<int64_t> &value_depend_indices) const {
+                               const std::vector<int64_t> &value_depend_indices,
+                               const ShapeValidFunc &valid_func) const {
   auto functor = std::make_shared<deprecated::DeprecatedShapeCalcFunctor>(shape_func, infer_func);
-  return ShapeCalc(functor, inputs, value_depend_indices);
+  return ShapeCalc(functor, inputs, value_depend_indices, valid_func);
 }
 
 NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
-                               const std::vector<int64_t> &value_depend) const {
+                               const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) const {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "ShapeCalc got empty inputs";
   }
@@ -383,7 +389,8 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
     if (std::find(value_depend.begin(), value_depend.end(), static_cast<int64_t>(i)) == value_depend.end()) {
       // input[i]'s shape is used
       auto input_shape = inputs[i]->shape();
-      if (!IsDynamic(input_shape)) {
+      auto input_valid = valid_func ? valid_func(i, input_shape) : !IsDynamic(input_shape);
+      if (input_valid) {
         (void)const_args_indices.insert(i);
         const_args[i] = input_shape;
       }

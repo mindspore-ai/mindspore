@@ -102,7 +102,7 @@ void ComputeReduceIndex(const std::vector<int64_t> &x_rev, const std::vector<int
     } else if (y_i == 1) {
       grad_y_reduce_idy->push_back(reduce_idx);
     } else {
-      MS_LOG(EXCEPTION) << "not compatible shape input for BroadcastGradientArgs.";
+      MS_LOG(EXCEPTION) << "not compatible shape input(" << x_rev << ", " << y_rev << ") for BroadcastGradientArgs.";
     }
   }
 
