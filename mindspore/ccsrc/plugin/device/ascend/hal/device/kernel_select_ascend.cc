@@ -25,6 +25,7 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <functional>
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/oplib/super_bar.h"
@@ -46,11 +47,14 @@ namespace device {
 namespace ascend {
 namespace {
 using KernelBuildInfoBuilderPtr = std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder>;
+using OriginTypeConverter = std::function<TypeId(const TypeId &)>;
+const OriginTypeConverter kDefaultOriginTypeConverter = [](const TypeId &origin_type) { return origin_type; };
 constexpr int kWeightUnInitScore = 1;
 constexpr int kWeightInitScore = 2;
 constexpr int kFeatureMapBaseScore = 10;
 constexpr auto kPriChoosenFormat = "pri_format";
 constexpr auto kOriSelectFormat = "ori_select_format";
+constexpr auto kForceFp32Strategy = "force_fp32";
 enum MatchCountPriority : size_t {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
   MATCH_DTYPE_COUNT = MATCH_COUNT_PRIORITY_BEGIN,
@@ -85,6 +89,25 @@ mindspore::HashSet<std::string> kHighPrecisionOp = {kConv2DOpName,
                                                     kBiasAddGradOpName,
                                                     kSigmoidCrossEntropyWithLogitsV2OpName};
 
+bool IsCubeKernel(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  static const std::unordered_set<std::string> kCubeKernelSet = {
+    // matmul
+    kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName, kBatchMatMulV2OpName,
+    // conv
+    kConv2DOpName, kConv3DOpName,
+    // conv dx
+    kConv2DBackpropInputOpName, kConv2DBackpropInputDOpName, kConv2DTransposeOpName, kConv2DTransposeDOpName,
+    kDepthwiseConv2DBackpropInputOpName, kDepthwiseConv2DBackpropInputDOpName, kConv3DBackpropInputOpName,
+    kConv3DBackpropInputDOpName, kConv3DTransposeOpName, kConv3DTransposeDOpName,
+    // conv dw
+    kConv2DBackpropFilterOpName, kConv2DBackpropFilterDOpName, kDepthwiseConv2DBackpropFilterOpName,
+    kDepthwiseConv2DBackpropDFilterOpName, kConv3DBackpropFilterOpName, kConv3DBackpropFilterDOpName};
+
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
+  return kCubeKernelSet.find(op_name) != kCubeKernelSet.end();
+}
+
 void FallbackOps(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -105,12 +128,12 @@ void FallbackOps(const CNodePtr &kernel_node) {
 }
 
 namespace {
-bool ProcessKernelInputIdx(const kernel::KernelBuildInfoPtr &kernel_build_info, const std::vector<TypeId> &inputs_type,
-                           size_t i, size_t kernel_input_index) {
+bool ProcessKernelInputIdx(const kernel::KernelBuildInfoPtr &kernel_build_info, const TypeId &input_type,
+                           size_t kernel_input_index) {
   if (kernel_input_index >= kernel_build_info->GetInputNum()) {
     return false;
   }
-  if (kernel_build_info->GetInputDeviceType(kernel_input_index) != inputs_type[i]) {
+  if (kernel_build_info->GetInputDeviceType(kernel_input_index) != input_type) {
     return false;
   }
   return true;
@@ -128,7 +151,9 @@ bool IsNodeTupleInputNeedUnfold(const CNodePtr &cnode, const kernel::KernelBuild
 }
 }  // namespace
 
-bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
+bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info,
+                                    const OriginTypeConverter &input_type_converter = kDefaultOriginTypeConverter,
+                                    const OriginTypeConverter &output_type_converter = kDefaultOriginTypeConverter) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
   size_t kernel_input_index = 0;
@@ -139,7 +164,7 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
   for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
     std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
     for (size_t i = 0; i < inputs_type.size(); ++i) {
-      if (!ProcessKernelInputIdx(kernel_build_info, inputs_type, i, kernel_input_index)) {
+      if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(inputs_type[i]), kernel_input_index)) {
         return false;
       }
       if (is_input_need_unfold) {
@@ -154,14 +179,16 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
   // Check output data type
   for (size_t output_index = 0; output_index < kernel_build_info->GetOutputNum(); ++output_index) {
     if (kernel_build_info->GetOutputDeviceType(output_index) !=
-        common::AnfAlgo::GetOutputInferDataType(cnode, output_index)) {
+        output_type_converter(common::AnfAlgo::GetOutputInferDataType(cnode, output_index))) {
       return false;
     }
   }
   return true;
 }
 
-bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
+bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info,
+                                  const OriginTypeConverter &input_type_converter = kDefaultOriginTypeConverter,
+                                  const OriginTypeConverter &output_type_converter = kDefaultOriginTypeConverter) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
   size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
@@ -169,7 +196,7 @@ bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBui
   for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
     if (kernel_build_info->GetInputKernelObjectType(kernel_index) == kernel::KernelObjectType::TUPLE) {
       auto input_node = cnode->inputs()[input_index + 1];
-      TypeId input_origin_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+      TypeId input_origin_type = input_type_converter(common::AnfAlgo::GetOutputInferDataType(input_node, 0));
       if (kernel_build_info->GetInputDeviceType(kernel_index) != input_origin_type) {
         return false;
       }
@@ -177,7 +204,7 @@ bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBui
     } else {
       std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
       for (size_t i = 0; i < inputs_type.size(); ++i) {
-        if (!ProcessKernelInputIdx(kernel_build_info, inputs_type, i, kernel_index)) {
+        if (!ProcessKernelInputIdx(kernel_build_info, input_type_converter(inputs_type[i]), kernel_index)) {
           return false;
         }
         ++kernel_index;
@@ -187,20 +214,22 @@ bool MatchFoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBui
   // Check output data type
   for (size_t output_index = 0; output_index < kernel_build_info->GetOutputNum(); ++output_index) {
     if (kernel_build_info->GetOutputDeviceType(output_index) !=
-        common::AnfAlgo::GetOutputInferDataType(cnode, output_index)) {
+        output_type_converter(common::AnfAlgo::GetOutputInferDataType(cnode, output_index))) {
       return false;
     }
   }
   return true;
 }
 
-bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
+bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info,
+                              const OriginTypeConverter &input_type_converter = kDefaultOriginTypeConverter,
+                              const OriginTypeConverter &output_type_converter = kDefaultOriginTypeConverter) {
   MS_EXCEPTION_IF_NULL(cnode);
   bool is_fold = kernel::IsFoldKernelBuildInfo(kernel_build_info);
   if (is_fold) {
-    return MatchFoldInferOutputDataType(cnode, kernel_build_info);
+    return MatchFoldInferOutputDataType(cnode, kernel_build_info, input_type_converter, output_type_converter);
   } else {
-    return MatchUnfoldInferOutputDataType(cnode, kernel_build_info);
+    return MatchUnfoldInferOutputDataType(cnode, kernel_build_info, input_type_converter, output_type_converter);
   }
 }
 
@@ -364,11 +393,13 @@ std::shared_ptr<kernel::KernelBuildInfo> ChooseMatchedKernelInfo(
 }
 
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilteredKernelInfoByDtype(
-  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list,
+  const OriginTypeConverter &input_type_converter = kDefaultOriginTypeConverter,
+  const OriginTypeConverter &output_type_converter = kDefaultOriginTypeConverter) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> result;
   for (const auto &kernel_build_info : kernel_info_list) {
     MS_EXCEPTION_IF_NULL(kernel_build_info);
-    if (!MatchInferOutputDataType(cnode, kernel_build_info)) {
+    if (!MatchInferOutputDataType(cnode, kernel_build_info, input_type_converter, output_type_converter)) {
       continue;
     }
     result.push_back(kernel_build_info);
@@ -904,6 +935,35 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   }
 }
 
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> ApplyForceFP32Strategy(
+  const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> result;
+  static std::string precision_mode;
+  if (precision_mode.empty()) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+  }
+  if (precision_mode != kForceFp32Strategy) {
+    return result;
+  }
+
+  MS_LOG(DEBUG) << "Apply force_fp32 stratepy for node " << cnode->fullname_with_scope();
+  const OriginTypeConverter fp32_converter = [](const TypeId &origin_type) {
+    if (origin_type == kNumberTypeFloat16 || origin_type == kNumberTypeFloat) {
+      return kNumberTypeFloat32;
+    }
+    return origin_type;
+  };
+  if (IsCubeKernel(cnode)) {
+    // for cube op, select fp16-in & fp32-out first if origin type is fp16
+    return FilteredKernelInfoByDtype(cnode, kernel_info_list, kDefaultOriginTypeConverter, fp32_converter);
+  } else {
+    // for vector op, select fp32-in & fp32-out first
+    return FilteredKernelInfoByDtype(cnode, kernel_info_list, fp32_converter, fp32_converter);
+  }
+}
+
 KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
                                         const std::vector<kernel::KernelBuildInfoPtr> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -914,8 +974,12 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   bool precision_reduce = false;
   kernel::KernelBuildInfoPtr selected_kernel_info = nullptr;
   // Matched kernel info
+  // Apply force_fp32 strategy if it is set in context
+  auto filtered_kernel_info_list = ApplyForceFP32Strategy(kernel_node, kernel_info_list);
   // Filter kernel info matched with me inferred type
-  auto filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
+  if (filtered_kernel_info_list.empty()) {
+    filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
+  }
   if (filtered_kernel_info_list.empty()) {
     // selected kernel info using raised precision or reduce precision
     filtered_kernel_info_list =
