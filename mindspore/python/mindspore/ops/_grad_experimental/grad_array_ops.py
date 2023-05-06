@@ -255,7 +255,7 @@ def get_bprop_matrix_band_part(self):
     matrix_band_part = MatrixBandPart()
 
     def bprop(x, lower, upper, out, dout):
-        return (matrix_band_part(dout, lower, upper), None, None)
+        return matrix_band_part(dout, lower, upper), zeros_like(lower), zeros_like(upper)
 
     return bprop
 
