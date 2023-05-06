@@ -22,7 +22,6 @@ from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.dataset.engine import offload
-import mindspore.dataset as ds
 from mindspore import context, nn
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
@@ -45,33 +44,28 @@ def _send_data_no_flag(dataset, epoch_num):
     exec_dataset.send(epoch_num)
 
 
-def _dynamic_sink_data(dataset, dataset_iter, network):
+def _dynamic_sink_data(dataset, dataset_iter):
     """Special scenario for dataset with sink_size=1."""
-    _, dataset_shapes = dataset_iter.types_shapes()
     if hasattr(dataset_iter, "sink_size") and \
        dataset_iter.sink_size == 1 and \
        dataset.get_dataset_size() != 1 and \
        hasattr(dataset_iter, "sink_count") and \
-       dataset_iter.sink_count == 1 and \
-       not _has_dynamic_shape(dataset_shapes) and \
-       not network.get_inputs():
+       dataset_iter.sink_count == 1:
         return True
     return False
 
 
-def _dynamic_sink_exception_scenario(dataset_iter):
+def _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
     """The exception scenario for dynamic data is not applicable."""
-    _, dataset_shapes = dataset_iter.types_shapes()
-
-    if _has_dynamic_shape(dataset_shapes) or context.get_context("mode") != context.GRAPH_MODE:
+    if context.get_context("mode") != context.GRAPH_MODE or is_dynamic:
         return True
     return False
 
 
-def _dynamic_sink_scenario(dataset, dataset_iter, network):
+def _dynamic_sink_scenario(dataset, dataset_iter, is_dynamic):
     """Special scenario with dynamic shape and sink_size=1."""
     flag = False
-    if _dynamic_sink_data(dataset, dataset_iter, network) and not _dynamic_sink_exception_scenario(dataset_iter):
+    if _dynamic_sink_data(dataset, dataset_iter) and not _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
         flag = True
 
     return flag
@@ -124,7 +118,8 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
         _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
     elif context.get_context("mode") == context.PYNATIVE_MODE:
         dataset_shapes = tuple([(-2,)] * len(dataset_shapes))
-    network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
+    network = _generate_dataset_sink_mode_net(
+        network, dataset_shapes, dataset_types, queue_name)
     return network
 
 
@@ -227,9 +222,9 @@ def connect_network_with_dataset(network, dataset_helper):
     if aux.__network__ is not network:
         raise ValueError(
             "The dataset has been connected to other network, please check the code.")
-
+    is_dynamic = bool(network.get_inputs())
     queue_name = dataset.__transfer_dataset__.queue_name
-    if _dynamic_sink_scenario(dataset, dataset_iter, network) and not context.get_context("enable_ge"):
+    if _dynamic_sink_scenario(dataset, dataset_iter, is_dynamic) and not context.get_context("enable_ge"):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
 
@@ -260,7 +255,7 @@ def connect_network_with_dataset(network, dataset_helper):
                 network, dataset_helper, queue_name)
             aux.__sink_network__ = network
 
-    if _dynamic_sink_data(dataset, dataset_iter, network) and _dynamic_sink_exception_scenario(dataset_iter):
+    if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
         dataset_helper.get_data_info()
 
     return network
@@ -415,12 +410,11 @@ class _DatasetIter:
         self.sink_count = self.get_sink_count(dataset)
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(
             dataset)
-        self.dynamic_shape = _has_dynamic_shape(self.dataset_shapes) or ds.config.get_dynamic_shape()
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
-            create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
-                                      and not self.dynamic_shape)
+            create_data_info_queue = (
+                sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1)
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
                                                            create_data_info_queue=create_data_info_queue)
 
