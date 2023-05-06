@@ -770,10 +770,10 @@ class ResizeBicubic(Primitive):
     Resize images to size using bicubic interpolation.
 
     Args:
-        align_corners (bool, optional):If ``True`` , the centers of the 4 corner pixels of the input
-            and output tensors are aligned, preserving the values at the corner pixels.Default: ``False`` .
+        align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input
+            and output tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
         half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to ``True`` ,
-            `align_corners` should be False. Default: ``False`` .
+            `align_corners` should be ``False`` . Default: ``False`` .
 
     Inputs:
         - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
@@ -794,7 +794,7 @@ class ResizeBicubic(Primitive):
         ValueError: If the dim of `size` is not 1.
         ValueError: If the number of elements in `size` is not 2.
         ValueError: If any value of `size` is not positive.
-        ValueError: If the values of `align_corners` and `half_pixel_centers` are both True .
+        ValueError: If the values of `align_corners` and `half_pixel_centers` are both ``True`` .
 
 
     Supported Platforms:

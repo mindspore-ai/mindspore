@@ -11,11 +11,11 @@ mindspore_lite.ModelParallelRunner
 
         参数：
             - **model_path** (str) - 定义模型路径。
-            - **context** (Context，可选) - 定义用于在模型池初始化期间传递上下文和选项的配置。默认值：None。None表示设置target为cpu的Context，Context带有默认的parallel属性。
+            - **context** (Context，可选) - 定义用于在模型池初始化期间传递上下文和选项的配置。默认值： ``None`` 。 ``None`` 表示设置target为cpu的Context，Context带有默认的parallel属性。
 
         异常：
             - **TypeError** - `model_path` 不是str类型。
-            - **TypeError** - `context` 既不是Context类型也不是None。
+            - **TypeError** - `context` 既不是Context类型也不是 ``None`` 。
             - **RuntimeError** - `model_path` 文件路径不存在。
             - **RuntimeError** - 初始化模型并行Runner失败。
 

@@ -2261,9 +2261,10 @@ class MappableDataset(SourceDataset):
             1. There is an optimized split function, which will be called automatically when the dataset
                that calls this function is a MappableDataset.
             2. Dataset should not be sharded if split is going to be called. Instead, create a
-               DistributedSampler and specify a split to shard after splitting. If the dataset is
-               sharded after a split, it is strongly recommended setting the same seed in each instance
-               of execution, otherwise each shard may not be part of the same split (see Examples).
+               :class:`mindspore.dataset.DistributedSampler` and specify a split to shard after splitting.
+               If the dataset is sharded after a split, it is strongly recommended setting the same
+               seed in each instance of execution, otherwise each shard may not be part of the same
+               split (see Examples).
             3. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
                Shuffling the dataset may not be deterministic, which means the data in each split
                will be different in each epoch. Furthermore, if sharding occurs after split, each

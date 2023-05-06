@@ -59,7 +59,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             Default: None, will include all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -121,7 +121,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: None, performs mindspore.dataset.Shuffle.GLOBAL.
             Bool type and Shuffle enum are both supported to pass in.
@@ -254,8 +254,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in lexicographical order.
         schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
-            column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
-            Default: None.
+            column to be read. Both JSON file path and objects constructed by :class:`mindspore.dataset.Schema` are
+            acceptable. Default: None.
         columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
         num_samples (int, optional): The number of samples (rows) to be included in the dataset. Default: None.
             When `num_shards` and `shard_id` are specified, it will be interpreted as number of rows per shard.
@@ -269,7 +269,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: None, will use global default workers(8), it can be set
-            by `mindspore.dataset.config.set_num_parallel_workers` .
+            by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is False, no shuffling will be performed.

@@ -524,8 +524,8 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset. Default: None.
             If provided, sanity check will be performed on generator output.
         schema (Union[str, Schema], optional): Data format policy, which specifies the data types and shapes of the data
-            column to be read. Both JSON file path and objects constructed by mindspore.dataset.Schema are acceptable.
-            Default: None.
+            column to be read. Both JSON file path and objects constructed by :class:`mindspore.dataset.Schema` are
+            acceptable. Default: None.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, all images.
         num_parallel_workers (int, optional): Number of worker threads/subprocesses used to

@@ -11,22 +11,22 @@ mindspore.dataset.GraphData
 
     参数：
         - **dataset_file** (str) - 数据集文件路径。
-        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **working_mode** (str, 可选) - 设置工作模式，目前支持 'local'/'client'/'server'。默认值：'local'。
+        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **working_mode** (str, 可选) - 设置工作模式，目前支持 ``'local'`` 、 ``'client'`` 、 ``'server'`` 。默认值： ``'local'`` 。
 
-          - **local**：用于非分布式训练场景。
-          - **client**：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
-          - **server**：用于分布式训练场景。服务器加载数据并可供客户端使用。
+          - ``local`` ：用于非分布式训练场景。
+          - ``client`` ：用于分布式训练场景。客户端不加载数据，而是从服务器获取数据。
+          - ``server`` ：用于分布式训练场景。服务器加载数据并可供客户端使用。
 
-        - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效。默认值：'127.0.0.1'。
-        - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' 时有效。默认值：50051。
-        - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效。默认值：1。
-        - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client`，且没有客户端正在连接时，服务器将自动退出。默认值：True。
+        - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 ``'client'`` 或 ``'server'`` 时有效。默认值： ``'127.0.0.1'`` 。
+        - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 ``'client'`` 或 ``'server'`` 时有效。默认值： ``50051`` 。
+        - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 ``'server'`` 时有效。默认值： ``1`` 。
+        - **auto_shutdown** (bool, 可选) - 当工作模式设置为 ``'server'`` 时有效。当连接的客户端数量达到 `num_client`，且没有客户端正在连接时，服务器将自动退出。默认值： ``True`` 。
 
     异常：
         - **ValueError** - `dataset_file` 路径下数据文件不存在或无效。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `working_mode` 参数取值不为 'local', 'client' 或 'server'。
+        - **ValueError** - `working_mode` 参数取值不为 ``'local'`` 、 ``'client'`` 或 ``'server'`` 。
         - **TypeError** - `hostname` 参数类型错误。
         - **ValueError** - `port` 参数不在范围[1024, 65535]内。
         - **ValueError** - `num_client` 参数不在范围[1, 255]内。
@@ -46,7 +46,7 @@ mindspore.dataset.GraphData
 
     .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=OutputFormat.NORMAL)
 
-        获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例。1表示两个节点之间连接，0表示不连接。
+        获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例。 ``1`` 表示两个节点之间连接， ``0`` 表示不连接。
 
         .. list-table:: 邻接矩阵
             :widths: 20 20 20 20 20
@@ -135,7 +135,7 @@ mindspore.dataset.GraphData
         参数：
             - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
             - **neighbor_type** (int) - 指定相邻节点的类型。
-            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值：mindspore.dataset.OutputFormat.NORMAL，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
+            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值： ``mindspore.dataset.OutputFormat.NORMAL`` ，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
 
         返回：
             对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示相邻节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示相邻节点。
@@ -239,10 +239,10 @@ mindspore.dataset.GraphData
             - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
             - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
             - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型，列表或数组中每个元素都应该是int类型。
-            - **strategy** (SamplingStrategy, 可选) - 采样策略。默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
+            - **strategy** (SamplingStrategy, 可选) - 采样策略。默认值： ``mindspore.dataset.SamplingStrategy.RANDOM`` 。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
-              - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
-              - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
+              - ``SamplingStrategy.RANDOM`` ：随机抽样，带放回采样。
+              - ``SamplingStrategy.EDGE_WEIGHT`` ：以边缘权重为概率进行采样。
 
         返回：
             numpy.ndarray，包含相邻节点的数组。
@@ -266,9 +266,9 @@ mindspore.dataset.GraphData
         参数：
             - **target_nodes** (list[int]) - 随机游走中的起始节点列表。
             - **meta_path** (list[int]) - 每个步长的节点类型。
-            - **step_home_param** (float, 可选) - 返回 `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的超参。默认值：1.0。
-            - **step_away_param** (float, 可选) - `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的in和out超参。默认值：1.0。
-            - **default_node** (int, 可选) - 如果找不到更多相邻节点，则为默认节点。默认值：-1，表示不给定节点。
+            - **step_home_param** (float, 可选) - 返回 `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的超参。默认值： ``1.0`` 。
+            - **step_away_param** (float, 可选) - `node2vec算法 <https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf>`_ 中的in和out超参。默认值： ``1.0`` 。
+            - **default_node** (int, 可选) - 如果找不到更多相邻节点，则为默认节点。默认值： ``-1`` ，表示不给定节点。
 
         返回：
             numpy.ndarray，包含节点的数组。

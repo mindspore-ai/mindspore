@@ -564,9 +564,9 @@ class Graph(GraphData):
             format should be dict, key is feature type, which is represented with string, value should be numpy.array,
             its shape is not restricted.
         node_type(Union[list, numpy.ndarray], optional): type of nodes, each element should be string which represent
-            type of corresponding node. If not provided, default type for each node is "0".
+            type of corresponding node. Default: None, default type for each node is "0".
         edge_type(Union[list, numpy.ndarray], optional): type of edges, each element should be string which represent
-            type of corresponding edge. If not provided, default type for each edge is "0".
+            type of corresponding edge. Default: None, default type for each edge is "0".
         num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
         working_mode (str, optional): Set working mode, now supports 'local'/'client'/'server'. Default: 'local'.
 
