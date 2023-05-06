@@ -36,7 +36,13 @@ NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, c
 }
 
 NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) const {
-  return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1});
+  auto check_shp_valid_func = [shift](size_t i, const ShapeVector &shape) -> bool {
+    ShapeVector broadcast_shape;
+    broadcast_shape.insert(broadcast_shape.end(), shape.begin(), shape.end() - std::min(shape.size(), shift));
+    return !IsDynamic(broadcast_shape);
+  };
+
+  return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1}, {}, check_shp_valid_func);
 }
 
 ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {

@@ -37,6 +37,8 @@ namespace deprecated {
 using ShapeFunc = std::function<ShapeArray(const ShapeArray &)>;
 using InferFunc = std::function<ShapeVector(const ShapeArray &, const std::unordered_set<size_t> &)>;
 }  // namespace deprecated
+using ShapeValidFunc = std::function<bool(size_t, const ShapeVector &)>;
+
 class COMMON_EXPORT Emitter {
  public:
   Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
@@ -182,8 +184,8 @@ class COMMON_EXPORT Emitter {
 
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis, bool keep_dim,
                                           bool skip_mode = false) const;
-  std::pair<bool, ShapeVector> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
-                                          bool skip_mode = false) const;
+  std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim,
+                                      bool skip_mode = false) const;
   NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false) const;
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
@@ -255,8 +257,8 @@ class COMMON_EXPORT Emitter {
   ///     of its shape will be passed to 'func'.
   /// \return NodePtrList, the outputs shape list.
   NodePtrList ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
-                        const deprecated::InferFunc &infer_func,
-                        const std::vector<int64_t> &value_depend_indices = {}) const;
+                        const deprecated::InferFunc &infer_func, const std::vector<int64_t> &value_depend_indices = {},
+                        const ShapeValidFunc &valid_func = nullptr) const;
 
   /// \brief Shape calculation. This interface is used to unify the code between static-shape and dynamic-shape
   /// situation, the output type is depend on types of inputs.
@@ -268,7 +270,8 @@ class COMMON_EXPORT Emitter {
   /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
   /// otherwise CNode tensors are returned.
   NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
-                        const std::vector<int64_t> &value_depend = {}) const;
+                        const std::vector<int64_t> &value_depend = {},
+                        const ShapeValidFunc &valid_func = nullptr) const;
 
   using BlockFunc = std::function<NodePtrList(const Emitter *)>;
   /// \brief Generate a conditional block.
