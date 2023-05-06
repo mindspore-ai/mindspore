@@ -130,6 +130,13 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   *ceil_mode = GetValue<int64_t>(primitive->GetAttr(kCeilMode)) == 1;
 }
 
+int64_t FixCeil(int64_t input, int16_t output, int64_t stride, int64_t pad) {
+  if (((output - 1) * stride) >= (input + pad)) {
+    return output - 1;
+  }
+  return output;
+}
+
 std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::vector<int64_t> &in_shape,
                                     int64_t kernel_d, int64_t kernel_h, int64_t kernel_w, int64_t stride_d,
                                     int64_t stride_h, int64_t stride_w, const std::vector<int64_t> &pad_list,
@@ -191,6 +198,9 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
       out_d = DoubleToLong(std::ceil(out_d_tmp));
       out_h = DoubleToLong(std::ceil(out_h_tmp));
       out_w = DoubleToLong(std::ceil(out_w_tmp));
+      out_d = FixCeil(in_d, out_d, stride_d, pad_list[kInputIndex0]);
+      out_h = FixCeil(in_h, out_h, stride_h, pad_list[kInputIndex2]);
+      out_w = FixCeil(in_w, out_w, stride_w, pad_list[kInputIndex4]);
     } else {
       out_d = DoubleToLong(std::floor(out_d_tmp));
       out_h = DoubleToLong(std::floor(out_h_tmp));
