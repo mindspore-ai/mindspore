@@ -323,6 +323,7 @@ Reduction函数
     mindspore.ops.cumsum
     mindspore.ops.fmax
     mindspore.ops.histc
+    mindspore.ops.logcumsumexp
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean

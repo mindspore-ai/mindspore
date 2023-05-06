@@ -185,6 +185,7 @@ mindspore.Tensor
     mindspore.Tensor.log2
     mindspore.Tensor.logaddexp
     mindspore.Tensor.logaddexp2
+    mindspore.Tensor.logcumsumexp
     mindspore.Tensor.logdet
     mindspore.Tensor.logical_and
     mindspore.Tensor.logical_not

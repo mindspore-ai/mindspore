@@ -48,6 +48,7 @@ from mindspore.ops.operations.math_ops import (
     BesselY1,
     BesselK1,
     BesselK1e,
+    CumulativeLogsumexp,
     LuSolve,
     MatrixExp,
     MatrixSolve,
@@ -7287,6 +7288,43 @@ def _type_convert(force, obj):
     return force(obj)
 
 
+def logcumsumexp(input, axis):
+    """
+    Compute the cumulative log-sum-exp of the input tensor `input` along `axis` .
+    For example, if `input` is a tensor [a, b, c] and `axis` is 0, the output will be [a, log(exp(a) + exp(b)),
+    log(exp(a) + exp(b) + exp(c))].
+
+    Args:
+        input (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
+        axis (int) - Describing the dimension to compute the cumulative product.
+            Must be in the range [-rank(x), rank(x)).
+
+    Returns:
+        Tensor, has the same dtype and shape as the `input`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not in [float16, float32, float64].
+        TypeError: If dtype of `axis` is not int.
+        RuntimeError: If `axis` is out of range [-rank(input), rank(input)).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> output = ops.logcumsumexp(x, 0)
+        >>> print(output)
+        [1.        2.3132617 3.407606 ]
+    """
+    if not isinstance(axis, int):
+        raise TypeError(
+            f"For 'logcumsumexp', 'axis' must be int type, but got {type(axis)}"
+        )
+    logcumsumexp_ = _get_cache_prim(CumulativeLogsumexp)()
+    return logcumsumexp_(input, Tensor(axis))
+
+
 def logsumexp(input, axis, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
@@ -11006,6 +11044,7 @@ __all__ = [
     'logical_and',
     'logit',
     'gcd',
+    'logcumsumexp',
     'logsumexp',
     'ldexp',
     'rsqrt',

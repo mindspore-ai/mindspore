@@ -1358,6 +1358,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('logaddexp2')(self, other)
 
+    def logcumsumexp(self, axis):
+        r"""
+        For details, please refer to :func:`mindspore.ops.logcumsumexp`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('logcumsumexp')(self, axis)
+
     def logsumexp(self, axis, keepdims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.logsumexp`.

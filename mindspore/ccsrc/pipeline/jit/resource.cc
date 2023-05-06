@@ -256,6 +256,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"lcm", std::string("lcm")},                                        // F.lcm()
        {"ldexp", std::string("ldexp")},                                    // F.ldexp()
        {"log1p", std::string("log1p")},                                    // P.Log1p()
+       {"logcumsumexp", std::string("logcumsumexp")},                      // logcumsumexp()
        {"logit", std::string("logit")},                                    // Logit()
        {"negative", std::string("negative")},                              // neg()
        {"logdet", std::string("logdet")},                                  // logdet()
