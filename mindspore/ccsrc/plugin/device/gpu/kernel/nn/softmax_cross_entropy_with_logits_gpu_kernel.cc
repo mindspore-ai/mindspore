@@ -34,13 +34,6 @@ bool SoftmaxCrossEntropyWithLogitsGpuKernelMod::Init(const BaseOperatorPtr &base
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&logits_descriptor_),
-                                      kernel_name_ + " cudnnCreateTensorDescriptor failed.");
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&softmax_output_descriptor_),
-                                      kernel_name_ + " cudnnCreateTensorDescriptor failed.");
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
   return true;
 }
 
@@ -74,15 +67,6 @@ int SoftmaxCrossEntropyWithLogitsGpuKernelMod::Resize(const BaseOperatorPtr &bas
   output2_size_ = logits_size_;
   softmax_output_logits_size_ = logits_size_;
 
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_, channel_size_,
-                               height_, width_),
-    kernel_name_ + " cudnnSetTensor4dDescriptor failed.");
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetTensor4dDescriptor(softmax_output_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_,
-                               channel_size_, height_, width_),
-    kernel_name_ + " cudnnSetTensor4dDescriptor failed.");
-
   workspace_size_list_.push_back(softmax_output_logits_size_);
   return KRET_OK;
 }
@@ -95,16 +79,9 @@ bool SoftmaxCrossEntropyWithLogitsGpuKernelMod::LaunchKernel(const std::vector<A
   S *labels_addr = GetDeviceAddress<S>(inputs, 1);
   T *loss_addr = GetDeviceAddress<T>(outputs, 0);
   T *dlogits_addr = GetDeviceAddress<T>(outputs, 1);
-  T *softmax_output_logits = GetDeviceAddress<T>(workspace, 0);
+  T *workspace_addr = GetDeviceAddress<T>(workspace, 0);
 
-  const float alpha = 1;
-  const float beta = 0;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, logits_descriptor_, logits_addr, &beta,
-                        softmax_output_descriptor_, softmax_output_logits),
-    kernel_name_ + " cudnnSoftmaxForward failed.");
-
-  CrossEntropy(softmax_output_logits, labels_addr, batch_size_, channel_size_, loss_addr, dlogits_addr,
+  CrossEntropy(logits_addr, labels_addr, batch_size_, channel_size_, loss_addr, dlogits_addr, workspace_addr,
                reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
