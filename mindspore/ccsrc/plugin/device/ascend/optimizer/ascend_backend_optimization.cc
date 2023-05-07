@@ -376,8 +376,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<opt::LambFission>());
-  ir_fusion_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
-  ir_fusion_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
@@ -745,6 +743,8 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
 
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto ms_context = MsContext::GetInstance();
