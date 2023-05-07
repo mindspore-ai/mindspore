@@ -42,7 +42,7 @@ __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_aut
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
 _DEVICE_APP_MEMORY_SIZE = 31  # The max memory size of graph plus variable.
-_re_pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
+_RE_PATTERN = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
 K_CONTEXT = None
 
 
@@ -343,7 +343,7 @@ class _Context:
         logger.warning("For 'context.set_context', the parameter 'variable_memory_max_size' is deprecated, "
                        "and will be removed in a future "
                        "version. Please use parameter 'max_device_memory' instead.")
-        if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
+        if not Validator.check_str_by_regular(variable_memory_max_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should be in correct"
                              " format! It must be a string ending with 'GB', in addition to that, it must contain "
                              "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
@@ -358,7 +358,7 @@ class _Context:
         self.set_param(ms_ctx_param._graph_memory_max_size, graph_memory_max_size_)
 
     def set_max_device_memory(self, max_device_memory):
-        if not Validator.check_str_by_regular(max_device_memory, _re_pattern):
+        if not Validator.check_str_by_regular(max_device_memory, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'max_device_memory' should be in correct "
                              " format! It must be a string ending with 'GB', in addition to that, it must contain "
                              "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
@@ -374,7 +374,7 @@ class _Context:
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
                            "you can use context.set_context to set pynative mode.")
             return
-        if not Validator.check_str_by_regular(mempool_block_size, _re_pattern):
+        if not Validator.check_str_by_regular(mempool_block_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
                              "correct format! Such as \"10GB\", "
                              "but got {}".format(mempool_block_size))

@@ -14,6 +14,7 @@
 # ============================================================================
 """RNN Cells module, include RNNCell, GRUCell, LSTMCell."""
 from __future__ import absolute_import
+from functools import wraps
 
 import math
 import numpy as np
@@ -68,6 +69,8 @@ def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
 
 
 def _check_lstmcell_init(func):
+    """Internal function, used to check init args."""
+    @wraps(func)
     def wrapper(*args, **kwargs):
         logger.warning(f"LSTMCell has been changed from 'single LSTM layer' to 'single LSTM cell', "
                        f"if you still need use single LSTM layer, please use `nn.LSTM` instead.")

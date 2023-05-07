@@ -189,7 +189,7 @@ class Bijector(Cell):
         """
         Calculate batch_shape based on parameters.
         """
-        if 'param_dict' not in self.parameters.keys():
+        if 'param_dict' not in self.parameters:
             return None
         param_dict = self.parameters.get('param_dict')
         broadcast_shape_tensor = None

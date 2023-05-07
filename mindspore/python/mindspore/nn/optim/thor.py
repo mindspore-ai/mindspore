@@ -681,7 +681,7 @@ class ThorAscend(Optimizer):
         self.g_normalizer = ParameterTuple(filter(lambda x: 'g_normalizer' in x.name, net.get_parameters()))
         logger.info("matrix_a_cov len is {}".format(len(self.matrix_a_cov)))
         self._define_ascend_operator()
-        self.C0 = 16
+        self.c0 = 16
         self.device_shape_pad_flag = ()
         self.diag_block_dim = 128
         self.matrix_a = ()
@@ -989,8 +989,8 @@ class ThorAscend(Optimizer):
             kernel_hw = weight_shape[2] * weight_shape[3]
             in_channels = weight_shape[1]
             matrix_a_inv = self.reshape(matrix_a_inv, (kernel_hw, in_channels, kernel_hw, in_channels))
-            matrix_a_inv = P.Pad(((0, 0), (0, self.C0 - in_channels), (0, 0),
-                                  (0, self.C0 - in_channels)))(matrix_a_inv)
+            matrix_a_inv = P.Pad(((0, 0), (0, self.c0 - in_channels), (0, 0),
+                                  (0, self.c0 - in_channels)))(matrix_a_inv)
         return matrix_a_inv
 
     def _get_ainv_ginv_amax_gmax_list(self, gradients, damping_step, matrix_a_allreduce, matrix_g_allreduce,

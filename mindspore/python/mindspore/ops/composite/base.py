@@ -922,11 +922,7 @@ class _ListAppend(ListAppend_):
     Args:
         name (str): The name of the metafuncgraph object.
     """
-
-    def __init__(self, name):
-        """Initialize _ListAppend."""
-        ListAppend_.__init__(self, name)
-
+    # `__init__` method removed entirely
     def __call__(self, *args):
         pass
 
