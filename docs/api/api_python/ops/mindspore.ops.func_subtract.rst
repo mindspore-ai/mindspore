@@ -20,3 +20,4 @@
 
     异常：
         - **TypeError** - `input` 或 `other` 不是Tensor、number.Number。
+        - **TypeError** - `input` 和 `other` 都不是Tensor。
