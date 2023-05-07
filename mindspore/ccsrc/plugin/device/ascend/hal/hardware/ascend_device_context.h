@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/hal/hardware/ascend_kernel_executor.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_executor.h"
 #include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
+#include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 
 namespace mindspore {
 namespace device {

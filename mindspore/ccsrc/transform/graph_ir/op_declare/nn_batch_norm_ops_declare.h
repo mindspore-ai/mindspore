@@ -22,7 +22,6 @@
 #include "ops/nn_batch_norm_ops.h"
 #include "ops/reduce_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BatchNorm)
 DECLARE_OP_USE_OUTPUT(BatchNorm)
 
@@ -43,5 +42,4 @@ DECLARE_OP_USE_OUTPUT(L2Normalize)
 
 DECLARE_OP_ADAPTER(L2NormalizeGrad)
 DECLARE_OP_USE_OUTPUT(L2NormalizeGrad)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_BATCH_NORM_OPS_DECLARE_H_

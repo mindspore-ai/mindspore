@@ -21,9 +21,11 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/selection_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Slice)
 DECLARE_OP_USE_OUTPUT(Slice)
+
+DECLARE_OP_ADAPTER(CumulativeLogsumexp)
+DECLARE_OP_USE_OUTPUT(CumulativeLogsumexp)
 
 DECLARE_OP_ADAPTER(ScatterNd)
 DECLARE_OP_USE_OUTPUT(ScatterNd)
@@ -147,5 +149,4 @@ DECLARE_OP_USE_OUTPUT(StridedWrite)
 
 DECLARE_OP_ADAPTER(InplaceIndexAdd)
 DECLARE_OP_USE_OUTPUT(InplaceIndexAdd)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_SELECTION_OPS_DECLARE_H_

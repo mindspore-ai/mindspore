@@ -124,11 +124,23 @@ ATTR_MAP(MatrixDiagPart) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDiagPart) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixDiagPart, kMatrixDiagPartOpName, ADPT_DESC(MatrixDiagPart))
 
+// MatrixDiagPartV3
+INPUT_MAP(MatrixDiagPartV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(k)}, {3, INPUT_DESC(padding_value)}};
+ATTR_MAP(MatrixDiagPartV3) = {{"align", ATTR_DESC(align, AnyTraits<std::string>())}};
+OUTPUT_MAP(MatrixDiagPartV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiagPartV3, kMatrixDiagPartV3OpName, ADPT_DESC(MatrixDiagPartV3))
+
 // MatrixSetDiag
-INPUT_MAP(MatrixSetDiag) = {{1, INPUT_DESC(x)}};
+INPUT_MAP(MatrixSetDiag) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(diagonal)}};
 ATTR_MAP(MatrixSetDiag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixSetDiag) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixSetDiag, kMatrixSetDiagOpName, ADPT_DESC(MatrixSetDiag))
+
+// MatrixSetDiagV3
+INPUT_MAP(MatrixSetDiagV3) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(diagonal)}, {3, INPUT_DESC(k)}};
+ATTR_MAP(MatrixSetDiagV3) = {{"align", ATTR_DESC(align, AnyTraits<std::string>())}};
+OUTPUT_MAP(MatrixSetDiagV3) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(MatrixSetDiagV3, kMatrixSetDiagV3OpName, ADPT_DESC(MatrixSetDiagV3))
 
 // ConfusionMatrix
 INPUT_MAP(ConfusionMatrix) = {{1, INPUT_DESC(labels)}, {2, INPUT_DESC(predictions)}, {3, INPUT_DESC(weights)}};

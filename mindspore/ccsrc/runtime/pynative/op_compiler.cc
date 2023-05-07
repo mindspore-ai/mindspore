@@ -85,20 +85,16 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 
   graph->set_run_mode(device::RunMode::kKernelMode);
   graph->set_is_from_single_op(true);
-  MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
-  // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    deprecated_kernel_executor->UnifyMindIR(graph);
-  } else {
-    opt::CommonUnifyMindIR(graph);
-  }
+  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  auto kernel_executor = device_context->GetKernelExecutor(use_dynamic_shape_process);
+  MS_EXCEPTION_IF_NULL(kernel_executor);
 
-  opt::OpBackendCommonOptimization(graph);
+  opt::OptimizationWithoutBackend(graph);
+  // Unify the MindIR, must be before of the graph optimization.
+  kernel_executor->AddMindIRPass(graph);
 
   // Select kernel and optimize
-  device_context->kernel_executor_->OptimizeGraph(graph);
+  kernel_executor->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
 
@@ -121,7 +117,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   return op_compiler_info;
 }
 
-void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context) {
+void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
+                            bool is_dynamic) {
   MS_EXCEPTION_IF_NULL(device_context);
   // The compilation task may be in a child thread that has not yet set rt_context,
   // but the AICPU.so loading needs to use rt_context
@@ -134,10 +131,11 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
     (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   }
   // Kernel build
-  device_context->kernel_executor_->CreateKernel(node_to_build);
+  auto kernel_executor = device_context->GetKernelExecutor(is_dynamic);
+  kernel_executor->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
-    device_context->kernel_executor_->PreprocessBeforeRun(graph);
+    kernel_executor->PreprocessBeforeRun(graph);
     DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
     // Need to execute after PreprocessBeforeRunSingleOpGraph
     runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);

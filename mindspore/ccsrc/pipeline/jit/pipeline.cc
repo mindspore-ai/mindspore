@@ -831,13 +831,10 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 #endif
 
   compile::SetMindRTEnable();
-  if (use_vm && backend != "ge" && !is_air) {
-    if (IsPhaseLoadFromMindIR(phase)) {
-      return MindIRPipeline();
-    }
-    return VmPipeline(resource);
+  if (use_vm && backend != "ge" && !is_air && IsPhaseLoadFromMindIR(phase)) {
+    return MindIRPipeline();
   }
-  return GePipeline();
+  return VmPipeline(resource);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {

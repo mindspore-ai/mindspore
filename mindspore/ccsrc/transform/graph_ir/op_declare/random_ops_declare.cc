@@ -71,4 +71,12 @@ ATTR_MAP(RandomStandardNormal) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>()
                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(RandomStandardNormal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomStandardNormal, kNameStandardNormal, ADPT_DESC(RandomStandardNormal))
+
+// Multinomial
+INPUT_MAP(Multinomial) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_samples)}};
+ATTR_MAP(Multinomial) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                         {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                         {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Multinomial) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Multinomial, prim::kPrimMultinomial->name(), ADPT_DESC(Multinomial))
 }  // namespace mindspore::transform

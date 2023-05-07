@@ -291,7 +291,7 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const;
-  void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const;
+  void GetConstValueDepend(const CNodePtr &cnode, std::set<int64_t> *const_input_attr_index) const;
   mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;

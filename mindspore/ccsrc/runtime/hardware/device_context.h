@@ -80,13 +80,31 @@ class DeviceContext {
   // Get device address type according different device type, such GPU, Ascend.
   DeviceType GetDeviceType() const { return GetDeviceTypeByName(device_context_key_.device_name_); }
 
+  // Get kernel executor by is dynamic shape
+  std::shared_ptr<KernelExecutor> GetKernelExecutor(bool is_dynamic_shape) const {
+    if (is_dynamic_shape) {
+      return dyn_kernel_executor_;
+    } else {
+      return kernel_executor_;
+    }
+  }
+
+  void SetKernelExecutor(const std::shared_ptr<KernelExecutor> &kernel_executor) { kernel_executor_ = kernel_executor; }
+
+  void SetDynKernelExecutor(const std::shared_ptr<KernelExecutor> &kernel_executor) {
+    dyn_kernel_executor_ = kernel_executor;
+  }
+
   // todo: delete
   virtual DeprecatedInterface *GetDeprecatedInterface() { return nullptr; }
 
   DeviceContextKey device_context_key_;
   std::unique_ptr<DeviceResManager> device_res_manager_;
   std::unique_ptr<GraphExecutor> graph_executor_;
-  std::unique_ptr<KernelExecutor> kernel_executor_;
+
+ private:
+  std::shared_ptr<KernelExecutor> kernel_executor_;
+  std::shared_ptr<KernelExecutor> dyn_kernel_executor_;
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 
@@ -201,9 +219,12 @@ class GraphExecutor {
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 };
 
-class KernelExecutor {
+class BACKEND_EXPORT KernelExecutor {
  public:
   virtual ~KernelExecutor() = default;
+
+  virtual void Initialize(){};
+  virtual void Destroy(){};
 
   // Optimize the kernel graph for graph mode.
   virtual void OptimizeGraph(const FuncGraphPtr &graph) const {}
@@ -221,27 +242,17 @@ class KernelExecutor {
                             size_t stream_id) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
+  // Unify the MindIR, the default behavior uses the common unified MindIR.
+  virtual void UnifyMindIR(const KernelGraphPtr &graph) const;
+  virtual void AddMindIRPass(const KernelGraphPtr &graph) const {};
+
+  // Get rank id for distributed training.
+  virtual uint32_t GetRankID() const { return 0; }
+
+  void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 
  protected:
   DeviceContext *device_context_{nullptr};
-
- private:
-  template <class... Args>
-  friend class DeviceInterface;
-
-  void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
-};
-
-class BACKEND_EXPORT DeprecatedKernelExecutor : public KernelExecutor {
- public:
-  // Unify the MindIR, the default behavior uses the common unified MindIR.
-  // It is deprecated and will be removed in a future version
-  virtual void UnifyMindIR(const KernelGraphPtr &graph) const;
-  virtual void AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const;
-
-  // Get rank id for distributed training.
-  // It is deprecated and will be removed in a future version
-  virtual uint32_t GetRankID() const { return 0; }
 };
 
 template <class... Args>
@@ -275,10 +286,14 @@ class DeviceInterface<T, Args...> : public DeviceInterface<Args...> {
       DeviceContext::graph_executor_ = std::make_unique<T>();
       DeviceContext::graph_executor_->SetDeviceContext(this);
     } else if constexpr (std::is_base_of_v<KernelExecutor, T>) {
-      DeviceInterface::CheckUnset(reinterpret_cast<void *>(DeviceContext::kernel_executor_.get()),
+      DeviceInterface::CheckUnset(reinterpret_cast<void *>(DeviceContext::GetKernelExecutor(false).get()),
                                   "KernelExecutor has been registered!");
-      DeviceContext::kernel_executor_ = std::make_unique<T>();
-      DeviceContext::kernel_executor_->SetDeviceContext(this);
+      DeviceInterface::CheckUnset(reinterpret_cast<void *>(DeviceContext::GetKernelExecutor(true).get()),
+                                  "Dyn KernelExecutor has been registered!");
+      DeviceContext::SetKernelExecutor(std::make_shared<T>());
+      DeviceContext::GetKernelExecutor(false)->SetDeviceContext(this);
+      // for GPU/CPU dynamic shape kernel executor
+      DeviceContext::SetDynKernelExecutor(DeviceContext::GetKernelExecutor(false));
     }
   }
 

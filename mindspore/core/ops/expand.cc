@@ -184,6 +184,8 @@ class MIND_API AGExpandInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return ExpandInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Expand, prim::kPrimExpand, AGExpandInfer, false);

@@ -154,6 +154,8 @@ class MIND_API AGSplitVInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SplitVInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SplitV, prim::kPrimSplitV, AGSplitVInfer, false);

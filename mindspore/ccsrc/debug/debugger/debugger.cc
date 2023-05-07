@@ -477,10 +477,9 @@ uint32_t Debugger::GetRankID() {
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
   uint32_t rank_id = 0;
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    rank_id = deprecated_kernel_executor->GetRankID();
+  auto kernel_executor = device_context->GetKernelExecutor(false);
+  if (kernel_executor != nullptr) {
+    rank_id = kernel_executor->GetRankID();
   }
   return rank_id;
 }

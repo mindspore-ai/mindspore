@@ -26,7 +26,7 @@ class CreateNodeHelper {
  public:
   CreateNodeHelper() = default;
   ~CreateNodeHelper() = default;
-  static AnfNodePtr CreateNodeWithCheck(const AnfNodePtr &node);
+  static AnfNodePtr CreateNodeWithCheck(const AnfNodePtr &node, bool is_ascend_mindir = false);
 
  private:
   static CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info);

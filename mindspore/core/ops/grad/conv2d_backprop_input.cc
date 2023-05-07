@@ -284,6 +284,8 @@ class MIND_API AGConv2DBackpropInputInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return Conv2DBackpropInputInferType(primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, AGConv2DBackpropInputInfer,

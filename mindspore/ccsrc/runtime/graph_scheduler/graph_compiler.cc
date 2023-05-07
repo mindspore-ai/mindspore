@@ -316,21 +316,14 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     session_->ConstructKernelGraph(nodes, outputs, device_terget, true, IsEnableZeroCopy(run_in_pynative));
   MS_EXCEPTION_IF_NULL(graph);
   SetRunGraphBySingleOpFlag(graph);
-  opt::EliminateIllegalDataTypePass(graph);
   SetGraphDependency(graph, segment);
-
-  // Unify the MindIR, must be before of the graph optimization.
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    deprecated_kernel_executor->UnifyMindIR(graph);
-  } else {
-    opt::CommonUnifyMindIR(graph);
-  }
-
-  // The graph common optimization.
   graph->UpdateGraphAquireGilAttr();
-  opt::BackendCommonOptimization(graph);
+  opt::OptimizationWithoutBackend(graph);
+  // Unify the MindIR, must be before of the graph optimization.
+  auto kernel_executor = device_context->GetKernelExecutor(false);
+  if (kernel_executor != nullptr) {
+    kernel_executor->AddMindIRPass(graph);
+  }
   graph->SetInputNodes();
   auto manager = MakeManager({graph});
   if (manager) {
@@ -375,41 +368,6 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   return graph_id;
 }
 
-namespace {
-void OptimizeDynamicGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_before_opt_dynamic_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-    DumpIRProto(graph, "before_opt_dynamic_graph_hwopt_" + std::to_string(graph->graph_id()));
-  }
-#endif
-  auto opt = std::make_shared<opt::GraphOptimizer>();
-  opt->AddPassManager(opt::GetEliminateIllegalDataTypePassManager());
-  // Unify the MindIR, must be before of the graph optimization.
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    deprecated_kernel_executor->AddUnifyMindIRPass(opt);
-  } else {
-    opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
-  }
-  opt->AddPassManager(opt::GetBackendCommonOptimizationPassManagerPtr(graph));
-  (void)opt->Optimize(graph);
-  graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "hwopt_d_after_opt_dynamic_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-  }
-#endif
-}
-}  // namespace
-
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                            const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -426,8 +384,13 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   graph->set_flag(kAttrMutableKernel, true);
   graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
-  OptimizeDynamicGraph(graph, device_context);
-
+  //  Speedup: OptimizeDynamicGraph(graph, device_context);
+  opt::OptimizationWithoutBackend(graph);
+  // Unify the MindIR, must be before of the graph optimization.
+  auto kernel_executor = device_context->GetKernelExecutor(true);
+  if (kernel_executor != nullptr) {
+    kernel_executor->AddMindIRPass(graph);
+  }
   graph->UpdateGraphAquireGilAttr();
   graph->SetInputNodes();
   auto manager = Manage(graph);
@@ -474,7 +437,14 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
     graph->set_is_loop_count_sink(true);
     graph->set_attrs(func_graph->attrs());
     // Convert the illegal data type.
-    opt::EliminateIllegalDataTypePass(graph);
+    //    opt::EliminateIllegalDataTypePass(graph);
+    opt::OptimizationWithoutBackend(graph);
+  }
+
+  // Unify the MindIR, must be before of the graph optimization.
+  auto kernel_executor = device_context->GetKernelExecutor(false);
+  if (kernel_executor != nullptr) {
+    kernel_executor->AddMindIRPass(root_graph);
   }
 
   // todo: waiting for GraphExecutor
@@ -511,14 +481,14 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
 #endif
 
   // Unify the MindIR, must be before of the graph optimization.
-  auto deprecated_kernel_executor =
-    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-  if (deprecated_kernel_executor != nullptr) {
-    deprecated_kernel_executor->UnifyMindIR(root_graph);
-  }
-
-  // The graph common optimization.
-  opt::BackendCommonOptimization(root_graph);
+  //  auto deprecated_kernel_executor =
+  //    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->GetKernelExecutor(false).get());
+  //  if (deprecated_kernel_executor != nullptr) {
+  //    deprecated_kernel_executor->UnifyMindIR(root_graph);
+  //  }
+  //
+  //  // The graph common optimization.
+  //  opt::BackendCommonOptimization(root_graph);
   root_graph->SetInputNodes();
 
   GraphId graph_id = 0;
@@ -571,12 +541,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
-  MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
+  MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(false));
   // Execute optimization pass.
-  device_context->kernel_executor_->OptimizeGraph(graph);
+  device_context->GetKernelExecutor(false)->OptimizeGraph(graph);
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
-  device_context->kernel_executor_->CreateKernel(graph->execution_order());
+  device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
 
   // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
 #ifdef WITH_BACKEND
@@ -584,7 +554,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     auto cpu_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {kCPUDevice, device_context->device_context_key().device_id_});
     MS_EXCEPTION_IF_NULL(cpu_device_context);
-    auto cpu_executor = dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_device_context->kernel_executor_.get());
+    auto cpu_executor =
+      dynamic_cast<device::cpu::CPUKernelExecutor *>(cpu_device_context->GetKernelExecutor(false).get());
     MS_EXCEPTION_IF_NULL(cpu_executor);
     cpu_executor->RebuildKernelSelectBackoffOp(graph->execution_order());
   }
@@ -622,7 +593,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 
   // Adjust kernel graph before run graph.
-  device_context->kernel_executor_->PreprocessBeforeRun(graph);
+  device_context->GetKernelExecutor(false)->PreprocessBeforeRun(graph);
   graph->UpdateInternalParameter();
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context);

@@ -60,14 +60,18 @@ void AscendDeviceContext::Initialize() {
     return;
   }
 
+  DeviceContext::SetDynKernelExecutor(std::make_shared<GeKernelExecutor>());
+  GetKernelExecutor(true)->SetDeviceContext(this);
+
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
   auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(ascend_res_manager);
   runtime_instance_ = ascend_res_manager->runtime_instance_;
-  auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
-  MS_EXCEPTION_IF_NULL(ascend_kernel_executor);
-  ascend_kernel_executor->Initialize();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Initialize();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+  GetKernelExecutor(true)->Initialize();
   auto ascend_graph_executor = dynamic_cast<AscendGraphExecutor *>(graph_executor_.get());
   MS_EXCEPTION_IF_NULL(ascend_graph_executor);
   ascend_graph_executor->Initialize();
@@ -99,9 +103,13 @@ void AscendDeviceContext::Destroy() {
 
   MS_LOG(INFO) << "Start Destroy ";
   auto ascend_graph_executor = dynamic_cast<AscendGraphExecutor *>(graph_executor_.get());
+  MS_EXCEPTION_IF_NULL(ascend_graph_executor);
   ascend_graph_executor->Destroy();
-  auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
-  ascend_kernel_executor->Destroy();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Destroy();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+  GetKernelExecutor(true)->Destroy();
+  MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Destroy();
   if (runtime_instance_) {
     runtime_instance_ = nullptr;

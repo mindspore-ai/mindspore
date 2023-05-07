@@ -21,8 +21,18 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/linalg_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Ger)
 DECLARE_OP_USE_OUTPUT(Ger)
-}  // namespace mindspore::transform
+
+DECLARE_OP_ADAPTER(LogMatrixDeterminant)
+DECLARE_OP_USE_OUTPUT(LogMatrixDeterminant)
+
+DECLARE_OP_ADAPTER(MatrixInverse)
+DECLARE_OP_USE_OUTPUT(MatrixInverse)
+
+DECLARE_OP_ADAPTER(MatrixDeterminant)
+DECLARE_OP_USE_OUTPUT(MatrixDeterminant)
+
+DECLARE_OP_ADAPTER(MatrixSolve)
+DECLARE_OP_USE_OUTPUT(MatrixSolve)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_LINALG_OPS_DECLARE_H_

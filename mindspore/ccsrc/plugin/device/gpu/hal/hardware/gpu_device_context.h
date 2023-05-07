@@ -74,13 +74,13 @@ class GPUDeviceResManager : public DeviceResManager {
   std::shared_ptr<MindRTAutoOffloadAdapter> auto_mem_offload_{nullptr};
 };
 
-class GPUKernelExecutor : public DeprecatedKernelExecutor {
+class GPUKernelExecutor : public KernelExecutor {
  public:
   GPUKernelExecutor() = default;
   ~GPUKernelExecutor() override = default;
 
-  void Initialize();
-  void Destroy();
+  void Initialize() override;
+  void Destroy() override;
 
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
@@ -127,6 +127,7 @@ class GPUKernelExecutor : public DeprecatedKernelExecutor {
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
   mutable std::mutex launch_mutex_;
   GPUDeviceResManager *res_manager_{nullptr};
+  bool initialized_ = false;
 };
 
 class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResManager> {

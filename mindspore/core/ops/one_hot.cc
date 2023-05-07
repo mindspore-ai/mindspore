@@ -125,6 +125,8 @@ class OneHotInfer : public abstract::OpInferBase {
        kFloat64, kComplex64, kComplex128},
       op_name);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(OneHot, prim::kPrimOneHot, OneHotInfer, false);

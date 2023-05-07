@@ -22,7 +22,6 @@
 #include "ops/array_ops.h"
 #include "ops/selection_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Shape)
 DECLARE_OP_USE_OUTPUT(Shape)
 
@@ -94,9 +93,9 @@ DECLARE_OP_ADAPTER(Where)
 DECLARE_OP_USE_OUTPUT(Where)
 
 DECLARE_OP_ADAPTER(Unique)
+DECLARE_OP_ATTR(Unique)
 DECLARE_OP_USE_OUTPUT(Unique)
 
 DECLARE_OP_ADAPTER(BroadcastGradientArgs)
 DECLARE_OP_USE_OUTPUT(BroadcastGradientArgs)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

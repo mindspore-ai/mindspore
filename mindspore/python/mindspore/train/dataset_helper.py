@@ -323,7 +323,7 @@ class DatasetHelper:
                     if _is_role_sched():
                         iterclass = _DatasetIterPSServer
                     elif (context.get_context("device_target") == "Ascend") or \
-                         (context.get_context("device_target") == "GPU"):
+                            (context.get_context("device_target") == "GPU"):
                         iterclass = _DatasetIterMSLoopSink
                     else:
                         target = context.get_context("device_target")

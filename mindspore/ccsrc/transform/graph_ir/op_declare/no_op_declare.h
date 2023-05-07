@@ -21,7 +21,5 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/no_op.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(NoOp)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NO_OP_DECLARE_H_

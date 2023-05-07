@@ -54,9 +54,6 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   address->set_ptr(nullptr);
 }
 
-void DeprecatedKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
-void DeprecatedKernelExecutor::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
-  opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
-}
+void KernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
 }  // namespace device
 }  // namespace mindspore

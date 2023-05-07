@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/image_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)
 
@@ -54,5 +53,7 @@ DECLARE_OP_USE_OUTPUT(NonMaxSuppressionWithOverlaps)
 
 DECLARE_OP_ADAPTER(CombinedNonMaxSuppression)
 DECLARE_OP_USE_OUTPUT(CombinedNonMaxSuppression)
-}  // namespace mindspore::transform
+
+DECLARE_OP_ADAPTER(NonMaxSuppressionV3)
+DECLARE_OP_USE_OUTPUT(NonMaxSuppressionV3)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_

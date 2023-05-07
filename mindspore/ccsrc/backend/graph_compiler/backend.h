@@ -87,7 +87,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
  private:
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
-  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                            bool is_dynamic_shape = false) const;
 
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
   void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) const;

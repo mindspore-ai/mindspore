@@ -25,7 +25,13 @@ dropout_genmask_op_info = AiCPURegOp("DropoutGenMask") \
     .output(0, "y", "required") \
     .attr("Seed0", "int") \
     .attr("Seed1", "int") \
+    .dtype_format(DataType.I64_Default, DataType.F16_Default, DataType.U64_Default, DataType.U64_Default,
+                  DataType.U8_Default) \
     .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.U64_Default, DataType.U64_Default,
+                  DataType.U8_Default) \
+    .dtype_format(DataType.I64_Default, DataType.F32_Default, DataType.U64_Default, DataType.U64_Default,
+                  DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.U64_Default, DataType.U64_Default,
                   DataType.U8_Default) \
     .get_op_info()
 

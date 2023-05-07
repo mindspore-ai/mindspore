@@ -108,6 +108,12 @@ ATTR_MAP(IsNan) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IsNan) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IsNan, kNameIsNan, ADPT_DESC(IsNan))
 
+// IsInf
+INPUT_MAP(IsInf) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(IsInf) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(IsInf) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IsInf, prim::kPrimIsInf->name(), ADPT_DESC(IsInf))
+
 // LpNorm
 INPUT_MAP(LpNorm) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LpNorm) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
@@ -125,7 +131,7 @@ REG_ADPT_DESC(Trunc, prim::kPrimTrunc->name(), ADPT_DESC(Trunc))
 
 // HistogramFixedWidth
 INPUT_MAP(HistogramFixedWidth) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}, {3, INPUT_DESC(nbins)}};
-ATTR_MAP(HistogramFixedWidth) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int32_t>())}};
+ATTR_MAP(HistogramFixedWidth) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>(), AnyTraits<int32_t>())}};
 OUTPUT_MAP(HistogramFixedWidth) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(HistogramFixedWidth, kNameHistogramFixedWidth, ADPT_DESC(HistogramFixedWidth))
 
@@ -160,4 +166,16 @@ ATTR_MAP(CdistGrad) = {
 };
 OUTPUT_MAP(CdistGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CdistGrad, prim::kPrimCdistGrad->name(), ADPT_DESC(CdistGrad))
+
+// Conj
+INPUT_MAP(Conj) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(Conj) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Conj) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Conj, prim::kPrimConj->name(), ADPT_DESC(Conj))
+
+// NextAfter
+INPUT_MAP(NextAfter) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(NextAfter) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(NextAfter) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(NextAfter, prim::kPrimNextAfter->name(), ADPT_DESC(NextAfter))
 }  // namespace mindspore::transform

@@ -30,8 +30,8 @@
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_build.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 
 namespace mindspore {
 namespace device {

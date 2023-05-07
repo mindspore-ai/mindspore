@@ -34,6 +34,26 @@ constexpr auto m_reduce = "m_reduce";
 constexpr auto kXs = "Xs";
 constexpr auto kV = "V";
 constexpr auto v_axis = "axis";
+
+tensor::TensorPtr CreateTensor(const std::vector<int64_t> &values) {
+  auto type_ptr = kInt64;
+  auto data_length = sizeof(int64_t);
+  std::vector<int64_t> tensor_shape = {SizeToLong(values.size())};
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
+  tensor->set_device_info(device_info);
+  auto data_ptr = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  auto buffer_size = values.size() * data_length;
+  if (buffer_size != 0) {
+    auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), buffer_size);
+    if (ret_code != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
+    }
+  }
+  return tensor;
+}
 }  // namespace
 
 bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
@@ -62,6 +82,9 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
     auto list = value->cast<ValueListPtr>();
     MS_EXCEPTION_IF_NULL(list);
     return list->size() == 0;
+  } else if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    return tensor->DataSize() == 0;
   }
 
   return false;
@@ -121,8 +144,7 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
     (void)axis.emplace_back(SizeToLong(i));
     MS_LOG(INFO) << "x dim: " << x_shape[i];
   }
-
-  ValuePtr new_value = MakeValue(axis);
+  ValuePtr new_value = MakeValue(CreateTensor(axis));
   MS_EXCEPTION_IF_NULL(new_value);
   auto new_axis_node = std::make_shared<ValueNode>(new_value);
   MS_EXCEPTION_IF_NULL(new_axis_node);

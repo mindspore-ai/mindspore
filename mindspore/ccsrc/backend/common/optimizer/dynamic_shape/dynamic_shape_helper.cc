@@ -414,7 +414,9 @@ void InferOp(const CNodePtr &cnode, void *args) {
   kernel::KernelArgs kernel_args;
   InferShape(cnode, &kernel_args.depend_tensor_map, args);
 
-  if (auto kernel_mod_type = kernel_mod->GetKernelModType(); IsCpuGpuKernelMod(kernel_mod_type)) {
+  auto kernel_type = AnfAlgo::GetKernelType(cnode);
+  if (auto kernel_mod_type = kernel_mod->GetKernelModType();
+      (IsCpuGpuKernelMod(kernel_mod_type) || kernel_type == ACL_KERNEL)) {
     auto update = kernel::AbstractArgsFromCNode(cnode, IsDeprecatedCpuOrGpuKernelMod(kernel_mod_type));
     update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
     kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));

@@ -22,7 +22,6 @@
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "ops/math_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ActsULQ)
 DECLARE_OP_USE_OUTPUT(ActsULQ)
 
@@ -59,6 +58,9 @@ DECLARE_OP_USE_OUTPUT(IsFinite)
 DECLARE_OP_ADAPTER(IsNan)
 DECLARE_OP_USE_OUTPUT(IsNan)
 
+DECLARE_OP_ADAPTER(IsInf)
+DECLARE_OP_USE_OUTPUT(IsInf)
+
 DECLARE_OP_ADAPTER(LpNorm)
 DECLARE_OP_USE_OUTPUT(LpNorm)
 
@@ -79,5 +81,10 @@ DECLARE_OP_USE_OUTPUT(Cdist)
 
 DECLARE_OP_ADAPTER(CdistGrad)
 DECLARE_OP_USE_OUTPUT(CdistGrad)
-}  // namespace mindspore::transform
+
+DECLARE_OP_ADAPTER(Conj)
+DECLARE_OP_USE_OUTPUT(Conj)
+
+DECLARE_OP_ADAPTER(NextAfter)
+DECLARE_OP_USE_OUTPUT(NextAfter)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

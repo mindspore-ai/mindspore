@@ -20,7 +20,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/ocr_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(OCRDetectionPreHandle)
 DECLARE_OP_USE_OUTPUT(OCRDetectionPreHandle)
 
@@ -47,5 +46,4 @@ DECLARE_OP_USE_OUTPUT(Dequeue)
 
 DECLARE_OP_ADAPTER(OCRRecognitionPreHandle)
 DECLARE_OP_USE_OUTPUT(OCRRecognitionPreHandle)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_OCR_OPS_DECLARE_H_

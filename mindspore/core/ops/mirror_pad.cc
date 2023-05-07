@@ -169,6 +169,8 @@ class MirrorPadInfer : public abstract::OpInferBase {
       {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
       prim->name());
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MirrorPad, prim::kPrimMirrorPad, MirrorPadInfer, false);

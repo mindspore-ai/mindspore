@@ -21,7 +21,6 @@
 #include "ops/rnn.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(BasicLSTMCell)
 DECLARE_OP_USE_OUTPUT(BasicLSTMCell)
 
@@ -54,5 +53,4 @@ DECLARE_OP_USE_OUTPUT(CommonLSTM)
 
 DECLARE_OP_ADAPTER(GRUV2HiddenGradCell)
 DECLARE_OP_USE_OUTPUT(GRUV2HiddenGradCell)
-}  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RNN_DECLARE_H_

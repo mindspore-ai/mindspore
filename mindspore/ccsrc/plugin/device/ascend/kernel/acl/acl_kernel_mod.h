@@ -19,12 +19,15 @@
 #include <memory>
 #include <map>
 #include <string>
+#include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 #include "runtime/pynative/op_runtime_info.h"
+#include "transform/acl_ir/acl_convert.h"
 
 namespace mindspore {
 namespace kernel {
+using TensorParams = transform::TensorParams;
+
 class AclKernelMod : public AscendKernelMod {
  public:
   AclKernelMod() = default;
@@ -41,30 +44,32 @@ class AclKernelMod : public AscendKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  void SetOpType(const std::string &op_type) { op_type_ = op_type; }
-  void SetInputDescList(const std::vector<GeTensorDescPtr> &input_desc_list) { input_desc_list_ = input_desc_list; }
-  void SetOutputDescList(const std::vector<GeTensorDescPtr> &output_desc_list) { output_desc_list_ = output_desc_list; }
-  void SetDynamic(const bool is_dynamic) { is_dynamic_ = is_dynamic; }
+  void SetDeviceInfo(const std::vector<std::string> &input_device_formats,
+                     const std::vector<std::string> &output_device_formats,
+                     const std::vector<TypeId> &input_device_types, const std::vector<TypeId> &output_device_types);
+  bool IsNeedRetrieveOutputShape() override;
 
  protected:
+  std::string DebugString() const;
   void SyncData() override;
-  void ProcessAttribute(const std::shared_ptr<AclOpDesc> &op_desc_ptr, const std::vector<string> &input_names);
-  void UpdateReduceAxisAttr(const AnfNodePtr &node);
+  void GetInputInfo(const std::vector<KernelTensorPtr> &inputs);
+  int GetOutputInfo(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &outputs);
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
-  int UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info,
-                  const std::map<uint32_t, tensor::TensorPtr> &value_depend_list);
-  void UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
-  void SetInputBasicInfo(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_edge,
-                         const size_t ori_idx, const std::vector<std::string> &input_names);
-  tensor::TensorPtr UpdateConstInput(const CNodePtr &node, const size_t ori_idx, const tensor::TensorPtr &tensor,
-                                     TypeId *type, ShapeVector *shape);
-  std::vector<GeTensorDescPtr> input_desc_list_{};
-  std::vector<GeTensorDescPtr> output_desc_list_{};
-  std::map<int, tensor::TensorPtr> const_input_list_{};
-  std::string op_type_{};
-  bool is_dynamic_{false};
-  bool need_skip_execute_ = false;
+  std::vector<TensorParams> input_params_;
+  std::vector<TensorParams> output_params_;
+  std::map<uint32_t, tensor::TensorPtr> inputs_on_host_;
+
+  PrimitivePtr primitive_ptr_;
+  std::string kernel_name_;
+  std::vector<std::string> input_device_formats_;
+  std::vector<std::string> output_device_formats_;
+  std::vector<TypeId> input_device_types_;
+  std::vector<TypeId> output_device_types_;
+
+  std::vector<std::string> ms_attr_str_;
+  transform::AclConverterPtr converter_;
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;

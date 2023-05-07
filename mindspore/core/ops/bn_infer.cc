@@ -21,6 +21,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -55,7 +56,7 @@ class ABNInfer : public abstract::OpInferBase {
     return x_type;
   }
 };
-
+MIND_API_OPERATOR_IMPL(BNInfer, BaseOperator);
 abstract::AbstractBasePtr BNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

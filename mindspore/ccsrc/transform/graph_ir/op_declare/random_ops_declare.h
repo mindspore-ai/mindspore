@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/random_ops.h"
 
-namespace mindspore::transform {
 DECLARE_OP_ADAPTER(DropOutGenMask)
 DECLARE_OP_USE_OUTPUT(DropOutGenMask)
 
@@ -42,5 +41,7 @@ DECLARE_OP_USE_OUTPUT(TruncatedNormal)
 
 DECLARE_OP_ADAPTER(RandomStandardNormal)
 DECLARE_OP_USE_OUTPUT(RandomStandardNormal)
-}  // namespace mindspore::transform
+
+DECLARE_OP_ADAPTER(Multinomial)
+DECLARE_OP_USE_OUTPUT(Multinomial)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_

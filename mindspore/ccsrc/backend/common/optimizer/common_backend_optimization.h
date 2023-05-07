@@ -30,6 +30,7 @@ void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &k
 void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 PassManagerPtr GetEliminateIllegalDataTypePassManager();
 PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &graph);
+BACKEND_EXPORT void OptimizationWithoutBackend(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt
 }  // namespace mindspore
 
