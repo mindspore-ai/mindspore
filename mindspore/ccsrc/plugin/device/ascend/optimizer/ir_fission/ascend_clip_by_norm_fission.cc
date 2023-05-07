@@ -250,6 +250,9 @@ const AnfNodePtr AscendClipByNormFission::Process(const FuncGraphPtr &func_graph
   // Get `ClipByNorm` cnode
   MS_EXCEPTION_IF_NULL(node);
   auto clip_by_norm = node->cast<CNodePtr>();
+  if (common::AnfAlgo::IsNodeInputDynamicShape(clip_by_norm)) {
+    return clip_by_norm;
+  }
   MS_EXCEPTION_IF_NULL(clip_by_norm);
   constexpr size_t clip_by_norm_inp_num = 2;
   CheckCNodeInputSize(clip_by_norm, clip_by_norm_inp_num);
