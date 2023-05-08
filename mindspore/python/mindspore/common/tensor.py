@@ -178,14 +178,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
             _check_tensor_input(input_data, dtype, shape, init)
 
-            import os
-            is_dynamic_rank = os.getenv("DYNAMIC_RANK") == "on"
-
             # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
             if (isinstance(shape, (list, tuple)) and None in shape) or init is not None:
                 shape = _check_tensor_dynamic_shape(dtype, shape, init)
-                if is_dynamic_rank and -1 in shape:
-                    shape = [-2]
                 Tensor_.__init__(self, dtype, shape)
             else:
                 _check_input_data_type(input_data)

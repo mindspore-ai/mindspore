@@ -374,6 +374,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<opt::LambFission>());
   ir_fusion_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   ir_fusion_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
@@ -442,6 +443,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<opt::LambFission>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplace>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
@@ -542,6 +544,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
+  opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
@@ -693,9 +696,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
 
 PassManagerPtr GetAscendUnifyMindIRPassManager() {
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
-  unify_mindir_pm->AddPass(std::make_shared<LambFission>());
   unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AscendClipByNormFission>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::ClipByNormFissionGe>());
   unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond1>());
   unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayAddFlowCond2>());
   unify_mindir_pm->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
