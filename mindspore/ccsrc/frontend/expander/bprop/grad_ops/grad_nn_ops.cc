@@ -1375,6 +1375,17 @@ REG_BPROP_BUILDER("AdaptiveMaxPool2D").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("AdaptiveMaxPool3D").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto output_size = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto index = ib->TupleGetItem(out, 1);
+  auto dy = ib->TupleGetItem(dout, 0);
+  auto dx = ib->Emit("AdaptiveMaxPool3DGrad", {dy, x, index});
+  return {dx, ib->ZerosLike(output_size)};
+});
+
 REG_BPROP_BUILDER("Conv2DTranspose").SetUnusedInputs({i2, i3}).SetBody(Conv2DTransposeBpropExpander);
 REG_BPROP_BUILDER("Conv2DBackpropInput").SetUnusedInputs({i2, i3}).SetBody(Conv2DTransposeBpropExpander);
 

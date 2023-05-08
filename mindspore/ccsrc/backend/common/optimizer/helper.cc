@@ -1361,7 +1361,8 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
   if (common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
-      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial) ||
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimBpropCut)) {
     return nullptr;
   }
 
@@ -1370,8 +1371,6 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
                  << " has dynamic tuple input, can't convert. Node debug string:" << cnode_ptr->DebugString();
     return nullptr;
   }
-
-  bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimBpropCut);
   bool cnode_is_print = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPrint);
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
@@ -1381,10 +1380,9 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
     bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
-    bool skip = (is_bprop_cut && input_node->abstract()->isa<abstract::AbstractSparseTensor>());
     if (output_is_tuple && cnode_is_print) {
       (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
-    } else if (output_is_tuple && !skip) {
+    } else if (output_is_tuple) {
       auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
       if (dyn_input_size == 0) {
         dyn_input_sizes.push_back(-1);

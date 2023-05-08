@@ -559,13 +559,25 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
     for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
-      const auto &input = kernel->input(i);
-      auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
-      const auto &node = kernel_with_index.first;
-      if (node->isa<CNode>()) {
-        (*ref_count)[kernel_with_index] += 1;
-      }
+      auto input = kernel->inputs()[i];
+      CalculateRefCount(input, ref_count);
     }
+  }
+}
+
+void SessionBasic::CalculateRefCount(const AnfNodePtr &node, std::map<KernelWithIndex, size_t> *ref_count) const {
+  if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(node, 0);
+    const auto &real_input = kernel_with_index.first;
+    if (real_input->isa<CNode>()) {
+      (*ref_count)[kernel_with_index] += 1;
+    }
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    auto input = cnode->input(i);
+    CalculateRefCount(input, ref_count);
   }
 }
 
