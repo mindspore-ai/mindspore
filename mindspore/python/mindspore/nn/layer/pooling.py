@@ -550,7 +550,7 @@ class MaxPool2d(_PoolNd):
         else:
             self.use_pad = False
             if padding != 0 or dilation != 1 or return_indices or ceil_mode:
-                raise ValueError(f"For MaxPool1d, the parameter 'padding', 'dilation', 'return_indices', 'ceil_mode' "
+                raise ValueError(f"For MaxPool2d, the parameter 'padding', 'dilation', 'return_indices', 'ceil_mode' "
                                  f"can not be set to non-default value when pad_mode is not 'pad', "
                                  f"but got pad_mode:{pad_mode}.")
             self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
