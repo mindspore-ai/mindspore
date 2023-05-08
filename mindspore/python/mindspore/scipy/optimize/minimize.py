@@ -136,13 +136,13 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
         >>> from mindspore.common import Tensor
         >>> x0 = Tensor(onp.zeros(2).astype(onp.float32))
         >>> def func(p):
-        >>>     x, y = p
-        >>>     return (x ** 2 + y - 11.) ** 2 + (x + y ** 2 - 7.) ** 2
+        ...     x, y = p
+        ...     return (x ** 2 + y - 11.) ** 2 + (x + y ** 2 - 7.) ** 2
         >>> res = minimize(func, x0, method='BFGS', options=dict(maxiter=None, gtol=1e-6))
         >>> print(res.x)
-        >>> l_res = minimize(func, x0, method='LBFGS', options=dict(maxiter=None, gtol=1e-6))
-        >>> print(res.x)
         [3. 2.]
+        >>> l_res = minimize(func, x0, method='LBFGS', options=dict(maxiter=None, gtol=1e-6))
+        >>> print(l_res.x)
         [3. 2.]
     """
     if method is None:
