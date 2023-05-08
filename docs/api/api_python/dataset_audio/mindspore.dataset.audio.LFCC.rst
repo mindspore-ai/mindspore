@@ -8,15 +8,15 @@ mindspore.dataset.audio.LFCC
     .. note:: 待处理音频shape需为<..., time>。
 
     参数：
-        - **sample_rate** (int, 可选) - 音频信号的采样率。默认值：16000。
-        - **n_filter** (int, 可选) - 要应用的线性滤波器数量。默认值：128。
-        - **n_lfcc** (int, 可选) - 要保留的线性频率倒谱系数数。默认值：40。
-        - **f_min** (float, 可选) - 最小频率。默认值：0.0。
-        - **f_max** (float, 可选) - 最大频率。默认值：None，会被设置为 `sample_rate // 2` 。
-        - **dct_type** (int, 可选) - 要使用的离散余弦变换的类型。该值只能为2。默认值：2。
-        - **norm** (:class:`~.audio.NormMode`, 可选) - 要使用的标准化方法。默认值：NormMode.ORTHO。
-        - **log_lf** (bool, 可选) - 是否使用对数-线性频谱图而不是以分贝为刻度的频谱图。默认值：False。
-        - **speckwargs** (dict, 可选) - :class:`~.audio.Spectrogram` 接口的参数。默认值：None，会被设置为包含以下字段的字典
+        - **sample_rate** (int, 可选) - 音频信号的采样率。默认值： ``16000`` 。
+        - **n_filter** (int, 可选) - 要应用的线性滤波器数量。默认值： ``128`` 。
+        - **n_lfcc** (int, 可选) - 要保留的线性频率倒谱系数数。默认值： ``40`` 。
+        - **f_min** (float, 可选) - 最小频率。默认值： ``0.0`` 。
+        - **f_max** (float, 可选) - 最大频率。默认值： ``None`` ，会被设置为 `sample_rate // 2` 。
+        - **dct_type** (int, 可选) - 要使用的离散余弦变换的类型。该值只能为 ``2`` 。默认值： ``2`` 。
+        - **norm** (:class:`~.audio.NormMode`, 可选) - 要使用的标准化方法。默认值： ``NormMode.ORTHO`` 。
+        - **log_lf** (bool, 可选) - 是否使用对数-线性频谱图而不是以分贝为刻度的频谱图。默认值： ``False`` 。
+        - **speckwargs** (dict, 可选) - :class:`~.audio.Spectrogram` 接口的参数。默认值： ``None`` ，会被设置为包含以下字段的字典
 
           - 'n_fft': 400
           - 'win_length': n_fft
@@ -40,4 +40,4 @@ mindspore.dataset.audio.LFCC
         - **ValueError** - 如果 `n_lfcc` 小于0。
         - **ValueError** - 如果 `f_min` 大于 `f_max` 。
         - **ValueError** - 当 `f_max` 为None时，如果 `f_min` 大于 `sample_rate // 2` 。
-        - **ValueError** - 如果 `dct_type` 不为2。
+        - **ValueError** - 如果 `dct_type` 不为 ``2`` 。

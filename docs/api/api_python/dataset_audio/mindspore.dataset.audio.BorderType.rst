@@ -5,7 +5,7 @@ mindspore.dataset.audio.BorderType
 
     填充模式。
 
-    可选的枚举值包括：BorderType.CONSTANT、BorderType.EDGE、BorderType.REFLECT和BorderType.SYMMETRIC。
+    可选的枚举值包括： ``BorderType.CONSTANT`` 、 ``BorderType.EDGE`` 、 ``BorderType.REFLECT`` 和 ``BorderType.SYMMETRIC`` 。
     
     - **BorderType.CONSTANT** - 使用常量值填充。
     - **BorderType.EDGE** - 使用各边的边界像素值填充。

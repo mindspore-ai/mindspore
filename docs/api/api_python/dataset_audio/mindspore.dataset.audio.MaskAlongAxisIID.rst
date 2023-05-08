@@ -9,7 +9,7 @@ mindspore.dataset.audio.MaskAlongAxisIID
     参数：
         - **mask_param** (int) - 要屏蔽的列数，将从[0, mask_param]统一采样，必须是非负数。
         - **mask_value** (float) - 填充到掩码区间的值。
-        - **axis** (int) - 要应用掩码的轴（1表示频率，2表示时间）。
+        - **axis** (int) - 要应用掩码的轴（ ``1`` 表示频率， ``2`` 表示时间）。
 
     异常：
         - **TypeError** - 当 `mask_param` 的类型不为int。

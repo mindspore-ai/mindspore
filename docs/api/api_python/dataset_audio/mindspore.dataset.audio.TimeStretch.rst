@@ -8,9 +8,9 @@ mindspore.dataset.audio.TimeStretch
     .. note:: 待处理音频shape需为<..., freq, time, complex=2>。第零维代表实部，第一维代表虚部。
 
     参数：
-        - **hop_length** (int, 可选) - STFT窗之间每跳的长度，即连续帧之间的样本数。默认值：None，表示取 `n_freq - 1` 。
-        - **n_freq** (int, 可选) - STFT中的滤波器组数。默认值：201。
-        - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例。默认值：None，表示保持原始速率。
+        - **hop_length** (int, 可选) - STFT窗之间每跳的长度，即连续帧之间的样本数。默认值： ``None`` ，表示取 `n_freq - 1` 。
+        - **n_freq** (int, 可选) - STFT中的滤波器组数。默认值： ``201`` 。
+        - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例。默认值： ``None`` ，表示保持原始速率。
 
     异常：
         - **TypeError** - 当 `hop_length` 的类型不为int。

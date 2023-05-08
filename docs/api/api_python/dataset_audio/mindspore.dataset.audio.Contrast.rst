@@ -12,7 +12,7 @@ mindspore.dataset.audio.Contrast
     .. note:: 待处理音频shape需为<..., time>。
 
     参数：
-        - **enhancement_amount** (float, 可选) - 控制音频增益的量，取值范围为[0,100]。默认值：75.0。请注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
+        - **enhancement_amount** (float, 可选) - 控制音频增益的量，取值范围为[0,100]。默认值： ``75.0`` 。请注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
 
     异常：
         - **TypeError** - 当 `enhancement_amount` 的类型不为float。

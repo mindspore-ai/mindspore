@@ -10,7 +10,7 @@ mindspore.dataset.audio.Filtfilt
           序列长度必须与 `b_coeffs` 相同（根据需要填充0值）。
         - **b_coeffs** (Sequence[float]) - 不同维度的差分方程分子系数。低维的延迟系数在前，例如[b0, b1, b2, ...]。
           序列长度必须与 `a_coeffs` 相同（根据需要填充0值）。
-        - **clamp** (bool, 可选) - 如果为True，将输出信号截断在[-1, 1]范围内。默认值：True。
+        - **clamp** (bool, 可选) - 如果为 ``True`` ，将输出信号截断在[-1, 1]范围内。默认值： ``True`` 。
 
     异常：
         - **TypeError** - 当 `a_coeffs` 的类型不为Sequence[float]。

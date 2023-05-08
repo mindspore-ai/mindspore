@@ -9,16 +9,16 @@ mindspore.dataset.audio.Flanger
 
     参数：
         - **sample_rate** (int) - 波形采样频率，例如44100 (Hz)。
-        - **delay** (float, 可选) - 期望的延迟时间，单位为毫秒，取值范围为[0, 30]。默认值：0.0。
-        - **depth** (float, 可选) - 期望的延迟深度，单位为毫秒，取值范围为[0, 10]。默认值：2.0。
-        - **regen** (float, 可选) - 期望的反馈增益，单位为dB，取值范围为[-95, 95]。默认值：0.0。
-        - **width** (float, 可选) - 期望的延迟增益，单位为dB，取值范围为[0, 100]。默认值：71.0。
-        - **speed** (float, 可选) - 调制速度，单位为Hz，取值范围为[0.1, 10]。默认值：0.5。
-        - **phase** (float, 可选) - 各通道的相位偏移百分比，取值范围为[0, 100]。默认值：25.0。
-        - **modulation** (:class:`~.audio.Modulation`, 可选) - 调制方法，可为Modulation.SINUSOIDAL或Modulation.TRIANGULAR。
-          默认值：Modulation.SINUSOIDAL。
-        - **interpolation** (:class:`~.audio.Interpolation`, 可选) - 插值方法，可为Interpolation.LINEAR或Interpolation.QUADRATIC。
-          默认值：Interpolation.LINEAR。
+        - **delay** (float, 可选) - 期望的延迟时间，单位为毫秒，取值范围为[0, 30]。默认值： ``0.0`` 。
+        - **depth** (float, 可选) - 期望的延迟深度，单位为毫秒，取值范围为[0, 10]。默认值： ``2.0`` 。
+        - **regen** (float, 可选) - 期望的反馈增益，单位为dB，取值范围为[-95, 95]。默认值： ``0.0`` 。
+        - **width** (float, 可选) - 期望的延迟增益，单位为dB，取值范围为[0, 100]。默认值： ``71.0`` 。
+        - **speed** (float, 可选) - 调制速度，单位为Hz，取值范围为[0.1, 10]。默认值： ``0.5`` 。
+        - **phase** (float, 可选) - 各通道的相位偏移百分比，取值范围为[0, 100]。默认值： ``25.0`` 。
+        - **modulation** (:class:`~.audio.Modulation`, 可选) - 调制方法，可为 ``Modulation.SINUSOIDAL`` 或 ``Modulation.TRIANGULAR`` 。
+          默认值： ``Modulation.SINUSOIDAL`` 。
+        - **interpolation** (:class:`~.audio.Interpolation`, 可选) - 插值方法，可为 ``Interpolation.LINEAR`` 或 ``Interpolation.QUADRATIC`` 。
+          默认值： ``Interpolation.LINEAR`` 。
 
     异常：
         - **TypeError** - 当 `sample_rate` 的类型不为int。
