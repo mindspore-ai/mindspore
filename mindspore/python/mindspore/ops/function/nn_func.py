@@ -248,15 +248,15 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
-        kernel_size (int): The size of kernel window used to take the average value. Default: 1.
+        kernel_size (int): The size of kernel window used to take the average value. Default: ``1`` .
         stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents the height and
             width of movement are both strides, or a tuple of two int numbers that represent height and width of
-            movement respectively. Default: 1.
+            movement respectively. Default: ``1`` .
         padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
             and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
-            equal to `padding[0]` and `padding[1]` correspondingly. Default: 0.
+            equal to `padding[0]` and `padding[1]` correspondingly. Default: ``0`` .
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: True.
+        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
 
     Returns:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
@@ -391,18 +391,18 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value. It is an int number
             that represents height and width of the kernel, or a tuple of two int numbers that represent height and
-            width respectively. Default: 1.
+            width respectively. Default: ``1`` .
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the height and
             width of movement are both strides, or a tuple of two int numbers that represent height and width of
-            movement respectively. Default: 1.
+            movement respectively. Default: ``1`` .
         padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `padding` is an integer, the
             paddings of top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of `4` integers,
             the padding of top, bottom, left and right equal to `padding[0]`, `padding[1]`, `padding[2]` and
-            `padding[3]` correspondingly. Default: 0.
+            `padding[3]` correspondingly. Default: ``0`` .
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: True.
+        count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
-            `kernel_size` will be used. Default: 0.
+            `kernel_size` will be used. Default: ``0`` .
 
     Returns:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -494,18 +494,20 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
             float32 data type.
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value, is an int
             number that represents depth, height and width are both `kernel_size`, or a tuple of three int numbers that
-            represent depth, height and width respectively. Default: 1.
+            represent depth, height and width respectively. Default: ``1`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents the
             depth, height and width of movement are both stride, or a tuple of three int numbers that represent depth,
-            height and width of movement respectively. Default: 1.
+            height and width of movement respectively. Default: ``1`` .
         padding (Union(int, tuple[int]), optional): The pad value to be filled. If `padding` is an integer, the addings
             of head, tail, top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of six
             integers, the padding of head, tail, top, bottom, left and right equal to padding[0], padding[1],
-            padding[2], padding[3], padding[4] and padding[5] correspondingly. Default: 0
-        ceil_mode (bool, optional): If True, ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad (bool, optional): If True, averaging calculation will include the zero-padding. Default: True.
+            padding[2], padding[3], padding[4] and padding[5] correspondingly. Default: ``0`` .
+        ceil_mode (bool, optional): If ``True`` , ceil instead of floor to
+            compute the output shape. Default: ``False`` .
+        count_include_pad (bool, optional): If ``True`` , averaging calculation
+            will include the zero-padding. Default: ``True`` .
         divisor_override (int, optional): If specified, it will be used as divisor in the averaging calculation,
-            otherwise `kernel_size` will be used. Default: 0.
+            otherwise `kernel_size` will be used. Default: ``0`` .
 
     Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
@@ -788,9 +790,9 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
           Data type must be in int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is 0, (0) or None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0.
-        output_size (tuple[int], optional): The output shape. Default: None.
+            If stride is 0, (0) or ``None`` , then stride equal to kernel_size. Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` .
+        output_size (tuple[int], optional): The output shape. Default: ``None`` .
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
             If output_size != (), then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
             :math:`(H)` and output_size must belong to
@@ -905,11 +907,11 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
+            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
-        output_size (tuple[int], optional): The target output size. Default: None.
+        output_size (tuple[int], optional): The target output size. Default: ``None`` .
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
             If output_size != (), then output_size must be :math:`(N, C, H, W)` , :math:`(C, H, W)` or :math:`(H, W)`
             and output_size must belong to
@@ -1008,12 +1010,12 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: None.
-        padding (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `padding` is an integer,
+            If stride is ``None`` , then ``stride`` equal to ``kernel_size`` . Default: ``None`` .
+        padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
             correspondingly.
-        output_size (tuple[int], optional): The output size. Default: None. If output_size == (), then the shape of
+        output_size (tuple[int], optional): The output size. Default: ``None`` . If output_size == (), then the shape of
             output computed by `kernel_size`, `stride` and `padding`. If output_size != (), then output_size must be
             :math:`(N, C, D, H, W)` or :math:`(C, D, H, W)` or :math:`(D, H, W)` and output_size must belong to
             :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
@@ -1139,8 +1141,9 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         pos_weight (Tensor): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `logits`.
           Data type must be float16 or float32.
-        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
-             not case sensitive. If 'none', do not perform reduction. Default: 'mean'.
+        reduction (str): Type of reduction to be applied to loss. The optional values
+             are ``'mean'`` , ``'sum'`` , and ``'none'`` ,
+             not case sensitive. If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
     Returns:
         Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
@@ -1174,15 +1177,15 @@ def dropout(input, p=0.5, training=True, seed=None):
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
     reducing neuron correlation and avoid overfitting. The meaning of probability
-    here is opposite to that in `ops.Dropout` and `nn.Dropout`.
+    here is opposite to that in :class:`mindspore.ops.Dropout` and :class:`mindspore.nn.Dropout`.
 
     Args:
         input (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
-            means dropping out 10% of input units. Default: 0.5.
+            means dropping out 10% of input units. Default: ``0.5`` .
         training (bool): Apply dropout if is True. Default: True.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-            Default: None, which will be treated as 0.
+            Default: ``None`` , which will be treated as ``0`` .
 
     Returns:
         - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
@@ -1271,8 +1274,8 @@ def dropout1d(input, p=0.5, training=True):
             number of channels, `L` is the feature length. The data type must be int8, int16, int32, int64, float16,
             float32 or float64.
         p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means an 80% chance of clearing. Default: 0.5.
-        training (bool, optional): Apply dropout if is True. Default: True.
+            which means an 80% chance of clearing. Default: ``0.5`` .
+        training (bool, optional): Apply dropout if is True. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -1342,8 +1345,8 @@ def dropout2d(input, p=0.5, training=True):
             of channels, `H` is the feature height, and `W` is the feature width. The data type must be int8,
             int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means dropping out 80% of channels. Default: 0.5.
-        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: True.
+            which means dropping out 80% of channels. Default: ``0.5`` .
+        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -1391,8 +1394,8 @@ def dropout3d(input, p=0.5, training=True):
             of channels, `D` is the feature depth, `H` is the feature height, and `W` is the feature width.
             The data type must be int8, int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means dropping out 80% of channels. Default: 0.5.
-        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: True.
+            which means dropping out 80% of channels. Default: ``0.5`` .
+        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: ``True`` .
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -1596,12 +1599,12 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             is an int number that represents depth, height and width, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
-            Default: None.
+            Default: ``None`` .
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type: float16, float32, double, and value is between (0, 1).
-            Default: None.
-        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
+            Default: ``None`` .
+        return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
         _random_samples (Tensor, optional): The random step of fractional_max_pool3d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between [0, 1).
             Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` . Default: ``None``, the values of `_random_samples`
@@ -2657,16 +2660,16 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
         bias (Tensor, optional): An 1D tensor of additive biases to the filter outputs.
-            The shape is :math:`(C_{out})`. Defaults to None.
+            The shape is :math:`(C_{out})`. Default: ``None`` .
         dilations (tuple[int], optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
-            to 1. Defaults to (1, 1, 1, 1).
+            to 1. Default: ``(1, 1, 1, 1)`` .
         groups (int, optional): An integer of type int32. The number of blocked connections from input channels
-            to output channels. In_channels and out_channels must both be divisible by `groups`. Defaults to 1.
+            to output channels. In_channels and out_channels must both be divisible by `groups`. Default: ``1`` .
         deformable_groups (int, optional): An integer of type int32. The number of deformable group partitions.
-            In_channels must be divisible by `deformable_groups`. Defaults to 1.
+            In_channels must be divisible by `deformable_groups`. Default: ``1`` .
         modulated (bool, optional): Specifies version of DeformableConv2D, True means v2, False means v1, currently
-            only supports v2. Defaults to True.
+            only supports v2. Default: ``True`` .
 
     Returns:
         Tensor, A 4D Tensor of output feature map. With the same type as `x`. With the format "NCHW",
@@ -3681,11 +3684,12 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
     Args:
-        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
-        bias (float): An offset (usually positive to avoid dividing by 0). Default: 1.0.
-        alpha (float): A scale factor, usually positive. Default: 1.0.
-        beta (float): An exponent. Default: 0.5.
-        norm_region (str): Specifies normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
+        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: ``5`` .
+        bias (float): An offset (usually positive to avoid dividing by 0). Default: ``1.0`` .
+        alpha (float): A scale factor, usually positive. Default: ``1.0`` .
+        beta (float): An exponent. Default: ``0.5`` .
+        norm_region (str): Specifies normalization region. Options: ``"ACROSS_CHANNELS"`` .
+            Default: ``"ACROSS_CHANNELS"`` .
         x (Tensor): A 4-D Tensor with float16 or float32 data type.
 
     Returns:
@@ -3942,13 +3946,13 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
             three int numbers that represent depth, height and width respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: `kernel_size`.
+            represent depth, height and width of movement respectively. Default: ``kernel_size`` .
         padding (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-            Default: 0.
-        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: 1.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        return_indices (bool): Whether to output the indices of max value. Default: False.
+            Default: ``0`` .
+        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
 
     Returns:
         If `return_indices` is False, return a Tensor `output`, else return a tuple (`output`, `argmax`).
@@ -3956,7 +3960,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
-          only when `return_indices` is True.
+          only when `return_indices` is ``True`` .
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -4362,7 +4366,7 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
             Default blank label is `num_classes - 1`. Data type must be float32 or float64.
         sequence_length (Tensor): A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
             The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
-        merge_repeated (bool): If true, merge repeated classes in output. Default: True.
+        merge_repeated (bool): If ``true`` , merge repeated classes in output. Default: ``True`` .
 
     Returns:
         decoded_indices (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
@@ -4558,11 +4562,12 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         weight (Tensor): Tensor of shape
             :math:`(N, C_{in} / \text{groups}, \text{kernel_size})`, then the size of kernel is
             :math:`(\text{kernel_size})`.
-        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default: None.
+        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`.
+            When bias is None, zeros will be used. Default: ``None`` .
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number or a tuple of one int
             that represents width of movement. Default: 1.
         pad_mode (str, optional): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
             - same: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in left and right possiblily.
@@ -4576,12 +4581,12 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
               Tensor borders. `padding` must be greater than or equal to 0.
         padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of `input`, meaning the paddings of
             left and right are the same, equal to padding or padding[0] when padding is a tuple of 1 integer.
-            Default: 0.
+            Default: ``0`` .
         dilation (Union(int, tuple[int]), optional): Gaps between kernel elements. The data type is int or a tuple of
             1 integer. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than or
-            equal to 1 and bounded by the width of `input`. Default: 1.
-        groups (int, optional): Splits `input` into groups. Default: 1.
+            equal to 1 and bounded by the width of `input`. Default: ``1`` .
+        groups (int, optional): Splits `input` into groups. Default: ``1`` .
 
     Returns:
         Tensor, the value that applied 1D convolution. The shape is :math:`(N, C_{out}, W_{out})`.
@@ -4680,12 +4685,13 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         weight (Tensor): Tensor of shape
             :math:`(N, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`, then the size of kernel
             is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`.
-        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default: None.
+        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`.
+            When bias is ``None`` , zeros will be used. Default: ``None`` .
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+            represent height and width of movement respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
             - same: Adopts the way of completion. The height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
@@ -4700,12 +4706,12 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of the input `x`.
             If `padding` is one integer, the paddings of top, bottom, left and right are the same, equal to padding.
             If `padding` is a tuple with two integers, the padding of top adn bottom is padding[0], and the padding of
-            left and right is padding[1]. Default: 0.
+            left and right is padding[1]. Default: ``0`` .
         dilation (Union(int, tuple[int]), optional): Gaps between kernel elements.The data type is int or a tuple of
             2 integers. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must
-            be greater than or equal to 1 and bounded by the height and width of the input `x`. Default: 1.
-        groups (int, optional): Splits `input` into groups. Default: 1.
+            be greater than or equal to 1 and bounded by the height and width of the input `x`. Default: ``1`` .
+        groups (int, optional): Splits `input` into groups. Default: ``1`` .
 
     Returns:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -5016,11 +5022,11 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         weight (Union[Tensor, Parameter]): The shape :math:`(C,)`, with float16 or float32 data type.
         bias (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
         training (bool, optional): If `training` is `True`, `mean` and `variance` are computed during training.
-            If `training` is `False`, they're loaded from checkpoint during inference. Default: False.
+            If `training` is `False`, they're loaded from checkpoint during inference. Default: ``False`` .
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
-            Momentum value must be `[0, 1]`. Default: 0.1.
-        eps (float, optional): A small value added for numerical stability. Default: 1e-5.
+            Momentum value must be `[0, 1]`. Default: ``0.1`` .
+        eps (float, optional): A small value added for numerical stability. Default: ``1e-5`` .
 
     Returns:
         output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
@@ -5112,13 +5118,15 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         labels (Tensor): The target value which has the same shape and data type as `logits`.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `logits` and `labels`.
-            And it must have the same shape and data type as `logits`. Default: None. If set to None, the loss function
+            And it must have the same shape and data type as `logits`. Default: ``None`` . If set to ``None`` ,
+            the loss function
             will not consider any sample weights, and each sample will be treated as having equal importance
             when calculating the loss.
         reduction (str, optional): Specify the protocol calculation method used to output the results.
-            Its value must be one of 'none', 'mean' or 'sum', respectively indicate that no calculation method is
+            Its value must be one of ``'none'`` , ``'mean'`` or ``'sum'`` ,
+            respectively indicate that no calculation method is
             specified, using the average value for calculation, and using summation for calculation, not case-sensitive.
-            Default: 'mean'.
+            Default: ``'mean'`` .
 
     Returns:
         Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
@@ -5184,13 +5192,13 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
             \text{kernel_size[1]}, \text{kernel_size[1]})`.
         bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default:
-            None.
+            ``None`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving,
             it can be an int number that represents
             the depth, height and width of movement or a tuple of three int numbers that
-            represent depth, height and width movement respectively. Default: 1.
+            represent depth, height and width movement respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies padding mode. The optional values are
-            "same", "valid" and "pad". Default: "valid".
+            ``"same"`` , ``"valid"`` and ``"pad"`` . Default: ``"valid"`` .
 
             - same: Adopts the way of completion. The depth, height and width of the output will be equal to
               the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
@@ -5208,15 +5216,15 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         padding (Union[int, tuple[int]], optional): The pad value to be filled. If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
             If `pad` is a tuple of 3 integers, the padding of head, tail, top, bottom,
-            left and right equal to pad[0], pad[0], pad[1], pad[1], pad[2] and pad[2] correspondingly. Default: 0.
+            left and right equal to pad[0], pad[0], pad[1], pad[1], pad[2] and pad[2] correspondingly. Default: ``0`` .
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
             :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
-            respectively. Default: 1.
+            respectively. Default: ``1`` .
         groups (int, optional):The number of groups into which the filter is divided. `in_channels`
-            and `out_channels` must be divisible by `group`. Default: 1.
+            and `out_channels` must be divisible by `group`. Default: ``1`` .
 
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -5848,8 +5856,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is stride, if the value is None, the default value `kernel_size` is used;
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+            the width of movement is stride, if the value is ``None`` , the default value ``kernel_size`` is used;
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Returns:
         - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{out})` or :math:`(C, L_{out})`,
@@ -5930,8 +5938,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively, if the value is None,
-            the default value `kernel_size` is used.
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
+            the default value ``kernel_size`` is used.
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False``.
 
     Returns:
         - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
@@ -6505,16 +6513,16 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            Default: None, meaning that the value of `kernel_size` is used here.
+            Default: ``None`` , meaning that the value of `kernel_size` is used here.
         padding (Union[int, tuple[int]]): An int number that represents the height and width of movement are both
             strides, or a tuple of two int numbers that represent height and width of movement respectively.
-            Default: 0.
-        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: 1.
-        return_indices (bool): Whether to output the indices of max value. Default: False.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
+            Default: ``0`` .
+        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
+        return_indices (bool): Whether to output the indices of max value. Default: ``False`` .
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
 
     Returns:
-        If `return_indices` is False, return a Tensor `output`, else return a tuple (`output`, `argmax`).
+        If `return_indices` is ``False`` , return a Tensor `output`, else return a tuple (`output`, `argmax`).
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
