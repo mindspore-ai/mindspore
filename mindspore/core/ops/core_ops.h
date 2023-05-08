@@ -208,6 +208,7 @@ constexpr auto kGeLU = "GeLU";
 constexpr auto kUnravelIndex = "UnravelIndex";
 constexpr auto kGLU = "GLU";
 constexpr auto kGluGrad = "GluGrad";
+constexpr auto kSiLU = "SiLU";
 constexpr auto kReLU = "ReLU";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kReLUV2 = "ReLUV2";

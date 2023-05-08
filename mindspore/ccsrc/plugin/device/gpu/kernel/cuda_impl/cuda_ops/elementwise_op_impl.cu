@@ -729,6 +729,60 @@ template CUDA_LIB_EXPORT void SigmoidOpt<Complex<float>>(const Complex<float> *i
 template CUDA_LIB_EXPORT void SigmoidOpt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                           const size_t count, cudaStream_t cuda_stream);
 
+// silu
+template <typename T>
+struct SiLUFunctor {
+  SiLUFunctor() {}
+  __device__ __forceinline__ T operator()(T x) const {
+    T one_{1};
+    return x / (one_ + exp(-x));
+  }
+};
+
+template <>
+struct SiLUFunctor<half> {
+  SiLUFunctor() {}
+  __device__ __forceinline__ half operator()(half x) const {
+    half one_{1.};
+    return x / (one_ + hexp(-x));
+  }
+};
+
+template <>
+struct SiLUFunctor<Complex<float>> {
+  SiLUFunctor() {}
+  __device__ __forceinline__ Complex<float> operator()(Complex<float> x) const {
+    Complex<float> one_{1.0, 0};
+    return x / (one_ + exp(-x));
+  }
+};
+
+template <>
+struct SiLUFunctor<Complex<double>> {
+  SiLUFunctor() {}
+  __device__ __forceinline__ Complex<double> operator()(Complex<double> x) const {
+    Complex<double> one_{1.0, 0};
+    return x / (one_ + exp(-x));
+  }
+};
+
+template <typename T>
+void SiLUOpt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SiLUFunctor<T> functor;
+  cuda::elementwise::Unary(functor, (uint)(count), output, input, cuda_stream);
+  return;
+}
+
+template CUDA_LIB_EXPORT void SiLUOpt<double>(const double *input, double *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SiLUOpt<float>(const float *input, float *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SiLUOpt<half>(const half *input, half *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SiLUOpt<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                         const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SiLUOpt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                          const size_t count, cudaStream_t cuda_stream);
 // TanhGrad
 template <typename T>
 struct TanhGradFunctor {
