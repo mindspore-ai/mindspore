@@ -79,16 +79,19 @@ void BatchNorm::set_momentum(const float momentun) {
 
 float BatchNorm::get_momentum() const {
   auto value_ptr = GetAttr(kMomentum);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
 bool BatchNorm::get_is_training() const {
   auto value_ptr = GetAttr(kIsTraining);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 float BatchNorm::get_epsilon() const {
   auto value_ptr = GetAttr(kEpsilon);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
@@ -128,6 +131,7 @@ bool MeanAndVarianceValid(const std::vector<AbstractBasePtr> &input_args) {
 
 std::string get_format_in_infer(const PrimitivePtr &primitive) {
   auto format_ptr = primitive->GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(format_ptr);
   if (format_ptr->isa<StringImm>()) {
     return GetValue<std::string>(format_ptr);
   }
