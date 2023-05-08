@@ -1605,8 +1605,9 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
 
     Args:
         input (Tensor): The input Tensor.
-        order (str, optional): Only 'C' and 'F' are supported. 'C' means to flatten in row-major (C-style) order.
-            'F' means to flatten in column-major (Fortran-style) order. Default: ``'C'`` .
+        order (str, optional): Only ``'C'`` and ``'F'`` are supported.
+            ``'C'`` means to flatten in row-major (C-style) order.
+            ``'F'`` means to flatten in column-major (Fortran-style) order. Default: ``'C'`` .
 
     Keyword Args:
         start_dim (int, optional): The first dimension to flatten. Default: ``1`` .
@@ -6210,7 +6211,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Returns:
-        A Tensor, with same type as `input` , format of the Tensor is (N, C, H, W).
+        A Tensor, with same type as `input` , format of the Tensor is :math`(N, C, H, W)`.
 
     Raises:
         TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.

@@ -3,7 +3,7 @@ mindspore.ops.dropout
 
 .. py:function:: mindspore.ops.dropout(input, p=0.5, training=True, seed=None)
 
-    在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些值归零，起到减少神经元相关性的作用，避免过拟合。此概率与 `ops.Dropout` 和 `nn.Dropout` 中的含义相反。
+    在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些值归零，起到减少神经元相关性的作用，避免过拟合。此概率与 :class:`mindspore.ops.Dropout` 和 :class:`mindspore.nn.Dropout` 中的含义相反。
 
     参数：
         - **input** (Tensor) - dropout的输入，任意维度的Tensor，其数据类型为float16或float32。
