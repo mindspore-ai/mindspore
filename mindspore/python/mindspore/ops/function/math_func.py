@@ -837,7 +837,7 @@ def sub(input, other):
 
 def subtract(input, other, *, alpha=1):
     r"""
-    Performs the element-wise subtraction of input tensors.
+    Performs the element-wise subtract of input tensors.
 
     .. math::
         output[i] = input[i] - alpha * other[i]
@@ -854,6 +854,7 @@ def subtract(input, other, *, alpha=1):
 
     Raises:
         TypeError: `input` or `other` is neither Tensor nor number.Number.
+        TypeError: Both `input` and `other` are not Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
