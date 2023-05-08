@@ -181,8 +181,8 @@ void MsContext::RefreshMemoryOffload() {
   }
   if (target == kAscendDevice && get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       common::GetEnv(kGraphOpRun) != "1") {
-    MS_LOG(WARNING) << "Memory offload is not available when GRAPH_OP_RUN is not set to 1.";
-    set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+    MS_LOG(WARNING) << "Run graph mode with kernel by kernel because memory offload is ON.";
+    set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
     return;
   }
   if (get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1) {

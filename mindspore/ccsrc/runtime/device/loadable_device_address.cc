@@ -110,7 +110,7 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   }
   MS_EXCEPTION_IF_NULL(storage_info_.host_ptr_);
   if (status_ == DeviceAddressStatus::kInFile) {
-    if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, GetFileAlignSize(), async)) {
+    if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, size_, async)) {
       MS_LOG(WARNING) << "Copy data from file to host failed.";
       return false;
     }
@@ -194,7 +194,7 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
       return false;
     }
   }
-  if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, GetFileAlignSize(), async)) {
+  if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, size_, async)) {
     MS_LOG(WARNING) << "Copy data from host to file failed.";
     return false;
   }

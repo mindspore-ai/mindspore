@@ -55,7 +55,7 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_variable_mem_size) {
   auto kernel_graph = kernel_graph_add_net_;
   EXPECT_NE(kernel_graph, nullptr);
   std::vector<std::vector<size_t>> inputs = {{10000, 10000}, {10000, 136}, {100, 136}};
-  std::vector<std::vector<size_t>> expects = {{5, 2, 5, 0, 5, 0}, {5, 2, 5, 5, 15, 10}, {5, 2, 5, 5, 15, 10}};
+  std::vector<std::vector<size_t>> expects = {{5, 2, 5, 0, 5, 0}, {5, 2, 5, 0, 5, 0}, {5, 2, 5, 0, 5, 0}};
   for (size_t i = 0; i < 3; ++i) {
     context->ddr_mem_size_ = inputs[i][0];
     context->hbm_mem_size_ = inputs[i][1];
@@ -135,14 +135,14 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_all_reduce_nodes) {
   EXPECT_EQ(strategy->kernel_num_, 9);
   EXPECT_EQ(strategy->virtual_node_num_, 2);
   EXPECT_EQ(strategy->nodes_.size(), 9);
-  EXPECT_EQ(strategy->actions_.size(), 8);
-  EXPECT_EQ(strategy->links_.size(), 25);
+  EXPECT_EQ(strategy->actions_.size(), 5);
+  EXPECT_EQ(strategy->links_.size(), 19);
   std::vector<std::shared_ptr<TensorAction>> all_actions;
   for (auto const &item : strategy->actions_) {
     for (auto const &action : item.second->actions_) {
       (void)all_actions.emplace_back(action);
     }
   }
-  EXPECT_EQ(all_actions.size(), 12);
+  EXPECT_EQ(all_actions.size(), 6);
 }
 }  // namespace mindspore::device

@@ -1358,9 +1358,6 @@ void KernelGraphMgr::HandleInternalOutput(const AnfNodePtr &input_front_node, co
                                           const FuncGraphManagerPtr &front_func_graph_manager,
                                           const std::shared_ptr<KernelGraph> &backend_graph) {
   MS_EXCEPTION_IF_NULL(backend_graph);
-  if (device::KernelRuntime::UseMemScheduler()) {
-    return;
-  }
   auto front_node = GetSupportedInternalNode(input_front_node);
   if (front_node == nullptr) {
     return;
