@@ -657,10 +657,10 @@ class ConfusionMatrix(PrimitiveWithInfer):
         return ret
 
     def infer_dtype(self, labels, predictions, weights=None):
-        validator.check_subclass('labels', labels, mstype.tensor, self.name)
-        validator.check_subclass('predictions', predictions, mstype.tensor, self.name)
+        validator.check_subclass('labels', labels, mstype.tensor_type, self.name)
+        validator.check_subclass('predictions', predictions, mstype.tensor_type, self.name)
         if weights is not None:
-            validator.check_subclass('weights', weights, mstype.tensor, self.name)
+            validator.check_subclass('weights', weights, mstype.tensor_type, self.name)
         args = {"labels": labels, "predictions": predictions}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.number_type), self.name)
         return labels

@@ -71,7 +71,7 @@ def add_scala2(x, y):
     return scala_add(x, y)
 
 
-@add2.register(mstype.tensor, mstype.tensor)
+@add2.register(mstype.tensor_type, mstype.tensor_type)
 def add_tensor2(x, y):
     return tensor_add(x, y)
 

@@ -200,5 +200,5 @@ def update_multitype_ops_setitem_tensor(ops):
 
     entries = ops.entries.copy()
     for sigs, fn in entries:
-        if typing.is_subclass(sigs[0], mstype.tensor):
+        if typing.is_subclass(sigs[0], mstype.tensor_type):
             register_for_setitem(sigs, fn)

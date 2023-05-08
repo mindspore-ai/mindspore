@@ -96,7 +96,7 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node) {
   }
   // Only use the last comment.
   const auto &comment = comments.back();
-  std::regex regex("^#\\s*@jit.typing\\s*:\\s*\\(\\)\\s*->\\s*(tensor|tuple_|list_)+\\[?([a-zA-Z0-9]+)?\\]?$");
+  std::regex regex("^#\\s*@jit.typing\\s*:\\s*\\(\\)\\s*->\\s*(tensor_type|tuple_|list_)+\\[?([a-zA-Z0-9]+)?\\]?$");
   std::smatch matched_results;
   if (std::regex_match(comment, matched_results, regex)) {
     constexpr auto container_match_count = 3;

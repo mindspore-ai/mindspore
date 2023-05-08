@@ -1256,11 +1256,11 @@ def test_pyexecute_with_func_graph_input():
 
 class CreateDynTensor(nn.Cell):
     def construct(self, x):
-        # @jit.typing: () -> tensor[int32]
+        # @jit.typing: () -> tensor_type[int32]
         shape_tensor1 = Tensor(ops.shape(x), ms.int32)
         output1 = ops.FillV2()(shape_tensor1, Tensor(1, ms.int32))
 
-        shape_tensor2 = Tensor(ops.shape(x), ms.int32)  # @jit.typing: () -> tensor[int32]
+        shape_tensor2 = Tensor(ops.shape(x), ms.int32)  # @jit.typing: () -> tensor_type[int32]
         output2 = ops.FillV2()(shape_tensor2, Tensor(1, ms.int32))
         return output1 + output2
 

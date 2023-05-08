@@ -340,7 +340,7 @@ def hasattr(x, attr):  # pylint: disable=redefined-builtin
         Boolean value, indicates whether the object x has attribute attr.
     """
     out = getattr(x, attr, mstype._null)
-    return not isinstance(out, mstype._null_type)
+    return not isinstance(out, mstype._NullType)
 
 
 def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
@@ -2863,7 +2863,7 @@ def check_select_condition(cond_type):
     """
     Check select input condition.
     """
-    if isinstance(cond_type, mstype.tensor_type):
+    if isinstance(cond_type, mstype.TensorType):
         return
     raise TypeError(
         f"For select, the argument condition should be Tensor, but got {cond_type}.")
@@ -3018,7 +3018,7 @@ def ge(x, y):
 
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
-    if issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
+    if issubclass_(F.typeof(x), F.typeof(mstype.tensor_type)):
         is_cond = F.is_tensor_bool_cond(x)
         if is_cond:
             return F.cast(x, mstype.bool_)
@@ -3217,7 +3217,7 @@ def get_itemsize(x_type):
 @constexpr(check=False)
 def check_is_tensor(x):
     """check whether x is tensor."""
-    if isinstance(x, mstype.tensor_type):
+    if isinstance(x, mstype.TensorType):
         return True
     return False
 
@@ -3225,7 +3225,7 @@ def check_is_tensor(x):
 @constexpr
 def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
     """check whether x is list or tuple or tensor."""
-    if isinstance(x, (mstype.List, mstype.Tuple, mstype.tensor_type)):
+    if isinstance(x, (mstype.List, mstype.Tuple, mstype.TensorType)):
         return True
     raise TypeError(
         f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")

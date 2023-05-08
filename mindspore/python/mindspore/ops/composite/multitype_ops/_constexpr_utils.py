@@ -242,7 +242,7 @@ def check_tensor_setitem_index(index, element_type=None):
                 raise IndexError(
                     "Index of type '{}' is not supported yet.".format(type(item)))
         return True
-    if isinstance(index, mstype.tensor_type):
+    if isinstance(index, mstype.TensorType):
         if element_type is None or element_type != mstype.bool_:
             raise TypeError(
                 "The index of tensor should be a bool type tensor. "
@@ -338,13 +338,13 @@ def get_pos_of_indexes_types(indexes_types, op_name):
             slice_positions += (i,)
         elif isinstance(index_type, mstype.Ellipsis_):
             ellipsis_positions += (i,)
-        elif isinstance(index_type, mstype.none_type):
+        elif isinstance(index_type, mstype.NoneType):
             none_positions += (i,)
         elif isinstance(index_type, mstype.Int):
             int_positions += (i,)
         elif isinstance(index_type, mstype.Bool):
             bool_positions += (i,)
-        elif isinstance(index_type, mstype.tensor_type):
+        elif isinstance(index_type, mstype.TensorType):
             tensor_positions += (i,)
         elif isinstance(index_type, (list, tuple)):
             sequence_positions += (i,)
@@ -436,7 +436,7 @@ def check_indices_value_size(indices_size, value_size):
 @constexpr
 def tuple_index_type_cnt(types, op_name):
     """count the tensor type of types which contains the tuple elements' type."""
-    if all(isinstance(ele, mstype.tensor_type) for ele in types):
+    if all(isinstance(ele, mstype.TensorType) for ele in types):
         return ALL_TENSOR
     if all(isinstance(ele, (mstype.Int, mstype.Ellipsis_, mstype.Slice)) for ele in types):
         return ALL_BASIC
@@ -448,7 +448,7 @@ def check_value_elements(types):
     """Judges the type of all elements of the tuple."""
     tensor_number = 0
     for ele in types:
-        if isinstance(ele, mstype.tensor_type):
+        if isinstance(ele, mstype.TensorType):
             tensor_number += 1
     if tensor_number == 0:
         return NO_TENSOR
