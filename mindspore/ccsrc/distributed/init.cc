@@ -38,6 +38,17 @@ bool Initialize() {
   if (!InitializeCollective()) {
     MS_LOG(EXCEPTION) << "Failed to initialize collective communication.";
   }
+
+  // If this is a scheduler node, it does not need to execute other codes like graph compiling and running. We should
+  // finalize it immediately.
+  if (cluster::ClusterContext::instance()->initialized() &&
+      cluster::ClusterContext::instance()->node_role() == kEnvRoleOfScheduler) {
+    MS_LOG(INFO) << "Start finalizing the cluster instance.";
+    (void)cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
+    MS_LOG(INFO) << "End finalizing the cluster instance.";
+    exit(0);
+    return true;
+  }
   return true;
 }
 

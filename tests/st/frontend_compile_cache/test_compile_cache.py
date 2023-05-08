@@ -203,7 +203,6 @@ def start_ps_subprocess(script_path, cache_path, str_to_check, log_name):
                 + log_name + " 2>&1"
     subprocess.run(cmd_first, shell=True, check=True)
     os.chdir(cwd)
-    check_log("sched", log_name, str_to_check)
     check_log("server", log_name, str_to_check)
     check_log("worker", log_name, str_to_check)
     sched_process.wait()
@@ -242,7 +241,6 @@ def run_lenet_ps_twice(file_name, cache_path, log_file_name_first, log_file_name
     assert os.path.exists(cache_path)
     check_compile_cache_files(cache_path, "MS_WORKER")
     check_compile_cache_files(cache_path, "MS_PSERVER")
-    check_compile_cache_files(cache_path, "MS_SCHED")
     # Second run
     os.environ['MS_SCHED_PORT'] = '8183'
     second_str_to_check = "Use the compilation cache and execute the backend actions only. Be aware of correctness" \
