@@ -89,6 +89,8 @@ using mindspore::StatusCode;
     MS_LOG(_loglevel) << _msg << *_de_tensor;                      \
   } while (false)
 
+Status GetSessionFromEnv(uint32_t *session_id);
+
 namespace UT {
 class Common : public testing::Test {
  public:

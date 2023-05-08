@@ -19,9 +19,6 @@
 
 using namespace mindspore::dataset;
 
-// Helper function to get the session id from SESSION_ID env variable
-Status GetSessionFromEnv(session_id_type *session_id);
-
 class MindDataTestCacheOp : public UT::DatasetOpTesting {
  public:
   void SetUp() override { DatasetOpTesting::SetUp(); }

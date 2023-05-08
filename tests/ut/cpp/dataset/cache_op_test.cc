@@ -33,23 +33,6 @@ using namespace mindspore::dataset;
 using mindspore::dataset::CacheClient;
 using mindspore::dataset::TaskGroup;
 
-// Helper function to get the session id from SESSION_ID env variable
-Status GetSessionFromEnv(session_id_type *session_id) {
-  RETURN_UNEXPECTED_IF_NULL(session_id);
-  if (const char *session_env = std::getenv("SESSION_ID")) {
-    std::string session_id_str(session_env);
-    try {
-      *session_id = std::stoul(session_id_str);
-    } catch (const std::exception &e) {
-      std::string err_msg = "Invalid numeric value for session id in env var: " + session_id_str;
-      return Status(StatusCode::kMDSyntaxError, err_msg);
-    }
-  } else {
-    RETURN_STATUS_UNEXPECTED("Test case requires a session id to be provided via SESSION_ID environment variable.");
-  }
-  return Status::OK();
-}
-
 class MindDataTestCacheOp : public UT::DatasetOpTesting {
  public:
   void SetUp() override {
