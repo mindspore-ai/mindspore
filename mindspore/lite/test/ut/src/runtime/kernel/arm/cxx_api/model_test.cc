@@ -104,9 +104,9 @@ TEST_F(TestCxxApiLiteModel, test_outputs_SUCCESS) {
 TEST_F(TestCxxApiLiteModel, test_metrics_FAILURE) {
   Model model;
   AccuracyMetrics ac;
-  ASSERT_TRUE(model.InitMetrics({&ac}) != kSuccess);
+  ASSERT_TRUE(model.InitMetrics({&ac}) == kSuccess);
   auto metrics = model.GetMetrics();
-  ASSERT_EQ(metrics.size(), 0);
+  ASSERT_EQ(metrics.size(), 1);
 }
 
 TEST_F(TestCxxApiLiteModel, test_metrics_SUCCESS) {

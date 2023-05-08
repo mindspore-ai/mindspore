@@ -201,7 +201,7 @@ int NetTrain::CompareOutput() {
   float total_bias = 0;
   int total_size = 0;
   bool has_error = false;
-  auto output_tensors = ms_model_.GetOutputs();
+  auto output_tensors = ms_model_->GetOutputs();
   if (output_tensors.empty()) {
     MS_LOG(ERROR) << "Cannot find output tensors, get model output failed";
     return RET_ERROR;
@@ -308,7 +308,7 @@ int NetTrain::MarkPerformance() {
       if (ret != RET_OK) {
         return ret;
       }
-      auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
+      auto status = ms_model_->RunStep(before_call_back_, after_call_back_);
       if (status != mindspore::kSuccess) {
         MS_LOG(ERROR) << "Inference error " << status;
         std::cerr << "Inference error " << status;
@@ -348,7 +348,7 @@ int NetTrain::MarkAccuracy(bool enforce_accuracy) {
   if (load_ret != RET_OK) {
     return load_ret;
   }
-  for (auto &msInput : ms_model_.GetInputs()) {
+  for (auto &msInput : ms_model_->GetInputs()) {
     switch (msInput.DataType()) {
       case mindspore::DataType::kNumberTypeFloat32:
         PrintInputData<float>(&msInput);
@@ -361,7 +361,7 @@ int NetTrain::MarkAccuracy(bool enforce_accuracy) {
         return RET_ERROR;
     }
   }
-  auto status = ms_model_.RunStep(before_call_back_, after_call_back_);
+  auto status = ms_model_->RunStep(before_call_back_, after_call_back_);
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
@@ -403,8 +403,8 @@ int NetTrain::CreateAndRunNetworkForTrain(const std::string &filename, const std
       MS_LOG(ERROR) << "load head ms file failed. " << filename;
       return RET_ERROR;
     }
-    status = ms_model_.BuildTransferLearning(static_cast<GraphCell>(back_bone_graph),
-                                             static_cast<GraphCell>(head_graph), context, train_cfg);
+    status = ms_model_->BuildTransferLearning(static_cast<GraphCell>(back_bone_graph),
+                                              static_cast<GraphCell>(head_graph), context, train_cfg);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "build transfer learning failed. " << model_name;
       return RET_ERROR;
@@ -418,7 +418,7 @@ int NetTrain::CreateAndRunNetworkForTrain(const std::string &filename, const std
       MS_LOG(ERROR) << "load ms file failed. " << model_name;
       return RET_ERROR;
     }
-    status = ms_model_.Build(static_cast<GraphCell>(graph), context, train_cfg);
+    status = ms_model_->Build(static_cast<GraphCell>(graph), context, train_cfg);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "build transfer learning failed. " << model_name;
       return RET_ERROR;
@@ -426,9 +426,9 @@ int NetTrain::CreateAndRunNetworkForTrain(const std::string &filename, const std
   }
   if (epochs > 0) {
     if (flags_->virtual_batch_) {
-      ms_model_.SetupVirtualBatch(epochs);
+      ms_model_->SetupVirtualBatch(epochs);
     }
-    status = ms_model_.SetTrainMode(true);
+    status = ms_model_->SetTrainMode(true);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "set train mode failed. ";
       return RET_ERROR;
@@ -446,7 +446,7 @@ int NetTrain::CreateAndRunNetworkForInference(const std::string &filename,
   }
   MS_LOG(INFO) << "start reading model file " << filenamems.c_str();
   std::cout << "start reading model file " << filenamems.c_str() << std::endl;
-  auto status = ms_model_.Build(filenamems, mindspore::kMindIR, context);
+  auto status = ms_model_->Build(filenamems, mindspore::kMindIR, context);
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "ms model build failed. " << model_name;
     return RET_ERROR;
@@ -487,6 +487,11 @@ void NetTrain::InitTrainCfg(const std::shared_ptr<TrainCfg> &train_cfg) {
 
 int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, bool is_train,
                                   int epochs, bool check_accuracy) {
+  ms_model_ = std::make_shared<Model>();  // reset Model object
+  if (ms_model_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to create Model object";
+    return RET_ERROR;
+  }
   auto start_prepare_time = GetTimeUs();
 
   auto context = std::make_shared<mindspore::Context>();
@@ -522,7 +527,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
     std::vector<std::vector<int64_t>> resize_dims;
     (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
                          [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
-    auto status = ms_model_.Resize(ms_model_.GetInputs(), resize_dims);
+    auto status = ms_model_->Resize(ms_model_->GetInputs(), resize_dims);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Input tensor resize failed.";
       std::cout << "Input tensor resize failed.";
@@ -530,7 +535,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
     }
   }
 
-  ms_inputs_for_api_ = ms_model_.GetInputs();
+  ms_inputs_for_api_ = ms_model_->GetInputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kTHOUSAND) << " ms";
   std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kTHOUSAND) << " ms" << std::endl;
@@ -553,7 +558,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
     SaveModels();  // save file if flags are on
   }
   if (!flags_->data_file_.empty()) {
-    auto res = ms_model_.SetTrainMode(false);
+    auto res = ms_model_->SetTrainMode(false);
     if (res != mindspore::kSuccess) {
       MS_LOG(ERROR) << "set eval mode failed. ";
       return RET_ERROR;
@@ -592,7 +597,7 @@ int NetTrain::RunNetTrain() {
 int NetTrain::SaveModels() {
   if (!flags_->export_file_.empty()) {
     if (flags_->bb_model_file_.empty()) {
-      auto status = mindspore::Serialization::ExportModel(ms_model_, mindspore::kMindIR, flags_->export_file_ + "_qt",
+      auto status = mindspore::Serialization::ExportModel(*ms_model_, mindspore::kMindIR, flags_->export_file_ + "_qt",
                                                           mindspore::QuantizationType::kWeightQuant, false);
       if (status != mindspore::kSuccess) {
         MS_LOG(ERROR) << "Export quantized model error " << flags_->export_file_ + "_qt";
@@ -600,7 +605,7 @@ int NetTrain::SaveModels() {
         return RET_ERROR;
       }
     }
-    auto status = mindspore::Serialization::ExportModel(ms_model_, mindspore::kMindIR, flags_->export_file_,
+    auto status = mindspore::Serialization::ExportModel(*ms_model_, mindspore::kMindIR, flags_->export_file_,
                                                         QuantizationType::kNoQuant, false);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Export non quantized model error " << flags_->export_file_;
@@ -609,7 +614,7 @@ int NetTrain::SaveModels() {
     }
   }
   if (!flags_->inference_file_.empty()) {
-    auto status = mindspore::Serialization::ExportModel(ms_model_, mindspore::kMindIR, flags_->inference_file_ + "_qt",
+    auto status = mindspore::Serialization::ExportModel(*ms_model_, mindspore::kMindIR, flags_->inference_file_ + "_qt",
                                                         QuantizationType::kWeightQuant, true);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Export quantized inference model error " << flags_->inference_file_ + "_qt";
@@ -618,7 +623,7 @@ int NetTrain::SaveModels() {
     }
 
     auto tick = GetTimeUs();
-    status = mindspore::Serialization::ExportModel(ms_model_, mindspore::kMindIR, flags_->inference_file_,
+    status = mindspore::Serialization::ExportModel(*ms_model_, mindspore::kMindIR, flags_->inference_file_,
                                                    QuantizationType::kNoQuant, true);
     if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Export non quantized inference model error " << flags_->inference_file_;

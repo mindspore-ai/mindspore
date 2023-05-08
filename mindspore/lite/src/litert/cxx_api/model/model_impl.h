@@ -135,6 +135,7 @@ class ModelImpl {
   std::shared_ptr<Context> context_ = nullptr;
   std::shared_ptr<TrainCfg> cfg_ = nullptr;
   std::vector<Metrics *> metrics_;
+  mutable std::recursive_mutex mutex_;
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
   void SetConfig(const std::shared_ptr<TrainCfg> cfg) { cfg_ = cfg; }

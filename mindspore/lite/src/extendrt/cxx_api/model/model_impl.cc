@@ -223,7 +223,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
     MS_LOG(ERROR) << "Model has been called Build";
-    return kLiteError;
+    return kLiteModelRebuild;
   }
   SetMsContext();
   auto thread_num = model_context->GetThreadNum();
@@ -289,7 +289,7 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
     MS_LOG(ERROR) << "Model has been called Build";
-    return kLiteError;
+    return kLiteModelRebuild;
   }
   SetMsContext();
   auto thread_num = model_context->GetThreadNum();
@@ -775,10 +775,6 @@ Status ModelImpl::LoadConfig(const std::string &config_path) {
 
 Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_) {
-    MS_LOG(ERROR) << "Model has been called Build, please call UpdateConfig before Build.";
-    return kLiteError;
-  }
   auto iter = config_info_.find(section);
   if (iter == config_info_.end()) {
     if (config_info_.size() >= kMaxSectionNum) {
@@ -797,6 +793,7 @@ Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::
 }
 
 std::string ModelImpl::GetConfig(const std::string &section, const std::string &key) {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   auto iter = config_info_.find(section);
   if (iter == config_info_.end()) {
     return "";
