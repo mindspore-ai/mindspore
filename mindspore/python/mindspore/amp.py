@@ -110,7 +110,7 @@ def all_finite(inputs):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0]))
+        >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0])))
         >>> output = amp.all_finite(x)
     """
     inputs = mutable(inputs)
