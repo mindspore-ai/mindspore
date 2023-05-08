@@ -61,7 +61,7 @@ def get_bprop_all_reduce(self):
     elif self.op == ReduceOp.SUM:
 
         def bprop(x, out, dout):
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 dx = all_reduce_grad(dout)
             else:
                 indices = all_gather(dout.indices)
@@ -71,7 +71,7 @@ def get_bprop_all_reduce(self):
     else:
 
         def bprop(x, out, dout):
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 dx = all_reduce_grad(dout)
                 z = equal(x, out)
                 z = cast(z, dtype(dx))
@@ -203,7 +203,7 @@ def get_bprop_mirror_micro_step_operator(self):
         real_grad = z
         assign_out = dout
         if mean_flag:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
                 real_grad = F.tensor_mul(real_grad, scale)
@@ -211,7 +211,7 @@ def get_bprop_mirror_micro_step_operator(self):
                     return (real_grad, cast(out_tensor, dtype(z)))
                 return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
         else:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
                 if opt_shard:
@@ -485,7 +485,7 @@ def get_bprop_mirror_operator(self):
         if dev_num == 1:
             return (dout,)
         if mean_flag:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 dx = all_reduce(dout)
                 dx = mul(dx, cast(F.scalar_to_tensor(dev_num_r), F.dtype(dx)))
             else:
@@ -494,7 +494,7 @@ def get_bprop_mirror_operator(self):
                 grad = mul(grad, cast(F.scalar_to_tensor(dev_num_r), F.dtype(grad)))
                 dx = RowTensorInner(indices, grad, dout.dense_shape)
         else:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 dx = all_reduce(dout)
             else:
                 indices = all_gather(dout.indices)
@@ -533,7 +533,7 @@ def get_bprop_mirror_mini_step_operator(self):
 
     def bprop(x, z, out, dout):
         if mean_flag:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 if do_mirror:
                     z = F.depend(z, F.assign_add(z, dout))
                     real_grad = all_reduce(z)
@@ -544,7 +544,7 @@ def get_bprop_mirror_mini_step_operator(self):
             else:
                 dx = zeros_like(x)  # The grad accumulation do not support row tensor now
         else:
-            if issubclass_(F.typeof(dout), mstype.tensor):
+            if issubclass_(F.typeof(dout), mstype.tensor_type):
                 if do_mirror:
                     z = F.depend(z, F.assign_add(z, dout))
                     real_grad = all_reduce(z)
@@ -567,7 +567,7 @@ def get_bprop_virtual_div_operator(self):
     dtype = P.DType()
 
     def bprop(x, out, dout):
-        if issubclass_(F.typeof(dout), mstype.tensor):
+        if issubclass_(F.typeof(dout), mstype.tensor_type):
             if issubclass_(F.dtype(dout), mstype.bool_) or issubclass_(F.dtype(dout), mstype.int32) \
                                      or issubclass_(F.dtype(dout), mstype.int16):
                 return (dout,)

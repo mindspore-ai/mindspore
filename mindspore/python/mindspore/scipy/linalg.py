@@ -138,7 +138,7 @@ def inv(a, overwrite_a=False, check_finite=True):
     func_name = "inv"
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _square_check(func_name, a)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
 
@@ -202,7 +202,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
     _type_check(func_name, lower, bool, 'lower')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
     _square_check(func_name, a)
 
@@ -261,7 +261,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
     _type_check(func_name, lower, bool, 'lower')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
     _square_check(func_name, a)
 
@@ -368,7 +368,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     eigh_type_check(turbo, bool, 'turbo')
     eigh_type_check(type, int, 'type')
     eigh_type_check(check_finite, bool, 'check_finite')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _dtype_check(func_name, a,
                  [mstype.int32, mstype.int64, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128])
     _square_check(func_name, a)
@@ -455,7 +455,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     func_name = "lu_factor"
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
     _square_check(func_name, a)
 
@@ -533,7 +533,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     _type_check(func_name, permute_l, bool, 'permute_l')
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
     _value_check(func_name, a.ndim, 2, 'a', 'dimension')
 
@@ -599,9 +599,9 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     lu_matrix, pivot = lu_and_piv
     _type_check(func_name, overwrite_b, bool, 'overwrite_b')
     _type_check(func_name, check_finite, bool, 'check_finite')
-    _mstype_check(func_name, lu_matrix, mstype.tensor_type, 'lu_matrix')
-    _mstype_check(func_name, b, mstype.tensor_type, 'b')
-    _mstype_check(func_name, pivot, mstype.tensor_type, 'pivot')
+    _mstype_check(func_name, lu_matrix, mstype.TensorType, 'lu_matrix')
+    _mstype_check(func_name, b, mstype.TensorType, 'b')
+    _mstype_check(func_name, pivot, mstype.TensorType, 'pivot')
     _dtype_check(func_name, lu_matrix, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'lu_matrix')
     _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
     _dtype_check(func_name, pivot, [mstype.int32], 'pivot')
@@ -687,7 +687,7 @@ def det(a, overwrite_a=False, check_finite=True):
     func_name = "det"
     _type_check(func_name, overwrite_a, bool, 'overwrite_a')
     _type_check(func_name, check_finite, bool, 'check_finite')
-    _mstype_check(func_name, a, mstype.tensor_type)
+    _mstype_check(func_name, a, mstype.TensorType)
     _square_check(func_name, a)
     _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
 

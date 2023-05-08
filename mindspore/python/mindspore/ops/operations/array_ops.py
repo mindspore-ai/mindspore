@@ -370,12 +370,12 @@ class Cast(PrimitiveWithCheck):
             return None
         src_type = mstype.get_py_obj_dtype(x)
         validator.check_subclass("input_x", src_type,
-                                 [mstype.tensor, mstype.number], self.name)
+                                 [mstype.tensor_type, mstype.number], self.name)
         validator.check_subclass("type", dst_type, mstype.number, self.name)
 
-        if isinstance(src_type, type(mstype.tensor)):
+        if isinstance(src_type, type(mstype.tensor_type)):
             src_type = src_type.element_type()
-        if isinstance(dst_type, type(mstype.tensor)):
+        if isinstance(dst_type, type(mstype.tensor_type)):
             dst_type = dst_type.element_type()
 
         value = None
@@ -625,7 +625,7 @@ class Reshape(PrimitiveWithCheck):
             return None
 
         if isinstance(shape, (Tensor, Tensor_)):
-            validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),
+            validator.check_tensor_dtype_valid("shape", mstype.TensorType(shape.dtype),
                                                [mstype.int32, mstype.int64], self.name)
             shape = shape.asnumpy().tolist()
         else:
@@ -1067,7 +1067,7 @@ class GatherV2(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
     def __check__(self, params, indices, axis):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_subclass("params", params['dtype'], mstype.tensor_type, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("axis", axis['dtype'], [mstype.number], self.name)
         axis_v = axis['value']
@@ -1114,7 +1114,7 @@ class SparseGatherV2(PrimitiveWithCheck):
         self.add_prim_attr('bprop_return_sparse', True)
 
     def __check__(self, params, indices, axis):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_subclass("params", params['dtype'], mstype.tensor_type, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("axis", axis['dtype'], [mstype.number], self.name)
         axis_v = axis['value']
@@ -2018,7 +2018,7 @@ class InvertPermutation(PrimitiveWithInfer):
     def __infer__(self, x):
         x_shp = x['shape']
         x_value = x['value']
-        if mstype._issubclass_(x['dtype'], mstype.tensor):  # pylint: disable=W0212
+        if mstype._issubclass_(x['dtype'], mstype.tensor_type):  # pylint: disable=W0212
             raise ValueError(f"For \'{self.name}\', the value of 'input_x' must be non-Tensor, but got {x['dtype']}")
         if x_value is None:
             raise ValueError(f"For '{self.name}', the value of 'input_x' can not be None, but got {x_value}.")
@@ -2454,7 +2454,7 @@ class Tile(PrimitiveWithInfer):
             validator.check_positive_int(
                 multiple, "multiples[%d]" % i, self.name)
         validator.check_value_type(
-            "x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
+            "x[\'dtype\']", x["dtype"], mstype.TensorType, self.name)
         out_shp, value = self._get_shape_and_range(x, multiples)
         shp = out_shp.get('shape', None)
         out = {'shape': shp,
@@ -2890,7 +2890,7 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     """for stack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
     validator.check_int(len(x_shape), 1, validator.GE, "len of input_x", prim_name)
-    validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
+    validator.check_subclass("input_x[0]", x_type[0], mstype.tensor_type, prim_name)
 
     out_n = len(x_shape)
     for i in range(1, out_n):
@@ -3046,7 +3046,7 @@ class Unpack(PrimitiveWithInfer):
         self.axis = axis
 
     def __infer__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
+        validator.check_subclass("x", x['dtype'], mstype.tensor_type, self.name)
         x_shape = list(x['shape'])
         dim = len(x_shape)
         validator.check_int_range(self.axis, -dim, dim, validator.INC_LEFT, 'axis value', self.name)
@@ -6098,7 +6098,7 @@ class Meshgrid(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("input[0]", x_type[0], mstype.tensor, self.name)
+        validator.check_subclass("input[0]", x_type[0], mstype.tensor_type, self.name)
         n = len(x_type)
         for i in range(1, n):
             validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], validator.EQ, self.name, TypeError)
@@ -6392,7 +6392,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
         self.add_prim_attr('bprop_return_sparse', True)
 
     def __check__(self, params, indices, offset):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
+        validator.check_subclass("params", params['dtype'], mstype.tensor_type, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         indices_shp = indices['shape']

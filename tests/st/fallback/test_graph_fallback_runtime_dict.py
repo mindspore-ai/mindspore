@@ -280,7 +280,7 @@ def test_net_dict_1():
             x = self.relu(x)
             x = self.fc3(x)
             fc_x = x
-            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor[float32]
+            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor_type[float32]
             return outputs
 
     net = DictLeNetNet()
@@ -330,7 +330,7 @@ def test_net_dict_1_grad():
             x = self.relu(x)
             x = self.fc3(x)
             fc_x = x
-            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor[float32]
+            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor_type[float32]
             return outputs
 
     net = DictLeNetNet()

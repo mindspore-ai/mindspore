@@ -61,10 +61,10 @@ def _linear_sum_assignment(cost_matrix, maximize, dimension_limit=Tensor(sys.max
         [[0 1 2]]
     """
     func_name = 'linear_sum_assignment'
-    _mstype_check(func_name, cost_matrix, mstype.tensor_type, 'cost_matrix')
+    _mstype_check(func_name, cost_matrix, mstype.TensorType, 'cost_matrix')
     _mstype_check(func_name, dimension_limit,
-                  mstype.tensor_type, 'dimension_limit')
-    _mstype_check(func_name, maximize, mstype.tensor_type, 'maximize')
+                  mstype.TensorType, 'dimension_limit')
+    _mstype_check(func_name, maximize, mstype.TensorType, 'maximize')
     _dtype_check(func_name, cost_matrix, [mstype.float32, mstype.float64])
     _dtype_check(func_name, dimension_limit, [mstype.int64])
     _dtype_check(func_name, maximize, [mstype.bool_])

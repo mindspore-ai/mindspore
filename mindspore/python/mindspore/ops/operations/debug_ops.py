@@ -43,7 +43,7 @@ def _check_summary_param(name, value, class_name):
         raise ValueError(f"For '{class_name}', the name must be valid string, but got '{n_value}'.")
 
     v_type = value['dtype']
-    validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
+    validator.check_value_type('value', v_type, [type(mstype.tensor_type)], class_name)
 
 
 # Note: The return value of the summary operator is not used,
@@ -444,7 +444,7 @@ class HookBackward(PrimitiveWithInfer):
 
     def infer_dtype(self, *inputs_type):
         for dtype in inputs_type:
-            validator.check_subclass("input", dtype, [mstype.tensor], self.name)
+            validator.check_subclass("input", dtype, [mstype.tensor_type], self.name)
         if len(inputs_type) == 1:
             return inputs_type[0]
         return inputs_type
@@ -567,5 +567,5 @@ class Assert(PrimitiveWithInfer):
     def infer_dtype(self, condition, inputs):
         validator.check_scalar_or_tensor_types_same({"condition": condition}, [mstype.bool_], self.name)
         for dtype in inputs:
-            validator.check_subclass("input", dtype, [mstype.tensor], self.name)
+            validator.check_subclass("input", dtype, [mstype.tensor_type], self.name)
         return mstype.int32

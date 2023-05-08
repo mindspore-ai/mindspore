@@ -1647,7 +1647,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         args = {'x': x_dtype, 'w': w_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         if x_dtype.element_type() == mstype.int8:
-            return mstype.tensor_type(mstype.int32)
+            return mstype.TensorType(mstype.int32)
         return x_dtype
 
 
@@ -1736,7 +1736,7 @@ class _Pool(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass("input", x_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input", x_dtype, mstype.tensor_type, self.name)
         return x_dtype
 
 
@@ -4680,8 +4680,8 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         return (indices_len,), (indices_len,), (indices_len,)
 
     def check_dtype(self, true_classes_type, sampled_candidates_type):
-        validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
-        validator.check_subclass("sampled_candidates_type", sampled_candidates_type, mstype.tensor, self.name)
+        validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor_type, self.name)
+        validator.check_subclass("sampled_candidates_type", sampled_candidates_type, mstype.tensor_type, self.name)
         valid_types = (mstype.int32, mstype.int64)
         validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
         validator.check_tensor_dtype_valid("sampled_candidates_type", sampled_candidates_type, valid_types, self.name)

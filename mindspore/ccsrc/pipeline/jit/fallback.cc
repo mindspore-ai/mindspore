@@ -94,8 +94,8 @@ TypePtr GetTypeFromString(const std::string &dtype) {
 std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &comment) {
   std::stringstream err_buf;
   err_buf << "Wrong comment format for JIT type annotation: '" << comment
-          << "'.\ne.g. '# @jit.typing: () -> tensor[int32]' or:"
-          << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor[{dtype_var}]\n\t...\n---\n\n"
+          << "'.\ne.g. '# @jit.typing: () -> tensor_type[int32]' or:"
+          << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor_type[{dtype_var}]\n\t...\n---\n\n"
           << trace::GetDebugInfo(node->debug_info());
   return err_buf.str();
 }
@@ -114,7 +114,7 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
   }
   // Only use the last comment.
   const auto &comment = comments.back();
-  std::regex regex("^#\\s*@jit.typing\\s*:\\s*\\(\\)\\s*->\\s*([a-zA-Z0-9{}]+)?\\[?([a-zA-Z0-9{}]+)?\\]?$");
+  std::regex regex("^#\\s*@jit.typing\\s*:\\s*\\(\\)\\s*->\\s*([a-zA-Z0-9{}_]+)?\\[?([a-zA-Z0-9{}_]+)?\\]?$");
   std::smatch matched_results;
   if (std::regex_match(comment, matched_results, regex)) {
     constexpr auto container_match_count = 3;

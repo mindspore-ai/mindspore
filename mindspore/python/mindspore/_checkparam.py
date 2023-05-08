@@ -648,14 +648,14 @@ def check_types_same_and_valid(args, valid_values, prim_name):
 def check_tensors_dtypes_same_and_valid(args, valid_dtypes, prim_name):
     """Checks whether the element types of input tensors are the same and valid."""
     valid_dtypes = valid_dtypes if isinstance(valid_dtypes, Iterable) else [valid_dtypes]
-    tensor_types = [mstype.tensor_type(t) for t in valid_dtypes]
+    tensor_types = [mstype.TensorType(t) for t in valid_dtypes]
     check_types_same_and_valid(args, tensor_types, prim_name)
 
 
 def check_tensor_dtype_valid(arg_name, arg_type, valid_dtypes, prim_name):
     """Checks whether the element types of input tensors are valid."""
     valid_dtypes = valid_dtypes if isinstance(valid_dtypes, Iterable) else [valid_dtypes]
-    tensor_types = [mstype.tensor_type(t) for t in valid_dtypes]
+    tensor_types = [mstype.TensorType(t) for t in valid_dtypes]
     check_subclass(arg_name, arg_type, tensor_types, prim_name)
 
 
@@ -667,7 +667,7 @@ def check_scalar_or_tensor_types_same(args, valid_values, prim_name, allow_mix=F
 
     def _check_argument_type(arg):
         arg_key, arg_val = arg
-        if isinstance(arg_val, type(mstype.tensor)):
+        if isinstance(arg_val, type(mstype.tensor_type)):
             arg_val = arg_val.element_type()
         if arg_val not in valid_values:
             raise TypeError(f'For \'{prim_name}\', the type of \'{arg_key}\' must be in {valid_values},' \
@@ -678,14 +678,14 @@ def check_scalar_or_tensor_types_same(args, valid_values, prim_name, allow_mix=F
         arg1_name, arg1_type = arg1
         arg2_name, arg2_type = arg2
         except_flag = False
-        if isinstance(arg1_type, type(mstype.tensor)) and isinstance(arg2_type, type(mstype.tensor)):
+        if isinstance(arg1_type, type(mstype.tensor_type)) and isinstance(arg2_type, type(mstype.tensor_type)):
             arg1_type = arg1_type.element_type()
             arg2_type = arg2_type.element_type()
-        elif not (isinstance(arg1_type, type(mstype.tensor)) or isinstance(arg2_type, type(mstype.tensor))):
+        elif not (isinstance(arg1_type, type(mstype.tensor_type)) or isinstance(arg2_type, type(mstype.tensor_type))):
             pass
         elif allow_mix:
-            arg1_type = arg1_type.element_type() if isinstance(arg1_type, type(mstype.tensor)) else arg1_type
-            arg2_type = arg2_type.element_type() if isinstance(arg2_type, type(mstype.tensor)) else arg2_type
+            arg1_type = arg1_type.element_type() if isinstance(arg1_type, type(mstype.tensor_type)) else arg1_type
+            arg2_type = arg2_type.element_type() if isinstance(arg2_type, type(mstype.tensor_type)) else arg2_type
         else:
             except_flag = True
 
@@ -740,7 +740,7 @@ def check_type_name(arg_name, arg_type, valid_types, prim_name):
                         f"{type_names if num_types > 1 else type_names[0]}, " \
                         f"but got '{arg_type.__name__ if hasattr(arg_type, '__name__') else repr(arg_type)}'.")
 
-    if isinstance(arg_type, type(mstype.tensor)):
+    if isinstance(arg_type, type(mstype.tensor_type)):
         arg_type = arg_type.element_type()
     cond = arg_type not in valid_types
     raise_error_msg(cond, arg_type)
