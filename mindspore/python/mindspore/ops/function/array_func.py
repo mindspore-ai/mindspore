@@ -6708,16 +6708,17 @@ def movedim(x, source, destination):
 
     Args:
         x (Tensor): The tensor array whose axis should be reordered.
+            The dimension of `x` must not be 0.
         source (Union[int, sequence[int]]): Original positions of the
-            axis to move. These must be unique.
+            axis to move. The length of `source` and `destination` must be the same.
         destination (Union[int, sequence[int]]): Destination positions
-            for each of the original axis. These must also be unique.
+            for each of the original axis. The length of `source` and `destination` must be the same.
 
     Returns:
         Tensor, array with moved axis.
 
     Raises:
-        ValueError: If axis are out of the range of `[-a.ndim, a.ndim)`, or
+        ValueError: If axis are out of the range of `[-x.ndim, x.ndim)`, or
             if the axis contain duplicates.
 
     Supported Platforms:
