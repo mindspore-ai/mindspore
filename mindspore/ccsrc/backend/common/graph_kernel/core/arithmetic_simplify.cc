@@ -487,7 +487,7 @@ class TransposePatternTree : public PatternTree {
       auto perm_i = perm[i] < 0 ? (perm[i] + rank) : perm[i];
       auto i_v = static_cast<int64_t>(i);
       if (perm_i != i_v) {
-        exchange_axes.emplace_back(i_v, perm_i);
+        (void)exchange_axes.emplace_back(i_v, perm_i);
       }
     }
     // if there is only 1 non-one shape value within the perm indices, then Transpose --> Reshape is ok
@@ -504,7 +504,7 @@ class TransposePatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
     return attrs_map;
   }
 };
@@ -519,7 +519,7 @@ class ReshapePatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}};
+    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
     return attrs_map;
   }
 };
