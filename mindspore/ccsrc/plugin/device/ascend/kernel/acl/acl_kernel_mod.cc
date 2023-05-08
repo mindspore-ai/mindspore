@@ -66,7 +66,8 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
 
     params.ori_shape = shape;
     params.dev_format = input_device_formats_[idx];
-    params.dev_shape = trans::TransShapeToDevice(shape, params.dev_format, device_type);
+    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_ptr_);
+    params.dev_shape = trans::TransShapeToDevice(shape, params.dev_format, device_type, groups);
     (void)input_params_.emplace_back(params);
     ++idx;
   }
@@ -97,6 +98,7 @@ int AclKernelMod::GetOutputInfo(const BaseOperatorPtr &base_operator, const std:
       params.ori_format = transform::AclHelper::ConvertOriginShapeAndFormat(kernel_name_, idx, false, &shape);
     }
     auto device_shape = shape;
+    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_ptr_);
     if (!IsValidShape(shape)) {
       auto max_shape = output->GetMaxShape();
       if (max_shape.empty()) {
@@ -107,11 +109,11 @@ int AclKernelMod::GetOutputInfo(const BaseOperatorPtr &base_operator, const std:
       } else {
         tensor_size = SizeOf(max_shape) * type_size;
         shape = max_shape;
-        device_shape = trans::TransShapeToDevice(shape, output_device_formats_[idx], device_type);
+        device_shape = trans::TransShapeToDevice(shape, output_device_formats_[idx], device_type, groups);
         ret = KRET_UNKNOWN_OUT_SHAPE;
       }
     } else {
-      device_shape = trans::TransShapeToDevice(shape, output_device_formats_[idx], device_type);
+      device_shape = trans::TransShapeToDevice(shape, output_device_formats_[idx], device_type, groups);
       tensor_size = device_shape.empty()
                       ? type_size
                       : std::accumulate(device_shape.begin(), device_shape.end(), type_size, std::multiplies<size_t>());

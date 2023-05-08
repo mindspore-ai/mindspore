@@ -273,6 +273,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
       }
     }
   }
+  AscendGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {

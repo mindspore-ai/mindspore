@@ -357,5 +357,20 @@ std::string AclHelper::GetFormatFromAttr(const PrimitivePtr &primitive) {
   }
   return format;
 }
+
+int64_t AclHelper::GetFracZGroupFromAttr(const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto attrs = primitive->attrs();
+  int64_t fracz_group = 1;
+  if (attrs.count(kAttrFracZGroup) != 0) {
+    auto attr_value = attrs.at(kAttrFracZGroup);
+    if (attr_value->isa<Int64Imm>()) {
+      fracz_group = GetValue<int64_t>(attr_value);
+    } else {
+      MS_LOG(WARNING) << "The FracZGroup attr format is not a valid value.";
+    }
+  }
+  return fracz_group;
+}
 }  // namespace transform
 }  // namespace mindspore
