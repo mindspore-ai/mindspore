@@ -8,9 +8,9 @@ mindspore.dataset.audio.DeemphBiquad
     接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
 
     参数：
-        - **sample_rate** (int) - 波形的采样频率，只能为44100或48000(Hz)。
+        - **sample_rate** (int) - 波形的采样频率，只能为 ``44100`` 或 ``48000`` (Hz)。
     
     异常：
         - **TypeError** - 当 `sample_rate` 的类型不为int。
-        - **ValueError** - 当 `sample_rate` 不为44100或48000。
+        - **ValueError** - 当 `sample_rate` 不为 ``44100`` 或 ``48000`` 。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。

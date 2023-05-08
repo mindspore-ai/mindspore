@@ -5,7 +5,7 @@ mindspore.dataset.audio.DensityFunction
 
     密度函数类型。
 
-    可选的枚举值包括：DensityFunction.TPDF、DensityFunction.RPDF和DensityFunction.GPDF。
+    可选的枚举值包括： ``DensityFunction.TPDF`` 、 ``DensityFunction.RPDF`` 和 ``DensityFunction.GPDF`` 。
     
     - **DensityFunction.TPDF**：三角概率密度函数。
     - **DensityFunction.RPDF**：矩形概率密度函数。

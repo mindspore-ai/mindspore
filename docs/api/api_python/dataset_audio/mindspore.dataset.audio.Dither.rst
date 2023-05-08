@@ -7,9 +7,9 @@ mindspore.dataset.audio.Dither
 
     参数：
         - **density_function** (:class:`~.audio.DensityFunction`, 可选) - 连续随机变量的密度函数。
-          可为DensityFunction.TPDF（三角概率密度函数）、DensityFunction.RPDF（矩形概率密度函数）
-          或DensityFunction.GPDF（高斯概率密度函数）。默认值：DensityFunction.TPDF。
-        - **noise_shaping** (bool, 可选) - 是否通过滤波操作，来消除频谱能量的量化误差。默认值：False。
+          可为 ``DensityFunction.TPDF`` （三角概率密度函数）、 ``DensityFunction.RPDF`` （矩形概率密度函数）
+          或 ``DensityFunction.GPDF`` （高斯概率密度函数）。默认值： ``DensityFunction.TPDF`` 。
+        - **noise_shaping** (bool, 可选) - 是否通过滤波操作，来消除频谱能量的量化误差。默认值： ``False`` 。
 
     异常：
         - **TypeError** - 当 `density_function` 的类型不为 :class:`mindspore.dataset.audio.DensityFunction` 。

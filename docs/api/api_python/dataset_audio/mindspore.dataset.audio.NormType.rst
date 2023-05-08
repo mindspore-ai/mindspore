@@ -5,7 +5,7 @@ mindspore.dataset.audio.NormType
 
     标准化类型。
 
-    可选的枚举值包括：NormType.SLANEY、NormType.NONE。
+    可选的枚举值包括： ``NormType.SLANEY`` 、 ``NormType.NONE`` 。
 
     - **NormType.SLANEY** - 使用面积标准化。
     - **NormType.None** - 不使用标准化。
