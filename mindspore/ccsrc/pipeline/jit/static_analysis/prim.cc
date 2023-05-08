@@ -3351,6 +3351,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
       new_node = cur_graph->NewCNodeInOrder(
         {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+      new_node->set_debug_info(node->debug_info());
     } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
       // When the condition of while is a tensor, do not use standard_method.tensor_bool
       // to avoid turning the tensor into scalar to cause a loop.
@@ -3359,6 +3360,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       auto cast_node = NewValueNode(parse::data_converter::PyDataToValue(cast_op));
       auto type_node = NewValueNode(TypeIdToType(kNumberTypeBool));
       new_node = cur_graph->NewCNodeInOrder({cast_node, cond_node, type_node});
+      new_node->set_debug_info(node->debug_info());
     } else {
       // The logic of truth value testing:
       //   1. If the object has __bool__ attribute, call __bool__()

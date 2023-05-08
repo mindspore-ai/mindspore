@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ class ParallelValidator:
         if not isinstance(nodes_dict, dict):
             raise TypeError("Type of nodes_dict must be dict, but got {}".format(type(nodes_dict)))
         for name, inputs in nodes_dict.items():
-            if not self.check_node_inputs(name, inputs, graph_id):
+            if not self.check_node_inputs_fuzzy_match(name, inputs, graph_id):
                 return False
         return True
 

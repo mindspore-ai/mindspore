@@ -817,6 +817,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto make_key_tuple_node =
       fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
                     NewValueNode(dict_py_exec_key), dict_tuple_key_value});
+    make_key_tuple_node->set_debug_info(keys_node->debug_info());
     return make_key_tuple_node;
   }
 
@@ -829,6 +830,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto make_value_tuple_node =
       fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
                     NewValueNode(dict_py_exec_value), dict_tuple_node});
+    make_value_tuple_node->set_debug_info(values_node->debug_info());
     return make_value_tuple_node;
   }
 
@@ -860,6 +862,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto make_dict_node = fg->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
+    make_dict_node->set_debug_info(key_value_name_tuple->debug_info());
     return make_dict_node;
   }
 
@@ -944,9 +947,12 @@ class AfterOptARewriter : public BaseRewriter {
     auto arg_name_node = NewValueNode(std::make_shared<StringImm>(internal_scalar_arg_str));
     auto keys_tuple_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), arg_name_node});
     auto values_tuple_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), x_node});
+    keys_tuple_node->set_debug_info(cnode->debug_info());
+    values_tuple_node->set_debug_info(cnode->debug_info());
     auto scalar_cast_node =
       fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, keys_tuple_node, values_tuple_node});
     MS_LOG(DEBUG) << "Convert CastToScalar: " << cnode->DebugString() << " -> " << scalar_cast_node->DebugString();
+    scalar_cast_node->set_debug_info(cnode->debug_info());
     return scalar_cast_node;
   }
 
@@ -1076,6 +1082,7 @@ class AfterOptARewriter : public BaseRewriter {
       auto v_node = NewValueNode(v);
       v_node->set_debug_info(value_node->debug_info());
       auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
+      new_node->set_debug_info(value_node->debug_info());
       (void)new_inputs.emplace_back(new_node);
       if (new_node != v_node) {
         changed = true;
@@ -1155,10 +1162,16 @@ class AfterOptARewriter : public BaseRewriter {
           continue;
         }
       }
+      auto debug_info = value_node->debug_info();
+      auto location_info = trace::GetDebugInfo(debug_info, std::string(""));
+      if (location_info.empty()) {
+        value_node->set_debug_info(cnode->debug_info());
+      }
       auto new_input = GetPyExecuteFromValue(cur_func, value_node, value, false);
       if (new_input == input) {
         continue;
       }
+      new_input->set_debug_info(value_node->debug_info());
       (void)manager_->Replace(input, new_input);
       set_need_renormalized(true);
     }
@@ -1180,20 +1193,23 @@ class AfterOptARewriter : public BaseRewriter {
         auto tuple_node = GetValueNode(value_list);
         if (tuple_node->isa<ValueTuple>()) {
           auto value_tuple = tuple_node->cast<ValueTuplePtr>()->value();
-          std::vector<AnfNodePtr> make_tuple = {NewValueNode(prim::kPrimMakeTuple)};
+          std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
           bool found_clt = false;
           for (auto value : value_tuple) {
             if (value->isa<parse::ClassType>()) {
               auto class_type = value->cast<ClassTypePtr>();
               auto type_py_execute = ConvertClassTypeToPyExecute(cur_func, class_type);
-              (void)make_tuple.emplace_back(type_py_execute);
+              type_py_execute->set_debug_info(cnode->debug_info());
+              (void)make_tuple_inputs.emplace_back(type_py_execute);
               found_clt = true;
             } else {
-              (void)make_tuple.emplace_back(NewValueNode(value));
+              (void)make_tuple_inputs.emplace_back(NewValueNode(value));
             }
           }
           if (found_clt) {
-            (void)manager_->Replace(value_list, cur_func->NewCNodeInOrder(make_tuple));
+            auto new_make_tuple = cur_func->NewCNodeInOrder(make_tuple_inputs);
+            new_make_tuple->set_debug_info(cnode->debug_info());
+            (void)manager_->Replace(value_list, new_make_tuple);
             set_need_renormalized(true);
           }
         }
@@ -1260,6 +1276,7 @@ class AfterOptARewriter : public BaseRewriter {
       auto element_vnode = NewValueNode(element);
       element_vnode->set_debug_info(value_node->debug_info());
       auto converted_element = GetPyExecuteFromValue(func_graph, element_vnode, element, true);
+      converted_element->set_debug_info(value_node->debug_info());
       (void)key_value_list.emplace_back(converted_element);
     }
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
@@ -1268,6 +1285,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto list_value_node = func_graph->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     MS_LOG(DEBUG) << "List value node convert to PyExecute node: " << list_value_node->DebugString();
+    list_value_node->set_debug_info(value_node->debug_info());
     return list_value_node;
   }
 
@@ -1278,6 +1296,7 @@ class AfterOptARewriter : public BaseRewriter {
       auto new_vnode = NewValueNode(key_value.second);
       new_vnode->set_debug_info(value_node->debug_info());
       auto iter_value = GetPyExecuteFromValue(fg, new_vnode, key_value.second, true);
+      iter_value->set_debug_info(value_node->debug_info());
       (void)value_list.emplace_back(iter_value);
     }
     auto value_tuple_node = root_graph_->NewCNode(value_list);
@@ -1297,7 +1316,7 @@ class AfterOptARewriter : public BaseRewriter {
     }
     const auto key_tuple = std::make_shared<ValueTuple>(key_list);
     auto key_tuple_node = NewValueNode(key_tuple);
-
+    key_tuple_node->set_debug_info(value_node->debug_info());
     // Pack the value tuple.
     auto value_tuple_node = PackDictValue(fg, value_node, dict);
 

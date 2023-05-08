@@ -2234,7 +2234,10 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   auto script = std::make_shared<Script>("x[i]");
   auto script_node = NewValueNode(script);
 
-  return fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  auto prim = NewValueNode(prim::kPrimPyInterpret);
+  auto interpret_get_item = fg->NewCNodeInOrder({prim, script_node, global_dict_node, local_dict_node});
+  interpret_get_item->set_debug_info(iter_node->debug_info());
+  return interpret_get_item;
 }
 
 // Implement unroll for statement with tuple/getitem.
