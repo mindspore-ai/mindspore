@@ -129,10 +129,9 @@ uint32_t RightShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   T *in1_clamped = new T[in1_elements_nums];
   for (int64_t i = 0; i < in1_elements_nums; i++) {
     in1_clamped[i] = in1[i];
-    if (in1_clamped[i] < 0) {
-      in1_clamped[i] = 0;
-    } else if (in1_clamped[i] > static_cast<T>(sizeof(T) * CHAR_BIT) - 1) {
-      in1_clamped[i] = static_cast<T>(sizeof(T) * CHAR_BIT) - 1;
+    T char_bit = static_cast<T>(sizeof(T) * CHAR_BIT > 32 ? sizeof(T) * CHAR_BIT : 32);
+    if (in1_clamped[i] > char_bit || in1_clamped[i] < -char_bit) {
+      in1_clamped[i] = in1_clamped[i] % char_bit;
     }
   }
 
@@ -175,10 +174,9 @@ uint32_t RightShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bc
   T *in1_clamped = new T[in1_elements_nums];
   for (int64_t i = 0; i < in1_elements_nums; i++) {
     in1_clamped[i] = in1[i];
-    if (in1_clamped[i] < 0) {
-      in1_clamped[i] = 0;
-    } else if (in1_clamped[i] > static_cast<T>(sizeof(T) * CHAR_BIT) - 1) {
-      in1_clamped[i] = static_cast<T>(sizeof(T) * CHAR_BIT) - 1;
+    T char_bit = static_cast<T>(sizeof(T) * CHAR_BIT > 32 ? sizeof(T) * CHAR_BIT : 32);
+    if (in1_clamped[i] > char_bit || in1_clamped[i] < -char_bit) {
+      in1_clamped[i] = in1_clamped[i] % char_bit;
     }
   }
 
