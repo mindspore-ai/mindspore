@@ -548,7 +548,7 @@ class Dirac(Initializer):
         for group in range(self.groups):
             for dim in range(min_dim):
                 if dimension == 3:
-                    data[group * out_channel_per_group + dim, dim, shapes[2]//2] = 1
+                    data[group * out_channel_per_group + dim, dim, shapes[2] // 2] = 1
                 elif dimension == 4:
                     data[group * out_channel_per_group + dim, dim, shapes[2] // 2, shapes[3] // 2] = 1
                 else:

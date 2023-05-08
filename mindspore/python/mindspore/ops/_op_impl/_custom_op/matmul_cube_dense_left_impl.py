@@ -187,8 +187,8 @@ def core(shape_a_temp, shape_b_temp, shape_output, kernel_name):
                 tik_instance.mmad(resmatmul_local_ub_local_l0c, input_1_local_l1_local_l0a,
                                   input_2_local_l1_local_l0b, 128, 128, 256, 0)
                 tik_instance.data_move(resmatmul_local_ub, resmatmul_local_ub_local_l0c, 0, 1, 128, 0, 0, 1)
-                tik_instance.data_move(resmatmul[cc6 * 256 * 1008 + core_m_idx * 8 * 256 + core_n_idx * 512 * 1008]
-                                       , resmatmul_local_ub, 0, 16, 256 // 2, 0, 55 * 16 * 2 // 2)
+                tik_instance.data_move(resmatmul[cc6 * 256 * 1008 + core_m_idx * 8 * 256 + core_n_idx * 512 * 1008],
+                                       resmatmul_local_ub, 0, 16, 256 // 2, 0, 55 * 16 * 2 // 2)
         with tik_instance.else_scope():
             tik_instance.data_move(input_1_local_l1, input_x1[core_m_idx * (8 * 256 + 128 * 1008)], 0, 7, 112,
                                    56 * 16, 0)

@@ -2127,7 +2127,7 @@ class Cell(Cell_):
                                "are not support recomputation in pipeline parallel.")
             elif context.get_auto_parallel_context("pipeline_stages") == 1:
                 self._parallel_optimizer_comm_recompute(kwargs.get('parallel_optimizer_comm_recompute', False))
-        if 'recompute_slice_activation' in kwargs.keys():
+        if 'recompute_slice_activation' in kwargs:
             self._recompute_slice_activation(kwargs.get('recompute_slice_activation', False))
 
         for key, _ in kwargs.items():

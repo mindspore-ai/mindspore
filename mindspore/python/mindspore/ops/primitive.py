@@ -803,7 +803,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
 
             def __init__(self):
                 op_name = name if name else fn.__name__
-                PrimitiveWithInfer.__init__(self, op_name)
+                super(CompileOp, self).__init__(op_name)
                 self.set_const_prim(True)
                 self.fn = fn
                 self.add_prim_attr('constexpr_prim', True)

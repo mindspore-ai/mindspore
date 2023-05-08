@@ -25,7 +25,7 @@ if(BUILD_LITE)
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
-                CONFIGURE_COMMAND ./Configure android-arm64 -D__ANDROID_API__=29 no-zlib
+                CONFIGURE_COMMAND ./Configure android-arm64 -D__ANDROID_API__=29 no-zlib no-afalgeng
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-4160.patch
@@ -53,7 +53,7 @@ if(BUILD_LITE)
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
-                CONFIGURE_COMMAND ./Configure android-arm -D__ANDROID_API__=19 no-zlib
+                CONFIGURE_COMMAND ./Configure android-arm -D__ANDROID_API__=19 no-zlib no-afalgeng
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-4160.patch
@@ -76,7 +76,7 @@ if(BUILD_LITE)
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
-                CONFIGURE_COMMAND ./config no-zlib no-shared
+                CONFIGURE_COMMAND ./config no-zlib no-shared no-afalgeng
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-4160.patch
@@ -106,7 +106,7 @@ else()
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 SHA256 ${SHA256}
-                CONFIGURE_COMMAND ./config no-zlib no-shared
+                CONFIGURE_COMMAND ./config no-zlib no-shared no-afalgeng
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-4160.patch

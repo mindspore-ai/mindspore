@@ -170,7 +170,7 @@ def _download_work(shard_id, current_idx, local_path, cache, q):
         used_disk = get_used_disk_per()
         while used_disk > float(config.DISK_THRESHOLD):
             logger.info("[{} FUNCTION] Used disk space is {}%, and the disk threshold is {}%.".format(
-                sys._getframe().f_code.co_name, used_disk*100,  # pylint: disable=W0212
+                sys._getframe().f_code.co_name, used_disk * 100,  # pylint: disable=W0212
                 float(config.DISK_THRESHOLD)*100))
             retry_cnt = 0
             has_deleted = _delete_candidate_datasets(

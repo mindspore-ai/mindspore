@@ -82,6 +82,7 @@ class Backend:
     NCCL = "nccl"
     MCCL = "mccl"
 
+    @staticmethod
     def __new__(cls, name):
         """Create instance object of Backend."""
         if not isinstance(name, str):

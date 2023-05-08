@@ -22,9 +22,9 @@ import com.mindspore.config.MSContext;
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.TrainCfg;
 
-import java.util.HashMap;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -81,7 +81,7 @@ public class Model {
             return false;
         }
         return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), decKey, decMode,
-                croptoLibPath);
+                                  croptoLibPath);
     }
 
     /**
@@ -118,7 +118,8 @@ public class Model {
         if (!isValid) {
             return false;
         }
-        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), decKey, decMode, croptoLibPath);
+        return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), decKey, decMode,
+                                croptoLibPath);
     }
 
     /**
@@ -265,7 +266,7 @@ public class Model {
      *
      * @return Whether the LoadConfig is successful.
      */
-    public boolean loadConfig(String configPath){
+    public boolean loadConfig(String configPath) {
         return loadConfig(modelPtr, configPath);
     }
 
