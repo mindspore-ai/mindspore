@@ -74,7 +74,10 @@ class ValueTransferType(IntEnum):
     kSetItemByBool = 18
     kEmptyTensor = 19
     kSetItemByEllipsis = 20
-    kRaiseIndexError = 21
+    kFormatIndexTensor = 21
+    kGetitemByBoolTensor = 22
+    kSetitemByBoolTensor = 23
+    kRaiseIndexError = 24
 
 
 def data_update(transfer_types, args, data, new_index, value=None):
@@ -98,6 +101,12 @@ def data_update(transfer_types, args, data, new_index, value=None):
             return data
         if transfer_type == ValueTransferType.kEmptyTensor:
             return handle_empty_tensor(arg, data)
+        if transfer_type == ValueTransferType.kFormatIndexTensor:
+            new_index = format_index_tensor(new_index, arg)
+        if transfer_type == ValueTransferType.kGetitemByBoolTensor:
+            return F.gather_nd(data, new_index.nonzero())
+        if transfer_type == ValueTransferType.kSetitemByBoolTensor:
+            return handle_setitem_by_bool_tensor(data, new_index, value)
         if transfer_type == ValueTransferType.kRaiseIndexError:
             raise IndexError(
                 f'index {arg[0]} is out of bounds for dimension with size {arg[1]}')
@@ -427,6 +436,33 @@ def handle_multi_dim_index_tensor(new_index, arg):
             slice_cnt += 1
     new_index = stack(new_indies_tensor)
     return new_index
+
+
+def format_index_tensor(index, arg):
+    """Format index tensor when tensor less than 0"""
+    format_indices, format_dims = arg
+    if isinstance(index, list):
+        for format_idx, format_dim in zip(format_indices, format_dims):
+            index_tensor = index[format_idx]
+            index[format_idx] = F.select(index_tensor < 0, index_tensor + format_dim, index_tensor)
+        return index
+    index = Tensor(index)
+    return F.select(index < 0, index + format_dims, index)
+
+
+def handle_setitem_by_bool_tensor(data, index, value):
+    """Set a tensor item by a bool tensor with a tensor."""
+    value = F.cast(value, F.dtype(data))
+    indices = index.nonzero()
+    if indices.shape[0] == 0:
+        return data
+    value_shape = (indices.shape[0],) + data.shape[index.ndim:]
+    value = _broadcast(value_shape, value)
+    value = F.scatter_nd(indices, value, data.shape)
+    index = index.reshape(const_utils.generate_padding_shape(index.shape, len(data.shape)))
+    index = _broadcast(data.shape, index)
+    result = F.select(index, value, data)
+    return result
 
 
 def _expand_data_dims(data, tuple_index):
