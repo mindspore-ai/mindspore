@@ -575,23 +575,6 @@ kernel::AddressPtrList MallocOutputMemoryForDeviceAddress(
   return ret;
 }
 
-size_t GetTensorDeviceSize(const AnfNodePtr &node, const ShapeVector &shape, std::string format, TypeId dtype,
-                           size_t output_index) {
-  auto device_shape = shape;
-  if (device_shape.empty() && format != kOpFormat_DEFAULT) {
-    device_shape = trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
-    device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
-  } else {
-    if (trans::IsNeedPadding(format, device_shape)) {
-      device_shape = trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index), node);
-    }
-    device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
-  }
-  size_t type_size = GetTypeByte(TypeIdToType(dtype));
-  size_t tensor_size = type_size * SizeOf(device_shape);
-  return tensor_size;
-}
-
 device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   const OpCompilerInfoPtr &op_compiler_info, const TensorPtr &tensor,
   const device::DeviceAddressPtr &cached_device_address, const AnfNodePtr &node) {
@@ -875,9 +858,9 @@ void UpdateOutputShapeForCompileInfo(const std::vector<device::DeviceAddressPtr>
 }
 
 // launch dynamic kernel with input and output tensors
-void LaunchKernelsDynamicNew(const pynative::OpCompilerInfoPtr &op_compiler_info,
-                             const session::BackendOpRunInfoPtr &op_run_info,
-                             std::vector<device::DeviceAddressPtr> *device_address_list) {
+void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
+                          const session::BackendOpRunInfoPtr &op_run_info,
+                          std::vector<device::DeviceAddressPtr> *device_address_list) {
   MS_LOG(DEBUG) << "Start";
   // Get input tensors without const value
   auto input_tensors = GetTensorWithoutValueMask(op_run_info);
@@ -1045,6 +1028,6 @@ void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const O
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   MS_EXCEPTION_IF_NULL(op_run_info);
   WaitCommunicationFinish(op_run_info->base_op_run_info.input_tensor);
-  LaunchKernelsDynamicNew(op_compiler_info, op_run_info, device_address_list);
+  LaunchKernelsDynamic(op_compiler_info, op_run_info, device_address_list);
 }
 }  // namespace mindspore::runtime
