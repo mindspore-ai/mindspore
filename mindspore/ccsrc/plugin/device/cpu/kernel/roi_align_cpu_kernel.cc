@@ -202,8 +202,11 @@ bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 
   const T rois_min = static_cast<T>(0);
   const T rois_max = static_cast<T>(batch_ - 1);
-  if (rois[0] < rois_min || rois[0] > rois_max) {
-    MS_LOG(EXCEPTION) << "image_index " << rois[0] << " must be a number in [0," << rois_max << "]";
+  for (int i = 0; i < roi_rows_; ++i) {
+    int index = i * roi_cols_;
+    if (rois[index] < rois_min || rois[index] > rois_max) {
+      MS_LOG(EXCEPTION) << "image_index " << rois[index] << " must be a number in [0," << rois_max << "]";
+    }
   }
   size_t elem_num = IntToSize(roi_rows_ * channels_ * pooled_height_ * pooled_width_);
   auto task = [this, &input, &rois, &out_data](size_t start, size_t end) {
