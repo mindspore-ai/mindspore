@@ -819,10 +819,10 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
         >>> csrb = CSRTensor(b_indptr, b_indices, b_values, shape)
         >>> out = ops.csr_add(csra, csrb, alpha, beta)
         >>> print(out)
-        CSRTensor(shape=[2,6], dtype=Float32,
-                  indptr=Tensor(shape=[3], dtype=Int32, value = [0, 1, 2]),
-                  indices=Tensor(shape=[2], dtype=Int32, value = [0, 1]),
-                  values=Tensor(shape=[2], dtype=Float32, value = [2.0, 4.0]))
+        CSRTensor(shape=[2, 6], dtype=Float32, \
+                  indptr=Tensor(shape=[3], dtype=Int32, value=[0 1 2]), \
+                  indices=Tensor(shape=[2], dtype=Int32, value=[0 1]), \
+                  values=Tensor(shape=[2], dtype=Float32, value=[ 2.00000000e+00  4.00000000e+00]))
     """
     if not isinstance(a, CSRTensor) or not isinstance(b, CSRTensor):
         raise_type_error("For functional operator csr_add, both inputs a and b must be type of CSRTensor.")
