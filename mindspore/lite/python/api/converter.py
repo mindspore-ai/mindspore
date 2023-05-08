@@ -475,16 +475,17 @@ class Converter:
         the initialization time of the model increases during inference execution. If this property is set to
         ``"general"``, general optimization will be performed, such as constant folding and operator fusion (the
         converted model only supports CPU/GPU hardware backend, not Ascend backend). If this property is set to
-        ``"gpu_oriented"``, the optimization for GPU hardware will be performed (the converted model only supports GPU
-        hardware backend). If this property is set to ``"ascend_oriented"``, the optimization for Ascend hardware
-        will be performed (the converted model only supports Ascend hardware backend).
+        ``"gpu_oriented"``, the general optimization and extra optimization for GPU hardware will be performed (the
+        converted model only supports GPU hardware backend). If this property is set to ``"ascend_oriented"``, the
+        optimization for Ascend hardware will be performed (the converted model only supports Ascend hardware backend).
 
         For the MindSpore model, since it is already a `mindir` model, two approaches are suggested:
 
         1. Inference is performed directly without offline conversion.
 
-        2. Setting optimize to ``"general"`` in `CPU/GPU` hardware backend, setting optimize to ``"gpu_oriented"`` in
-        `GPU` hardware and setting optimize to ``"ascend_oriented"`` in `Ascend` hardware when using offline conversion.
+        2. When using offline conversion, setting optimize to ``"general"`` in `CPU/GPU` hardware backend (for general
+        optimization), setting optimize to ``"gpu_oriented"`` in `GPU` hardware (for GPU extra optimization based on
+        general optimization), setting optimize to ``"ascend_oriented"`` in `Ascend` hardware.
         The relevant optimization is done in the offline phase to reduce the initialization time of inference execution.
 
         Returns:
