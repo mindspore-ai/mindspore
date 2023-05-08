@@ -716,9 +716,6 @@ def where(condition, x=None, y=None):
         x = F.cast(x, mstype.float32)
         y = F.cast(y, mstype.float32)
 
-    if not _check_same_type(F.dtype(condition), mstype.float32):
-        # tiling with bool is not supported on GPU
-        condition = F.cast(condition, mstype.float32)
     dynamic = F.is_sequence_value_unknown(F.shape(condition)) or F.is_sequence_value_unknown(F.shape(x))\
               or F.is_sequence_value_unknown(F.shape(y))
     # As select op currently does not support broadcast, broadcasts input tensors
