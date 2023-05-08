@@ -79,13 +79,20 @@ AnfNodePtr CreateUpdateStateNode(const FuncGraphPtr &graph, const bool is_need_u
   return update_state_node;
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
+ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
-  auto new_node = std::make_shared<ValueNode>(value_ptr);
-  MS_EXCEPTION_IF_NULL(new_node);
-  auto value_abstract = value_ptr->ToAbstract();
-  new_node->set_abstract(value_abstract);
-  return new_node;
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph == nullptr) {
+    auto new_node = std::make_shared<ValueNode>(value_ptr);
+    MS_EXCEPTION_IF_NULL(new_node);
+    auto value_abstract = value_ptr->ToAbstract();
+    new_node->set_abstract(value_abstract);
+    return new_node;
+  } else {
+    ValueNodePtr value_node = kernel_graph->NewValueNode(value_ptr->ToAbstract(), value_ptr);
+    kernel_graph->AddValueNodeToGraph(value_node);
+    return value_node;
+  }
 }
 
 AnfNodePtr CreateLambApplyOptimizerAssignNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &ori_inputs,
@@ -139,7 +146,8 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   // Calc the sum of square
   auto shape_vec = common::AnfAlgo::GetOutputInferShape(input_node, 0);
 
-  auto type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0);
+  auto type_id = (input_node->isa<CNode>()) ? common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0)
+                                            : common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   const auto dim = shape_vec.size();
   std::vector<int64_t> axis;
   for (size_t i = 0; i < dim; ++i) {
@@ -168,7 +176,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
 
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
 
-  auto axis_node = CreateValueNode(MakeValue(axis));
+  auto axis_node = CreateValueNode(graph, MakeValue(axis));
   // Calc the sum of reducesum
   const std::vector<AnfNodePtr> square_sum_node_inputs = {NewValueNode(std::make_shared<Primitive>(kReduceSumOpName)),
                                                           square_node, axis_node};
@@ -176,6 +184,10 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   MS_EXCEPTION_IF_NULL(square_sum_node);
 
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(false), square_sum_node);
+  auto input_names = std::vector<std::string>{"input_x", "axis"};
+  auto output_names = std::vector<std::string>{"y"};
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), square_sum_node);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), square_sum_node);
   square_sum_node->set_scope(input_node->scope());
   square_sum_node->set_abstract(abs);
   ShapeVector shape = {1};
@@ -274,10 +286,10 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
 
   // cast delay flag to float32
   auto flag = std::make_shared<tensor::Tensor>(1.0);
-  auto weight_decay_flag = CreateValueNode(flag);
+  auto weight_decay_flag = CreateValueNode(graph, flag);
 
   auto num = std::make_shared<tensor::Tensor>(1.0);
-  auto num_one = CreateValueNode(num);
+  auto num_one = CreateValueNode(graph, num);
   // create 1-beta1
   auto sub_beta1 = CreateNodeOfBinaryOp(graph, kSubOpName, num_one, ori_inputs[kBeta1Index], ori_inputs[kBeta1Index]);
   // create 1-beta2
