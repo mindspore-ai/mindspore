@@ -34,6 +34,9 @@ public class ModelType {
     // onnx type
     public static final int MT_ONNX = 3;
 
+    // mindir lite type
+    public static final int MT_MINDIR_LITE = 4;
+
     // mindir opt type
-    public static final int MT_MINDIR_OPT = 4;
+    public static final int MT_MINDIR_OPT = MT_MINDIR_LITE;
 }
