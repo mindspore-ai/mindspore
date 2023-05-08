@@ -358,11 +358,11 @@ class _Context:
         if not Validator.check_str_by_regular(variable_memory_max_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should be in correct"
                              " format! It must be a string ending with 'GB', in addition to that, it must contain "
-                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                             "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}GB."
                              .format(variable_memory_max_size))
         if float(variable_memory_max_size[:-2]) > _DEVICE_APP_MEMORY_SIZE:
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should not be "
-                             "greater than 31GB, but got {}.".format(variable_memory_max_size))
+                             "greater than 31GB, but got {}GB.".format(variable_memory_max_size))
         variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
         graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
         graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"

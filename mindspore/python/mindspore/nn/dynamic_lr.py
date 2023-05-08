@@ -33,7 +33,8 @@ def piecewise_constant_lr(milestone, learning_rates):
         y[i] = x_t,\ for\ i \in [M_{t-1}, M_t)
 
     Args:
-        milestone (Union[list[int], tuple[int]]): A list of milestone. This list is a monotone increasing list.
+        milestone (Union[list[int], tuple[int]]): A list of milestone. When the specified step is reached, use the
+            corresponding `learning_rates`. This list is a monotone increasing list.
             Every element in the list must be greater than 0.
         learning_rates (Union[list[float], tuple[float]]): A list of learning rates.
 
@@ -54,6 +55,9 @@ def piecewise_constant_lr(milestone, learning_rates):
         >>> milestone = [2, 5, 10]
         >>> learning_rates = [0.1, 0.05, 0.01]
         >>> output = nn.piecewise_constant_lr(milestone, learning_rates)
+        >>> # learning_rates = 0.1  if step <= 2
+        >>> # learning_rates = 0.05  if 2 < step <= 5
+        >>> # learning_rates = 0.01  if 5 < step <= 10
         >>> print(output)
         [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
     """
