@@ -23,6 +23,7 @@
 namespace mindspore::lite {
 namespace {
 constexpr auto kTensorRtPluginSoName = "libtensorrt_plugin.so";
+constexpr auto kTensorRtPluginPythonSoName = "libtensorrt_plugin_python.so";
 constexpr auto kFunCreateTRTPluginImp = "CreateTensorRTPluginImpl";
 }  // namespace
 TensorRTExecutorPlugin::TensorRTExecutorPlugin() = default;
@@ -57,7 +58,10 @@ Status TensorRTExecutorPlugin::TryRegister() {
   std::string plugin_path;
   auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kTensorRtPluginSoName, &plugin_path);
   if (ret != kSuccess) {
-    return {kLiteError, std::string("Get real path of ") + kTensorRtPluginSoName + " failed."};
+    ret = DLSoPath({"libmindspore-extendrt_python.so", "_c_lite"}, kTensorRtPluginPythonSoName, &plugin_path);
+    if (ret != kSuccess) {
+      return {kLiteError, std::string("Get real path of ") + kTensorRtPluginSoName + " failed."};
+    }
   }
   void *function = nullptr;
   ret = DLSoOpen(plugin_path, kFunCreateTRTPluginImp, &handle_, &function);

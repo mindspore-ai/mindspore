@@ -25,6 +25,7 @@
 namespace mindspore::infer {
 namespace {
 constexpr auto kLiteRtPluginSoName = "libmsplugin-ge-litert.so";
+constexpr auto kLiteRtPluginPythonSoName = "libmsplugin-ge-litert_python.so";
 constexpr auto kFunCreateLiteRTPluginImp = "CreateLiteRTPluginImpl";
 }  // namespace
 LiteRTExecutorPlugin::LiteRTExecutorPlugin() = default;
@@ -47,10 +48,16 @@ bool LiteRTExecutorPlugin::Register() {
     return true;
   }
   std::string plugin_path;
-  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kLiteRtPluginSoName, &plugin_path);
+  auto ret =
+    DLSoPath({"libmindspore-lite.so", "libmindspore-extendrt_python.so", "_c_lite"}, kLiteRtPluginSoName, &plugin_path);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get real path of " << kLiteRtPluginSoName << " failed.";
-    return false;
+    MS_LOG(INFO) << "use python so path.";
+    ret = DLSoPath({"libmindspore-lite.so", "libmindspore-extendrt_python.so", "_c_lite"}, kLiteRtPluginPythonSoName,
+                   &plugin_path);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Get real path of " << kLiteRtPluginSoName << " failed, plugin_path: " << plugin_path;
+      return false;
+    }
   }
   MS_LOG(INFO) << "Find litert plugin so success, path = " << plugin_path;
   void *function = nullptr;

@@ -69,8 +69,8 @@ Status AscendKernelPlugin::TryRegisterInner() {
   }
   auto pos = cur_so_path.find("libmindspore-lite.so");
   if (pos == std::string::npos) {
-    MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
-    auto c_lite_pos = cur_so_path.find("_c_lite");
+    MS_LOG(INFO) << "use python so path: " << cur_so_path;
+    auto c_lite_pos = cur_so_path.find("libmindspore-extendrt_python.so");
     if (c_lite_pos == std::string::npos) {
       return {kLiteError, "Could not find _c_lite so, cur so path: " + cur_so_path};
     }
@@ -80,7 +80,11 @@ Status AscendKernelPlugin::TryRegisterInner() {
   std::string ascend_kernel_plugin_path;
   auto ret = FindSoPath(parent_dir, "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
-    return {kLiteError, "Get real path of libascend_kernel_plugin.so failed."};
+    MS_LOG(INFO) << "use python so path: " << ascend_kernel_plugin_path;
+    ret = FindSoPath(parent_dir, "libascend_kernel_plugin_python.so", &ascend_kernel_plugin_path);
+    if (ret != kSuccess) {
+      return {kLiteError, "Get real path of libascend_kernel_plugin.so failed."};
+    }
   }
   MS_LOG(INFO) << "Find ascend kernel plugin so success, path = " << ascend_kernel_plugin_path;
   void *function = nullptr;
