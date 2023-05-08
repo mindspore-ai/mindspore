@@ -214,7 +214,3 @@ def test_spacetodepth_dyn_shape():
     output = net(input_x)
     expect_shape = (1, 12, 1, 1)
     assert output.asnumpy().shape == expect_shape
-
-
-test_spacetodepth_graph_float32()
-test_spacetodepth_pynative_int32()
