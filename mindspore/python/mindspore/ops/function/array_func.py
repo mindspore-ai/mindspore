@@ -4134,10 +4134,10 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
             value of k must be in (-x.shape[-2], x.shape[-1]).
         padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
             The number to fill the area outside the specified diagonal band. Default: ``0`` .
-        align (str, optional): An optional string from: ``"RIGHT_LEFT"`` (Default), ``"LEFT_RIGHT"`` ,
+        align (str, optional): An optional string from: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` ,
             ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` . Align is a string specifying how superdiagonals and subdiagonals
             should be aligned, respectively. ``"RIGHT_LEFT"`` aligns superdiagonals to the right (left-pads the row)
-            and subdiagonals to the left (right-pads the row).
+            and subdiagonals to the left (right-pads the row). Default: ``"RIGHT_LEFT"`` .
 
     Returns:
         A Tensor. Has the same type as `x`.
@@ -4354,6 +4354,7 @@ def affine_grid(theta, size, align_corners=False):
             If ``True`` , consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
             The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
             irrelevant to resolution of the image. Default: ``False`` .
+
     Returns:
         Tensor, a tensor whose data type is same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
         or :math:`(N, D, H, W, 3)` for 3D grid.

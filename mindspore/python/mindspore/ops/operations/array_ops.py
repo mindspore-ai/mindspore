@@ -1582,11 +1582,11 @@ class MatrixBandPart(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
-            The data type must be float16, float32, float64, int32 or int64.
+          The data type must be float16, float32, float64, int32 or int64.
         - **lower** (Union[int, Tensor]) - Number of subdiagonals to keep. The data type must be int32 or int64.
-            If negative, keep entire lower triangle.
+          If negative, keep entire lower triangle.
         - **upper** (Union[int, Tensor]) - Number of superdiagonals to keep. The data type must be int32 or int64.
-            If negative, keep entire upper triangle.
+          If negative, keep entire upper triangle.
 
     Outputs:
         Tensor, has the same type and shape as `x`.
@@ -4204,7 +4204,7 @@ class ResizeNearestNeighborV2(Primitive):
 
     Args:
         align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input and output
-            tensors are aligned, preserving the values at the corner pixels. Defaults: ``False`` .
+            tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
         half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` ,
             `align_corners` should be False. Default: ``False`` .
         data_format (str, optional): An optional `string` that describes the

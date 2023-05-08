@@ -706,9 +706,9 @@ class GRU(_RNNBase):
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
-          shape (seq\_len, batch\_size, `input\_size`) or :math:`(batch\_size, seq\_len, `input\_size`)`.
+          shape (seq\_len, batch\_size, `input\_size`) or :math:`(batch\_size, seq\_len, input\_size)`.
         - **hx** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
-          shape :math:`(num\_directions * `num\_layers`, batch\_size, `hidden\_size`)`.
+          shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
           The data type of `hx` must be the same as
           `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
@@ -720,9 +720,9 @@ class GRU(_RNNBase):
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`).
 
-        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * `hidden\_size`)` or
-          :math:`(batch\_size, seq\_len, num\_directions * `hidden\_size`)`.
-        - **hx_n** (Tensor) - Tensor of shape :math:`(num\_directions * `num\_layers`, batch\_size, `hidden\_size`)`.
+        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` or
+          :math:`(batch\_size, seq\_len, num\_directions * hidden\_size)`.
+        - **hx_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
 
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.

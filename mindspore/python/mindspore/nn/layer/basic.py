@@ -998,7 +998,7 @@ class Unfold(Cell):
     Outputs:
         Tensor, a 4-D tensor whose data type is same as `x`,
         and the shape is :math:`(out\_batch, out\_depth, out\_row, out\_col)`
-            where `out_batch` is the same as the `in_batch`.
+        where `out_batch` is the same as the `in_batch`.
 
         - :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
         - :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
