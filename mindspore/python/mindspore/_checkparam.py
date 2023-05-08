@@ -238,7 +238,7 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
             if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
                 raise ValueError(f"{prim_name} {arg_name} must be a legal float, but got '{arg_value}'.")
         else:
-            raise TypeError("{} type of {} must be {}, but got '{}'".format(
+            raise TypeError("{} type of {} must be '{}', but got '{}'.".format(
                 prim_name, arg_name, arg_type.__name__, type(arg_value).__name__))
     _check_param()
     return arg_value

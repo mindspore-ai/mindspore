@@ -79,7 +79,6 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
     }
   }
   auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
-  (void)primitive->AddAttr("shape", MakeValue(input_x));
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] == -1) {
       continue;
