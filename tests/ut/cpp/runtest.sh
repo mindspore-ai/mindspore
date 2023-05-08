@@ -40,12 +40,32 @@ cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/
 ## prepare album dataset, uses absolute path so has to be generated
 python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_json.py
 
+RET=0
 if [ $# -gt 0 ]; then
-  ./ut_tests --gtest_filter=$1
-else
-  ./ut_tests
+  ./ut_API_tests --gtest_filter=$1
+  ./ut_FRONTEND_tests --gtest_filter=$1
+  ./ut_BACKEND_tests --gtest_filter=$1
+  ./ut_PS_tests --gtest_filter=$1
+  ./ut_OTHERS_tests --gtest_filter=$1
+  ./ut_MINDDATA0_tests --gtest_filter=$1
+  ./ut_MINDDATA1_tests --gtest_filter=$1
+  exit 0
 fi
-RET=$?
-cd -
 
-exit ${RET}
+pids=()
+tasks=(./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
+set +e
+for task in "${tasks[@]}"; do
+  $task &
+  pids+=($!)
+done
+cd -
+for pid in "${pids[@]}"; do
+  wait $pid
+  status=$?
+  if [ $status != 0 ]; then
+    RET=$status
+  fi
+done
+
+exit $RET

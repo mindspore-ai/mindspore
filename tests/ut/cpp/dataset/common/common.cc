@@ -151,6 +151,23 @@ std::shared_ptr<mindspore::dataset::ExecutionTree> DatasetOpTesting::Build(
 #endif
 }  // namespace UT
 
+// Helper function to get the session id from SESSION_ID env variable
+Status GetSessionFromEnv(uint32_t *session_id) {
+  RETURN_UNEXPECTED_IF_NULL(session_id);
+  if (const char *session_env = std::getenv("SESSION_ID")) {
+    std::string session_id_str(session_env);
+    try {
+      *session_id = std::stoul(session_id_str);
+    } catch (const std::exception &e) {
+      std::string err_msg = "Invalid numeric value for session id in env var: " + session_id_str;
+      return Status(StatusCode::kMDSyntaxError, err_msg);
+    }
+  } else {
+    RETURN_STATUS_UNEXPECTED("Test case requires a session id to be provided via SESSION_ID environment variable.");
+  }
+  return Status::OK();
+}
+
 namespace mindspore {
 namespace dataset {
 MSTensorVec Predicate1(MSTensorVec in) {

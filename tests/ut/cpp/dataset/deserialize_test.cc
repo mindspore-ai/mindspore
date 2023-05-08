@@ -532,9 +532,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
   EXPECT_EQ(json_ss.str(), json_ss1.str());
 }
 
-// Helper function to get the session id from SESSION_ID env variable
-Status GetSessionFromEnv(session_id_type *session_id);
-
 /// Feature: Deserialize
 /// Description: Test Deserialize on created Dataset Cache
 /// Expectation: The data is processed successfully
