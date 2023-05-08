@@ -25,6 +25,7 @@
 #include <limits>
 #include <cmath>
 #include <chrono>
+#include <algorithm>
 #include "mindapi/base/macros.h"
 namespace mindspore {
 class MSLogTime {
@@ -172,6 +173,10 @@ inline bool IsFloatEqual(const float &a, const float &b) {
 
 inline bool IsDoubleEqual(const double &a, const double &b) {
   return (std::fabs(a - b) <= std::numeric_limits<double>::epsilon());
+}
+
+inline bool IsStrNumeric(const std::string &str) {
+  return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
 }  // namespace common
 }  // namespace mindspore
