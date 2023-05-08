@@ -38,7 +38,7 @@ COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBase
 COMMON_EXPORT bool IsStubTensor(const py::handle &obj);
 COMMON_EXPORT tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 COMMON_EXPORT ValuePtr PyStubNodeCast(const py::handle &obj);
-COMMON_EXPORT std::pair<ShapeVector, TypeId> GetStubTensorInfo(const py::handle &obj);
+COMMON_EXPORT std::pair<ShapeVector, TypePtr> GetStubTensorInfo(const py::handle &obj);
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);

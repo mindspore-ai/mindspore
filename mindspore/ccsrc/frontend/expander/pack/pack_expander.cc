@@ -25,7 +25,6 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
-#include "backend/common/pass/convert_const_input_to_attr.h"
 
 namespace mindspore {
 namespace expander {
@@ -47,13 +46,14 @@ inline bool IsHasValue(const ValuePtr &value) {
   return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>());
 }
 
-bool IsTensorTuple(const py::object &arg) {
-  if (!py::isinstance<py::tuple>(arg)) {
+template <typename T>
+bool IsTensorSequence(const py::object &arg) {
+  if (!py::isinstance<T>(arg)) {
     return false;
   }
-  py::tuple tuple = py::cast<py::tuple>(arg);
-  for (size_t i = 0; i < tuple.size(); ++i) {
-    if (IsPackTensor(tuple[i]) || py::isinstance<tensor::Tensor>(tuple[i])) {
+  T seq = py::cast<T>(arg);
+  for (size_t i = 0; i < seq.size(); ++i) {
+    if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i])) {
       return true;
     }
   }
@@ -131,9 +131,7 @@ py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs)
   py::tuple outputs(inputs.size());
   graph_ = std::make_shared<FuncGraph>();
   for (size_t i = 0; i < inputs.size(); ++i) {
-    auto param = graph_->add_parameter();
-    param->set_abstract(inputs[i]);
-    outputs[i] = py::cast(std::make_shared<PackNode>(param));
+    outputs[i] = ConvertAbstractToParameter(inputs[i]);
   }
   return outputs;
 }
@@ -164,6 +162,29 @@ py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
     auto val = node->abstract()->BuildValue();
     MS_EXCEPTION_IF_NULL(val);
     return ValueToPyData(val);
+  }
+}
+
+py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) const {
+  if (IsHasValue(abs->BuildValue())) {
+    auto val = abs->BuildValue();
+    graph_->AddNode(NewValueNode(val));
+    return ValueToPyData(val);
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    size_t len = abs->cast<abstract::AbstractSequencePtr>()->size();
+    py::tuple tuple_node(len);
+    for (size_t i = 0; i < len; ++i) {
+      tuple_node[i] = ConvertAbstractToParameter(abs->cast<abstract::AbstractSequencePtr>()->elements()[i]);
+    }
+    return tuple_node;
+  } else {
+    if (!abs->isa<abstract::AbstractTensor>()) {
+      MS_LOG(WARNING) << "input should be Tensor, but get " << abs->ToString();
+    }
+    auto param = graph_->add_parameter();
+    param->set_abstract(abs);
+    auto ret = std::make_shared<PackNode>(param);
+    return py::cast(ret);
   }
 }
 
@@ -202,6 +223,7 @@ AnfNodePtr PackExpander::CNodeInfer(const CNodePtr &cnode) const {
   }
   auto [infer_res, val] = InferShapeAndValue(prim, abs_list, need_infer_value);
   if (IsHasValue(val)) {
+    graph_->DropNode(cnode);
     auto node = NewValueNode(val);
     node->set_abstract(val->ToAbstract());
     return node;
@@ -220,13 +242,18 @@ AnfNodePtr PackExpander::EmitCNode(const PrimitivePtr &prim, const AnfNodePtrLis
 }
 
 AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
-  if (IsTensorTuple(arg)) {
+  auto ConvertSqeuenceInput = [&](const auto &tuple) -> AnfNodePtr {
     AnfNodePtrList cnode_inputs;
-    py::tuple tuple = py::cast<py::tuple>(arg);
     for (size_t i = 0; i < tuple.size(); ++i) {
       cnode_inputs.emplace_back(ConvertInput(tuple[i]));
     }
     return EmitCNode(prim::kPrimMakeTuple, cnode_inputs);
+  };
+  if (IsTensorSequence<py::tuple>(arg)) {
+    return ConvertSqeuenceInput(py::cast<py::tuple>(arg));
+  }
+  if (IsTensorSequence<py::list>(arg)) {
+    return ConvertSqeuenceInput(py::cast<py::list>(arg));
   }
   // value
   if (IsPackTensor(arg)) {

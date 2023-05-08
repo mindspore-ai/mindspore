@@ -46,6 +46,14 @@ def test_pack_basic_cell():
             z = x + y + 1
             _, b = self.arg_max(z)
             return z * z, b
+
+    @pack
+    def func(x, k):
+        z = x[0] * x[0]
+        z[2] = z[1]
+        z = P.Concat()((z, x[0] + k))
+        return z
+
     ms.set_context(mode=ms.PYNATIVE_MODE)
     net = Net()
     x = Tensor([1, 2, 3, 4])
@@ -54,12 +62,8 @@ def test_pack_basic_cell():
     expect = np.array([36., 64., 100., 144.])
     expect_max = np.array([12])
 
-    @pack
-    def func(x):
-        z = x * x
-        return z
-    func_output = func(x)
-    func_expect = np.array([1, 4, 9, 16])
+    func_output = func((x,), 10)
+    func_expect = np.array([1, 4, 4, 16, 11, 12, 13, 14])
     assert np.allclose(func_output.asnumpy(), func_expect)
     assert np.allclose(output.asnumpy(), expect)
     assert np.allclose(max_.asnumpy(), expect_max)
