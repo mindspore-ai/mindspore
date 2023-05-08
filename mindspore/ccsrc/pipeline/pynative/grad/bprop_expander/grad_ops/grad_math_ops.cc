@@ -328,8 +328,12 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto bc_x = ib->Emit(kDivOpName, {dout, y});
   auto bc_y = -(bc_x * out);
-  auto result = BinopGradCommon(ib, x, y, bc_x, bc_y);
-  return {ib->Emit("Conj", {result[0]}), ib->Emit("Conj", {result[1]})};
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    auto result = BinopGradCommon(ib, x, y, bc_x, bc_y);
+    return {ib->Emit("Conj", {result[0]}), ib->Emit("Conj", {result[1]})};
+  }
+  return BinopGradCommon(ib, x, y, bc_x, bc_y);
 });
 
 REG_BPROP_BUILDER("Less").SetUnusedInputs({i0, i1, i2, i3}).SetBody(CompareBpropExpander);
