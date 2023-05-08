@@ -379,25 +379,25 @@ class Profiler:
 
         Examples:
              >>> class StopAtStep(Callback):
-             >>>     def __init__(self, start_step, stop_step):
+             ...     def __init__(self, start_step, stop_step):
              ...         super(StopAtStep, self).__init__()
              ...         self.start_step = start_step
              ...         self.stop_step = stop_step
              ...         self.profiler = Profiler(start_profile=False)
              ...
-             >>>     def step_begin(self, run_context):
+             ...     def step_begin(self, run_context):
              ...         cb_params = run_context.original_args()
              ...         step_num = cb_params.cur_step_num
              ...         if step_num == self.start_step:
              ...             self.profiler.start()
              ...
-             >>>     def step_end(self, run_context):
+             ...     def step_end(self, run_context):
              ...         cb_params = run_context.original_args()
              ...         step_num = cb_params.cur_step_num
              ...         if step_num == self.stop_step:
              ...             self.profiler.stop()
              ...
-             >>>     def end(self, run_context):
+             ...     def end(self, run_context):
              ...         self.profiler.analyse()
         """
         if self._msprof_enable:
@@ -444,25 +444,25 @@ class Profiler:
 
         Examples:
              >>> class StopAtEpoch(Callback):
-             >>>     def __init__(self, start_epoch, stop_epoch):
+             ...     def __init__(self, start_epoch, stop_epoch):
              ...         super(StopAtEpoch, self).__init__()
              ...         self.start_epoch = start_epoch
              ...         self.stop_epoch = stop_epoch
              ...         self.profiler = Profiler(start_profile=False)
              ...
-             >>>     def epoch_begin(self, run_context):
+             ...     def epoch_begin(self, run_context):
              ...         cb_params = run_context.original_args()
              ...         epoch_num = cb_params.cur_epoch_num
              ...         if epoch_num == self.start_epoch:
              ...             self.profiler.start()
              ...
-             >>>     def epoch_end(self, run_context):
+             ...     def epoch_end(self, run_context):
              ...         cb_params = run_context.original_args()
              ...         epoch_num = cb_params.cur_epoch_num
              ...         if epoch_num == self.stop_epoch:
              ...             self.profiler.stop()
              ...
-             >>>     def end(self, run_context):
+             ...     def end(self, run_context):
              ...         self.profiler.analyse()
         """
         if self._msprof_enable:
