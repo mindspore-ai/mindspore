@@ -52,6 +52,7 @@ struct BaseOpRunInfo {
   std::vector<tensor::TensorPtr> input_tensor;
   std::vector<int64_t> input_mask;
   AbstractBasePtr abstract;
+  std::vector<size_t> output_indexes;
 };
 
 struct AsyncStatus {

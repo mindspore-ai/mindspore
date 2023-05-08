@@ -30,7 +30,7 @@ class TensorShapeKernelMod : public HostKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
-  void Execute(void *stream_ptr) const;
+  void Execute(void *stream_ptr, const std::vector<AddressPtr> &outputs) const;
 };
 MS_HOST_REG_KERNEL(DynamicShape, TensorShapeKernelMod);
 MS_HOST_REG_KERNEL(TensorShape, TensorShapeKernelMod);

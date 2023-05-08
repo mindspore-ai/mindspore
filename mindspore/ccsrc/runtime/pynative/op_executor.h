@@ -70,6 +70,7 @@ class BACKEND_EXPORT OpExecutor {
   // Determine if there is another task with the same name in execution.
   // Tasks with the same name use the same CNode cache. So we need to wait.
   bool ActorInQueue(GraphId graph_id);
+  bool BuildInQueue(GraphId graph_id);
 
   // Wait for all OpRunTasks to finish executing.
   void Wait();

@@ -485,6 +485,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   size_t somas_whole_block_size() const { return somas_info_->whole_block_size_; }
   const std::map<size_t, size_t> &somas_merged_blocks_map() const { return somas_info_->merged_blocks_map_; }
 
+  void set_graph_info(const std::string &graph_info) { graph_info_ = graph_info; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -601,6 +603,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool is_loop_count_sink_{false};
   // save the communication sub-graph id for comm op reuse
   std::set<uint32_t> comm_sub_graph_ids_{};
+  // graph info for single op
+  std::string graph_info_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

@@ -131,38 +131,6 @@ VectorRef MsBackend::MsSimuRunGraph(const GraphId &g) {
 }
 
 namespace {
-std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  std::vector<tensor::TensorPtr> tensors_without_value_node;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask.at(index) != kValueNodeTensorMask) {
-      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
-    }
-  }
-  return tensors_without_value_node;
-}
-
-device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
-                                                 const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(old_device_address);
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id(),
-    old_device_address->host_shape());
-  MS_EXCEPTION_IF_NULL(new_device_address);
-  new_device_address->set_original_ref_count(old_device_address->original_ref_count());
-  new_device_address->ResetRefCount();
-  auto node = old_device_address->GetNodeIndex();
-  new_device_address->SetNodeIndex(node.first, node.second);
-  return new_device_address;
-}
-
 void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context, bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->execution_order()) {
@@ -177,7 +145,7 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
         continue;
       }
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
+      auto new_device_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(device_address, device_context);
       if (is_gradient_out) {
         new_device_address->set_from_persistent_mem(true);
       }
@@ -193,27 +161,8 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
         continue;
       }
       const auto &device_address = AnfAlgo::GetMutableWorkspaceAddr(node, i);
-      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
+      auto new_device_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(device_address, device_context);
       AnfAlgo::SetWorkspaceAddr(new_device_address, i, node.get());
-    }
-  }
-}
-
-void ClearGraphDeviceAddressDynamic(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  for (const auto &node : graph->execution_order()) {
-    auto output_address_num = AnfAlgo::GetOutputAddressNum(node);
-    // Clear old output device address of kernel
-    for (size_t i = 0; i < output_address_num; ++i) {
-      AnfAlgo::SetOutputAddr(nullptr, i, node.get());
-    }
-
-    // Clear old workspace device address of kernel
-    auto kernel_mod = AnfAlgo::GetKernelMod(node);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    auto workspace_lists = kernel_mod->GetWorkspaceSizeList();
-    for (size_t i = 0; i < workspace_lists.size(); ++i) {
-      AnfAlgo::SetWorkspaceAddr(nullptr, i, node.get());
     }
   }
 }
@@ -228,7 +177,7 @@ void ClearInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
       if (device_address == nullptr) {
         continue;
       }
-      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
+      auto new_device_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(device_address, device_context);
       AnfAlgo::SetOutputAddr(new_device_address, 0, node.get());
     }
   }
@@ -259,29 +208,6 @@ bool EnablePyNativeSyncRunning() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-}
-
-void UpdateGraphInputAbstract(const KernelGraphPtr &graph, const session::BackendOpRunInfoPtr &op_run_info,
-                              const device::DeviceContext *device_context) {
-  auto input_nodes = graph->input_nodes();
-  auto input_size = input_nodes.size();
-  auto input_tensors = GetTensorWithoutValueMask(op_run_info);
-  if (input_size > input_tensors.size()) {
-    MS_LOG(EXCEPTION) << "input_size is bigger than input_tensors size, input_size:" << input_size
-                      << ", input_tensors size:" << input_tensors.size();
-  }
-  // Update the Graph`s Parameter shape
-  for (size_t i = 0; i < input_size; ++i) {
-    MS_EXCEPTION_IF_NULL(input_tensors[i]);
-    auto type_of_tensor = input_tensors[i]->Dtype();
-    std::shared_ptr<abstract::AbstractTensor> abstract;
-    abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, input_tensors[i]->shape());
-    input_nodes[i]->set_abstract(abstract);
-  }
-
-  // Create input address before infer
-  runtime::DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
-  runtime::DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
 }
 }  // namespace
 
@@ -556,6 +482,31 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
   op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(elements);
 }
 
+TensorPtr CreateOutputMapTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
+                                       const std::shared_ptr<device::DeviceAddress> &address) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &user_data = device_tensor->user_data();
+  MS_EXCEPTION_IF_NULL(user_data);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
+    MS_EXCEPTION_IF_NULL(shape_vector);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    MS_EXCEPTION_IF_NULL(default_value);
+    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
+    map_tensor->set_device_address(address);
+    return map_tensor;
+  }
+  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
+  return nullptr;
+}
+
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
@@ -587,6 +538,73 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   }
 
   return tensor;
+}
+TensorPtr CreateOutputTensorDynamicImpl(const AnfNodePtr &output_node, size_t output_index,
+                                        const std::shared_ptr<device::DeviceAddress> &address, const TypeId &type_id,
+                                        const ShapeVector &shape) {
+  auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+
+  // Put device tensor into host tensor.
+  address->SetNodeIndex(output_node, output_index);
+  tensor->set_device_address(address);
+
+  // MindRT is disabled in the multi graphs scenario
+  // Delete tensor->data_sync() when MindRT is enabled in all scenes.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
+    // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
+    tensor->data_sync(false);
+  }
+  return tensor;
+}
+
+TensorPtr CreateOutputTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
+                                    const std::shared_ptr<device::DeviceAddress> &address) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
+  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+    return CreateOutputMapTensorDynamic(output_node, output_index, address);
+  }
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
+  const auto &shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
+
+  return CreateOutputTensorDynamicImpl(output_node, output_index, address, type_id, shape);
+}
+
+TensorPtr CreateOutputTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
+                                    const std::shared_ptr<device::DeviceAddress> &address,
+                                    const abstract::AbstractBasePtr &out_abstract, const size_t abstract_index) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
+  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
+    return CreateOutputMapTensorDynamic(output_node, output_index, address);
+  }
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
+
+  ShapeVector shape;
+  auto op_run_info_abstract = out_abstract;
+  if (out_abstract->isa<abstract::AbstractTuple>()) {
+    auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
+    if (abstract_index >= abstract_tuple->elements().size()) {
+      MS_LOG(EXCEPTION) << "abstract_tuple size is " << abstract_tuple->elements().size() << " ,but get index is"
+                        << abstract_index;
+    }
+    op_run_info_abstract = abstract_tuple->elements()[abstract_index];
+  }
+  auto output_shape_ptr = op_run_info_abstract->BuildShape();
+  MS_EXCEPTION_IF_NULL(output_shape_ptr);
+  auto shape_vector = output_shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_vector);
+  shape = shape_vector->shape();
+
+  return CreateOutputTensorDynamicImpl(output_node, output_index, address, type_id, shape);
 }
 }  // namespace
 
@@ -845,7 +863,24 @@ void MindRTBackend::CompileSingleOpGraphs(
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, task_context->is_pynative_infer());
 
   auto device_context = task_context->device_context();
-  pynative::OpCompiler::BatchBuild(graphs, device_context);
+  pynative::OpCompiler::GetInstance().BatchBuild(graphs, device_context);
+}
+
+std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  std::vector<tensor::TensorPtr> tensors_without_value_node;
+  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
+  if (input_tensors.size() != tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
+                      << tensors_mask.size();
+  }
+  for (size_t index = 0; index < tensors_mask.size(); ++index) {
+    if (tensors_mask.at(index) != kValueNodeTensorMask) {
+      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
+    }
+  }
+  return tensors_without_value_node;
 }
 
 void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context) {
@@ -854,26 +889,35 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
-  bool use_dynamic_shape_process = context->op_run_info()->base_op_run_info.use_dynamic_shape_process;
-  if (use_dynamic_shape_process) {
-    runtime::RunSingleOpGraphDynamic(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
-                                     context->device_context(), context->op_run_info()->is_gradient_out);
-  } else {
-    runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
-                              context->device_context());
-  }
+  runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
+                            context->device_context());
 
   if (!context->op_run_info()->is_infer) {
     ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
   }
-  if (use_dynamic_shape_process) {
-    ClearGraphDeviceAddressDynamic(context->graph());
-    ClearInputDeviceAddressDynamic(context->graph(), context->device_context());
-  } else {
-    ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info()->is_gradient_out);
-    ClearInputDeviceAddress(context->graph(), context->device_context());
+
+  ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info()->is_gradient_out);
+  ClearInputDeviceAddress(context->graph(), context->device_context());
+
+  // Reset PyNative infer flag.
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
+  MS_LOG(DEBUG) << "OpRunCallback end";
+}
+
+void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskContext> &context) {
+  MS_LOG(DEBUG) << "OpRunCallback start";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
+
+  runtime::RunSingleOpDynamic(context->op_run_info(), context->op_compiler_info(), &context->device_address_list());
+
+  if (!context->op_run_info()->is_infer) {
+    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
   }
 
+  ClearInputDeviceAddressDynamic(context->graph(), context->device_context());
   // Reset PyNative infer flag.
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
   MS_LOG(DEBUG) << "OpRunCallback end";
@@ -963,6 +1007,42 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   }
 }
 
+void MindRTBackend::DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *outputs,
+                                          const OpCompilerInfoPtr &op_compiler_info,
+                                          const session::BackendOpRunInfoPtr &op_run_info,
+                                          const vector<device::DeviceAddressPtr> &device_address_list) {
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  const auto &graph = op_compiler_info->graph_;
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
+                                                                  op_compiler_info->device_context_, infer_flag);
+  run_op_context->set_op_compiler_info(op_compiler_info);
+  run_op_context->set_device_address_list(device_address_list);
+  // Save build task and run task.
+  std::promise<bool> promise;
+  auto future = promise.get_future();
+
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  if (!single_op_cache_hit) {
+    op_executor.PushOpBuildTask(std::make_shared<pynative::BackendOpBuildTask>(run_op_context, std::move(promise)));
+  } else {
+    promise.set_value(true);
+  }
+  op_executor.PushOpRunTask(std::make_shared<pynative::BackendOpRunTask>(
+    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); },
+    std::move(future)));
+
+  op_executor.Register([this]() { BatchBuildCallback(); });
+  if (op_executor.BuildQueueFull()) {
+    WaitTaskFinish();
+  }
+}
+
 void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                               const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1018,39 +1098,50 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
                                      const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
+  MS_LOG(DEBUG) << "RunOpImplDynamic " << op_run_info->base_op_run_info.op_name;
   // Fetch outputs.
   const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
   MS_EXCEPTION_IF_NULL(outputs);
 
-  auto device_context = op_compiler_info->device_context_;
-  auto &op_executor = runtime::OpExecutor::GetInstance();
   bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
+
+  auto async_exec_disabled = is_dynamic_shape || !op_run_info->base_op_run_info.lazy_build ||
+                             OpInBlackList(op_run_info) || GetExecutionMode() == kGraphMode ||
+                             EnablePyNativeSyncRunning();
+  if (!async_exec_disabled) {
+    MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
+    // Create graph output device address
+    auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
+      op_compiler_info, op_run_info->base_op_run_info.abstract);
+    // Create output tensor
+    UpdateOutputDynamic(op_compiler_info, outputs, device_address_list, op_run_info->base_op_run_info.abstract);
+    DispatchOpTaskDynamic(single_op_cache_hit, outputs, op_compiler_info, op_run_info, device_address_list);
+    return;
+  }
   MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
+  auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!op_executor.RunQueueEmpty()) {
     WaitTaskFinish();
   }
+
+  auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
-    CompileSingleOpGraph(graph, device_context);
+    CompileSingleOpGraph(op_compiler_info->graph_, device_context);
   }
-  const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
-  runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
-  runtime::RunSingleOpGraphDynamic(graph, tensors_without_value_mask, device_context, op_run_info->is_gradient_out);
+
+  std::vector<device::DeviceAddressPtr> device_address_list;
+  runtime::RunSingleOpDynamic(op_run_info, op_compiler_info, &device_address_list);
 
   if (!op_run_info->is_infer) {
     ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
   }
-  UpdateOutput(output_nodes, outputs);
-  ClearGraphDeviceAddressDynamic(graph);
+
+  // Create output tensor
+  UpdateOutputDynamic(op_compiler_info, outputs, device_address_list, nullptr);
   ClearInputDeviceAddressDynamic(graph, device_context);
-  if (is_dynamic_shape) {
-    UpdateOutputAbstract(*outputs, op_run_info);
-  }
-  if (op_compiler_info->need_erase_) {
-    EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
-  }
+  UpdateOutputAbstract(*outputs, op_run_info);
 }
 
 void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
@@ -1092,32 +1183,19 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
 
+  // Single op graph compile
   bool single_op_cache_hit = true;
   auto op_compiler_info =
     pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_context);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
-  if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
-    WaitTaskFinish();
-  }
 
-  const auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-
-  if (!single_op_cache_hit) {
-    MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    op_compiler_info->need_erase_ = !enable_cache;
-  }
-  UpdateGraphInputAbstract(graph, op_run_info, device_context);
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
 void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  pynative::OpCompiler::BatchBuild({graph}, device_context);
+  pynative::OpCompiler::GetInstance().BatchBuild({graph}, device_context);
 }
 
 void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes,
@@ -1131,6 +1209,34 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);
     MS_EXCEPTION_IF_NULL(output_tensor);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    outputs->emplace_back(output_tensor);
+  }
+}
+
+void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
+                                        const vector<device::DeviceAddressPtr> &device_address_list,
+                                        const abstract::AbstractBasePtr &out_abstract) const {
+  MS_LOG(DEBUG) << "UpdateOutputDynamic";
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  auto output_nodes = op_compiler_info->graph_output_nodes_;
+  auto outputs_size = output_nodes.size();
+  for (size_t i = 0; i < outputs_size; ++i) {
+    auto item_with_index = output_nodes[i];
+    MS_EXCEPTION_IF_NULL(item_with_index.first);
+    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+      continue;
+    }
+    auto output_address = device_address_list[i];
+    MS_EXCEPTION_IF_NULL(output_address);
+    TensorPtr output_tensor;
+    if (out_abstract != nullptr) {
+      output_tensor =
+        CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address, out_abstract, i);
+    } else {
+      output_tensor = CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address);
+    }
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
     outputs->emplace_back(output_tensor);
   }
 }
