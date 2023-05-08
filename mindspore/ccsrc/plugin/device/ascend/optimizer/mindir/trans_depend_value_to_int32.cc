@@ -22,6 +22,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -72,6 +73,9 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   // if node has depend value
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfUtils::GetCNodeName(cnode) == kScatterNdOpName) {
+    return nullptr;
+  }
   auto depend_set = abstract::GetValueDependArgIndices(cnode);
   if (depend_set.empty()) {
     return nullptr;
