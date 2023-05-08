@@ -16,7 +16,6 @@
 
 #include "runtime/pynative/async/async_queue.h"
 
-#include <utility>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
 #endif
@@ -25,6 +24,19 @@
 
 namespace mindspore {
 namespace pynative {
+constexpr int32_t kTaskQueueSize = 8192;
+constexpr size_t kMaxSpinCount = 300000;
+
+#ifndef LIKELY
+#ifdef _MSC_VER
+#define LIKELY(x) (x)
+#define UNLIKELY(x) (x)
+#else
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#endif
+#endif
+
 AsyncQueue::~AsyncQueue() { WorkerJoin(); }
 
 void AsyncQueue::WorkerLoop() {
@@ -183,6 +195,77 @@ void AsyncQueue::WorkerJoin() {
     MS_LOG(ERROR) << "WorkerJoin failed: " << e.what();
   } catch (...) {
     MS_LOG(ERROR) << "WorkerJoin failed";
+  }
+}
+
+AsyncHqueue::~AsyncHqueue() { WorkerJoin(); }
+
+void AsyncHqueue::WorkerLoop() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  // cppcheck-suppress unreadVariable
+  SignalGuard sig([](int, siginfo_t *, void *) {
+    int this_pid = getpid();
+    MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
+    (void)kill(this_pid, SIGTERM);
+  });
+#endif
+
+  while (alive_) {
+    if (LIKELY(!tasks_.Empty())) {
+      auto task = tasks_.Dequeue();
+      if (LIKELY(task != nullptr)) {
+        task->Run();
+        delete task;
+        spin_count_ = 0;
+      }
+    } else {
+      if (spin_count_ == 0) {
+        status_.store(kThreadIdle);
+      }
+      ++spin_count_;
+      std::this_thread::yield();
+    }
+    if (UNLIKELY(spin_count_ > kMaxSpinCount)) {
+      std::unique_lock<std::mutex> lock(task_mutex_);
+      task_cond_var_.wait(lock, [this]() { return !tasks_.Empty() || !alive_; });
+      spin_count_ = 0;
+    }
+  }
+}
+
+void AsyncHqueue::Init() {
+  if (tasks_.Init(kTaskQueueSize) != true) {
+    MS_LOG(EXCEPTION) << "Init task queue failed.";
+  }
+  worker_ = std::make_shared<std::thread>(&AsyncHqueue::WorkerLoop, this);
+}
+
+void AsyncHqueue::Push(AsyncTask *task) {
+  while (!tasks_.Enqueue(task)) {
+  }
+  if (UNLIKELY(status_.load() == kThreadIdle)) {
+    status_.store(kThreadBusy);
+    task_cond_var_.notify_one();
+  }
+}
+
+void AsyncHqueue::Wait() {
+  while (status_.load() == kThreadBusy) {
+  }
+}
+
+bool AsyncHqueue::Empty() { return tasks_.Empty(); }
+
+void AsyncHqueue::WorkerJoin() {
+  Wait();
+  {
+    std::lock_guard<std::mutex> lock(task_mutex_);
+    alive_ = false;
+  }
+  task_cond_var_.notify_one();
+
+  if (worker_->joinable()) {
+    worker_->join();
   }
 }
 }  // namespace pynative

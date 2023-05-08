@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BPROP_TASK_H_
 
 #include <functional>
+#include <utility>
 #include "runtime/pynative/async/task.h"
 
 namespace mindspore {
@@ -25,6 +26,7 @@ namespace pynative {
 class BpropTask : public AsyncTask {
  public:
   explicit BpropTask(const std::function<void(void)> &task) : AsyncTask(kBpropTask), run_task_(task) {}
+  explicit BpropTask(std::function<void(void)> &&task) : AsyncTask(kBpropTask), run_task_(std::move(task)) {}
   ~BpropTask() = default;
   void Run() override;
 
