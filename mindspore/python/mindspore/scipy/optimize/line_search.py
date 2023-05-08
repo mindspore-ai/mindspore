@@ -336,7 +336,7 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
         >>> x0 = Tensor(onp.ones(2).astype(onp.float32))
         >>> p0 = Tensor(onp.array([-1, -1]).astype(onp.float32))
         >>> def func(x):
-        >>>     return x[0] ** 2 - x[1] ** 3
+        ...     return x[0] ** 2 - x[1] ** 3
         >>> res = line_search(func, x0, p0)
         >>> print(res.a_k)
         1.0
