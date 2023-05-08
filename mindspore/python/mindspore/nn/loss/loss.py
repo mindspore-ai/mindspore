@@ -344,7 +344,7 @@ class RMSELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor and its shape is ().
+        Tensor, weighted loss float tensor and its shape is :math:`()`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -466,7 +466,7 @@ class MarginRankingLoss(LossBase):
         \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
 
     Args:
-        margin (float, optional): Specify the adjustment factor of the operation. Default 0.0.
+        margin (float, optional): Specify the adjustment factor of the operation. Default: ``0.0`` .
         reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
             ``"none"`` , ``"mean"`` , and ``"sum"`` , meaning no reduction, reduce mean and sum on output,
             respectively. Default: ``"mean"`` .
@@ -574,7 +574,7 @@ class SmoothL1Loss(LossBase):
 
     Outputs:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
-        Otherwise the shape of output tensor is `()`.
+        Otherwise the shape of output tensor is :math:`()`.
 
     Raises:
         TypeError: If `beta` is not a float.

@@ -13,7 +13,7 @@ mindspore.nn.SoftMarginLoss
     :math:`x.nelement()` 代表 `x` 中元素的个数。
 
     参数：
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。默认值："mean"。
+        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。默认值： ``"mean"`` 。
 
     输入：
         - **logits** (Tensor) - 预测值，数据类型为float16或float32。

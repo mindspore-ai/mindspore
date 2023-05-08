@@ -97,7 +97,7 @@ class ASGD(Optimizer):
 
         lambd (float): The decay term. Default: ``1e-4`` .
         alpha (float): The power for :math:`\eta` update. Default: ``0.75`` .
-        t0 (float): The point of starting averaging. Default: ``1e6`` .
+        t0 (float): The point of starting averaging. Default: ``1e-6`` .
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 
             - float: The fixed weight decay value. Must be equal to or greater than 0.

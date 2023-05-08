@@ -31,14 +31,14 @@ mindspore.nn.ASGD
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 学习率。默认值：0.1。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 学习率。默认值： ``0.1`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-        - **lambd** (float) - 衰减项。默认值：1e-4。
-        - **alpha** (float) -  :math:`\eta` 更新的系数。默认值：0.75。
-        - **t0** (float) - 开始平均的点。默认值：1e6。
-        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+        - **lambd** (float) - 衰减项。默认值： ``1e-4`` 。
+        - **alpha** (float) -  :math:`\eta` 更新的系数。默认值： ``0.75`` 。
+        - **t0** (float) - 开始平均的点。默认值： ``1e-6`` 。
+        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 

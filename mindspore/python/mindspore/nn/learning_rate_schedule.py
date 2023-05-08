@@ -349,7 +349,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     Where :
 
     .. math::
-        tmp\_step=min(current\_step, decay\_steps)
+        tmp\_step= \min(current\_step, decay\_steps)
 
     If `update_decay_steps` is true, update the value of `tmp_decay_step` every `decay_steps`. The formula is :
 
@@ -443,7 +443,7 @@ class WarmUpLR(LearningRateSchedule):
     Where
 
     .. math::
-        tmp\_step=min(current\_step, warmup\_steps)
+        tmp\_step= \min(current\_step, warmup\_steps)
 
     Args:
         learning_rate (float): The initial value of learning rate.

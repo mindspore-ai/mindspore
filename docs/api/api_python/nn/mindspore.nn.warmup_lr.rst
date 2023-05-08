@@ -10,7 +10,7 @@ mindspore.nn.warmup_lr
     .. math::
         warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / warmup\_epoch
 
-    其中 :math:`tmp\_epoch=min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
+    其中 :math:`tmp\_epoch= \min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
 
     参数：
         - **learning_rate** (float) - 学习率的初始值。

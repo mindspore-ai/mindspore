@@ -13,15 +13,15 @@ mindspore.nn.MultiMarginLoss
     其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}` 并且 :math:`i \neq y`。
 
     参数：
-        - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值：1。
-        - **margin** (float, 可选) - 改变对偶距离的参数。默认值：1.0。
-        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选'none'、'mean'、'sum'。默认值：'mean'。
+        - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值： ``1``。
+        - **margin** (float, 可选) - 改变对偶距离的参数。默认值： ``1.0`` 。
+        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选 ``'none'`` 、 ``'mean'`` 、``'sum'`` 。默认值： ``'mean'`` 。
 
-          - 'none'：不应用缩减方法。
-          - 'mean'：输出的值总和除以输出的元素个数。
-          - 'sum'：输出的总和。
+          - ``'none'`` ：不应用缩减方法。
+          - ``'mean'`` ：输出的值总和除以输出的元素个数。
+          - `` 'sum'`` ：输出的总和。
 
-        - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值：None，表示各个类别权重相同。
+        - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值： ``None`` ，表示各个类别权重相同。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。即上述公式中的 :math:`x` 。
