@@ -926,8 +926,6 @@ SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::v
     major_thread_ = UP_DIV(context_->thread_num_, kDefaultSubGraphSize);
     minor_thread_ = static_cast<size_t>(context_->thread_num_ - major_thread_);
   }
-  MS_ASSERT(major_thread_ > 0);
-  MS_ASSERT(minor_thread_ > 0);
 
   InitSearchTensor();
   return;
@@ -1043,6 +1041,9 @@ void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
 bool SearchSubGraph::ValidInParallel() {
   LiteGraph::Node *front_node = model_->graph_.all_nodes_.at(0);
   if (front_node->quant_type_ != schema::QuantType_QUANT_NONE) {
+    return false;
+  }
+  if (major_thread_ < 1 || minor_thread_ < 1) {
     return false;
   }
   if (major_dt_ == DT_NPU) {
