@@ -136,33 +136,28 @@ void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<
                                       const std::vector<AddressPtr> &outputs) {
   auto *outputs_addr = static_cast<T *>(outputs[0]->addr);
   auto inputs_addr = reinterpret_cast<T *>(inputs.data());
-  auto dims = dims_;
 
   const size_t length = IntToSize(output_size_);
   auto copy_size = int64_t(sizeof(T)) * extents[dims_ - 1];
-  auto task = [this, &inputs_addr, &outputs_addr, &dims, &extents, &rhs_offsets, &input_strides, &copy_size](
-                size_t start, size_t end) {
-    for (size_t i = start; i < end; i += extents[dims_ - 1]) {
-      std::vector<int64_t> pos(dims_, 0);
-      auto idx = i / extents[dims_ - 1];
-      for (int j = dims_ - 2; j >= 0; --j) {
-        if (idx == 0) {
-          break;
-        }
-        pos[j] = idx % extents[j];
-        idx /= extents[j];
+  for (size_t i = 0; i < length; i += extents[dims_ - 1]) {
+    std::vector<int64_t> pos(dims_, 0);
+    auto idx = i / extents[dims_ - 1];
+    for (int j = dims_ - 2; j >= 0; --j) {
+      if (idx == 0) {
+        break;
       }
-      int64_t input_index = 0;
-      for (size_t j = 0; j < pos.size(); j++) {
-        input_index += (pos[j] + rhs_offsets[j]) * input_strides[j];
-      }
-      int ret = memcpy_s(outputs_addr + i, copy_size, inputs_addr + input_index, copy_size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-      }
+      pos[j] = idx % extents[j];
+      idx /= extents[j];
     }
-  };
-  ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
+    int64_t input_index = 0;
+    for (size_t j = 0; j < pos.size(); j++) {
+      input_index += (pos[j] + rhs_offsets[j]) * input_strides[j];
+    }
+    int ret = memcpy_s(outputs_addr + i, copy_size, inputs_addr + input_index, copy_size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+    }
+  }
 }
 
 template <typename T>
