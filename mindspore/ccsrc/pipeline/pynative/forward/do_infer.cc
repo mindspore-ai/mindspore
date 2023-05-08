@@ -76,6 +76,19 @@ void CallPyInferFunc(const PrimitivePtr &primitive, const FrontendOpRunInfoPtr &
   primitive->EndRecordAddAttr();
   op_run_info->base_op_run_info.abstract = abs;
 }
+
+std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(const PrimitivePtr &primitive) {
+  auto iter = abstract::GetFrontendPrimitiveInferMap().find(primitive);
+  if (iter != abstract::GetFrontendPrimitiveInferMap().end()) {
+    return iter->second;
+  }
+
+  auto find = abstract::GetPrimitiveInferImpl(primitive);
+  if (find.has_value()) {
+    return find.value();
+  }
+  return std::optional<abstract::StandardPrimitiveImplReg>();
+}
 }  // namespace
 
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -85,27 +98,13 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   const auto &prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   op_run_info->base_op_run_info.abstract = nullptr;
-  auto eval_impl = abstract::GetFrontendPrimitiveInferImpl(prim);
-  bool need_call_python_code = false;
-  // Charge if the primitive should call the python code, when infer abstract.
-  if (prim->prim_type() == kPrimTypePyCheck || !eval_impl.has_value()) {
-    need_call_python_code = true;
-  }
+  auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
   // Only cache the abstract when the primitive should call the python code.
-  if (need_call_python_code && GetOutputAbstractByCache(op_run_info)) {
+  if (GetOutputAbstractByCache(op_run_info)) {
     return;
   }
   // Cache miss to call the infer function
   prim->BeginRecordAddAttr();
-
-  // Call Python func
-  if (need_call_python_code) {
-    py::gil_scoped_acquire acquire;
-    CallPyInferFunc(prim, op_run_info);
-    if (op_run_info->base_op_run_info.abstract != nullptr) {
-      return;
-    }
-  }
 
   // the WhileList ops should be constant fold in Pynative mode.
   if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
@@ -119,10 +118,15 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
 
   // Call Cpp infer
   auto infer_res = eval_impl->InferShapeAndType(nullptr, prim, op_run_info->input_abs);
-  MS_EXCEPTION_IF_NULL(infer_res);
-  op_run_info->base_op_run_info.abstract = infer_res;
-
   prim->EndRecordAddAttr();
+  if (infer_res == nullptr) {
+    py::gil_scoped_acquire acquire;
+    CallPyInferFunc(prim, op_run_info);
+    if (op_run_info->base_op_run_info.abstract != nullptr) {
+      return;
+    }
+  }
+  op_run_info->base_op_run_info.abstract = infer_res;
 }
 
 void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {

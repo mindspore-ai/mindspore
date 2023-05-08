@@ -36,6 +36,24 @@ def vm_impl_zeroslike(self):
     return vm_impl
 
 
+@vm_impl_getters.register(P.Zeros)
+def vm_impl_zeros(self):
+    def vm_impl(x, y):
+        out = np.zeros(x)
+        return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Ones)
+def vm_impl_ones(self):
+    def vm_impl(x, y):
+        out = np.ones(x)
+        return Tensor(out)
+
+    return vm_impl
+
+
 @vm_impl_getters.register(P.Log)
 def vm_impl_log(self):
     def vm_impl(x):
