@@ -5920,7 +5920,7 @@ class BesselJ1(Primitive):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = bessel_j1(x)
         >>> print(output)
-        [0.24226846,  0.44005059,  0.57672481, -0.06604333]
+        [0.24226846  0.44005059  0.57672481  -0.06604333]
     """
 
     @prim_attr_register
