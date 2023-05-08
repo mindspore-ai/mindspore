@@ -14,7 +14,7 @@ mindspore.nn.polynomial_decay_lr
     其中，
 
     .. math::
-        tmp\_epoch = min(current\_epoch, decay\_epoch)
+        tmp\_epoch = \min(current\_epoch, decay\_epoch)
 
     .. math::
         current\_epoch=floor(\frac{i}{step\_per\_epoch})

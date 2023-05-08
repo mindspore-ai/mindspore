@@ -336,7 +336,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     Where:
 
     .. math::
-        tmp\_epoch = min(current\_epoch, decay\_epoch)
+        tmp\_epoch = \min(current\_epoch, decay\_epoch)
 
     .. math::
         current\_epoch=floor(\frac{i}{step\_per\_epoch})
@@ -419,7 +419,7 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     .. math::
         warmup\_learning\_rate[i] = learning\_rate * tmp\_epoch / warmup\_epoch
 
-    Where :math:`tmp\_epoch=min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
+    Where :math:`tmp\_epoch= \min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
 
     Args:
         learning_rate (float): The initial value of learning rate.

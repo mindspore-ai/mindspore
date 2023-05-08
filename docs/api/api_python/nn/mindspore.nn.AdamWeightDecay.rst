@@ -52,14 +52,14 @@ mindspore.nn.AdamWeightDecay
 
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值： ``1e-3`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-        - **beta1** (float) - `moment1` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.9。
-        - **beta2** (float) - `moment2` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.999。
-        - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-6。
-        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+        - **beta1** (float) - `moment1` 的指数衰减率。参数范围（0.0,1.0）。默认值： ``0.9`` 。
+        - **beta2** (float) - `moment2` 的指数衰减率。参数范围（0.0,1.0）。默认值： ``0.999`` 。
+        - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值： ``1e-6`` 。
+        - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 

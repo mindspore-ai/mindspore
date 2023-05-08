@@ -6,8 +6,8 @@ mindspore.nn.Flatten
     沿着从 `start_dim` 到 `end_dim` 的维度，对输入Tensor进行展平。
 
     参数：
-        - **start_dim** (int, 可选) - 要展平的第一个维度。默认值：1。
-        - **end_dim** (int, 可选) - 要展平的最后一个维度。默认值：-1。
+        - **start_dim** (int, 可选) - 要展平的第一个维度。默认值： ``1`` 。
+        - **end_dim** (int, 可选) - 要展平的最后一个维度。默认值： ``-1`` 。
 
     输入：
         - **x** (Tensor) - 要展平的输入Tensor。

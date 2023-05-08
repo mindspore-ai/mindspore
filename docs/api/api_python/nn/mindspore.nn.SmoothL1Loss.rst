@@ -32,15 +32,15 @@ mindspore.nn.SmoothL1Loss
         - :class:`mindspore.ops.L2Loss` 通常更快收敛，但对离群值的鲁棒性较差。该损失函数具有较好的鲁棒性。
 
     参数：
-        - **beta** (float) - 损失函数计算在L1Loss和L2Loss间变换的阈值。默认值：1.0。
-        - **reduction** (str) - 缩减输出的方法。默认值：'none'。其他选项：'mean'和'sum'。
+        - **beta** (float) - 损失函数计算在L1Loss和L2Loss间变换的阈值。默认值： ``1.0`` 。
+        - **reduction** (str) - 缩减输出的方法。默认值： ``'none'`` 。其他选项： ``'mean'`` 和 ``'sum'`` 。
 
     输入：
         - **logits** (Tensor) - 预测值，任意维度Tensor。数据类型为float16、float32或float64。
         - **labels** (Tensor) - 目标值，数据类型和shape与 `logits` 相同的Tensor。
 
     输出：
-        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 `()`。
+        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 :math:`()`。
 
     异常：
         - **TypeError** - `beta` 不是float。

@@ -13,7 +13,7 @@ mindspore.nn.WarmUpLR
     其中，
 
     .. math::
-        tmp\_step=min(current\_step, warmup\_steps)
+        tmp\_step= \min(current\_step, warmup\_steps)
 
     参数：
         - **learning_rate** (float) - 学习率的初始值。
