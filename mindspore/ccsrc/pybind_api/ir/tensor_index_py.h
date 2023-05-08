@@ -61,6 +61,9 @@ enum class ValueTransferType {
   kSetItemByBool,
   kEmptyTensor,
   kSetItemByEllipsis,
+  kFormatIndexTensor,
+  kGetitemByBoolTensor,
+  kSetitemByBoolTensor,
   kRaiseIndexError
 };
 
@@ -611,7 +614,8 @@ class TensorIndex final {
   // This is the c++ version of format_index in
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
   // Converts advanced index into array
-  static TensorIndex FormatIndex(const TensorIndex &idx, const ShapeVector &data_shape, size_t cur_dim);
+  static TensorIndex FormatIndex(const TensorIndex &idx, const ShapeVector &data_shape, size_t cur_dim,
+                                 bool *need_format);
   static bool RemoveExpandedDimsParseTensorIndex(const ShapeVector &data_shape, const TensorPtr &index_out,
                                                  std::vector<TensorIndex> *indices_out,
                                                  std::vector<ShapeVector> *shapes, bool *has_sequence, size_t *cur_dim,
@@ -619,10 +623,13 @@ class TensorIndex final {
   static std::pair<std::vector<TensorIndex>, ShapeVector> RemoveExpandedDims(
     const std::vector<TensorIndex> &indices, const ShapeVector &data_shape, const ShapeVector &value_shape,
     std::vector<int64_t> *value_transfer_type, std::vector<py::object> *value_transfer_args, int64_t *idx_advanced,
-    bool *by_pass);
+    bool *by_pass, std::vector<size_t> *format_index, std::vector<int64_t> *format_dim);
   static py::object GenerateIndicesFromTuple(const ShapeVector &data_shape, const std::vector<TensorIndex> &tuple_index,
                                              int64_t py_fancy_position, bool *by_pass, ShapeVector *output_index_shape,
                                              py::object *data_transfer_arg);
+  static py::object ReSetitemByTensor(const std::vector<TensorIndex> &new_tuple_index,
+                                      std::vector<int64_t> *value_transfer_types,
+                                      std::vector<py::object> *value_transfer_args);
   static py::object SetitemByTupleWithTensor(const ShapeVector &data_shape, const std::vector<TensorIndex> &indices,
                                              const ShapeVector &value_shape, std::vector<int64_t> *value_transfer_type,
                                              std::vector<py::object> *value_transfer_args);
@@ -632,7 +639,7 @@ class TensorIndex final {
                                              std::vector<py::object> *value_transfer_args);
 
   static py::array SetItemByTensorByBool(const ShapeVector &data_shape, const TensorPtr &index, int64_t data_dims,
-                                         const py::array &np_index, std::vector<int64_t> *value_transfer_types,
+                                         std::vector<int64_t> *value_transfer_types,
                                          std::vector<py::object> *value_transfer_args,
                                          ValueTransferType *tensor_update_type);
 
