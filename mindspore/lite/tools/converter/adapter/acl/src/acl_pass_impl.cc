@@ -16,6 +16,8 @@
 
 #define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/src/acl_pass_impl.h"
+#include <algorithm>
+#include <deque>
 #include <set>
 #include <map>
 #include "tools/common/graph_util.h"
@@ -56,6 +58,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/converter/quantizer/quant_helper/ascend_distribute_fake_quant_transform.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace opt {
@@ -196,6 +199,10 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Remove single input concat node failed.";
     return lite::RET_ERROR;
   }
+  if (MakeListToMakeTuple(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "Convert make_list to MakeTuple failed.";
+    return lite::RET_ERROR;
+  }
   if (param_->ascendQuantParam.mode == lite::quant::NONE) {
     if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
       MS_LOG(ERROR) << "Remove redundant op pass failed.";
@@ -214,6 +221,295 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
   if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
     MS_LOG(ERROR) << "Const fold pass failed.";
     return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+// From:
+//   MakeList(arg1, arg2, ...)
+// To:
+//   MakeTuple(arg1, arg2, ...)
+static AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.reserve(node->size());
+  (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  // Inputs of node should be [make_list, item1, item2, ...], so offset by 1 to get items;
+  (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
+  return node->func_graph()->NewCNode(std::move(inputs));
+}
+
+// From:
+//   list_getitem(list, key)
+// To:
+//   TupleGetItem(list, key)
+static AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  // Inputs should be [list_getitem, list, item]
+  constexpr size_t expect_inputs_size = 3;
+  if (node->size() != expect_inputs_size) {
+    std::string op_name = GetCNodeFuncName(node);
+    MS_LOG(EXCEPTION) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
+    return nullptr;
+  }
+  constexpr size_t data_index = 1;
+  constexpr size_t cons_index = 2;
+  const auto &inputs = node->inputs();
+  auto &data = inputs[data_index];
+  auto &key = inputs[cons_index];
+  return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, key});
+}
+
+// From:
+//   ListSetItem(list, index, item)
+// To:
+//   TupleSetItem(list, index, item)
+static AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
+
+  // Inputs should be [list_setitem, list, index, item]
+  const size_t expect_inputs_size = 4;
+  if (node->size() != expect_inputs_size) {
+    std::string op_name = GetCNodeFuncName(node);
+    MS_LOG(EXCEPTION) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
+    return nullptr;
+  }
+
+  const size_t data_index = 1;
+  const size_t cons_index = 2;
+  const size_t value_index = 3;
+  const auto &inputs = node->inputs();
+  auto &data = inputs[data_index];
+  auto &key = inputs[cons_index];
+  auto &value = inputs[value_index];
+  return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, key, value});
+}
+
+static AnfNodePtr ConvertMakeListPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  if (prim->name() == prim::kPrimMakeList->name()) {
+    return ConvertMakeListToMakeTuple(cnode);
+  } else if (prim->name() == prim::kPrimListGetItem->name()) {
+    return ConvertListGetItemToTupleGetItem(cnode);
+  } else if (prim->name() == prim::kPrimListSetItem->name()) {
+    return ConvertListSetItemToTupleSetItem(cnode);
+  }
+  return nullptr;
+}
+
+static constexpr size_t kMaxSeqRecursiveDepth = 6;
+static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert) {
+  MS_EXCEPTION_IF_NULL(need_convert);
+  MS_EXCEPTION_IF_NULL(value);
+  if (depth > kMaxSeqRecursiveDepth) {
+    MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+  }
+
+  if (value->isa<ValueSequence>()) {
+    std::vector<ValuePtr> elements;
+    auto value_seq = value->cast<ValueSequencePtr>();
+    (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
+                         [&](const ValuePtr &value) -> ValuePtr {
+                           bool is_convert = false;
+                           auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
+                           *need_convert |= is_convert;
+                           return convert_value;
+                         });
+    *need_convert |= value->isa<ValueList>();
+    if (*need_convert) {
+      return std::make_shared<ValueTuple>(elements);
+    }
+  }
+  return value;
+}
+
+static AnfNodePtr ConvertMakeListValueNode(const ValueNodePtr &value_node, const ValuePtr &value) {
+  bool need_convert = false;
+  auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
+  if (need_convert) {
+    return std::make_shared<ValueNode>(convert_value);
+  }
+  return nullptr;
+}
+
+static AnfNodePtr ConvertMakeListNode(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode != nullptr) {
+    if (cnode->size() == 0) {
+      return nullptr;
+    }
+    // Get primitive from cnode.
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      return nullptr;
+    }
+    // Call primitive cnode converter.
+    return ConvertMakeListPrimitiveCNode(cnode, prim);
+  }
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node != nullptr) {
+    const auto &value = value_node->value();
+    if (value == nullptr) {
+      return nullptr;
+    }
+    // Call value node converter.
+    return ConvertMakeListValueNode(value_node, value);
+  }
+  return nullptr;
+}
+
+// AbstractRowTensor --> AbstractTuple.
+static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
+  if (depth > kMaxSeqRecursiveDepth) {
+    MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                      << " levels.";
+  }
+  // Convert RowTensor in AbstractSequence to AbstractTuple.
+  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+  if (abs_seq != nullptr) {
+    if (abs_seq->dynamic_len() && abs_seq->isa<abstract::AbstractList>()) {
+      auto converted_abs_tuple =
+        std::make_shared<abstract::AbstractTuple>(abs_seq->elements(), abs_seq->sequence_nodes());
+      converted_abs_tuple->set_dynamic_len(true);
+      converted_abs_tuple->set_dynamic_len_element_abs(abs_seq->dynamic_len_element_abs());
+      return converted_abs_tuple;
+    }
+    const auto &seq_elements = abs_seq->elements();
+    // First we check if elements should be converted,
+    // changed_elements maps old element to new element.
+    mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
+    for (const auto &element : seq_elements) {
+      auto new_element = ConvertToAbstractTuple(element, depth + 1);
+      if (new_element != nullptr) {
+        (void)changed_elements.emplace(element, new_element);
+      }
+    }
+    if (changed_elements.empty()) {
+      if (abs->isa<abstract::AbstractTuple>()) {
+        // If no elements changed and it is an AbstractTuple, do not convert.
+        return nullptr;
+      }
+      // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
+      return std::make_shared<abstract::AbstractTuple>(seq_elements);
+    }
+    // Make new abstract sequence.
+    std::vector<AbstractBasePtr> elements;
+    elements.reserve(seq_elements.size());
+    for (const auto &element : seq_elements) {
+      auto iter = changed_elements.find(element);
+      if (iter != changed_elements.end()) {
+        (void)elements.emplace_back(iter->second);
+      } else {
+        (void)elements.emplace_back(element);
+      }
+    }
+    if (abs_seq->isa<abstract::AbstractList>()) {
+      return std::make_shared<abstract::AbstractList>(std::move(elements));
+    }
+    return std::make_shared<abstract::AbstractTuple>(std::move(elements));
+  }
+  // AbstractRowTensor --> AbstractTuple.
+  auto abs_row_tensor = abs->cast<std::shared_ptr<abstract::AbstractRowTensor>>();
+  if (abs_row_tensor != nullptr) {
+    std::vector<AbstractBasePtr> elements{abs_row_tensor->indices(), abs_row_tensor->values(),
+                                          abs_row_tensor->dense_shape()};
+    return std::make_shared<abstract::AbstractTuple>(std::move(elements));
+  }
+  return nullptr;
+}
+
+static AnfNodePtr MakeListNodeRewrite(const AnfNodePtr &node) {
+  auto new_node = ConvertMakeListNode(node);
+  if (IsPrimitiveCNode(new_node, prim::kPrimPyExecute)) {
+    return new_node;
+  }
+  if (new_node != nullptr) {
+    new_node->set_abstract(node->abstract());
+  }
+  return new_node;
+}
+
+static void UpdateMakeListAbstracts(const FuncGraphPtr &func_graph) {
+  auto manager = func_graph->manager();
+  CHECK_NULL_RETURN_VOID(manager);
+  const auto &nodes = manager->all_nodes();
+  for (const auto &node : nodes) {
+    const auto &abs = node->abstract();
+    if (abs == nullptr) {
+      continue;
+    }
+    bool is_interpret_dict = false;
+    // Do not convert the abstract of Interpret node(AbstractDictionary) to AbstractSequence.
+    if (abs->isa<abstract::AbstractDictionary>()) {
+      abstract::AbstractDictionaryPtr abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+      auto &dict_elements = abs_dict->elements();
+      for (auto &element : dict_elements) {
+        TypePtr type = element.second->GetTypeTrack();
+        MS_EXCEPTION_IF_NULL(type);
+        auto value = element.second->BuildValue();
+        MS_EXCEPTION_IF_NULL(value);
+        if (type->type_id() == kMetaTypeExternal && value->isa<parse::InterpretedObject>()) {
+          is_interpret_dict = true;
+          break;
+        }
+      }
+    }
+    if (is_interpret_dict) {
+      continue;
+    }
+    // Call abstract converter.
+    auto new_abs = ConvertToAbstractTuple(abs, 0);
+    if (new_abs != nullptr) {
+      node->set_abstract(new_abs);
+    }
+  }
+}
+
+STATUS AclPassImpl::MakeListToMakeTuple(const FuncGraphPtr &func_graph) {
+  bool changed = false;
+  auto seen = NewSeenGeneration();
+  std::deque<AnfNodePtr> todo;
+  auto add_todo = [&seen, &todo](const AnfNodePtr &node) {
+    if (node != nullptr && node->seen_ != seen) {
+      (void)todo.emplace_back(node);
+    }
+  };
+  (void)todo.emplace_back(func_graph->return_node());
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_ERROR, "Manager is nullptr.");
+  auto &all_nodes = manager->all_nodes();
+  while (!todo.empty()) {
+    AnfNodePtr node = std::move(todo.front());
+    todo.pop_front();
+    if (node == nullptr || node->seen_ == seen || !all_nodes.contains(node)) {
+      continue;
+    }
+    node->seen_ = seen;
+    auto cnode = node->cast_ptr<CNode>();
+    if (cnode != nullptr) {
+      for (auto &input : cnode->inputs()) {
+        add_todo(input);
+      }
+    } else {
+      auto fg = GetValuePtr<FuncGraph>(node);
+      if (fg != nullptr) {
+        add_todo(fg->return_node());
+      }
+    }
+    TraceGuard trace_guard(std::make_shared<TraceOpt>(node->debug_info()));
+    ScopeGuard scope_guard(node->scope());
+    auto new_node = MakeListNodeRewrite(node);
+    if (new_node != nullptr) {
+      (void)manager->Replace(node, new_node);
+      changed = true;
+    }
+  }
+  if (changed) {
+    UpdateMakeListAbstracts(func_graph);
   }
   return lite::RET_OK;
 }
