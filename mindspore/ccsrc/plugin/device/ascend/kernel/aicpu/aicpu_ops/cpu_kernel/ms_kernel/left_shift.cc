@@ -92,11 +92,9 @@ void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
     case BcastShapeType::SAME_SHAPE: {
       for (int64_t i = start; i < end; ++i) {
         T mid = *(input2 + i);
-        T flag = sizeof(T) * 8 - 1;
-        if (mid < 0) {
-          mid = 0;
-        } else if (mid > flag) {
-          mid = flag;
+        T flag = sizeof(T) * 8 > 32 ? sizeof(T) * 8 : 32;
+        if (mid > flag || mid < -flag) {
+          mid = mid % flag;
         }
         *(output + i) = *(input1 + i) << mid;
       }
@@ -105,11 +103,9 @@ void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
     case BcastShapeType::X_ONE_ELEMENT: {
       for (int64_t i = start; i < end; ++i) {
         T mid = *(input2 + i);
-        T flag = sizeof(T) * 8 - 1;
-        if (mid < 0) {
-          mid = 0;
-        } else if (mid > flag) {
-          mid = flag;
+        T flag = sizeof(T) * 8 > 32 ? sizeof(T) * 8 : 32;
+        if (mid > flag || mid < -flag) {
+          mid = mid % flag;
         }
         *(output + i) = *input1 << mid;
       }
@@ -117,11 +113,9 @@ void LeftShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int6
     }
     case BcastShapeType::Y_ONE_ELEMENT: {
       T mid = *input2;
-      T flag = sizeof(T) * 8 - 1;
-      if (mid < 0) {
-        mid = 0;
-      } else if (mid > flag) {
-        mid = flag;
+      T flag = sizeof(T) * 8 > 32 ? sizeof(T) * 8 : 32;
+      if (mid > flag || mid < -flag) {
+        mid = mid % flag;
       }
       for (int64_t i = start; i < end; ++i) {
         *(output + i) = *(input1 + i) << mid;
@@ -179,11 +173,9 @@ uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
     auto sharder_left_shift = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; ++i) {
         T mid = *(input_1 + bcast.GetBroadcastYIndex(i));
-        T flag = sizeof(T) * 8 - 1;
-        if (mid < 0) {
-          mid = 0;
-        } else if (mid > flag) {
-          mid = flag;
+        T flag = sizeof(T) * 8 > 32 ? sizeof(T) * 8 : 32;
+        if (mid > flag || mid < -flag) {
+          mid = mid % flag;
         }
         *(output + i) = *(input_0 + bcast.GetBroadcastXIndex(i)) << mid;
       }
@@ -199,11 +191,9 @@ uint32_t LeftShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       T mid = *(input_1 + bcast.GetBroadcastYIndex(i));
-      T flag = sizeof(T) * 8 - 1;
-      if (mid < 0) {
-        mid = 0;
-      } else if (mid > flag) {
-        mid = flag;
+      T flag = sizeof(T) * 8 > 32 ? sizeof(T) * 8 : 32;
+      if (mid > flag || mid < -flag) {
+        mid = mid % flag;
       }
       *(output + i) = *(input_0 + bcast.GetBroadcastXIndex(i)) << mid;
     }
