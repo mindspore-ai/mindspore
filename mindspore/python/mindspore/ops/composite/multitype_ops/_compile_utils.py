@@ -1066,8 +1066,6 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
     updates = _generate_updates_from_tensor(data, index, value, const_utils.SET_ITEM_BY_ONE_TENSOR)
     data_shape = F.shape(data)
     first_val = data_shape[0]
-    if not F.isconstant(first_val):
-        first_val = -1
     index = F.select(index < 0, index + first_val, index)
     index = F.expand_dims(index, -1)
     if F.rank(index) < 2:
