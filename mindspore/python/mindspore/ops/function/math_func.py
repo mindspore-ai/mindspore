@@ -4582,8 +4582,7 @@ def orgqr(input, input2):
         >>> input = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]),
         ... mindspore.float32)
         >>> input2 = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
-        >>> net = ops.orgqr()
-        >>> y = net(input, input2)
+        >>> y = ops.orgqr(input, input2)
         >>> print(y)
         [[-0.54999995 -0.2128925   0.8137956 ]
          [ 0.47119996 -0.8752807   0.08240613]
