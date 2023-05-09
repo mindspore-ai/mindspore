@@ -136,7 +136,7 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
         num_sample (int):  Number of sample to be drawn. Only constant values is allowed.
         seed (int):  Random seed. Only constant values is allowed. Default: 0.
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
-            mindspore.int32 and mindspore.int64. Default: mindspore.int64.
+            mindspore.int32 and mindspore.int64. Default: mstype.int64.
 
     Returns:
         Tensor, The output Tensor with shape :math:`(batch\_size, num\_samples)`.
@@ -243,7 +243,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
           must be non-negative. Default: None, which will be treated as 0.
         dtype (mindspore.dtype): Type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
-          supports these two data types. Default: mindspore.float32.
+          supports these two data types. Default: mstype.float32.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -626,7 +626,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
             Default: 0. It must be non-negative.
         dtype (mindspore.dtype, optional): The type of output.
             Its value must be one of the following types: int32, int16, int8,
-            uint8, int64, float64, float32, float16. Default: int64.
+            uint8, int64, float64, float32, float16. Default: mstype.int64.
 
     Returns:
         Tensor. Its shape is specified by the required args `n`. Its type is spcified by `dtype`. Otherwise is default.
