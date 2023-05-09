@@ -188,7 +188,7 @@ const AnfNodePtr ReduceOptimizer::Process(const FuncGraphPtr &func_graph, const 
     MS_LOG(DEBUG) << "Skip ReduceOptimizer for " << op_name;
     return nullptr;
   }
-  if (!common::AnfAlgo::IsDynamicShape(cnode) && !common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrSkipMode, cnode) && common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSkipMode)) {
     MS_LOG(DEBUG) << "Current node is not dynamic shape, skip!";
     return nullptr;
   }
