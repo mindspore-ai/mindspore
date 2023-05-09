@@ -34,7 +34,9 @@ namespace aicpu {
 uint32_t CoalesceCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Coalesce normal check failed.");
   auto x_values_type = ctx.Input(1)->GetDataType();
-  if (x_values_type == DT_FLOAT) {
+  if (x_values_type == DT_DOUBLE) {
+    return ComputeKernel<double>(ctx);
+  } else if (x_values_type == DT_FLOAT) {
     return ComputeKernel<float>(ctx);
   } else {
     return ComputeKernel<Eigen::half>(ctx);

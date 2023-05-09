@@ -106,8 +106,6 @@ int BernoulliCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   p_shape_ = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(input_shape_), LongToSize);
   return ret;
 }
 
@@ -119,8 +117,7 @@ bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 
   InitMSPhiloxRandom(seed_, offset_);
 
-  input_elements_nums =
-    std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
+  input_elements_nums = std::accumulate(x_shape_.begin(), x_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   auto p = reinterpret_cast<S *>(inputs[kIndex1]->addr);
   auto y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   int64_t p_dims = static_cast<int64_t>(p_shape_.size());

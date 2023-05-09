@@ -23,6 +23,8 @@ coalesce_op_info = AiCPURegOp("Coalesce") \
     .output(0, "y_indices", "required") \
     .output(1, "y_values", "required") \
     .output(2, "y_shape", "required") \
+    .dtype_format(DataType.I64_Default, DataType.F64_Default, DataType.I64_Default, DataType.I64_Default,
+                  DataType.F64_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.F32_Default, DataType.I64_Default, DataType.I64_Default,
                   DataType.F32_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.F16_Default, DataType.I64_Default, DataType.I64_Default,
