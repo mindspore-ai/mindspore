@@ -5026,7 +5026,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Momentum value must be `[0, 1]`. Default: ``0.1`` .
-        eps (float, optional): A small value added for numerical stability. Default: ``1e-5`` .
+        eps (float, optional): A small value added for numerical stability. Default: ``1e-5``, value must be `[0, 1)` .
 
     Returns:
         output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
@@ -5041,11 +5041,11 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor([[1.0, 2.0], [3.0, 4.0]], dtype.float32)
-        >>> running_mean = Tensor([0.5, 1.5], dtype.float32)
-        >>> running_var = Tensor([0.1, 0.2], dtype.float32)
-        >>> weight = Tensor([2.0, 2.0], dtype.float32)
-        >>> bias = Tensor([-1.0, -1.0], dtype.float32)
+        >>> input_x = Tensor([[1.0, 2.0], [3.0, 4.0]], mindspore.float32)
+        >>> running_mean = Tensor([0.5, 1.5], mindspore.float32)
+        >>> running_var = Tensor([0.1, 0.2], mindspore.float32)
+        >>> weight = Tensor([2.0, 2.0], mindspore.float32)
+        >>> bias = Tensor([-1.0, -1.0], mindspore.float32)
         >>> output = ops.batch_norm(input_x, running_mean, running_var, weight, bias)
         >>> print(output)
         [[ 2.1621194  1.2360122]
