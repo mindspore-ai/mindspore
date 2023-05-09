@@ -57,16 +57,16 @@ REGISTER_ACL_OP(BNTrainingReduceGrad)
 
 REGISTER_ACL_OP(BNInfer)
   .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"}, "NCH")
-  .Input(1, {"NCHW"}, {"NCHW"})
-  .Input(2, {"NCHW"}, {"NCHW"})
-  .Input(3, {"NCHW"}, {"NCHW"})
-  .Input(4, {"NCHW"}, {"NCHW"})
+  .Input(1, {"NCHW"}, {"NCHW", "NC1HWC0"})
+  .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
+  .Input(3, {"NCHW"}, {"NCHW", "NC1HWC0"})
+  .Input(4, {"NCHW"}, {"NCHW", "NC1HWC0"})
   .Output(0, {"NCHW"}, {"NCHW"}, "NCH");
 
 REGISTER_ACL_OP(BNInferGrad)
-  .Input(0, {"NCHW"}, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"}, {"NCHW"})
-  .Input(2, {"NCHW"}, {"NCHW"})
+  .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"}, "NCH")
+  .Input(1, {"NCHW"}, {"NCHW", "NC1HWC0"})
+  .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
   .Output(0, {"NCHW"}, {"NCHW"}, "NCH");
 }  // namespace transform
 }  // namespace mindspore
