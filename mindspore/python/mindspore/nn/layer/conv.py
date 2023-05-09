@@ -788,6 +788,7 @@ class Conv3dTranspose(_Conv):
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``'zeros'`` .
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
+            Default: ``'NCDHW'`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -859,7 +860,7 @@ class Conv3dTranspose(_Conv):
                  out_channels,
                  kernel_size,
                  stride=1,
-                 pad_mode='same',
+                 pad_mode="same",
                  padding=0,
                  dilation=1,
                  group=1,

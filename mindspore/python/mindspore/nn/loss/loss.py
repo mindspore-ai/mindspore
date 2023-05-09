@@ -273,7 +273,7 @@ class MSELoss(LossBase):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . Default: ``"mean"`` .
+            ``"none"`` . Default: ``'mean'`` .
 
     Inputs:
         - **logits** (Tensor) - The predicted value of the input. Tensor of any dimension.
@@ -947,7 +947,7 @@ class SampledSoftmaxLoss(LossBase):
         num_true (int): The number of labels classes per training example. Default: ``1`` .
         sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
-            Default to None, `UniformCandidateSampler` is applied.
+            Default to None, `UniformCandidateSampler` is applied. Default: ``None`` .
         remove_accidental_hits (bool): Whether to remove "accidental hits"
             where a sampled class equals to one of the labels classes. Default: ``True`` .
         seed (int): Random seed for candidate sampling. Default: 0
@@ -2002,8 +2002,8 @@ class HuberLoss(LossBase):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are ``"mean"`` , ``"sum"`` , and
-            ``"none"`` . Default: ``"mean"``. If `reduction` is ``"mean"`` or ``"sum"`` , then output a scalar Tensor,
-            if `reduction` is ``"none"`` , the shape of the output Tensor is the broadcasted shape.
+            ``"none"`` . If `reduction` is ``"mean"`` or ``"sum"`` , then output a scalar Tensor, if `reduction` is
+            ``"none"`` , the shape of the output Tensor is the broadcasted shape. Default: ``"mean"``.
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be positive. Default: ``1.0`` .
 
@@ -2049,7 +2049,7 @@ class HuberLoss(LossBase):
          [0.  0.  0.5]]
     """
 
-    def __init__(self, reduction='mean', delta=1.0):
+    def __init__(self, reduction="mean", delta=1.0):
         """Initialize HuberLoss."""
         super(HuberLoss, self).__init__(reduction=reduction)
         self.reduction = reduction
@@ -2089,7 +2089,7 @@ class TripletMarginLoss(LossBase):
         p (int, optional): The degree of norm for pairwise distance. Default: ``2`` .
         eps (float, optional): Add small value to avoid division by zero. Default: ``1e-06`` .
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
-            sample and negative sample. Default: ``"False"`` .
+            sample and negative sample. Default: ``False`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``"mean"`` .
         margin (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair.
@@ -2133,7 +2133,7 @@ class TripletMarginLoss(LossBase):
         0.8881968
     """
 
-    def __init__(self, p=2, swap=False, eps=1e-06, reduction='mean', margin=1.):
+    def __init__(self, p=2, swap=False, eps=1e-06, reduction="mean", margin=1.):
         super(TripletMarginLoss, self).__init__()
         self.p = p
         self.swap = swap
@@ -2433,8 +2433,7 @@ class KLDivLoss(LossBase):
           only when `reduction` is set to 'batchmean'.
 
     Args:
-        reduction (str): Specifies the reduction to be applied to the output.
-            Default: ``'mean'`` .
+        reduction (str): Specifies the reduction to be applied to the output. Default: ``'mean'`` .
 
             - On Ascend, the value of `reduction` must be one of ``'batchmean'`` , ``'none'`` or ``'sum'`` .
             - On GPU, the value of `reduction` must be one of ``'mean'`` , ``'none'`` or ``'sum'`` .

@@ -296,14 +296,14 @@ class BatchNorm2d(_BatchNorm):
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             Default: ``'ones'`` .
-        use_batch_statistics (bool):
+        use_batch_statistics (bool): Default: ``None`` .
 
             - If ``true`` , use the mean value and variance value of current batch data and track running mean
               and running variance.
             - If ``false`` , use the mean value and variance value of specified value, and not track statistical value.
             - If ``None`` , the use_batch_statistics is automatically set to ``true`` or ``false`` according to the
               training and evaluation mode. During training, the parameter is set to true, and during evaluation, the
-              parameter is set to false. Default: ``None`` .
+              parameter is set to false.
 
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
@@ -827,7 +827,7 @@ class InstanceNorm1d(_InstanceNorm):
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
@@ -906,7 +906,7 @@ class InstanceNorm2d(_InstanceNorm):
         affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
@@ -984,7 +984,7 @@ class InstanceNorm3d(_InstanceNorm):
         affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
-            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+            When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
@@ -1047,7 +1047,7 @@ class GroupNorm(Cell):
     Args:
         num_groups (int): The number of groups to be divided along the channel dimension.
         num_channels (int): The number of input channels.
-        eps (float): A value added to the denominator for numerical stability. Default: ``1e-5`` .
+        eps (float): A value added to the denominator for numerical stability. Default: ``1e-05`` .
         affine (bool): A bool value, this layer will have learnable affine parameters when set to ``true`` .
             Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
