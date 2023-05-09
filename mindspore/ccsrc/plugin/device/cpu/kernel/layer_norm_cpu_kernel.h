@@ -22,12 +22,11 @@
 #include <utility>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class LayerNormCpuKernelMod : public MKLCpuKernelMod {
+class LayerNormCpuKernelMod : public NativeCpuKernelMod {
  public:
   LayerNormCpuKernelMod() = default;
   ~LayerNormCpuKernelMod() override = default;
@@ -41,8 +40,6 @@ class LayerNormCpuKernelMod : public MKLCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs);
-
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
@@ -54,10 +51,6 @@ class LayerNormCpuKernelMod : public MKLCpuKernelMod {
   size_t block_num_{1};
   size_t block_size_{1};
   size_t param_num_{1};
-  enum input_list_ { X, SCALE, BIAS };
-  enum workspace_list_ { SCALE_BIAS };
-  enum output_list_ { Y, SAVE_MEAN, SAVE_VARIANCE };
-  bool use_onednn_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
