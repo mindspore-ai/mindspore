@@ -49,10 +49,10 @@ class SparseFunc(NamedTuple):
     Args:
         fn (Union[str, Callable]): a sparse function. If `fn` is a string, the function represents a mindspore
             functional op; or `fn` can be any function object.
-        inputs (Optional[Any]): input types for the function. If `inputs` is None, use the input types in function
-            type hints. Defaults to None.
-        outputs (Optional[Any]): output types for the function. If `outputs` is None, use the output types in function
-            type hints. Defaults to None.
+        inputs (Any, Optional): input types for the function. If `inputs` is None, use the input types in function
+            type hints. Default: ``None`` .
+        outputs (Any, Optional): output types for the function. If `outputs` is None, use the output types in function
+            type hints. Default: ``None`` .
     """
     fn: Union[str, Callable]
     inputs: Optional[Any] = None

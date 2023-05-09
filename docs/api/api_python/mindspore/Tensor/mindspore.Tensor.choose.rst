@@ -13,6 +13,8 @@ mindspore.Tensor.choose
           - **wrap** - 原值映射为对n取余后的值；
           - **clip** - 大于n-1的值会被映射为n-1。该模式下禁用负数索引。
 
+          默认值： ``'clip'`` 。
+
     返回：
         Tensor，合并后的结果。
 
