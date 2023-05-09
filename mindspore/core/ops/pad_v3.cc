@@ -147,7 +147,13 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     auto paddings_value = paddings->BuildValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
     if (!paddings_value->isa<tensor::Tensor>()) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
+      auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(paddings_shape_ptr)[kShape];
+      size_t pad_dim = paddings_shape[0] / 2;
+      auto out_shape = x_shape;
+      for (size_t i = dim_size - pad_dim; i < dim_size; ++i) {
+        out_shape[i] = abstract::Shape::kShapeDimAny;
+      }
+      return std::make_shared<abstract::Shape>(out_shape);
     }
     paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
