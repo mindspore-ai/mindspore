@@ -35,7 +35,6 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
   std::vector<CNodePtr> caller_cnodes = {};
-  size_t fg_arg_nums = fg->parameters().size();
   // Find all caller of fg.
   auto manager = fg->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -50,8 +49,6 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
     // Process has partial func_graph with Primitive
     // %1 = Partial(func_graph, arg1, arg2, ...)
     if (index == 1 && IsPrimitiveCNode(caller_cnode, prim::kPrimPartial)) {
-      size_t arg_start_index = 2;
-      size_t partial_arg_num = caller_cnode->cast<CNodePtr>()->inputs().size() - arg_start_index;
       auto iter = node_users.find(caller_cnode);
       for (auto &user : iter->second) {
         auto &user_node = user.first;
@@ -72,20 +69,6 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
           if (std::find(caller_cnodes.begin(), caller_cnodes.end(), caller_cnode) == caller_cnodes.end()) {
             (void)caller_cnodes.emplace_back(caller_cnode->cast<CNodePtr>());
           }
-          continue;
-        } else if (IsPrimitiveCNode(user_cnode, prim::kPrimMakeTuple)) {
-          continue;
-        }
-        size_t arg_num_in_user = user_cnode->inputs().size();
-        if (user_cnode->input(0) == caller_cnode) {
-          arg_num_in_user = arg_num_in_user - 1;
-        } else if (arg_num_in_user > 1 && user_cnode->input(1) == caller_cnode) {
-          arg_num_in_user = arg_num_in_user - arg_start_index;
-        }
-        if (fg_arg_nums != partial_arg_num + arg_num_in_user) {
-          MS_LOG(EXCEPTION) << "The number of formal parameters(" << fg_arg_nums
-                            << ") does not match the number of actual parameters(" << partial_arg_num + arg_num_in_user
-                            << "). The current func_graph is:" << fg->ToString();
         }
       }
     } else if (index != 0) {
