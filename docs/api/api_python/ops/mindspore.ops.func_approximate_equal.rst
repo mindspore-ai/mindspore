@@ -17,7 +17,7 @@ mindspore.ops.approximate_equal
     参数：
         - **x** (Tensor) - 输入Tensor，需为以下数据类型：float16，float32。shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
         - **y** (Tensor) - 输入Tensor，shape与数据类型与 `x` 相同。
-        - **tolerance** (float) - 两元素可被视为相等的最大偏差。默认值： ``1e-05`` 。
+        - **tolerance** (float) - 两元素可被视为相等的最大偏差。默认值： ``1e-5`` 。
 
     返回：
         Tensor，shape与 `x` 相同，bool类型。

@@ -790,7 +790,8 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
           Data type must be in int32 or int64.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is 0, (0) or ``None`` , then stride equal to kernel_size. Default: ``None`` .
+            If stride is 0, (0) or ``None`` , then stride equal to kernel_size.
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` .
         output_size (tuple[int], optional): The output shape. Default: ``None`` .
             If output_size == (), then the shape of output computed by `kernel_size`, `stride` and `padding`.
@@ -907,7 +908,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -1010,7 +1011,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is ``None`` , then ``stride`` equal to ``kernel_size`` . Default: ``None`` .
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
@@ -2045,9 +2046,10 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             One and only one of size and scale_factor can be set to None. Default: None.
         mode (str): The sampling algorithm.
             One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
-            'area', 'nearest-exact'(3D and 4D). Default: 'nearest'.
+            'area', 'nearest-exact'(3D and 4D). Default: "nearest".
         align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
+            Default: None.
 
             .. code-block::
 
@@ -2799,7 +2801,7 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`\text{padding_top}, \text{padding_bottom}`,
             :math:`\text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: "constant".
+        mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: 'constant'.
 
             For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
@@ -2816,6 +2818,7 @@ def pad(input_x, padding, mode='constant', value=None):
 
         value (Union[int, float, None], optional): Valid only in "constant" mode.
             Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
+            Default: None.
 
     Returns:
         Tensor, the tensor after padding.
@@ -3037,8 +3040,8 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
 
     Args:
         input  (Tensor): The input of rrelu is a Tensor of any dimension.
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0/8.
-        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0/3.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0 / 8.
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0 / 3.
 
     Returns:
         Tensor, after rrelu, has the same type and shape as the `input`.
@@ -3417,7 +3420,7 @@ def l1_loss(input, target, reduction='mean'):
         target (Tensor): Target value, usually has the same shape as the `input`.
             If `input` and `target` have different shape, make sure they can broadcast to each other.
         reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
-            "none". Default: "mean".
+            "none". Default: ``'mean'`` .
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
@@ -3867,9 +3870,9 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
         target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
-        margin (float, optional): Should be in [-1.0, 1.0]. Default 0.0.
+        margin (float, optional): Should be in [-1.0, 1.0]. Default: 0.0.
         reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
-          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
+          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default: "mean".
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
@@ -3946,7 +3949,8 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
             three int numbers that represent depth, height and width respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: ``kernel_size`` .
+            represent depth, height and width of movement respectively.
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
             Default: ``0`` .
@@ -4021,8 +4025,9 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
             "bilinear", "nearest". Default: "bilinear". Note: `bicubic` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
+            Default: 'bilinear'.
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
-            "reflection". Default: "zeros".
+            "reflection". Default: 'zeros'.
         align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
             the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
@@ -4101,7 +4106,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         blank (int, optional): The blank label. Default: 0.
         reduction (str, optional): Implements the reduction method to the output with 'none', 'mean', or 'sum',
             respectively indicate that no calculation is specified, that the mean is used, and that is calculated
-            using summation. Default: 'mean'.
+            using summation. Default: "mean".
         zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: False.
 
     Returns:
@@ -4185,7 +4190,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
         eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: 1e-6.
         reduction (str, optional): Apply specific reduction method to the
-            output: ``"none"``, ``"mean"``, or ``"sum"``. Default: ``"mean"``.
+            output: ``"none"``, ``"mean"``, or ``"sum"``. Default: ``'mean'``.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -4866,8 +4871,8 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
         target (Tensor): Target value, has same dtype and shape as the `input` in common cases.
             However, when the shape of `target` is different from the shape of `input`,
             and they should be broadcasted to each other.
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum" and "none".
-            Default: "mean".
+        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum' and 'none'.
+            Default: 'mean'.
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be greater than zero. Default: 1.0.
 
@@ -5856,7 +5861,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is stride, if the value is ``None`` , the default value ``kernel_size`` is used;
+            the width of movement is stride. Default: ``None`` , which indicates the moving step is `kernel_size` .
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Returns:
@@ -5937,9 +5942,9 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
             or a tuple of two int numbers that represent height and width respectively.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively, if the value is None,
-            the default value ``kernel_size`` is used.
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False``.
+            represent height and width of movement respectively.
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
+        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Returns:
         - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
@@ -6014,7 +6019,7 @@ def mse_loss(input, target, reduction='mean'):
             However, it supports that the shape of `input` is different from the shape of `target`
             and they should be broadcasted to each other.
         reduction (str, optional): Type of reduction to be applied to loss.
-            The optional values are "mean", "none" and "sum". Default: "mean".
+            The optional values are "mean", "none" and "sum". Default: ``'mean'`` .
 
     Returns:
         Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
@@ -6118,9 +6123,9 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         p (int, optional): The degree of norm for pairwise distance. Default: 2.
         eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
-            sample and negative sample. Default: "False".
+            sample and negative sample. Default: False.
         reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
-            Default: "mean".
+            Default: 'mean'.
 
     Returns:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
@@ -6513,7 +6518,7 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            Default: ``None`` , meaning that the value of `kernel_size` is used here.
+            Default: ``None`` , which indicates the moving step is `kernel_size` .
         padding (Union[int, tuple[int]]): An int number that represents the height and width of movement are both
             strides, or a tuple of two int numbers that represent height and width of movement respectively.
             Default: ``0`` .

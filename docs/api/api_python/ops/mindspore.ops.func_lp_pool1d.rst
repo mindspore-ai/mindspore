@@ -23,7 +23,7 @@ mindspore.ops.lp_pool1d
           - 如果 p = :math:`\infty`，得到的结果为最大池化的结果。
 
         - **kernel_size** (int) - 池化核的尺寸大小。
-        - **stride** (int) - 池化操作的移动步长，数据类型为整型。如果值为 ``None`` ，则使用默认值 ``kernel_size`` 。
+        - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值： ``None`` ，表示移动步长为 `kernel_size` 。
         - **ceil_mode** (bool) - 若为 ``True`` ，使用ceil来计算输出shape。若为 ``False`` ，使用floor来计算输出shape。默认值： ``False`` 。
 
     返回：

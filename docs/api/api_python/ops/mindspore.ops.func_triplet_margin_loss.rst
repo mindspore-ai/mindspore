@@ -14,7 +14,7 @@ mindspore.ops.triplet_margin_loss
         - **p** (int，可选) - 成对距离的范数。默认值： ``2`` 。
         - **eps** (float，可选) - 防止除数为 0。默认值： ``1e-06`` 。
         - **swap** (bool，可选) - 距离交换。默认值： ``False`` 。
-        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` 。默认值： ``'mean'`` 。
 
     返回：
         Tensor。如果 `reduction` 为"none"，其shape为 :math:`(N)`。否则，将返回Scalar。

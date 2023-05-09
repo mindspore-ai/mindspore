@@ -18,7 +18,7 @@ mindspore.ops.lp_pool2d
           - 如果 p = :math:`\infty`，得到的结果为最大池化的结果。
 
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。如果为整数，则代表池化核的高和宽。如果为tuple，其值必须包含两个整数值分别表示池化核的高和宽。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数，则代表stride的高和宽。如果为tuple，其值必须包含两个整数值分别表示stride的高和宽。如果值为 ``None`` ，则使用默认值 ``kernel_size``。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数，则代表stride的高和宽。如果为tuple，其值必须包含两个整数值分别表示stride的高和宽。默认值： ``None`` ，表示移动步长为 `kernel_size` 。
         - **ceil_mode** (bool) - 若为 ``True`` ，使用ceil模式来计算输出shape。若为 ``False`` ，使用floor模式来计算输出shape。默认值： ``False`` 。
 
     返回：

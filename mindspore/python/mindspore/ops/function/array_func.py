@@ -369,8 +369,9 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     Args:
         window_length (int): The size of returned window. Must be a non negative integer.
         periodic (bool, optional): If True, return a periodic window. If False, return a symmetric window.
-        alpha (float, optional): The coefficient α.
-        beta (float, optional): The coefficient β.
+            Default: ``True`` .
+        alpha (float, optional): The coefficient α. Default: ``0.54`` .
+        beta (float, optional): The coefficient β. Default: ``0.46`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The output window data type. Default: ``None`` .
@@ -3771,8 +3772,8 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           mindspore.int64. Same rank as input_x. And accepted range is [-s, s) where s is the size along axis.
         updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
           and update.shape should be equal to indices.shape.
-        axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(input_x).
-        reduction (str): Which reduction operation to scatter, default is "none". Other option: "add".
+        axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input_x). Default: ``0``.
+        reduction (str): Which reduction operation to scatter, supports ``"none"`` , ``"add"`` . Default: ``"none"``.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -4132,13 +4133,13 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
             superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be
             a single integer (for a single diagonal) or a pair of integers specifying the low and high ends
             of a matrix band. k[0] must not be larger than k[1]. The value of k has restructions, meaning
-            value of k must be in (-x.shape[-2], x.shape[-1]).
+            value of k must be in (-x.shape[-2], x.shape[-1]). Default: ``0``.
         padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
             The number to fill the area outside the specified diagonal band. Default: ``0`` .
         align (str, optional): An optional string from: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` ,
             ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` . Align is a string specifying how superdiagonals and subdiagonals
             should be aligned, respectively. ``"RIGHT_LEFT"`` aligns superdiagonals to the right (left-pads the row)
-            and subdiagonals to the left (right-pads the row). Default: ``"RIGHT_LEFT"`` .
+            and subdiagonals to the left (right-pads the row). Default: ``"RIGHT_LEFT"`` . Default: ``"RIGHT_LEFT"``.
 
     Returns:
         A Tensor. Has the same type as `x`.
@@ -4925,8 +4926,7 @@ def scalar_to_tensor(input_x, dtype=mstype.float32):
 
     Args:
         input_x (Union[bool, int, float]): The input is a scalar. Only constant value is allowed.
-        dtype (mindspore.dtype): The target data type. Default: ``mindspore.float32`` . Only
-            constant value is allowed.
+        dtype (mindspore.dtype): The target data type. Only constant value is allowed. Default: ``mstype.float32``.
 
     Returns:
         Tensor. 0-D Tensor and the content is the input.
@@ -5151,11 +5151,11 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
         dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+            for height and width. If type is int, it means that height equal with width.
         padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+            for height and width. If type is int, it means that height equal with width.
         stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
+            for height and width. If type is int, it means that height equal with width.
 
     Returns:
         A 4D Tensor, with same type as 'input_x'.
@@ -6363,13 +6363,13 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     Args:
         input (Tensor): Array from which the diagonals are taken.
         offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Defaults: 0.
+            Can be positive or negative. Default: ``0`` .
         dim1 (int, optional): Axis to be used as the first axis of the 2-D
             sub-arrays from which the diagonals should be taken. Defaults to
-            first axis (0).
+            first axis (0). Default: ``0`` .
         dim2 (int, optional): Axis to be used as the second axis of the 2-D
             sub-arrays from which the diagonals should be taken. Defaults to
-            second axis (1).
+            second axis (1). Default: ``1`` .
 
     Returns:
         Tensor, if `input` is 2-D, then `input` 1-D array containing the diagonal. If
@@ -6940,7 +6940,7 @@ def repeat_elements(x, rep, axis=0):
         x (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
         rep (int): The number of times to repeat, must be positive.
-        axis (int): The axis along which to repeat, default 0.
+        axis (int): The axis along which to repeat. Default: 0.
 
     Returns:
         One tensor with values repeated along the specified axis. If x has shape

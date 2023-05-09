@@ -16,7 +16,7 @@ mindspore.ops.max_pool2d
     参数：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在CPU和GPU上，支持数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32和float64。在Ascend上，数据类型仅支持Float16。
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。可以是一个整数表示池化核的高度和宽度，或者包含两个整数的tuple，分别表示池化核的高度和宽度。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在高度和宽度方向的移动步长，或者包含两个整数的tuple，分别表示在高度和宽度方向的移动步长。默认值： ``None`` ，表示取值等于 `kernel_size`。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在高度和宽度方向的移动步长，或者包含两个整数的tuple，分别表示在高度和宽度方向的移动步长。默认值： ``None`` ，表示移动步长为 `kernel_size` 。
         - **padding** (Union[int, tuple[int]]) - 池化填充长度。可以是一个整数表示在高度和宽度方向的填充长度，或者包含两个整数的tuple，分别表示在高度和宽度方向的填充长度。默认为 ``0``。
         - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认为 ``1``。
         - **return_indices** (bool) - 是否输出最大值的索引。默认为 ``False``。
