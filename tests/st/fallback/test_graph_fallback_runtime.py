@@ -308,11 +308,11 @@ def test_fallback_anytype():
 
 class CreateDynTensor(nn.Cell):
     def construct(self, x):
-        # @jit.typing: () -> tensor[int32]
+        # @jit.typing: () -> tensor_type[int32]
         shape_tensor1 = Tensor(ms.mutable(ops.shape(x)), ms.int32)
         output1 = ops.FillV2()(shape_tensor1, Tensor(1, ms.int32))
 
-        shape_tensor2 = Tensor(ms.mutable(ops.shape(x)), ms.int32)  # @jit.typing: () -> tensor[int32]
+        shape_tensor2 = Tensor(ms.mutable(ops.shape(x)), ms.int32)  # @jit.typing: () -> tensor_type[int32]
         output2 = ops.FillV2()(shape_tensor2, Tensor(1, ms.int32))
         return output1 + output2
 
@@ -365,11 +365,11 @@ def test_not_dynamic_shape_tensor():
 
 class CreateDynTensorWithInputDtype(nn.Cell):
     def construct(self, x, dtype):
-        # @jit.typing: () -> tensor[{dtype}]
+        # @jit.typing: () -> tensor_type[{dtype}]
         shape_tensor1 = Tensor(ms.mutable(ops.shape(x)), dtype)
         output1 = ops.FillV2()(shape_tensor1, Tensor(1, dtype))
 
-        shape_tensor2 = Tensor(ms.mutable(ops.shape(x)), dtype)  # @jit.typing: () -> tensor[{dtype}]
+        shape_tensor2 = Tensor(ms.mutable(ops.shape(x)), dtype)  # @jit.typing: () -> tensor_type[{dtype}]
         output2 = ops.FillV2()(shape_tensor2, Tensor(1, ms.int32))
         return output1 + output2
 
@@ -459,7 +459,7 @@ def test_gelu():
     """
     @ms.jit
     def gelu_forward_1(x):
-        # @jit.typing: () -> tensor[float32]
+        # @jit.typing: () -> tensor_type[float32]
         return 0.5 * x * (1 + ms.ops.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * ms.ops.pow(x, 3))))
 
     @ms.jit
@@ -468,7 +468,7 @@ def test_gelu():
         pow_var = ms.ops.pow(x, 3)
         var1 = 0.044715 * pow_var
         var2 = x + var1
-        var3 = math_var * var2  # @jit.typing: () -> tensor[float32]
+        var3 = math_var * var2  # @jit.typing: () -> tensor_type[float32]
         tanh_var = ms.ops.tanh(var3)
         return 0.5 * x * (1 + tanh_var)
 

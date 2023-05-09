@@ -247,9 +247,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         if rtol is None:
             rtol = max(ops.Shape()(x)) * ops.Eps()(Tensor(1.0, x_dtype))
 
-    if not inner.IsInstance()(rtol, mstype.tensor):
+    if not inner.IsInstance()(rtol, mstype.tensor_type):
         rtol = Tensor(rtol, mstype.float32)
-    if not inner.IsInstance()(atol, mstype.tensor):
+    if not inner.IsInstance()(atol, mstype.tensor_type):
         atol = Tensor(atol, mstype.float32)
 
     if not hermitian:

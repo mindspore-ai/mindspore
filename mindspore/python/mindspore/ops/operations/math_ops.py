@@ -91,15 +91,15 @@ class _MathBinaryOp(_BinaryOp):
     def do_infer_dtype(x_dtype, y_dtype, valid_dtype=mstype.number_type, prim_name=None):
         """Staticmethod of infer dtype for _MathBinaryOp."""
         args_type = {"x": x_dtype, "y": y_dtype}
-        complex_types = [mstype.tensor_type(mstype.complex64), mstype.tensor_type(mstype.complex128)]
+        complex_types = [mstype.TensorType(mstype.complex64), mstype.TensorType(mstype.complex128)]
         if x_dtype in complex_types or y_dtype in complex_types:
             type_infer_dict = {
-                (mstype.complex64, mstype.complex64): mstype.tensor_type(mstype.complex64),
-                (mstype.complex64, mstype.float32): mstype.tensor_type(mstype.complex64),
-                (mstype.float32, mstype.complex64): mstype.tensor_type(mstype.complex64),
-                (mstype.complex128, mstype.complex128): mstype.tensor_type(mstype.complex128),
-                (mstype.complex128, mstype.float64): mstype.tensor_type(mstype.complex128),
-                (mstype.float64, mstype.complex128): mstype.tensor_type(mstype.complex128),
+                (mstype.complex64, mstype.complex64): mstype.TensorType(mstype.complex64),
+                (mstype.complex64, mstype.float32): mstype.TensorType(mstype.complex64),
+                (mstype.float32, mstype.complex64): mstype.TensorType(mstype.complex64),
+                (mstype.complex128, mstype.complex128): mstype.TensorType(mstype.complex128),
+                (mstype.complex128, mstype.float64): mstype.TensorType(mstype.complex128),
+                (mstype.float64, mstype.complex128): mstype.TensorType(mstype.complex128),
             }
             if (x_dtype.element_type(), y_dtype.element_type()) not in type_infer_dict.keys():
                 raise TypeError('Complex math binary op expecting Tensor [Complex64, Complex64],'
@@ -4013,7 +4013,7 @@ class _LogicBinaryOp(_BinaryOp):
         """Staticmethod of infer dtype for _LogicBinaryOp."""
         args_dtype = {"x": x_dtype, "y": y_dtype}
         validator.check_tensors_dtypes_same_and_valid(args_dtype, valid_type, prim_name)
-        return mstype.tensor_type(mstype.bool_)
+        return mstype.TensorType(mstype.bool_)
 
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, prim_name=self.name)

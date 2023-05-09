@@ -1062,7 +1062,7 @@ class Custom(ops.PrimitiveWithInfer):
                 arg_dtype = arg["dtype"]
                 # if any value is missing from input, disable infer value
                 enable_infer_value = False
-                if isinstance(arg_dtype, mstype.tensor_type):
+                if isinstance(arg_dtype, mstype.TensorType):
                     arg_dtype = arg_dtype.element_type()
                 fake_arg = np.zeros(arg["shape"]).astype(
                     mstype.dtype_to_nptype(arg_dtype))
@@ -1072,7 +1072,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         if hasattr(fake_output, 'shape'):
             infer_shape = fake_output.shape
-            infer_dtype = mstype.tensor_type(mstype.pytype_to_dtype(fake_output.dtype))
+            infer_dtype = mstype.TensorType(mstype.pytype_to_dtype(fake_output.dtype))
         else:
             infer_shape = (1,)
             infer_dtype = mstype.pytype_to_dtype(fake_output.dtype)

@@ -2368,14 +2368,14 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
         return (dgate_shape, dct_1_shape)
 
     def infer_dtype(self, c_dtype, dht_dtype, dct_dtype, it_dtype, jt_dtype, ft_dtype, ot_dtype, tanhct_dtype):
-        validator.check_subclass("c", c_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("dht", dht_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("dct", dct_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("it", it_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("jt", jt_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("ft", ft_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("ot", ot_dtype, [mstype.tensor], self.name)
-        validator.check_subclass("tanhct", tanhct_dtype, [mstype.tensor], self.name)
+        validator.check_subclass("c", c_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("dht", dht_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("dct", dct_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("it", it_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("jt", jt_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("ft", ft_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("ot", ot_dtype, [mstype.tensor_type], self.name)
+        validator.check_subclass("tanhct", tanhct_dtype, [mstype.tensor_type], self.name)
         validator.check_type_name("c", c_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("dht", dht_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("dct", dct_dtype, [mstype.float16, mstype.float32], self.name)
@@ -2408,9 +2408,9 @@ class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
         return (dw_shape, db_shape)
 
     def infer_dtype(self, x_dtype, h_dtype, dgate_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
-        validator.check_subclass("h", h_dtype, mstype.tensor, self.name)
-        validator.check_subclass("dgate", dgate_dtype, mstype.tensor, self.name)
+        validator.check_subclass("x", x_dtype, mstype.tensor_type, self.name)
+        validator.check_subclass("h", h_dtype, mstype.tensor_type, self.name)
+        validator.check_subclass("dgate", dgate_dtype, mstype.tensor_type, self.name)
         validator.check_type_name("x", x_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("h", h_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("dgate", dgate_dtype, [mstype.float16, mstype.float32], self.name)
@@ -2437,8 +2437,8 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
         return (dxt_shape, dht_shape)
 
     def infer_dtype(self, dgate_dtype, w_dtype):
-        validator.check_subclass("dgate", dgate_dtype, mstype.tensor, self.name)
-        validator.check_subclass("w", w_dtype, mstype.tensor, self.name)
+        validator.check_subclass("dgate", dgate_dtype, mstype.tensor_type, self.name)
+        validator.check_subclass("w", w_dtype, mstype.tensor_type, self.name)
         validator.check_type_name("dgate", dgate_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_type_name("w", w_dtype, [mstype.float16, mstype.float32], self.name)
         return (dgate_dtype, dgate_dtype)

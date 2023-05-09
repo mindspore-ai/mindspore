@@ -3766,8 +3766,8 @@ def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
 @constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
-    if input_data is not None and not isinstance(ops.typeof(input_data), mstype.tensor_type):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
+    if input_data is not None and not isinstance(ops.typeof(input_data), mstype.TensorType):
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.TensorType}', "
                         f"but got '{ops.typeof(input_data)}'")
 
 

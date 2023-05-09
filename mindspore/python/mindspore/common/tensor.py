@@ -80,7 +80,7 @@ def make_tensor(input_data=None, dtype=None, shape=None, init=None, internal=Fal
 
     The arguments are the same as class 'Tensor'. Also see: :class:`mindspore.common.Tensor`.
     """
-    return Tensor(input_data, dtype, shape, init, internal, const_arg)  # @jit.typing: () -> tensor[{dtype}]
+    return Tensor(input_data, dtype, shape, init, internal, const_arg)  # @jit.typing: () -> tensor_type[{dtype}]
 
 
 class Tensor(Tensor_, metaclass=_TensorMeta):

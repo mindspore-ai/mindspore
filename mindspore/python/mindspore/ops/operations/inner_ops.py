@@ -19,7 +19,6 @@ import numbers
 import numpy as np
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
-from mindspore.common.dtype import tensor
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from mindspore.ops import signature as sig
 
@@ -46,7 +45,7 @@ class ScalarCast(Primitive):
 
     def __call__(self, x, dtype):
         validator.check_value_type("x", x, [bool, numbers.Number], self.name)
-        if isinstance(dtype, type(tensor)):
+        if isinstance(dtype, type(mstype.tensor_type)):
             dtype = dtype.element_type()
         np_dtype = str(dtype)
         value = np.cast[np_dtype.lower()](x)

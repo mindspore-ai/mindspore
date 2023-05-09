@@ -26,7 +26,7 @@ from ..common import dtype as mstype
 @constexpr
 def _callable_const(x):
     """Returns true if x is a function in graph mode."""
-    return isinstance(x, mstype.function_type)
+    return isinstance(x, mstype.FunctionType)
 
 
 @constexpr
@@ -126,9 +126,9 @@ def mstype_to_pytype(type_):
         Type of Python type.
     """
     return {
-        mstype.tensor_type: Tensor,
-        mstype.csr_tensor_type: CSRTensor,
-        mstype.function_type: FunctionType,
+        mstype.TensorType: Tensor,
+        mstype.CSRTensorType: CSRTensor,
+        mstype.FunctionType: FunctionType,
     }.get(type_)
 
 

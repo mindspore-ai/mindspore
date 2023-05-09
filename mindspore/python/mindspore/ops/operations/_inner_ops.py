@@ -173,7 +173,7 @@ class Quant(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
+        validator.check_subclass("input_x", x_type, mstype.tensor_type, self.name)
         validator.check_type_name("input_x", x_type, [mstype.float16, mstype.float32], self.name)
         return mstype.int8
 
@@ -282,7 +282,7 @@ class Dequant(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type, deq_scale_type):
-        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        validator.check_subclass("x", x_type, mstype.tensor_type, self.name)
         validator.check_type_name("x", x_type, [mstype.int32], self.name)
         validator.check_type_name("deq_scale", deq_scale_type, [mstype.float16, mstype.uint64], self.name)
         return mstype.float16
@@ -605,9 +605,9 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         return outshape0, outshape1
 
     def infer_dtype(self, input0_dtype, input1_dtype, input2_dtype):
-        validator.check_subclass("input0_dtype", input0_dtype, mstype.tensor, self.name)
-        validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor, self.name)
-        validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input0_dtype", input0_dtype, mstype.tensor_type, self.name)
+        validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor_type, self.name)
+        validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor_type, self.name)
         return input0_dtype, input1_dtype
 
 
@@ -665,7 +665,7 @@ class ConvertToDynamic(PrimitiveWithCheck):
         validator.check("input_shape rank", len(input_shape), "", 0, validator.GT, self.name)
 
     def check_dtype(self, input_dtype):
-        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor_type, self.name)
 
 
 class GpuConvertToDynamicShape(PrimitiveWithCheck):
@@ -715,7 +715,7 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
         validator.check("input_shape rank", len(input_shape), "", 0, validator.GT, self.name)
 
     def check_dtype(self, input_dtype):
-        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor_type, self.name)
 
 
 class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
@@ -767,7 +767,7 @@ class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
 
     def infer_type(self, input_dtype):
         """Infer the dtype of input for ErrorOnDynamicShapeInput."""
-        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor_type, self.name)
         return input_dtype
 
     def infer_value(self, input_tensor):
@@ -817,7 +817,7 @@ class SequenceMask(PrimitiveWithCheck):
         validator.check("maxlen_shape", len(maxlen_shape), "", 0, validator.EQ, self.name)
 
     def check_dtype(self, lengths_dtype, maxlen_dtype):
-        validator.check_subclass("lengths_dtype", lengths_dtype, mstype.tensor, self.name)
+        validator.check_subclass("lengths_dtype", lengths_dtype, mstype.tensor_type, self.name)
         validator.check_subclass("maxlen", maxlen_dtype, mstype.number, self.name)
 
 
@@ -1171,8 +1171,8 @@ class DynamicStitch(PrimitiveWithCheck):
         return out_shape
 
     def check_dtype(self, indices_type, data_type):
-        validator.check_subclass("indices[0]", indices_type[0], mstype.tensor, self.name)
-        validator.check_subclass("data[0]", data_type[0], mstype.tensor, self.name)
+        validator.check_subclass("indices[0]", indices_type[0], mstype.tensor_type, self.name)
+        validator.check_subclass("data[0]", data_type[0], mstype.tensor_type, self.name)
         indices_num = len(indices_type)
         for i in range(0, indices_num):
             validator.check_tensor_dtype_valid(f'indices[{i}]', indices_type[i], mstype.int32, self.name)
@@ -1624,7 +1624,7 @@ class PsROIPooling(PrimitiveWithInfer):
         return output_shape, output_map_shape
 
     def infer_dtype(self, inputs_type, rois_type):
-        map_type = mstype.tensor_type(mstype.int32)
+        map_type = mstype.TensorType(mstype.int32)
         return inputs_type, map_type
 
 
@@ -2071,8 +2071,8 @@ class TopTypeof(Primitive):
             'slice': mstype.Slice(),
             'list': mstype.List(),
             'tuple': mstype.Tuple(),
-            'Tensor': mstype.tensor,
-            'NoneType': mstype.none_type(),
+            'Tensor': mstype.tensor_type,
+            'NoneType': mstype.NoneType(),
             'int': mstype.Int(),
             'bool': mstype.Bool(),
             'ellipsis': mstype.Ellipsis_(),
@@ -2211,12 +2211,12 @@ class CheckBprop(PrimitiveWithInfer):
         for i in range(checking_range):
             xdtype = xdtypes[i]
             ydtype = ydtypes[i]
-            if isinstance(xdtype, mstype.anything_type) or isinstance(ydtype, mstype.anything_type):
+            if isinstance(xdtype, mstype.AnythingType) or isinstance(ydtype, mstype.AnythingType):
                 continue
-            if isinstance(ydtype, mstype.function_type):
-                if not isinstance(xdtype, mstype.env_type_type):
+            if isinstance(ydtype, mstype.FunctionType):
+                if not isinstance(xdtype, mstype.EnvType):
                     raise TypeError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) type "
-                                    f"should be {mstype.env_type_type}, but got {xdtype}.")
+                                    f"should be {mstype.EnvType}, but got {xdtype}.")
             if xdtype != ydtype:
                 raise TypeError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) "
                                 f"should have the same dtype as the {i}th argument, "
@@ -2257,8 +2257,8 @@ class SameTypeShape(PrimitiveWithInfer):
         return x
 
     def __infer__(self, x, y):
-        validator.check_subclass('x', x['dtype'], mstype.tensor, self.name)
-        validator.check_subclass('y', y['dtype'], mstype.tensor, self.name)
+        validator.check_subclass('x', x['dtype'], mstype.tensor_type, self.name)
+        validator.check_subclass('y', y['dtype'], mstype.tensor_type, self.name)
         validator.check('x dtype', x['dtype'], 'y dtype', y['dtype'], validator.EQ, self.name, TypeError)
         validator.check('x shape', x['shape'], 'y shape', y['shape'], validator.EQ, self.name)
         return x
@@ -2481,7 +2481,7 @@ class IsParameter(PrimitiveWithInfer):
     def __infer__(self, x):
         return {'shape': [],
                 'dtype': mstype.bool_,
-                'value': isinstance(x['dtype'], mstype.ref_type)}
+                'value': isinstance(x['dtype'], mstype.RefType)}
 
 
 class SiLU(Primitive):

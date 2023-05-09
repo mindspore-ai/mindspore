@@ -70,7 +70,7 @@ def vm_impl_cast(self):
     """Generate vm_impl function for Cast"""
 
     def vm_impl(x, t):
-        if isinstance(t, type(mstype.tensor)):
+        if isinstance(t, type(mstype.tensor_type)):
             t = t.element_type()
         # update the src type
         x = x.asnumpy()
