@@ -47,7 +47,7 @@ class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.add = P.Add()
-        self.shape = P.TensorShape()
+        self.shape = P.Shape()
         self.reshape = P.Reshape()
 
     def construct(self, x_, y_):

@@ -35,7 +35,7 @@ class NetDynShape(nn.Cell):
     def __init__(self):
         super(NetDynShape, self).__init__()
         self.scatternd = P.ScatterNd()
-        self.shape_op = P.TensorShape()
+        self.shape_op = P.Shape()
 
     def construct(self, indices, update, prev_out):
         shape = self.shape_op(prev_out)

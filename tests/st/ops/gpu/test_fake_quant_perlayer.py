@@ -46,7 +46,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant1():
-    # (8, false, 0.0f, 0.0f, TensorShape({2, 3}),
+    # (8, false, 0.0f, 0.0f, Shape({2, 3}),
     # {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
     # {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
     x = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]).reshape(2, 3).astype(np.float32)
@@ -68,7 +68,7 @@ def test_fake_quant1():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant2():
-    # 8, false, -10.0f, 53.75f, TensorShape({2, 3}),
+    # 8, false, -10.0f, 53.75f, Shape({2, 3}),
     # {-10.1f, -10.0f, -9.9f, -9.75f, 53.75f, 53.8f},
     # {-10.0f, -10.0f, -10.0f, -9.75f, 53.75f, 53.75f});
     x = np.array([-10.1, -10.0, -9.9, -9.75, 53.75, 53.8]).reshape(2, 3).astype(np.float32)

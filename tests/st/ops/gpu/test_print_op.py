@@ -270,7 +270,7 @@ def test_print_tensor():
             super().__init__()
             self.relu = nn.ReLU()
             self.reduce = P.ReduceSum(keep_dims=False)
-            self.shape = P.TensorShape()
+            self.shape = P.Shape()
 
         def construct(self, x, y, z):
             rand_axis = ms_np.randint(1, 3, (3,))

@@ -253,7 +253,7 @@ def test_dynamic_bachnorm():
 
 class ReshapeNet(nn.Cell):
     def construct(self, x, y):
-        shape_of_y = ops.TensorShape()(y)
+        shape_of_y = ops.Shape()(y)
         return ops.Reshape()(x, shape_of_y)
 
 

@@ -24,7 +24,7 @@ class Net(nn.Cell):
 
     def __init__(self) -> None:
         super(Net, self).__init__()
-        self.op = P.TensorShape()
+        self.op = P.Shape()
 
     def construct(self, tensor):
         return self.op(tensor)
@@ -35,7 +35,7 @@ class Net(nn.Cell):
 @pytest.mark.env_onecard
 def test_tensor_shape_dyn():
     """
-    Feature: test TensorShape ops in cpu.
+    Feature: test Shape ops in cpu.
     Description: test the ops in dynamic shape.
     Expectation: expect correct shape result.
     """

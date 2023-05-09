@@ -104,7 +104,7 @@ def test_gatherv2():
             shp = P.Shape()(self.yy)
             y = P.Reshape()(y, shp)
             u, _ = self.unq(y)
-            u_shp = P.TensorShape()(u)
+            u_shp = P.Shape()(u)
             z = self.gather(x, u, 0)
             return z, u_shp
 
@@ -123,7 +123,7 @@ def test_segmentsum():
             self.sum = P.UnsortedSegmentSum()
         def construct(self, x):
             u, _ = self.unq(x)
-            shp = P.TensorShape()(u)
+            shp = P.Shape()(u)
             z = self.sum(x, self.segment_ids, shp[0])
             return z, shp[0]
 
