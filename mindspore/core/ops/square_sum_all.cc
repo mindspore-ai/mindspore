@@ -51,7 +51,14 @@ abstract::TupleShapePtr SquareSumAllInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto input_y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("x", input_x_shape, kEqual, input_y_shape, prim_name, ValueError);
+  bool is_x_dynamic_shape = IsDynamicShape(input_x_shape);
+  bool is_y_dynamic_shape = IsDynamicShape(input_y_shape);
+  if (is_x_dynamic_shape && !is_y_dynamic_shape) {
+    std::swap(input_x_shape, input_y_shape);
+  }
+  if ((is_x_dynamic_shape && is_y_dynamic_shape) || (!is_x_dynamic_shape && !is_y_dynamic_shape)) {
+    CheckAndConvertUtils::Check("x", input_x_shape, kEqual, input_y_shape, prim_name, ValueError);
+  }
   if (IsDynamicRank(input_x_shape)) {
     auto output_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output_shape, output_shape});
