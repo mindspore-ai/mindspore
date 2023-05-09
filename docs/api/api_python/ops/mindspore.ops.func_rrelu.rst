@@ -17,8 +17,8 @@ mindspore.ops.rrelu
 
     参数：
         - **input** (Tensor) - 计算RReLU的任意维度的Tensor。
-        - **lower** (Union[int, float]) - x<0时激活函数的斜率的下界，默认值： ``1.0/8`` 。
-        - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值： ``1.0/3`` 。
+        - **lower** (Union[int, float]) - x<0时激活函数的斜率的下界，默认值： ``1.0 / 8`` 。
+        - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值： ``1.0 / 3`` 。
 
     返回：
         Tensor，数据类型和shape与 `input` 相同。

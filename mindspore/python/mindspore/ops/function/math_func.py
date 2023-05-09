@@ -435,8 +435,8 @@ def bincount(input, weights=None, minlength=0):
 
     Args:
         input (Tensor): 1-d input tensor.
-        weights (Tensor, optional): Weights, a tensor of the same shape as `input`. Defaults to None.
-        minlength (int, optional): A minimum number of bins for the output tensor. Defaults to 0.
+        weights (Tensor, optional): Weights, a tensor of the same shape as `input`. Default: ``None`` .
+        minlength (int, optional): A minimum number of bins for the output tensor. Default: ``0`` .
 
     Returns:
         Tensor, a tensor of shape [max(input)+1] if input is non-empty, otherwise, the shape is [0].
@@ -1935,7 +1935,7 @@ def cosine_similarity(x1, x2, dim=1, eps=1e-08):
         x1 (Tensor): The first input Tensor.
         x2 (Tensor): The second input Tensor.
         dim (int, optional): Axis for calculating cosine similarity. Default: 1.
-        eps (float, optional): Minimal value to avoid division by zero. Default: 1e-8.
+        eps (float, optional): Minimal value to avoid division by zero. Default: 1e-08.
 
     Returns:
         Tensor, cosine similarity between x1 and x2.
@@ -4106,7 +4106,7 @@ def approximate_equal(x, y, tolerance=1e-5):
         x (Tensor): A tensor. Must be one of the following types: float32, float16.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): A tensor of the same type and shape as `x`.
-        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-5.
 
     Returns:
         Tensor, the shape is the same as the shape of `x`, and the data type is bool.
@@ -4819,7 +4819,7 @@ def histc(input, bins=100, min=0., max=0.):
 
     Args:
         input (Tensor): the input tensor, type support list :math:`[float16, float32, int32]`.
-        bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
+        bins (int, optional): Number of histogram bins, optional. If specified, must be positive. Default: ``100`` .
         min (int, float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
         max (int, float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
@@ -7299,8 +7299,7 @@ def logsumexp(input, axis, keep_dims=False):
 
     Args:
         input (Tensor): The input tensor. With float16 or float32 data type.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-            Only constant value is allowed.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
             If False, don't keep these dimensions.
             Default : False.
