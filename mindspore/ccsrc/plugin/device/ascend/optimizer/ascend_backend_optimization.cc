@@ -291,6 +291,11 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   for (const auto &pass_creator : pass_creators) {
     ir_fusion_pm->AddPass(pass_creator.second());
   }
+  const auto &pattern_to_pattern_creators =
+    opt::Factory<PatternToPatternPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
+  for (const auto &pattern_to_pattern_pass : pattern_to_pattern_creators) {
+    ir_fusion_pm->AddPass(pattern_to_pattern_pass.second());
+  }
 }
 }  // namespace
 
@@ -494,6 +499,11 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
     ir_fusion_pm->AddPass(pass_creator.second());
+  }
+  const auto &pattern_to_pattern_creators =
+    opt::Factory<PatternToPatternPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
+  for (const auto &pattern_to_pattern_pass : pattern_to_pattern_creators) {
+    ir_fusion_pm->AddPass(pattern_to_pattern_pass.second());
   }
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
 
