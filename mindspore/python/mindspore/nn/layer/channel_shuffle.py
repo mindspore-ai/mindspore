@@ -48,26 +48,24 @@ class ChannelShuffle(Cell):
         >>> channel_shuffle = nn.ChannelShuffle(2)
         >>> x = Tensor(np.arange(16).astype(np.int32).reshape(1, 4, 2, 2))
         >>> print(x)
-        [[[[0 1],
-           [2 3]],
-          [[4 5],
-           [6 7]],
-          [[8 9],
-           [10 11]],
-          [[12 13],
-           [14 15]],
-         ]]
+        [[[[ 0  1]
+           [ 2  3]]
+          [[ 4  5]
+           [ 6  7]]
+          [[ 8  9]
+           [10 11]]
+          [[12 13]
+           [14 15]]]]
         >>> output = channel_shuffle(x)
         >>> print(output)
-        [[[[0 1],
-           [2 3]],
-          [[8 9],
-           [10 11]],
-          [[4 5],
-           [6 7]],
-          [[12 13],
-           [14 15]],
-         ]]
+        [[[[ 0  1]
+           [ 2  3]]
+          [[ 8  9]
+           [10 11]]
+          [[ 4  5]
+           [ 6  7]]
+          [[12 13]
+           [14 15]]]]
     """
     def __init__(self, groups):
         """Initialize ChannelShuffle."""
