@@ -435,7 +435,8 @@
     "ReduceMeanD",
     "SquareSumV1",
     "SplitVD",
-    "BiasAddGrad"
+    "BiasAddGrad",
+    "SoftmaxCrossEntropyWithLogits"
   ],
   "SkipNodesComments": {
     "Im2col": "not support int8, uint8, float16 in op json, need add pass",
