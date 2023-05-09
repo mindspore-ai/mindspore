@@ -1089,10 +1089,10 @@ class AdamWeightDecay(Optimizer):
         self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
         self.fused_opt = P.AdamWeightDecay()
-        if context.get_context("device_target") == "CPU":
-            self.use_fused_opt = True
-        else:
+        if context.get_context("device_target") == "Ascend":
             self.use_fused_opt = False
+        else:
+            self.use_fused_opt = True
 
     @jit
     def construct(self, gradients):
