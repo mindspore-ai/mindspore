@@ -49,6 +49,7 @@ class AclPassImpl {
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
   STATUS RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph);
+  STATUS MakeListToMakeTuple(const FuncGraphPtr &func_graph);
 
  private:
   /* map func graph */
