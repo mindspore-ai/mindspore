@@ -101,10 +101,10 @@ class Eig(PrimitiveWithInfer):
         self.compute_v = validator.check_value_type("compute_v", compute_v, [bool], self.name)
         self.add_prim_attr('compute_v', self.compute_v)
         self.io_table = {
-            mstype.tensor_type(mstype.float32): mstype.complex64,
-            mstype.tensor_type(mstype.complex64): mstype.complex64,
-            mstype.tensor_type(mstype.float64): mstype.complex128,
-            mstype.tensor_type(mstype.complex128): mstype.complex128
+            mstype.TensorType(mstype.float32): mstype.complex64,
+            mstype.TensorType(mstype.complex64): mstype.complex64,
+            mstype.TensorType(mstype.float64): mstype.complex128,
+            mstype.TensorType(mstype.complex128): mstype.complex128
         }
 
     def __infer__(self, a):

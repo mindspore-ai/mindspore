@@ -82,7 +82,7 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
     validator.check_value_type("shape", x_shp, [tuple, list], prim_name)
     validator.check_positive_int(len(x_shp), "input_x rank", prim_name)
-    validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
+    validator.check_subclass("shape0", x_type[0], mstype.tensor_type, prim_name)
     validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)
     rank_base = len(x_shp[0])
     for i in range(1, len(x_shp)):

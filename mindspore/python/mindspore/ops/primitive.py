@@ -490,7 +490,7 @@ class PrimitiveWithCheck(Primitive):
         ...         Validator.check_int(len(input_x), 1, validator.GE, 'input_x rank', self.name)
         ...
         ...     def check_dtype(self, input_x):
-        ...         Validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
+        ...         Validator.check_subclass("input_x", input_x, mstype.tensor_type, self.name)
         ...
         >>> # init a Primitive obj
         >>> add = Flatten()

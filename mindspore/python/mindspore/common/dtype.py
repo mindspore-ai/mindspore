@@ -38,9 +38,9 @@ __dtype__ = [
     "bool_", "float_",
     "list_", "tuple_",
     "int_", "uint",
-    "number", "tensor",
+    "number", "tensor_type",
     "string", "type_none",
-    "tensor_type", "_null",
+    "TensorType", "_null",
     "Type", "Int",
     "complex64", "complex128"
 ]
@@ -94,7 +94,7 @@ tuple_ = typing.Tuple()
 type_none = typing.TypeNone()
 _null = typing.TypeNull()
 
-tensor = typing.TensorType()
+tensor_type = typing.TensorType()
 index_slices = typing.RowTensorType()
 coo_tensor = typing.COOTensorType()
 csr_tensor = typing.CSRTensorType()
@@ -114,16 +114,16 @@ List = typing.List
 Tuple = typing.Tuple
 Dict = typing.Dict
 Slice = typing.Slice
-function_type = typing.Function
+FunctionType = typing.Function
 Ellipsis_ = typing.TypeEllipsis
 MsClassType = typing.TypeMsClassType
-none_type = typing.TypeNone
-env_type_type = typing.EnvType
-tensor_type = typing.TensorType
-csr_tensor_type = typing.CSRTensorType
-anything_type = typing.TypeAnything
-ref_type = typing.RefType
-_null_type = typing.TypeNull
+NoneType = typing.TypeNone
+EnvType = typing.EnvType
+TensorType = typing.TensorType
+CSRTensorType = typing.CSRTensorType
+AnythingType = typing.TypeAnything
+RefType = typing.RefType
+_NullType = typing.TypeNull
 
 number_type = (int8,
                int16,
@@ -212,7 +212,7 @@ def get_py_obj_dtype(obj):
     """
     # Tensor
     if hasattr(obj, 'shape') and hasattr(obj, 'dtype') and isinstance(obj.dtype, typing.Type):
-        return tensor_type(obj.dtype)
+        return TensorType(obj.dtype)
     # Primitive or Cell
     if hasattr(obj, '__primitive_flag__') or hasattr(obj, 'construct'):
         return function

@@ -434,7 +434,7 @@ def _expand_data_dims(data, tuple_index):
     indexes_types = hyper_map(toptypeof, tuple_index)
     expand_positions, tuple_index_new = (), ()
     for i, (index, index_type) in enumerate(zip(tuple_index, indexes_types)):
-        if isinstance(index_type, mstype.none_type):
+        if isinstance(index_type, mstype.NoneType):
             tuple_index_new += (const_utils.make_empty_slice(),)
             expand_positions += (i,)
         elif isinstance(index_type, mstype.Bool):
@@ -642,7 +642,7 @@ def judeg_tuple_index_dim(data, tuple_index):
     data_dim = data.ndim
     index_dim = 0
     for index in tuple_index:
-        if isinstance(toptypeof(index), mstype.tensor_type) and index.dtype == mstype.bool_:
+        if isinstance(toptypeof(index), mstype.TensorType) and index.dtype == mstype.bool_:
             index_dim += index.ndim
         else:
             index_dim += 1

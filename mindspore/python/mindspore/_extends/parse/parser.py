@@ -491,8 +491,8 @@ def ms_isinstance(x, cmp_type):
         list: mstype.List,
         tuple: mstype.Tuple,
         dict: mstype.Dict,
-        Tensor: mstype.tensor_type,
-        Parameter: mstype.ref_type,
+        Tensor: mstype.TensorType,
+        Parameter: mstype.RefType,
         slice: mstype.Slice,
     }
     if cmp_type not in pytype_to_mstype:

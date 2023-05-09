@@ -671,7 +671,7 @@ class _AllSwap(PrimitiveWithCheck):
         self.add_prim_attr('order_enforce_skip', True)
 
     def __check__(self, tensor_in, send_size, recv_size):
-        validator.check_subclass("tensor_in", tensor_in['dtype'], mstype.tensor, self.name)
+        validator.check_subclass("tensor_in", tensor_in['dtype'], mstype.tensor_type, self.name)
         validator.check_tensor_dtype_valid("send_size", send_size['dtype'], [mstype.int64],
                                            self.name)
         validator.check_tensor_dtype_valid("recv_size", recv_size['dtype'], [mstype.int64],

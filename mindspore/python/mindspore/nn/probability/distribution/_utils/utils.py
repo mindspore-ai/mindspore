@@ -315,7 +315,7 @@ class CheckTensor(PrimitiveWithInfer):
     def __infer__(self, x, name):
         src_type = x['dtype']
         validator.check_subclass(
-            "input", src_type, [mstype.tensor], name["value"])
+            "input", src_type, [mstype.tensor_type], name["value"])
 
         out = {'shape': None,
                'dtype': None,

@@ -81,7 +81,7 @@ class GeSwitch(PrimitiveWithInfer):
 
     def infer_dtype(self, data_type, pred_type):
         validator.check_subclass(
-            "data", data_type, (mstype.tensor,) + mstype.number_type, self.name)
+            "data", data_type, (mstype.tensor_type,) + mstype.number_type, self.name)
         validator.check_tensor_dtype_valid("pred", pred_type, [mstype.bool_], self.name)
         return data_type, data_type
 
