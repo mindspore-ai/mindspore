@@ -20,12 +20,14 @@
 #include "nnacl/arithmetic.h"
 #include "nnacl/nnacl_utils.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/kernel/arithmetic.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param);
+void CalcStructMultiplesAndStrides(ArithmeticStruct *arithmetic);
 
 #ifdef __cplusplus
 }

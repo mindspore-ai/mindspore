@@ -43,6 +43,7 @@ int MatmulKernel::Prepare() {
   matmul->infer_shape_ = InferShapeDone();
   matmul->a_const_ = in_tensors_[FIRST_INPUT]->IsConst() && !op_parameter_->is_train_session_;
   matmul->b_const_ = in_tensors_[SECOND_INPUT]->IsConst() && !op_parameter_->is_train_session_;
+  matmul->is_sharing_pack_ = true;
   int ret = kernel_->prepare(kernel_);
   if (ret != RET_OK) {
     return ret;

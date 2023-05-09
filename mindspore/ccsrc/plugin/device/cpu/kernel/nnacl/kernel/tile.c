@@ -159,7 +159,7 @@ int tile_compute(struct KernelBase *self) {
   }
 
   tile->data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
-  NNACL_CHECK_TRUE_RET(tile->data_size_ > 0, NNACL_TILE_DATA_TYPE_INVALID);
+  NNACL_CHECK_TRUE_RET(tile->data_size_ > 0, NNACL_UNSUPPORTED_DATA_TYPE);
 
   if (tile->one_dim_tile_) {
     return self->env_->parallel_launch(self->env_->thread_pool_, SimpleTile, self, self->thread_nr_);

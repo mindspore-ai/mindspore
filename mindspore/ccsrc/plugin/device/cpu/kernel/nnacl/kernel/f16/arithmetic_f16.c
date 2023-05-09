@@ -24,28 +24,48 @@ typedef struct ArithmeticF16Funcions {
   int primitive_type_;
   int activation_type_;
   int (*compute_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele);
-  int (*optimzie_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele, bool scalar);
+  int (*optimzie_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele, bool first_scalar);
 } ArithmeticF16Funcions;
 
 typedef struct ArithmeticF16Struct {
   ArithmeticStruct arithmetic_;
-  int (*compute_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele);
-  int (*optimzie_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele, bool scalar);
+  ArithmeticF16Funcions functions_;
   void *tmp_buffer_[THREE_TENSOR]; /* in_size + out_size */
 } ArithmeticF16Struct;
 
 void InitArithmeticF16RunFunction(KernelBase *base) {
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)base;
 
-  ArithmeticF16Funcions f16_fun_table[] = {};
+  ArithmeticF16Funcions f16_fun_table[] = {
+    {PrimType_MulFusion, ActType_Relu, ElementMulReluFp16, ElementOptMulReluFp16},
+    {PrimType_MulFusion, ActType_Relu6, ElementMulRelu6Fp16, ElementOptMulRelu6Fp16},
+    {PrimType_MulFusion, ActType_No, ElementMulFp16, ElementOptMulFp16},
+    {PrimType_AddFusion, ActType_Relu, ElementAddReluFp16, ElementOptAddReluFp16},
+    {PrimType_AddFusion, ActType_Relu6, ElementAddRelu6Fp16, ElementOptAddRelu6Fp16},
+    {PrimType_AddFusion, ActType_No, ElementAddFp16, ElementOptAddFp16},
+    {PrimType_SubFusion, ActType_Relu, ElementSubReluFp16, ElementOptSubReluFp16},
+    {PrimType_SubFusion, ActType_Relu6, ElementSubRelu6Fp16, ElementOptSubRelu6Fp16},
+    {PrimType_SubFusion, ActType_No, ElementSubFp16, ElementOptSubFp16},
+    {PrimType_DivFusion, ActType_Relu, ElementDivReluFp16, ElementOptDivReluFp16},
+    {PrimType_DivFusion, ActType_Relu6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
+    {PrimType_DivFusion, ActType_No, ElementDivFp16, ElementOptDivFp16},
+    {PrimType_RealDiv, ActType_Relu, ElementDivReluFp16, ElementOptDivReluFp16},
+    {PrimType_RealDiv, ActType_Relu6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
+    {PrimType_RealDiv, ActType_No, ElementDivFp16, ElementOptDivFp16},
+    {PrimType_FloorMod, ActType_No, ElementFloorModFp16, ElementOptFloorModFp16},
+    {PrimType_FloorDiv, ActType_No, ElementFloorDivFp16, ElementOptFloorDivFp16},
+    {PrimType_LogicalAnd, ActType_No, ElementLogicalAndFp16, ElementOptLogicalAndFp16},
+    {PrimType_LogicalOr, ActType_No, ElementLogicalOrFp16, ElementOptLogicalOrFp16},
+    {PrimType_SquaredDifference, ActType_No, ElementSquaredDifferenceFp16, ElementOptSquaredDifferenceFp16},
+    {PrimType_Maximum, ActType_No, ElementMaximumFp16, ElementOptMaximumFp16},
+    {PrimType_Minimum, ActType_No, ElementMinimumFp16, ElementOptMinimumFp16}};
 
   size_t length = sizeof(f16_fun_table) / sizeof(ArithmeticF16Funcions);
   for (size_t i = 0; i < length; i++) {
     if (f16_fun_table[i].primitive_type_ == arithmetic_f16->arithmetic_.primitive_type_ &&
         f16_fun_table[i].activation_type_ ==
           ((ArithmeticParameter *)(arithmetic_f16->arithmetic_.base_.param_))->activation_type_) {
-      arithmetic_f16->compute_ = f16_fun_table[i].compute_;
-      arithmetic_f16->optimzie_ = f16_fun_table[i].optimzie_;
+      arithmetic_f16->functions_ = f16_fun_table[i];
       return;
     }
   }
@@ -55,13 +75,15 @@ int ArithmeticF16DoExecute(KernelBase *base, const void *input0, const void *inp
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)base;
 
   if (arithmetic_f16->arithmetic_.scalar_opt_) {
-    NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->optimzie_);
-    return arithmetic_f16->optimzie_((const float16_t *)input0, (const float16_t *)input1, (float16_t *)output, size,
-                                     arithmetic_f16->arithmetic_.in_elements_num0_ == 1);
+    NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->functions_.compute_);
+    return arithmetic_f16->functions_.optimzie_((const float16_t *)input0, (const float16_t *)input1,
+                                                (float16_t *)output, size,
+                                                arithmetic_f16->arithmetic_.in_elements_num0_ == 1);
   }
 
-  NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->compute_);
-  return arithmetic_f16->compute_((const float16_t *)input0, (const float16_t *)input1, (float16_t *)output, size);
+  NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->functions_.compute_);
+  return arithmetic_f16->functions_.compute_((const float16_t *)input0, (const float16_t *)input1, (float16_t *)output,
+                                             size);
 }
 
 int arithmetic_f16_resize(KernelBase *self) {
@@ -115,9 +137,9 @@ int arithmetic_f16_compute(KernelBase *self) {
   int out_data_type = self->out_[OUTPUT_INDEX]->data_type_;
 
   NNACL_CHECK_FALSE(in0_data_type != kNumberTypeFloat32 && in0_data_type != kNumberTypeFloat16,
-                    NNACL_ARITHMETIC_DATA_TYPE_INVALID);
+                    NNACL_UNSUPPORTED_DATA_TYPE);
   NNACL_CHECK_FALSE(in1_data_type != kNumberTypeFloat16 && in1_data_type != kNumberTypeFloat32,
-                    NNACL_ARITHMETIC_DATA_TYPE_INVALID);
+                    NNACL_UNSUPPORTED_DATA_TYPE);
 
   if (!arithmetic_f16->arithmetic_.a_matrix_.is_valid_) {
     arithmetic_f16->arithmetic_.a_matrix_.data_ = GetOrAllocFp16Data(self->in_[FIRST_INPUT], self->env_, true);
@@ -165,6 +187,7 @@ KernelBase *CreateArithmeticF16(OpParameter *param, int data_type) {
   arithmetic->base_.compute = arithmetic_f16_compute;
 
   arithmetic->execute_ = ArithmeticF16DoExecute;
+  arithmetic->tile_function_ = TileOneDimensionFp16;
   arithmetic->init_function_ = InitArithmeticF16RunFunction;
 
   return (KernelBase *)arithmetic_f16;

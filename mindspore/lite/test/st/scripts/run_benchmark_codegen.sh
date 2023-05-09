@@ -114,9 +114,9 @@ function Run_x86_codegen() {
       echo "./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0" >> $4
       ./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} 0 >> $4
       if [ $? = 0 ]; then
-          run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+          run_result='x86_codegen'${suffix}' '${model_name}' pass'; echo ${run_result} >> $5
       else
-          run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          run_result='x86_codegen'${suffix}' '${model_name}' failed'; echo ${run_result} >> $5;
           return 1;
       fi
     done < $3
@@ -240,9 +240,9 @@ function Run_cortex_m_codegen() {
       bash ${STM32_CUBE_PROG_PATH}/bin/STM32_Programmer.sh -c port=SWD model=HOTPLUG --upload 0x20000000 0x1 ret.bin  || exit 1
       calib_ret=`cat ret.bin`
       if [[ ${calib_ret} = 1 ]];then
-          run_result='cortex_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+          run_result='cortex_codegen'${suffix}' '${model_name}' pass'; echo ${run_result} >> $5
       else
-          run_result='cortex_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          run_result='cortex_codegen'${suffix}' '${model_name}' failed'; echo ${run_result} >> $5;
           echo "return is "${calib_ret} >> $5;
           return 1;
       fi
@@ -353,9 +353,9 @@ function Run_quant_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter_'${model_type}' quant '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}'_quant '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter_'${model_type}' quant '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}'_quant '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -383,9 +383,9 @@ function Run_quant_codegen() {
       echo "./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1  ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}" >> $4
       ./benchmark ${input_files} ${output_file}/src/model0/net0.bin 1 ${benchmark_data_file} ${thread_num} ${bind_mode} 0 ${cosine_threshold}>> $4
       if [ $? = 0 ]; then
-          run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+          run_result='x86_codegen'${suffix}' '${model_name}' pass'; echo ${run_result} >> $5
       else
-          run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          run_result='x86_codegen'${suffix}' '${model_name}' failed'; echo ${run_result} >> $5;
           return 1;
       fi
     done < $3
