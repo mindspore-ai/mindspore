@@ -300,7 +300,7 @@ class EmbeddingLookup(Cell):
             self.embeddinglookup.shard(((1, get_group_size()), indices_strategy))
         elif slice_mode == "batch_slice" and is_auto_parallel:
             indices_strategy = [get_group_size()]
-            indices_strategy.extend([1]*(indices_shape_size - 1))
+            indices_strategy.extend([1] * (indices_shape_size - 1))
             indices_strategy = tuple(indices_strategy)
             self.gatherv2.shard(((1, 1), indices_strategy))
             self.embeddinglookup.shard(((1, 1), indices_strategy))

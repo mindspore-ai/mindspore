@@ -49,7 +49,7 @@ class _TupleSlice(base.SequenceSliceGetItem_):
 
     def __init__(self, name):
         """Initialize _TupleSlice."""
-        base.SequenceSliceGetItem_.__init__(self, name, "MakeTuple", "TupleGetItem")
+        super(_TupleSlice, self).__init__(name, "MakeTuple", "TupleGetItem")
 
     def __call__(self, *args):
         pass

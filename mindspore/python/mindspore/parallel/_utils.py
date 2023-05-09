@@ -335,7 +335,7 @@ def _check_similar_layout(tensor_layout1, tensor_layout2):
     for i in tensor_layout1[1]:
         if i == -1:
             continue
-        if tensor_layout1[0][-1-i] != tensor_layout2[0][-1-i]:
+        if tensor_layout1[0][-1 - i] != tensor_layout2[0][-1 - i]:
             return False
     return True
 

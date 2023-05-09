@@ -899,7 +899,7 @@ def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim
 
 @_primexpr
 def check_slice_empty(start, stop, step):
-    return (start - stop)*step >= 0
+    return (start - stop) * step >= 0
 
 
 @_primexpr

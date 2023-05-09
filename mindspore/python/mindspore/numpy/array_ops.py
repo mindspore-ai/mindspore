@@ -210,17 +210,17 @@ def rollaxis(x, axis, start=0):
     new_perm = None
     if start < axis:
         if axis + 1 < ndim:
-            new_perm = perm[0:start] + perm[axis:axis+1] + \
+            new_perm = perm[0:start] + perm[axis:axis + 1] + \
                 perm[start:axis] + perm[axis+1:]
         else:
-            new_perm = perm[0:start] + perm[axis:axis+1] + perm[start:axis]
+            new_perm = perm[0:start] + perm[axis:axis + 1] + perm[start:axis]
     if start > axis:
         if start < ndim:
-            new_perm = perm[0:axis] + perm[axis+1:start] + \
-                perm[axis:axis+1] + perm[start:]
+            new_perm = perm[0:axis] + perm[axis + 1:start] + \
+                perm[axis:axis + 1] + perm[start:]
         else:
             new_perm = perm[0:axis] + perm[axis+1:start] + \
-                perm[axis:axis+1]
+                perm[axis:axis + 1]
 
     return F.transpose(x, new_perm)
 
@@ -335,9 +335,9 @@ def _move_axes_for_concatenate(arr_shape, axis):
     """
 
     original_axes = tuple(range(len(arr_shape)))
-    new_axes = original_axes[1:axis+1] + (0,) + original_axes[axis+1:]
-    new_shape = arr_shape[1:axis+1] + (arr_shape[0] * arr_shape[axis+1],) + \
-        arr_shape[axis+2:]
+    new_axes = original_axes[1:axis + 1] + (0,) + original_axes[axis + 1:]
+    new_shape = arr_shape[1:axis + 1] + (arr_shape[0] * arr_shape[axis + 1],) + \
+        arr_shape[axis + 2:]
     return new_axes, new_shape
 
 
@@ -931,7 +931,7 @@ def stack(arrays, axis=0):
         axes = F.make_range(ndim)
         perm = axes[1:axis+1] + (0,) + axes[axis+1:]
         if _is_shape_empty(shape):
-            return _empty(mstype.float32, shape[1:axis+1] + (shape[0],) + shape[axis+1:])
+            return _empty(mstype.float32, shape[1:axis + 1] + (shape[0],) + shape[axis + 1:])
         return transpose(arrays, perm)
 
     if isinstance(arrays, (list, tuple)):
@@ -939,7 +939,7 @@ def stack(arrays, axis=0):
         ndim = len(shape)
         axis = axis % ndim
         if _is_shape_empty(shape):
-            return _empty(mstype.float32, shape[1:axis+1] + (shape[0],) + shape[axis+1:])
+            return _empty(mstype.float32, shape[1:axis + 1] + (shape[0],) + shape[axis + 1:])
         seq = ()
         for arr in arrays:
             seq += (F.expand_dims(arr, axis),)

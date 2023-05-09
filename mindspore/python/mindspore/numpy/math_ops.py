@@ -2429,7 +2429,7 @@ def _shape_reduced_keepdims(shape, axes):
     keeping the number of dimensions unchanged.
     """
     ndim_out = F.tuple_len(shape)
-    shape_out = [1]*ndim_out
+    shape_out = [1] * ndim_out
     for i in range(ndim_out):
         if i not in axes:
             shape_out[i] = shape[i]
@@ -5201,7 +5201,7 @@ def polyder(p, m=1):
         return _to_tensor([])
     for _ in range(m):
         coeff = _to_tensor(F.make_range(_type_convert(int, p.size) - 1, 0, -1))
-        p = p[:-1]*coeff
+        p = p[:-1] * coeff
     return p
 
 

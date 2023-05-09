@@ -62,7 +62,7 @@ from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCE
 from mindspore.parallel._utils import _get_device_num
 from mindspore.dataset.debug import DebugHook
 
-from . import samplers
+from mindspore.dataset.engine import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
     ITERATORS_LIST, _unset_iterator_cleanup
 from .queue import _SharedQueue, _Queue
