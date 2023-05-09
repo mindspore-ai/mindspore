@@ -21,6 +21,11 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kClipInputIndex1 = 1;
+constexpr int kClipInputIndex2 = 2;
+}  // namespace
+
 PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Clip>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -34,7 +39,51 @@ PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const on
       prim->set_min(onnx_node_attr.f());
     }
   }
-
+  for (int i = 1; i < onnx_node.input_size(); i++) {
+    const auto &input_name = onnx_node.input(i);
+    auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
+                                  [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
+    if (node_iter == onnx_graph.initializer().end()) {
+      MS_LOG(INFO) << "not find node: " << input_name;
+      return prim->GetPrim();
+    }
+    float value = 0.0;
+    size_t element_size;
+    switch (node_iter->data_type()) {
+      case onnx::TensorProto_DataType_FLOAT:
+        element_size = node_iter->raw_data().size() / sizeof(float);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return nullptr;
+        }
+        value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
+        break;
+      case onnx::TensorProto_DataType_INT32:
+        element_size = node_iter->raw_data().size() / sizeof(int32_t);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return nullptr;
+        }
+        value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
+        break;
+      case onnx::TensorProto_DataType_INT64:
+        element_size = node_iter->raw_data().size() / sizeof(int64_t);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return nullptr;
+        }
+        value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
+        break;
+      default:
+        MS_LOG(ERROR) << "do not support data_type: " << node_iter->data_type();
+        return nullptr;
+    }
+    if (i == kClipInputIndex1) {
+      prim->set_min(value);
+    } else if (i == kClipInputIndex2) {
+      prim->set_max(value);
+    }
+  }
   return prim->GetPrim();
 }
 
