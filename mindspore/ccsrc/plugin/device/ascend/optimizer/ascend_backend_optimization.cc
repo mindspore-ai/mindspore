@@ -557,13 +557,43 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  // TODO(acl): fix condition
   if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_d_end_opt_acl_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
   }
 #endif
   PROF_END(ascend_backend_optimize_acl);
+  MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+}
+
+void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
+               << kernel_graph->graph_id();
+  PROF_START(ascend_backend_optimize_acl_after_kernel_select);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_before_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name =
+      "hwopt_d_end_opt_acl_graph_after_kernel_select_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  PROF_END(ascend_backend_optimize_acl_after_kernel_select);
   MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 

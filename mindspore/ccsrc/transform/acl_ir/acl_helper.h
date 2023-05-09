@@ -49,6 +49,8 @@ class AclHelper {
   static bool NeedCheckAttrToInput(const CNodePtr &node, const mindspore::HashMap<size_t, std::string> &attr_input_map,
                                    size_t index);
   static std::string GetFormatFromAttr(const PrimitivePtr &primitive);
+
+  static int64_t GetFracZGroupFromAttr(const PrimitivePtr &primitive);
 };
 }  // namespace transform
 }  // namespace mindspore
