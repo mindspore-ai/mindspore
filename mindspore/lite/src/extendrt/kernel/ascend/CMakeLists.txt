@@ -13,15 +13,24 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
         "model/*.cc"
         )
 
-add_library(ascend_kernel_plugin SHARED ${ASCEND_SRC})
+add_library(ascend_kernel_plugin_mid OBJECT ${ASCEND_SRC})
+
+add_library(ascend_kernel_plugin SHARED $<TARGET_OBJECTS:ascend_kernel_plugin_mid>)
 add_dependencies(ascend_kernel_plugin fbs_inner_src)
 add_dependencies(ascend_kernel_plugin mindspore-extendrt)
 target_link_libraries(ascend_kernel_plugin mindspore-extendrt)
+
+
+add_library(ascend_kernel_plugin_python SHARED $<TARGET_OBJECTS:ascend_kernel_plugin_mid>)
+add_dependencies(ascend_kernel_plugin_python fbs_inner_src)
+add_dependencies(ascend_kernel_plugin_python mindspore-extendrt_python)
+target_link_libraries(ascend_kernel_plugin_python mindspore-extendrt_python)
 
 if("${MSLITE_REGISTRY_DEVICE}" STREQUAL "SD3403" AND PLATFORM_ARM64)
     find_library(acl_retr libacl_retr.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(acl_runtime libruntime.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(ascend_kernel_plugin ${ge_graph} ${acl} ${acl_retr} ${acl_cblas} ${acl_runtime})
+    target_link_libraries(ascend_kernel_plugin_python ${ge_graph} ${acl} ${acl_retr} ${acl_cblas} ${acl_runtime})
 else()
     find_library(acl_dvpp libacl_dvpp.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ge_compiler libge_compiler.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -33,4 +42,6 @@ else()
         ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(ascend_kernel_plugin ${ge_graph} ${ge_compiler} ${acl_cblas} ${acl_dvpp} ${acl_runtime}
         ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils} ${libaicpu_engine_common} ${acl})
+    target_link_libraries(ascend_kernel_plugin_python ${ge_graph} ${ge_compiler} ${acl_cblas} ${acl_dvpp} ${acl_runtime}
+            ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils} ${libaicpu_engine_common} ${acl})
 endif()

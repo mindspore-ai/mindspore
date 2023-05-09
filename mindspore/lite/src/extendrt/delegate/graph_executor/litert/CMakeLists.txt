@@ -336,42 +336,57 @@ add_library(msplugin_infer_lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(msplugin_infer_lite_src_mid fbs_src)
 
 add_library(msplugin-ge-litert SHARED $<TARGET_OBJECTS:msplugin_infer_lite_src_mid>)
+add_library(msplugin-ge-litert_python SHARED $<TARGET_OBJECTS:msplugin_infer_lite_src_mid>)
 
 add_dependencies(msplugin-ge-litert mindspore_converter)
 target_link_libraries(msplugin-ge-litert mindspore_converter)
 target_link_libraries(msplugin-ge-litert mindspore-extendrt)
 
+add_dependencies(msplugin-ge-litert_python mindspore_converter)
+target_link_libraries(msplugin-ge-litert mindspore_converter)
+target_link_libraries(msplugin-ge-litert_python mindspore-extendrt_python)
+
 if(MSVC)
     set_target_properties(msplugin-ge-litert PROPERTIES PREFIX lib)
     set_target_properties(msplugin-ge-litert PROPERTIES IMPORT_PREFIX lib)
     set_target_properties(msplugin-ge-litert PROPERTIES IMPORT_SUFFIX .dll.lib)
+    set_target_properties(msplugin-ge-litert_python PROPERTIES PREFIX lib)
+    set_target_properties(msplugin-ge-litert_python PROPERTIES IMPORT_PREFIX lib)
+    set_target_properties(msplugin-ge-litert_python PROPERTIES IMPORT_SUFFIX .dll.lib)
 endif()
 
 target_link_libraries(msplugin-ge-litert cpu_kernel_mid nnacl_mid cpu_ops_mid)
+target_link_libraries(msplugin-ge-litert_python cpu_kernel_mid nnacl_mid cpu_ops_mid)
 
 if(SUPPORT_TRAIN)
     target_link_libraries(msplugin-ge-litert train_cpu_kernel_mid)
+    target_link_libraries(msplugin-ge-litert_python train_cpu_kernel_mid)
 endif()
 
 if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(msplugin-ge-litert mindrt_mid)
+    target_link_libraries(msplugin-ge-litert_python mindrt_mid)
 endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
         AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
     target_link_libraries(msplugin-ge-litert log)
+    target_link_libraries(msplugin-ge-litert_python log)
 endif()
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
     target_link_libraries(msplugin-ge-litert minddata_eager_mid minddata-lite)
+    target_link_libraries(msplugin-ge-litert_python minddata_eager_mid minddata-lite)
 endif()
 
 ########################## build optimize and float16 library #################################
 if(PLATFORM_ARM)
     if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT TARGET_MIX210 AND NOT MACHINE_LINUX_ARM64)
         target_link_libraries(msplugin-ge-litert cpu_opt_kernel_mid nnacl_optimize_mid)
+        target_link_libraries(msplugin-ge-litert_python cpu_opt_kernel_mid nnacl_optimize_mid)
     endif()
     if(MSLITE_ENABLE_FP16)
         target_link_libraries(msplugin-ge-litert cpu_fp16_kernel_mid nnacl_fp16_mid)
+        target_link_libraries(msplugin-ge-litert_python cpu_fp16_kernel_mid nnacl_fp16_mid)
     endif()
 endif()
 
@@ -383,19 +398,30 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(msplugin-ge-litert
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
+    target_link_libraries(msplugin-ge-litert_python
+            quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
+            cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
+            config_parser_mid mslite_converter_plugin mindspore_core coder_mid
+            mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
+    target_link_libraries(msplugin-ge-litert_python
+            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
 endif()
 
 
 target_link_libraries(msplugin-ge-litert mindspore::protobuf)
+target_link_libraries(msplugin-ge-litert_python mindspore::protobuf)
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)
     target_link_libraries(msplugin-ge-litert mindspore::glog)
+    target_link_libraries(msplugin-ge-litert_python mindspore::glog)
 endif()
 
 if(NOT WIN32)
     target_link_libraries(msplugin-ge-litert dl)
+    target_link_libraries(msplugin-ge-litert_python dl)
 endif()
 
 if(ENABLE_MODEL_OBF)
     target_link_libraries(msplugin-ge-litert ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+    target_link_libraries(msplugin-ge-litert_python ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()

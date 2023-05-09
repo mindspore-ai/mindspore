@@ -84,12 +84,22 @@ set_target_properties(libnvinfer PROPERTIES IMPORTED_LOCATION ${TENSORRT_LIB_PAT
 
 add_library(libcublas SHARED IMPORTED)
 set_target_properties(libcublas PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/libcublas.so)
-add_library(tensorrt_plugin SHARED ${TENSORRT_RUNTIME_SRC})
+
+add_library(tensorrt_plugin_mid OBJECT ${TENSORRT_RUNTIME_SRC})
+add_library(tensorrt_plugin SHARED $<TARGET_OBJECTS:tensorrt_plugin_mid>)
+add_library(tensorrt_plugin_python SHARED $<TARGET_OBJECTS:tensorrt_plugin_mid>)
 
 add_dependencies(tensorrt_plugin fbs_src)
+add_dependencies(tensorrt_plugin_python fbs_src)
 
 target_link_libraries(
     tensorrt_plugin
+    libcudart
+    libcublas
+    libnvinfer
+)
+target_link_libraries(
+    tensorrt_plugin_python
     libcudart
     libcublas
     libnvinfer
@@ -102,9 +112,15 @@ if(MSLITE_DEPS_AKG_TENSORRT)
         tensorrt_plugin
         libcuda
     )
+    target_link_libraries(
+        tensorrt_plugin_python
+        libcuda
+    )
 endif()
 
 add_subdirectory(cuda_impl)
 
 target_link_libraries(tensorrt_plugin cuda_kernel_mid gpu_distribution_collective)
 target_link_libraries(tensorrt_plugin mindspore-extendrt mindspore_core mindspore::fast_transformers)
+target_link_libraries(tensorrt_plugin_python cuda_kernel_mid gpu_distribution_collective)
+target_link_libraries(tensorrt_plugin_python mindspore-extendrt_python mindspore_core mindspore::fast_transformers)

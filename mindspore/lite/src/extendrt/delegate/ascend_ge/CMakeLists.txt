@@ -23,10 +23,13 @@ file(GLOB GE_EXECUTOR_SRC
         ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
         ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
         )
-list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 
+add_library(ascend_ge_plugin_mid OBJECT ${GE_EXECUTOR_SRC})
 
-add_library(ascend_ge_plugin SHARED ${GE_EXECUTOR_SRC})
+add_library(ascend_ge_plugin SHARED $<TARGET_OBJECTS:ascend_ge_plugin_mid>
+        $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+add_library(ascend_ge_plugin_python SHARED $<TARGET_OBJECTS:ascend_ge_plugin_mid>
+        $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 
 find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -45,5 +48,9 @@ find_library(ge_runner libge_runner.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOL
 target_link_libraries(ascend_ge_plugin ${ge_graph} ${ge_compiler} ${acl_retr} ${acl_cblas} ${acl_dvpp}
                       ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
                       ${libaicpu_engine_common} ${acl} ${ge_runner} mindspore_converter mindspore_core)
+target_link_libraries(ascend_ge_plugin_python ${ge_graph} ${ge_compiler} ${acl_retr} ${acl_cblas} ${acl_dvpp}
+                      ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
+                      ${libaicpu_engine_common} ${acl} ${ge_runner} mindspore_converter mindspore_core)
 
 target_link_libraries(ascend_ge_plugin mindspore-extendrt)
+target_link_libraries(ascend_ge_plugin_python mindspore-extendrt_python)
