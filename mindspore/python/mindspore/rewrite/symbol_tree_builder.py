@@ -95,6 +95,9 @@ class SymbolTreeBuilder:
             SymbolTreeBuilder._erase_unused_func_of_sequentialcell(sub_stree.get_class_ast())
         father_mod = main_tree.get_module_ast()
         sub_mod = sub_stree.get_module_ast()
+        # Tree Node created by internal/external function has no module ast
+        if not sub_mod:
+            return
         SymbolTreeBuilder._merge_import_of_module(father_mod, sub_mod)
         SymbolTreeBuilder._merge_class_of_module(father_mod, sub_mod)
         sub_stree.set_module_ast(father_mod)
@@ -167,6 +170,27 @@ class SymbolTreeBuilder:
         for name in func_names:
             AstModifier.erase_func_from_class_by_name(ast_class, name)
 
+    def build(self) -> SymbolTree:
+        """
+        Build SymbolTree.
+
+        Returns:
+             An instance of SymbolTree.
+        """
+
+        self._ast_root = SymbolTreeBuilder._ast_transform(self._ast_root)
+        if not isinstance(self._ast_root, ast.Module):
+            raise RuntimeError("ast_root should be a ast.Module")
+        self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
+        parser: Parser = ParserRegister.instance().get_parser(ast.Module)
+        parser.process(self._root_tree, self._ast_root)
+        self._merge_module_of_subtrees()
+        self._reduce_redundant_import()
+        self._insert_file_path()
+        ast.fix_missing_locations(self._root_tree.get_module_ast())
+        self._root_tree.finish_build()
+        return self._root_tree
+
     def _merge_module_of_subtrees(self):
         """
         Merge ast.Module of all sub-networks into ast.Module of main-network.
@@ -221,22 +245,16 @@ class SymbolTreeBuilder:
         for import_ast in import_list:
             AstModifier.insert_sub_ast(module, import_ast, insert_pos, True)
 
-    def build(self) -> SymbolTree:
+    def _insert_file_path(self):
         """
-        Build SymbolTree.
-
-        Returns:
-             An instance of SymbolTree.
+        Insert codes like below to add file search path.
+        >>> import sys
+        >>> sys.path.append(net_path1)
+        >>> sys.path.append(net_path2)
+        >>> ...
         """
-
-        self._ast_root = SymbolTreeBuilder._ast_transform(self._ast_root)
-        if not isinstance(self._ast_root, ast.Module):
-            raise RuntimeError("ast_root should be a ast.Module")
-        self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
-        parser: Parser = ParserRegister.instance().get_parser(ast.Module)
-        parser.process(self._root_tree, self._ast_root)
-        self._merge_module_of_subtrees()
-        self._reduce_redundant_import()
-        ast.fix_missing_locations(self._root_tree.get_module_ast())
-        self._root_tree.finish_build()
-        return self._root_tree
+        module: ast.Module = self._root_tree.get_module_ast()
+        module.body.insert(0, ast.Import([ast.alias(name='sys', asname=None)]))
+        for net_path in self._root_tree.get_net_file_path():
+            sys_path_append_ast = ast.parse(f"sys.path.append(r'{net_path}')").body[0]
+            module.body.insert(1, sys_path_append_ast)

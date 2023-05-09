@@ -186,6 +186,8 @@ class SymbolTree(Observer, Observable):
         self._tmp_file_limits = 20
         self._tmp_files = []
         self._saved_file_name = "./network_define.py"
+        # used to insert "sys.path.append(xxx)"
+        self._net_file_paths = []
 
     def __del__(self):
         for tmp_file in self._tmp_files:
@@ -486,6 +488,19 @@ class SymbolTree(Observer, Observable):
         """Get dict of nodes"""
         return self._nodes
 
+    def get_father_class_ast(self):
+        """Get _father_class_ast"""
+        return self._father_class_ast
+
+    def append_net_file_path(self, file_path):
+        """Append a file_path into _net_file_paths"""
+        if file_path not in self._net_file_paths:
+            self._net_file_paths.append(file_path)
+
+    def get_net_file_path(self):
+        """Get _net_file_paths"""
+        return self._net_file_paths
+
     def nodes(self):
         """
         Get generator of nodes of current `SymbolTree`.
@@ -704,6 +719,15 @@ class SymbolTree(Observer, Observable):
             self._return = node
         elif node.get_node_type() == NodeType.Input:
             self._inputs.append(node)
+        elif node.get_node_type() == NodeType.Tree:
+            # add father_class_ast into main tree, used when get_code
+            for father_ast in node.symbol_tree.get_father_class_ast():
+                if father_ast not in self._father_class_ast:
+                    self._father_class_ast.append(father_ast)
+            # add subtree's net path into main tree
+            for file_path in node.symbol_tree.get_net_file_path():
+                if file_path not in self._net_file_paths:
+                    self.append_net_file_path(file_path)
         return self.append_node(node, False)
 
     def append_input_node(self, ast_node, param_name: str, default: Optional[ScopedValue] = None):
@@ -954,8 +978,9 @@ class SymbolTree(Observer, Observable):
     def update_module_ast(self):
         for node in self._external_func_ast:
             self._module_ast.body.append(node)
-        for node in self._father_class_ast:
-            index = self._module_ast.body.index(self._class_ast)
+        # Put father asts in front of first ClassDef
+        index = [type(body) for body in self._module_ast.body].index(ast.ClassDef)
+        for node in reversed(self._father_class_ast):
             self._module_ast.body.insert(index, node)
 
     def get_code(self) -> str:

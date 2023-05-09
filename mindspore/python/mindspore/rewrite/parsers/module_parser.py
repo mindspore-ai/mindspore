@@ -30,11 +30,6 @@ from ..common import error_str
 
 class ModuleParser(Parser):
     """Parse ast.Module to SymbolTrees."""
-
-    def target(self):
-        """Parse target type"""
-        return ast.Module
-
     @staticmethod
     def _find_class(ast_node: ast.Module) -> ast.ClassDef:
         """Find all ast.ClassDef in ast.Module, only support one ast.ClassDef in ast.Module now."""
@@ -47,7 +42,7 @@ class ModuleParser(Parser):
         return classes[0]
 
     @staticmethod
-    def get_import_node(ast_root):
+    def _get_import_node(ast_root):
         """Iterate over ast_root and return all ast.Import nodes or ast.ImportFrom nodes in ast_root."""
         import_nodes = []
 
@@ -87,21 +82,33 @@ class ModuleParser(Parser):
             raise RuntimeError("For MindSpore Rewrite, in module parser, File ", origin_net_source_code_file,
                                " not exist")
         try:
-            with open(origin_net_source_code_file, "r") as f:
+            with open(origin_net_source_code_file, "r", encoding="utf-8") as f:
                 source_code = f.read()
-                import_nodes = ModuleParser.get_import_node(ast.parse(source_code))
+                import_nodes = ModuleParser._get_import_node(ast.parse(source_code))
         except RuntimeError:
             raise RuntimeError("For MindSpore Rewrite, in module parser, get import nodes error")
         if import_nodes:
             for import_index, import_node in enumerate(import_nodes):
-                module.body.insert(import_index + 3, import_node)
+                module.body.insert(import_index + 4, import_node)
         ast.fix_missing_locations(module)
+
+    @staticmethod
+    def _save_net_file_path(stree: SymbolTree):
+        origin_net_file = inspect.getfile(type(stree.get_origin_network()))
+        file_full_path = os.path.abspath(origin_net_file)
+        file_path, _ = os.path.split(file_full_path)
+        stree.append_net_file_path(file_path)
+
+    def target(self):
+        """Parse target type"""
+        return ast.Module
 
     def process(self, stree: SymbolTree, node: ast.Module):
         """Process ast.ClassDef nodes in ast.Module."""
         ModuleParser._add_import_to_module(node, stree.get_origin_network())
         class_ast = ModuleParser._find_class(node)
         stree.set_class_ast(class_ast)
+        ModuleParser._save_net_file_path(stree)
         for body in node.body:
             if isinstance(body, ast.ClassDef):
                 parser: Parser = ParserRegister.instance().get_parser(ast.ClassDef)
@@ -109,6 +116,5 @@ class ModuleParser(Parser):
             else:
                 logger.info(f"For MindSpore Rewrite, in module parser, Ignoring unsupported "
                             f"node({astunparse.unparse(body)}) in ast.Module.")
-
 
 g_module_parser = reg_parser(ModuleParser())
