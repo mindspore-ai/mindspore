@@ -10,7 +10,7 @@ mindspore.ops.CheckValid
 
 
     输入：
-        - **bboxes** (Tensor) - shape大小为 :math:`(N, 4)` 。 :math:`N` 表示边界框的数量， `4` 表示 `x0` 、 `x1` 、 `y0` 、 `y` 。数据类型必须是float16或float32。
+        - **bboxes** (Tensor) - shape大小为 :math:`(N, 4)` 。 :math:`N` 表示边界框的数量， `4` 表示 `x0` 、 `y0` 、 `x1` 、 `y1` 。数据类型必须是float16或float32。
         - **img_metas** (Tensor) - 原始图片的信息 :math:`(长度, 宽度, 比率)` ，指定有效边界为 :math:`(长度 * 比率, 宽度 * 比率)` 。数据类型必须是float16或float32。
 
     输出：
