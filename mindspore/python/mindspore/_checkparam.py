@@ -559,6 +559,17 @@ def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     return True
 
 
+def check_str_and_none_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
+    if reg is None:
+        # Named string regular expression
+        reg = r"^\w*[0-9a-zA-Z\_\.]*$"
+    if re.match(reg, target, flag) is None:
+        prim_name = f"For '{prim_name}', the" if prim_name else "The"
+        raise ValueError("{} '{}' is illegal, it must be match regular'{}' by flags'{}.'".format(
+            prim_name, target, reg, flag))
+    return True
+
+
 def check_file_name_by_regular(target, reg=None, prim_name=None):
     """Check whether file name is legitimate."""
     if not isinstance(target, str):

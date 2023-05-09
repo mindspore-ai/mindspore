@@ -623,6 +623,7 @@ class Cell(Cell_):
         if args and is_pack_tensor(args[0]):
             return self._run_packfunc(*args, **kwargs)
 
+        self.check_names_and_refresh_name()
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args)
@@ -1183,7 +1184,7 @@ class Cell(Cell_):
             recurse (bool): Whether contains the parameters of subcells. Default: ``True`` .
         """
 
-        Validator.check_str_by_regular(prefix)
+        Validator.check_str_and_none_by_regular(prefix)
         for name, param in self.parameters_and_names(expand=recurse):
             if prefix != '':
                 param.is_init = False
@@ -1267,6 +1268,17 @@ class Cell(Cell_):
         """
         for _, param in self.parameters_and_names(expand=expand):
             yield param
+
+    def check_names_and_refresh_name(self):
+        """
+        Check the names of cell parameters and try to refresh.
+        """
+        if not hasattr(self, "_params"):
+            return
+        all_name = [i.name for i in dict(self.parameters_and_names()).values()]
+        if len(set(all_name)) < len(all_name):
+            self.update_parameters_name()
+            self.check_names()
 
     def check_names(self):
         """
