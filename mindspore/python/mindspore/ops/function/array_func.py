@@ -6551,18 +6551,19 @@ def argwhere(input):
 
 def column_stack(tensors):
     """
-    Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
+    Stacks 1-D tensors as columns into a 2-D tensor. Tensors of other dimension are stacked as-is,
     like ops.hstack.
 
     Args:
-        tensors (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
+        tensors (Union[tuple[Tensor], list[Tensor]]): A sequence of tensors. All
             of them must have the same shape except the axis to be concatenated.
 
     Returns:
         2-D Tensor, formed by stacking the given tensors.
 
     Raises:
-        TypeError: If `tensors` is not Tensor, list or tuple.
+        TypeError: If `tensors` is not list or tuple.
+        TypeError: If element in `tensors` is not Tensor.
         ValueError: If `tensors` is empty.
 
     Supported Platforms:
@@ -6584,6 +6585,8 @@ def column_stack(tensors):
     trans_x = ()
     _expand_dims = _get_cache_prim(P.ExpandDims)()
     for tensor in tensors:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For column_stack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
             tensor = _expand_dims(tensor, 0)
         if tensor.ndim == 1:
@@ -6591,7 +6594,7 @@ def column_stack(tensors):
         trans_x += (tensor,)
     if not trans_x:
         raise ValueError(f"For column_stack, the input must have at least 1 tensor, but got 0.")
-    _concat = _get_cache_prim(P.Concat)(-1)
+    _concat = _get_cache_prim(P.Concat)(1)
     return _concat(trans_x)
 
 
@@ -6602,7 +6605,7 @@ def hstack(tensors):
     where it concatenates along the first axis.
 
     Args:
-        tensors (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
+        tensors (Union[tuple[Tensor], list[Tensor]]): A sequence of tensors. The
             tensors must have the same shape along all but the second axis, except
             1-D tensors which can be any length.
 
@@ -6610,7 +6613,8 @@ def hstack(tensors):
         Stacked Tensor, formed by stacking the given tensors.
 
     Raises:
-        TypeError: If `tensors` is not Tensor, list or tuple.
+        TypeError: If `tensors` is not list or tuple.
+        TypeError: If element in `tensors` is not Tensor.
         ValueError: If `tensors` is empty.
 
     Supported Platforms:
@@ -6629,6 +6633,8 @@ def hstack(tensors):
 
     tuple_of_tensor = ()
     for tensor in tensors:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For hstack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
             tensor = expand_dims_(tensor, 0)
         tuple_of_tensor += (tensor,)
