@@ -2329,7 +2329,7 @@ class CrossEntropyLoss(LossBase):
               \end{cases}
 
     Args:
-        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is :math`(C,)`.
+        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is :math:`(C,)`.
             The data type only supports float32 or float16. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored (typically for padding value)
             and does not contribute to the gradient. Default: ``-100`` .

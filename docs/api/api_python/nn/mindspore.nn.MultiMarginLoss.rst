@@ -15,11 +15,11 @@ mindspore.nn.MultiMarginLoss
     参数：
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值： ``1``。
         - **margin** (float, 可选) - 改变对偶距离的参数。默认值： ``1.0`` 。
-        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选 ``'none'`` 、 ``'mean'`` 、``'sum'`` 。默认值： ``'mean'`` 。
+        - **reduction** (str, 可选) - 对输出应用特定的缩减方法：可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
 
           - ``'none'`` ：不应用缩减方法。
           - ``'mean'`` ：输出的值总和除以输出的元素个数。
-          - `` 'sum'`` ：输出的总和。
+          - ``'sum'`` ：输出的总和。
 
         - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值： ``None`` ，表示各个类别权重相同。
 
@@ -28,7 +28,7 @@ mindspore.nn.MultiMarginLoss
         - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。`target` 即上述公式中的 :math:`y` 。
 
     输出：
-        Tensor，当 `reduction` 为'none'时，类型为Tensor，shape为 :math:`(N,)`，和 `target` 相同。否则为标量Tensor。
+        Tensor，当 `reduction` 为 ``'none'`` 时，类型为Tensor，shape为 :math:`(N,)`，和 `target` 相同。否则为标量Tensor。
 
     异常：
         - **TypeError** - `p` 或者 `target` 数据类型不是int。

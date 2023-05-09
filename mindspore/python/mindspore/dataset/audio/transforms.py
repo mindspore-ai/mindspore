@@ -526,7 +526,7 @@ class ComputeDeltas(AudioTensorOperation):
 
     Args:
         win_length (int, optional): The window length used for computing delta, must be no less than 3. Default: ``5``.
-        pad_mode (BorderType, optional): Mode parameter passed to padding, can be B``orderType.CONSTANT``,
+        pad_mode (BorderType, optional): Mode parameter passed to padding, can be ``BorderType.CONSTANT``,
             ``BorderType.EDGE``, ``BorderType.REFLECT`` or ``BorderType.SYMMETRIC``. Default: ``BorderType.EDGE``.
 
             - ``BorderType.CONSTANT``, pad with a constant value.
@@ -1796,7 +1796,7 @@ class MelSpectrogram(AudioTensorOperation):
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: ``True``.
         norm (NormType, optional): If 'slaney', divide the triangular mel weights by the width of the mel band
             (area normalization). Default: ``NormType.NONE``, no narmalization.
-        mel_scale (MelType, optional): Mel scale to use, can be M``elType.SLANEY`` or ``MelType.HTK``.
+        mel_scale (MelType, optional): Mel scale to use, can be ``MelType.SLANEY`` or ``MelType.HTK``.
             Default: ``MelType.HTK``.
 
     Raises:
