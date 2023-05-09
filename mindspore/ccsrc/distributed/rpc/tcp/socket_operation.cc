@@ -254,6 +254,29 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
   return false;
 }
 
+std::string SocketOperation::GetIP(int fd) {
+  int retval = 0;
+  std::string ip = "";
+  union SocketAddress isa;
+  socklen_t isaLen = sizeof(struct sockaddr_storage);
+  retval = getsockname(fd, &isa.sa, &isaLen);
+  if (retval > 0) {
+    MS_LOG(INFO) << "Failed to call getsockname, fd: " << fd << ", ret: " << retval << ", errno: " << errno;
+    return ip;
+  }
+
+  if (isa.sa.sa_family == AF_INET) {
+    char ipv4[INET_ADDRSTRLEN] = {0};
+    ip = inet_ntop(isa.sa.sa_family, &isa.saIn.sin_addr, ipv4, INET_ADDRSTRLEN);
+  } else if (isa.sa.sa_family == AF_INET6) {
+    char ipv6[INET6_ADDRSTRLEN] = {0};
+    ip = inet_ntop(isa.sa.sa_family, &isa.saIn6.sin6_addr, ipv6, INET6_ADDRSTRLEN);
+  } else {
+    MS_LOG(INFO) << "Unknown fd: " << fd << ", family: " << isa.sa.sa_family;
+  }
+  return ip;
+}
+
 uint16_t SocketOperation::GetPort(int fd) {
   uint16_t port = 0;
   int retval = 0;

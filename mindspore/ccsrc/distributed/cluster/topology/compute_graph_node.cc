@@ -183,6 +183,7 @@ bool ComputeGraphNode::Register() {
     return false;
   }
   reg_msg.set_host_name(std::string(host_name));
+  reg_msg.set_host_ip(hb_client_->GetClientIPByDstUrl(server_url));
 
   std::string content = reg_msg.SerializeAsString();
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
