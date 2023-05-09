@@ -919,9 +919,9 @@ class CSRTensor(CSRTensor_):
             >>> a = CSRTensor(indptr, indices, values_a, dense_shape)
             >>> b = CSRTensor(indptr, indices, values_b, dense_shape)
             >>> print(a.add(b, alpha, beta))
-                CSRTensor(shape=[2,4], dtype=Float32,
-                          indptr=Tensor(shape=[3], dtype=Int32, value = [0, 1, 2]),
-                          indices=Tensor(shape=[2], dtype=Int32, value = [0, 1]),
-                          values=Tensor(shape=[2], dtype=Float32, value = [3.0, 3.0]))
+                CSRTensor(shape=[2, 4], dtype=Float32, \
+                          indptr=Tensor(shape=[3], dtype=Int32, value=[0 1 2]), \
+                          indices=Tensor(shape=[2], dtype=Int32, value=[0 1]), \
+                          values=Tensor(shape=[2], dtype=Float32, value=[ 3.00000000e+00  3.00000000e+00]))
         """
         return tensor_operator_registry.get('csr_add')(self, b, alpha, beta)
