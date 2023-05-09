@@ -4059,7 +4059,8 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
         TypeError: If input `x` and `padding_value` are not the same dtype.
         TypeError: If `k`, `num_rows` or `num_cols` is not int32 dtype.
         ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `num_rows`, `num_cols` or `padding_value` is not equal to 0.
+        ValueError: If rank of `num_rows`, `num_cols` is not equal to 0.
+        ValueError: If rank of `padding_value` is not equal to 0/1.
         ValueError: If size of `k` is not equal to 1 or 2.
         ValueError: If the value of `k` is not in (-num_rows, num_cols).
         ValueError: If k[1] is not greater equal to k[0] when k[0] != k[1].
