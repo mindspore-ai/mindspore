@@ -67,7 +67,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
   void CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg);
   void CodeStruct(const std::string &name, const SpliceParameter &splice_parameter);
-  void CodeStruct(const std::string &name, const ExpParameter &exp_parameter);
+  void CodeStruct(const std::string &name, const ExpStruct &exp_struct);
   void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter);
   void CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info);
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
