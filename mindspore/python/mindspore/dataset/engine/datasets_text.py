@@ -589,7 +589,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
             Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
-            :class:`mindspore.dataset.Shuffle.GLOBAL` .
+            ``mindspore.dataset.Shuffle.GLOBAL`` .
             Set the mode of data shuffling by passing in enumeration variables:
 
             - ``Shuffle.GLOBAL`` : Shuffle both the files and samples.

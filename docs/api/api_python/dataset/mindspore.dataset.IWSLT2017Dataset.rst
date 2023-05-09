@@ -10,7 +10,7 @@ mindspore.dataset.IWSLT2017Dataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'valid'`` 、 ``'test'`` 或 ``'all'`` 。默认值： ``None`` ，读取全部样本。
-        - **language_pair** (sequence, 可选) - 包含源语和目标语的语言列表，支持的语言对有 `` ``('en', 'nl')`` 、
+        - **language_pair** (sequence, 可选) - 包含源语和目标语的语言列表，支持的语言对有 ``('en', 'nl')`` 、
           ``('en', 'de')`` 、 ``('en', 'it')`` 、 ``('en', 'ro')`` 、 ``('nl', 'en')`` 、 ``('nl', 'de')`` 、 ``('nl', 'it')`` 、 ``('nl', 'ro')`` 、
           ``('de', 'en')`` 、 ``('de', 'nl')`` 、 ``('de', 'it')`` 、 ``('de', 'ro')`` 、 ``('it', 'en')`` 、 ``('it', 'nl')`` 、 ``('it', 'de')`` 、
           ``('it', 'ro')`` 、 ``('ro', 'en')`` 、 ``('ro', 'nl')`` 、 ``('ro', 'de')`` 、 ``('ro', 'it')`` 。默认值： ``('de', 'en')`` 。

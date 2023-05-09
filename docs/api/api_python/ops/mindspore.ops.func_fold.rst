@@ -18,7 +18,7 @@ mindspore.ops.fold
         - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长，如果是两个int，则分别为滑窗的高度和宽度方向上的步长；如果是一个int，则高度和宽度方向上的步长均为这个int值。默认值： ``1`` 。
 
     返回：
-        Tensor，数据类型与 `input` 相同，Tensor格式为： :math`(N, C, H, W)`。
+        Tensor，数据类型与 `input` 相同，Tensor格式为： :math:`(N, C, H, W)`。
 
     异常：
         - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `kernel_size` 的数据类型不是int、tuple或者list。

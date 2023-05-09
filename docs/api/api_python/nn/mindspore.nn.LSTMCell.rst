@@ -1,7 +1,7 @@
 mindspore.nn.LSTMCell
 ======================
 
-.. py:class:: mindspore.nn.LSTMCell(*args, **kwargs)
+.. py:class:: mindspore.nn.LSTMCell(input_size: int, hidden_size: int, has_bias: bool = True)
 
     长短期记忆网络单元（LSTMCell）。
 
