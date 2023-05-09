@@ -22,6 +22,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include "common/opskernel/ge_task_info.h"
@@ -34,6 +35,8 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
   ~HcclTask() override;
 
   void Distribute() override;
+
+  std::string DebugString() const override;
 
  private:
   class StreamGuard;

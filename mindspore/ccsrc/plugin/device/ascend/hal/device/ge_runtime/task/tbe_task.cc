@@ -53,6 +53,41 @@ TbeTask::~TbeTask() {
   }
 }
 
+std::string TbeTask::DebugString() const {
+  std::ostringstream buffer;
+  buffer << "Tbetask: task name: " << task_info_->op_name() << ", stub_func: " << task_info_->stub_func()
+         << ", mindspore stream_id: " << task_info_->stream_id() << ", stream_: " << stream_
+         << ", block_dim: " << task_info_->block_dim() << ", dump_flag: " << task_info_->dump_flag();
+  auto input_data = task_info_->input_data_addrs();
+  auto output_data = task_info_->output_data_addrs();
+  auto workspace = task_info_->workspace_addrs();
+  // args_size should be obtained from task instead of task_info
+  size_t addr_size = input_data.size() + output_data.size() + workspace.size();
+  buffer << ", args_size: " << addr_size * sizeof(void *);
+  buffer << ", input_data_addr: ";
+  for (size_t i = 0; i < input_data.size(); ++i) {
+    buffer << "[" << i << "]: " << input_data[i];
+    if (i != input_data.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << ", output_data_addr: ";
+  for (size_t i = 0; i < output_data.size(); ++i) {
+    buffer << "[" << i << "]: " << output_data[i];
+    if (i != output_data.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << ", workspace_addr: ";
+  for (size_t i = 0; i < workspace.size(); ++i) {
+    buffer << "[" << i << "]: " << workspace[i];
+    if (i != workspace.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  return buffer.str();
+}
+
 void TbeTask::Distribute() {
   MS_LOG(INFO) << "InitTbeTask and DistributeTbeTask start.";
   MS_EXCEPTION_IF_NULL(task_info_);

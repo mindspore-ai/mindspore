@@ -57,6 +57,17 @@ HcclTask::~HcclTask() {
   }
 }
 
+std::string HcclTask::DebugString() const {
+  std::ostringstream buffer;
+  buffer << "HcclTask: op_name: " << task_info_->op_name() << ", task_id: " << ge_task_.id
+         << ", hccl_type: " << task_info_->hccl_type() << ", input_data_addr: " << task_info_->input_data_addr()
+         << ", workspace_size: " << task_info_->workspace_size()
+         << ", output_data_addr: " << task_info_->output_data_addr() << ", count: " << task_info_->count()
+         << ", data_type: " << task_info_->data_type() << ", op_type: " << task_info_->op_type()
+         << ", root_id: " << task_info_->root_id();
+  return buffer.str();
+}
+
 void HcclTask::Distribute() {
   // Ops kernel info store
   // Get privateDef and opsKernelStorePtr

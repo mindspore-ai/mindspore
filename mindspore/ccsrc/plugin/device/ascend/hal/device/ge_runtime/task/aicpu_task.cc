@@ -74,6 +74,29 @@ AicpuTask::~AicpuTask() {
   input_output_addr_ = nullptr;
 }
 
+std::string AicpuTask::DebugString() const {
+  std::ostringstream buffer;
+  buffer << "AicpuTask: so_name: " << task_info_->so_name() << ", kernel_name: " << task_info_->kernel_name()
+         << ", mindspore stream_id: " << task_info_->stream_id() << ", dump_flag: " << task_info_->dump_flag();
+  auto input_data = task_info_->input_data_addrs();
+  auto output_data = task_info_->output_data_addrs();
+  buffer << ", input_data_addr: ";
+  for (size_t i = 0; i < input_data.size(); ++i) {
+    buffer << "[" << i << "]: " << input_data[i];
+    if (i != input_data.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << ", output_data_addr: ";
+  for (size_t i = 0; i < output_data.size(); ++i) {
+    buffer << "[" << i << "]: " << output_data[i];
+    if (i != output_data.size() - 1) {
+      buffer << ", ";
+    }
+  }
+  return buffer.str();
+}
+
 void AicpuTask::Distribute() {
   MS_LOG(INFO) << "InitAicpuTask start. node: " << task_info_->op_name();
   std::vector<void *> io_addrs;
