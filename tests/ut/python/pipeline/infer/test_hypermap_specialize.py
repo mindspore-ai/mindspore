@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_hypermap_partial """
+import os
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -51,9 +52,11 @@ def test_hypermap_specialize_param():
         ret2 = hypermap(F.partial(net, factor1), [x, y])
         return ret1, ret2
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     expected_ret = (Tensor(np.full(1, 5).astype(np.int32)), Tensor(np.full(2, 5).astype(np.int32)))
     ret = hypermap_specialize_param()
     assert ret[0][0].asnumpy() == expected_ret[0].asnumpy()
     assert np.all(ret[0][1].asnumpy() == expected_ret[1].asnumpy())
     assert ret[1][0].asnumpy() == list(expected_ret[0].asnumpy())
     assert np.all(ret[1][1].asnumpy() == list(expected_ret[1].asnumpy()))
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

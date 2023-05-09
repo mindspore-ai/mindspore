@@ -15,6 +15,7 @@
 """
 test_structure_output
 """
+import os
 import pytest
 import numpy as np
 
@@ -65,8 +66,10 @@ def test_output_const_list():
             ret = self.tuple_1
             return ret
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Net()
     assert net() == [1, 2, 3]
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '1'
 
 
 def test_output_const_int():

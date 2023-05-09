@@ -469,7 +469,7 @@ class _Context:
         'memory_offload': set_memory_offload,
         'deterministic': set_deterministic,
         'ascend_config': set_ascend_config,
-        'jit_syntax_level': set_jit_syntax_level
+        'jit_syntax_level': set_jit_syntax_level,
     }
 
     @property
@@ -843,7 +843,8 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int)
+                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int,
+                 jit_enable_inplace_ops=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -1054,9 +1055,6 @@ def set_context(**kwargs):
               different types of operators in the network model. The sequence of RL and GA is not differentiated
               (Automatic selection).
 
-            For more information about the enable operator tuning tool settings, please check
-            `Enable the operator optimization tool
-            <https://www.mindspore.cn/tutorials/experts/en/master/debug/auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_dictionary """
+import os
 import numpy as np
 import pytest
 
@@ -30,7 +31,7 @@ class Net1(Cell):
             output.append(i)
         for j in dic.values():
             output.append(j)
-        return output
+        return tuple(output)
 
 
 class Net2(Cell):
@@ -61,7 +62,7 @@ def test_dict1():
     input_me = Tensor(input_np)
     net = Net1()
     out_me = net(input_me)
-    assert out_me == ['x', 'y', 0, 1]
+    assert out_me == ('x', 'y', 0, 1)
 
 
 def test_dict2():
@@ -72,11 +73,13 @@ def test_dict2():
 
 
 def test_dict3():
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = Net3()
     out_me = net(input_me)
     assert out_me == ['x', 'y', 0, (0, 1)]
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '1'
 
 
 def test_dict4():

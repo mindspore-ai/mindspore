@@ -72,6 +72,9 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
       mul.push_back(seq_abs->elements()[j]);
     }
   }
+  if (first_abs->isa<abstract::AbstractList>()) {
+    return std::make_shared<abstract::AbstractList>(mul);
+  }
   auto ret = std::make_shared<abstract::AbstractTuple>(mul);
   return ret;
 }

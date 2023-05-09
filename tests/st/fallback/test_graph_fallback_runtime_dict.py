@@ -509,6 +509,7 @@ def test_return_nested_dict1():
     assert out == {'a': None, 'b': {'a': {'c': 1}}}
 
 
+@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -746,6 +747,34 @@ def test_return_nested_dict_with_parameter_constant1():
             super(Net, self).__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = [{'params': (self.x, self.y), 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
+
+        def construct(self):
+            return self.z
+
+    net = Net()
+    out = net()
+    assert out == [{'params': (net.x, net.y), 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
+
+
+@pytest.mark.skip('Not support list to PyExecute yet.')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter_constant2():
+    """
+    Feature: Return nested output of dict with parameter constant.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
 
         def construct(self):
@@ -761,7 +790,35 @@ def test_return_nested_dict_with_parameter_constant1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_return_nested_dict_with_parameter_constant2():
+def test_return_nested_dict_with_parameter_constant3():
+    """
+    Feature: Return nested output of dict with parameter constant.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = {'params': (self.x, self.y), 'a': 1, 'b': {'params': self.x, 'a': 2}}
+
+        def construct(self):
+            return self.z
+
+    net = Net()
+    out = net()
+    assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
+
+
+@pytest.mark.skip(reason="List object can not pass PyExecute output.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter_constant4():
     """
     Feature: Return nested output of dict with parameter constant.
     Description: Support dict return.

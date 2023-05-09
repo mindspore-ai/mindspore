@@ -1061,6 +1061,7 @@ AbstractBasePtr AbstractList::Clone() const {
   ret->dyn_len_arg_ = dyn_len_arg_;
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
+  ret->set_list_user_data(list_user_data_);
   return ret;
 }
 
@@ -1068,6 +1069,7 @@ AbstractBasePtr AbstractList::Broaden() const {
   auto ret = std::make_shared<AbstractList>(ElementsBroaden(), sequence_nodes());
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
+  ret->set_list_user_data(list_user_data_);
   return ret;
 }
 
@@ -1075,6 +1077,7 @@ AbstractBasePtr AbstractList::PartialBroaden() const {
   auto ret = std::make_shared<AbstractList>(ElementsPartialBroaden(), sequence_nodes());
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
+  ret->set_list_user_data(list_user_data_);
   return ret;
 }
 

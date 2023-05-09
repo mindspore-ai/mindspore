@@ -18,6 +18,7 @@
 
 #include <string>
 #include <memory>
+#include "pipeline/jit/fallback.h"
 
 namespace mindspore {
 namespace opt {
@@ -89,6 +90,10 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     // Let getattr be resolved in static_analysis.
     if (IsValueNode<TypeNull>(ret)) {
       return nullptr;
+    }
+    if (fallback::HasPyListObject(node)) {
+      MS_LOG(DEBUG) << "Resolved node has python object, attach it to the node after resolve.";
+      fallback::SetPyListObject<AnfNode, py::list>(ret, fallback::GetPyListObject<AnfNode, py::list>(node));
     }
     return ret;
   };

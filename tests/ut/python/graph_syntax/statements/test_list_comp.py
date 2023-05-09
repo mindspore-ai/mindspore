@@ -21,25 +21,25 @@ from mindspore import context, jit
 @jit
 def get_list_comp_1():
     l = [x for x in range(1, 6)]
-    return l
+    return tuple(l)
 
 
 @jit
 def get_list_comp_2():
     l = [x * x for x in range(1, 6)]
-    return l
+    return tuple(l)
 
 
 @jit
 def get_list_comp_3():
     l = [x * x for x in range(1, 11) if x % 2 == 0]
-    return l
+    return tuple(l)
 
 
 @jit
 def get_list_comp_4():
     l = [x * x for x in range(1, 11) if x > 5 if x % 2 == 0]
-    return l
+    return tuple(l)
 
 
 @jit
@@ -47,7 +47,7 @@ def get_list_comp_5():
     # Create a ListComp with multiple comprehension.
     # Not supported.
     l = [y for x in ((1, 2), (3, 4), (5, 6)) for y in x]  # [1, 2, 3, 4, 5, 6]
-    return l
+    return tuple(l)
 
 
 @jit
@@ -64,10 +64,10 @@ def get_generator_exp_2():
 
 def test_list_comp():
     context.set_context(mode=context.GRAPH_MODE)
-    assert get_list_comp_1() == [1, 2, 3, 4, 5]
-    assert get_list_comp_2() == [1, 4, 9, 16, 25]
-    assert get_list_comp_3() == [4, 16, 36, 64, 100]
-    assert get_list_comp_4() == [36, 64, 100]
+    assert get_list_comp_1() == (1, 2, 3, 4, 5)
+    assert get_list_comp_2() == (1, 4, 9, 16, 25)
+    assert get_list_comp_3() == (4, 16, 36, 64, 100)
+    assert get_list_comp_4() == (36, 64, 100)
     with pytest.raises(TypeError) as ex:
         get_list_comp_5()
     assert "The 'generators' supports 1 'comprehension' in ListComp/GeneratorExp" in str(ex.value)

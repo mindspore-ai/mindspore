@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_reverse """
+import os
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -31,8 +32,10 @@ def test_list_reverse_1():
         x = [1, 2, 3, 4]
         x.reverse()
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_1()
     assert np.all(out == [4, 3, 2, 1])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_reverse_2():
@@ -47,8 +50,10 @@ def test_list_reverse_2():
         x = ['a', ('bb', '2', 3), aa, 4]
         x.reverse()
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_2()
     assert np.all(out == [4, 20, ('bb', '2', 3), 'a'])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_reverse_3():
@@ -64,8 +69,10 @@ def test_list_reverse_3():
         x = ['a', ('Michael', 'Bob', '2'), aa, 4, bb, (1, 2), Tensor(1)]
         x.reverse()
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_3()
     assert np.all(out == [Tensor(1), (1, 2), Tensor(1), 4, 20, ('Michael', 'Bob', '2'), 'a'])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_reverse_4():
@@ -79,5 +86,7 @@ def test_list_reverse_4():
         x = []
         x.reverse()
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_4()
     assert np.all(out == [])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

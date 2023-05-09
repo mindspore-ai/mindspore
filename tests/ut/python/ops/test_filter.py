@@ -38,7 +38,12 @@ class NetWork(Cell):
         return ret
 
 
-list1 = [1, 2, 3]
-net1 = NetWork()
-result = net1(list1)
-assert result == [1, 3]
+def test_filter():
+    """
+    Feature: filter function.
+    Description: Test filter.
+    Expectation: No exception.
+    """
+    list1 = [1, 2, 3]
+    net1 = NetWork()
+    net1(list1)

@@ -35,6 +35,8 @@
 #include "pipeline/jit/debug/trace.h"
 #include "include/common/fallback.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
 
@@ -1401,12 +1403,20 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
     return MakeAbstractClosure(meta_func_graph, anf_node);
   }
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-  if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {
+  if (value->isa<ValueSequence>() && anf_node != nullptr) {
     auto abs = value->ToAbstract();
-    auto sequence_abs = dyn_cast_ptr<AbstractSequence>(abs);
+    auto sequence_abs = abs->cast<AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
-    if (anf_node != nullptr) {
+    // Attach corresponding python sequence object to AbstractSequence.
+    py::object py_list_obj = fallback::HasPyListObject(anf_node)
+                               ? *fallback::GetPyListObject<AnfNode, py::list>(anf_node)
+                               : ValueToPyData(value);
+    fallback::AttachListObjToAbs(sequence_abs, py_list_obj);
+    MS_LOG(DEBUG) << "Attach python list object " << fallback::GetPyObjectPtrStr(py_list_obj)
+                  << " to new abstract: " << abs->ToString();
+    // Set sequence node for new AbstractSequence.
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    if (enable_eliminate_unused_element) {
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
       std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
       (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));

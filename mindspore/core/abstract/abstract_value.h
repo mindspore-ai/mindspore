@@ -30,6 +30,7 @@
 #include "utils/any.h"
 #include "utils/hash_map.h"
 #include "base/base.h"
+#include "base/user_data.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
@@ -1184,8 +1185,38 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
+  /// \brief Set corresponding list user data.
+  ///
+  /// \param[in] value The corresponding user data.
+  template <typename T>
+  void set_list_py_obj(const std::shared_ptr<T> &list_user_data) {
+    list_user_data_->set<T>(py_obj_key, list_user_data);
+  }
+
+  /// \brief Get corresponding list user data.
+  ///
+  /// \return The corresponding list user data.
+  template <typename T>
+  std::shared_ptr<T> list_py_obj() const {
+    return list_user_data_->get<T>(py_obj_key);
+  }
+
+  /// \brief Check whether the AbstractList has list user data.
+  ///
+  /// \return True if it exists, otherwise false.
+  bool has_list_py_obj() const { return list_user_data_->has(py_obj_key); }
+
+  /// \brief Set corresponding list user data.
+  ///
+  /// \param[in] value The corresponding user data.
+  void set_list_user_data(const UserDataPtr &list_user_data) { list_user_data_ = list_user_data; }
+
  protected:
   ValuePtr RealBuildValue() const override;
+
+ private:
+  UserDataPtr list_user_data_ = std::make_shared<UserData>();
+  const std::string py_obj_key = "py_obj_key";
 };
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 

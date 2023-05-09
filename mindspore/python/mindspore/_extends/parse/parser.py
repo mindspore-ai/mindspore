@@ -855,6 +855,13 @@ def get_local_variable(name):
     return _local_value_nodes.get(name)
 
 
+def _jit_fallback_generate_list(key_name, list_value):
+    "Generate list object."
+    list_obj = get_local_variable(key_name)
+    list_obj.extend(list_value)
+    return list_obj
+
+
 def get_dtype(name: str):
     """get mstype from name"""
     if not hasattr(mstype, name):

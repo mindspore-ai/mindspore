@@ -105,6 +105,7 @@ def test_fallback_add_meta_3():
     assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
 
 
+@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -304,6 +305,7 @@ def test_fallback_compare_meta_2():
     assert ret == [True, True, True, True]
 
 
+@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

@@ -2162,6 +2162,12 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
     }
   }
   auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
+  auto val = abs->BuildValue();
+  if (val != kValueAny) {
+    MS_LOG(DEBUG) << "Generate python object for new value node.";
+    py::list py_list_obj = ValueToPyData(val);
+    fallback::AttachListObjToAbs(abs, py_list_obj);
+  }
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
@@ -2215,7 +2221,17 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
     const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
-    res = std::make_shared<AbstractTensor>(preset_type, shape);
+    if (preset_type->isa<List>()) {
+      AbstractListPtr res_list = fallback::GenerateAbstractList(shape, preset_type, true);
+      if (fallback::HasPyListObject(node)) {
+        MS_LOG(DEBUG) << "Current Pyexecute node has python list object, attach it to the abstarct.";
+        auto list_obj = fallback::GetPyListObject<AnfNode, py::list>(node);
+        res_list->set_list_py_obj<py::list>(list_obj);
+      }
+      res = res_list;
+    } else {
+      res = std::make_shared<AbstractTensor>(preset_type, shape);
+    }
   } else if (fallback::HasRealType(node)) {
     res = std::make_shared<AbstractNegligible>();
   } else {
