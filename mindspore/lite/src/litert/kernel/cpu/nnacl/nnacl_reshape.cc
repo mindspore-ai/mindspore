@@ -47,26 +47,7 @@ int ReshapeKernel::Run() {
     return RET_ERROR;
   }
 
-  if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
-      op_parameter_->is_train_session_ || out_tensor->IsGraphOutput()) {
-    UpdateTensorC();
-    auto ret = kernel_->compute(kernel_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Reshape compute failed.";
-    }
-    return ret;
-  }
-
-  out_tensor->FreeData();
-  out_tensor->ResetRefCount();
-  out_tensor->set_data(in_tensor->data());
-  if (in_tensor->IsConst()) {
-    out_tensor->set_own_data(false);
-  } else {
-    out_tensor->set_own_data(in_tensor->own_data());
-  }
-  return RET_OK;
+  return NNACLKernel::OptimizeDataCopy();
 }
 
 NNACL_KERNEL(PrimitiveType_Reshape, kNumberTypeInt32, NNACLOpt<ReshapeKernel>)

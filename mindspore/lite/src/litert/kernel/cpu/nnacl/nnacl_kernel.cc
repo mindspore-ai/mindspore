@@ -89,6 +89,31 @@ void NNACLKernel::UpdateTensorC() {
   }
 }
 
+int NNACLKernel::OptimizeDataCopy() {
+  auto input_tensor = in_tensors().front();
+  CHECK_NULL_RETURN(input_tensor);
+  CHECK_NULL_RETURN(input_tensor->data());
+  auto output_tensor = out_tensors().front();
+  CHECK_NULL_RETURN(output_tensor);
+  CHECK_NULL_RETURN(output_tensor->data());
+
+  if (input_tensor->allocator() == nullptr || input_tensor->allocator() != output_tensor->allocator() ||
+      input_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
+      op_parameter_->is_train_session_) {
+    return NNACLKernel::Run();
+  }
+
+  output_tensor->FreeData();
+  output_tensor->ResetRefCount();
+  output_tensor->set_data(input_tensor->data());
+  if (input_tensor->IsConst()) {
+    output_tensor->set_own_data(false);
+  } else {
+    output_tensor->set_own_data(input_tensor->own_data());
+  }
+  return RET_OK;
+}
+
 int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *ctx) {
   CHECK_NULL_RETURN(ctx);
 
