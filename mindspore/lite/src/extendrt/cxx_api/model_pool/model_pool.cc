@@ -436,12 +436,14 @@ std::shared_ptr<Context> ModelPool::CopyContext(const std::shared_ptr<Context> &
       auto cpu_info = device->Cast<CPUDeviceInfo>();
       auto new_cpu_info = std::make_shared<CPUDeviceInfo>();
       new_cpu_info->SetEnableFP16(cpu_info->GetEnableFP16());
+      new_cpu_info->SetProvider(cpu_info->GetProvider());
       new_device_list.push_back(new_cpu_info);
     } else if (device->GetDeviceType() == DeviceType::kGPU) {
       auto gpu_info = device->Cast<GPUDeviceInfo>();
       auto new_gpu_info = std::make_shared<GPUDeviceInfo>();
       new_gpu_info->SetEnableFP16(gpu_info->GetEnableFP16());
       new_gpu_info->SetDeviceID(gpu_info->GetDeviceID());
+      new_gpu_info->SetProvider(gpu_info->GetProvider());
       new_device_list.push_back(new_gpu_info);
     } else if (device->GetDeviceType() == DeviceType::kAscend) {
       auto asscend_info = device->Cast<AscendDeviceInfo>();
