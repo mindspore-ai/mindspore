@@ -297,6 +297,11 @@ foreach(comp ${ALL_UT_COMPS})
     add_dependencies(_ut_${comp}_obj engine-cache-server)
     set(ut_${comp}_objects $<TARGET_OBJECTS:_ut_${comp}_obj> $<TARGET_OBJECTS:_ut_obj> ${CORE_OBJECT_LIST})
     add_executable(ut_${comp}_tests ${ut_${comp}_objects})
+    # ci envs have no enough memory, so make link target sequentially
+    if(LAST_COMP)
+        add_dependencies(ut_${comp}_tests ${LAST_COMP})
+    endif()
+    set(LAST_COMP ut_${comp}_tests)
     target_link_libraries(ut_${comp}_tests PRIVATE -Wl,--start-group mindspore backend_static proto_input
             _ut_mindspore_obj -Wl,--end-group proto_input_ut)
 
