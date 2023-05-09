@@ -34,26 +34,7 @@ int StridedSliceKernel::Run() {
     return NNACLKernel::Run();
   }
 
-  auto input_tensor = in_tensors().front();
-  CHECK_NULL_RETURN(input_tensor);
-  auto output_tensor = out_tensors().front();
-  CHECK_NULL_RETURN(output_tensor);
-
-  if (input_tensor->allocator() == nullptr || input_tensor->allocator() != output_tensor->allocator() ||
-      input_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
-      op_parameter_->is_train_session_) {
-    return NNACLKernel::Run();
-  }
-
-  output_tensor->FreeData();
-  output_tensor->ResetRefCount();
-  output_tensor->set_data(input_tensor->data());
-  if (input_tensor->IsConst()) {
-    output_tensor->set_own_data(false);
-  } else {
-    output_tensor->set_own_data(input_tensor->own_data());
-  }
-  return RET_OK;
+  return NNACLKernel::OptimizeDataCopy();
 }
 
 NNACL_KERNEL(PrimitiveType_StridedSlice, kNumberTypeFloat32, NNACLOpt<StridedSliceKernel>)

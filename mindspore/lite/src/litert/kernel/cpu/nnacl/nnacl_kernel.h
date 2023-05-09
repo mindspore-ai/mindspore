@@ -39,6 +39,7 @@ class NNACLKernel : public kernel::LiteKernel {
 
  protected:
   void UpdateTensorC();
+  int OptimizeDataCopy();
 
  protected:
   KernelBase *kernel_ = nullptr;
