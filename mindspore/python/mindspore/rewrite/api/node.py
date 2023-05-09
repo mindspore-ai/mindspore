@@ -65,17 +65,17 @@ class Node:
             targets (list[ScopedValue]): Indicate output names. Used as targets of an assign statement in source code.
                 Rewrite will check and ensure the uniqueness of each target while node being inserted.
             args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
-                source code. Default is None indicate the `cell` has no args inputs. Rewrite will check and ensure the
-                uniqueness of each arg while node being inserted.
+                source code. Rewrite will check and ensure the uniqueness of each arg while node being inserted.
+                Default: ``None`` , which indicates the `cell` has no args inputs.
             kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
-                Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source code.
-                Default is None indicate the `cell` has no kwargs inputs. Rewrite will check and ensure the uniqueness
-                of each kwarg while node being inserted.
+                Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source
+                code. Rewrite will check and ensure the uniqueness of each kwarg while node being inserted.
+                Default: ``None`` , which indicates the `cell` has no kwargs inputs.
             name (str): Indicate the name of node. Used as field name in source code. Default is None. Rewrite will
                 generate name from `targets` when name is None. Rewrite will check and ensure the uniqueness of `name`
-                while node being inserted.
-            is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse the
-                `cell` to a TreeNode, else a CallCell Node. Default is a False.
+                while node being inserted. Default: ``""`` .
+            is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse
+                the `cell` to a TreeNode, otherwise the `cell` is parsed to a CallCell node. Default: ``False`` .
 
         Returns:
             An instance of `Node`.
