@@ -17,6 +17,7 @@
 #include "ops/unstack.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "abstract/utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
@@ -32,84 +33,95 @@ void Unstack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unstack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t Unstack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
+namespace {
+size_t GetUnstackAxis(const std::vector<int64_t> &x_shape, const PrimitivePtr &primitive) {
+  auto x_rank = SizeToLong(x_shape.size());
+  auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, primitive->name());
+  return axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
+}
+
+bool IsDynamicOutputs(const std::vector<int64_t> &x_shape, const PrimitivePtr &primitive) {
+  if (IsDynamicRank(x_shape)) {
+    return true;
+  }
+  auto rank = x_shape.size();
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", rank, kGreaterEqual, 1, primitive->name());
+  auto axis = GetUnstackAxis(x_shape, primitive);
+  return x_shape[axis] == -1;
+}
+
+TypePtr UnstackInferType(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name,
+                         int64_t output_num) {
+  auto type = input_args[kInputIndex0]->BuildType();
+  std::vector<TypePtr> type_tuple;
+  for (int64_t i = 0; i < output_num; ++i) {
+    type_tuple.push_back(type);
+  }
+  return std::make_shared<Tuple>(type_tuple);
+}
+
+BaseShapePtr UnstackInferShape(const std::vector<int64_t> &x_shape, size_t axis) {
+  auto temp_shape = x_shape;
+  (void)temp_shape.erase(temp_shape.begin() + SizeToLong(axis));
+  std::vector<abstract::BaseShapePtr> shape_tuple;
+  auto output_num = x_shape[axis];
+  for (int64_t i = 0; i < output_num; ++i) {
+    abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(temp_shape);
+    shape_tuple.push_back(out_shape);
+  }
+  return std::make_shared<abstract::TupleShape>(shape_tuple);
+}
+
+AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, prim_name);
+  auto type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool,
+                                                   prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (!IsDynamicOutputs(x_shape, primitive)) {
+    auto unstack_axis = GetUnstackAxis(x_shape, primitive);
+    auto output_num = x_shape[unstack_axis];
+    (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
+    (void)primitive->AddAttr(kAttrNum, MakeValue(output_num));
+    auto output_type = UnstackInferType(input_args, prim_name, output_num);
+    auto output_shape = UnstackInferShape(x_shape, unstack_axis);
+    return abstract::MakeAbstract(output_shape, output_type);
+  }
+  // process dynamic num of outputs case
+  BaseShapePtr shape;
+  if (IsDynamicRank(x_shape)) {
+    shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  } else {  // the axis corresponding dim equals -1
+    auto unstack_axis = GetUnstackAxis(x_shape, primitive);
+    shape = UnstackInferShape(x_shape, unstack_axis);
+  }
+  auto output = std::make_shared<abstract::AbstractTensor>(type, shape);
+  AbstractBasePtrList output_list = {output};
+  auto output_abs_tuple = std::make_shared<abstract::AbstractTuple>(output_list);
+  output_abs_tuple->set_dynamic_len(true);
+  output_abs_tuple->set_dynamic_len_element_abs(output);
+  return output_abs_tuple;
+}
+}  // namespace
 class UnstackInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, primitive->name());
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-
-    auto output_num = GetValue<int64_t>(primitive->GetAttr(kAttrNum));
-    auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
-    std::vector<abstract::BaseShapePtr> shape_tuple;
-
-    auto temp_shape = x_shape;
-    if (IsDynamicRank(x_shape)) {
-      for (int64_t i = 0; i < output_num; ++i) {
-        abstract::ShapePtr output =
-          std::make_shared<abstract::Shape>(std::vector<int64_t>(1, abstract::Shape::kShapeRankAny));
-        shape_tuple.push_back(output);
-      }
-      return std::make_shared<abstract::TupleShape>(shape_tuple);
-    }
-    auto x_rank = SizeToLong(x_shape.size());
-    auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
-    if (axis >= x_shape.size()) {
-      MS_LOG(EXCEPTION) << "Axis should be less than " << x_rank << ", but got " << axis;
-    }
-    (void)temp_shape.erase(temp_shape.begin() + SizeToLong(axis));
-    if (!IsDynamic(x_shape)) {
-      auto output_num_from_shape = x_shape[axis];
-      auto name = primitive->name();
-      (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kEqual, output_num_from_shape, name);
-    }
-
-    for (int64_t i = 0; i < output_num; ++i) {
-      abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(temp_shape);
-      shape_tuple.push_back(out_shape);
-    }
-    return std::make_shared<abstract::TupleShape>(shape_tuple);
+    return UnstackInferInner(primitive, input_args)->BuildShape();
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, primitive->name());
-    auto name = primitive->name();
-    auto type = input_args[kInputIndex0]->BuildType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool, name);
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnstackInferInner(prim, input_args)->BuildType();
+  }
 
-    int64_t output_num = 1;
-    auto num_value = primitive->GetAttr(kAttrNum);
-    MS_EXCEPTION_IF_NULL(num_value);
-    if (!num_value->isa<None>()) {
-      output_num = GetValue<int64_t>(num_value);
-      (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 1, name);
-    } else {
-      // Num attr is None, try to infer output num from shape.
-      auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-      if (!IsDynamicRank(x_shape)) {
-        auto x_rank = SizeToLong(x_shape.size());
-        (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, name);
-
-        auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
-        CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, name);
-        auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
-
-        output_num = x_shape[axis];
-      }
-      (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 1, name);
-      (void)primitive->AddAttr(kAttrNum, MakeValue(output_num));
-    }
-
-    std::vector<TypePtr> type_tuple;
-    for (int64_t i = 0; i < output_num; ++i) {
-      type_tuple.push_back(type);
-    }
-    return std::make_shared<Tuple>(type_tuple);
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return UnstackInferInner(primitive, input_args);
   }
 };
-
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Unstack, prim::kPrimUnstack, UnstackInfer, false);
 }  // namespace ops
 }  // namespace mindspore
