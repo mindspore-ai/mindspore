@@ -19,7 +19,7 @@ mindspore.ops.gaussian_nll_loss
         - **target** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `x` 具有相同shape，或者相同shape但有一个维度为1（以允许广播）。
         - **var** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `x` 具有相同shape，或者相同shape但有一个维度为1，或者少一个维度（以允许广播）。
         - **full** (bool，可选) - 指定损失函数中的常数部分。如果 :math:`full=True` ，则常数为 :math:`const = 0.5*log(2\pi)`。默认值： ``False``。
-        - **eps** (float，可选) - 用于提高log的稳定性，必须大于0。默认值：1e-6。
+        - **eps** (float，可选) - 用于提高log的稳定性，必须大于0。默认值： ``1e-6`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的计算方式，支持 ``'none'``、 ``'mean'``、 ``'sum'``，默认值： ``'mean'`` 。
 
     返回：

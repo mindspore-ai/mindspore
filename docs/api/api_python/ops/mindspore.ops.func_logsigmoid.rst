@@ -8,7 +8,7 @@ mindspore.ops.logsigmoid
     logsigmoid定义为：
 
     .. math::
-        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
     其中，:math:`x_{i}` 是输入Tensor的一个元素。
 

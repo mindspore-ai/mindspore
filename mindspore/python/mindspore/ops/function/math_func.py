@@ -5831,7 +5831,7 @@ def cdist(x1, x2, p=2.0):
           [float32, float64] on GPU, or [float32] on CPU.
         x2 (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x1`.
         p (float, optional): P value for the p-norm distance to calculate between each
-          vector pair, P ∈ [0,∞]. Default: 2.0.
+          vector pair, P ∈ [0,∞]. Default: ``2.0`` .
 
     Returns:
         Tensor, p-norm distance, has the same dtype as `x1`, its shape is :math:`(B, P, R)`.
@@ -7119,7 +7119,7 @@ def dist(input, other, p=2):
     Args:
         input (Tensor): The first input tensor. The dtype must be float16 or float32.
         other (Tensor): The second input tensor. The dtype must be float16 or float32.
-        p (int, optional): The order of norm. `p` is greater than or equal to 0. Default: 2.
+        p (int, optional): The order of norm. `p` is greater than or equal to 0. Default: ``2`` .
 
     Returns:
         Tensor, has the same dtype as `input`, which shape is :math:`(1)`.
@@ -8128,10 +8128,10 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
-        tau (float): The scalar temperature, which is a positive number. Default: 1.0.
+        tau (float): The scalar temperature, which is a positive number. Default: ``1.0`` .
         hard (bool): if `True`, the returned samples will be discretized as one-hot vectors, but will be differentiated
-          as if it is the soft sample in autograd. Default: False.
-        dim (int): Dim for softmax to compute. Default: -1.
+          as if it is the soft sample in autograd. Default: ``False`` .
+        dim (int): Dim for softmax to compute. Default: ``-1`` .
 
     Returns:
         Tensor, has the same dtype and shape as `logits`.
