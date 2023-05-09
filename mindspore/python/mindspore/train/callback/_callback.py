@@ -113,6 +113,7 @@ class Callback:
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> model.train(1, dataset, callbacks=print_cb)
+        step_num: 1
         step_num: 2
     """
 
