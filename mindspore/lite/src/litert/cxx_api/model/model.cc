@@ -46,7 +46,6 @@ extern void mindspore_log_init();
 }
 #endif
 
-std::mutex g_impl_init_lock;
 #ifdef ENABLE_OPENSSL
 Status DecryptModel(const std::string &cropto_lib_path, const void *model_buf, size_t model_size, const Key &dec_key,
                     const std::string &dec_mode, std::unique_ptr<Byte[]> *decrypt_buffer, size_t *decrypt_len) {
@@ -69,18 +68,9 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    if (impl_ == nullptr) {
-#ifdef USE_GLOG
-      mindspore::mindspore_log_init();
-#endif
-      impl_ = std::make_shared<ModelImpl>();
-      if (impl_ == nullptr) {
-        MS_LOG(ERROR) << "Model implement is null.";
-        return kLiteFileError;
-      }
-    }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   if (dec_key.len > 0) {
     std::unique_ptr<Byte[]> decrypt_buffer;
@@ -135,18 +125,9 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    if (impl_ == nullptr) {
-#ifdef USE_GLOG
-      mindspore::mindspore_log_init();
-#endif
-      impl_ = std::make_shared<ModelImpl>();
-      if (impl_ == nullptr) {
-        MS_LOG(ERROR) << "Model implement is null.";
-        return kLiteFileError;
-      }
-    }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   Status ret;
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
@@ -183,18 +164,9 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    if (impl_ == nullptr) {
-#ifdef USE_GLOG
-      mindspore::mindspore_log_init();
-#endif
-      impl_ = std::make_shared<ModelImpl>();
-      if (impl_ == nullptr) {
-        MS_LOG(ERROR) << "Model implement is null.";
-        return kLiteFileError;
-      }
-    }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   if (dec_key.len > 0) {
     size_t model_size;
@@ -259,18 +231,9 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
-  {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    if (impl_ == nullptr) {
-#ifdef USE_GLOG
-      mindspore::mindspore_log_init();
-#endif
-      impl_ = std::make_shared<ModelImpl>();
-      if (impl_ == nullptr) {
-        MS_LOG(ERROR) << "Model implement is null.";
-        return kLiteFileError;
-      }
-    }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
   Status ret;
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
@@ -306,18 +269,9 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   std::stringstream err_msg;
-  {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    if (impl_ == nullptr) {
-#ifdef USE_GLOG
-      mindspore::mindspore_log_init();
-#endif
-      impl_ = std::make_shared<ModelImpl>();
-      if (impl_ == nullptr) {
-        MS_LOG(ERROR) << "Model implement is null.";
-        return kLiteFileError;
-      }
-    }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
 
   if (graph.GetGraph() == nullptr) {
@@ -421,7 +375,15 @@ bool Model::HasPreprocess() {
   return false;
 }
 
-Model::Model() : impl_(nullptr) {}
+Model::Model() {
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
+  impl_ = std::make_shared<ModelImpl>();
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to create ModelImpl";
+  }
+}
 
 Model::~Model() {}
 
@@ -505,16 +467,9 @@ std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_
 }
 
 Status Model::LoadConfig(const std::vector<char> &config_path) {
-  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-  if (impl_ != nullptr) {
-    MS_LOG(ERROR) << "impl_ illegal in LoadConfig.";
-    return Status(kLiteFileError, "Illegal operation.");
-  }
-
-  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
-    return Status(kLiteFileError, "Fail to load config file.");
+    return kLiteNullptr;
   }
 
   auto ret = impl_->LoadConfig(CharToString(config_path));
@@ -527,15 +482,11 @@ Status Model::LoadConfig(const std::vector<char> &config_path) {
 
 Status Model::UpdateConfig(const std::vector<char> &section,
                            const std::pair<std::vector<char>, std::vector<char>> &config) {
-  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
   if (impl_ == nullptr) {
-    impl_ = std::make_shared<ModelImpl>();
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
-  if (impl_ != nullptr) {
-    return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
-  }
-  MS_LOG(ERROR) << "Model implement is null!";
-  return kLiteFileError;
+  return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
 }
 
 Status Model::SetTrainMode(bool train) {

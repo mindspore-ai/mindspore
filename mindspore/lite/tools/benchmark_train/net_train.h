@@ -296,7 +296,7 @@ class MS_API NetTrain {
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
 
-  mindspore::Model ms_model_;
+  std::shared_ptr<mindspore::Model> ms_model_ = nullptr;
   std::vector<mindspore::MSTensor> ms_inputs_for_api_;
 
   mindspore::MSKernelCallBack before_call_back_{nullptr};

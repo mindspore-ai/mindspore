@@ -57,7 +57,7 @@ class MS_API Model {
   /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
   /// iterations. \param[in] model_context Define the context used to store options during execution.
   ///
-  /// \return Status.
+  /// \return Status. kSuccess: build success, kLiteModelRebuild: build model repeatedly, Other: other types of errors.
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr);
 
@@ -69,7 +69,7 @@ class MS_API Model {
   /// ModelType::kMindIR and ModelType::kMindIR_Lite, but option odelType::kMindIR_Lite will be removed in future
   /// iterations. \param[in] model_context Define the context used to store options during execution.
   ///
-  /// \return Status.
+  /// \return Status. kSuccess: build success, kLiteModelRebuild: build model repeatedly, Other: other types of errors.
   inline Status Build(const std::string &model_path, ModelType model_type,
                       const std::shared_ptr<Context> &model_context = nullptr);
 
@@ -84,7 +84,7 @@ class MS_API Model {
   /// Define the key used to decrypt the ciphertext model. The key length is 16. \param[in] dec_mode Define the
   /// decryption mode. Options: AES-GCM. \param[in] cropto_lib_path Define the openssl library path.
   ///
-  /// \return Status.
+  /// \return Status. kSuccess: build success, kLiteModelRebuild: build model repeatedly, Other: other types of errors.
   inline Status Build(const void *model_data, size_t data_size, ModelType model_type,
                       const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
                       const std::string &cropto_lib_path);
@@ -99,7 +99,7 @@ class MS_API Model {
   /// Define the key used to decrypt the ciphertext model. The key length is 16. \param[in] dec_mode Define the
   /// decryption mode. Options: AES-GCM. \param[in] cropto_lib_path Define the openssl library path.
   ///
-  /// \return Status.
+  /// \return Status. kSuccess: build success, kLiteModelRebuild: build model repeatedly, Other: other types of errors.
   inline Status Build(const std::string &model_path, ModelType model_type,
                       const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
                       const std::string &cropto_lib_path);
@@ -292,7 +292,7 @@ class MS_API Model {
 
   /// \brief Initialize object with metrics.
   ///
-  /// \param[in] metrics A verctor of metrics objects.
+  /// \param[in] metrics A vector of metrics objects.
   ///
   /// \return 0 on success or -1 in case of error
   Status InitMetrics(std::vector<Metrics *> metrics);

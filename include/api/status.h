@@ -80,6 +80,7 @@ enum StatusCode : uint32_t {
   kLiteUninitializedObj = kLite | (0x0FFFFFFF & -9), /**< Object is not initialized. */
   kLiteFileError = kLite | (0x0FFFFFFF & -10),       /**< Invalid file. */
   kLiteServiceDeny = kLite | (0x0FFFFFFF & -11),     /**< Denial of service. */
+  kLiteModelRebuild = kLite | (0x0FFFFFFF & -12),    /**< Model has been built. */
 
   // Executor error code, range: [-100,-200)
   kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100), /**< Failed to check range. */
