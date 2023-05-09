@@ -15,14 +15,7 @@
  */
 #include "extendrt/infer_session.h"
 
-#include "extendrt/session/single_op_session.h"
 #include "plugin/factory/ms_factory.h"
-#include "kernel/common_utils.h"
-#include "backend/graph_compiler/graph_partition.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
-#include "extendrt/utils/kernel_graph_utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
@@ -109,6 +102,9 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
       if (device_context->GetDeviceType() == kAscend) {
         if (device_context->GetProvider() == "ge") {
           return kDelegateSession;
+        }
+        if (device_context->GetProvider() == "bisheng") {
+          return kBishengSession;
         }
         return kSingleOpSession;
       }

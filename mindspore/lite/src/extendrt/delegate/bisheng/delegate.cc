@@ -26,7 +26,7 @@ bool BishengDelegate::IsDelegateNode(const std::shared_ptr<AnfNode> &node) {
   return true;
 }
 
-std::shared_ptr<kernel::Kernel> BishengDelegate::CreateKernel(const std::shared_ptr<AnfNode> &node) {
+std::shared_ptr<kernel::BaseKernel> BishengDelegate::CreateKernel(const std::shared_ptr<AnfNode> &node) {
   // need to implementation
   return nullptr;
 }

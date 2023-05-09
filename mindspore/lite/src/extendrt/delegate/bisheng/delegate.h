@@ -30,7 +30,7 @@ class BishengDelegate : public ExtendDelegate {
 
   bool IsDelegateNode(const std::shared_ptr<AnfNode> &node) override;
 
-  std::shared_ptr<kernel::Kernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override;
+  std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override;
 };
 }  // namespace mindspore
 

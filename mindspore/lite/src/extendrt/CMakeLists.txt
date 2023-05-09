@@ -87,6 +87,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
             )
     endif()
+    if(MSLITE_ENABLE_ACL)
+        set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+                ${CMAKE_CURRENT_SOURCE_DIR}/session/bisheng_session.cc
+                )
+    endif()
     include_directories("${CCSRC_DIR}/ps/core")
     file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CCSRC_DIR}/ps/core/protos/*.proto")
     ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})
@@ -148,8 +153,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
         ${CCSRC_DIR}/kernel/oplib/oplib.cc
         ${CCSRC_DIR}/kernel/oplib/super_bar.cc
-        ${CCSRC_DIR}/common/debug/anf_dump_utils.cc
-        ${CCSRC_DIR}/common/debug/anf_ir_dump.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mock/anf_ir_dump.cc
         ${CCSRC_DIR}/common/debug/common.cc
         ${CCSRC_DIR}/common/debug/env_config_parser.cc
         ${CCSRC_DIR}/backend/common/mem_reuse/mem_dynamic_allocator.cc
@@ -259,6 +263,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         include_directories(${TOP_DIR}/graphengine/910/inc/external)
         add_subdirectory(kernel/ascend)
         add_subdirectory(delegate/ascend_ge)
+        add_subdirectory(delegate/bisheng)
+        target_link_libraries(mindspore-extendrt ascend_bisheng_plugin)
+        target_link_libraries(mindspore-extendrt_python ascend_bisheng_plugin)
     endif()
 
     if(SUPPORT_CUDA)
