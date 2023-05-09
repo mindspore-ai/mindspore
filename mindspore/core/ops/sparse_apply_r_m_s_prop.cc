@@ -93,13 +93,16 @@ TuplePtr SparseApplyRMSPropInferType(const PrimitivePtr &prim, const std::vector
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-
-  auto var_type = input_args[0]->BuildType();
-  auto ms_type = input_args[1]->BuildType();
-  auto mom_type = input_args[2]->BuildType();
-  auto lr_type = input_args[3]->BuildType();
-  auto grad_type = input_args[4]->BuildType();
-  auto indices_type = input_args[5]->BuildType();
+  if (!input_args[kInputIndex4]->BuildType()->isa<TensorType>() ||
+      !input_args[kInputIndex5]->BuildType()->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For SparseApplyRMSProp, 'grad' or 'indices' should be Tensor.";
+  }
+  auto var_type = input_args[kInputIndex0]->BuildType();
+  auto ms_type = input_args[kInputIndex1]->BuildType();
+  auto mom_type = input_args[kInputIndex2]->BuildType();
+  auto lr_type = input_args[kInputIndex3]->BuildType();
+  auto grad_type = input_args[kInputIndex4]->BuildType();
+  auto indices_type = input_args[kInputIndex5]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
 
   // Args ms、mom、grad must have the same type as var
