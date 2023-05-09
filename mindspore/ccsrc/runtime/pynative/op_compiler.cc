@@ -29,7 +29,15 @@ namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
-constexpr size_t kGraphInfoReserveLen = 128;
+static std::vector<std::string> kNumStrCache;
+
+inline std::string GetNumString(int n) {
+  if (n >= static_cast<int>(kNumStrCache.size())) {
+    return std::to_string(n);
+  }
+
+  return kNumStrCache[n];
+}
 
 void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
@@ -176,7 +184,12 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
 }
 }  // namespace
 
-OpCompiler::OpCompiler() { session_ = session::SessionFactory::Get().Create(kSessionBasic); }
+OpCompiler::OpCompiler() {
+  session_ = session::SessionFactory::Get().Create(kSessionBasic);
+  for (size_t i = 0; i < kNumberTypeEnd; i++) {
+    (void)kNumStrCache.emplace_back(std::to_string(i));
+  }
+}
 
 OpCompiler &OpCompiler::GetInstance() {
   static OpCompiler instance;
@@ -317,20 +330,19 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
                       << " should be equal to tensors mask size " << op_info.input_mask.size();
   }
   std::string graph_info = op_info.device_target;
-  graph_info.reserve(kGraphInfoReserveLen);
 
   if (op_info.use_dynamic_shape_process) {
     graph_info += "_1_";
   } else {
     graph_info += "_0_";
   }
-  graph_info.append(op_prim->name()).append("_");
+  graph_info += op_prim->name();
   bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
   for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
     const auto &input_tensor = op_info.input_tensor[index];
     MS_EXCEPTION_IF_NULL(input_tensor);
     if (op_info.use_dynamic_shape_process) {
-      graph_info += std::to_string(input_tensor->shape().size());
+      graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));
     } else {
       if (input_tensor->base_shape_ptr() != nullptr) {
         graph_info += input_tensor->base_shape_ptr()->ToString();
@@ -344,14 +356,14 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
         }
       }
     }
-    graph_info += std::to_string(input_tensor->data_type());
+
+    graph_info += GetNumString(input_tensor->data_type());
     graph_info += input_tensor->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
     auto tensor_addr = input_tensor->device_address();
     if (tensor_addr != nullptr && !has_hidden_side_effect) {
       auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
       MS_EXCEPTION_IF_NULL(p_address);
-      graph_info += std::to_string(p_address->type_id());
       graph_info += p_address->format();
     }
     // For constant input

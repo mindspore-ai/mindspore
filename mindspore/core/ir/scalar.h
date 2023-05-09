@@ -36,10 +36,15 @@ using std::fabs;
 
 namespace mindspore {
 template <typename T>
-inline std::string scalar_to_string(T v) {
+inline std::string scalar_float_to_string(T v) {
   std::stringstream ss;
   ss << v;
   return ss.str();
+}
+
+template <typename T>
+inline std::string scalar_to_string(T v) {
+  return std::to_string(v);
 }
 
 /// \brief Scalar defines interface for scalar data.
@@ -497,7 +502,7 @@ class MS_CORE_API FP32Imm final : public FloatImm {
   /// \return Return true if other's value and the value of current object are the same,else return false.
   bool operator==(const FP32Imm &other) const;
 
-  std::string ToString() const override { return scalar_to_string(v_); }
+  std::string ToString() const override { return scalar_float_to_string(v_); }
 
   std::string DumpText() const override {
     std::ostringstream oss;
@@ -537,7 +542,7 @@ class MS_CORE_API FP64Imm final : public FloatImm {
   /// \param[in] other The other FP64Imm to be compared with.
   /// \return Return true if other's value and the value of current object are the same,else return false.
   bool operator==(const FP64Imm &other) const;
-  std::string ToString() const override { return scalar_to_string(v_); }
+  std::string ToString() const override { return scalar_float_to_string(v_); }
 
   std::string DumpText() const override {
     std::ostringstream oss;
