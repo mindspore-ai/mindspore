@@ -21,7 +21,7 @@ from mindspore import Tensor, nn, ops
 
 class Net(nn.Cell):
     def construct(self, input_x, boundaries, right):
-        return ops.bucketize(input_x, boundaries, right)
+        return ops.bucketize(input_x, boundaries, right=right)
 
 
 @pytest.mark.level1
