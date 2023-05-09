@@ -54,7 +54,7 @@ class LambdaCallback(Callback):
         >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> lambda_callback = LambdaCallback(on_train_epoch_end=
-        ... lambda run_context: print("loss: ", run_context.original_args().net_outputs))
+        ... lambda run_context: print("loss:", run_context.original_args().net_outputs))
         >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[lambda_callback])
         loss: 1.6127687
