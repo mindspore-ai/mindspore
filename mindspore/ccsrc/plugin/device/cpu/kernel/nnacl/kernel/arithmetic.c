@@ -558,9 +558,7 @@ int arithmetic_resize(struct KernelBase *self) {
 
   arithmetic_release(&arithmetic->base_);
 
-  arithmetic->in_data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
   NNACL_CHECK_TRUE_RET(arithmetic->in_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
-  arithmetic->out_data_size_ = DataTypeCSize(self->out_[OUTPUT_INDEX]->data_type_);
   NNACL_CHECK_TRUE_RET(arithmetic->out_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
   arithmetic->in_elements_num0_ = GetElementNum(self->in_[FIRST_INPUT]);
   arithmetic->in_elements_num1_ = GetElementNum(self->in_[SECOND_INPUT]);
@@ -595,6 +593,10 @@ int arithmetic_prepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_[FIRST_INPUT]->data_type_ > kNumberTypeEnd, NNACL_ERR);
   NNACL_CHECK_FALSE(self->in_[SECOND_INPUT]->data_type_ > kNumberTypeEnd, NNACL_ERR);
   NNACL_CHECK_FALSE(self->in_[SECOND_INPUT]->data_type_ > kNumberTypeEnd, NNACL_ERR);
+
+  if (self->param_->quant_type_ != Quant_None) {
+    return NNACL_ERR;
+  }
 
   arithmetic->primitive_type_ = self->param_->type_;
   if (self->param_->type_ == PrimType_Eltwise) {
@@ -649,6 +651,8 @@ KernelBase *CreateArithmetic(OpParameter *param, int data_type) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)malloc(sizeof(ArithmeticStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(arithmetic);
   memset(arithmetic, 0, sizeof(ArithmeticStruct));
+  arithmetic->in_data_size_ = DataTypeCSize(data_type);
+  arithmetic->out_data_size_ = DataTypeCSize(data_type);
   arithmetic->block_boundary_infos_size_ = 0;
   arithmetic->a_matrix_.batch_post_sum_ = NULL;
   arithmetic->b_matrix_.batch_post_sum_ = NULL;
