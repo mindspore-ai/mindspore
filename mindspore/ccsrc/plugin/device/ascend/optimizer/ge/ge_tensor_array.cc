@@ -107,6 +107,11 @@ const AnfNodePtr GeTensorArrayCastIndex::Process(const FuncGraphPtr &graph, cons
   cast_abstract->set_type(dst_type);
   new_node->set_abstract(cast_abstract);
 
+  auto input_names = std::vector<std::string>{"x", "dst_type"};
+  auto output_names = std::vector<std::string>{"output"};
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), new_node);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), new_node);
+
   auto mgr = graph->manager();
   MS_EXCEPTION_IF_NULL(mgr);
   mgr->SetEdge(node, index_input_index, new_node);
