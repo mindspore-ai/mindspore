@@ -173,7 +173,7 @@ class Model:
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # Create the dataset taking MNIST as an example. Refer to
@@ -991,7 +991,7 @@ class Model:
             >>> # Define the network structure of LeNet5. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None,
@@ -1143,7 +1143,7 @@ class Model:
             >>> # Define the network structure of LeNet5. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics={"accuracy"})
             >>> model.fit(2, train_dataset, valid_dataset)
@@ -1407,7 +1407,7 @@ class Model:
             >>> # Define the network structure of LeNet5. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> acc = model.eval(dataset, dataset_sink_mode=False)
         """
@@ -1477,7 +1477,9 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
-            >>> model = Model(Net())
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> model = Model(LeNet5())
             >>> result = model.predict(input_data)
         """
         self._check_network_mode(self._predict_network, False)
