@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class BiasAddFP32Coder final : public OperatorCoder {

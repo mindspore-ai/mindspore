@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_OPS_OPERATOR_POPULATE_ARITHMETIC_POPULATE_H_
 #define MINDSPORE_LITE_SRC_COMMON_OPS_OPERATOR_POPULATE_ARITHMETIC_POPULATE_H_
 
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 namespace mindspore {
 namespace lite {

@@ -16,7 +16,7 @@
 
 #include "src/expression/ops/biasadd.h"
 #include "src/expression/ops/transpose.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "src/expression/import.h"
 
 namespace mindspore {

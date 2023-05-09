@@ -16,7 +16,6 @@
 
 #include "nnacl/kernel/arithmetic.h"
 #include "nnacl/op_base.h"
-#include "nnacl/arithmetic.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/mul_fp32.h"

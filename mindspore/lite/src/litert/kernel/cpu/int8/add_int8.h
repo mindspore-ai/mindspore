@@ -21,7 +21,7 @@
 #include <algorithm>
 #include "src/litert/lite_kernel.h"
 #include "nnacl/int8/add_int8.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 namespace mindspore::kernel {
 class QuantizedAddCPUKernel : public LiteKernel {

@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/infer/add_sub_grad_infer.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/infer/infer_register.h"
 
 int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,

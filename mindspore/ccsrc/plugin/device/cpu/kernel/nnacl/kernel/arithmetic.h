@@ -19,7 +19,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 typedef struct ArithmeticFuncions {
   int primitive_type_;

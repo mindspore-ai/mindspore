@@ -15,7 +15,7 @@
  */
 #include "common/common_test.h"
 #include "nnacl/infer/max_min_grad_infer.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 namespace mindspore {
 

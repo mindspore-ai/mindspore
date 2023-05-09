@@ -17,7 +17,7 @@
 #include "src/litert/kernel/cpu/int8/arithmetic_int8.h"
 #include "src/litert/kernel/cpu/int8/add_int8.h"
 #include "src/litert/kernel/cpu/int8/mul_int8.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"

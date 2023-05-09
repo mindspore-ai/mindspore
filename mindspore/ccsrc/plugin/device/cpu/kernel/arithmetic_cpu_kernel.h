@@ -24,7 +24,7 @@
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/nnacl/arithmetic.h"
+#include "plugin/device/cpu/kernel/nnacl/arithmetic_parameter.h"
 
 namespace mindspore {
 namespace kernel {

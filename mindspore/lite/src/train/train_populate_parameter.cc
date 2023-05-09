@@ -17,7 +17,7 @@
 #include "src/common/ops/populate/populate_register.h"
 #include "src/common/ops/populate/default_populate.h"
 #include "nnacl/strided_slice_parameter.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/power_parameter.h"
