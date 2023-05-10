@@ -443,6 +443,7 @@ from .nn_func import (
     dropout1d,
     dropout2d,
     dropout3d,
+    dense,
     deformable_conv2d,
     fast_gelu,
     flip,
