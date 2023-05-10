@@ -23,14 +23,14 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import SliceGetItem
 from ...operations._sequence_ops import SequenceSlice
 
-DOC_URL = "https://mindspore.cn/docs/zh-CN/master/note/index_support.html"
+DOC_URL = "https://mindspore.cn/search/en?inputValue=Index%20values"
 
-getitem = base.MultitypeFuncGraph('getitem', doc_url=DOC_URL)
+getitem = base.MultitypeFuncGraph('getitem')
 """
 getitem is a metafuncgraph object which will get item from an object according to input type
 using ".register" decorator.
 """
-
+getitem.set_doc_url(DOC_URL)
 slice_getitem = SliceGetItem()
 sequence_slice = SequenceSlice()
 
