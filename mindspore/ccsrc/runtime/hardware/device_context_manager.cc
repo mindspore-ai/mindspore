@@ -365,7 +365,9 @@ const DeviceContext *FetchRealDeviceContext(const CNodePtr &node, const DeviceCo
 
 DeviceContextManager &DeviceContextManager::GetInstance() {
   static DeviceContextManager instance{};
+#ifdef WITH_BACKEND
   instance.LoadPlugin();
+#endif
   return instance;
 }
 
