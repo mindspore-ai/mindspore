@@ -1295,7 +1295,7 @@ class AdaptiveAvgPool2d(Cell):
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
-            `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+            `output_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
             If it is None, it means the output size is the same as the input size.
 
     Inputs:
@@ -1358,7 +1358,7 @@ class AdaptiveAvgPool3d(Cell):
         \end{array}
 
     Args:
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
             or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
 
@@ -1514,7 +1514,7 @@ class AdaptiveMaxPool2d(Cell):
         Ascend platform only supports float16 type for input.
 
     Args:
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
         return_indices (bool): If `return_indices` is True, the indices of max value would be output.

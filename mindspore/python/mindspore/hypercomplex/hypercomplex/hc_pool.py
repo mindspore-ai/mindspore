@@ -556,7 +556,7 @@ class _AdaptivePoolNd(nn.Cell):
         The size of every spatial dimension of `inp` must be divisible by the corresponding value of `output_size`.
 
     Args:
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple of length being equal to
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple of length being equal to
             the  count of spatial dimensions of the input tensor, or a single integer which then represents the desired
             output size for all of the spatial dimensions at once, or None.
             If it is None, it means the output size is the same as the input size.
@@ -724,7 +724,7 @@ class AdaptiveAvgPool2d(_AdaptivePoolNd):
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
-            `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+            `output_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
             If it is None, it means the output size is the same as the input size.
 
     Inputs:
@@ -959,7 +959,7 @@ class AdaptiveMaxPool2d(_AdaptivePoolNd):
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
+            output_size can be a tuple, or a single H for H x H, and H and W can be int or None
             which means the output size is the same as the input.
 
         return_indices (bool): If `return_indices` is True, the indices of max value would be output.

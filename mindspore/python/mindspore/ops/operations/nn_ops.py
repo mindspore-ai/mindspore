@@ -226,7 +226,7 @@ class AdaptiveAvgPool2D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
 
     Args:
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
 
@@ -300,7 +300,7 @@ class AdaptiveMaxPool2D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_max_pool2d` for more details.
 
     Args:
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
 
