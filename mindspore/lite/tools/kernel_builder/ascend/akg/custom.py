@@ -26,6 +26,7 @@ from impl.util.util_select_op_base import gen_param
 from impl.util.util_select_op_base import get_dynamic_param_in_json
 
 BLOCK = 16
+FP16_MAX = 65504
 
 
 def copy_shape(shape):
@@ -83,11 +84,30 @@ class OpInfer:
             raise KeyError("Can not find attr '{}' in op '{}'".format(key, self.name))
         self.attr.get(key)["value"] = value
 
+    def supported_type(self):
+        """get the supported data type of current op"""
+        keep_fp32 = False
+        for item in self.input_desc:
+            # check if type can reduce precision
+            value = item.get("value", None)
+            if item["data_type"] == "float32" and value is not None and abs(value) > FP16_MAX:
+                keep_fp32 = True
+                break
+        io_type = ",".join([t["data_type"] for t in self.input_desc] + [t["data_type"] for t in self.output_desc])
+        fp32_type = io_type.replace("float16", "float32")
+        fp16_type = io_type.replace("float32", "float16")
+        supported_types = [io_type]
+        if fp32_type not in supported_types:
+            supported_types.append(fp32_type)
+        if not keep_fp32 and fp16_type not in supported_types:
+            supported_types.append(fp16_type)
+        return supported_types
+
     def supported_format(self):
-        """get the supported format of current of"""
+        """get the supported format of current op"""
         io_num = len(self.input_desc) + len(self.output_desc)
         nd = ["ND"] * io_num
-        return ",".join(nd)
+        return [",".join(nd)]
 
     def infer_type(self):
         """infer data type"""
@@ -292,6 +312,14 @@ class ReduceSum(OpInfer):
             else:
                 out_shape.append(s)
         return out_shape
+
+    def supported_type(self):
+        in_type = self.input_desc[0]["data_type"]
+        if in_type == "float16":
+            return ["float16,float16", "float32,float32"]
+        if in_type == "float32":
+            return ["float32,float32"]
+        return ",".join([in_type, in_type])
 
     def supported_format(self):
         supported_formats = ["ND,ND"]
@@ -504,15 +532,17 @@ def update_akg_info(args, kernel_name, info_path):
         return save_path
 
 
-def search_supported_formats(info):
-    """Get the supported formats of the fused info file"""
+def search_supported_types_formats(info):
+    """Get the supported data types and formats of the fused info file"""
 
     class DfsSearcher:
         """Use DFS"""
 
         def __init__(self, top_io_names, ops_desc):
+            self.supported_types = []
             self.supported_formats = []
             self.top_io_names = top_io_names
+            self.tensor_types = {}
             self.tensor_formats = {}
             self.ops_desc = ops_desc
             self.cache = []
@@ -523,6 +553,14 @@ def search_supported_formats(info):
                 if self.tensor_formats.get(io_names[i], fmt) != fmt:
                     return False
                 self.tensor_formats[io_names[i]] = fmt
+            return True
+
+        def set_current_type(self, cur_type, io_names):
+            """set tensor data type"""
+            for i, data_type in enumerate(cur_type):
+                if self.tensor_types.get(io_names[i], data_type) != data_type:
+                    return False
+                self.tensor_types[io_names[i]] = data_type
             return True
 
         def get_desc(self, opid):
@@ -537,68 +575,51 @@ def search_supported_formats(info):
                 raise KeyError("Not supported op: {}".format(op_name))
             prim = prims.get(op_name)(desc)
             io_formats = [f.split(",") for f in prim.supported_format()]
-            self.cache.append((io_formats, tuple(io_names)))
+            io_types = [t.split(",") for t in prim.supported_type()]
+            self.cache.append((io_formats, io_types, tuple(io_names)))
             return self.cache[-1]
 
-        def search(self, opid):
+        def search_types(self, opid):
+            """search the supported types"""
+            if opid == len(self.ops_desc):
+                top_tensor_types = tuple(self.tensor_types.get(t) for t in self.top_io_names)
+                self.supported_types.append(top_tensor_types)
+                return
+            _, op_io_types, io_names = self.get_desc(opid)
+            for cur_type in op_io_types:
+                bak_tensor_types = copy.deepcopy(self.tensor_types)
+                if self.set_current_type(cur_type, io_names):
+                    self.search_types(opid + 1)
+                self.tensor_types = bak_tensor_types
+
+        def search_formats(self, opid):
             """search the supported formats"""
             if opid == len(self.ops_desc):
                 top_tensor_formats = tuple(self.tensor_formats.get(t) for t in self.top_io_names)
                 self.supported_formats.append(top_tensor_formats)
                 return
-            op_ioformats, io_names = self.get_desc(opid)
-            for cur_format in op_ioformats:
+            op_io_formats, _, io_names = self.get_desc(opid)
+            for cur_format in op_io_formats:
                 bak_tensor_formats = copy.deepcopy(self.tensor_formats)
                 if self.set_current_format(cur_format, io_names):
-                    self.search(opid + 1)
+                    self.search_formats(opid + 1)
                 self.tensor_formats = bak_tensor_formats
+
+    def remove_dup(data):
+        res = []
+        data_str = []
+        for _, t in enumerate(data):
+            t_str = ",".join(t)
+            if t_str not in data_str:
+                data_str.append(t_str)
+                res.append(t)
+        return res
 
     top_io_names = [t[0]["tensor_name"] for t in info["input_desc"]] + [t["tensor_name"] for t in info["output_desc"]]
     handle = DfsSearcher(top_io_names, info["op_desc"])
-    handle.search(0)
-    return handle.supported_formats
-
-
-def search_supported_types(info):
-    """
-    Get the supported data types of the fused info file.
-    Support type conversion between float16 and float32.
-    """
-
-    def _convert_element(data, src, dst):
-        res = []
-        for _, d in enumerate(data):
-            if d == src:
-                res.append(dst)
-            else:
-                res.append(d)
-        return res
-
-    io_type = []
-    for _, input_desc in enumerate(info["input_desc"]):
-        io_type.append(input_desc[0]["data_type"])
-    for _, output_desc in enumerate(info["output_desc"]):
-        io_type.append(output_desc["data_type"])
-    # note: let AKG process this
-    has_reduce = False
-    for op_desc in info["op_desc"]:
-        if op_desc["name"] == "ReduceSum":
-            has_reduce = True
-            break
-    if has_reduce:
-        io_types = [_convert_element(io_type, "float16", "float32")]
-    else:
-        io_types = [io_type,
-                    _convert_element(io_type, "float16", "float32"),
-                    _convert_element(io_type, "float32", "float16")]
-    supported_io_type = []
-    supported_io_type_str = []
-    for _, t in enumerate(io_types):
-        type_str = ",".join(t)
-        if type_str not in supported_io_type_str:
-            supported_io_type_str.append(type_str)
-            supported_io_type.append(t)
-    return supported_io_type
+    handle.search_types(0)
+    handle.search_formats(0)
+    return remove_dup(handle.supported_types), remove_dup(handle.supported_formats)
 
 
 def op_select_format(*args, **kwags):
@@ -607,8 +628,7 @@ def op_select_format(*args, **kwags):
     with open(info_path, 'r') as f:
         info_str = f.read()
         desc = json.loads(info_str)
-        supported_io_type = search_supported_types(desc)
-        supported_io_format = search_supported_formats(desc)
+        supported_io_type, supported_io_format = search_supported_types_formats(desc)
         input_num = len(desc["input_desc"])
         output_num = len(desc["output_desc"])
         param_list = []
