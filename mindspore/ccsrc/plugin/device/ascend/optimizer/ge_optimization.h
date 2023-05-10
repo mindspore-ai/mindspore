@@ -15,11 +15,12 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZATION_H_
+#include <string>
 #include "ir/func_graph.h"
 
 namespace mindspore {
 namespace opt {
-void GeOptimization(const FuncGraphPtr &func_graph);
+void GeOptimization(const FuncGraphPtr &func_graph, const std::string &phase_prefix);
 void ReduceOptimization(const FuncGraphPtr &func_graph);
 }  // namespace opt
 }  // namespace mindspore
