@@ -35,7 +35,7 @@ mindspore.nn.ProximalAdagrad
 
         - **accum** (float) - 累加器 `accum` 的初始值，起始值必须为零或正值。默认值：0.1。
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

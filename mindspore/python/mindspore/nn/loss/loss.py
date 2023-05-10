@@ -945,7 +945,7 @@ class SampledSoftmaxLoss(LossBase):
         num_true (int): The number of labels classes per training example. Default: 1.
         sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
-            Default to None, `UniformCandidateSampler` is applied.
+            Default to None, `UniformCandidateSampler` is applied. Default: None.
         remove_accidental_hits (bool): Whether to remove "accidental hits"
             where a sampled class equals to one of the labels classes. Default: True.
         seed (int): Random seed for candidate sampling. Default: 0
@@ -1893,8 +1893,8 @@ class HuberLoss(LossBase):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
-            Default: "mean". If `reduction` is "mean" or "sum", then output a scalar Tensor, if `reduction` is "none",
-            the shape of the output Tensor is the broadcasted shape.
+            If `reduction` is "mean" or "sum", then output a scalar Tensor, if `reduction` is "none",
+            the shape of the output Tensor is the broadcasted shape. Default: "mean".
         delta (Union[int, float]): The threshold to change between two type of loss.
             The value must be positive. Default: 1.0.
 
@@ -1980,7 +1980,7 @@ class TripletMarginLoss(LossBase):
         p (int, optional): The degree of norm for pairwise distance. Default: 2.
         eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
-            sample and negative sample. Default: "False".
+            sample and negative sample. Default: False.
         reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
             Default: "mean".
         margin (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair. Default: 1.0.

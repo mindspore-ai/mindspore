@@ -103,8 +103,8 @@ class LPPool1d(Cell):
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (int): The size of kernel window.
-        stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is stride, if the value is None, the default value `kernel_size` is used;
+        stride (int): The distance of kernel moving, an int number that represents the width of movement is stride.
+            If the value is None, the default value `kernel_size` is used. Default: None.
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
@@ -181,8 +181,8 @@ class LPPool2d(Cell):
             or a tuple of two int numbers that represent height and width respectively.
         stride(Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
-            represent height and width of movement respectively, if the value is None,
-            the default value `kernel_size` is used;
+            represent height and width of movement respectively, if the value is None, the default value
+            `kernel_size` is used. Default: None.
         ceil_mode(bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
@@ -596,7 +596,7 @@ class MaxPool1d(_PoolNd):
     Args:
         kernel_size (int): The size of kernel used to take the max value, Default: 1.
         stride (int): The distance of kernel moving, an int number that represents
-            the width of movement is stride, Default: 1.
+            the width of movement is stride. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same", "valid" or "pad", not case sensitive.
             Default: "valid".
 

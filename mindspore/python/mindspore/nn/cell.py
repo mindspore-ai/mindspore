@@ -542,7 +542,7 @@ class Cell(Cell_):
                              Support ["CPU", "GPU", "Ascend"]. Default: "Ascend".
             level (int): Option for parallel strategy infer algorithm, namely the object function, maximize computation
                          over communication ratio, maximize speed performance, minimize memory usage etc. It is not in
-                         use right now. Support ["0", "1", "2"]. Default: "0".
+                         use right now. Support ["0", "1", "2"]. Default: 0.
 
         Returns:
             Cell, the cell itself.
@@ -1460,7 +1460,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter.
         """
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
@@ -1475,7 +1475,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter. Default: None.
+                dataset. Users can also customize network attributes by this parameter.
         """
         self.add_flags(**flags)
         self._add_mixed_precision_flag_recursive(**flags)
