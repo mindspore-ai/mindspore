@@ -24,14 +24,14 @@ class JitConfig:
 
     Args:
         jit_level (str): Option for argument `level` for Optimization of lift graph.
-            Supports ["O0", "O1", "O2", "O3"]. Default: "O1".
+            Supports ["O0", "O1", "O2", "O3"]. Default: ``"O1"`` .
 
             - "O0": Basic optimization.
             - "O1": Manual optimization.
             - "O2": Manual optimization and graph computation fusion.
             - "O3": Performance optimization, no generalization guaranteed.
 
-        exc_mode (str): Mode for execute the network. Supports ["auto", "sink", "no_sink"]. Default: "auto".
+        exc_mode (str): Mode for execute the network. Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
 
             - "auto": Automatic Policies.
             - "sink": Build computational graphs with the sink mode.

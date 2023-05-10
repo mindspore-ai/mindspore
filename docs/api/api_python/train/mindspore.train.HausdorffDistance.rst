@@ -1,7 +1,7 @@
 mindspore.train.HausdorffDistance
 ============================================
 
-.. py:class:: mindspore.train.HausdorffDistance(distance_metric='euclidean', percentile=None, directed=False, crop=True)
+.. py:class:: mindspore.train.HausdorffDistance(distance_metric="euclidean", percentile=None, directed=False, crop=True)
 
     计算Hausdorff距离。Hausdorff距离是两个点集之间两点的最小距离的最大值，度量了两个点集间的最大不匹配程度。
 
@@ -15,10 +15,10 @@ mindspore.train.HausdorffDistance
     其中 :math:`h(A, B)` 表示，对A中的每个点a找到B集合里的最近点，这些最短距离的最大值为从A到B的单向Hausdorff距离，同理，:math:`h(B, A)` 为集合B到集合A中最近点的最大距离。Hausdoff距离是有方向性的，通常情况下 :math:`h(A, B)` 不等于 :math:`h(B, A)`。:math:`H(A, B)` 为双向Hausdorff距离。
 
     参数：
-        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard" 或 "taxicab"。默认值："euclidean"。
-        - **percentile** (float) - 0到100之间的浮点数。指定最终返回的Hausdorff距离的百分位数。默认值：None。
-        - **directed** (bool) - 如果为True，为单向Hausdorff距离，只计算h(y_pred, y)距离；如果为False，为双向Hausdorff距离，计算max(h(y_pred, y), h(y, y_pred))。默认值：False。
-        - **crop** (bool) - 是否裁剪输入图像，仅保留目标区域。为了保证y_pred和y的shape匹配，使用(y_pred | y)，即两图像的并集来确定bounding box。默认值：True。
+        - **distance_metric** (string) - 支持如下三种距离计算方法： "euclidean"、"chessboard" 或 "taxicab"。默认值： ``"euclidean"`` 。
+        - **percentile** (float) - 0到100之间的浮点数。指定最终返回的Hausdorff距离的百分位数。默认值： ``None`` 。
+        - **directed** (bool) - 如果为True，为单向Hausdorff距离，只计算h(y_pred, y)距离；如果为False，为双向Hausdorff距离，计算max(h(y_pred, y), h(y, y_pred))。默认值： ``False`` 。
+        - **crop** (bool) - 是否裁剪输入图像，仅保留目标区域。为了保证y_pred和y的shape匹配，使用(y_pred | y)，即两图像的并集来确定bounding box。默认值： ``True`` 。
 
     .. py:method:: clear()
 

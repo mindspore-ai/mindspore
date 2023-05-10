@@ -277,7 +277,7 @@ class Profiler:
             op_name (str or list): The primitive operator name to query.
             device_id (int, optional): ID of the target device. This parameter is optional during network training or
                 inference, and users can use device_id parameter to specify which card operator performance data to
-                parse. If this interface is used for offline data parsing, Default: 0.
+                parse. If this interface is used for offline data parsing, Default: ``0`` .
 
         Raises:
             TypeError: If the op_name parameter type is incorrect.

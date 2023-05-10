@@ -80,25 +80,26 @@ class CheckpointConfig:
         `keep_checkpoint_per_n_minutes` will be invalid.
 
     Args:
-        save_checkpoint_steps (int): Steps to save checkpoint. Default: 1.
+        save_checkpoint_steps (int): Steps to save checkpoint. Default: ``1`` .
         save_checkpoint_seconds (int): Seconds to save checkpoint.
-            Can't be used with save_checkpoint_steps at the same time. Default: 0.
-        keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: 5.
+            Can't be used with save_checkpoint_steps at the same time. Default: ``0`` .
+        keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: ``5`` .
         keep_checkpoint_per_n_minutes (int): Save the checkpoint file every `keep_checkpoint_per_n_minutes` minutes.
-            Can't be used with keep_checkpoint_max at the same time. Default: 0.
+            Can't be used with keep_checkpoint_max at the same time. Default: ``0`` .
         integrated_save (bool): Whether to merge and save the split Tensor in the automatic parallel scenario.
             Integrated save function is only supported in automatic parallel scene, not supported
-            in manual parallel. Default: True.
-        async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
+            in manual parallel. Default: ``True`` .
+        async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: ``False`` .
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
-            with the network in training, the initial value of saved_network will be saved. Default: None.
+            with the network in training, the initial value of saved_network will be saved. Default: ``None`` .
         append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and dict. The key
-            of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor. Default: None
+            of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor.
+            Default: ``None`` .
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
-                                      is not required. Default: None.
+                                      is not required. Default: ``None`` .
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
-                        mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
-        exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: False.
+                        mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
+        exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
 
     Raises:
         ValueError: If input parameter is not the correct type.
@@ -367,10 +368,10 @@ class ModelCheckpoint(Callback):
         parameters of the optimizer by default.
 
     Args:
-        prefix (str): The prefix name of checkpoint files. Default: "CKP".
+        prefix (str): The prefix name of checkpoint files. Default: ``'CKP'`` .
         directory (str): The path of the folder which will be saved in the checkpoint file.
-            By default, the file is saved in the current directory. Default: None.
-        config (CheckpointConfig): Checkpoint strategy configuration. Default: None.
+            By default, the file is saved in the current directory. Default: ``None`` .
+        config (CheckpointConfig): Checkpoint strategy configuration. Default: ``None`` .
 
     Raises:
         ValueError: If `prefix` is not str or contains the '/' character.

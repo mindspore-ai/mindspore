@@ -30,18 +30,18 @@ class LambdaCallback(Callback):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        on_train_epoch_begin (Function): called at each train epoch begin.
-        on_train_epoch_end (Function): called at each train epoch end.
-        on_train_step_begin (Function):  called at each train step begin.
-        on_train_step_end (Function): called at each train step end.
-        on_train_begin (Function): called at the beginning of model train.
-        on_train_end (Function): called at the end of model train.
-        on_eval_epoch_begin (Function): called at eval epoch begin.
-        on_eval_epoch_end (Function): called at eval epoch end.
-        on_eval_step_begin (Function): called at each eval step begin.
-        on_eval_step_end (Function): called at each eval step end.
-        on_eval_begin (Function): called at the beginning of model eval.
-        on_eval_end (Function): called at the end of model eval.
+        on_train_epoch_begin (Function): called at each train epoch begin. Default: ``None`` .
+        on_train_epoch_end (Function): called at each train epoch end. Default: ``None`` .
+        on_train_step_begin (Function):  called at each train step begin. Default: ``None`` .
+        on_train_step_end (Function): called at each train step end. Default: ``None`` .
+        on_train_begin (Function): called at the beginning of model train. Default: ``None`` .
+        on_train_end (Function): called at the end of model train. Default: ``None`` .
+        on_eval_epoch_begin (Function): called at eval epoch begin. Default: ``None`` .
+        on_eval_epoch_end (Function): called at eval epoch end. Default: ``None`` .
+        on_eval_step_begin (Function): called at each eval step begin. Default: ``None`` .
+        on_eval_step_end (Function): called at each eval step end. Default: ``None`` .
+        on_eval_begin (Function): called at the beginning of model eval. Default: ``None`` .
+        on_eval_end (Function): called at the end of model eval. Default: ``None`` .
 
     Examples:
         >>> import numpy as np

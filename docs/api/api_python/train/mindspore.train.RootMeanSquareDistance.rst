@@ -1,7 +1,7 @@
 mindspore.train.RootMeanSquareDistance
 =======================================
 
-.. py:class:: mindspore.train.RootMeanSquareDistance(symmetric=False, distance_metric='euclidean')
+.. py:class:: mindspore.train.RootMeanSquareDistance(symmetric=False, distance_metric="euclidean")
 
     计算从 `y_pred` 到 `y` 的均方根表面距离。
 
@@ -26,8 +26,8 @@ mindspore.train.RootMeanSquareDistance
         \right | + \left | S(B) \right |}}
 
     参数：
-        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard" 或 "taxicab"。默认值："euclidean"。
-        - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为 :math:`RmsSurDis(y\_pred, y)`，如果为True，计算方式为 :math:`RmsSurDis(y\_pred \leftrightarrow y)`。默认值：False。
+        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard" 或 "taxicab"。默认值： ``"euclidean"`` 。
+        - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为 :math:`RmsSurDis(y\_pred, y)`，如果为True，计算方式为 :math:`RmsSurDis(y\_pred \leftrightarrow y)`。默认值： ``False`` 。
 
     .. py:method:: clear()
 

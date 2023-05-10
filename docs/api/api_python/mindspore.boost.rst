@@ -11,7 +11,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     MindSpore自动优化算法库。
 
     参数：
-        - **level** (str) - Boost的配置级别，默认值："O0"。
+        - **level** (str) - Boost的配置级别，默认值： ``"O0"`` 。
 
           - "O0"：不变化。
           - "O1"：启用boost模式，性能将提升约20%，准确率保持不变。
@@ -59,44 +59,46 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
               }
 
+          默认值： ``""`` 。
+
           - boost：
 
-            - mode (str)：Boost配置模式，支持 ["auto", "manual", "enable_all", "disable_all"]。默认值： "auto"。
+            - mode (str)：Boost配置模式，支持 ["auto", "manual", "enable_all", "disable_all"]。默认值：  ``"auto"`` 。
 
               - auto：自动配置，取决于Model类中的 `boost_level` 参数配置。
               - manual：在 `boost_config_dict` 中人工配置。
               - enable_all：开启所有boost算法。
               - disable_all：关闭所有boost算法。
 
-            - less_bn (bool)：是否开启LessBN算法，默认：False
-            - grad_freeze (bool)：是否开启梯度冻结算法，默认：False。
-            - adasum (bool)：是否开启自适应求和算法，默认：False。
-            - grad_accumulation (bool)：是否开启梯度累加算法，默认：False。
-            - dim_reduce (bool)：是否开启降维训练算法，默认：False。
+            - less_bn (bool)：是否开启LessBN算法，默认值： ``False`` 。
+            - grad_freeze (bool)：是否开启梯度冻结算法，默认值： ``False`` 。
+            - adasum (bool)：是否开启自适应求和算法，默认值： ``False``。
+            - grad_accumulation (bool)：是否开启梯度累加算法，默认值： ``False`` 。
+            - dim_reduce (bool)：是否开启降维训练算法，默认值： ``False`` 。
 
               如果开启dim_reduce算法，其他算法会失效。
               如果开启grad_freeze算法，同时关闭dim_reduce，其他算法会失效。
 
           - common：
 
-            - gradient_split_groups (list)：网络的梯度分割点，默认：[50, 100]。
-            - device_number (int)：设备数，默认：8。
+            - gradient_split_groups (list)：网络的梯度分割点，默认值： ``[50, 100]`` 。
+            - device_number (int)：设备数，默认值： ``8`` 。
 
           - less_bn：
 
-            - fn_flag (bool)：是否采用fn替换fc，默认：替换。
-            - gc_flag (bool)：是否启用gc，默认：启用gc。
+            - fn_flag (bool)：是否采用fn替换fc，默认值： ``True`` ，采用fn替换fc。
+            - gc_flag (bool)：是否启用gc，默认值： ``True`` ，启用gc。
 
           - grad_freeze：
 
-            - param_groups (int)：参数分组数量，默认值：10。
-            - freeze_type (int)：梯度冻结策略，参数选择[0, 1]，默认值：1。
-            - freeze_p (float)：梯度冻结概率，默认值：0.7。
-            - total_steps (int)：总训练步数，默认值：65536。
+            - param_groups (int)：参数分组数量，默认值： ``10`` 。
+            - freeze_type (int)：梯度冻结策略，参数选择[0, 1]，默认值： ``1`` 。
+            - freeze_p (float)：梯度冻结概率，默认值： ``0.7`` 。
+            - total_steps (int)：总训练步数，默认值： ``65536`` 。
 
           - grad_accumulation：
 
-            - grad_accumulation_step (int)：累加梯度的步数，默认值：1。
+            - grad_accumulation_step (int)：累加梯度的步数，默认值： ``1`` 。
 
           - dim_reduce：
 
@@ -131,14 +133,14 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
                 delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
                 \end{align}
 
-            - rho (float)：超参，一般无需调整，默认值：0.55。
-            - gamma (float)：超参，一般无需调整，默认值：0.9。
-            - alpha (float)：超参，一般无需调整，默认值：0.001。
-            - sigma (float)：超参，一般无需调整，默认值：0.4。
-            - n_components (int)：PCA后的维度，默认值：32。
-            - pca_mat_path (str)：PCA矩阵的加载路径，使用绝对路径，默认值：None。
-            - weight_load_dir (str)：以checkpoint形式保存的权重加载路径，用于计算PCA矩阵，默认值：None。
-            - timeout (int)：加载PCA矩阵的最长等待时间，默认值：1800(s)。
+            - rho (float)：超参，一般无需调整，默认值： ``0.55`` 。
+            - gamma (float)：超参，一般无需调整，默认值： ``0.9`` 。
+            - alpha (float)：超参，一般无需调整，默认值： ``0.001`` 。
+            - sigma (float)：超参，一般无需调整，默认值： ``0.4`` 。
+            - n_components (int)：PCA后的维度，默认值： ``32`` 。
+            - pca_mat_path (str)：PCA矩阵的加载路径，使用绝对路径，默认值： ``None`` 。
+            - weight_load_dir (str)：以checkpoint形式保存的权重加载路径，用于计算PCA矩阵，默认值： ``None`` 。
+            - timeout (int)：加载PCA矩阵的最长等待时间，默认值： ``1800(s)`` 。
 
           用户可以通过加载JSON文件或者直接使用字典来配置 *boost_config_dict*。
           未配置的参数会使用默认值。
@@ -363,8 +365,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     参数：
         - **opt** (Cell) - 非冻结优化器实例，如 *Momentum*，*SGD*。
-        - **train_parameter_groups** (Union[tuple, list]) - 梯度冻结训练的权重。
-        - **train_strategy** (Union[tuple(int), list(int), Tensor]) - 梯度冻结训练的策略。
+        - **train_parameter_groups** (Union[tuple, list]) - 梯度冻结训练的权重。默认值： ``None`` 。
+        - **train_strategy** (Union[tuple(int), list(int), Tensor]) - 梯度冻结训练的策略。默认值： ``None`` 。
 
 .. py:function:: mindspore.boost.freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None, max_accumulation_step=1)
 
@@ -377,9 +379,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **sens** (numbers.Number) - 损失缩放系数。
         - **grad** (tuple(Tensor)) - 网络梯度。
         - **use_grad_accumulation** (bool) - 是否使用梯度累积。
-        - **mean** (bool) - 可选参数，梯度是否求平均，仅分布式训练时生效。默认值为None。
-        - **degree** (int) - 可选参数，device卡数，仅分布式训练时生效。默认值为None。
-        - **max_accumulation_step** (int) - 可选参数，梯度累积步数。默认值为1。
+        - **mean** (bool) - 可选参数，梯度是否求平均，仅分布式训练时生效。默认值： ``None`` 。
+        - **degree** (int) - 可选参数，device卡数，仅分布式训练时生效。默认值： ``None`` 。
+        - **max_accumulation_step** (int) - 可选参数，梯度累积步数。默认值： ``1`` 。
 
 .. py:class:: mindspore.boost.GradientAccumulation(max_accumulation_step, optimizer)
 

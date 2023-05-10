@@ -6,9 +6,9 @@ mindspore.train.CosineSimilarity
     计算余弦相似度。
 
     参数： 
-        - **similarity** (str) - "dot"或"cosine"。"cosine"表示相似度计算逻辑, "dot"表示矩阵点乘矩阵计算逻辑。默认值："cosine"。
-        - **reduction** (str) - "none"、"sum"或"mean"。默认值："none"。
-        - **zero_diagonal** (bool) - 如果为True，则对角线将设置为零。默认值：True。
+        - **similarity** (str) - "dot"或"cosine"。"cosine"表示相似度计算逻辑，"dot"表示矩阵点乘矩阵计算逻辑。默认值： ``'cosine'`` 。
+        - **reduction** (str) - "none"、"sum"或"mean"。默认值： ``'none'`` 。
+        - **zero_diagonal** (bool) - 如果为True，则对角线将设置为零。默认值： ``True`` 。
 
     .. py:method:: clear()
 

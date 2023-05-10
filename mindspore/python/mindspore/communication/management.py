@@ -361,7 +361,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
-                     or the default world communication group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+                     or the default world communication group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Returns:
         int, the local rank size where the calling process is within the group.

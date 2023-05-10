@@ -34,7 +34,7 @@ mindspore.amp.auto_mixed_precision
 
     参数：
         - **network** (Cell) - 定义网络结构。
-        - **amp_level** (str) - 支持["O0", "O1", "O2", "O3"]。默认值："O0"。
+        - **amp_level** (str) - 支持["O0", "O1", "O2", "O3"]。默认值： ``"O0"`` 。
 
           - **"O0"** - 不变化。
           - **"O1"** - 将白名单内的Cell和算子转换为float16精度运算，其余部分保持float32精度运算。

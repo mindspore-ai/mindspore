@@ -1,7 +1,7 @@
 mindspore.train.MeanSurfaceDistance
 ===============================================
 
-.. py:class:: mindspore.train.MeanSurfaceDistance(symmetric=False, distance_metric='euclidean')
+.. py:class:: mindspore.train.MeanSurfaceDistance(symmetric=False, distance_metric="euclidean")
 
     计算从 `y_pred` 到 `y` 的平均表面距离。通常情况下，用来衡量分割任务中，预测情况和真实情况之间的差异度。
 
@@ -26,8 +26,8 @@ mindspore.train.MeanSurfaceDistance
         \left | S(B) \right |}
 
     参数：
-        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard"或"taxicab"。默认值："euclidean"。
-        - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为  :math:`AvgSurDis(y\_pred \rightarrow y)` ，如果为True，计算方式为 :math:`MeanSurDis(y\_pred \leftrightarrow y)` 。默认值：False。
+        - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard"或"taxicab"。默认值： ``"euclidean"`` 。
+        - **symmetric** (bool) - 是否计算 `y_pred` 和 `y` 之间的对称平均平面距离。如果为False，计算方式为  :math:`AvgSurDis(y\_pred \rightarrow y)` ，如果为True，计算方式为 :math:`MeanSurDis(y\_pred \leftrightarrow y)` 。默认值： ``False`` 。
 
     .. py:method:: clear()
 

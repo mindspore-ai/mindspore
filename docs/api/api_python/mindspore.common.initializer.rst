@@ -22,8 +22,8 @@ mindspore.common.initializer
           - **numbers.Number** - 用于初始化Tensor的常量。
           - **Tensor** - 用于初始化Tensor的Tensor。
 
-        - **shape** (Union[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。
-        - **dtype** (mindspore.dtype) - 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。
+        - **shape** (Union[tuple, list, int]) - 被初始化的Tensor的shape，默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 被初始化的Tensor的数据类型，默认值： ``mstype.float32`` 。
 
     返回：
         Tensor。

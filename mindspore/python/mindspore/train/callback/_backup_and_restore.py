@@ -36,9 +36,9 @@ class BackupAndRestore(Callback):
         backup_dir (str): Path to store and load the checkpoint file.
         save_freq(Union['epoch', int]): When set to 'epoch' the callback saves the checkpoint at the end of
                                         each epoch. When set to an integer, the callback saves the checkpoint
-                                        every `save_freq` epoch. Default: 'epoch'.
+                                        every `save_freq` epoch. Default: ``"epoch"`` .
         delete_checkpoint(bool): If `delete_checkpoint=True`, the checkpoint will be deleted after
-                                        training is finished. Default: True.
+                                        training is finished. Default: ``True`` .
 
     Raises:
         ValueError: If backup_dir is not str.

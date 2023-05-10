@@ -615,7 +615,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
 
     Args:
         num_classes (int): The num of classes.
-        dtype (str): Data type of confusion matrix. Default: 'int32'.
+        dtype (str): Data type of confusion matrix. Default: ``'int32'`` .
 
     Inputs:
         - **labels** (Tensor) - real labels, tensor of 1-D. the dtype must be non-negative Integer.

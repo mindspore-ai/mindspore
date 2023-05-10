@@ -10,8 +10,8 @@ mindspore.train.BackupAndRestore
 
     参数：
         - **backup_dir** (str) - 保存和恢复checkpoint文件的路径。
-        - **save_freq** (Union['epoch', int]) - 当设置为'epoch'时，在每个epoch进行备份，当设置为整数时，将在每隔 `save_freq` 个epoch进行备份。默认值：'epoch'。
-        - **delete_checkpoint** (bool) - 如果 `delete_checkpoint=True` ，将在训练结束的时候删除备份文件，否则保留备份文件。默认值：True。
+        - **save_freq** (Union['epoch', int]) - 当设置为'epoch'时，在每个epoch进行备份，当设置为整数时，将在每隔 `save_freq` 个epoch进行备份。默认值： ``"epoch"`` 。
+        - **delete_checkpoint** (bool) - 如果 `delete_checkpoint=True` ，将在训练结束的时候删除备份文件，否则保留备份文件。默认值： ``True`` 。
 
     异常：
         - **ValueError** - 如果 `backup_dir` 参数不是str类型。
