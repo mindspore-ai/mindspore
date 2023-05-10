@@ -17,7 +17,7 @@ mindspore.ops.matrix_solve
     参数：
         - **matrix** (Tensor) - 输入Tensor， shape 为 :math:`(..., M, M)` 。
         - **rhs** (Tensor) - 输入Tensor， shape 为 :math:`(..., M, K)` 。 `rhs` 的 dtype 必须与 `matrix` 的 dtype 相同。
-        - **adjoint** (bool) - 表示是否需要在求解前对输入矩阵 `matrix` 做共轭转置，默认：False。
+        - **adjoint** (bool) - 表示是否需要在求解前对输入矩阵 `matrix` 做共轭转置，默认值： ``False`` 。
 
     返回：
         Tensor，与 `rhs` 的 shape 和数据类型相同。

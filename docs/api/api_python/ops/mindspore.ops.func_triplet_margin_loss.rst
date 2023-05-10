@@ -10,11 +10,11 @@ mindspore.ops.triplet_margin_loss
         - **anchor** (Tensor) - 从训练集随机选取的样本。数据类型为BasicType。
         - **positive** (Tensor) - 与 `anchor` 为同一类的样本，数据类型与shape与 `anchor` 一致。
         - **negative** (Tensor) - 与 `anchor` 为异类的样本，数据类型与shape与 `anchor` 一致。
-        - **margin** (float，可选) - 用于拉进 `anchor` 和 `positive` 之间的距离，拉远 `anchor` 和 `negative` 之间的距离。默认值：1.0。
-        - **p** (int，可选) - 成对距离的范数。默认值：2。
-        - **eps** (float，可选) - 防止除数为 0。默认值：1e-06。
-        - **swap** (bool，可选) - 距离交换。默认值：False。
-        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为"mean"、"sum"或"none"。默认值："mean"。
+        - **margin** (float，可选) - 用于拉进 `anchor` 和 `positive` 之间的距离，拉远 `anchor` 和 `negative` 之间的距离。默认值： ``1.0`` 。
+        - **p** (int，可选) - 成对距离的范数。默认值： ``2`` 。
+        - **eps** (float，可选) - 防止除数为 0。默认值： ``1e-06`` 。
+        - **swap** (bool，可选) - 距离交换。默认值： ``False`` 。
+        - **reduction** (str，可选) - 指定要应用于输出的缩减方式，取值为 ``'mean'`` 、 ``'sum'`` 或 ``'none'`` 。默认值： ``'mean'`` 。
 
     返回：
         Tensor。如果 `reduction` 为"none"，其shape为 :math:`(N)`。否则，将返回Scalar。

@@ -11,8 +11,8 @@ mindspore.ops.amax
         - **keepdims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值：False。
 
     关键字参数：
-        - **initial** (scalar, 可选) - 输出元素的最大值。如果 `input` 为空，则该参数必须设置。默认值：None。
-        - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为True则不替换，若为False则替换。`where` 中为False的位置，必须提供对应的 `initial` 值。默认值：True。
+        - **initial** (scalar, 可选) - 输出元素的最大值。如果 `input` 为空，则该参数必须设置。默认值： ``None`` 。
+        - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为True则不替换，若为False则替换。`where` 中为False的位置，必须提供对应的 `initial` 值。默认值： ``None`` ，表示 ``True`` 。
 
     返回：
         Tensor。
