@@ -15,7 +15,6 @@
  */
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
-#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 #include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -116,6 +115,116 @@ NodePtrList CommonMaxMinGradBprop(const BpropIRBuilder *ib) {
   return {ib->ZerosLike(x), ib->ZerosLike(y), dz};
 }
 
+class BiasAddGradShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_BiasAddGrad", BiasAddGradShapeCalc)
+  explicit BiasAddGradShapeCalc(std::string format) : ShapeCalcFunctor("ShapeCalc_BiasAddGrad"), format_(format) {}
+  ValuePtr ToValue() const override { return MakeValue(format_); }
+  void FromValue(const ValuePtr &value) override { format_ = GetValue<std::string>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    ShapeVector expanded_shape;
+    ShapeVector tile_mults;
+    ShapeVector one_vec{1};
+    auto dy_shape = inputs.at(0);
+    auto dout_shape = inputs.at(1);
+    if (format_ == "NCHW") {
+      // expanded_shape = np.concatenate([np.ones_like(shape[:1]), bias_shape, np.ones_like(shape[2:])], axis=0)
+      expanded_shape = one_vec + dout_shape;
+      expanded_shape = dy_shape.size() > i2 ? expanded_shape + ShapeVector(1, dy_shape.size() - i2) : expanded_shape;
+      // tile_mults = np.concatenate([shape[:1], [1], shape[2:]], axis=0)
+      ShapeVector tmp{dy_shape[0], 1};
+      tile_mults = tmp;
+      tile_mults = dy_shape.size() > i2 ? tile_mults + ShapeVector(dy_shape.begin() + i2, dy_shape.end()) : tile_mults;
+    } else {
+      // expanded_shape = np.concatenate([np.ones_like(shape[:-1]), bias_shape], axis=0)
+      expanded_shape = ShapeVector(1, dy_shape.size() - 1) + dout_shape;
+      // tile_mults = np.concatenate([shape[:-1], [1]], axis=0)
+      tile_mults = ShapeVector(dy_shape.begin(), dy_shape.end() - 1) + one_vec;
+    }
+    return {expanded_shape, tile_mults};
+  }
+
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size() + inputs.at(1).size() - 1);
+    int64_t y_rank = IsDynamicRank(inputs.at(1)) ? -1 : SizeToLong(inputs.at(0).size());
+    return {x_rank, y_rank};
+  }
+
+ protected:
+  std::string format_;
+};
+REG_FUNCTOR("ShapeCalc_BiasAddGrad", BiasAddGradShapeCalc);
+
+class ExtractImagePatchesShapeCalc : public ShapeCalcFunctor {
+ public:
+  DECLARE_SHAPE_CALC("ShapeCalc_ExtractImagePatches", ExtractImagePatchesShapeCalc)
+  ExtractImagePatchesShapeCalc(int64_t ksizes_row, int64_t ksizes_col)
+      : ShapeCalcFunctor("ShapeCalc_ExtractImagePatches"), ksizes_row_(ksizes_row), ksizes_col_(ksizes_col) {}
+  ValuePtr ToValue() const override {
+    auto values = {MakeValue(ksizes_row_), MakeValue(ksizes_col_)};
+    return std::make_shared<ValueTuple>(values);
+  }
+  void FromValue(const ValuePtr &value) override {
+    auto values = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(values);
+    if (values->value().size() != i2) {
+      MS_LOG(EXCEPTION) << "CalBatchGatherShapeCalc's value size should be 2, but got " << values->value().size();
+    }
+    ksizes_row_ = GetValue<int64_t>(values->value()[0]);
+    ksizes_col_ = GetValue<int64_t>(values->value()[1]);
+  }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto x_shape = inputs.at(0);
+    auto x_batch = x_shape[0];
+    auto x_depth = x_shape[1];
+    auto x_row = x_shape[2];
+    auto x_col = x_shape[3];
+    auto x_indices_num = (x_row * x_col) + 1;
+    auto out_shape = inputs.at(1);
+    auto out_row = out_shape[2];
+    auto out_col = out_shape[3];
+    auto out_indices_num = ((out_row * out_col) * ksizes_row_) * ksizes_col_;
+    return {{x_indices_num},
+            {1, 1, x_row, x_col},
+            {out_indices_num},
+            {1, out_row, out_col, ksizes_row_ * ksizes_col_},
+            {x_indices_num, out_indices_num},
+            {x_indices_num - 1, out_indices_num},
+            {x_batch, out_row, out_col, ksizes_row_, ksizes_col_, x_depth},
+            {-1, x_batch * x_depth},
+            {x_row, x_col, x_batch, x_depth}};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    return {1, 4, 1, 4, 2, 2, 6, 2, 4};
+  }
+
+ protected:
+  int64_t ksizes_row_{0};
+  int64_t ksizes_col_{0};
+};
+REG_FUNCTOR("ShapeCalc_ExtractImagePatches", ExtractImagePatchesShapeCalc);
+
+class SoftmaxShapeCalc : public ShapeCalcFunctor {
+ public:
+  DECLARE_SHAPE_CALC("ShapeCalc_Softmax", SoftmaxShapeCalc)
+  explicit SoftmaxShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_Softmax"), axis_(axis) {}
+  ValuePtr ToValue() const override { return MakeValue(axis_); }
+  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {x_shape}
+    return {GetTransposeAxis(inputs.at(0), axis_)};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
+    return {x_rank};
+  }
+
+ protected:
+  int64_t axis_{0};
+};
+REG_FUNCTOR("ShapeCalc_Softmax", SoftmaxShapeCalc);
+
 REG_BPROP_BUILDERS_BEGIN(GradNnOps)
 REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
@@ -191,6 +300,25 @@ REG_BPROP_BUILDER("ReLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+DEF_PURE_SHAPE_CALC(g_topk_1)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    return {{-1, inputs.at(0).back()}};
+  })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> { return {2}; });
+
+DEF_PURE_SHAPE_CALC(g_topk_2)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto in_shape = inputs.at(0);
+    auto in_lastdim = in_shape.back();
+    auto outerdim = inputs.at(1)[0];  // k
+    auto in_shape_1d_x =
+      ShapeVector(1, std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>()));
+    return {in_shape_1d_x, {outerdim * in_lastdim}, {in_lastdim}};
+  })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> {
+    return {1, 1, 1};
+  });
+
 REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex2);
@@ -199,20 +327,9 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
   auto in_shape = ib->GetShape(input_x);
   if (IsDynamic(in_shape)) {
-    auto shape_func0 = [](const ShapeArray &inputs) -> ShapeArray { return {{-1, inputs.at(0).back()}}; };
-    auto infer_func0 = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {2}; };
-    auto re0 = ib->ShapeCalc({indices}, shape_func0, infer_func0, {})[0];
+    auto re0 = ib->ShapeCalc(g_topk_1, {indices})[0];
     NodePtr ind_2d = ib->Reshape(indices, re0);
-    auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-      auto in_shape = inputs.at(0);
-      auto in_lastdim = in_shape.back();
-      auto outerdim = inputs.at(1)[0];  // k
-      auto in_shape_1d_x =
-        ShapeVector(1, std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>()));
-      return {in_shape_1d_x, {outerdim * in_lastdim}, {in_lastdim}};
-    };
-    auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {1, 1, 1}; };
-    auto res = ib->ShapeCalc({input_x, ind_2d}, shape_func, infer_func, {});
+    auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
     auto in_shape_1d = res[0];
     auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), res[1], res[2]);
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
@@ -662,6 +779,18 @@ REG_BPROP_BUILDER("MaxPoolGradGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(
   return {dx1, dx2, dgrad};
 });
 
+DEF_PURE_SHAPE_CALC(g_max_pool_grad)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x2_shape = inputs.at(0);
+    auto b = x2_shape.at(0);
+    auto c = x2_shape.at(1);
+    auto h = x2_shape.at(2);
+    auto w = x2_shape.at(3);
+    return {{b}, {b, -1}, {1, c * h * w}};
+  })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> {
+    return {1, 2, 2};
+  });
 REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto device_target = ib->GetTargetFromContext();
   auto is_ascend = device_target == "Ascend";
@@ -707,18 +836,7 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
     auto x2_shape = ib->GetShape(x2);
     if (IsDynamic(x2_shape)) {
       auto shape = ib->Emit("Shape", {x2});
-      auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-        auto x2_shape = inputs.at(0);
-        auto b = x2_shape.at(0);
-        auto c = x2_shape.at(1);
-        auto h = x2_shape.at(2);
-        auto w = x2_shape.at(3);
-        return {{b}, {b, -1}, {1, c * h * w}};
-      };
-
-      auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {1, 2, 2}; };
-
-      auto res = ib->ShapeCalc({x2}, shape_func, infer_func, {});
+      auto res = ib->ShapeCalc(g_max_pool_grad, {x2});
       auto batch = ib->Cast(ib->Range(res[0]), kInt32);
       batch = ib->Tile(ib->Reshape(batch, {-1, 1}), res[2]);
       int64_t axis = -1;
@@ -888,36 +1006,7 @@ REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   auto data_format = GetValue<std::string>(ib->GetAttr("format"));
   auto dy = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto shape_func = [data_format](const ShapeArray &inputs) -> ShapeArray {
-    ShapeVector expanded_shape;
-    ShapeVector tile_mults;
-    ShapeVector one_vec{1};
-    auto dy_shape = inputs.at(0);
-    auto dout_shape = inputs.at(1);
-    if (data_format == "NCHW") {
-      // expanded_shape = np.concatenate([np.ones_like(shape[:1]), bias_shape, np.ones_like(shape[2:])], axis=0)
-      expanded_shape = one_vec + dout_shape;
-      expanded_shape = dy_shape.size() > 2 ? expanded_shape + ShapeVector(1, dy_shape.size() - 2) : expanded_shape;
-      // tile_mults = np.concatenate([shape[:1], [1], shape[2:]], axis=0)
-      ShapeVector tmp{dy_shape[0], 1};
-      tile_mults = tmp;
-      tile_mults = dy_shape.size() > 2 ? tile_mults + ShapeVector(dy_shape.begin() + 2, dy_shape.end()) : tile_mults;
-    } else {
-      // expanded_shape = np.concatenate([np.ones_like(shape[:-1]), bias_shape], axis=0)
-      expanded_shape = ShapeVector(1, dy_shape.size() - 1) + dout_shape;
-      // tile_mults = np.concatenate([shape[:-1], [1]], axis=0)
-      tile_mults = ShapeVector(dy_shape.begin(), dy_shape.end() - 1) + one_vec;
-    }
-    return {expanded_shape, tile_mults};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size() + inputs.at(1).size() - 1);
-    int64_t y_rank = IsDynamicRank(inputs.at(1)) ? -1 : SizeToLong(inputs.at(0).size());
-    return {x_rank, y_rank};
-  };
-
-  auto res = ib->ShapeCalc({dy, dout}, shape_func, infer_func, {});
+  auto res = ib->ShapeCalc(std::make_shared<BiasAddGradShapeCalc>(data_format), {dy, dout});
   NodePtr expanded_shape = res[0];
   NodePtr tile_mults = res[1];
 
@@ -935,33 +1024,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
   auto x_shape = ib->GetShape(x);
   auto out_shape = ib->GetShape(out);
   if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
-    auto shape_func = [ksizes_row, ksizes_col](const ShapeArray &inputs) -> ShapeArray {
-      auto x_shape = inputs.at(0);
-      auto x_batch = x_shape[0];
-      auto x_depth = x_shape[1];
-      auto x_row = x_shape[2];
-      auto x_col = x_shape[3];
-      auto x_indices_num = (x_row * x_col) + 1;
-      auto out_shape = inputs.at(1);
-      auto out_row = out_shape[2];
-      auto out_col = out_shape[3];
-      auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
-      return {{x_indices_num},
-              {1, 1, x_row, x_col},
-              {out_indices_num},
-              {1, out_row, out_col, ksizes_row * ksizes_col},
-              {x_indices_num, out_indices_num},
-              {x_indices_num - 1, out_indices_num},
-              {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth},
-              {-1, x_batch * x_depth},
-              {x_row, x_col, x_batch, x_depth}};
-    };
-
-    auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector {
-      return {1, 4, 1, 4, 2, 2, 6, 2, 4};
-    };
-
-    auto res = ib->ShapeCalc({x, out}, shape_func, infer_func, {});
+    auto res = ib->ShapeCalc(std::make_shared<ExtractImagePatchesShapeCalc>(ksizes_row, ksizes_col), {x, out});
     auto x_idx = ib->Cast(ib->Range(ib->Tensor(1, kInt64), res[0], ib->Tensor(1, kInt64)), kFloat32);
     x_idx = ib->Reshape(x_idx, res[1]);
     auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
@@ -1192,11 +1255,9 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto shp = ib->GetShape(x);
-
   if (IsLastAxis(shp, one_axis)) {
     return {ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)))};
   }
-
   NodePtr reverse_axis = IsDynamicRank(shp) ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(one_axis), {x})[0]
                                             : ib->Value(GetTransposeAxis(shp, one_axis));
   out = ib->Transpose(out, reverse_axis);

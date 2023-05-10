@@ -134,7 +134,7 @@ ShapeArray MatrixDeterminantShapeFunc(const ShapeArray &inputs) {
   return {new_shape};
 }
 
-ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &) {
+ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const HashSet<size_t> &) {
   auto new_shape = inputs.at(0);
   return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
 }
@@ -191,6 +191,58 @@ NodePtrList BpropAddcCommon(const BpropIRBuilder *ib, const std::string &op_name
   }
   return {dinput_data, dx1, dx2, dvalue};
 }
+
+class ReduceStdShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_ReduceStd", ReduceStdShapeCalc)
+  explicit ReduceStdShapeCalc(const std::vector<int64_t> &axis)
+      : ShapeCalcFunctor("ShapeCalc_ReduceStd"), axis_(axis) {}
+  ValuePtr ToValue() const override { return MakeValue(axis_); }
+  void FromValue(const ValuePtr &value) override { axis_ = GetValue<std::vector<int64_t>>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto new_axis = axis_;
+    auto x_shape = inputs.at(0);
+    if (new_axis.empty() && !x_shape.empty()) {
+      for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
+        new_axis.push_back(i);
+      }
+    }
+    (void)std::transform(new_axis.begin(), new_axis.end(), new_axis.begin(), [&x_shape](const int64_t &c) {
+      if (c < 0) {
+        return c + SizeToLong(x_shape.size());
+      }
+      return c;
+    });
+    for (size_t i = 1; i < new_axis.size(); ++i) {
+      for (size_t j = 0; j < new_axis.size() - i; ++j) {
+        if (new_axis[j] > (new_axis[j + 1])) {
+          std::swap(new_axis[j], new_axis[j + 1]);
+        }
+      }
+    }
+    // input_x:[2,3,4,5]  new_axis:   [0, 2]
+    // reduce: [3,5]      reshape:[1,3,1,5]
+    auto reshape = x_shape;
+    for (auto &i : new_axis) {
+      reshape[LongToSize(i)] = 1;
+    }
+    int64_t num = 1;
+    for (const auto &i : new_axis) {
+      num *= x_shape[LongToSize(i)];
+    }
+    return {reshape, {num - 1}, {num}};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    auto shape_x = inputs.at(0);
+    auto rank = IsDynamicRank(shape_x) ? -1 : SizeToLong(shape_x.size());
+    return {rank, 1, 1};
+  }
+
+ protected:
+  std::vector<int64_t> axis_;
+};
+REG_FUNCTOR("ShapeCalc_ReduceStd", ReduceStdShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -754,12 +806,8 @@ REG_BPROP_BUILDER("Logit").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto input_y = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+DEF_PURE_SHAPE_CALC(g_cdist)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto dout_shape = inputs.at(0);
     auto dout_dim = dout_shape.size();
     ShapeVector perm;
@@ -769,12 +817,17 @@ REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
     perm.push_back(dout_dim - 1);
     perm.push_back(dout_dim - 2);
     return {perm};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     auto dout_shape = inputs.at(0);
     return {IsDynamicRank(dout_shape) ? -1 : static_cast<int64_t>(dout_shape.size())};
-  };
-  auto res = ib->ShapeCalc({dout}, shape_func, infer_func, {})[0];
+  });
+REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto input_y = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto res = ib->ShapeCalc(g_cdist, {dout})[0];
   auto dout_transpose = ib->Transpose(dout, res);
   auto out_transpose = ib->Transpose(out, res);
   auto dx = ib->Emit("CdistGrad", {dout, input_x, input_y, out}, {{"p", ib->GetAttr("p")}});
@@ -1112,6 +1165,22 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->ZerosLike(axis)};
 });
 
+DEF_PURE_SHAPE_CALC(g_reduce_prod)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto axis = inputs.at(1);
+    auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+    auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
+    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
+    if (!unknown_inputs.empty()) {
+      return {-1, -1, 2, -1, -1};
+    }
+    auto size = SizeToLong(inputs.at(0).size());
+    return {size, size, 2, size, size};
+  });
 REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_dtype_id = ib->GetDtypeId(x);
@@ -1123,22 +1192,7 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   if (ib->GetShape(x).empty()) {
     return {SumGrad(ib, x, axis, dout), ib->ZerosLike(axis)};
   }
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto input_shape = inputs.at(0);
-    auto axis = inputs.at(1);
-    auto output_shape_kept_dims = ReduceShape(input_shape, axis);
-    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
-    auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
-    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
-      return {-1, -1, 2, -1, -1};
-    }
-    auto size = SizeToLong(inputs.at(0).size());
-    return {size, size, 2, size, size};
-  };
-  auto res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
   dout = ib->Reshape(dout, res[0]);
   auto grad = ib->Tile(dout, res[1]);
   auto permuted = ib->Transpose(x, res[3]);
@@ -1261,12 +1315,13 @@ REG_BPROP_BUILDER("Betainc").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   return {ib->ZerosLike(input_a), ib->ZerosLike(input_b), ib->Reshape(ib->Mul(partial_x, dout), sx)};
 });
 
+DEF_PURE_SHAPE_CALC(g_matrix_determinant).SetCalc(MatrixDeterminantShapeFunc).SetInfer(MatrixDeterminantInferFunc);
 REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto res = ib->ShapeCalc({ib->TupleGetItem(out, 1)}, MatrixDeterminantShapeFunc, MatrixDeterminantInferFunc, {})[0];
+  auto res = ib->ShapeCalc(g_matrix_determinant, {ib->TupleGetItem(out, 1)})[0];
   auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
@@ -1277,7 +1332,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto res = ib->ShapeCalc({out}, MatrixDeterminantShapeFunc, MatrixDeterminantInferFunc, {})[0];
+  auto res = ib->ShapeCalc(g_matrix_determinant, {out})[0];
   auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
@@ -1351,10 +1406,8 @@ REG_BPROP_BUILDER("MatrixSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   }
 });
 
-REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+DEF_PURE_SHAPE_CALC(g_matrix_exp)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto shape_x = inputs.at(0);
     auto x_len = shape_x.size();
     auto input_perm = Range(SizeToLong(x_len));
@@ -1367,13 +1420,17 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
     sizes[x_len - kDim1] = n;
     sizes[x_len - kDim2] = n;
     return {input_perm, begins, sizes};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     auto shape_x = inputs.at(0);
     auto rank = IsDynamicRank(shape_x) ? -1 : static_cast<int64_t>(shape_x.size());
     return {rank, rank, rank};
-  };
-  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  });
+
+REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto res = ib->ShapeCalc(g_matrix_exp, {x});
   auto input_perm = res[0];
   auto begins = res[1];
   auto sizes = res[2];
@@ -1770,45 +1827,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto std = ib->TupleGetItem(out, 0);
   auto mean_d = ib->TupleGetItem(dout, 1);
   auto mean = ib->TupleGetItem(out, 1);
-  auto shape_func = [axis](const ShapeArray &inputs) -> ShapeArray {
-    auto new_axis = axis;
-    auto x_shape = inputs.at(0);
-    if (new_axis.empty() && !x_shape.empty()) {
-      for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
-        new_axis.push_back(i);
-      }
-    }
-    (void)std::transform(new_axis.begin(), new_axis.end(), new_axis.begin(), [&x_shape](const int64_t &c) {
-      if (c < 0) {
-        return c + SizeToLong(x_shape.size());
-      }
-      return c;
-    });
-    for (size_t i = 1; i < new_axis.size(); ++i) {
-      for (size_t j = 0; j < new_axis.size() - i; ++j) {
-        if (new_axis[j] > (new_axis[j + 1])) {
-          std::swap(new_axis[j], new_axis[j + 1]);
-        }
-      }
-    }
-    // input_x:[2,3,4,5]  new_axis:   [0, 2]
-    // reduce: [3,5]      reshape:[1,3,1,5]
-    auto reshape = x_shape;
-    for (auto &i : new_axis) {
-      reshape[LongToSize(i)] = 1;
-    }
-    int64_t num = 1;
-    for (const auto &i : new_axis) {
-      num *= x_shape[LongToSize(i)];
-    }
-    return {reshape, {num - 1}, {num}};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto shape_x = inputs.at(0);
-    auto rank = IsDynamicRank(shape_x) ? -1 : SizeToLong(shape_x.size());
-    return {rank, 1, 1};
-  };
-  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  auto res = ib->ShapeCalc(std::make_shared<ReduceStdShapeCalc>(axis), {x});
   res[1] = ib->TupleToTensor(res[1]);
   res[2] = ib->TupleToTensor(res[2]);
   if (!keep_dims && !ib->GetShape(x).empty()) {

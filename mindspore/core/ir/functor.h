@@ -46,14 +46,10 @@ class MS_CORE_API Functor : public Value {
   /// \brief Pack member variables to a Value, it's the inverse operation of FromValue.
   ///
   /// \return ValuePtr that packed member variables.
-  virtual ValuePtr ToValue() const {
-    MS_EXCEPTION(NotImplementedError) << "The function 'ToValue' is not implemented in Functor " << name();
-  }
+  virtual ValuePtr ToValue() const = 0;
 
   /// \brief Unpack member variables from Value, it's the inverse operation of ToValue.
-  virtual void FromValue(const ValuePtr &) {
-    MS_EXCEPTION(NotImplementedError) << "The function 'FromValue' is not implemented in Functor " << name();
-  }
+  virtual void FromValue(const ValuePtr &) = 0;
 
   /// \brief The hash value of the Functor object.
   ///
@@ -111,16 +107,10 @@ class MS_CORE_API ShapeCalcFunctor : public Functor {
 using ShapeCalcFunctorPtr = std::shared_ptr<ShapeCalcFunctor>;
 
 // common code to declare ShapeCalcFunctor
-#define DECLARE_SHAPE_CALC(cls_name)          \
-  cls_name() : ShapeCalcFunctor(#cls_name) {} \
-  ~cls_name() override = default;             \
-  MS_DECLARE_PARENT(cls_name, ShapeCalcFunctor)
-
-// declare ShapeCalcFunctor with empty ToValue and FromValue function
-#define DECLARE_PURE_SHAPE_CALC(cls_name)               \
-  DECLARE_SHAPE_CALC(cls_name)                          \
-  ValuePtr ToValue() const override { return nullptr; } \
-  void FromValue(const ValuePtr &) override {}
+#define DECLARE_SHAPE_CALC(reg_name, cls) \
+  cls() : ShapeCalcFunctor(reg_name) {}   \
+  ~cls() override = default;              \
+  MS_DECLARE_PARENT(cls, ShapeCalcFunctor)
 
 /// \brief FunctorRegistry is the registry of functors to support importing functor from mindir.
 class MS_CORE_API FunctorRegistry {
@@ -140,19 +130,22 @@ class MS_CORE_API FunctorRegistry {
     ~RegCls() = default;
   };
 
- private:
   void Register(const std::string &name, const Creator &creator) {
     auto ret = reg.insert({name, creator});
     if (!ret.second) {
       MS_LOG(WARNING) << "Duplicated functor is registered. name: " << name;
+    } else {
+      MS_LOG(DEBUG) << "Register functor: " << name;
     }
   }
+
+ private:
   FunctorRegistry() = default;
   ~FunctorRegistry() = default;
   HashMap<std::string, Creator> reg;
 };
 
-#define REG_FUNCTOR(cls) \
-  static FunctorRegistry::RegCls functor_##cls(#cls, []() -> FunctorPtr { return std::make_shared<cls>(); })
+#define REG_FUNCTOR(name, cls) \
+  static const FunctorRegistry::RegCls g_functor_##cls((name), []() -> FunctorPtr { return std::make_shared<cls>(); })
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_FUNCTOR_H_

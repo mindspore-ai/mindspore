@@ -342,41 +342,6 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
 }
 
-namespace deprecated {
-class DeprecatedShapeCalcFunctor : public ShapeCalcFunctor {
- public:
-  // cppcheck-suppress unknownMacro
-  DECLARE_SHAPE_CALC(DeprecatedShapeCalcFunctor)
-  DeprecatedShapeCalcFunctor(const ShapeFunc &shape_func, const InferFunc &infer_func)
-      : ShapeCalcFunctor("DeprecatedShapeCalcFunctor"), shape_func_(shape_func), infer_func_(infer_func) {}
-
-  ShapeArray Calc(const ShapeArray &shape_array) const override {
-    MS_EXCEPTION_IF_NULL(shape_func_);
-    return shape_func_(shape_array);
-  }
-
-  std::vector<int64_t> Infer(const ShapeArray &shape_array, const HashSet<size_t> &unknown_inputs) const override {
-    MS_EXCEPTION_IF_NULL(infer_func_);
-    return infer_func_(shape_array, std::unordered_set<size_t>(unknown_inputs.begin(), unknown_inputs.end()));
-  }
-
-  ValuePtr ToValue() const override { return nullptr; }
-  void FromValue(const ValuePtr &) override {}
-
- protected:
-  ShapeFunc shape_func_{nullptr};
-  InferFunc infer_func_{nullptr};
-};
-}  // namespace deprecated
-
-NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
-                               const deprecated::InferFunc &infer_func,
-                               const std::vector<int64_t> &value_depend_indices,
-                               const ShapeValidFunc &valid_func) const {
-  auto functor = std::make_shared<deprecated::DeprecatedShapeCalcFunctor>(shape_func, infer_func);
-  return ShapeCalc(functor, inputs, value_depend_indices, valid_func);
-}
-
 NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
                                const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) const {
   if (inputs.empty()) {

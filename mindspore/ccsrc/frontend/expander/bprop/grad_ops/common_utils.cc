@@ -28,7 +28,6 @@
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
-#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -139,6 +138,15 @@ TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
   return (priority_1 > priority_2 ? t1 : t2);
 }
 }  // namespace
+
+int64_t NormalizeAxis(int64_t axis, size_t rank) {
+  auto rank_i = SizeToLong(rank);
+  if (axis < -rank_i || axis >= rank_i) {
+    MS_EXCEPTION(ValueError) << "For rank " << rank << ", the axis must be in range [" << -rank_i << ", " << rank_i
+                             << "), but got " << axis;
+  }
+  return (axis < 0) ? (axis + rank_i) : axis;
+}
 
 NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
   MS_EXCEPTION_IF_NULL(ib);
@@ -548,8 +556,20 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
+DEF_PURE_SHAPE_CALC(g_sumgrad_shapecalc)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    auto axis_value = inputs.at(1);
+    auto r_shape = ReduceShape(x_shape, axis_value);
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
+  });
 NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
-  auto calc_res = ib->ShapeCalc(std::make_shared<SumGradShapeCalc>(), {x, axis}, {1});
+  auto calc_res = ib->ShapeCalc(g_sumgrad_shapecalc, {x, axis}, {1});
   const size_t cal_num = 2;
   if (calc_res.size() != cal_num) {
     MS_LOG(EXCEPTION) << "Number of ShapeCalc should be 2, but got " << calc_res.size();
@@ -563,19 +583,18 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
   return ib->Emit("DynamicBroadcastTo", {grad, ib->Value(x->shape())});
 }
 
-NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
-                     const NodePtr &dout) {
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+DEF_PURE_SHAPE_CALC(g_min_or_max_grad)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto input_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
     return {ReduceShape(input_shape, axis_value)};
-  };
-
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
-  };
-
-  auto output_shape_kept_dims = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1})[0];
+  });
+NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
+                     const NodePtr &dout) {
+  auto output_shape_kept_dims = ib->ShapeCalc(g_min_or_max_grad, {x, axis}, {1})[0];
   auto y = ib->Reshape(out, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
@@ -584,6 +603,32 @@ NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &
   auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis), output_shape_kept_dims) + min_num;
   return indicators / num_selected * grad;
 }
+
+class ArgminOrArgmaxShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc)
+  explicit ArgminOrArgmaxShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_ArgminOrArgmax"), axis_(axis) {}
+  ValuePtr ToValue() const override { return MakeValue(axis_); }
+  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto indices_expand_rank = inputs.at(0).size();
+    auto x_shape = inputs.at(1);
+    std::vector<int64_t> broad_shape(indices_expand_rank, 1);
+    auto x = LongToSize(axis_ + SizeToLong(indices_expand_rank));
+    auto depth = x_shape[x];
+    broad_shape[x] = depth;
+    return {broad_shape, {depth}};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, 1};
+  }
+
+ protected:
+  int64_t axis_{0};
+};
+REG_FUNCTOR("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc);
 
 NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
@@ -625,20 +670,7 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
     return dx;
   } else {
     auto indices_expand = ib->ExpandDims(out_0, x_axis);
-    auto shape_func = [x_axis](const ShapeArray &inputs) -> ShapeArray {
-      auto indices_expand_rank = inputs.at(0).size();
-      auto x_shape = inputs.at(1);
-      std::vector<int64_t> broad_shape(indices_expand_rank, 1);
-      auto x = LongToSize(x_axis + SizeToLong(indices_expand_rank));
-      auto depth = x_shape[x];
-      broad_shape[x] = depth;
-      return {broad_shape, {depth}};
-    };
-    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-      int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
-      return {x_rank, 1};
-    };
-    auto res = ib->ShapeCalc({indices_expand, x}, shape_func, infer_func, {});
+    auto res = ib->ShapeCalc(std::make_shared<ArgminOrArgmaxShapeCalc>(x_axis), {indices_expand, x});
     auto broad_shape = res[0];
     depth = res[1];
     auto depth_range = ib->Range(depth);
