@@ -17,7 +17,7 @@ mindspore.ops.prelu
 
     参数：
         - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度。
-        - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。 `weight` 只可以是Tensor，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为(1,)。
+        - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。 `weight` 只可以是Tensor，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为 :math:`(1,)` 。
 
     返回：
         Tensor，其shape和数据类型与 `x` 相同。

@@ -569,9 +569,9 @@ def choice_with_mask(input_x, count=256, seed=None):
     Args:
         input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
-        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: 256.
+        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-            Default: None, which will be treated as 0.
+            Default: ``None`` , which will be treated as 0.
 
     Returns:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.

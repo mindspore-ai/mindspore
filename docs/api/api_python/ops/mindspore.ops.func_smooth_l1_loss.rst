@@ -34,7 +34,7 @@ mindspore.ops.smooth_l1_loss
         - **reduction** (str) - 缩减输出的方法。默认值： ``'none'`` 。其他选项： ``'mean'`` 和 ``'sum'`` 。
 
     返回：
-        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `input` 的shape相同。否则shape为 `(1,)`。
+        Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `input` 的shape相同。否则shape为 :math:`(1,)`。
 
     异常：
         - **TypeError** - `beta` 不是float类型。

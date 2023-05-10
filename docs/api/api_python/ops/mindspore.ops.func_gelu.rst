@@ -18,7 +18,7 @@ mindspore.ops.gelu
     当 `approximate` 为 `tanh` ，GELU的定义如下：
 
     .. math::
-        GELU(x_i) = 0.5 * x_i * (1 + tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
+        GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
     GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ 。
 

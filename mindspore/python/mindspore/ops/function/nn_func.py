@@ -1145,6 +1145,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         reduction (str): Type of reduction to be applied to loss. The optional values
              are ``'mean'`` , ``'sum'`` , and ``'none'`` ,
              not case sensitive. If ``'none'`` , do not perform reduction. Default: ``'mean'`` .
+
     Returns:
         Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
@@ -1719,7 +1720,7 @@ def kl_div(logits, labels, reduction='mean'):
         logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
         labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
+            Its value must be one of ``'none'`` , ``'mean'`` , ``'batchmean'`` or ``'sum'`` . Default: ``'mean'`` .
 
     Returns:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
@@ -1777,7 +1778,7 @@ def hardshrink(x, lambd=0.5):
 
     Args:
         x (Tensor): The input of Hard Shrink with data type of float16 or float32.
-        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Returns:
         Tensor, has the same data type and shape as the input `x`.
@@ -2346,18 +2347,18 @@ def softmax(x, axis=-1, *, dtype=None):
     the Softmax function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},
+        \text{output}(x_i) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},
 
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: -1.
+        axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: ``-1`` .
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
         Tensor, with the same type and shape as the logits.
@@ -2394,18 +2395,18 @@ def softmin(x, axis=-1, *, dtype=None):
     the Softmin function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \frac{exp(-x_i)}{\sum_{j = 0}^{N-1}\exp(-x_j)},
+        \text{output}(x_i) = \frac{\exp(-x_i)}{\sum_{j = 0}^{N-1}\exp(-x_j)},
 
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: -1.
+        axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: ``-1`` .
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
         Tensor, with the same type and shape as the logits.
@@ -2446,7 +2447,7 @@ def softshrink(x, lambd=0.5):
 
     Args:
         x (Tensor): The input of soft shrink with data type of float16 or float32.
-        lambd (float): The :math:`\lambda` must be no less than zero. Default: 0.5.
+        lambd (float): The :math:`\lambda` must be no less than zero. Default: ``0.5`` .
 
     Returns:
         Tensor, has the same shape and data type as `x`.
@@ -2596,7 +2597,7 @@ def logsigmoid(x):
     Logsigmoid is defined as:
 
     .. math::
-        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+        \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
     where :math:`x_{i}` is the element of the input.
 
@@ -2740,7 +2741,7 @@ def pdist(input, p=2.0):
     Args:
         input (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
             dtype: float16, float32 or float64.
-        p (float): The order of norm distance, :math:`p∈[0, ∞)`. Default: 2.0.
+        p (float): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
     Returns:
         Tensor, has the same dtype as `input`.
@@ -2904,7 +2905,7 @@ def relu(input):
 
     .. math::
 
-        ReLU(input) = (input)^+ = max(0, input)
+        ReLU(input) = (input)^+ = \max(0, input)
 
     Note:
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
@@ -2990,12 +2991,12 @@ def prelu(x, weight):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         weight (Tensor):  Weight Tensor. The data type is float16 or float32.
           The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is (1,).
+          On GPU devices, when the input is a scalar, the shape is :math:`(1,)` .
 
     Returns:
         Tensor, with the same shape and dtype as `x`.
 
-    For detailed information, please refer to :class:`mindspore.nn.PReLU`.
+        For detailed information, please refer to :class:`mindspore.nn.PReLU`.
 
     Raises:
         TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
@@ -3040,8 +3041,8 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
 
     Args:
         input  (Tensor): The input of rrelu is a Tensor of any dimension.
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0 / 8.
-        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0 / 3.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1.0 / 8`` .
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: ``1.0 / 3`` .
 
     Returns:
         Tensor, after rrelu, has the same type and shape as the `input`.
@@ -3205,13 +3206,13 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             high-dimensional loss.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`,
-            data type must be float16 or float32. Default: None.
+            data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
-            and does not contribute to the input gradient. Default: -100
-        reduction (str):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
-            Default: 'mean'.
+            and does not contribute to the input gradient. Default: ``-100`` .
+        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
+            Default: ``'mean'`` .
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
-            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
+            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
     Returns:
         Tensor, the computed loss value.
@@ -3300,13 +3301,13 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
             high-dimensional loss, data type must be int32.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`.
-            The data type must be float16 or float32. Default: None.
+            The data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
-            and does not contribute to the input gradient. Default: -100
-        reduction (str):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
-            Default: 'mean'.
+            and does not contribute to the input gradient. Default: ``-100`` .
+        reduction (str):  Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
+            Default: ``'mean'`` .
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
-            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
+            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
     Returns:
         Tensor, the computed loss value.
@@ -3406,7 +3407,7 @@ def l1_loss(input, target, reduction='mean'):
 
     where :math:`N` is the batch size.
 
-    If `reduction` is "mean" or "sum", then:
+    If `reduction` is ``"mean"`` or ``"sum"`` , then:
 
     .. math::
         \ell(x, y) =
@@ -3419,8 +3420,9 @@ def l1_loss(input, target, reduction='mean'):
         input (Tensor): Predicted value, Tensor of any dimension.
         target (Tensor): Target value, usually has the same shape as the `input`.
             If `input` and `target` have different shape, make sure they can broadcast to each other.
-        reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
-            "none". Default: ``'mean'`` .
+        reduction (str, optional): Type of reduction to be applied to loss.
+            The optional value is ``"mean"`` , ``"sum"`` or
+            ``"none"`` . Default: ``'mean'`` .
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
@@ -3476,18 +3478,19 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         \end{cases}
 
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
-    :math:`\text{beta}>0` , its default value is 1.0. :math:`N` is the batch size.
+    :math:`\text{beta}>0` , its default value is ``1.0`` . :math:`N` is the batch size.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         target (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `input`.
         beta (float): A parameter used to control the point where the function will change between
-            L1 to L2 loss. The value should be greater than zero. Default: 1.0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
+            L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
+        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` or ``'sum'`` .
+            Default: ``'none'`` .
 
     Returns:
         Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `input`.
-        Otherwise, the shape of output tensor is `(1,)`.
+        Otherwise, the shape of output tensor is :math:`(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
@@ -3575,7 +3578,7 @@ def leaky_relu(input, alpha=0.2):
     Args:
         input (Tensor): The input of leaky_relu is a Tensor of any dimension.
         alpha (Union[int, float]): Slope of the activation function when the element of `input` is less than 0.
-          Default: 0.2.
+          Default: ``0.2`` .
 
     Returns:
         Tensor, has the same type and shape as the `input`.
@@ -3650,7 +3653,7 @@ def log_softmax(logits, axis=-1):
     Args:
         logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
-        axis (int): The axis to perform the Log softmax operation. Default: -1.
+        axis (int): The axis to perform the Log softmax operation. Default: ``-1`` .
 
     Returns:
         Tensor, with the same type and shape as the logits.
@@ -3872,7 +3875,8 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
         margin (float, optional): Should be in [-1.0, 1.0]. Default: 0.0.
         reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
-          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default: "mean".
+          ``"none"`` , ``"mean"`` , and ``"sum"`` ,
+          meaning no reduction, reduce mean and sum on output, respectively. Default: ``"mean"`` .
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", its shape is the same as `target`.
@@ -4103,11 +4107,12 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         targets (Tensor): Target sequences. A tensor of shape :math:`(N, S)`, where S is max target length.
         input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape(N).
         target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape(N).
-        blank (int, optional): The blank label. Default: 0.
-        reduction (str, optional): Implements the reduction method to the output with 'none', 'mean', or 'sum',
+        blank (int, optional): The blank label. Default: ``0`` .
+        reduction (str, optional): Implements the reduction method to the output with
+            ``'none'`` , ``'mean'`` , or ``'sum'`` ,
             respectively indicate that no calculation is specified, that the mean is used, and that is calculated
-            using summation. Default: "mean".
-        zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: False.
+            using summation. Default: ``"mean"`` .
+        zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: ``False`` .
 
     Returns:
         neg_log_likelihood (Tensor), A loss value with shape :math:`(N)` , which is differentiable with respect to
@@ -4188,7 +4193,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
             the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
-        eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: 1e-6.
+        eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: ``1e-6`` .
         reduction (str, optional): Apply specific reduction method to the
             output: ``"none"``, ``"mean"``, or ``"sum"``. Default: ``'mean'``.
 
@@ -4288,9 +4293,10 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         targets (Tensor): Label values, represented as :math:`y` in the formula.
             Has the same shape as `inputs`, contains -1 or 1.
         margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
-            Represented as :math:`\Delta` in the formula. Default: 1.0.
-        reduction (str): Specify the computing method to be applied to the outputs: 'none', 'mean', or 'sum'.
-            Default: 'mean'.
+            Represented as :math:`\Delta` in the formula. Default: ``1.0`` .
+        reduction (str): Specify the computing method to be applied to the outputs:
+            ``'none'`` , ``'mean'`` , or ``'sum'`` .
+            Default: ``'mean'`` .
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
@@ -4808,8 +4814,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     Args:
         input (Tensor): Input Tensor.
-        min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
-        max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
+        min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
+        max_val (Union[int, float]): Maximum value of the linear region range. Default: ``1.0`` .
 
     Returns:
         Tensor, with the same dtype and shape as `input`.
@@ -4871,10 +4877,11 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
         target (Tensor): Target value, has same dtype and shape as the `input` in common cases.
             However, when the shape of `target` is different from the shape of `input`,
             and they should be broadcasted to each other.
-        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum' and 'none'.
-            Default: 'mean'.
+        reduction (str): Type of reduction to be applied to loss.
+            The optional values are ``'mean'`` , ``'sum'`` and ``'none'`` .
+            Default: ``'mean'``.
         delta (Union[int, float]): The threshold to change between two type of loss.
-            The value must be greater than zero. Default: 1.0.
+            The value must be greater than zero. Default: ``1.0`` .
 
     Returns:
         Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
@@ -5452,7 +5459,7 @@ def glu(x, axis=-1):
     Args:
         x (Tensor): Tensor to be splited. Its dtype is Number, and shape is :math:`(\ast_1, N, \ast_2)`
             where `*` means, any number of additional dimensions.
-        axis (int, optional): the axis to split the input. It must be int. Default: -1, the last axis of `x`.
+        axis (int, optional): the axis to split the input. It must be int. Default: ``-1`` , the last axis of `x`.
 
     Returns:
         Tensor, the same dtype as the `x`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
@@ -5500,16 +5507,16 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
             It is :math:`x` in the above formula.
         target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
             value of target should be non-negative, less than C. It is :math:`y` in the above formula.
-        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
-        margin (int, optional): A parameter to change pairwise distance. Default: 1.
+        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: ``1`` .
+        margin (int, optional): A parameter to change pairwise distance. Default: ``1`` .
         weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
-            support float16, float32 or float64. Default: None.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+            support float16, float32 or float64. Default: ``None`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
 
-            - 'none': no reduction will be applied.
-            - 'mean': the sum of the output will be divided by the number of elements in the output.
-            - 'sum': the output will be summed.
+            - ``'none'`` : no reduction will be applied.
+            - ``'mean'`` : the sum of the output will be divided by the number of elements in the output.
+            - ``'sum'`` : the output will be summed.
 
     Returns:
         Tensor. If `reduction` is 'none', returns a Tensor with the same shape as `target`.
@@ -5525,7 +5532,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         ValueError: If `reduction` is not one of {'none','sum','mean'}.
         ValueError: If shape[0] of `input` is not equal to shape[0] of `target`.
         ValueError: If shape[1] of `input` is not equal to shape[0] of `weight`.
-        ValueError: If rank of `weight` is not 1 or  rank of `target` is not 1 or `input` is not 2.
+        ValueError: If rank of `weight` is not 1 or rank of `target` is not 1 or `input` is not 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5573,12 +5580,12 @@ def multilabel_margin_loss(input, target, reduction='mean'):
             is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
         target (Tensor): Ground truth data, with the same shape as `input`, data type must be int32 and
             label targets padded by -1.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
 
-            - 'none': no reduction will be applied.
-            - 'mean': the sum of the output will be divided by the number of elements in the output.
-            - 'sum': the output will be summed.
+            - ``'none'`` : no reduction will be applied.
+            - ``'mean'`` : the sum of the output will be divided by the number of elements in the output.
+            - ``'sum'`` : the output will be summed.
 
     Returns:
         - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
@@ -5630,15 +5637,16 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     multiply to the loss of each class if given.
 
     Args:
-        input (Tensor): A tensor of shape (N, C), where N is batch size and C is number of classes.
+        input (Tensor): A tensor of shape :math:`(N, C)` , where N is batch size and C is number of classes.
         target (Tensor): The label target Tensor which has the same shape as `input`.
-        weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: None.
+        weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: ``None``.
         reduction (str): Specifies which reduction to be applied to the output. It must be one of
-            'none', 'mean', and 'sum', meaning no reduction, reduce mean and sum on output, respectively.
-            Default: 'mean'.
+            ``'none'`` , ``'mean'`` , and ``'sum'`` , meaning no reduction, reduce mean and sum on output, respectively.
+            Default: ``'mean'`` .
 
     Returns:
-        Tensor, the data type is the same as input, if the reduction is 'none', its shape is (N), otherwise it is zero.
+        Tensor, the data type is the same as input, if the reduction is 'none',
+        its shape is :math:`(N)` , otherwise it is zero.
 
     Raises:
         ValueError: If the rank of `input` or `target` is not 2.
@@ -5704,7 +5712,7 @@ def elu(input_x, alpha=1.0):
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
         alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
-            Default: 1.0.
+            Default: ``1.0`` .
 
     Returns:
         Tensor, has the same shape and data type as `input_x`.
@@ -5746,12 +5754,12 @@ def gelu(input_x, approximate='none'):
     When `approximate` argument is `tanh`, GeLU is estimated with:
 
     .. math::
-        GELU(x_i) = 0.5 * x_i * (1 + tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
+        GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
     Args:
         input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
-        approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are 'none' and 'tanh'.
-            Default: 'none'.
+        approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are ``'none'`` and ``'tanh'`` .
+            Default: ``'none'`` .
 
     Returns:
         Tensor, with the same type and shape as `input_x`.
@@ -6019,14 +6027,14 @@ def mse_loss(input, target, reduction='mean'):
             However, it supports that the shape of `input` is different from the shape of `target`
             and they should be broadcasted to each other.
         reduction (str, optional): Type of reduction to be applied to loss.
-            The optional values are "mean", "none" and "sum". Default: ``'mean'`` .
+            The optional values are ``"mean"`` , ``"none"`` and ``"sum"`` . Default: ``'mean'`` .
 
     Returns:
-        Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
-        while the shape of output is the broadcasted shape if `reduction` is 'none'.
+        Tensor, loss of type float, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` ,
+        while the shape of output is the broadcasted shape if `reduction` is ``'none'`` .
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``'none'`` , ``'mean'`` or ``'sum'``.
         ValueError: If `input` and `target` have different shapes and cannot be broadcasted.
 
     Supported Platforms:
@@ -6119,13 +6127,13 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
             as `anchor`.
         negative (Tensor): A sample belonging to the different class from `anchor`, with the same type and shape
             as `anchor`.
-        margin (float, optional): Make a margin between the positive pair and the negative pair. Default: 1.0.
-        p (int, optional): The degree of norm for pairwise distance. Default: 2.
-        eps (float, optional): Add small value to avoid division by zero. Default: 1e-06.
+        margin (float, optional): Make a margin between the positive pair and the negative pair. Default: ``1.0`` .
+        p (int, optional): The degree of norm for pairwise distance. Default: ``2`` .
+        eps (float, optional): Add small value to avoid division by zero. Default: ``1e-06``.
         swap (bool, optional): The distance swap change the negative distance to the distance between positive
-            sample and negative sample. Default: False.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
-            Default: 'mean'.
+            sample and negative sample. Default: ``False`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , ``'sum'`` .
+            Default: ``'mean'`` .
 
     Returns:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
