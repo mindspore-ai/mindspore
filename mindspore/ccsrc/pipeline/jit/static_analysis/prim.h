@@ -41,6 +41,9 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
 
   std::string ToString() const override { return identifier_ + "_" + prim_->name(); }
 
+ protected:
+  bool inplace_prim() const override { return prim_->inplace_prim(); }
+
  private:
   EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
   EvalResultPtr RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
@@ -61,6 +64,9 @@ class PythonPrimEvaluator final : public TrivialPrimEvaluator {
   PrimitivePtr prim() { return dyn_cast<Primitive>(prim_py_); }
 
   std::string ToString() const override { return identifier_ + "_" + prim_py_->name(); }
+
+ protected:
+  bool inplace_prim() const override { return dyn_cast<Primitive>(prim_py_)->inplace_prim(); }
 
  private:
   PrimitivePyPtr prim_py_;
@@ -100,6 +106,9 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
     }
     return args_abs_list;
   }
+
+ protected:
+  bool inplace_prim() const override { return false; }
 
  private:
   PrimitiveImpl impl_;

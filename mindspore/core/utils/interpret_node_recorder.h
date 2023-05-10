@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 
 #include <string>
+#include "ir/anf.h"
 #include "utils/hash_set.h"
 #include "mindapi/base/macros.h"
 
@@ -30,18 +31,24 @@ class MS_CORE_API InterpretNodeRecorder {
   InterpretNodeRecorder &operator=(InterpretNodeRecorder &&) = delete;
   static InterpretNodeRecorder &GetInstance();
 
-  void PushLineInfo(const std::string &line) { (void)interpret_nodes_lines_.emplace(line); }
+  void PushPyInterpretNode(const AnfNodePtr &node) { (void)py_interpret_nodes_.emplace(node); }
+  const mindspore::HashSet<AnfNodePtr> &PyInterpretNodes() const { return py_interpret_nodes_; }
 
-  const mindspore::HashSet<std::string> &LineInfos() const { return interpret_nodes_lines_; }
+  void PushPyExecuteNode(const AnfNodePtr &node) { (void)py_execute_nodes_.emplace(node); }
+  const mindspore::HashSet<AnfNodePtr> &PyExecuteNodes() const { return py_execute_nodes_; }
 
-  void Clear() { interpret_nodes_lines_.clear(); }
+  void Clear() {
+    py_interpret_nodes_.clear();
+    py_execute_nodes_.clear();
+  }
 
  protected:
   InterpretNodeRecorder() = default;
   virtual ~InterpretNodeRecorder() = default;
 
  private:
-  mindspore::HashSet<std::string> interpret_nodes_lines_;
+  mindspore::HashSet<AnfNodePtr> py_interpret_nodes_;
+  mindspore::HashSet<AnfNodePtr> py_execute_nodes_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_

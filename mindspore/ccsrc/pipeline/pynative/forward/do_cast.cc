@@ -92,15 +92,17 @@ void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   if (cast_prim_ == nullptr) {
     py::gil_scoped_acquire gil;
     const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
-    const auto &py_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
-    MS_EXCEPTION_IF_NULL(py_adapter);
-    const auto adapter = std::make_shared<PrimitivePyAdapter>(*py_adapter);
-    cast_prim_ = std::make_shared<PrimitivePy>(cast_prim, adapter);
-    const auto py_cast_prim = cast_prim_->cast<PrimitivePyPtr>();
-    adapter->set_attached_primitive(py_cast_prim);
-    if (!py_cast_prim->HasPyObj()) {
+    auto prim_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
+    MS_EXCEPTION_IF_NULL(prim_adapter);
+    auto primitive = prim_adapter->attached_primitive();
+    if (primitive == nullptr) {
+      primitive = std::make_shared<PrimitivePy>(cast_prim);
+      prim_adapter->set_attached_primitive(primitive);
+    }
+    if (!primitive->HasPyObj()) {
       MS_LOG(EXCEPTION) << "Pyobj is empty";
     }
+    cast_prim_ = primitive;
   }
   // Mixed precision conversion tensors which has cast dtype
   SetTensorMixPrecisionCast(op_run_info);

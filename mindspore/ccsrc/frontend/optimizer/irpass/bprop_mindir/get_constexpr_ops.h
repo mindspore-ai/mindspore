@@ -48,7 +48,7 @@ class GetConstexprOps : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(prim_adapter);
     auto new_prim = prim_adapter->attached_primitive();
     if (new_prim == nullptr) {
-      new_prim = std::make_shared<PrimitivePy>(attr, prim_adapter);
+      new_prim = std::make_shared<PrimitivePy>(attr);
       prim_adapter->set_attached_primitive(new_prim);
     }
     return NewValueNode(std::make_shared<prim::DoSignaturePrimitive>(new_prim->name(), new_prim));

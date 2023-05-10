@@ -41,6 +41,16 @@ std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const s
 std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op);
 std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
 
+// Create a PyExecute CNode by old node or debug_info.
+CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
+                              const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info);
+CNodePtr CreatePyExecuteCNode(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
+                              const AnfNodePtr &values);
+CNodePtr CreatePyExecuteCNodeInOrder(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
+                                     const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info);
+CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
+                                     const AnfNodePtr &values);
+
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node);
 AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);

@@ -1378,13 +1378,14 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   AnfNodePtr getattr_node = nullptr;
   constexpr auto args_size = 3;
   if (args_abs_list.size() == args_size) {  // Has setattr node as input.
-    getattr_node = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str),
-                                 NewValueNode(key_tuple), value_tuple_node, cnode->input(args_size)});
+    const auto &getattr_cnode = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str),
+                                                               NewValueNode(key_tuple), value_tuple_node);
+    getattr_cnode->add_input(cnode->input(args_size));
+    getattr_node = getattr_cnode;
   } else {
-    getattr_node = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str),
-                                 NewValueNode(key_tuple), value_tuple_node});
+    getattr_node = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str), NewValueNode(key_tuple),
+                                                  value_tuple_node);
   }
-  getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
 
   auto eng = out_conf->engine();
@@ -1437,9 +1438,8 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   (void)value_list.emplace_back(cnode->input(value_node_index));
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto setattr_node = fg->NewCNode(
-    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_setattr_str), NewValueNode(key_tuple), value_tuple_node});
-  setattr_node->set_debug_info(cnode->debug_info());
+  const auto setattr_node =
+    fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_setattr_str), NewValueNode(key_tuple), value_tuple_node);
   MS_LOG(DEBUG) << "setattr_node: " << setattr_node->DebugString(debug_recursive_level);
 
   auto eng = out_conf->engine();
@@ -3321,9 +3321,9 @@ class CondEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(CondEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    auto node = out_conf->node()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(node);
-    auto cur_graph = node->func_graph();
+    auto cnode = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto cur_graph = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
     constexpr size_t input_size = 2;
     if (args_abs_list.size() != input_size) {
@@ -3336,8 +3336,8 @@ class CondEvaluator : public TransitionPrimEvaluator {
     constexpr size_t cond_input_index = 1;
     constexpr size_t flag_input_index = 2;
     auto cond_abs = args_abs_list[cond_abs_index];
-    auto cond_node = node->input(cond_input_index);
-    auto flag_node = node->input(flag_input_index);
+    auto cond_node = cnode->input(cond_input_index);
+    auto flag_node = cnode->input(flag_input_index);
     if (cond_abs->isa<AbstractAny>()) {
       // If the input to cond node is AbstractAny, genenrate pyexecute node 'bool(input)';
       const auto script_str = std::make_shared<StringImm>("bool(__input__)");
@@ -3349,9 +3349,8 @@ class CondEvaluator : public TransitionPrimEvaluator {
 
       std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple), cond_node};
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
-      new_node = cur_graph->NewCNodeInOrder(
-        {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
-      new_node->set_debug_info(node->debug_info());
+      new_node =
+        fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
     } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
       // When the condition of while is a tensor, do not use standard_method.tensor_bool
       // to avoid turning the tensor into scalar to cause a loop.
@@ -3360,7 +3359,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       auto cast_node = NewValueNode(parse::data_converter::PyDataToValue(cast_op));
       auto type_node = NewValueNode(TypeIdToType(kNumberTypeBool));
       new_node = cur_graph->NewCNodeInOrder({cast_node, cond_node, type_node});
-      new_node->set_debug_info(node->debug_info());
+      new_node->set_debug_info(cnode->debug_info());
     } else {
       // The logic of truth value testing:
       //   1. If the object has __bool__ attribute, call __bool__()
@@ -3386,7 +3385,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       prim_fg->set_manager(mng);
       new_node = cur_graph->NewCNodeInOrder({NewValueNode(prim_fg), cond_node});
     }
-    cur_graph->ReplaceInOrder(node, new_node);
+    cur_graph->ReplaceInOrder(cnode, new_node);
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
   }

@@ -63,11 +63,12 @@ class MS_CORE_API AbstractBase : public Base {
   /// \param[in] abstract_base an abstract
   AbstractBase(const AbstractBase &other)
       : Base(other),
-        name_(other.name_),
         value_(other.value_),
         type_(other.type_),
         shape_(other.shape_),
-        value_desc_(other.value_desc_) {
+        value_desc_(other.value_desc_),
+        name_(other.name_),
+        inplace_abstract_(other.inplace_abstract_) {
     user_data_ = other.user_data_;
   }
 
@@ -80,9 +81,10 @@ class MS_CORE_API AbstractBase : public Base {
       this->value_ = other.value_;
       this->type_ = other.type_;
       this->shape_ = other.shape_;
-      this->name_ = other.name_;
       this->user_data_ = other.user_data_;
       this->value_desc_ = other.value_desc_;
+      this->name_ = other.name_;
+      this->inplace_abstract_ = other.inplace_abstract_;
     }
     return *this;
   }
@@ -241,22 +243,27 @@ class MS_CORE_API AbstractBase : public Base {
   }
   static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher() { return pyexecute_user_data_catcher_; }
 
+  /// \brief Store for mindir input and output names.
   std::string name() const { return name_; }
-
   void set_name(const std::string &name) { name_ = name; }
+
+  /// \brief Cover *this abstract for inplace primitive. If inplace_abstract() is not null, use it as real abstract.
+  AbstractBasePtr inplace_abstract() const { return inplace_abstract_; }
+  void set_inplace_abstract(const AbstractBasePtr &inplace_abstract) { inplace_abstract_ = inplace_abstract; }
 
  protected:
   /// \brief Build a value when value is not set.
   ///
   /// \return A pointer to the Value.
   virtual ValuePtr RealBuildValue() const { return kValueAny; }
-  std::string name_;
 
  private:
   ValuePtr value_;
   TypePtr type_;
   BaseShapePtr shape_;
-  std::string value_desc_;  // store initial value description for error report
+  std::string value_desc_;                     // Store initial value description for error report.
+  std::string name_;                           // Store for mindir input and output names.
+  AbstractBasePtr inplace_abstract_{nullptr};  // Cover *this abstract for inplace primitive.
 };
 
 /// \brief Class AbstractScalar describes a scalar's type and value.

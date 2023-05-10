@@ -691,15 +691,15 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // DictGetItem --> PyExecute()
-  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
+  AnfNodePtr ConvertDictGetItem(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
-    CheckInputsSize(node, expect_inputs_size);
+    CheckInputsSize(cnode, expect_inputs_size);
 
     const size_t data_index = 1;
     const size_t item_key_index = 2;
-    const auto &inputs = node->inputs();
+    const auto &inputs = cnode->inputs();
     auto &data = inputs[data_index];
     auto &key = inputs[item_key_index];
     MS_EXCEPTION_IF_NULL(data);
@@ -709,7 +709,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (abs_dict == nullptr) {
       return nullptr;
     }
-    auto func_graph = node->func_graph();
+    auto func_graph = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
 
     // Script
@@ -733,8 +733,8 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
     // Build the new dict node.
-    const auto dict_getitem_node = func_graph->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    const auto dict_getitem_node =
+      fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
     int64_t index = GetElementIndex(abs_dict->elements(), key);
     const auto &val = abs_dict->elements()[index].second;
     const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
@@ -748,21 +748,20 @@ class AfterOptARewriter : public BaseRewriter {
                     << ", shape: " << tensor_shape->ToString() << ", val: " << tensor_val->ToString();
     }
     MS_LOG(DEBUG) << "Made dict getitem node: " << dict_getitem_node->DebugString();
-    dict_getitem_node->set_debug_info(node->debug_info());
     return dict_getitem_node;
   }
 
   // DictSetItem --> PyExecute()
-  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
+  AnfNodePtr ConvertDictSetItem(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item, value]
     const size_t expect_inputs_size = 4;
-    CheckInputsSize(node, expect_inputs_size);
+    CheckInputsSize(cnode, expect_inputs_size);
 
     const size_t data_index = 1;
     const size_t item_key_index = 2;
     const size_t item_value_index = 3;
-    const auto &inputs = node->inputs();
+    const auto &inputs = cnode->inputs();
     auto &data = inputs[data_index];
     auto &key = inputs[item_key_index];
     auto &item_value = inputs[item_value_index];
@@ -773,7 +772,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (abs_dict == nullptr) {
       return nullptr;
     }
-    auto func_graph = node->func_graph();
+    auto func_graph = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
 
     // Script
@@ -801,10 +800,9 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
     // Build the new dict node.
-    const auto dict_setitem_node = func_graph->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    const auto dict_setitem_node =
+      fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
     MS_LOG(DEBUG) << "Made dict setitem node: " << dict_setitem_node->DebugString();
-    dict_setitem_node->set_debug_info(node->debug_info());
     return dict_setitem_node;
   }
 
@@ -815,9 +813,8 @@ class AfterOptARewriter : public BaseRewriter {
     auto dict_py_exec_key = std::make_shared<ValueTuple>(std::vector<ValuePtr>{script_key_tuple_str});
     auto dict_tuple_key_value = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), keys_node});
     const auto make_key_tuple_node =
-      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_key_tuple_str),
-                    NewValueNode(dict_py_exec_key), dict_tuple_key_value});
-    make_key_tuple_node->set_debug_info(keys_node->debug_info());
+      fallback::CreatePyExecuteCNode(fg, NewValueNode(script_key_tuple_str), NewValueNode(dict_py_exec_key),
+                                     dict_tuple_key_value, keys_node->debug_info());
     return make_key_tuple_node;
   }
 
@@ -828,9 +825,8 @@ class AfterOptARewriter : public BaseRewriter {
     auto dict_py_exec_value = std::make_shared<ValueTuple>(std::vector<ValuePtr>{script_value_tuple_str});
     auto dict_tuple_node = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), values_node});
     const auto make_value_tuple_node =
-      fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_value_tuple_str),
-                    NewValueNode(dict_py_exec_value), dict_tuple_node});
-    make_value_tuple_node->set_debug_info(values_node->debug_info());
+      fallback::CreatePyExecuteCNode(fg, NewValueNode(script_value_tuple_str), NewValueNode(dict_py_exec_value),
+                                     dict_tuple_node, values_node->debug_info());
     return make_value_tuple_node;
   }
 
@@ -859,10 +855,9 @@ class AfterOptARewriter : public BaseRewriter {
     const auto script_str = std::make_shared<StringImm>(script);
 
     // Build the new dict node.
-    const auto make_dict_node = fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    const auto make_dict_node = fallback::CreatePyExecuteCNodeInOrder(
+      fg, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, make_key_tuple_node->debug_info());
     MS_LOG(DEBUG) << "Made dict node: " << make_dict_node->DebugString();
-    make_dict_node->set_debug_info(key_value_name_tuple->debug_info());
     return make_dict_node;
   }
 
@@ -950,9 +945,8 @@ class AfterOptARewriter : public BaseRewriter {
     keys_tuple_node->set_debug_info(cnode->debug_info());
     values_tuple_node->set_debug_info(cnode->debug_info());
     auto scalar_cast_node =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, keys_tuple_node, values_tuple_node});
+      fallback::CreatePyExecuteCNodeInOrder(cnode, script_node, keys_tuple_node, values_tuple_node);
     MS_LOG(DEBUG) << "Convert CastToScalar: " << cnode->DebugString() << " -> " << scalar_cast_node->DebugString();
-    scalar_cast_node->set_debug_info(cnode->debug_info());
     return scalar_cast_node;
   }
 
@@ -999,10 +993,9 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = fg->NewCNode(key_value_list);
 
     // Build the new slice node.
-    const auto slice_node = fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    const auto slice_node =
+      fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
     MS_LOG(DEBUG) << "Made slice node: " << slice_node->DebugString();
-    slice_node->set_debug_info(cnode->debug_info());
     return slice_node;
   }
 
@@ -1040,8 +1033,8 @@ class AfterOptARewriter : public BaseRewriter {
     const auto none_tuple = std::make_shared<ValueTuple>(none_value);
     auto none_tuple_node = NewValueNode(none_tuple);
 
-    AnfNodePtr none_execute_node =
-      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, none_tuple_node, none_tuple_node});
+    AnfNodePtr none_execute_node = fallback::CreatePyExecuteCNodeInOrder(
+      func_graph, script_node, none_tuple_node, none_tuple_node, none_tuple_node->debug_info());
     MS_LOG(DEBUG) << "none_execute_node:" << none_execute_node->DebugString();
 
     set_need_renormalized(true);
@@ -1064,8 +1057,8 @@ class AfterOptARewriter : public BaseRewriter {
     const auto type_tuple = std::make_shared<ValueTuple>(type_value);
     auto type_tuple_node = NewValueNode(type_tuple);
 
-    AnfNodePtr type_execute_node =
-      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, type_tuple_node, type_tuple_node});
+    AnfNodePtr type_execute_node = fallback::CreatePyExecuteCNodeInOrder(func_graph, script_node, type_tuple_node,
+                                                                         type_tuple_node, script_node->debug_info());
     MS_LOG(DEBUG) << "type_execute_node:" << type_execute_node->DebugString();
 
     return type_execute_node;
@@ -1282,10 +1275,9 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
     // Build the new dict node.
-    const auto list_value_node = func_graph->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    const auto list_value_node = fallback::CreatePyExecuteCNodeInOrder(
+      func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, value_node->debug_info());
     MS_LOG(DEBUG) << "List value node convert to PyExecute node: " << list_value_node->DebugString();
-    list_value_node->set_debug_info(value_node->debug_info());
     return list_value_node;
   }
 

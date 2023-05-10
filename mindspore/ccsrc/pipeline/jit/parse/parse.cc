@@ -3074,7 +3074,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   MS_LOG(INFO) << "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter:"
                << "\n\n"
                << line_info;
-  InterpretNodeRecorder::GetInstance().PushLineInfo(line_info);
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(value_node);
   return interpreted_node;
 }
 

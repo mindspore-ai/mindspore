@@ -802,7 +802,7 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   MS_EXCEPTION_IF_NULL(compute_node_type);
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
-    prim = std::make_shared<PrimitivePy>(cast_prim, adapter);
+    prim = std::make_shared<PrimitivePy>(cast_prim);
   }
   // Insert cast.
   auto type_node = NewValueNode(compute_node_type);

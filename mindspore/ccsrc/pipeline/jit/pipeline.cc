@@ -1048,19 +1048,57 @@ void CacheValidateFuncGraph(const ResourcePtr &resource) {
 }
 
 void CheckInterpretNodeLineInfos() {
-  auto &line_infos = InterpretNodeRecorder::GetInstance().LineInfos();
-  if (line_infos.empty()) {
+  auto &py_interpret_nodes = InterpretNodeRecorder::GetInstance().PyInterpretNodes();
+  auto &py_execute_nodes = InterpretNodeRecorder::GetInstance().PyExecuteNodes();
+  if (py_interpret_nodes.empty() && py_execute_nodes.empty()) {
     return;
   }
+
   std::stringstream ss;
   ss << "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter:\n";
-  ss << "-----\n";
+  // Dump for PyInterpret.
+  ss << "----------------------------------------\n";
+  ss << " After Parser Phase (total: " << py_interpret_nodes.size() << ")\n";
+  ss << "----------------------------------------\n";
   size_t num = 1;
-  for (auto &line : line_infos) {
-    ss << "# No. " << num << ":\n" << line << "\n";
+  for (const auto &node : py_interpret_nodes) {
+    const auto line_info = trace::GetDebugInfo(node->debug_info());
+    ss << "# No. " << num << ":\n" << line_info << "\n";
     ++num;
   }
-  ss << "-----\n";
+  ss << "\n";
+  // Dump for PyExecute.
+  ss << "----------------------------------------\n";
+  ss << " After Optimizer Phase (total: " << py_execute_nodes.size() << ")\n";
+  ss << "----------------------------------------\n";
+  num = 1;
+  for (const auto &node : py_execute_nodes) {
+    ss << "# No. " << num << ":\n";
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &script_node = cnode->input(1);
+    const auto &script = GetValueNode<StringImmPtr>(script_node);
+    // Usually the script is a value node.
+    if (script != nullptr) {
+      ss << "Script: " << script->value() << "\n\n";
+    } else {
+      const auto &script_abs = script_node->abstract();
+      if (script_abs != nullptr) {
+        const auto script_abs_scalar = script_abs->cast<abstract::AbstractScalarPtr>();
+        auto script_value = script_abs_scalar->BuildValue();
+        MS_EXCEPTION_IF_NULL(script_value);
+        auto script_value_str = script_value->cast<StringImmPtr>();
+        MS_EXCEPTION_IF_NULL(script_value_str);
+        ss << "Script: " << script_value_str->value() << "\n\n";
+      }
+    }
+    const auto line_info = trace::GetDebugInfo(node->debug_info());
+    ss << line_info << "\n";
+    ++num;
+  }
+  ss << "\n";
+  ss << "----------------------------------------\n";
+
   // Print the codes run in JIT Fallback.
   MS_LOG(INFO) << ss.str();
   InterpretNodeRecorder::GetInstance().Clear();

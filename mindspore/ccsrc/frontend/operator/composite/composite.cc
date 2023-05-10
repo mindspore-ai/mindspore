@@ -32,6 +32,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "ir/signature.h"
 #include "pipeline/jit/debug/trace.h"
+#include "utils/interpret_node_recorder.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -657,6 +658,8 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimPyExecute));
+  // Record the PyExecute node.
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(out);
   return fg;
 }
 

@@ -1344,7 +1344,7 @@ GVAR_DEF(PrimitivePtr, kPrimLuUnpack, std::make_shared<Primitive>("LuUnpack"));
 GVAR_DEF(PrimitivePtr, kPrimLuUnpackGrad, std::make_shared<Primitive>("LuUnpackGrad"));
 GVAR_DEF(PrimitivePtr, kPrimCholeskyInverse, std::make_shared<Primitive>("CholeskyInverse"));
 GVAR_DEF(PrimitivePtr, kPrimTensorAdd, std::make_shared<Primitive>("TensorAdd"));
-GVAR_DEF(PrimitivePtr, kPrimAdd, std::make_shared<Primitive>(kAdd));
+GVAR_DEF(PrimitivePtr, kPrimAdd, std::make_shared<Primitive>(kAdd, true, kPrimTypeBuiltIn, true));
 GVAR_DEF(PrimitivePtr, kPrimAddV2, std::make_shared<Primitive>(kAddV2));
 GVAR_DEF(PrimitivePtr, kPrimAddcdiv, std::make_shared<Primitive>(kAddcdiv));
 GVAR_DEF(PrimitivePtr, kPrimAddcmul, std::make_shared<Primitive>(kAddcmul));

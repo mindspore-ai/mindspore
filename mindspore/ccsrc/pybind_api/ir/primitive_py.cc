@@ -150,19 +150,22 @@ PrimitivePy &PrimitivePy::operator=(const PrimitivePy &other) {
   return *this;
 }
 
-PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter)
-    : Primitive(adapter->name_, false), python_obj_(python_obj), adapter_(adapter) {
-  MS_LOG(DEBUG) << "New primitive:" << adapter->name_;
-  set_signatures(adapter->signatures_);
-  (void)Primitive::SetAttrs(adapter->attrs_);
-  Primitive::set_prim_type(adapter->prim_type_);
-  Primitive::set_const_prim(adapter->is_const_prim_);
-  Primitive::set_const_input_indexes(adapter->const_input_indexes_);
-  for (const auto &elem : adapter->backward_hook_fn_) {
+PrimitivePy::PrimitivePy(const py::object &python_obj)
+    : Primitive(python_obj.cast<PrimitivePyAdapterPtr>()->name_, false),
+      python_obj_(python_obj),
+      adapter_(python_obj.cast<PrimitivePyAdapterPtr>()) {
+  MS_LOG(DEBUG) << "New primitive:" << adapter_->name_;
+  set_signatures(adapter_->signatures_);
+  (void)Primitive::SetAttrs(adapter_->attrs_);
+  Primitive::set_prim_type(adapter_->prim_type_);
+  Primitive::set_const_prim(adapter_->const_prim_);
+  Primitive::set_inplace_prim(adapter_->inplace_prim_);
+  Primitive::set_const_input_indexes(adapter_->const_input_indexes_);
+  for (const auto &elem : adapter_->backward_hook_fn_) {
     AddBackwardHookFn(elem.first, elem.second);
   }
-  set_instance_name(adapter->instance_name_);
-  CloneUserData(adapter->user_data_);
+  set_instance_name(adapter_->instance_name_);
+  CloneUserData(adapter_->user_data_);
 }
 
 PrimitivePy::~PrimitivePy() {
@@ -535,7 +538,7 @@ PrimitivePtr PrimitivePy::Clone() {
   auto clone_fn = python_obj_.attr("_clone");
   py::object obj_adapter = clone_fn();
   auto prim_adapter = obj_adapter.cast<PrimitivePyAdapterPtr>();
-  auto prim = std::make_shared<PrimitivePy>(obj_adapter, prim_adapter);
+  auto prim = std::make_shared<PrimitivePy>(obj_adapter);
   prim_adapter->set_attached_primitive(prim);
   return prim;
 }
@@ -581,7 +584,8 @@ void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }
 PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
 
 PrimitivePyAdapter::PrimitivePyAdapter(const PrimitivePyAdapter &adapter)
-    : is_const_prim_(adapter.is_const_prim_),
+    : const_prim_(adapter.const_prim_),
+      inplace_prim_(adapter.inplace_prim_),
       backward_hook_fn_key_(adapter.backward_hook_fn_key_),
       name_(adapter.name_),
       instance_name_(adapter.instance_name_),
@@ -595,7 +599,8 @@ PrimitivePyAdapter &PrimitivePyAdapter::operator=(const PrimitivePyAdapter &othe
   if (this == &other) {
     return *this;
   }
-  is_const_prim_ = other.is_const_prim_;
+  const_prim_ = other.const_prim_;
+  inplace_prim_ = other.inplace_prim_;
   backward_hook_fn_key_ = other.backward_hook_fn_key_;
   name_ = other.name_;
   instance_name_ = other.instance_name_;
@@ -677,13 +682,23 @@ void PrimitivePyAdapter::set_prim_type(const PrimType t) {
     prim->set_prim_type(t);
   }
 }
+
 void PrimitivePyAdapter::set_const_prim(bool is_const_prim) {
-  is_const_prim_ = is_const_prim;
+  const_prim_ = is_const_prim;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_const_prim(is_const_prim);
   }
 }
+
+void PrimitivePyAdapter::set_inplace_prim(bool is_inplace_prim) {
+  inplace_prim_ = is_inplace_prim;
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_inplace_prim(is_inplace_prim);
+  }
+}
+
 void PrimitivePyAdapter::set_const_input_indexes(const std::vector<size_t> &const_input_indexes) {
   const_input_indexes_ = const_input_indexes;
   auto prim = attached_primitive_.lock();
@@ -778,6 +793,7 @@ void RegPrimitive(const py::module *m) {
     .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
     .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
     .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
+    .def("set_inplace_prim", &PrimitivePyAdapter::set_inplace_prim, "Set primitive is inplace primitive.")
     .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes, "Set primitive const input indexes.")
     .def("set_signatures", &PrimitivePyAdapter::set_signatures, "Set primitive inputs signature.")
     .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
