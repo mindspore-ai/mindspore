@@ -74,7 +74,7 @@ class _TensorMeta(type(Tensor_), abc.ABCMeta):
     """
 
 
-def make_tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
+def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
     """
     Create a new Tensor in Cell.construct() or function decorated by @jit.
 
@@ -4342,14 +4342,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('ormqr')(self, input2, input3, left, transpose)
 
 
-    def masked_scatter(self, mask, tensor):
+    def masked_scatter(self, mask, x):
         r"""
         Returns a Tensor. Updates the value in the "self Tensor" with the `tensor` value according to the mask.
         The shape of `mask` and the "self Tensor" must be the same or `mask` is broadcastable.
 
         Args:
             mask (Tensor[bool]): A bool tensor with a shape broadcastable to the "self Tensor".
-            tensor (Tensor): A tensor with the same data type as the "self Tensor". The number
+            x (Tensor): A tensor with the same data type as the "self Tensor". The number
                 of elements must be greater than or equal to the number of True's in `mask`.
 
         Returns:
@@ -4375,7 +4375,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [5. 6. 3. 7.]
         """
         self._init_check()
-        return tensor_operator_registry.get('masked_scatter')()(self, mask, tensor)
+        return tensor_operator_registry.get('masked_scatter')()(self, mask, x)
 
 
     def index_put(self, indices, values, accumulate=False):
