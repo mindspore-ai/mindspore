@@ -86,8 +86,8 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
           return res_graph->NewCNode({NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(key_value), dict_get_item});
         });
     } else {
-      MS_LOG(EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
-                        << args_abs_list[index]->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The arguments of UnpackCall operator should be tuple, list or dict, but got "
+                                 << args_abs_list[index]->ToString();
     }
   }
   // Add to order list to trace if fn_node had side effect.

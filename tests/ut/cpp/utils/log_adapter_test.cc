@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,46 @@ TEST_F(TestLogAdapter, TestParseExceptionMessage2) {
     const std::string &exception_str = ex.what();
     MS_LOG(INFO) << exception_str;
     ASSERT_TRUE(exception_str.find("The Dev Content1") == std::string::npos);
+  }
+}
+
+/// Feature: Framework exception info optimization
+/// Description: Test that displays user note message when using internal expcetion
+/// Expectation: User guide message displays
+TEST_F(TestLogAdapter, TestInternalException) {
+  const std::string title = "Framework Unexpected Exception Raised:";
+  const std::string content =
+    "This exception is caused by framework's unexpected error. Please create an issue at "
+    "https://gitee.com/mindspore/mindspore/issues to get help.";
+
+  // Test MS_INTERNAL_EXCEPTION(type)
+  try {
+    MS_INTERNAL_EXCEPTION(TypeError) << "test content1";
+  } catch (const std::exception &ex) {
+    const std::string &exception_str = ex.what();
+    MS_LOG(INFO) << exception_str;
+    ASSERT_TRUE(exception_str.find(title) != std::string::npos);
+    ASSERT_TRUE(exception_str.find(content) != std::string::npos);
+  }
+
+  // Test MS_LOG(INTERNAL_EXCEPTION)
+  try {
+    MS_LOG(INTERNAL_EXCEPTION) << "test content2";
+  } catch (const std::exception &ex) {
+    const std::string &exception_str = ex.what();
+    MS_LOG(INFO) << exception_str;
+    ASSERT_TRUE(exception_str.find(title) != std::string::npos);
+    ASSERT_TRUE(exception_str.find(content) != std::string::npos);
+  }
+
+  // Test MS_LOG_INTERNAL_EXCEPTION
+  try {
+    MS_LOG_INTERNAL_EXCEPTION << "test content3";
+  } catch (const std::exception &ex) {
+    const std::string &exception_str = ex.what();
+    MS_LOG(INFO) << exception_str;
+    ASSERT_TRUE(exception_str.find(title) != std::string::npos);
+    ASSERT_TRUE(exception_str.find(content) != std::string::npos);
   }
 }
 }  // namespace mindspore

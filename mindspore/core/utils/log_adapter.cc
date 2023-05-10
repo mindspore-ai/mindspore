@@ -188,8 +188,8 @@ static inline std::string GetEnv(const std::string &envvar) {
 // then will only print message in exception stack.
 static MsLogLevel GetGlobalLogLevel();
 void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const {
-  auto logLevel = GetGlobalLogLevel();
-  if (logLevel <= MsLogLevel::kInfo || GetEnv("GLOG_logtostderr") == "0") {
+  auto log_level = GetGlobalLogLevel();
+  if (log_level <= MsLogLevel::kInfo || GetEnv("GLOG_logtostderr") == "0") {
     std::string str = msg.str();
     // replace any titles enclosed in "#dmsg#" or "#umsg#", as well as its formatted couterparts with "\n"
     std::regex title_re{R"(\#[d|u]msg\#.+?\#[d|u]msg\#|)" + std::string(kSplitLine) + R"(- .+?)" +
@@ -361,6 +361,11 @@ void LogWriter::operator^(const LogStream &stream) const {
   const auto &message_handler = GetMessageHandler();
   if (message_handler != nullptr) {
     message_handler(&msg);
+  }
+
+  if (is_internal_exception_) {
+    msg << "#umsg#Framework Unexpected Exception Raised:#umsg#This exception is caused by framework's unexpected "
+           "error. Please create an issue at https://gitee.com/mindspore/mindspore/issues to get help.";
   }
 
   std::ostringstream oss;
