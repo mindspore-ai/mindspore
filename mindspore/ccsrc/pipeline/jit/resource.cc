@@ -346,6 +346,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"bernoulli", std::string("bernoulli")},                            // P.Bernoulli()
        {"ceil", std::string("ceil")},                                      // P.Ceil
        {"floor", std::string("floor")},                                    // P.floor
+       {"floor_divide", std::string("floor_divide")},                      // floor_divide
        {"flip", std::string("flip")},                                      // flip
        {"fliplr", std::string("fliplr")},                                  // fliplr
        {"flipud", std::string("flipud")},                                  // flipud

@@ -125,6 +125,7 @@
     mindspore.Tensor.float
     mindspore.Tensor.float_power
     mindspore.Tensor.floor
+    mindspore.Tensor.floor_divide
     mindspore.Tensor.flush_from_cache
     mindspore.Tensor.fold
     mindspore.Tensor.fmax

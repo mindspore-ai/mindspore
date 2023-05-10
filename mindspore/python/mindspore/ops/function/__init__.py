@@ -216,6 +216,7 @@ from .math_func import (
     true_divide,
     tensor_floordiv,
     floor_div,
+    floor_divide,
     floordiv,
     float_power,
     fmod,

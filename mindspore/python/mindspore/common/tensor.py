@@ -1284,6 +1284,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('floor')(self)
 
+    def floor_divide(self, other):
+        """
+        For details, please refer to :func:`mindspore.ops.floor_divide`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('floor_divide')(self, other)
+
     def lerp(self, end, weight):
         """
         For details, please refer to :func:`mindspore.ops.lerp`.

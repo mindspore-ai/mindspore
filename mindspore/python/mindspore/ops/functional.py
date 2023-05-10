@@ -334,6 +334,7 @@ tensor_operator_registry.register('log10', log10)
 tensor_operator_registry.register('log2', log2)
 tensor_operator_registry.register('lerp', lerp)
 tensor_operator_registry.register('floor', floor)
+tensor_operator_registry.register('floor_divide', floor_divide)
 # support sparse tensor operators
 tensor_operator_registry.register('csr_add', csr_add)
 tensor_operator_registry.register('csr_mul', csr_mul)
