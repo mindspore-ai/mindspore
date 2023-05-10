@@ -560,7 +560,6 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
-  opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
