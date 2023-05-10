@@ -421,3 +421,7 @@ int GetDimensionSize(const TensorC *tensor, const size_t index) {
   }
   return dim_size;
 }
+
+bool IsConst(const TensorC *tensor) {
+  return (tensor->category_ == ConstTensor || tensor->category_ == ConstScalar) && tensor->data_ != NULL;
+}
