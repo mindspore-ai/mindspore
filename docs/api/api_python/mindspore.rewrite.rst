@@ -154,10 +154,10 @@ ReWrite完整示例请参考
         参数：
             - **cell** (Cell) - 该节点对应的前向计算的Cell对象。
             - **targets** (list[ScopedValue]) - 表示输出名称。在源代码中作为节点的输出。Rewrite将在插入节点时检查并确保每个目标的唯一性。
-            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。表示 `cell` 没有参数输入。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。默认值：None。
-            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。表示 `cell` 没有 `kwargs` 输入。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。默认值：None。
-            - **name** (str) - 表示节点的名称。用作源代码中的字段名称。当名称为无时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。默认值：None。
-            - **is_sub_net** (bool) - 表示 `cell` 是否是一个网络。如果 `is_sub_net` 为真，Rewrite将尝试将 `cell` 解析为TreeNode，否则为CallCell节点。默认值：False。
+            - **args** (list[ScopedValue]) - 该节点的参数名称。用作源代码中代码语句的参数。Rewrite将在插入节点时检查并确保每个 `arg` 的唯一性。默认值： ``None`` ，表示 `cell` 没有参数输入。
+            - **kwargs** (dict) - 键的类型必须是str，值的类型必须是ScopedValue。用来说明带有关键字的形参的输入参数名称。输入名称在源代码中作为语句表达式中的 `kwargs`。Rewrite将在插入节点时检查并确保每个 `kwarg` 的唯一性。默认值： ``None`` ，表示 `cell` 没有 `kwargs` 输入。
+            - **name** (str) - 表示节点的名称。用作源代码中的字段名称。当未提供名称时，ReWrite将根据 `target` 生成一个默认名称。Rewrite将在插入节点时检查并确保名称的唯一性。默认值： ``""`` 。
+            - **is_sub_net** (bool) - 表示 `cell` 是否是一个网络。如果 `is_sub_net` 为 ``True`` ，Rewrite将尝试将 `cell` 解析为TreeNode，否则为CallCell节点。默认值： ``False`` 。
 
         返回：
             Node实例。
@@ -260,8 +260,8 @@ ReWrite完整示例请参考
 
     参数：
         - **arg_type** (ValueType) - 当前值的类型。
-        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ""。
-        - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值：None。
+        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
+        - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值： ``None`` 。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None)
         :staticmethod:
@@ -270,7 +270,7 @@ ReWrite完整示例请参考
 
         参数：
             - **names** (list[str] or tuple[str]) - 引用变量的名称，类型为str的列表或元组。
-            - **scopes** (list[str] or tuple[str]) - 引用变量的范围，类型为str的列表或元组。表示没有指定作用范围。默认值：None。
+            - **scopes** (list[str] or tuple[str]) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例列表。
@@ -286,7 +286,7 @@ ReWrite完整示例请参考
 
         参数：
             - **name** (str) – 表示变量的字符串。
-            - **scope** (str) – 表示变量范围的字符串，表示没有指定作用范围。默认值：空字符串。
+            - **scope** (str) – 表示变量范围的字符串，默认值： ``""`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例。
@@ -318,7 +318,7 @@ ReWrite完整示例请参考
 
     参数：
         - **pattern** (Union[PatternNode, List]) - PatternNode的实例或用于构造 `Pattent` 的Cell类型列表。
-        - **replacement** (callable) - 生成新节点的接口实现。
+        - **replacement** (callable) - 生成新节点的接口实现。默认值： ``None`` 。
 
     .. py:method:: mindspore.rewrite.PatternEngine.apply(stree: SymbolTree)
 
@@ -349,8 +349,8 @@ ReWrite完整示例请参考
 
     参数：
         - **pattern_node_name** (str) - 节点名称。
-        - **match_type** (Type) - 当前节点的匹配类型。默认值：None。
-        - **inputs** (list[PatternNode]) - 当前节点的输入节点。默认值：None。
+        - **match_type** (Type) - 当前节点的匹配类型。默认值： ``Type[None]`` 。
+        - **inputs** (list[PatternNode]) - 当前节点的输入节点。默认值： ``None`` 。
 
     .. py:method:: mindspore.rewrite.PatternNode.add_input(node)
 
@@ -493,7 +493,7 @@ ReWrite完整示例请参考
     参数：
         - **f** (Cell) - 被稀疏化的网络。
         - **arg_types** (Tuple[ArgType] | Dict[int, ArgType]) - `f` 接受的参数类型（稀疏CSR/COO、非稀疏等）。如果是tuple，长度需要和 `f` 的参数数量相等；如果是dict，每个键值对应一个参数的索引，字典里没有表示的参数默认为非稀疏。
-        - **sparse_rules** (Dict[str, SparseFunc], Optional) - 自定义稀疏规则。默认为None。
+        - **sparse_rules** (Dict[str, SparseFunc], 可选) - 自定义稀疏规则。默认值： ``None`` 。
 
 .. py:class:: mindspore.rewrite.ArgType
 
@@ -512,7 +512,7 @@ ReWrite完整示例请参考
 
     参数：
         - **fn** (Union[str, Callable]) - 稀疏函数，如果是字符串，表示一个mindspore.ops.function接口；或者是任意函数对象。
-        - **inputs** (Optional[Any]) - 函数的输入类型。如果是None，则使用函数本身的类型注解。默认是None。
-        - **outputs** (Optional[Any]) - 函数的输出类型。如果是None，则使用函数本身的类型注解。默认是None。
+        - **inputs** (Any, 可选) - 函数的输入类型。如果是 ``None`` ，则使用函数本身的类型注解。默认值： ``None`` 。
+        - **outputs** (Any, 可选) - 函数的输出类型。如果是 ``None`` ，则使用函数本身的类型注解。默认值： ``None`` 。
 
 

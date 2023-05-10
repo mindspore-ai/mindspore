@@ -33,8 +33,8 @@ class PatternNode:
 
     Args:
         pattern_node_name (str): Name of current node.
-        match_type (Type): A type represents what type would be matched of current node. Default: None.
-        inputs (list[PatternNode]): Input nodes of current node. Default: None.
+        match_type (Type): A type represents what type would be matched of current node. Default: ``Type[None]`` .
+        inputs (list[PatternNode]): Input nodes of current node. Default: ``None`` .
     """
 
     def __init__(self, pattern_node_name: str, match_type: Type = Type[None], inputs: ['PatternNode'] = None):
@@ -235,7 +235,7 @@ class PatternEngine:
     Args:
         pattern (Union[PatternNode, List]): An instance of `PatternNode` or a cell-type-list to construct `PatternNode`
             as root of a pattern.
-        replacement (callable): A callable define how to generate new_node.
+        replacement (callable): A callable define how to generate new_node. Default: ``None`` .
     """
 
     def __init__(self, pattern: Union[PatternNode, List], replacement: Replacement = None):
