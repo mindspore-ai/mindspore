@@ -77,6 +77,8 @@ Flags::Flags() {
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
           "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "");
+  AddFlag(&Flags::graphOutputFormatStr, "outputDataFormat",
+          "Assign the output format of exported model. Only Valid for 4-dimensional output. NHWC | NCHW", "");
 #ifdef ENABLE_OPENSSL
   AddFlag(&Flags::encryptionStr, "encryption",
           "Whether to export the encryption model."
@@ -217,6 +219,18 @@ int Flags::InitGraphInputFormat() {
   if (StrToEnumFormatMap.find(this->graphInputFormatStr) != StrToEnumFormatMap.end()) {
     graphInputFormat = StrToEnumFormatMap.at(this->graphInputFormatStr);
   } else if (!this->graphInputFormatStr.empty()) {
+    MS_LOG(ERROR) << "graph input format is invalid.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitGraphOutputFormat() {
+  // value check not here, it is in converter c++ API's CheckValueParam method.
+  std::map<std::string, Format> StrToEnumFormatMap = {{"NHWC", NHWC}, {"NCHW", NCHW}};
+  if (StrToEnumFormatMap.find(this->graphOutputFormatStr) != StrToEnumFormatMap.end()) {
+    graphOutputFormat = StrToEnumFormatMap.at(this->graphOutputFormatStr);
+  } else if (!this->graphOutputFormatStr.empty()) {
     MS_LOG(ERROR) << "graph input format is invalid.";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -371,6 +385,12 @@ int Flags::Init(int argc, const char **argv) {
   ret = InitGraphInputFormat();
   if (ret != RET_OK) {
     std::cerr << "Init graph input format failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = InitGraphOutputFormat();
+  if (ret != RET_OK) {
+    std::cerr << "Init graph output format failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 

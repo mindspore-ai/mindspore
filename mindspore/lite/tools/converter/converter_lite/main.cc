@@ -82,6 +82,7 @@ int main(int argc, const char **argv) {
       converter.SetWeightFp16(flags.saveFP16);
       converter.SetInputShape(flags.graph_input_shape_map);
       converter.SetInputFormat(flags.graphInputFormat);
+      converter.SetOutputFormat(flags.graphOutputFormat);
       converter.SetInputDataType(flags.inputDataType);
       converter.SetOutputDataType(flags.outputDataType);
       converter.SetSaveType(flags.save_type);
