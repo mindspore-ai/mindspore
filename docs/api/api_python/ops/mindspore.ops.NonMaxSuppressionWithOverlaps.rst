@@ -3,7 +3,7 @@ mindspore.ops.NonMaxSuppressionWithOverlaps
 
 .. py:class:: mindspore.ops.NonMaxSuppressionWithOverlaps
 
-    按照得分从高到低贪心地选择一组边界框，同时移除与之前选定的边界框高度重叠的边界框
+    按照得分从高到低贪心地选择一组边界框，同时移除与之前选定的边界框高度重叠的边界框。
     得分低于 `score_threshold` 的边界框将被删除。可以定义自定义重叠标准（例如，IoU，IoA等），重叠值以N-by-N矩阵形式提供。
 
     .. note::

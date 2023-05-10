@@ -3,7 +3,7 @@ mindspore.ops.bucketize
 
 .. py:function:: mindspore.ops.bucketize(input, boundaries, *, right=False)
 
-    根据 `boundaries` 对 `input` 进行分桶，如果 `right` 为 ``False``，则左边界关闭，对于 `input` 中的每个元素 x，返回的索引满足以下规则:
+    根据 `boundaries` 对 `input` 进行分桶。如果 `right` 为 ``False``，则左边界关闭，对于 `input` 中的每个元素 x，返回的索引满足以下规则:
 
     .. math::
         \begin{cases}

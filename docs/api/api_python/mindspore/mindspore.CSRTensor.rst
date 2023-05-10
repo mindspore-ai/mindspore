@@ -38,7 +38,7 @@ mindspore.CSRTensor
 
     .. py:method:: add(b: CSRTensor, alpha: Tensor, beta: Tensor)
 
-        两个CSRTensor求和：C = alpha * a + beta * b
+        两个CSRTensor求和：C = alpha * a + beta * b。
 
         参数：
             - **b** (CSRTensor) - 稀疏CSRTensor。
