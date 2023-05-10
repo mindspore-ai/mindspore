@@ -139,7 +139,6 @@ bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg) {
 }
 
 void CSE::DoReplace(const FuncGraphManagerPtr &manager) {
-  auto transact = manager->Transact();
   // if A is a hidden_side_effect node, then A's user B can't be replaced by main, then B's user C can't be replaced by
   // main.
   HashSet<AnfNodePtr> cannot_replace_nodes;
@@ -159,9 +158,8 @@ void CSE::DoReplace(const FuncGraphManagerPtr &manager) {
     }
     // We don't merge primitive cnodes with random effect.
     MS_LOG(DEBUG) << "CSE replace, node:" << node->DebugString() << ", main:" << main->DebugString();
-    (void)transact.Replace(node, main);
+    (void)manager->Replace(node, main);
   }
-  transact.Commit();
 }
 
 bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) {
