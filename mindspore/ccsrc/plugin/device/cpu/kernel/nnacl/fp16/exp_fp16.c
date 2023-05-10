@@ -70,7 +70,7 @@ int ExpFusionFp16(const void *src_data, void *dst_data, const ExpStruct *exp, in
   if (exp->out_scale_ != 1) {
     int i = 0;
 #ifdef ENABLE_ARM64
-    MS_FLOAT16X8 scale = MS_MOVQ_F16(param->out_scale_);
+    MS_FLOAT16X8 scale = MS_MOVQ_F16(exp->out_scale_);
     int count = (num / C8NUM) * C8NUM;
     for (; i < count; i += C8NUM) {
       simd_exp_fp16(MS_LDQ_F16(src + i), dst + i);
@@ -79,7 +79,7 @@ int ExpFusionFp16(const void *src_data, void *dst_data, const ExpStruct *exp, in
 #endif
     for (; i < num; ++i) {
       single_exp_fp16(src[i], dst + i);
-      dst[i] *= param->out_scale_;
+      dst[i] *= exp->out_scale_;
     }
   }
   return NNACL_OK;

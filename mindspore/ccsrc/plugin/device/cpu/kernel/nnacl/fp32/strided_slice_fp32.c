@@ -18,21 +18,6 @@
 #include "nnacl/nnacl_common.h"
 #include "nnacl/errorcode.h"
 
-int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *param) {
-  StridedSliceStruct strided_slice;
-  memcpy(strided_slice.begins_, param->begins_, MAX_SHAPE_SIZE * sizeof(int));
-  memcpy(strided_slice.ends_, param->ends_, MAX_SHAPE_SIZE * sizeof(int));
-  memcpy(strided_slice.in_shape_, param->in_shape_, MAX_SHAPE_SIZE * sizeof(int));
-  memcpy(strided_slice.strides_, param->strides_, MAX_SHAPE_SIZE * sizeof(int));
-  strided_slice.in_shape_size_ = param->in_shape_length_;
-  strided_slice.data_type_ = param->data_type;
-
-  if (param->num_axes_ < DIMENSION_8D) {
-    PadStridedSliceParameterTo8D(&strided_slice);
-  }
-  return DoStridedSliceIn8D(in_data, out_data, &strided_slice);
-}
-
 int PadStridedSliceParameterTo8D(StridedSliceStruct *strided_slice) {
   if (strided_slice->in_shape_size_ > DIMENSION_8D) {
     return NNACL_STRIDED_SLICE_UNSUPPORTED_MAX_8D;

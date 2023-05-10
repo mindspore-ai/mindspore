@@ -177,9 +177,11 @@ int StridedSliceBaseCoder::DoCode(CoderContext *ctx) {
   Collect(ctx,
           {
             "nnacl/fp32/strided_slice_fp32.h",
+            "wrapper/base/strided_slice_wrapper.h",
           },
           {
             "strided_slice_fp32.c",
+            "strided_slice_wrapper.c",
           });
   if (fast_run_) {
     return DoFastCode(ctx);

@@ -6,6 +6,7 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/base/detection_post_process_base_wrapper.c
         ${WRAPPER_DIR}/base/optimize_handler_wrapper.c
         ${WRAPPER_DIR}/base/affine_wrapper.c
+        ${WRAPPER_DIR}/base/strided_slice_wrapper.c
         ${WRAPPER_DIR}/fp32/matmul_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/concat_fp32_wrapper.c
         ${WRAPPER_DIR}/fp32/arithmetic_fp32_wrapper.c

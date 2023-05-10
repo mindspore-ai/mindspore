@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_FP32_STRIDED_SLICE_FP32_H_
-#define NNACL_FP32_STRIDED_SLICE_FP32_H_
 
-#include "nnacl/op_base.h"
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_BASE_STRIDED_SLICE_WRAPPER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_BASE_STRIDED_SLICE_WRAPPER_H_
+#include <string.h>
 #include "nnacl/strided_slice_parameter.h"
-#include "nnacl/kernel/strided_slice.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int PadStridedSliceParameterTo8D(StridedSliceStruct *strided_slice);
-int DoStridedSliceIn8D(const void *input, void *output, StridedSliceStruct *strided_slice);
-
-void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
-                size_t in_offset);
+int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *param);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP32_STRIDED_SLICE_FP32_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_BASE_STRIDED_SLICE_WRAPPER_H_
