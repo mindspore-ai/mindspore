@@ -6600,7 +6600,7 @@ def column_stack(tensors):
          [1 2]]
     """
     if not isinstance(tensors, (list, tuple)):
-        raise TypeError(f"For column_stack, the input must be list or tuple or tensor, but got {type(tensors)}.")
+        raise TypeError(f"For column_stack, the input must be list or tuple of tensors, but got {type(tensors)}.")
 
     trans_x = ()
     _expand_dims = _get_cache_prim(P.ExpandDims)()
