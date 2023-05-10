@@ -763,24 +763,6 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    auto node = distributed::cluster::ClusterContext::instance()->node();
-    MS_EXCEPTION_IF_NULL(node);
-    const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
-    MS_EXCEPTION_IF_NULL(cluster_ctx);
-    MS_LOG(INFO) << "Cluster is initialized. This node role is " << cluster_ctx->node_role();
-    // If this process is not scheduler, it should be a computing graph node so common pipeline is returned.
-    if (cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
-      return PSchedulerPipeline(resource);
-    }
-  } else {
-    if (ps::PSContext::instance()->is_scheduler()) {
-      return PSchedulerPipeline(resource);
-    }
-  }
-#endif
-
   compile::SetMindRTEnable();
   if (use_vm && backend != "ge" && !is_air) {
     if (IsPhaseLoadFromMindIR(phase)) {
@@ -1609,11 +1591,6 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->cache_enable() &&
       !ps::PSContext::instance()->is_worker()) {
-    return true;
-  }
-  const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
-  MS_EXCEPTION_IF_NULL(cluster_ctx);
-  if (cluster_ctx->initialized() && cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
     return true;
   }
 #endif

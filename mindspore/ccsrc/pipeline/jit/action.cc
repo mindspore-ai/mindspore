@@ -60,7 +60,6 @@
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/distributed/ps/util.h"
-#include "include/backend/distributed/ps/scheduler.h"
 #endif
 
 namespace mindspore {
@@ -1386,20 +1385,6 @@ bool ExecuteAction(const ResourcePtr &resource) {
 }
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-bool StartPSSchedulerAction(const ResourcePtr &) {
-  if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    MS_LOG(INFO) << "This node is scheduler. Start wait for finalizing.";
-    if (!distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX)) {
-      MS_LOG(ERROR) << "Failed to finalize server.";
-      return false;
-    }
-    MS_LOG(INFO) << "Scheduler is successfully finalized.";
-    return true;
-  }
-  ps::Scheduler::GetInstance().Run();
-  return true;
-}
-
 bool DistributedSplitAction(const ResourcePtr &resource) {
   // Only run this action when the cluster is initialized.
   if (!distributed::cluster::ClusterContext::instance()->initialized()) {
@@ -1663,21 +1648,5 @@ std::vector<ActionItem> MindIRPipeline() {
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
-  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
-    return {std::make_pair("scheduler", StartPSSchedulerAction)};
-  }
-  auto actions = CommonPipeline();
-  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
-  (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-  (void)actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
-  return actions;
-}
-#endif
 }  // namespace pipeline
 }  // namespace mindspore

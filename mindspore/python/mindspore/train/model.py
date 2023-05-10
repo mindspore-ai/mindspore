@@ -38,7 +38,7 @@ from mindspore import context
 from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_parameter_broadcast, \
     _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
     _reset_op_id_with_offset
-from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_ps_mode, \
     _cache_enable, _enable_distributed_mindrt
 from mindspore.train.metrics import Loss
 from mindspore import nn
@@ -598,10 +598,8 @@ class Model:
             callbacks = cb_params.list_callback
         cb_params.train_dataset_element = None
         cb_params.network = self._network
-        if _is_role_sched():
-            epoch = 1
         # Embedding cache server only run one step.
-        if (_is_role_pserver() or _is_role_sched()) and _cache_enable():
+        if _is_role_pserver() and _cache_enable():
             epoch = 1
         cb_params.last_save_ckpt_step = None
         cb_params.latest_ckpt_file = None
@@ -702,9 +700,6 @@ class Model:
                 train_network = self._check_network_mode(train_network, True)
                 outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
-
-                if _is_role_sched():
-                    os._exit(0)
 
                 # In disaster recovery scenarios, need not to execute callbacks if this step executes failed.
                 need_exec_callback_step_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
@@ -922,8 +917,6 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.on_train_step_end(run_context)
-                if _is_role_sched():
-                    os._exit(0)
                 # Embedding cache server only run one step.
                 if is_embedding_cache_server:
                     break
@@ -1325,8 +1318,6 @@ class Model:
             outputs = eval_network(*inputs)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
-            if _is_role_sched():
-                os._exit(0)
             self._update_metrics(outputs)
             if add_eval_loss:
                 eval_loss_fn = get_metric_fn("loss")
@@ -1371,8 +1362,6 @@ class Model:
             outputs = self._eval_network(*next_element)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
-            if _is_role_sched():
-                os._exit(0)
             self._update_metrics(outputs)
             if add_eval_loss:
                 eval_loss_fn = get_metric_fn("loss")
