@@ -26,18 +26,17 @@
 
 namespace mindspore::graphkernel {
 constexpr auto kTunedSign = "tuned_signature";
-constexpr auto kAddAkgPath =
-  "import sys; import subprocess;\n"
-  "str = \'from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path;"
-  "      print(get_akg_path())\'\n"
-  "cmd = \'unset LD_LIBRARY_PATH;python -c \\\"{}\\\"\'.format(str)\n"
-  "p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)\n"
-  "sys.path.insert(0, p.communicate()[-2].decode().strip())\n";
+constexpr auto kAddMSLiteAkg =
+  "try:\n"
+  "   import mindspore_lite.akg as akg\n"
+  "except Exception:\n"
+  "   import akg as akg\n";
 
 class AkgKernelBuilder {
  public:
   virtual bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) = 0;
   virtual AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) = 0;
+  virtual bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) { return true; }
 
   static DumpOption json_option() {
     DumpOption dump_json_option;

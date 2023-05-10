@@ -16,6 +16,8 @@
 
 #include "tools/graph_kernel/converter/akg/utils.h"
 
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -28,6 +30,7 @@
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "tools/common/tensor_util.h"
 
 namespace mindspore::graphkernel {
 bool SaveJsonInfo(const std::string &json_name, const std::string &info) {
@@ -145,5 +148,39 @@ std::string GetCNodeOutputFormatStr(const CNodePtr &cnode) {
     }
   }
   return output_format_str;
+}
+ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(path);
+  auto akg_fd = open(path.c_str(), O_RDONLY);
+  struct stat sb;
+  if (akg_fd < 0) {
+    MS_LOG(ERROR) << "open " << path << " failed.";
+    return nullptr;
+  }
+  if (fstat(akg_fd, &sb) == -1) {
+    MS_LOG(ERROR) << "fstat " << path << " failed.";
+    return nullptr;
+  }
+  auto akg_mmap = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, akg_fd, 0);
+  if (akg_mmap == nullptr) {
+    MS_LOG(ERROR) << "mmap " << path << " failed.";
+    return nullptr;
+  }
+  close(akg_fd);
+  auto tensor_info = lite::CreateTensorInfo(akg_mmap, sb.st_size, {sb.st_size}, kNumberTypeUInt8);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+  munmap(akg_mmap, sb.st_size);
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  return param_node;
 }
 }  // namespace mindspore::graphkernel

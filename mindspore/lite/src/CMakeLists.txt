@@ -413,7 +413,9 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
         ${TOOLS_DIR}/graph_kernel/common/*.cc
         ${TOOLS_DIR}/graph_kernel/runtime/*.cc
         )
-    set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
+    set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+    )
 endif()
 
 if(NOT MSLITE_ENABLE_COREML)

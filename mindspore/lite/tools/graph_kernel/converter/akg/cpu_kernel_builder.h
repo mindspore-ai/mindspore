@@ -29,6 +29,7 @@ class CpuKernelBuilder : public AkgKernelBuilder {
  public:
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) override;
   AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) override;
+  bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) override;
 };
 
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list);

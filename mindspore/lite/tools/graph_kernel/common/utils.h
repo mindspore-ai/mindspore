@@ -20,6 +20,7 @@
 #include <string>
 #include "nnacl/tensor_c.h"
 
+constexpr auto kAkgKernelSo = "akgkernels.so";
 namespace mindspore::graphkernel {
 std::vector<std::string> SplitString(const std::string &raw_str, char delimiter);
 

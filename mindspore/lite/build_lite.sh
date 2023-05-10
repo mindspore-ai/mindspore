@@ -200,6 +200,74 @@ build_lite_jni_and_jar() {
     echo "---------------- mindspore lite jni and jar: build success ----------------"
 }
 
+get_python_tag(){
+    local minor_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
+    local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
+    if [[ "${minor_version}" == "7" ]]; then
+      py_tags="cp37-cp37m"
+    fi
+    echo ${py_tags}
+}
+
+build_akg() {
+  local python_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
+  if [[ "${python_version}" == "3" ]]; then
+    echo "---------------- AKG: build start ----------------"
+    AKG_DIR=${BASEPATH}/akg
+    BUILD_DIR=${BASEPATH}/mindspore/lite/build
+    write_version() {
+        cd ${AKG_DIR}
+        if [ ! -e ${AKG_DIR}/version.txt ]; then
+            version=$(git branch | sed -n '/\* /s///p')
+            if [ -z "${version}" ]; then
+                version='master'
+            fi
+            echo ${version#r} >${BUILD_DIR}/akg/version.txt
+        else
+          cp ${AKG_DIR}/version.txt ${BUILD_DIR}/akg
+        fi
+        cp ${AKG_DIR}/setup.py ${BUILD_DIR}/akg/akg_setup.py
+    }
+    cd ${BUILD_DIR}
+    mkdir -pv akg
+    write_version
+    cd ${BUILD_DIR}/akg
+    mkdir -pv build
+    cd build
+    CMAKE_ARGS="-DUSE_LLVM=ON -DUSE_RPC=ON -DENABLE_AKG=off"
+    if [[ "${DEBUG_MODE}" == "on" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS}  -DCMAKE_BUILD_TYPE=Debug -DUSE_AKG_LOG=1"
+    fi
+    if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON"
+    fi
+    if [[ ( ${MS_ENABLE_CUDA_DISTRIBUTION} == "on" ) && $1 == "x86_64" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DUSE_CUDA=ON"
+    fi
+    echo "cmake ${CMAKE_ARGS}"
+    cmake -S ${AKG_DIR} ${CMAKE_ARGS} -B .
+    cmake --build . -j$THREAD_NUM
+    cmake --install .
+    cd ${BUILD_DIR}/akg
+    [ -d dist ] && rm -rf dist
+    python3 ${BUILD_DIR}/akg/akg_setup.py bdist_wheel
+    cd dist
+    for file in *.whl; do
+        file_name=$(basename $file)
+        prefix=$(echo $file_name | cut -d '-' -f 1-2)
+        PY_TAGS=`get_python_tag`
+        akg_pkg_name="${prefix}-${PY_TAGS}-linux_$1.whl"
+        mv $file ${akg_pkg_name}
+        sha256sum -b "$akg_pkg_name" >"$akg_pkg_name.sha256"
+        akg_package_path=dist/${akg_pkg_name}
+    done
+    echo "---------------- AKG: build end ----------------"
+    cd ${BUILD_DIR}
+  else
+    echo -e "\e[31mPython3 not found, so AKG will not be compiled. \e[0m"
+  fi
+}
+
 build_python_wheel_package() {
   local python_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
   if [[ "${python_version}" == "3" ]]; then
@@ -275,11 +343,7 @@ build_python_wheel_package() {
     cd package
     rm -rf dist/mindspore_lite-*.whl
     python3 setup.py bdist_wheel
-    local minor_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
-    local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
-    if [[ "${minor_version}" == "7" ]]; then
-      py_tags="cp37-cp37m"
-    fi
+    py_tags=`get_python_tag`
     local whl_name=mindspore_lite-${VERSION_STR}-${py_tags}-linux_$1.whl
     cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}
     cd ${BASEPATH}/output/
@@ -468,7 +532,14 @@ build_lite() {
     if [[ ("${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32") && "${TOOLCHAIN_NAME}" != "ohos" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
     fi
-
+    if [[ ("X${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" != "Xon") && ("X${MSLITE_ENABLE_CLOUD_INFERENCE}" != "Xon") ]]; then
+      ENABLE_AKG="off"
+    fi
+    if [[ ( ("${local_lite_platform}" == "x86_64" && "${machine}" == "x86_64") || ("${local_lite_platform}" == "arm64" && ${machine} == "aarch64") ) && ("${ENABLE_AKG}" == "on") ]]; then
+      akg_package_path=""
+      build_akg ${machine}
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DAKG_PKG_PATH=${akg_package_path}"
+    fi
     echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
     cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
 
@@ -732,6 +803,13 @@ update_submodule()
   cd "${BASEPATH}/graphengine"
   git submodule update --init 910/metadef
   cd "${BASEPATH}"
+  if [[ ("X$MSLITE_ENABLE_GRAPH_KERNEL" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") ) ]]; then
+    if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
+      git submodule update --init akg
+    else
+      GIT_LFS_SKIP_SMUDGE=1 git submodule update --init akg
+    fi
+  fi
 }
 
 build_lite_x86_64_aarch64_jar()
@@ -854,10 +932,6 @@ fi
 
 get_version
 CMAKE_ARGS="${CMAKE_ARGS} -DVERSION_STR=${VERSION_STR}"
-
-if [[ "X$LITE_PLATFORM" != "Xx86_64" ]]; then
-    export ENABLE_AKG="off"
-fi
 
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar

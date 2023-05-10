@@ -48,6 +48,7 @@
 #include "tools/converter/config_parser/micro_param_parser.h"
 #include "tools/converter/config_parser/preprocess_parser.h"
 #include "tools/converter/config_parser/quant_param_parser.h"
+#include "tools/converter/config_parser/graph_kernel_param_parser.h"
 #include "tools/converter/converter_funcgraph.h"
 #include "tools/converter/converter_metagraph.h"
 #include "tools/common/string_util.h"
@@ -525,6 +526,12 @@ int ConverterImpl::ParseParam(lite::ConfigFileParser *config_parser, const std::
   ret = lite::QuantParamParser::ParseDynamicQuant(config_parser->GetDynamicQuantString(), &param->dynamicQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse dynamic quant param failed.";
+    return ret;
+  }
+  lite::GraphKernelParamParser graph_kernel_parser;
+  ret = graph_kernel_parser.ParseGraphKernelCfg(config_parser->GetGraphKernelString(), &param->graphKernelParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse graph kernel param failed.";
     return ret;
   }
   return RET_OK;

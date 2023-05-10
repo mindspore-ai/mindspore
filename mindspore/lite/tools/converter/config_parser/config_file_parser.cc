@@ -42,6 +42,7 @@ constexpr auto kCustomOppPath = "custom_opp_path";
 constexpr auto kTransformQuantParam = "transform_quant_param";
 constexpr auto kAscendQuantParam = "ascend_quant_param";
 constexpr auto kDynamicQuantParam = "dynamic_quant_param";
+constexpr auto kGraphKernelParam = "graph_kernel_param";
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -367,6 +368,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
     MS_LOG(ERROR) << "ParseDynamicQuantString failed.";
     return ret;
   }
+  ret = ParseGraphKernelString(*maps);
+  (void)maps->erase(kGraphKernelParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseGraphKernelString failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -574,6 +581,18 @@ int ConfigFileParser::ParseDynamicQuantString(const std::map<std::string, std::m
       {"quant_strategy", dynamic_quant_string_.quant_strategy},
     };
     return SetMapData(map, parse_map, kDynamicQuantParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseGraphKernelString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kGraphKernelParam) != maps.end()) {
+    const auto &map = maps.at(kGraphKernelParam);
+    for (const auto &item : map) {
+      std::stringstream oss;
+      oss << "--" << item.first << "=" << item.second;
+      graph_kernel_string_.emplace_back(oss.str());
+    }
   }
   return RET_OK;
 }

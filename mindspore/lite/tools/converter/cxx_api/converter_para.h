@@ -40,6 +40,10 @@ struct CpuOptionCfg {
   std::string instruction;
 };
 
+struct GraphKernelCfg {
+  std::string graph_kernel_flags;
+};
+
 struct ConverterPara {
   converter::FmkType fmk_type;
   std::string model_file;
@@ -91,6 +95,7 @@ struct ConverterPara {
   lite::quant::TransformQuantParam transformQuantParam;
   lite::quant::AscendQuantParam ascendQuantParam;
   lite::quant::DynamicQuantParam dynamicQuantParam;
+  GraphKernelCfg graphKernelParam;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_

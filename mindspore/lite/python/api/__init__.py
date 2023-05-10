@@ -17,6 +17,8 @@ MindSpore Lite Python API.
 """
 from __future__ import absolute_import
 import os
+import sys
+from importlib.abc import MetaPathFinder
 
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
@@ -38,6 +40,50 @@ def install_custom_kernels():
         print(out)
     else:
         print("no custom kernel " + custom_kernel_path)
+
+
+def mslite_add_path():
+    """mslite add path."""
+    pwd = os.path.dirname(os.path.realpath(__file__))
+    akg_path = os.path.realpath(pwd)
+    if akg_path not in sys.path:
+        sys.path.insert(0, akg_path)
+    else:
+        sys.path.remove(akg_path)
+        sys.path.insert(0, akg_path)
+
+
+class MSLiteMetaPathFinder(MetaPathFinder):
+    """class MSLiteMetaPath finder."""
+
+    def find_module(self, fullname, path=None):
+        """method mslite find module."""
+        akg_idx = fullname.find("mindspore_lite.akg")
+        if akg_idx != -1:
+            rname = fullname[akg_idx+15:]
+            return MSLiteMetaPathLoader(rname)
+        return None
+
+
+class MSLiteMetaPathLoader:
+    """class MSLiteMetaPathLoader loader."""
+    def __init__(self, rname):
+        self.__rname = rname
+
+    def load_module(self, fullname):
+        if self.__rname in sys.modules:
+            sys.modules.pop(self.__rname)
+        mslite_add_path()
+        __import__(self.__rname, globals(), locals())
+        if sys.modules.get(self.__rname) is None:
+            return None
+        target_module = sys.modules.get(self.__rname)
+        sys.modules[fullname] = target_module
+        return target_module
+
+
+sys.meta_path.insert(0, MSLiteMetaPathFinder())
+
 
 __all__ = []
 __all__.extend(__version__)
