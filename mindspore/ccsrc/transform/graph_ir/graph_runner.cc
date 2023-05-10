@@ -142,7 +142,8 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
 
   MS_LOG(INFO) << "Run the graph " << name << " in GE with " << ge_inputs.size() << " inputs";
 
-  struct timeval start_time, end_time;
+  struct timeval start_time;
+  struct timeval end_time;
   (void)gettimeofday(&start_time, nullptr);
 
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
@@ -207,7 +208,8 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
 #endif
   MS_LOG(INFO) << "Run the graph in GE with " << ge_inputs.size() << " inputs";
 
-  struct timeval start_time, end_time;
+  struct timeval start_time;
+  struct timeval end_time;
   (void)gettimeofday(&start_time, nullptr);
 
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)

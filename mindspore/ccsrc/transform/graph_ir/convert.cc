@@ -1770,7 +1770,8 @@ DfGraphPtr DfGraphConvertor::GetBroadcastGraph() { return broadcast_graph_; }
 const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
 
 AnfNodePtr DfGraphConvertor::ParseLoadInput(const CNodePtr &cnode) const {
-  if (cnode->inputs().size() < 3) {
+  size_t min_inputs_size = 3;
+  if (cnode->inputs().size() < min_inputs_size) {
     MS_LOG(EXCEPTION) << "input size error, " << cnode->ToString();
   }
   const size_t para_index = 1;
