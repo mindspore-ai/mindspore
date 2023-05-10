@@ -21,6 +21,7 @@
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/concat_int8.h"
+#include "wrapper/int8/concat_int8_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ConcatInt8Coder final : public OperatorCoder {
@@ -36,8 +37,8 @@ class ConcatInt8Coder final : public OperatorCoder {
     if (concat_param_->quant_arg_.in_args_ != nullptr) {
       free(concat_param_->quant_arg_.in_args_);
     }
-    if (concat_param_->input_shapes_ != nullptr) {
-      free(concat_param_->input_shapes_);
+    if (micro_concat_.input_shapes_ != nullptr) {
+      free(micro_concat_.input_shapes_);
     }
   }
 
@@ -47,10 +48,7 @@ class ConcatInt8Coder final : public OperatorCoder {
 
  private:
   ConcatParameter *concat_param_{nullptr};
-  int64_t before_axis_size{0};
-  int64_t count_unit_{0};
-  int8_t *input_data_{nullptr};
-  int axis_ = 0;
+  ConcatInt8Args micro_concat_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_CONCAT_INT8_CODER_H_

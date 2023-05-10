@@ -153,35 +153,40 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxQuant
                         softmax_quant_parameter.shift_left_, softmax_quant_parameter.shift_right_);
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParameter &concat_parameter,
-                                     int in_tensor_count, int in_shape, int out_shape) {
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatInt8Args &micro_concat, int in_tensor_count,
+                                     int in_shape, int out_shape) {
+  ConcatParameter *concat_para = micro_concat.para_;
+
   std::string quant_arg_name = name + "_quant_arg";
   std::string in_args_name = quant_arg_name + "_in_args";
   std::string input_shapes_name = name + "_input_shapes";
   std::string output_shapes_name = name + "_output_shapes";
 
-  CodeArray(in_args_name, concat_parameter.quant_arg_.in_args_, in_tensor_count, false);
-  CodeBaseStruct("ConcatQuantArg", quant_arg_name, in_args_name, concat_parameter.quant_arg_.out_args_,
-                 concat_parameter.quant_arg_.output_activation_min_,
-                 concat_parameter.quant_arg_.output_activation_max_);
+  CodeArray(in_args_name, concat_para->quant_arg_.in_args_, in_tensor_count, false);
+  CodeBaseStruct("ConcatQuantArg", quant_arg_name, in_args_name, concat_para->quant_arg_.out_args_,
+                 concat_para->quant_arg_.output_activation_min_, concat_para->quant_arg_.output_activation_max_);
 
   auto get_shape_name = [&input_shapes_name](int i) { return input_shapes_name + "_" + std::to_string(i); };
+
   // input_shape
   for (int i = 0; i < in_tensor_count; ++i) {
-    CodeArray(get_shape_name(i), concat_parameter.input_shapes_[i], in_shape, false);
+    CodeArray(get_shape_name(i), micro_concat.input_shapes_[i], in_shape, false);
   }
-
   code << "int *" << input_shapes_name << "[] = {";
   for (int i = 0; i < in_tensor_count; ++i) {
     code << get_shape_name(i) << " ,";
   }
   code << "};\n";
-  // output_shape
-  CodeArray(output_shapes_name, concat_parameter.output_shapes_, out_shape, false);
 
-  CodeBaseStruct<false>("ConcatParameter", name, concat_parameter.op_parameter_, quant_arg_name, concat_parameter.axis_,
-                        concat_parameter.thread_count_, concat_parameter.input_num_, "(int **)" + input_shapes_name,
-                        output_shapes_name, concat_parameter.after_axis_size, concat_parameter.count_unit_);
+  // output_shape
+  CodeArray(output_shapes_name, micro_concat.output_shapes_, out_shape, false);
+
+  CodeBaseStruct<false>("ConcatParameter", "concat_param", concat_para->op_parameter_, quant_arg_name,
+                        concat_para->axis_);
+
+  CodeBaseStruct<false>("ConcatInt8Args", kRunArgs, "input_data", "output_data", "&concat_param", micro_concat.axis_,
+                        micro_concat.before_axis_size_, micro_concat.count_unit_, micro_concat.thread_count_,
+                        micro_concat.input_num_, input_shapes_name, output_shapes_name, micro_concat.after_axis_size);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ::QuantArg &quant_arg) {

@@ -34,6 +34,7 @@
 #include "nnacl/pad_parameter.h"
 #include "nnacl/transpose_parameter.h"
 #include "nnacl/int8/relux_int8.h"
+#include "wrapper/int8/concat_int8_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclInt8Serializer : public Serializer {
@@ -50,7 +51,7 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SliceParameter &slice_parameter);
   void CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter);
   void CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter);
-  void CodeStruct(const std::string &name, const ConcatParameter &concat_parameter, int input_tensors, int in_shape,
+  void CodeStruct(const std::string &name, const ConcatInt8Args &ConcatInt8Args, int input_tensors, int in_shape,
                   int out_shape);
   void CodeStruct(const std::string &name, const ::QuantArg &quant_arg);
   void CodeStruct(const std::string &name, const ::QuantMulArg &quant_mul_arg);

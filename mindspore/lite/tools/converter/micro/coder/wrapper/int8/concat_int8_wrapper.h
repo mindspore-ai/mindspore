@@ -28,6 +28,12 @@ typedef struct {
   int axis_;
   int64_t before_axis_size_;
   int64_t count_unit_;
+
+  int thread_count_;
+  int input_num_;
+  int **input_shapes_;
+  int *output_shapes_;
+  int64_t after_axis_size;
 } ConcatInt8Args;
 
 int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

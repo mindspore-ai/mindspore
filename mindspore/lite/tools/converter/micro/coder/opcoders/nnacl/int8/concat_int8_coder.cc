@@ -37,8 +37,9 @@ using mindspore::schema::PrimitiveType_Concat;
 namespace mindspore::lite::micro::nnacl {
 int ConcatInt8Coder::Prepare(CoderContext *const context) {
   this->concat_param_ = reinterpret_cast<ConcatParameter *>(parameter_);
+  micro_concat_.para_ = concat_param_;
 
-  concat_param_->input_shapes_ = nullptr;
+  micro_concat_.input_shapes_ = nullptr;
   size_t input_num = input_tensors().size();
   MS_CHECK_RET_CODE(MallocQuantArgForConcat(&concat_param_->quant_arg_, input_num),
                     "Null pointer reference: quant_concat_parm_->in_quant_args_.");
@@ -56,45 +57,46 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
   concat_param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   concat_param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
   // concat base resize
-  axis_ = concat_param_->axis_ >= 0 ? concat_param_->axis_ : input_tensor_->shape().size() + concat_param_->axis_;
+  micro_concat_.axis_ =
+    concat_param_->axis_ >= 0 ? concat_param_->axis_ : input_tensor_->shape().size() + concat_param_->axis_;
   // concat int8 resize
-  concat_param_->input_num_ = input_num;
+  micro_concat_.input_num_ = input_num;
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, sizeof(int *) * input_num);
-  concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
-  MS_CHECK_PTR(concat_param_->input_shapes_);
+  micro_concat_.input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
+  MS_CHECK_PTR(micro_concat_.input_shapes_);
   for (int i = 0; i < static_cast<int>(input_num); i++) {
     auto in_shape = input_tensors_.at(i)->shape();
-    concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
-    MS_CHECK_PTR(concat_param_->input_shapes_[i]);
-    MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), sizeof(int) * in_shape.size(),
+    micro_concat_.input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
+    MS_CHECK_PTR(micro_concat_.input_shapes_[i]);
+    MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(micro_concat_.input_shapes_[i]), sizeof(int) * in_shape.size(),
                                in_shape.data(), sizeof(int) * in_shape.size()),
                       "memcpy_s failed");
   }
 
-  before_axis_size = 1;
-  for (int i = 0; i < axis_ && i < static_cast<int>(output_tensor_->shape().size()); i++) {
-    before_axis_size *= output_tensor_->DimensionSize(i);
+  micro_concat_.before_axis_size_ = 1;
+  for (int i = 0; i < micro_concat_.axis_ && i < static_cast<int>(output_tensor_->shape().size()); i++) {
+    micro_concat_.before_axis_size_ *= output_tensor_->DimensionSize(i);
   }
 
   int64_t after_axis_size = 1;
   int output_dim = static_cast<int>(output_tensor_->shape().size());
-  concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
-  MS_CHECK_PTR(concat_param_->output_shapes_);
-  MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(concat_param_->output_shapes_), output_dim * sizeof(int),
+  micro_concat_.output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
+  MS_CHECK_PTR(micro_concat_.output_shapes_);
+  MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(micro_concat_.output_shapes_), output_dim * sizeof(int),
                              output_tensor_->shape().data(), sizeof(int) * output_dim),
                     "memcpy_s failed");
-  for (int i = axis_ + 1; i < output_dim; i++) {
-    after_axis_size *= concat_param_->output_shapes_[i];
+  for (int i = micro_concat_.axis_ + 1; i < output_dim; i++) {
+    after_axis_size *= micro_concat_.output_shapes_[i];
   }
-  concat_param_->after_axis_size = after_axis_size;
+  micro_concat_.after_axis_size = after_axis_size;
   return RET_OK;
 }
 
 int ConcatInt8Coder::DoCode(CoderContext *const context) {
-  concat_param_->thread_count_ = thread_num_;
+  micro_concat_.thread_count_ = thread_num_;
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
-  count_unit_ = thread_num_ > 1 ? UP_DIV(before_axis_size, thread_num_) : before_axis_size;
-  concat_param_->count_unit_ = count_unit_;
+  micro_concat_.count_unit_ =
+    thread_num_ > 1 ? UP_DIV(micro_concat_.before_axis_size_, thread_num_) : micro_concat_.before_axis_size_;
 
   Collect(context,
           {
@@ -114,10 +116,13 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
     MS_CHECK_PTR(input_tensors().at(i));
     code << "input_data[" << i << "] = " << allocator_->GetRuntimeAddr(input_tensors().at(i)) << ";\n";
   }
-  code.CodeStruct("concat_param", *concat_param_, in_tensor_count, input_tensor_->shape().size(),
+
+  code << "int8_t *output_data;\n";
+  code << "output_data = " << allocator_->GetRuntimeAddr(output_tensors().at(0)) << ";\n";
+
+  code.CodeStruct("concat", micro_concat_, in_tensor_count, input_tensor_->shape().size(),
                   output_tensor_->shape().size());
-  code.CodeBaseStruct<false>("ConcatInt8Args", kRunArgs, "input_data", output_tensor_, "&concat_param", axis_,
-                             before_axis_size, count_unit_);
+
   if (support_parallel_) {
     code.CodeFunction(kParallelLaunch, "ConcatInt8Run", kRunArgsAddr, gThreadNum);
   } else {

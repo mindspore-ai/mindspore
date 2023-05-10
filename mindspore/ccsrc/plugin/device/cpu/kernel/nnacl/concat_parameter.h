@@ -24,14 +24,6 @@ typedef struct ConcatParameter {
   OpParameter op_parameter_;
   ConcatQuantArg quant_arg_;
   int axis_;
-
-  /* micro */
-  int thread_count_;
-  int input_num_;
-  int **input_shapes_;
-  int *output_shapes_;
-  int64_t after_axis_size;
-  int64_t count_unit_;
 } ConcatParameter;
 
 #endif  // MINDSPORE_NNACL_CONCAT_PARAMETER_H_
