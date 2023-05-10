@@ -15,8 +15,9 @@
  */
 
 #include "transform/acl_ir/acl_utils.h"
-#include "transform/acl_ir/acl_convert.h"
 #include <algorithm>
+#include <set>
+#include "transform/acl_ir/acl_convert.h"
 
 namespace mindspore {
 namespace transform {
@@ -122,19 +123,35 @@ void AclRunner::Reset() {
   op_type_ = "";
 }
 
-void AclRunner::Run(void *stream_ptr, bool is_sync) {
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto set_compile_flag = ACL_SUCCESS;
-  if (is_dynamic_) {
-    set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_FUZZ);
-  } else {
-    set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
-  }
+void AclRunner::SetStaticMode() {
+  auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
   if (set_compile_flag != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set compile mode failed! op_name is " << op_type_ << " and error flag is "
+    MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
   }
+}
 
+void AclRunner::SetDynamicMode() {
+  auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_FUZZ);
+  if (set_compile_flag != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
+                      << set_compile_flag;
+  }
+}
+
+void AclRunner::SetRunMode(const std::string &mode) {
+  static std::set<std::string> kCurrentValidMode = {"allow_fp32_to_fp16", "force_fp32"};
+  if (kCurrentValidMode.find(mode) == kCurrentValidMode.end()) {
+    MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
+  }
+  auto ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
+  }
+}
+
+void AclRunner::Run(void *stream_ptr, bool is_sync) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
   MS_LOG(INFO) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   // TODO(XXX): INFO for debug.
   if (is_sync) {

@@ -27,6 +27,8 @@
 
 namespace mindspore {
 namespace transform {
+typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32 } AclPrecisionMode;
+
 struct AclSpecialInfo {
   std::vector<std::string> ori_format{};
   std::vector<std::string> dev_format{};
@@ -68,9 +70,21 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &set_run_mode(bool is_dynamic) {
+    is_dynamic_ = is_dynamic;
+    return *this;
+  }
+
+  AclAdapterInfo &set_precision_mode(AclPrecisionMode precision_mode) {
+    precision_mode_ = precision_mode;
+    return *this;
+  }
+
   const std::string &op_type() const { return op_type_; }
   const bool &is_3d() const { return is_3d_ops_; }
   const bool &is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
+  const bool &is_dynamic() const { return is_dynamic_; }
+  const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   const std::map<size_t, AclSpecialInfo> &outputs() const { return output_info_; }
 
@@ -78,6 +92,8 @@ class AclAdapterInfo {
   std::string op_type_;
   bool is_3d_ops_{false};
   bool is_need_retrieve_output_shape_{false};
+  bool is_dynamic_{true};
+  AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::map<size_t, AclSpecialInfo> output_info_{};
 };

@@ -71,10 +71,9 @@ class AclConverter {
   void ConvertInputToAclAttr(const std::map<uint32_t, tensor::TensorPtr> &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);
+  void SetRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params);
 
-  void SetIsNeedRetrieveOutputShape(const bool is_need_retrieve_output_shape) {
-    is_need_retrieve_output_shape_ = is_need_retrieve_output_shape;
-  }
+  bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
 
   std::string DebugString() const;
   static aclDataType ConvertType(TypeId type);

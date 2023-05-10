@@ -44,8 +44,6 @@ class AclHelper {
   static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, bool is_input,
                                                  ShapeVector *shape);
 
-  static bool IsNeedRetrieveOutputShape(const std::string &name);
-
   static bool NeedCheckAttrToInput(const CNodePtr &node, const mindspore::HashMap<size_t, std::string> &attr_input_map,
                                    size_t index);
   static std::string GetFormatFromAttr(const PrimitivePtr &primitive);

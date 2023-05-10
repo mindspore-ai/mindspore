@@ -180,11 +180,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
-  if (converter_ == nullptr) {
-    converter_ = std::make_shared<transform::AclConverter>();
-  }
+  MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
-  converter_->SetIsNeedRetrieveOutputShape(IsNeedRetrieveOutputShape());
   converter_->ConvertToAclOpType(kernel_name_);
   converter_->ResizeAclOpInputs(primitive_ptr_);
   converter_->ConvertAttrToAclInput(primitive_ptr_->attrs(), kernel_name_, &inputs_on_host_);
@@ -194,6 +191,7 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   if (!inputs_on_host_.empty()) {
     converter_->ConvertInputToAclAttr(inputs_on_host_, kernel_name_);
   }
+  converter_->SetRunnerSpecialInfo(kernel_name_, output_params_);
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(INFO) << this->DebugString();
@@ -227,12 +225,16 @@ std::vector<TaskInfoPtr> AclKernelMod::GenTask(const std::vector<AddressPtr> &, 
 }
 
 void AclKernelMod::SyncData() {
+  MS_EXCEPTION_IF_NULL(converter_);
   std::vector<std::vector<int64_t>> output_shape = converter_->SyncData();
   for (size_t i = 0; i < output_shape.size(); ++i) {
     outputs_[i]->SetShapeVector(output_shape[i]);
   }
 }
 
-bool AclKernelMod::IsNeedRetrieveOutputShape() { return transform::AclHelper::IsNeedRetrieveOutputShape(kernel_name_); }
+bool AclKernelMod::IsNeedRetrieveOutputShape() {
+  MS_EXCEPTION_IF_NULL(converter_);
+  return converter_->is_need_retrieve_output_shape();
+}
 }  // namespace kernel
 }  // namespace mindspore

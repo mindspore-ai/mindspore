@@ -53,6 +53,7 @@ static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat
                                                                       {kOpFormat_NC1HWC0, ACL_FORMAT_NC1HWC0},
                                                                       {kOpFormat_FRAC_Z, ACL_FORMAT_FRACTAL_Z},
                                                                       {kOpFormat_FRAC_NZ, ACL_FORMAT_FRACTAL_NZ},
+                                                                      {kOpFormat_FRACTAL_Z_3D, ACL_FRACTAL_Z_3D},
                                                                       {kOpFormat_NCDHW, ACL_FORMAT_NCDHW}};
 
 static const std::map<aclDataType, std::string> kAclDatatypeToStr = {
@@ -261,7 +262,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::map<ui
   size_t num_real_inputs = inputs.size();
   size_t ms_real_idx = 0;
   for (size_t ms_idx = 0; ms_idx < info->GetNumInputsOfMsOpProto(); ++ms_idx) {
-    // skip attribute covnerted input
+    // skip attribute convert input
     auto attr_iter = info->attr_input_map().find(ms_idx);
     if ((attr_iter != info->attr_input_map().end()) && (prim->attrs().count(attr_iter->second) > 0)) {
       MS_LOG(INFO) << "Skip input " << ms_idx << " converted from attribute " << attr_iter->second;
@@ -605,6 +606,40 @@ std::string AclConverter::DebugString() const {
     ss << AclTensorDescString(output_str_[i]) << std::endl;
   }
   return ss.str();
+}
+
+void AclConverter::SetRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params) {
+  auto opinfo = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  auto op_type = opinfo->op_type();
+  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    return;
+  }
+  auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
+
+  // Set need retrieve output shape flag.
+  is_need_retrieve_output_shape_ = info.is_need_retrieve_output_shape();
+
+  // Set dynamic or static compile mode.
+  if (info.is_dynamic()) {
+    runner_.SetDynamicMode();
+  } else {
+    runner_.SetStaticMode();
+  }
+
+  // Set acl precision mode
+  const std::map<AclPrecisionMode, std::string> kPrcesionModeMap = {{ALLOW_FP32_TO_FP16, "allow_fp32_to_fp16"},
+                                                                    {FORCE_FP32, "force_fp32"}};
+  auto iter = kPrcesionModeMap.find(info.precision_mode());
+  if (iter == kPrcesionModeMap.end()) {
+    MS_LOG(EXCEPTION) << "Error precision mode:" << info.precision_mode() << " of op_type:" << op_type;
+  }
+  auto precision_mode = iter->second;
+  if (iter->first == FORCE_FP32 &&
+      std::any_of(output_params.begin(), output_params.end(),
+                  [](const TensorParams &param) { return param.data_type != kNumberTypeFloat32; })) {
+    precision_mode = "allow_fp32_to_fp16";
+  }
+  runner_.SetRunMode(precision_mode);
 }
 
 void AclConverter::Run(void *stream_ptr) { runner_.Run(stream_ptr, is_need_retrieve_output_shape_); }
