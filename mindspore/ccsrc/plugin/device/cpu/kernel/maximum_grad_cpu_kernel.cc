@@ -53,12 +53,12 @@ int MaximumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = inputs[kIndex1]->GetShapeVector();
-  dout_shape = inputs[kIndex2]->GetShapeVector();
-  dx_shape = outputs[kIndex0]->GetShapeVector();
-  dy_shape = outputs[kIndex1]->GetShapeVector();
+  dout_shape_ = inputs[kIndex2]->GetShapeVector();
+  dx_shape_ = outputs[kIndex0]->GetShapeVector();
+  dy_shape_ = outputs[kIndex1]->GetShapeVector();
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);
-  CheckShape(&dout_shape);
+  CheckShape(&dout_shape_);
   return KRET_OK;
 }
 
@@ -105,11 +105,11 @@ void MaximumGradCpuKernelMod::MaximumGradRecTask(const T *x, const T *y, const T
       if (dim == dout_shape.size() - 1) {
         if (*(x + x_index + x_i) > *(y + y_index + y_i)) {
           *(dx + x_index + x_i) += *(dout + dout_index + i);
-        } else if (*(x + x_index + x_i) == *(y + y_index + y_i)) {
+        } else if (*(x + x_index + x_i) < *(y + y_index + y_i)) {
+          *(dy + y_index + y_i) += *(dout + dout_index + i);
+        } else {
           *(dx + x_index + x_i) += *(dout + dout_index + i) / 2;
           *(dy + y_index + y_i) += *(dout + dout_index + i) / 2;
-        } else {
-          *(dy + y_index + y_i) += *(dout + dout_index + i);
         }
       } else {
         MaximumGradRecTaskSerialized(x, y, dout, dx, dy, dim + 1, x_index + x_i, y_index + y_i, dout_index + dout_i,
@@ -133,11 +133,11 @@ void MaximumGradCpuKernelMod::MaximumGradRecTaskSerialized(
     if (dim == dout_shape.size() - 1) {
       if (*(x + x_index + x_i) > *(y + y_index + y_i)) {
         *(dx + x_index + x_i) += *(dout + dout_index + i);
-      } else if (*(x + x_index + x_i) == *(y + y_index + y_i)) {
+      } else if (*(x + x_index + x_i) < *(y + y_index + y_i)) {
+        *(dy + y_index + y_i) += *(dout + dout_index + i);
+      } else {
         *(dx + x_index + x_i) += *(dout + dout_index + i) / 2;
         *(dy + y_index + y_i) += *(dout + dout_index + i) / 2;
-      } else {
-        *(dy + y_index + y_i) += *(dout + dout_index + i);
       }
     } else if (x_shape[dim + 1] == y_shape[dim + 1] && !paralleled) {
       MaximumGradRecTask(x, y, dout, dx, dy, dim + 1, x_index + x_i, y_index + y_i, dout_index + dout_i, x_cargo,
@@ -197,15 +197,15 @@ void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no of x: " << res_dx
                       << " and y: " << res_dy;
   }
-  std::vector<size_t> x_shape(dout_shape.size(), 1);
-  std::vector<size_t> y_shape(dout_shape.size(), 1);
-  std::vector<size_t> x_cargo(dout_shape.size(), 0);
-  std::vector<size_t> y_cargo(dout_shape.size(), 0);
-  std::vector<size_t> dout_cargo(dout_shape.size(), 0);
-  auto dout_shape_sizet = Convert2SizeT(dout_shape);
+  std::vector<size_t> x_shape(dout_shape_.size(), 1);
+  std::vector<size_t> y_shape(dout_shape_.size(), 1);
+  std::vector<size_t> x_cargo(dout_shape_.size(), 0);
+  std::vector<size_t> y_cargo(dout_shape_.size(), 0);
+  std::vector<size_t> dout_cargo(dout_shape_.size(), 0);
+  auto dout_shape_sizet = Convert2SizeT(dout_shape_);
 
-  GetShape(&x_shape, x_shape_, dout_shape);
-  GetShape(&y_shape, y_shape_, dout_shape);
+  GetShape(&x_shape, x_shape_, dout_shape_);
+  GetShape(&y_shape, y_shape_, dout_shape_);
 
   GetCargo(&x_cargo, x_shape, dout_shape_sizet);
   GetCargo(&y_cargo, y_shape, dout_shape_sizet);

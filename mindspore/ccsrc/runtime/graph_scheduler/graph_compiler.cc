@@ -146,42 +146,6 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
   node->set_inputs(new_inputs);
 }
 
-// Collect all nopnodes which are input of kernel that not support multi-thread execute.
-std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  std::set<CNodePtr> invalid_nopnodes;
-
-  // In the implementation of some cpu operators, shape information is obtained through the input of the kernel
-  // in launchkernel stage. The nopnode input of these operators cannot be eliminated.
-  const std::set<std::string> kCPUOpNoEliminateList = {kConcatOpName};
-
-  for (const auto &cnode : graph->execution_order()) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    // If target is not cpu, the total cnode in graph can skip.
-    auto target = GetCNodeTarget(cnode);
-    if (target != kCPUDevice) {
-      break;
-    }
-
-    // kernel not support multi-thread execute will be inited in launch kernel, so its input cannot be eliminated.
-    if (kCPUOpNoEliminateList.find(common::AnfAlgo::GetCNodeName(cnode)) != kCPUOpNoEliminateList.end()) {
-      const auto &inputs = cnode->inputs();
-      for (const auto &input : inputs) {
-        MS_EXCEPTION_IF_NULL(input);
-        const auto &input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0);
-        if ((input_with_index.first != nullptr) && (input_with_index.first->isa<CNode>()) &&
-            common::AnfAlgo::IsNopNode(input_with_index.first)) {
-          // Collect all of the nopnode inputs.
-          (void)invalid_nopnodes.emplace(input->cast<CNodePtr>());
-          MS_LOG(INFO) << "Add invalid nopnode:" << input->DebugString()
-                       << " for node not support mulit-thread execute list.";
-        }
-      }
-    }
-  }
-  return invalid_nopnodes;
-}
-
 void OptimizeNopNode(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<CNodePtr> new_execution_order;
@@ -193,8 +157,6 @@ void OptimizeNopNode(KernelGraph *graph) {
     return;
   }
 
-  // Invalid nopnode is those cannot be eliminated in some scene.
-  const auto &invalid_nopnodes = FetchNopNodeNotSupportEliminate(graph);
   const auto &output_node = graph->output();
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(output_node);
@@ -212,8 +174,7 @@ void OptimizeNopNode(KernelGraph *graph) {
     }
     // The nopnode which satisfies the following conditions cannot be eliminated and set to ref node:
     // 1.dynamic shape 2.side effect 3. must not be eliminated.
-    if (graph->is_dynamic_shape() || common::AnfAlgo::HasMonadInput(cnode) ||
-        (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
+    if (graph->is_dynamic_shape() || common::AnfAlgo::HasMonadInput(cnode)) {
       (void)new_execution_order.emplace_back(cnode);
       (void)nop_nodes_need_set_ref.emplace_back(cnode);
     } else {
