@@ -772,8 +772,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
             - `Tensor`: The tensor will be called to initialize tensor.
 
-        shape (Union[tuple, list, int]): The shape of the initialized tensor. Default: None.
-        dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
+        shape (Union[tuple, list, int]): The shape of the initialized tensor. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: ``mstype.float32`` .
 
     Returns:
         Tensor, return is Tensor object.

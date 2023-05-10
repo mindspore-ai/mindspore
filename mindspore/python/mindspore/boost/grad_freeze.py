@@ -42,7 +42,9 @@ class FreezeOpt(Cell):
     Args:
         opt (Cell): non-freezing optimizer instance, such as 'Momentum', 'SGD'.
         train_parameter_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
+            Default: ``None`` .
         train_strategy (Union[tuple(int), list(int), Tensor]): Strategy for gradients freezing training.
+            Default: ``None`` .
 
     Supported Platforms:
         ``Ascend``
@@ -312,9 +314,9 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         sens (numbers.Number):  The scaling number.
         grad (tuple(Tensor)): Tuple of gradient tensors.
         use_grad_accumulation (bool): Use gradient accumulation flag.
-        mean (bool): Gradients mean flag. default: None.
-        degree (int): Device number. default: None.
-        max_accumulation_step (int): Max accumulation steps. default: 1.
+        mean (bool): Gradients mean flag. Default: ``None`` .
+        degree (int): Device number. Default: ``None`` .
+        max_accumulation_step (int): Max accumulation steps. Default: ``1`` .
 
     Examples:
         >>> import numpy as np

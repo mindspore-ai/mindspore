@@ -309,7 +309,7 @@ def auto_mixed_precision(network, amp_level="O0"):
 
     Args:
         network (Cell): Definition of the network.
-        amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: "O0".
+        amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
             - "O1": Convert cells and operators in whitelist to float16 precision operations, and keep float32
@@ -456,34 +456,34 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         network (Cell): Definition of the network.
         optimizer (Optimizer): Define the optimizer to update the Parameter.
         loss_fn (Union[None, Cell]): Define the loss function. If None, the `network` should have the loss inside.
-            Default: None.
-        level (str): Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
+            Default: ``None`` .
+        level (str): Supports ['O0', 'O1', 'O2', 'O3', 'auto']. Default: ``'O0'`` .
 
-            - "O0": Do not change.
-            - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
+            - 'O0': Do not change.
+            - 'O1': Cast the operators in white_list to float16, the remaining operators are kept in float32.
               The operators in the whitelist: [Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose,
               Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger].
-            - "O2": Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
+            - 'O2': Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
-            - "O3": Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
-            - "auto": Set to level to recommended level in different devices. Set level to "O2" on GPU, Set
-              level to "O3" Ascend. The recommended level is chosen by the export experience, not applicable to all
+            - 'O3': Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
+            - 'auto': Set to level to recommended level in different devices. Set level to 'O2' on GPU, Set
+              level to 'O3' Ascend. The recommended level is chosen by the export experience, not applicable to all
               scenarios. User should specify the level for special network.
 
-            "O2" is recommended on GPU, "O3" is recommended on Ascend. Property of `keep_batchnorm_fp32`,
+            'O2' is recommended on GPU, 'O3' is recommended on Ascend. Property of `keep_batchnorm_fp32`,
             `cast_model_type` and `loss_scale_manager` determined by `level` setting may be overwritten by settings in
             `kwargs`.
 
         boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
-            training. Supports ["O0", "O1", "O2"]. Default: "O0".
+            training. Supports ['O0', 'O1', 'O2']. Default: ``'O0'`` .
 
-            - "O0": Do not change.
-            - "O1": Enable the boost mode, the performance is improved by about 20%, and
+            - 'O0': Do not change.
+            - 'O1': Enable the boost mode, the performance is improved by about 20%, and
               the accuracy is the same as the original accuracy.
-            - "O2": Enable the boost mode, the performance is improved by about 30%, and
+            - 'O2': Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
 
-            If "O1" or "O2" mode is set, the boost related library will take effect automatically.
+            If 'O1' or 'O2' mode is set, the boost related library will take effect automatically.
 
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
             network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
@@ -606,9 +606,9 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
 
     Args:
         network (Cell): Definition of the network.
-        white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: None, means
+        white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: ``None`` , means
             white list is not used.
-        black_list (list[Primitive, Cell], optional): Black list of custom mixed precision. Defaults: None, means
+        black_list (list[Primitive, Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
             black list is not used.
 
     Returns:

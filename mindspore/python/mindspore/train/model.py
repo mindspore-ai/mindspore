@@ -116,22 +116,22 @@ class Model:
     Args:
         network (Cell): A training or testing network.
         loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss
-                        and parallel if needed. Default: None.
+                        and parallel if needed. Default: ``None`` .
         optimizer (Cell): Optimizer for updating the weights. If `optimizer` is None, the `network` needs to
-                          do backpropagation and update weights. Default value: None.
+                          do backpropagation and update weights. Default: ``None`` .
         metrics (Union[dict, set]): A Dictionary or a set of metrics for model evaluation.
-                                    eg: {'accuracy', 'recall'}. Default: None.
+                                    eg: {'accuracy', 'recall'}. Default: ``None`` .
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
-                             `eval_network` . Default: None.
+                             `eval_network` . Default: ``None`` .
         eval_indexes (list): It is used when eval_network is defined. If `eval_indexes` is None by default, all outputs
                              of the `eval_network` would be passed to metrics. If `eval_indexes` is set, it must contain
                              three elements: the positions of loss value, predicted value and label in outputs of the
                              `eval_network`. In this case, the loss value will be passed to the `Loss` metric, the
                              predicted value and label will be passed to other metrics.
                              :func:`mindspore.train.Metric.set_indexes` is recommended instead of `eval_indexes`.
-                             Default: None.
+                             Default: ``None`` .
         amp_level (str): Option for argument `level` in :func:`mindspore.amp.build_train_network`, level for mixed
-            precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: "O0".
+            precision training. Supports ["O0", "O1", "O2", "O3", "auto"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
             - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
@@ -150,7 +150,7 @@ class Model:
             The more detailed explanation of `amp_level` setting can be found at `mindspore.amp.build_train_network`.
 
         boost_level (str): Option for argument `level` in `mindspore.boost`, level for boost mode
-            training. Supports ["O0", "O1", "O2"]. Default: "O0".
+            training. Supports ["O0", "O1", "O2"]. Default: ``"O0"`` .
 
             - "O0": Do not change.
             - "O1": Enable the boost mode, the performance is improved by about 20%, and
@@ -1122,28 +1122,28 @@ class Model:
                                      then a tuple (data1, data2, data3, ...) with all data returned from dataset
                                      will be passed to the `network`.
             valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process
-                                     will be performed on the end of training process. Default: None.
+                                     will be performed on the end of training process. Default: ``None`` .
             valid_frequency (int, list): Only relevant if `valid_dataset` is provided.  If an integer, specifies
                          how many training epochs to run before a new validation run is performed,
                          e.g. `valid_frequency=2` runs validation every 2 epochs.
                          If a list, specifies the epochs on which to run validation,
                          e.g. `valid_frequency=[1, 5]` runs validation at the end of the 1st, 5th epochs.
-                         Default: 1
+                         Default: ``1`` .
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
                                                             which should be executed while training.
-                                                            Default: None.
+                                                            Default: ``None`` .
             dataset_sink_mode (bool): Determines whether to pass the train data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink. Default: False.
+                                      dataset not sink. Default: ``False`` .
             valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
-                                      Default: False.
+                                      Default: ``False`` .
             sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
                              is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
-                             Default: -1.
+                             Default: ``-1`` .
             initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
-                                 Default: 0.
+                                 Default: ``0`` .
 
         Examples:
             >>> from mindspore import nn
@@ -1229,11 +1229,11 @@ class Model:
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
-                                     built. Default: None.
+                                     built. Default: ``None`` .
             valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
-                                     will be built, and `metrics` in `Model` can not be None. Default: None.
-            sink_size (int): Control the amount of data in each sink. Default: -1.
-            epoch (int): Control the training epochs. Default: 1.
+                                     will be built, and `metrics` in `Model` can not be None. Default: ``None`` .
+            sink_size (int): Control the amount of data in each sink. Default: ``-1`` .
+            epoch (int): Control the training epochs. Default: ``1`` .
 
         Examples:
             >>> from mindspore import nn
@@ -1398,9 +1398,9 @@ class Model:
             valid_dataset (Dataset): Dataset to evaluate the model.
             callbacks (Optional[list(Callback), Callback]): List of callback objects or callback object,
                                                             which should be executed while evaluation.
-                                                            Default: None.
+                                                            Default: ``None`` .
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
-                Default: False.
+                Default: ``False`` .
 
         Returns:
             Dict, the key is the metric name defined by users and the value is the metrics value for
@@ -1607,12 +1607,12 @@ class Model:
                          function respectively.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink. Default: True.
+                                      dataset not sink. Default: ``True`` .
             sink_size (int): Control the amount of data in each sink.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              If dataset_sink_mode is False, set sink_size as invalid.
-                             Default: -1.
+                             Default: ``-1`` .
 
         Returns:
             Dict, Parameter layout dictionary used for load distributed checkpoint

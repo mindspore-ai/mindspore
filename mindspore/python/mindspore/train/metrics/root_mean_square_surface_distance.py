@@ -49,11 +49,11 @@ class RootMeanSquareDistance(Metric):
 
     Args:
         distance_metric (string): Three measurement methods are supported:
-                "euclidean", "chessboard" or "taxicab". Default: "euclidean".
+                "euclidean", "chessboard" or "taxicab". Default: ``"euclidean"`` .
         symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
                 y_pred and y. If False, only calculates :math:`RmsSurDis(y\_pred, y)` surface distance,
                 otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
-                :math:`RmsSurDis(y\_pred \leftrightarrow y)` will be returned. Default: False.
+                :math:`RmsSurDis(y\_pred \leftrightarrow y)` will be returned. Default: ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

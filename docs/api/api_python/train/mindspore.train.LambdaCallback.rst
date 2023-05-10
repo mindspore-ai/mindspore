@@ -13,15 +13,15 @@ mindspore.train.LambdaCallback
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **on_train_epoch_begin** (Function) - 训练每个epoch开始时被调用。
-        - **on_train_epoch_end** (Function) - 训练每个epoch结束时被调用。
-        - **on_train_step_begin** (Function) - 训练每个step开始时被调用。
-        - **on_train_step_end** (Function) - 训练每个step结束时被调用。
-        - **on_train_begin** (Function) - 模型训练开始时被调用。
-        - **on_train_end** (Function) - 模型训练结束时被调用。
-        - **on_eval_epoch_begin** (Function) - 推理的epoch开始时被调用。
-        - **on_eval_epoch_end** (Function) - 推理的epoch结束时被调用。
-        - **on_eval_step_begin** (Function) - 推理的每个step开始时被调用。
-        - **on_eval_step_end** (Function) - 推理的每个step结束时被调用。
-        - **on_eval_begin** (Function) - 模型推理开始时被调用。
-        - **on_eval_end** (Function) - 模型推理结束时被调用。
+        - **on_train_epoch_begin** (Function) - 训练每个epoch开始时被调用。默认值： ``None`` 。
+        - **on_train_epoch_end** (Function) - 训练每个epoch结束时被调用。默认值： ``None`` 。
+        - **on_train_step_begin** (Function) - 训练每个step开始时被调用。默认值： ``None`` 。
+        - **on_train_step_end** (Function) - 训练每个step结束时被调用。默认值： ``None`` 。
+        - **on_train_begin** (Function) - 模型训练开始时被调用。默认值： ``None`` 。
+        - **on_train_end** (Function) - 模型训练结束时被调用。默认值： ``None`` 。
+        - **on_eval_epoch_begin** (Function) - 推理的epoch开始时被调用。默认值： ``None`` 。
+        - **on_eval_epoch_end** (Function) - 推理的epoch结束时被调用。默认值： ``None`` 。
+        - **on_eval_step_begin** (Function) - 推理的每个step开始时被调用。默认值： ``None`` 。
+        - **on_eval_step_end** (Function) - 推理的每个step结束时被调用。默认值： ``None`` 。
+        - **on_eval_begin** (Function) - 模型推理开始时被调用。默认值： ``None`` 。
+        - **on_eval_end** (Function) - 模型推理结束时被调用。默认值： ``None`` 。

@@ -187,11 +187,12 @@ class ConvertModelUtils:
         Args:
             model (Object): High-Level API for Training.
             network (Cell): A training network.
-            loss_fn (Cell): Objective function. Default: None.
-            optimizer (Cell): Optimizer used to updating the weights. Default: None.
+            loss_fn (Cell): Objective function. Default: ``None`` .
+            optimizer (Cell): Optimizer used to updating the weights. Default: ``None`` .
             metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
-                                        training. eg: {'accuracy', 'recall'}. Default: None.
-            amp_level (str): Level for mixed precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
+                                        training. eg: {'accuracy', 'recall'}. Default: ``None`` .
+            amp_level (str): Level for mixed precision training. Supports ["O0", "O2", "O3", "auto"].
+                Default: ``"O0"`` .
 
                 - O0: Do not change.
                 - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
@@ -202,9 +203,9 @@ class ConvertModelUtils:
 
             loss_scale_manager (Union[None, LossScaleManager]): If it is None, the loss would not be scaled.
                 Otherwise, scale the loss by LossScaleManager and optimizer can not be None. It is a key argument.
-                e.g. Use `loss_scale_manager=None` to set the value.
+                e.g. Use `loss_scale_manager=None` to set the value. Default: ``None`` .
             keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If True, the level setting before
-                will be overwritten. Default: False.
+                will be overwritten. Default: ``False`` .
 
         Returns:
              model (Object), High-Level API for Training.

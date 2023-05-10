@@ -359,8 +359,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is ``None`` , the encryption
                                       is not required. Default: ``None`` .
         enc_mode (str): This parameter is valid only when enc_key is not set to ``None`` . Specifies the encryption
-                        mode, currently supports ``'AES-GCM'`` and ``'AES-CBC'`` and ``'SM4-CBC'`` .
-                        Default: ``'AES-GCM'`` .
+                        mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
+                        Default: ``"AES-GCM"`` .
 
     Raises:
         TypeError: If the parameter `save_obj` is not `nn.Cell` or list type.
@@ -833,8 +833,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
                                       is not required. Default: ``None`` .
         dec_mode (str): This parameter is valid only when dec_key is not set to ``None`` . Specifies the decryption
-                        mode, currently supports ``'AES-GCM'`` and ``'AES-CBC'`` and ``'SM4-CBC'`` .
-                        Default: ``'AES-GCM'`` .
+                        mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
+                        Default: ``"AES-GCM"`` .
         specify_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
             specify_prefix will be loaded. Default: ``None`` .
         choice_func (Union[None, function]) : Input value of the function is a Parameter name of type string,

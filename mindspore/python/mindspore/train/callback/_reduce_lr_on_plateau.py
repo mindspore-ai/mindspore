@@ -56,25 +56,25 @@ class ReduceLROnPlateau(Callback):
             the first element will be returned as training loss.
 
         factor (float): factor by which the learning rate will be reduced.
-            `new_lr = lr * factor`. Default: 0.1.
+            `new_lr = lr * factor`. Default: ``0.1`` .
         patience (int): `monitor` value is better than history best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
             with no improvement that would be waited. When the waiting
             counter `self.wait` is larger than or equal to `patience`,  the lr
-            will be reduced. Default: 10.
+            will be reduced. Default: ``10`` .
         verbose (bool): If False: quiet, if True: print related information.
-            Default: False.
+            Default: ``False`` .
         mode (str): one of `{'auto', 'min', 'max'}`. In "min" mode,
             the learning rate will be reduced when the
             quantity monitored has stopped decreasing; in "max" mode it will be
             reduced when the quantity monitored has stopped increasing; in "auto"
             mode, the direction is automatically inferred from the name of the
-            monitored quantity. Default: "auto".
+            monitored quantity. Default: ``'auto'`` .
         min_delta (float): threshold for measuring the new optimum, to only focus on
-            significant changes. Default: 1e-4.
+            significant changes. Default: ``1e-4`` .
         cooldown (int): number of epochs to wait before resuming normal operation after
-            lr has been reduced. Default: 0.
-        min_lr (float): lower bound on the learning rate. Default: 0.
+            lr has been reduced. Default: ``0`` .
+        min_lr (float): lower bound on the learning rate. Default: ``0`` .
 
     Raises:
         ValueError: `mode` not in 'auto', 'min' or 'max'.

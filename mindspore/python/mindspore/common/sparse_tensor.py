@@ -238,13 +238,13 @@ class COOTensor(COOTensor_):
     Args:
         indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
             where N and ndims are the number of `values` and number of dimensions in
-            the COOTensor, respectively. Currently, `ndims` must be 2.
+            the COOTensor, respectively. Currently, `ndims` must be 2. Default: ``None`` .
             Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
-            supplies the values for each element in `indices`.
+            supplies the values for each element in `indices`. Default: ``None`` .
         shape (tuple(int)): An integer tuple of size `ndims`,
-            which specifies the dense_shape of the sparse tensor.
-        coo_tensor (COOTensor): A COOTensor object.
+            which specifies the dense_shape of the sparse tensor. Default: ``None`` .
+        coo_tensor (COOTensor): A COOTensor object. Default: ``None`` .
 
     Returns:
         COOTensor, composed of `indices`, `values`, and `shape`.
