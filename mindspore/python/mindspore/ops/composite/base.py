@@ -684,7 +684,6 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         name (str): Operator name.
         read_value (bool, optional): If the registered function do not need to set value on Parameter,
             and all inputs will pass by value, set `read_value` to True. Default: False.
-        doc_url (str, optional): The official document link corresponding to the registered function. Default:"".
 
     Raises:
         ValueError: If failed to find a matching function for the given arguments.
@@ -716,9 +715,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         [0.2 1.2 2.4]
     """
 
-    def __init__(self, name, read_value=False, doc_url=""):
+    def __init__(self, name, read_value=False):
         """Initialize MultitypeFuncGraph."""
-        MultitypeFuncGraph_.__init__(self, name, doc_url)
+        MultitypeFuncGraph_.__init__(self, name)
         self.entries = list()
         if read_value:
             self.set_signatures((
@@ -766,6 +765,10 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             return fn
 
         return deco
+
+    def set_doc_url(self, doc_url):
+        """Register a doc_url for MultitypeFuncGraph object."""
+        self.set_doc_url_(doc_url)
 
 
 class HyperMap(HyperMap_):
