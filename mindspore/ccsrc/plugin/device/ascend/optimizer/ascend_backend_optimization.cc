@@ -189,6 +189,7 @@
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/format_type/replace_transdata_with_transpose.h"
 #include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
@@ -762,7 +763,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
 
   if (env_ge == "1") {
     auto env_train = common::GetEnv("MS_GE_TRAIN");
-    if (env_train == "1") {
+    if (env_train == "1" && device::ascend::GetPhasePrefix() != "eval") {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
     } else {

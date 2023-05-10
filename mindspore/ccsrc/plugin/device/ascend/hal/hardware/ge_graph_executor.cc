@@ -368,6 +368,10 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
     UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
+
+  ConfigManager::GetInstance().ResetConfig();
+  ConfigManager::GetInstance().ResetIterNum();
+
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
