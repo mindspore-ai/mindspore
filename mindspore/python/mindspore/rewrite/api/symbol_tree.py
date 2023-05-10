@@ -79,12 +79,12 @@ class SymbolTree:
             func (FunctionType): The function to be called.
             targets (list[str]): indicates the output name. As the output of the node in the source code.
             args (Union[MsDtypes, ParamTypes]): parameter name of the node. Used as a parameter to a code statement in
-                source code. The default value is None, which means there is no parameter input in the cell.
+                source code. When no value is provided, it means there is no parameter input in the cell.
             kwargs (dict{str, Union[MsDtypes, ParamTypes]}): The key type must be str,
                 and the value must be value or type must be ParamTypes.
                 The input parameter name used to describe the formal parameter with a keyword.
-                Enter the name in the source code as the `kwargs` in the statement expression.The default value is
-                None, which means there is no `kwargs` input.
+                Enter the name in the source code as the `kwargs` in the statement expression. When no value is
+                provided, it means there is no `kwargs` input.
 
         Returns:
             An instance of `Node`.
