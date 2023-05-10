@@ -17,7 +17,7 @@
 #ifndef NNACL_BASE_ARITHMETIC_BASE_H_
 #define NNACL_BASE_ARITHMETIC_BASE_H_
 
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/nnacl_utils.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/kernel/arithmetic.h"

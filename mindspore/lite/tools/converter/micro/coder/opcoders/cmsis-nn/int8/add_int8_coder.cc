@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <limits>
 #include "coder/opcoders/serializers/serializer.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/int8/quantize.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"

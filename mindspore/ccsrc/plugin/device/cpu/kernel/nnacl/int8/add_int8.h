@@ -18,7 +18,7 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/int8/arithmetic_int8.h"
 
 typedef struct AddQuantQrgs {

@@ -17,7 +17,7 @@
 #define MINDSPORE_NNACL_ARITHMETIC_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

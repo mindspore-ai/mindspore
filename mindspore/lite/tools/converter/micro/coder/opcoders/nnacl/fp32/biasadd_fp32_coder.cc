@@ -36,7 +36,7 @@ int BiasAddFP32Coder::DoCode(CoderContext *ctx) {
   std::string bias_str = allocator_->GetRuntimeAddr(input_tensors_.at(kWeightIndex), true);
   Collect(ctx,
           {
-            "nnacl/arithmetic.h",
+            "nnacl/arithmetic_parameter.h",
             "nnacl/nnacl_utils.h",
             "nnacl/nnacl_common.h",
             "nnacl/base/arithmetic_base.h",

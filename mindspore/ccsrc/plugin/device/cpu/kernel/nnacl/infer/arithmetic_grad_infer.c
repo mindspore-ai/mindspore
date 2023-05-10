@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/infer/arithmetic_grad_infer.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "nnacl/infer/infer_register.h"
 
 /*

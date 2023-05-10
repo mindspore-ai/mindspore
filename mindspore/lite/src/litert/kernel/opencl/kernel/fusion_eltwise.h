@@ -28,7 +28,7 @@
 #include "src/litert/kernel/opencl/kernel/arithmetic_self.h"
 #include "src/litert/kernel/opencl/kernel/to_format.h"
 #include "schema/ops_generated.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::PrimitiveType;

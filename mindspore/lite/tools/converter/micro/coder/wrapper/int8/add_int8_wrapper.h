@@ -19,7 +19,7 @@
 #include <string.h>
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/add_int8.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

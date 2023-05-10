@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_ARTITHMETIC_H_
-#define MINDSPORE_NNACL_ARTITHMETIC_H_
+#ifndef NNACL_ARTITHMETIC_PARAMETER_H_
+#define NNACL_ARTITHMETIC_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/nnacl_utils.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 #define ARITHMETIC_SUPPORT_DIMS_NUM 10
 
 typedef struct ArithmeticParameter {
@@ -47,7 +45,4 @@ typedef struct ArithmeticParameter {
   int eltwise_mode_;  // eltwise need
 } ArithmeticParameter;
 
-#ifdef __cplusplus
-}
-#endif
-#endif  // MINDSPORE_NNACL_ARTITHMETIC_H_
+#endif  // NNACL_ARTITHMETIC_PARAMETER_H_

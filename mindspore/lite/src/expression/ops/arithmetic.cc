@@ -21,7 +21,7 @@
 #include "src/expression/ops_utils.h"
 #include "src/expression/ops/arithmetic_self.h"
 #include "src/expression/ops.h"
-#include "nnacl/arithmetic.h"
+#include "nnacl/arithmetic_parameter.h"
 #include "src/expression/import.h"
 #include "src/litert/cxx_api/expression/node_impl.h"
 
