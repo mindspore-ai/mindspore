@@ -60,9 +60,9 @@ class MaximumGradCpuKernelMod : public NativeCpuKernelMod {
 
   ShapeVector x_shape_;
   ShapeVector y_shape_;
-  ShapeVector dout_shape;
-  ShapeVector dx_shape;
-  ShapeVector dy_shape;
+  ShapeVector dout_shape_;
+  ShapeVector dx_shape_;
+  ShapeVector dy_shape_;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

@@ -163,7 +163,9 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
       std::vector<int64_t> pos(dims_, 0);
       auto idx = i / input_shape_[dims_ - 1];
       for (int j = dims_ - 2; j >= 0; --j) {
-        if (idx == 0) break;
+        if (idx == 0) {
+          break;
+        }
         pos[j] = idx % input_shape_[j];
         idx /= input_shape_[j];
       }
