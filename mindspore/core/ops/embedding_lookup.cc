@@ -112,19 +112,23 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInRange<int64_t>("input number", SizeToLong(input_args.size()), kIncludeBoth,
                                                 {input_num, input_num_dynamic}, op_name);
     std::set<TypePtr> valid_params_types = {kTensorType};
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
     (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
                                               op_name);
     std::set<TypePtr> int_types = {kInt32, kInt64};
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
                                                      op_name);
     if (SizeToLong(input_args.size()) == input_num_dynamic) {
       std::set<TypePtr> int_type = {kInt64};
+      MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
       (void)CheckAndConvertUtils::CheckTypeValid("offset", input_args[kInputIndex2]->BuildType(), int_type, op_name);
     }
 
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 0, op_name);
     abstract::AbstractTensorPtr params =
       CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    MS_EXCEPTION_IF_NULL(params);
     return params->BuildType();
   }
 };
