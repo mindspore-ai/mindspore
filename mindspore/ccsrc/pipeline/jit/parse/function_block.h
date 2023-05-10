@@ -94,6 +94,10 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   bool is_break_continue_statement_inside() const { return is_break_continue_statement_inside_; }
   void SetBreakContinueStatementInside();
 
+  const std::string get_block_name() const { return block_name_; }
+  void set_block_name(const std::string &block_name) { block_name_ = block_name; }
+  void CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node);
+
   const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
   bool HasGlobalPyParam(const std::string &name) const { return global_py_params_.contains(py::str(name)); }
@@ -220,6 +224,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // If inside this block there is a break/continue statement.
   // This flag will propagate beyond outer if/else but not while/for loop, if-by-if;
   bool is_break_continue_statement_inside_{false};
+  // Set block name for control flow block.
+  std::string block_name_{""};
 };
 }  // namespace parse
 }  // namespace mindspore
