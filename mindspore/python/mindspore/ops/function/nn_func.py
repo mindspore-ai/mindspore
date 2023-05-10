@@ -82,7 +82,7 @@ def adaptive_avg_pool2d(input, output_size):
     Args:
         input (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor,
             with float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
 
@@ -171,7 +171,7 @@ def adaptive_avg_pool3d(input, output_size):
 
     Args:
         input (Tensor): The input of adaptive_avg_pool3d, which is a 5D or 4D Tensor.
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
             or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
 
@@ -654,7 +654,7 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
     Args:
         input (Tensor): A 3D or 4D tensor,
             with float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+        output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
 
