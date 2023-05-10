@@ -223,3 +223,17 @@ template CUDA_LIB_EXPORT void ScatterNd<uint64_t, int64_t>(int64_t *indices, uin
                                                            const size_t &output_size, const size_t &indices_dim_0,
                                                            const size_t &indices_dim_1, int64_t *indices_stride,
                                                            int64_t *work_shape, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScatterNd<bool, int16_t>(int16_t *indices, bool *update, bool *output,
+                                                       const size_t &block_size, const size_t &input_size,
+                                                       const size_t &output_size, const size_t &indices_dim_0,
+                                                       const size_t &indices_dim_1, int16_t *indices_stride,
+                                                       int16_t *work_shape, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScatterNd<bool, int>(int *indices, bool *update, bool *output, const size_t &block_size,
+                                                   const size_t &input_size, const size_t &output_size,
+                                                   const size_t &indices_dim_0, const size_t &indices_dim_1,
+                                                   int *indices_stride, int *work_shape, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScatterNd<bool, int64_t>(int64_t *indices, bool *update, bool *output,
+                                                       const size_t &block_size, const size_t &input_size,
+                                                       const size_t &output_size, const size_t &indices_dim_0,
+                                                       const size_t &indices_dim_1, int64_t *indices_stride,
+                                                       int64_t *work_shape, cudaStream_t stream);

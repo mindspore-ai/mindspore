@@ -61,6 +61,9 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int64_t),
   };
   return func_list;
 }
