@@ -59,6 +59,26 @@ bool AclHelper::CheckDefaultSupportFormat(const string &format) {
   return default_support.find(format) != default_support.end();
 }
 
+bool AclHelper::GetMoreDataTypeSupported(TypeId data_type, const std::string &op_type) {
+  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    return false;
+  }
+  auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
+  if (acl_info.precision_mode() == FORCE_FP32) {
+    if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat) {
+      return false;
+    }
+    return true;
+  }
+  if (!acl_info.extra_supported_datatype().empty()) {
+    if (std::any_of(acl_info.extra_supported_datatype().begin(), acl_info.extra_supported_datatype().end(),
+                    [data_type](GeDataType ge_type) { return ConvertGeType(ge_type) == data_type; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::shared_ptr<GeAdapterInfo> &info) {
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
@@ -90,6 +110,9 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
       if (base_type == kMetaTypeNone && ge_input_info.type == Ms2GeParamInfo::OPTIONAL) {
         MS_LOG(INFO) << "Input is a placeholder, continue!";
+        continue;
+      }
+      if (GetMoreDataTypeSupported(base_type, info->op_type())) {
         continue;
       }
       MS_LOG(INFO) << "Unsupported input dtype:" << TypeIdLabel(base_type)
@@ -176,12 +199,6 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
     return UNKNOWN_KERNEL_TYPE;
   }
 
-  // check whether all outputs are matched
-  if (GetKernelInfoByOutputs(node, info) == UNKNOWN_KERNEL_TYPE) {
-    return UNKNOWN_KERNEL_TYPE;
-  }
-
-  // TODO(linqingke): Return supported format from adapter.
   return ACL_KERNEL;
 }
 

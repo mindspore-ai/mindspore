@@ -30,25 +30,33 @@ class GeAdapterInfo;
 
 class AclHelper {
  public:
+  // Check is data layout unchanged format.
   static bool CheckDefaultSupportFormat(const string &format);
 
+  // Kernel select by ge_ir.
   static KernelType GetKernelInfoByInputs(const CNodePtr &cnode, const std::shared_ptr<GeAdapterInfo> &info);
   static KernelType GetKernelInfoByOutputs(const AnfNodePtr &node, const std::shared_ptr<GeAdapterInfo> &info);
   static KernelType GetKernelInfoFromGe(const AnfNodePtr &node);
 
+  // Select kernel's device format.
   static void GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
                                       std::vector<std::string> *output_formats,
                                       std::vector<std::string> *input_reshape_types,
                                       std::vector<std::string> *output_reshape_types);
 
+  // Convert mindspore's origin information to acl's origin information.
   static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, bool is_input,
                                                  ShapeVector *shape);
 
+  // Get attribute to input information.
   static bool NeedCheckAttrToInput(const CNodePtr &node, const mindspore::HashMap<size_t, std::string> &attr_input_map,
                                    size_t index);
+  // Get special information from kernel's attribute.
   static std::string GetFormatFromAttr(const PrimitivePtr &primitive);
-
   static int64_t GetFracZGroupFromAttr(const PrimitivePtr &primitive);
+
+  // Get kernel's precision mode is FORCE_FP32.
+  static bool GetMoreDataTypeSupported(TypeId data_type, const std::string &op_type);
 };
 }  // namespace transform
 }  // namespace mindspore

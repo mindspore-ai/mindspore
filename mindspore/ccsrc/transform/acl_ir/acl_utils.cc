@@ -17,7 +17,10 @@
 #include "transform/acl_ir/acl_utils.h"
 #include <algorithm>
 #include <set>
+#include "utils/ms_context.h"
 #include "transform/acl_ir/acl_convert.h"
+#include "include/common/debug/common.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -152,8 +155,29 @@ void AclRunner::SetRunMode(const std::string &mode) {
 
 void AclRunner::Run(void *stream_ptr, bool is_sync) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+  // Dump acl graph for aoe.
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->CanDump(kIntroductory)) {
+    auto file_path = GetSaveGraphsPathName("acl_dump");
+    auto real_path = FileUtils::CreateNotExistDirs(file_path, true);
+    if (!real_path.has_value()) {
+      MS_LOG(EXCEPTION) << "Get real path failed. path=" << file_path;
+    }
+    MS_LOG(INFO) << "Start aclGenGraphAndDumpForOp of op_type: " << op_type_;
+    auto dump_ret = aclGenGraphAndDumpForOp(
+      const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
+      const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
+      const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
+      const_cast<aclTensorDesc **>(acl_param_.output_desc.data()), acl_param_.output_buffer.data(), acl_param_.attr,
+      ACL_ENGINE_SYS, const_cast<char *>(real_path.value().c_str()), nullptr);
+    if (dump_ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Acl dump graph failed!";
+    }
+  }
+
   MS_LOG(INFO) << "Start aclopCompileAndExecute of op_type: " << op_type_;
-  // TODO(XXX): INFO for debug.
   if (is_sync) {
     bool ret = aclrtSynchronizeStream(stream_ptr);
     if (ret != ACL_SUCCESS) {

@@ -80,6 +80,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &set_extra_supported_datatype(const std::vector<ge::DataType> &supported_datatype) {
+    extra_supported_datatype_ = supported_datatype;
+    return *this;
+  }
+
   const std::string &op_type() const { return op_type_; }
   const bool &is_3d() const { return is_3d_ops_; }
   const bool &is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
@@ -87,6 +92,7 @@ class AclAdapterInfo {
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   const std::map<size_t, AclSpecialInfo> &outputs() const { return output_info_; }
+  const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
 
  private:
   std::string op_type_;
@@ -96,6 +102,7 @@ class AclAdapterInfo {
   AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::map<size_t, AclSpecialInfo> output_info_{};
+  std::vector<ge::DataType> extra_supported_datatype_{};
 };
 
 class AclAdapterManager {
