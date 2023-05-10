@@ -26,7 +26,7 @@ namespace mindspore {
 class ExtendDelegate : public IDelegate<FuncGraph, AnfNode, kernel::BaseKernel> {
  public:
   ExtendDelegate() = default;
-  virtual ~ExtendDelegate() = default;
+  ~ExtendDelegate() override = default;
 
   void ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) override {
     // not implemented
