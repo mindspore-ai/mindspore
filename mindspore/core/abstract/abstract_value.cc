@@ -1144,8 +1144,8 @@ AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
   } catch (std::exception &e) {
     std::ostringstream oss;
     oss << e.what();
-    oss << "Failed to join abstract sequence: " << ToString()
-        << ", with other abstract sequence: " << other_sequence->ToString();
+    oss << "Failed to join abstract tuple: " << ToString()
+        << ", with other abstract tuple: " << other_sequence->ToString();
     MS_EXCEPTION(TypeError) << oss.str();
   }
   auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractTuple>(other_sequence));
@@ -1171,8 +1171,11 @@ AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
       return dyn_len_sequence->Join(other_sequence->BroadenToDynamicLenSequence());
     }
   } catch (std::exception &e) {
-    MS_LOG(ERROR) << e.what();
-    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
+    std::ostringstream oss;
+    oss << e.what();
+    oss << "Failed to join abstract list: " << ToString()
+        << ", with other abstract list: " << other_sequence->ToString();
+    MS_EXCEPTION(TypeError) << oss.str();
   }
 
   auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractList>(other_sequence));
