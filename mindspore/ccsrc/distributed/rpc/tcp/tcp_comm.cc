@@ -338,8 +338,8 @@ bool TCPComm::Send(MessageBase *msg, size_t *const send_bytes, bool sync) {
     std::string destination = msg->to.Url();
     Connection *conn = conn_pool_->FindConnection(destination);
     if (conn == nullptr) {
-      MS_LOG(ERROR) << "Can not found remote link and send fail name: " << msg->name.c_str()
-                    << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
+      MS_LOG(WARNING) << "Can not found remote link and send fail name: " << msg->name.c_str()
+                      << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
       DropMessage(msg);
       return false;
     }

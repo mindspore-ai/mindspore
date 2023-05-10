@@ -129,12 +129,13 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
     if (retval < 0) {
       ++eagainCount;
       if (errno != EAGAIN) {
-        MS_LOG(ERROR) << "Failed to call sendmsg and errno is: " << errno;
+        MS_LOG(WARNING) << "Failed to call sendmsg and errno is: " << errno << " " << strerror(errno);
         connection->error_code = errno;
         return IO_RW_ERROR;
       } else if (eagainCount == EAGAIN_RETRY) {
-        MS_LOG(ERROR) << "Failed to call sendmsg after retry " + std::to_string(EAGAIN_RETRY) + " times and errno is: "
-                      << errno;
+        MS_LOG(WARNING) << "Failed to call sendmsg after retry " + std::to_string(EAGAIN_RETRY) +
+                             " times and errno is: "
+                        << errno << " " << strerror(errno);
         *sendLen = 0;
         return IO_RW_OK;
       }
