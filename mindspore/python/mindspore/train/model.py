@@ -1482,9 +1482,25 @@ class Model:
             Tensor, array(s) of predictions.
         """
         def _get_lite_context(lite_context_input):
-            lite_context_input.target = [context.get_context("device_target")]
-            lite_context_input.cpu.thread_num = 1
-            lite_context_input.cpu.thread_affinity_mode = 2
+            # use default lite context parameters for now
+            device_target = context.get_context("device_target").lower()
+            lite_context_input.target = [device_target]
+            if device_target == 'cpu':
+                inter_op_parallel_num = context.get_context('inter_op_parallel_num')
+                if inter_op_parallel_num and isinstance(inter_op_parallel_num, int):
+                    lite_context_input.cpu.inter_op_parallel_num = inter_op_parallel_num
+            elif device_target == 'gpu':
+                device_id = context.get_context('device_id')
+                if device_id and isinstance(device_id, int):
+                    lite_context_input.gpu.device_id = device_id
+            elif device_target == 'ascend':
+                device_id = context.get_context('device_id')
+                if device_id and isinstance(device_id, int):
+                    lite_context_input.ascend.device_id = device_id
+            else:
+                raise RuntimeError(f"For predict lite, device target should be in ['gpu', 'cpu', 'ascend']"
+                                   f" but got {device_target}")
+
             return lite_context_input
 
         if not self._mindspore_lite:

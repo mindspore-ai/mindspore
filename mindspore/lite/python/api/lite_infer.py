@@ -31,7 +31,7 @@ class LiteInfer(BaseModel):
     The LiteInfer class takes training model as input and performs predictions directly.
 
     Args:
-        train_model (Model): MindSpore Model.
+        model_or_net (Model, Cell): MindSpore Model or MindSpore nn.Cell.
         net_inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
@@ -44,7 +44,7 @@ class LiteInfer(BaseModel):
         ValueError: `train_model` is not a MindSpore Model.
     """
 
-    def __init__(self, train_model, *net_inputs, context=None):
+    def __init__(self, model_or_net, *net_inputs, context=None):
         super(LiteInfer, self).__init__(_c_lite_wrapper.LiteInferPyBind())
         self._mindspore = None
         # pylint: disable=broad-except
@@ -53,9 +53,15 @@ class LiteInfer(BaseModel):
         except (ImportError, BaseException):
             raise ImportError("For 'LiteInfer', import mindspore fail.")
 
-        if not isinstance(train_model, self._mindspore.train.Model):
-            raise ValueError("For LiteInfer, input train model is not ms.train.Model.")
-        self._func_graph = self._get_func_graph(train_model.predict_network, *net_inputs)
+        self._infer_network = None
+        if isinstance(model_or_net, self._mindspore.train.Model):
+            self._infer_network = model_or_net.predict_network
+        elif isinstance(model_or_net, self._mindspore.nn.Cell):
+            self._infer_network = model_or_net
+        else:
+            raise ValueError(f"For LiteInfer, input model_or_net should be ms.train.Model or "
+                             f"ms.nn.Cell, but got {type(model_or_net)}.")
+        self._func_graph = self._get_func_graph(self._infer_network, *net_inputs)
         self._build_from_fun_graph(self._func_graph, context)
 
     def _get_func_graph(self, pyobj, *net_inputs):
