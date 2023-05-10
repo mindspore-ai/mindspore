@@ -235,6 +235,32 @@ def test_setattr_global_obj_attr2():
     assert res == 101
 
 
+data_obj3 = np.array([1, 2, 3, 4])
+
+
+@pytest.mark.skip(reason="Do not support numpy array as global input")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_global_obj_attr3():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def simple_assign_global_obj_attr3():
+        data_obj3.shape = (2, 2)
+        return data_obj3.shape, data_obj3
+
+    res = simple_assign_global_obj_attr3()
+    assert len(res) == 2
+    assert res[0] == (2, 2)
+    assert np.all(res[1] == np.array([[1, 2], [3, 4]]))
+
+
 class NestedAssignTarget:
     def __init__(self):
         self.b = AssignTarget()
@@ -294,3 +320,27 @@ def test_setattr_global_obj_nested_attr2():
     res = simple_assign_global_obj_attr2()
     assert nested_data_obj2.a.b.x == 101
     assert res == 101
+
+
+@pytest.mark.skip(reason="Return value of x.shape is not changed because of the way InterpretNode generate.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_local_object_attr():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def foo():
+        x = np.array([1, 2, 3, 4])
+        x.shape = (2, 2)
+        return x.shape, x
+
+    res = foo()
+    assert len(res) == 2
+    assert res[0] == (2, 2)
+    assert np.all(res[1] == np.array([[1, 2], [3, 4]]))
