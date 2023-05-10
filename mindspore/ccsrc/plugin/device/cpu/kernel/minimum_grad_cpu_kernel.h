@@ -70,8 +70,6 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
   ShapeVector x_shape_;
   ShapeVector y_shape_;
   ShapeVector dout_shape_;
-  ShapeVector dx_shape;
-  ShapeVector dy_shape;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

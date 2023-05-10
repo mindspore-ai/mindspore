@@ -221,7 +221,7 @@ void MaximumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1,
 template <typename T>
 void MaximumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) {
   if (input_x_shape_.size() == 0) {
-    auto task = [&](size_t start, size_t end) {
+    auto task = [&](size_t, size_t) {
       for (size_t i = 0; i < output_num_; ++i) {
         output[i] = MaximumFunc(input_x[0], input_y[i]);
       }
