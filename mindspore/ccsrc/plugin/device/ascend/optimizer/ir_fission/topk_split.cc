@@ -36,6 +36,7 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kMultiply2 = 2;
 constexpr size_t kTopkIndexK = 1;
+constexpr auto kTopKDOpName = "TopKD";
 constexpr auto kAttrSorted = "sorted";
 constexpr auto r_assist_const = "assist_const";
 constexpr auto r_new_value = "new_value";
@@ -255,7 +256,7 @@ AnfNodePtr BuildTopk(const PatternMap &m, const AnfNodePtr &default_node) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKOpName))};
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKDOpName))};
   (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   CNodePtr new_cnode = NewCNode(new_inputs, g);
   MS_EXCEPTION_IF_NULL(new_cnode);
@@ -290,7 +291,7 @@ void TopKSplit::DefineDstPattern(DstPattern *dst_pattern) {
   (void)(*dst_pattern)
     .AddValueNode(r_assist_const, BuildAssistConst(s))
     .AddValueNode(r_new_value, BuildNewValue(s))
-    .AddCNode(r_topk, {std::make_shared<Primitive>(kTopKOpName), x1, r_assist_const}, BuildTopk);
+    .AddCNode(r_topk, {std::make_shared<Primitive>(kTopKDOpName), x1, r_assist_const}, BuildTopk);
 }
 
 MS_PASS_FACTORY_REG(PatternToPatternPass, topk_split_fission, TopKSplit, kIRFusionFissionPass);
