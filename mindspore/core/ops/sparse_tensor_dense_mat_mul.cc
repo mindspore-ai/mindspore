@@ -311,6 +311,8 @@ class MIND_API AGSparseTensorDenseMatmulInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SparseTensorDenseMatmulInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseTensorDenseMatmul, prim::kPrimSparseTensorDenseMatmul,

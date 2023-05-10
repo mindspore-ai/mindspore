@@ -123,6 +123,8 @@ class MIND_API AGAdaptiveAvgPool3DInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return AdaptiveAvgPool3DInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool3D, prim::kPrimAdaptiveAvgPool3D, AGAdaptiveAvgPool3DInfer, false);

@@ -174,6 +174,8 @@ class MIND_API AGSparseToDenseV2Infer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SparseToDenseV2Infer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SparseToDenseV2, prim::kPrimSparseToDenseV2, AGSparseToDenseV2Infer, false);

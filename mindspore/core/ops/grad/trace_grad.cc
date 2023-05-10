@@ -89,6 +89,8 @@ class MIND_API AGTraceGradInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return TraceGradInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TraceGrad, prim::kPrimTraceGrad, AGTraceGradInfer, false);

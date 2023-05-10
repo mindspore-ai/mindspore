@@ -168,6 +168,8 @@ class MIND_API AGResizeNearestNeighborV2GradInfer : public abstract::OpInferBase
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return ResizeNearestNeighborV2GradInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ResizeNearestNeighborV2Grad, prim::kPrimResizeNearestNeighborV2Grad,

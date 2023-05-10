@@ -90,6 +90,8 @@ class MIND_API AGAvgPoolGradV1Infer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return AvgPoolGradV1Infer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(AvgPoolGradV1, prim::kPrimAvgPoolGradV1, AGAvgPoolGradV1Infer, false);
