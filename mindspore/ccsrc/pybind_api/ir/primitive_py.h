@@ -22,7 +22,6 @@
 #include <vector>
 #include <memory>
 
-#include "base/user_data.h"
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"

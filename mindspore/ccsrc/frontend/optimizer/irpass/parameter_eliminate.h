@@ -31,6 +31,15 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+static inline void CheckSwitchCallValid(const CNodePtr &switch_call) {
+  if (switch_call->inputs().size() > 1) {
+    // means call switch(arg1, ...) has args.
+    MS_LOG(EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
+                         "The call_switch_cnode is:"
+                      << switch_call->DebugString();
+  }
+}
+
 static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
@@ -58,13 +67,7 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
           // call switch()
           auto call_switchs = node_users[user_cnode];
           for (auto call_switch_iter : call_switchs) {
-            auto call_switch_cnode = call_switch_iter.first->cast<CNodePtr>();
-            if (call_switch_cnode->inputs().size() > 1) {
-              // means call switch(arg1, ...) has args.
-              MS_LOG(EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
-                                   "The call_switch_cnode is:"
-                                << call_switch_cnode->DebugString();
-            }
+            CheckSwitchCallValid(call_switch_iter.first->cast<CNodePtr>());
           }
           if (std::find(caller_cnodes.begin(), caller_cnodes.end(), caller_cnode) == caller_cnodes.end()) {
             (void)caller_cnodes.emplace_back(caller_cnode->cast<CNodePtr>());
