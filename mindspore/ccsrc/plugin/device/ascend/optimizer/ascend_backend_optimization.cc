@@ -494,6 +494,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   const auto &pass_creators =
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
