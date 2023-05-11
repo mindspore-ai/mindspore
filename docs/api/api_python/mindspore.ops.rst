@@ -72,6 +72,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.multilabel_soft_margin_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
+    mindspore.ops.soft_margin_loss
     mindspore.ops.triplet_margin_loss
 
 激活函数

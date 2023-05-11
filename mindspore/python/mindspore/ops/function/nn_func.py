@@ -2340,6 +2340,51 @@ def softsign(x):
     return softsign_(x)
 
 
+def soft_margin_loss(input, target, reduction='mean'):
+    r"""
+    Calculate the soft margin loss of input and target.
+
+    Creates a criterion that optimizes a two-class classification
+    logistic loss between input tensor :math:`x` and target tensor :math:`y`
+    (containing 1 or -1).
+
+    .. math::
+        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
+
+    where :math:`x.nelement()` is the number of elements of :math:`x`.
+
+    Args:
+        input (Tensor): Predict data. Data type must be float16 or float32.
+        target (Tensor): Ground truth data, with the same type and shape as `logits`.
+        reduction (str): Implements the reduction method to the output with ``'none'`` , ``'mean'`` , or ``'sum'`` ,
+            respectively indicate that no calculation is specified, that the mean is used, and that is calculated
+            using summation. Default: ``'mean'`` .
+
+    Outputs:
+        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `logits`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `input` or `target` is not a Tensor.
+        TypeError: If dtype of `input` or `target` is neither float16 nor float32.
+        ValueError: If shape of `input` is not the same as that of `target`.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
+        >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
+        >>> output = ops.soft_margin_loss(logits, labels)
+        >>> print(output)
+        0.6764238
+    """
+    soft_margin_loss_op = _get_cache_prim(P.SoftMarginLoss)(reduction=reduction)
+    output = soft_margin_loss_op(input, target)
+    return output
+
+
 def softmax(x, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
@@ -6627,6 +6672,7 @@ __all__ = [
     'soft_shrink',
     'selu',
     'silu',
+    'soft_margin_loss',
     'softmax',
     'softmin',
     'pdist',

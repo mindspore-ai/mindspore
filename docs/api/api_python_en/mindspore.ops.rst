@@ -72,6 +72,7 @@ Loss Functions
     mindspore.ops.multilabel_soft_margin_loss
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
+    mindspore.ops.soft_margin_loss
     mindspore.ops.triplet_margin_loss
 
 Activation Functions
