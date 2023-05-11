@@ -23,6 +23,7 @@
 namespace mindspore::lite {
 namespace {
 constexpr auto kAscendGePluginSoName = "libascend_ge_plugin.so";
+constexpr auto kAscendGePluginPySoName = "libascend_ge_plugin_python.so";
 constexpr auto kFunCreateAscendGePluginImpl = "CreateAscendGeExecutorPluginImpl";
 }  // namespace
 AscendGeExecutorPlugin::AscendGeExecutorPlugin() = default;
@@ -50,8 +51,13 @@ bool AscendGeExecutorPlugin::Register() {
   }
   auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kAscendGePluginSoName, &plugin_path_);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get real path of " << kAscendGePluginSoName << " failed.";
-    return false;
+    MS_LOG(INFO) << "Get real path of " << kAscendGePluginSoName << " failed, then Get real path of "
+                 << kAscendGePluginSoName;
+    ret = DLSoPath({"libmindspore-extendrt_python.so", "_c_lite"}, kAscendGePluginPySoName, &plugin_path_);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Get real path of " << kAscendGePluginPySoName << " failed.";
+      return false;
+    }
   }
   MS_LOG(INFO) << "Find tensorrt plugin so success, path = " << plugin_path_;
   void *function = nullptr;
