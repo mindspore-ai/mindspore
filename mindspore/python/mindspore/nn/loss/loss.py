@@ -1614,7 +1614,7 @@ class MultilabelMarginLoss(LossBase):
        >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
        >>> output = loss(x, target)
        >>> print(output)
-       Tensor(shape=[], dtype=Float32, value=0.325)
+       0.325
     """
 
     def __init__(self, reduction='mean'):
@@ -2107,7 +2107,6 @@ class NLLLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-
         >>> logits = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> labels = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
         >>> loss = nn.NLLLoss()
