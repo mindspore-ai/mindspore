@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
@@ -56,6 +57,13 @@ class FuncGraphUtils {
   static void GetFuncGraphOutputsInfo(const FuncGraphPtr &graph, std::vector<tensor::TensorPtr> *outputs,
                                       std::vector<std::string> *output_names);
   static Status UnifyGraphToNHWCFormat(const FuncGraphPtr &graph);
+
+  static std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
+
+  static AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
+                                  const mindspore::HashSet<AnfNodePtr> &seen);
+  static AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
+                                    mindspore::HashMap<AnfNodePtr, AnfNodePtr> *eqv_ptr);
 
  private:
   static ValuePtr GetNodeValuePtr(AnfNodePtr input_node);

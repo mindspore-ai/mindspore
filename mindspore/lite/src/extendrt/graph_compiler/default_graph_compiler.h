@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <vector>
-#include <tuple>
 
 #include "infer/graph_compiler.h"
 #include "infer/context.h"
@@ -55,12 +54,6 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
   Status GetDTAndShapeFromParameter(ParameterPtr parameter, TypeId *data_type, ShapeVector *shape_vector);
   Status GetDTAndShapeFromAbTensor(const abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
-
-  std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
-  AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
-                           const mindspore::HashSet<AnfNodePtr> &seen);
-  AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
-                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *eqv_ptr);
 
  private:
   mindspore::HashMap<AnfNodePtr, infer::abstract::Tensor *> anf_tensor_map_;
