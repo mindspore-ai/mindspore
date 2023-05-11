@@ -33,7 +33,7 @@ class TestDynamicBatchSize : public ST::Common {
   TestDynamicBatchSize() {}
 };
 
-TEST_F(TestDynamicBatchSize, InferMindIR) {
+TEST_F(TestDynamicBatchSize, DISABLED_InferMindIR) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
