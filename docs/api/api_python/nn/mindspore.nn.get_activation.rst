@@ -7,7 +7,7 @@ mindspore.nn.get_activation
 
     参数：
         - **name** (str) - 激活函数名称。
-        - **prim_name** (Union[str, None]) - 算子名称，默认：None。
+        - **prim_name** (Union[str, None]) - 算子名称，默认值：None。
 
     返回：
         激活函数。

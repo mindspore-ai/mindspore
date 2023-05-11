@@ -787,7 +787,7 @@ class Conv3dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
-        data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+        data_format (str): The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
