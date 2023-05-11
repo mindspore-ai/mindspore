@@ -90,8 +90,8 @@ __global__ void StandardLaplaceKernel(int seed, curandState *globalState, T *out
 }
 
 template <typename T>
-void StandardNormal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState, T *output, size_t count,
-                    cudaStream_t cuda_stream) {
+void StandardNormal(int seed, int seed2, int seed_offset, curandStatePhilox4_32_10_t *globalState, T *output,
+                    size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
   if (seed2 != 0) {
@@ -101,7 +101,7 @@ void StandardNormal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState
   } else {
     RNG_seed = static_cast<int>(rd());
   }
-  NormalKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, output, count);
+  NormalKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed + seed_offset, globalState, output, count);
   return;
 }
 
@@ -190,10 +190,12 @@ void StandardLaplace(int seed, int seed2, curandState *globalState, T *output, s
   return;
 }
 
-template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
-                                                    float *output, size_t count, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
-                                                  int *output, size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, int seed_offset,
+                                                    curandStatePhilox4_32_10_t *globalState, float *output,
+                                                    size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, int seed_offset,
+                                                  curandStatePhilox4_32_10_t *globalState, int *output, size_t count,
+                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT bool UniformInt<float>(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
                                                 float *input1, size_t input_size_1, float *input2, size_t input_size_2,
                                                 float *output, size_t count, cudaStream_t cuda_stream);

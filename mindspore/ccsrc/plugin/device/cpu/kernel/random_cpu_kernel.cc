@@ -57,9 +57,10 @@ void LaunchStandardNormal(RandomCpuKernelMod *content, unsigned int seed, const 
   std::normal_distribution<float> distribution;
   auto task = [&](size_t start, size_t end) {
     auto task_id = start / once_compute_size;
-    std::default_random_engine random_generator(seed + task_id);
+    std::default_random_engine random_generator(seed + task_id + content->seed_offset_);
     StandardNormal(output, distribution, random_generator, start, end);
   };
+  content->seed_offset_ += 1;
   ParallelLaunch(task, lens, kRandomBlockSize, content);
 }
 
