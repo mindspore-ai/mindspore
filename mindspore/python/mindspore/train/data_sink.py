@@ -40,7 +40,7 @@ def _init_sink_dataset(dataset, sink_size, input_signature, create_info):
     # create transfer_dataset
     is_info_queue = (create_info and sink_size == 1 and dataset_size != 1 and
                      input_signature is None and not dynamic_shape and
-                     context.get_context('device_target') == 'Ascend' and not context.get_context("enable_ge"))
+                     context.get_context('device_target') == 'Ascend')
     transfer_dataset = _exec_datagraph(dataset, sink_size, create_data_info_queue=is_info_queue)
     dataset.__transfer_dataset__ = transfer_dataset
 

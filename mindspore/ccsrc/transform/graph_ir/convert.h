@@ -100,8 +100,6 @@ class DfGraphConvertor {
     is_kernel_graph_ = anf_graph_->type_name() == kKernelGraphTypeName;
     df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
 
-    AddGraphDynamicInputs(anf_graph_->parameters());
-
     std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
     std::string graph_name = anf_graph_->ToString();
     MS_LOG(INFO) << "Create DfGraphConvertor with graph: " << graph_name << "(type: " << graph_type << ")"
@@ -159,7 +157,6 @@ class DfGraphConvertor {
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
-  void MakeDatasetHandler(const std::string &name, const size_t &input_idx, const AnfNodePtr &it);
   void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input);
   void DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it);
 
@@ -217,12 +214,10 @@ class DfGraphConvertor {
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
-  void AddGraphDynamicInputs(const AnfNodePtrList &params);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
-  void SetupDatasetIterGetNextNode();
 
   void ConvertWhileNode(const CNodePtr &node);
   void CacheWhileGraph(const CNodePtr &cnode);
@@ -264,6 +259,7 @@ class DfGraphConvertor {
   bool IsNoOpRedundant(const ::ge::GNode &node) const;
   void RemoveNoOp(::ge::GNode noop);
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
+  void BuildInitDataGraph(const std::string &name);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
@@ -288,9 +284,6 @@ class DfGraphConvertor {
   std::vector<OperatorPtr> broadcast_ops_;
   std::vector<AnfNodePtr> inputs_;
   ShapeArray input_shapes_;
-  OperatorPtr dataset_iter_getnext_;
-  OperatorPtr queue_data_;
-  OperatorPtr get_next_from_queue_;
   Status error_ = SUCCESS;
   bool training_ = false;
   bool distribute_ = false;

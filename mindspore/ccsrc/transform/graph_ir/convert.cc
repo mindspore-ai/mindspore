@@ -247,27 +247,6 @@ bool HasSubgraph(const std::shared_ptr<AnfGraph> &func_graph) {
   }
   return false;
 }
-
-#ifdef ENABLE_D
-std::string GetShapesRange(const ShapeArray &shapes) {
-  std::stringstream buffer;
-  for (auto shape_it = shapes.begin(); shape_it != shapes.end(); ++shape_it) {
-    if (shape_it != shapes.begin()) {
-      buffer << ",";
-    }
-    buffer << "[";
-    const auto &dims = *shape_it;
-    for (auto dim_it = dims.begin(); dim_it != dims.end(); ++dim_it) {
-      if (dim_it != dims.begin()) {
-        buffer << ",";
-      }
-      buffer << *dim_it;
-    }
-    buffer << "]";
-  }
-  return buffer.str();
-}
-#endif
 }  // namespace
 
 // ---------------implement of DfGraphConvertor-------------
@@ -431,26 +410,6 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 }
 
-void DfGraphConvertor::MakeDatasetHandler(const std::string &name, const size_t &input_idx, const AnfNodePtr &it) {
-  MS_LOG(INFO) << "The " << name << " is the " << input_idx << "(st/nd/th) input";
-  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-    auto getnext_idx = static_cast<int64_t>(input_idx);
-    DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
-    if (!param.input_indexes().empty() && input_idx <= param.input_indexes().size()) {
-      getnext_idx = param.input_indexes()[input_idx] - 1;  // input_idx start from 0.
-      MS_LOG(INFO) << "remap input_index:" << input_idx << " to getnext_index:" << getnext_idx << ".";
-    }
-    // use iterator_getnext op with output_name instead of data op in BuildGraph.
-    if (dataset_iter_getnext_ != nullptr) {
-      out_handle_cache_[it.get()] = OutHandler(dataset_iter_getnext_, "y" + std::to_string(getnext_idx));
-    }
-    // heterogeneous getnextfromqueue op with output_name instead of data op in BuildGraph.
-    if (get_next_from_queue_ != nullptr) {
-      out_handle_cache_[it.get()] = OutHandler(get_next_from_queue_, "y" + std::to_string(getnext_idx));
-    }
-  }
-}
-
 void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast,
                                       const std::vector<GeTensorDesc> &broadcast_desc,
                                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input) {
@@ -558,7 +517,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
 
 // convert all parameter need initialize to variable
 DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
-  size_t input_idx = 0;
   if (error_ != SUCCESS) {
     return *this;
   }
@@ -568,21 +526,10 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
     return *this;
   }
 
-  // Processing input with MakeDatasetHandler
-  for (auto &it : anf_graph_->parameters()) {
-    auto op_itor = op_cache_.find(it.get());  // converted node
-    if (it->isa<Parameter>()) {
-      const auto &param = std::static_pointer_cast<Parameter>(it);
-      string name = param->name();
-      auto tensor_itor = tensors.find(name);  // in init value map
-      if (tensor_itor == tensors.end()) {
-        if (op_itor != op_cache_.end()) {
-          MakeDatasetHandler(name, input_idx, it);
-        }
-        input_idx++;
-      }
-    }
+  if (tensors.size() == 0) {
+    return *this;
   }
+
   InitParamWithData(tensors);
   init_sout_ << "}" << endl;
   return *this;
@@ -767,106 +714,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     }
   }
 
-#ifdef ENABLE_D
-  // Create dataset iterator and iterator_getnext node
-  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-    DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
-    MS_LOG(INFO) << "Dataset param is " << param.ToString() << ".";
-    std::vector<enum ::ge::DataType> getnext_types;
-    const auto &origin_ge_types = param.ge_types();
-    (void)std::transform(
-      origin_ge_types.begin(), origin_ge_types.end(), std::back_inserter(getnext_types),
-      [](int64_t t_num) -> enum ::ge::DataType { return static_cast<enum ::ge::DataType>(t_num); });
-    if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-      // QueueData
-      auto queue_data = make_shared<::ge::op::QueueData>("queue_data");
-      (void)queue_data->set_attr_output_types(getnext_types);
-      (void)queue_data->set_attr_output_shapes(param.shapes());
-      (void)queue_data->set_attr_queue_name(param.queue_name());
-      (void)queue_data->set_attr_index(0);
-      queue_data_ = queue_data;
-
-      // get next from queue
-      auto get_next_from_queue = make_shared<::ge::op::GetNextFromQueue>("get_next_from_queue");
-      (void)get_next_from_queue->set_attr_output_types(getnext_types);
-      (void)get_next_from_queue->set_attr_output_shapes(param.shapes());
-      get_next_from_queue_ = get_next_from_queue;
-      get_next_from_queue_->SetInput("x", *queue_data_);
-    } else {
-      if (dynamic_shape_inputs_) {
-        // DynamicGetNextV2
-        MS_LOG(INFO) << "Make DynamicGetNextV2 op which shapes is " << input_shapes_;
-        auto iter_getnext_op = make_shared<::ge::op::DynamicGetNextV2>("dynamic_get_next_tmp");
-        (void)iter_getnext_op->set_attr_output_types(getnext_types);
-        (void)iter_getnext_op->set_attr_output_shapes(input_shapes_);
-        (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
-        (void)iter_getnext_op->set_attr__dynamic_graph_execute_mode("dynamic_execute");
-        (void)iter_getnext_op->set_attr__getnext_inputs_shape_range(GetShapesRange(input_shapes_));
-        const auto output_num = input_shapes_.size();
-        if (output_num != getnext_types.size()) {
-          MS_LOG(EXCEPTION) << "Number of inputs of GetNext is different from dataset, " << output_num << " vs "
-                            << getnext_types.size();
-        }
-        (void)iter_getnext_op->create_dynamic_output_y(static_cast<unsigned int>(output_num));
-        for (uint32_t i = 0; i < output_num; i++) {
-          ::ge::TensorDesc desc(GeShape(input_shapes_[i]), ::ge::FORMAT_NCHW, getnext_types[i]);
-          (void)iter_getnext_op->update_dynamic_output_desc_y(i, desc);
-        }
-        // save iter_getnext_op for later use
-        dataset_iter_getnext_ = iter_getnext_op;
-      } else {
-        // GetNext
-        auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
-        (void)iter_getnext_op->set_attr_output_types(getnext_types);
-        (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
-        (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
-        // save iter_getnext_op for later use
-        dataset_iter_getnext_ = iter_getnext_op;
-      }
-    }
-  }
-#endif
   // return the data flow graph
   return *this;
-}
-
-void DfGraphConvertor::SetupDatasetIterGetNextNode() {
-  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-    DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
-    size_t output_num = param.ge_types().size();
-    MS_LOG(INFO) << "Set iterator_getnext op's output num = " << output_num << ".";
-
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-      MS_EXCEPTION_IF_NULL(get_next_from_queue_);
-      // set iterator_getnext op's output num
-      MS_LOG(INFO) << "SetupDatasetQueueGetNextNode " << get_next_from_queue_->GetName();
-      shared_ptr<::ge::op::GetNextFromQueue> iter_getnext =
-        std::static_pointer_cast<::ge::op::GetNextFromQueue>(get_next_from_queue_);
-      (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
-      for (uint32_t i = 0; i < output_num; i++) {
-        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW,
-                              static_cast<enum ::ge::DataType>(param.ge_types()[i]));
-        // we don't SetRealDimCnt here since GE do not use this output's real-dim
-        (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
-      }
-    } else {
-      MS_EXCEPTION_IF_NULL(dataset_iter_getnext_);
-      // set iterator_getnext op's output num
-      shared_ptr<::ge::op::GetNext> iter_getnext = std::dynamic_pointer_cast<::ge::op::GetNext>(dataset_iter_getnext_);
-      if (iter_getnext == nullptr) {
-        return;
-      }
-      (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
-      for (uint32_t i = 0; i < output_num; i++) {
-        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
-        // we don't SetRealDimCnt here since GE do not use this output's real-dim
-        (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
-      }
-    }
-  }
-  return;
 }
 
 void DfGraphConvertor::CacheWhileGraph(const CNodePtr &cnode) {
@@ -1560,11 +1409,31 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
+    std::vector<PrimitivePtr> input_prims;
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-      inputs->push_back(*queue_data_);
+      input_prims = {prim::kPrimQueueData};
     } else {
-      inputs->push_back(*dataset_iter_getnext_);
+      input_prims = {prim::kPrimGetNext, prim::kPrimDynamicGetNextV2};
     }
+
+    OperatorPtr input;
+    auto nodes = GetOrderedCNodes(anf_graph_);
+    for (auto &it : nodes) {
+      if (std::any_of(input_prims.begin(), input_prims.end(),
+                      [&it](const PrimitivePtr &prim) { return IsPrimitiveCNode(it, prim); })) {
+        auto it_op = op_cache_.find(it.get());
+        if (it_op != op_cache_.end()) {
+          input = it_op->second;
+          break;
+        } else {
+          MS_LOG(EXCEPTION) << "Can not find the operator of node: " << it->fullname_with_scope();
+        }
+      }
+    }
+    if (input == nullptr) {
+      MS_LOG(EXCEPTION) << "Can not find the GetNext node in graph in sink_mode, please check.";
+    }
+    inputs->push_back(*input);
   } else {
     auto params = anf_graph_->parameters();
     int index = 0;
@@ -1601,9 +1470,39 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   }
 }
 
+void DfGraphConvertor::BuildInitDataGraph(const std::string &name) {
+  MS_LOG(INFO) << "Start BuildInitDataGraph.";
+
+  // If MS_CTX_ENABLE_GE_HETEROGENOUS is true, no need InitData graph
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    df_graph_ = nullptr;
+    return;
+  }
+
+  AnfNodePtr init_dataset_queue_node = nullptr;
+  auto nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    if (IsInitDataSetQueueNode(it)) {
+      init_dataset_queue_node = it;
+      break;
+    }
+  }
+  OperatorPtr init_data_op = Convert(init_dataset_queue_node);
+  if (error_ != SUCCESS) {
+    return;
+  }
+  std::vector<::ge::Operator> inputs{*init_data_op};
+  std::vector<::ge::Operator> outputs{*init_data_op};
+  df_graph_ = make_shared<DfGraph>(name);
+  (void)df_graph_->SetInputs(inputs);
+  (void)df_graph_->SetOutputs(outputs);
+  MS_LOG(INFO) << "End BuildInitDataGraph.";
+}
+
 DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_LOG(INFO) << "Start BuildGraph, graph: " << anf_graph_->ToString();
-  SetupDatasetIterGetNextNode();
 
   if (error_ != SUCCESS) {
     return *this;
@@ -1611,11 +1510,15 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
 
   GetCallNodeInputs(cur_while_node_);
   // branch node set input.
+  bool is_initdata_graph = false;
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     if (IsBranchNode(it)) {
       auto node = it->cast<CNodePtr>();
       GetBranchNodeInput(node);
+    }
+    if (IsInitDataSetQueueNode(it)) {
+      is_initdata_graph = true;
     }
   }
   auto manager = anf_graph_->manager();
@@ -1625,6 +1528,11 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
     new_manager->AddFuncGraph(anf_graph_);
     anf_graph_->set_manager(new_manager);
     manager = new_manager;
+  }
+
+  if (is_initdata_graph) {
+    BuildInitDataGraph(name);
+    return *this;
   }
   nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
@@ -2054,9 +1962,9 @@ void DfGraphConvertor::SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePt
   MS_EXCEPTION_IF_NULL(adpt);
   MS_EXCEPTION_IF_NULL(make_tuple_node);
   MS_LOG(DEBUG) << "Set MakeTuple input handle: " << make_tuple_node->fullname_with_scope();
-  // Skip MakeTuple make_tuple_node before Merge. Two branches(true/false) should not be merged before Merge, which will
-  // lead to assign stream error in GE.
-  // Skip MakeTuple node before switch_layer, switch_layer's inputs will be set in control flow process
+  // Skip MakeTuple make_tuple_node before Merge. Two branches(true/false) should not be merged before Merge, which
+  // will lead to assign stream error in GE. Skip MakeTuple node before switch_layer, switch_layer's inputs will be
+  // set in control flow process
   if (IsMergeOrSwitchLayerInput(make_tuple_node)) {
     MS_LOG(INFO) << "Skip make_tuple_node " << make_tuple_node->fullname_with_scope() << ", not set input handle.";
     return;
@@ -2232,43 +2140,6 @@ void DfGraphConvertor::SetNodeInput(const AnfNodePtr node) {
 
   // get Operator from op_cache_, use adapter to set Inputs
   DfGraphConvertor::SetOpInput(adpt, cnode);
-}
-
-void DfGraphConvertor::AddGraphDynamicInputs(const AnfNodePtrList &params) {
-  std::vector<std::pair<std::string, BaseShapePtr>> unsupported_inputs;
-  for (const auto &input : params) {
-    MS_EXCEPTION_IF_NULL(input);
-    const auto param = input->cast<ParameterPtr>();
-    if (param != nullptr && !param->has_default()) {
-      const auto &base_shape = param->Shape();
-      MS_EXCEPTION_IF_NULL(base_shape);
-      const auto &shape = base_shape->cast<abstract::ShapePtr>();
-      if (shape == nullptr) {
-        (void)unsupported_inputs.emplace_back(param->name(), base_shape);
-        continue;
-      }
-      const auto &sv = shape->shape();
-      dynamic_shape_inputs_ |= std::any_of(sv.cbegin(), sv.cend(), [](const auto e) { return e == -1; });
-      (void)input_shapes_.emplace_back(sv);
-    }
-  }
-  // failback to static inputs if inputs contains unsupported shapes
-  if (unsupported_inputs.size() > 0) {
-    dynamic_shape_inputs_ = false;
-    input_shapes_.clear();
-    std::ostringstream inputs_info;
-    inputs_info << "[";
-    for (size_t i = 0; i < unsupported_inputs.size(); ++i) {
-      if (i != 0) {
-        inputs_info << ", ";
-      }
-      const auto &p = unsupported_inputs[i];
-      inputs_info << "'" << p.first << "'"
-                  << ": " << p.second->ToString();
-    }
-    inputs_info << "]";
-    MS_LOG(INFO) << "Fallback to static inputs because following inputs shapes are unsupported: " << inputs_info.str();
-  }
 }
 
 std::string DfGraphConvertor::GetGNodeName(const ::ge::GNode &node) const {

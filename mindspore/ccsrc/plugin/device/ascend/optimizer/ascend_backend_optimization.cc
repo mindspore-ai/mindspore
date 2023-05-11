@@ -204,6 +204,7 @@
 #include "plugin/device/ascend/optimizer/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
+#include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
 
 namespace mindspore {
 namespace opt {
@@ -563,6 +564,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
+  opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

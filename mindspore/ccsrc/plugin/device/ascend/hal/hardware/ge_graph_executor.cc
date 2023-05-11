@@ -49,6 +49,10 @@ const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
 
+  if (cnode_data->isa<abstract::AbstractNone>()) {
+    return;
+  }
+
   if (cnode_data->isa<abstract::AbstractTensor>()) {
     TypeId me_type = cnode_data->BuildType()->type_id();
     if (me_type == kObjectTypeTensorType) {
@@ -319,7 +323,10 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
     transform::Status ret = transform::RunGraphAsync(graph_runner, run_options, ge_inputs, &ge_outputs);
     MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();
-    if (ret != transform::Status::SUCCESS) {
+    if (ret == transform::Status::NOT_FOUND) {
+      MS_LOG(WARNING) << "The Graph[" << graph_name << "] is not found, skip run it.";
+      return true;
+    } else if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
@@ -369,9 +376,6 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
 
-  ConfigManager::GetInstance().ResetConfig();
-  ConfigManager::GetInstance().ResetIterNum();
-
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
@@ -389,11 +393,6 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
     DumpIR("anf_graph.ir", anf_graph, true);
   }
 #endif
-  // if queue name is not empty, set datasink mode
-  string queue_name = ConfigManager::GetInstance().dataset_param().queue_name();
-  if (queue_name != "") {
-    ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  }
   (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
   if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
     MS_LOG(ERROR) << "GenConvertor failed";

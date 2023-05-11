@@ -50,6 +50,7 @@ from mindspore.common.api import _pynative_executor
 from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
+from mindspore._c_expression import _set_dataset_mode_config
 
 
 def _transfer_tensor_to_tuple(inputs):
@@ -639,6 +640,7 @@ class Model:
             initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
+        _set_dataset_mode_config('sink')
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size // sink_size != 0:
@@ -879,6 +881,7 @@ class Model:
             initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
+        _set_dataset_mode_config('normal')
         dataset_helper, _ = self._exec_preprocess(is_train=True,
                                                   dataset=train_dataset,
                                                   dataset_sink_mode=False,
@@ -1303,6 +1306,7 @@ class Model:
         Returns:
             Dict, which returns the loss value and metrics values for the model in the test mode.
         """
+        _set_dataset_mode_config('sink')
         run_context = RunContext(cb_params)
 
         dataset_helper, eval_network = self._exec_preprocess(is_train=False,
@@ -1349,6 +1353,7 @@ class Model:
         Returns:
             Dict, which returns the loss value and metrics values for the model in the test mode.
         """
+        _set_dataset_mode_config('normal')
         run_context = RunContext(cb_params)
         cb_params.dataset_sink_mode = False
         list_callback.on_eval_begin(run_context)

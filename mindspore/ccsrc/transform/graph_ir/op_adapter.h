@@ -424,12 +424,21 @@ class OpAdapter : public BaseOpAdapter {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(INFO) << "Value: " << value->type_name();
     std::vector<std::vector<int64_t>> list;
-    if (!value->isa<ValueTuple>()) {
-      MS_LOG(EXCEPTION) << "Value should be ValueTuple, but got " << value->type_name();
+
+    ValuePtrList valuelists;
+    if (value->isa<ValueTuple>()) {
+      auto vec = value->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(vec);
+      valuelists = vec->value();
+    } else if (value->isa<ValueList>()) {
+      auto vec = value->cast<ValueListPtr>();
+      MS_EXCEPTION_IF_NULL(vec);
+      valuelists = vec->value();
+    } else {
+      MS_LOG(EXCEPTION) << "Value should be ValueTuple or ValueList, but got " << value->type_name();
     }
-    auto vec = value->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(vec);
-    for (auto &it : vec->value()) {
+
+    for (auto &it : valuelists) {
       MS_EXCEPTION_IF_NULL(it);
       std::vector<int64_t> sublist;
       if (!it->isa<ValueTuple>()) {
@@ -557,6 +566,10 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static GeDataType ConvertAny(const ValuePtr &value, const AnyTraits<GEType> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::vector<GeDataType> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<GEType>> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 

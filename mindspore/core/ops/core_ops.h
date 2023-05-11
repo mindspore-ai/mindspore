@@ -37,6 +37,8 @@ constexpr auto kAdjustContrastv2 = "AdjustContrastv2";
 constexpr auto kAdjustSaturation = "AdjustSaturation";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kGetNext = "GetNext";
+constexpr auto kGetNextFromQueue = "GetNextFromQueue";
+constexpr auto kDynamicGetNextV2 = "DynamicGetNextV2";
 constexpr auto kGather = "Gather";
 constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
@@ -516,6 +518,8 @@ GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtract
 // Here list all primitives used in backend or some special primitives used by core.
 // GetNext
 GVAR_DEF(PrimitivePtr, kPrimGetNext, std::make_shared<Primitive>(kGetNext));
+GVAR_DEF(PrimitivePtr, kPrimGetNextFromQueue, std::make_shared<Primitive>(kGetNextFromQueue));
+GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynamicGetNextV2));
 
 // Arithmetic
 GVAR_DEF(PrimitivePtr, kPrimScalarAdd, std::make_shared<Primitive>(kScalarAdd));
@@ -1208,6 +1212,7 @@ GVAR_DEF(PrimitivePtr, kPrimFill, std::make_shared<Primitive>("Fill"));
 GVAR_DEF(PrimitivePtr, kPrimFusedPushWeight, std::make_shared<Primitive>("FusedPushWeight"));
 GVAR_DEF(PrimitivePtr, kPrimFusedPullWeight, std::make_shared<Primitive>("FusedPullWeight"));
 GVAR_DEF(PrimitivePtr, kPrimInitDataSetQueue, std::make_shared<Primitive>("InitDataSetQueue"));
+GVAR_DEF(PrimitivePtr, kPrimQueueData, std::make_shared<Primitive>("QueueData"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualAssignAdd, std::make_shared<Primitive>("_VirtualAssignAdd"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualAccuGrad, std::make_shared<Primitive>("_VirtualAccuGrad"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualPipelineEnd, std::make_shared<Primitive>("_VirtualPipelineEnd"));
