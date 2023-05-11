@@ -12,7 +12,6 @@ mindspore.SummaryLandscape
     参数：
         - **summary_dir** (str) - 该路径将被用来保存创建地形图所使用的数据。
 
-
     .. py:method:: clean_ckpt()
 
         清理checkpoint。
