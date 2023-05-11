@@ -207,13 +207,13 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
           input_formats->at(i) = kOpFormat_DEFAULT;
         } else {
           MS_LOG(EXCEPTION) << "Acl kernel input not support this format: " << input_format
-                            << ", kernel: " << node->fullname_with_scope() << ", input idx: " << i;
+                            << ", kernel: " << node->fullname_with_scope() << ", input idx: " << ge_idx;
         }
       }
     } else {
       if (!AclHelper::CheckDefaultSupportFormat(input_format)) {
         MS_LOG(EXCEPTION) << "Acl kernel input not support this format: " << input_format
-                          << ", kernel: " << node->fullname_with_scope() << ", input idx: " << i;
+                          << ", kernel: " << node->fullname_with_scope() << ", input idx: " << ge_idx;
       }
     }
     if (!special_info.reshape_type.empty()) {

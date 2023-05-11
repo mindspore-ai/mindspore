@@ -149,11 +149,14 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName).set_backend_op_name(kArgMinOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName)
+  .set_backend_op_name(kArgMinOpName)
+  .set_target_op_name(kArgMinDOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kAvgPoolGradOpName)
   .set_target_op_name(kAvgPoolGradDOpName)
-  .set_need_tbe_check_supported(true)
   .set_input_attr_info(0, "listInt");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kAvgPoolGradVmOpName)
