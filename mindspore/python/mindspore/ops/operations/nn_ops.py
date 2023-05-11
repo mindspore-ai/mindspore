@@ -2002,8 +2002,8 @@ class MaxPool3D(Primitive):
         TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
         TypeError: If `pad_mode` or `data_format` is not a string.
         ValueError: If numbers in `kernel_size` or `strides` are not positive.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `pad_mode` is 'same' or 'valid', 'ceil_mode' is not None.
+        ValueError: If `pad_mode` is not one of 'SAME', 'VALID' or 'PAD'.
+        ValueError: If `pad_mode` is 'SAME' or 'VALID', 'ceil_mode' is not None.
         ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not 'NCDHW'.
 
@@ -2012,7 +2012,7 @@ class MaxPool3D(Primitive):
 
     Examples:
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
-        >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="valid")
+        >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="VALID")
         >>> output = max_pool3d(x)
         >>> print(output)
         [[[[[10. 11.]]]
@@ -2595,7 +2595,7 @@ class MaxPool3DWithArgmax(Primitive):
 
     @prim_attr_register
     def __init__(self, ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False,
-                 data_format="NCDHW", argmax_type=mstype.int64):
+                 data_format='NCDHW', argmax_type=mstype.int64):
         """Initialize MaxPool3DWithArgmax."""
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'argmax'])
         validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
@@ -10633,7 +10633,7 @@ class MaxPoolWithArgmaxV2(Primitive):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+        strides (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: None, meaning that `strides = kernel_size`.
         pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
