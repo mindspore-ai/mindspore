@@ -78,7 +78,10 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, c
     """
     Create a new Tensor in Cell.construct() or function decorated by @jit.
 
-    The arguments are the same as class 'Tensor'. Also see: :class:`mindspore.common.Tensor`.
+    In graph mode, different from the Tensor class, MindSpore would create a new Tensor object at runtime dynamically,
+    based on the `dtype` argument.
+
+    The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
     """
     return Tensor(input_data, dtype, shape, init, internal, const_arg)  # @jit.typing: () -> tensor_type[{dtype}]
 
