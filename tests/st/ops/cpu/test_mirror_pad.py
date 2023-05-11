@@ -59,11 +59,11 @@ def test_mirror_pad():
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, input_, output_grad):
-        return self.grad(self.network)(input_, output_grad)
+    def construct(self, input_):
+        return self.grad(self.network)(input_)
 
 
 class Net(nn.Cell):
@@ -82,13 +82,13 @@ def test_mirror_pad_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]] # size -> 3*3
     test_arr_in = Tensor(test_arr_in, dtype=mindspore.float32)
-    dy = (np.ones((1, 1, 4, 5)) * 0.1).astype(np.float32)
     expected_dx = np.array([[[[0.2, 0.2, 0.1],
                               [0.4, 0.4, 0.2],
                               [0.2, 0.2, 0.1]]]])
     net = Grad(Net(((0, 0), (0, 0), (1, 0), (0, 2)), "REFLECT"))
-    dx = net(test_arr_in, Tensor(dy))
+    dx = net(test_arr_in)
     dx = dx[0].asnumpy()
+    dx = 0.1 * dx
     np.testing.assert_array_almost_equal(dx, expected_dx)
 
 
@@ -110,8 +110,7 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
     # backwards pass check
     grad_net = Grad(Net(pads, "REFLECT"))
-    dy_value = Tensor(np.ones(obtained_ms_res.shape), dtype=mindspore.int32)
-    dx_value_obtained = grad_net(test_arr_ms, dy_value)[0].asnumpy()
+    dx_value_obtained = grad_net(test_arr_ms)[0].asnumpy()
     dx_value_expected = np.array([[[[4, 6, 6, 6, 2],
                                     [6, 9, 9, 9, 3],
                                     [2, 3, 3, 3, 1]],
@@ -151,8 +150,7 @@ def test_mirror_pad_fwd_back_4d_int32_symm():
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
     # backwards pass check
     grad_net = Grad(Net(pads, "SYMMETRIC"))
-    dy_value = Tensor(np.ones(obtained_ms_res.shape), dtype=mindspore.int32)
-    dx_value_obtained = grad_net(test_arr_ms, dy_value)[0].asnumpy()
+    dx_value_obtained = grad_net(test_arr_ms)[0].asnumpy()
     dx_value_expected = np.array([[[[16, 24, 24, 16, 16],
                                     [16, 24, 24, 16, 16],
                                     [16, 24, 24, 16, 16]],
@@ -187,10 +185,8 @@ def test_mirror_pad_grad_dynamic_shape():
     test_arr_in_dyn = Tensor(shape=[1, 1, None, 3], dtype=mindspore.float32)
     test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
     test_arr_in = Tensor(test_arr_in, dtype=mindspore.float32)
-    dy_dyn = Tensor(shape=[1, None, None, 5], dtype=mindspore.float32)
-    dy = (np.ones((1, 1, 4, 5)) * 0.1).astype(np.float32)
     expected_shape = (1, 1, 3, 3)
     net = Grad(Net(((0, 0), (0, 0), (1, 0), (0, 2)), "REFLECT"))
-    net.set_inputs(test_arr_in_dyn, dy_dyn)
-    dx = net(test_arr_in, Tensor(dy))
+    net.set_inputs(test_arr_in_dyn)
+    dx = net(test_arr_in)
     assert dx[0].asnumpy().shape == expected_shape

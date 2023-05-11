@@ -77,7 +77,7 @@ class GradNetWrtX(nn.Cell):
     def __init__(self, net):
         super(GradNetWrtX, self).__init__()
         self.net = net
-        self.grad_op = ops.GradOperation(get_all=True, get_by_list=True, sens_param=True)
+        self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
         self.params = ParameterTuple(net.trainable_params())
 
     def construct(self, *inputs):
@@ -237,7 +237,7 @@ def test_dynamic_layernorm():
     batch_size = 16
     dynamic_range = range(20, 23)
     data_type = np.float32
-    input_shape = [(batch_size, None, last_dim), (batch_size, None, last_dim)]
+    input_shape = [(batch_size, None, last_dim)]
     net = LayerNormNet(last_dim)
     common_func(dynamic_range, input_shape, data_type, net)
 
@@ -255,7 +255,7 @@ def test_dynamic_conv2d():
     batch_size = 16
     dynamic_range = range(220, 224)
     data_type = np.float32
-    input_shape = [(batch_size, 3, None, 112), (batch_size, 10, 219, 109)]
+    input_shape = [(batch_size, 3, None, 112)]
     net = Conv2dNet()
     common_func(dynamic_range, input_shape, data_type, net)
 
@@ -273,14 +273,12 @@ def test_dynamic_dropout():
     batch_size = 16
     data_list = []
     for i in range(48, 50):
-        data_list.append((np.random.rand(batch_size, i, 256).astype(np.float32),
-                          np.random.rand(batch_size, i, 256).astype(np.float32)))
+        data_list.append((np.random.rand(batch_size, i, 256).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset = ds.GeneratorDataset(data_list, ["data1"])
     t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, 256])
-    t1 = Tensor(dtype=ms.float32, shape=[batch_size, None, 256])
     net = GradNetWrtX(DropoutNet())
-    net.set_inputs(t0, t1)
+    net.set_inputs(t0)
     net.set_train()
     gradients = dynamic_shape_sink_process(net, dataset)
     assert gradients[0][0].shape == (batch_size, 49, 256)
@@ -299,14 +297,12 @@ def test_dynamic_reducesum1():
     batch_size = 16
     data_list = []
     for i in range(48, 50):
-        data_list.append((np.random.rand(batch_size, i, i + 2).astype(np.float32),
-                          np.array(1).astype(np.float32)))
+        data_list.append((np.random.rand(batch_size, i, i + 2).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset = ds.GeneratorDataset(data_list, ["data1"])
     t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, None])
-    t1 = Tensor(dtype=ms.float32, shape=[], init=One())
     net = GradNetWrtX(ReduceSumNet())
-    net.set_inputs(t0, t1)
+    net.set_inputs(t0)
     gradients = dynamic_shape_sink_process(net, dataset)
     assert gradients[0][0].shape == (batch_size, 49, 51)
 
@@ -324,15 +320,13 @@ def test_dynamic_reducesum2():
     batch_size = 16
     data_list = []
     for i in range(48, 50):
-        data_list.append((np.random.rand(batch_size, i, i + 2).astype(np.float32),
-                          np.random.rand(batch_size, i + 2).astype(np.float32)))
+        data_list.append((np.random.rand(batch_size, i, i + 2).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset = ds.GeneratorDataset(data_list, ["data1"])
     net = GradNetWrtX(ReduceSumNet(1))
 
     t0 = Tensor(dtype=ms.float32, shape=[batch_size, None, None])
-    t1 = Tensor(dtype=ms.float32, shape=[batch_size, None])
-    net.set_inputs(t0, t1)
+    net.set_inputs(t0)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -352,16 +346,14 @@ def test_dynamic_add1():
     data_list = []
     for i in range(48, 50):
         data_list.append((np.random.rand(batch_size, i).astype(np.float32),
-                          np.array(1).astype(np.float32),
-                          np.random.rand(batch_size, i).astype(np.float32)))
+                          np.array(1).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2", "data3"])
+    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
     net = GradNetWrtX(AddNet())
 
     t0 = Tensor(dtype=ms.float32, shape=[batch_size, None])
     t1 = Tensor(dtype=ms.float32, shape=[], init=One())
-    t2 = Tensor(dtype=ms.float32, shape=[batch_size, None])
-    net.set_inputs(t0, t1, t2)
+    net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -382,16 +374,14 @@ def test_dynamic_add2():
     data_list = []
     for i in range(48, 50):
         data_list.append((np.random.rand(batch_size, 2, i).astype(np.float32),
-                          np.random.rand(2, i).astype(np.float32),
-                          np.random.rand(batch_size, 2, i).astype(np.float32)))
+                          np.random.rand(2, i).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2", "data3"])
+    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
     net = GradNetWrtX(AddNet())
 
     t0 = Tensor(dtype=ms.float32, shape=[batch_size, 2, None])
     t1 = Tensor(dtype=ms.float32, shape=[2, None])
-    t2 = Tensor(dtype=ms.float32, shape=[batch_size, 2, None])
-    net.set_inputs(t0, t1, t2)
+    net.set_inputs(t0, t1)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -410,14 +400,12 @@ def test_tensor_shape_value_infer():
     """
     data_list = []
     for i in range(42, 50):
-        data_list.append((np.random.rand(64, 16, 4, i).astype(np.float32),
-                          np.random.rand(64, 16, 4, i).astype(np.float32)))
+        data_list.append((np.random.rand(64, 16, 4, i).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset = ds.GeneratorDataset(data_list, ["data1"])
     net = ShapeTensorNet()
     input_0 = Tensor(shape=[64, 16, 4, None], dtype=ms.float32)
-    input_1 = Tensor(shape=[64, 16, 4, None], dtype=ms.float32)
-    net.set_inputs(input_0, input_1)
+    net.set_inputs(input_0)
     res = dynamic_shape_sink_process(net, dataset, True, 3)
     assert res == ((64, 16, -1), (32, 32, -1))
 
@@ -435,7 +423,7 @@ def test_dynamic_softmax():
     batch_size = 16
     dynamic_range = range(48, 50)
     data_type = np.float32
-    input_shape = [(batch_size, 2, None), (batch_size, 2, None)]
+    input_shape = [(batch_size, 2, None)]
     net = SoftmaxNet()
     common_func(dynamic_range, input_shape, data_type, net)
 
@@ -454,7 +442,7 @@ def test_dynamic_batchnorm():
     batch_size = 1
     dynamic_range = range(2, 64)
     data_type = np.float32
-    input_shape = [(batch_size, 256, None, 12), (batch_size, 256, None, 12)]
+    input_shape = [(batch_size, 256, None, 12)]
     net = BatchNormNet(256)
     common_func(dynamic_range, input_shape, data_type, net)
 
@@ -499,7 +487,7 @@ def test_dynamic_hswish(dtype):
     """
     batch_size = 16
     dynamic_range = range(48, 50)
-    input_shape = [(batch_size, 2, None), (batch_size, 2, None)]
+    input_shape = [(batch_size, 2, None)]
     net = HSwishNet()
     common_func(dynamic_range, input_shape, dtype, net)
 
@@ -539,15 +527,13 @@ def test_dynamic_reshape():
 
     data_list = []
     for i in range(48, 50):
-        data_list.append((np.random.rand(32, 16, 4, i).astype(np.float32),
-                          np.random.rand(32, 16, 4, i).astype(np.float32)))
+        data_list.append((np.random.rand(32, 16, 4, i).astype(np.float32)))
 
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset = ds.GeneratorDataset(data_list, ["data1"])
     net = ReshapeNet()
     net.add_flags_recursive(defer_inline=True)
     grad_net = GradNetWrtX(net)
     t0 = Tensor(dtype=ms.float32, shape=[32, 16, 4, None])
-    t1 = Tensor(dtype=ms.float32, shape=[32, 16, 4, None])
-    grad_net.set_inputs(t0, t1)
+    grad_net.set_inputs(t0)
     gradients = dynamic_shape_sink_process(grad_net, dataset)
     print(gradients)
