@@ -18,14 +18,14 @@
         在实例化Cell类时，如果入参flags不为空，会调用此方法。
 
         参数：
-            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。
+            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。
 
     .. py:method:: add_flags_recursive(**flags)
 
         如果Cell含有多个子Cell，此方法会递归得给所有子Cell添加自定义属性。
 
         参数：
-            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。
+            - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。
 
     .. py:method:: apply(fn)
 

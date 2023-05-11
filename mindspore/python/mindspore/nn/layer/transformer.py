@@ -472,7 +472,7 @@ class TransformerEncoder(Cell):
     Args:
         encoder_layer (Cell): An instance of the TransformerEncoderLayer() class.
         num_layers (int): The number of encoder-layers in the encoder.
-        norm (Cell, optional): The layer normalization module.
+        norm (Cell, optional): The layer normalization module. Default: None.
 
     Inputs:
         - **src** (Tensor): The sequence to the encoder.
@@ -527,7 +527,7 @@ class TransformerDecoder(Cell):
     Args:
         decoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerDecoderLayer` class.
         num_layers (int): The number of decoder-layers in the decoder.
-        norm (Cell, optional): The layer normalization module.
+        norm (Cell, optional): The layer normalization module. Default: ``None``.
 
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder.

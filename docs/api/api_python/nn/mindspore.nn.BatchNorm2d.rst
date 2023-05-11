@@ -28,11 +28,11 @@ mindspore.nn.BatchNorm2d
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - :math:`\beta` 参数的初始化方法。str的值引用自函数 `mindspore.common.initializer`，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'zeros'`` 。
         - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer`，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'zeros'`` 。
         - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `mindspore.common.initializer`，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
-        - **use_batch_statistics** (bool) - 
+        - **use_batch_statistics** (bool) -  默认值： ``None`` 。
 
           - 如果为 ``True`` ，则使用当前批处理数据的平均值和方差值，并跟踪运行平均值和运行方差。
           - 如果为 ``False`` ，则使用指定值的平均值和方差值，不跟踪统计值。
-          - 如果为 ``None`` ，则根据训练和验证模式自动设置 `use_batch_statistics` 为 ``True`` 或 ``False`` 。在训练时， `use_batch_statistics会` 设置为 ``True`` 。在验证时， `use_batch_statistics` 会自动设置为 ``False`` 。默认值： ``None`` 。
+          - 如果为 ``None`` ，则根据训练和验证模式自动设置 `use_batch_statistics` 为 ``True`` 或 ``False`` 。在训练时， `use_batch_statistics会` 设置为 ``True`` 。在验证时， `use_batch_statistics` 会自动设置为 ``False`` 。
         - **data_format** (str) - 数据格式可为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值：``'NCHW'`` 。
 
     输入：

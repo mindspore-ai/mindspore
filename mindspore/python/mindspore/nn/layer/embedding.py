@@ -66,7 +66,7 @@ class Embedding(Cell):
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
             is specified. Default: ``'normal'`` .
-        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mindspore.float32`` .
+        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mstype.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: ``None`` . The feature is inactivated.
     Inputs:
@@ -178,7 +178,7 @@ class EmbeddingLookup(Cell):
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
-            :class:`mindspore.nn.EmbeddingLookup`. Default: 'nn.EmbeddingLookup.BATCH_SLICE'.
+            :class:`mindspore.nn.EmbeddingLookup`. Default: ``'batch_slice'`` .
         manual_shapes (tuple): The accompaniment array in field slice mode. Default: ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: ``None`` .
@@ -496,7 +496,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
-            :class:`mindspore.nn.EmbeddingLookup`. Default: 'nn.EmbeddingLookup.BATCH_SLICE'.
+            :class:`mindspore.nn.EmbeddingLookup`. Default: ``'batch_slice'``.
         feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
             Default:  ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32

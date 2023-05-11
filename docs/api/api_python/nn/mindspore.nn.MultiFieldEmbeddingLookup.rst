@@ -18,7 +18,7 @@ mindspore.nn.MultiFieldEmbeddingLookup
         - **field_size** (int) - 最终输出的字段大小。
         - **param_init** (Union[Tensor, str, Initializer, numbers.Number]) - 嵌入Tensor的初始化方法。当指定字符串时，请参见 `Initializer` 类了解字符串的值。默认值： ``'normal'`` 。
         - **target** (str) - 指定执行操作的'target'。该值必须在[ ``'DEVICE'`` ,  ``'CPU'`` ]中。默认值： ``'CPU'`` 。
-        - **slice_mode** (str) - semi_auto_parallel或auto_parallel模式下的切片方式。该值必须通过 :class:`.nn.EmbeddingLookup` 获得。默认值： ``'nn.EmbeddingLookup.BATCH_SLICE'`` 。
+        - **slice_mode** (str) - semi_auto_parallel或auto_parallel模式下的切片方式。该值必须通过 :class:`.nn.EmbeddingLookup` 获得。默认值： ``'batch_slice'`` 。
         - **feature_num_list** (tuple) - 字段切片模式下的伴随数组（accompaniment array）。目前该参数的功能还未实现。默认值： ``None`` 。
         - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32或None。默认值： ``None`` 。
         - **sparse** (bool) - 使用稀疏模式。当'target'设置为'CPU'时，'sparse'必须为 ``true`` 。默认值： ``True`` 。

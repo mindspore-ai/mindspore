@@ -129,7 +129,7 @@ class Dropout(Cell):
             E.g. rate=0.9, dropping out 10% of input neurons. Default: ``0.5`` .
         p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
             E.g. rate=0.9, dropping out 90% of input neurons. Default: ``None`` .
-        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: ``mindspore.float32`` .
+        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
@@ -787,7 +787,7 @@ class Pad(Cell):
     Raises:
         TypeError: If `paddings` is not a tuple.
         ValueError: If length of `paddings` is more than 4 or its shape is not :math:`(N, 2)` .
-        ValueError: If `mode` is not one of 'CONSTANT', 'REFLECT', 'SYMMETRIC'.
+        ValueError: If `mode` is not one of ``"CONSTANT"``, ``"REFLECT"``, ``"SYMMETRIC"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

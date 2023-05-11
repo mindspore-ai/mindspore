@@ -20,7 +20,7 @@ mindspore.nn.MSELoss
         \end{cases}
 
     参数：
-        - **reduction** (str) - 应用于loss的reduction类型。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。默认值： ``"mean"`` 。
+        - **reduction** (str) - 应用于loss的reduction类型。取值为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。默认值： ``'mean'`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值，任意维度的Tensor。

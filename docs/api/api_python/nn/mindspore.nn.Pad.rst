@@ -1,7 +1,7 @@
 mindspore.nn.Pad
 =================
 
-.. py:class:: mindspore.nn.Pad(paddings, mode='CONSTANT')
+.. py:class:: mindspore.nn.Pad(paddings, mode="CONSTANT")
 
     根据 `paddings` 和 `mode` 对输入进行填充。
 
@@ -20,7 +20,7 @@ mindspore.nn.Pad
               # 输出的第二个维度是paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7。
               # 所以最终的输出shape为(5, 7)
 
-        - **mode** (str) - 指定填充模式。取值为"CONSTANT"，"REFLECT"，"SYMMETRIC"。默认值："CONSTANT"。
+        - **mode** (str) - 指定填充模式。取值为 ``"CONSTANT"`` ，``"REFLECT"`` ，``"SYMMETRIC"`` 。默认值：``"CONSTANT"`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor。
@@ -35,4 +35,4 @@ mindspore.nn.Pad
     异常：
         - **TypeError** - `paddings` 不是tuple。
         - **ValueError** - `paddings` 的长度超过4或其shape不是 :math:`(N, 2)` 。
-        - **ValueError** - `mode` 不是'CONSTANT'，'REFLECT'或'SYMMETRIC'。
+        - **ValueError** - `mode` 不是 ``'CONSTANT'`` ， ``'REFLECT'`` 或 ``'SYMMETRIC'`` 。

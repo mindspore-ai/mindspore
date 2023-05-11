@@ -1,7 +1,7 @@
 mindspore.nn.CosineEmbeddingLoss
 =================================
 
-.. py:class:: mindspore.nn.CosineEmbeddingLoss(margin=0.0, reduction='mean')
+.. py:class:: mindspore.nn.CosineEmbeddingLoss(margin=0.0, reduction="mean")
 
     余弦相似度损失函数，用于测量两个Tensor之间的相似性。
 
