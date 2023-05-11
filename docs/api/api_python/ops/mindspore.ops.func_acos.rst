@@ -6,7 +6,7 @@ mindspore.ops.acos
     逐元素计算输入Tensor的反余弦。
 
     .. math::
-        out_i = cos^{-1}(input_i)
+        out_i = \cos^{-1}(input_i)
 
     参数：
         - **input** (Tensor) - Tensor的shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。

@@ -7,7 +7,7 @@ mindspore.ops.logaddexp2
 
     .. math::
 
-        out_i = log_2(2^{input_i} + 2^{other_i})
+        out_i = \log_2(2^{input_i} + 2^{other_i})
 
     参数：
         - **input** (Tensor) - 输入Tensor，其数据类型必须是float。

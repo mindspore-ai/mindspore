@@ -9,7 +9,7 @@ mindspore.ops.polar
 
     .. math::
 
-        y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
+        y_{i} =  abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
 
     参数：
         - **abs** (Tensor) - 极径。Tensor的shape为 :math:`(N,*)` ，其中 :math:`N` 为输入Tensor的批量大小， :math:`*` 为任意数量的额外维度。其数据类型须为：float32、float64。

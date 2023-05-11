@@ -324,7 +324,7 @@ def addcdiv(input, tensor1, tensor2, value=1):
         input (Tensor): The tensor to be added.
         tensor1 (Tensor): The numerator tensor.
         tensor2 (Tensor): The denominator tensor.
-        value (Union[Tensor, Number]): The multiplier for tensor1/tensor2. Default: 1.
+        value (Union[Tensor, Number]): The multiplier for tensor1/tensor2. Default: ``1`` .
 
     Returns:
         Tensor, has the same shape and dtype as tensor1/tensor2.
@@ -362,7 +362,7 @@ def addcmul(input, tensor1, tensor2, value=1):
         input (Tensor): The tensor to be added.
         tensor1 (Tensor): The tensor to be multiplied.
         tensor2 (Tensor): The tensor to be multiplied.
-        value (Union[Tensor, Number]): The multiplier for tensor1*tensor2. Default: 1.
+        value (Union[Tensor, Number]): The multiplier for tensor1*tensor2. Default: ``1`` .
 
     Returns:
         Tensor, has the same shape and dtype as x1*x2.
@@ -847,7 +847,7 @@ def subtract(input, other, *, alpha=1):
         other (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
 
     Keyword Args:
-        alpha (Number): The multiplier for :math:`other`. Default: 1.
+        alpha (Number): The multiplier for :math:`other`. Default: ``1`` .
 
     Returns:
         Tensor, has the same shape and dtype as input tensors.
@@ -957,7 +957,8 @@ def div(input, other, *, rounding_mode=None):
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Keyword Args:
-        rounding_mode (str, optional): Type of rounding applied to the result. Three types are defined as,
+        rounding_mode (str, optional): Type of rounding applied to the result. Default: ``None`` .
+            Three types are defined as,
 
             - None: Default behavior, which is the same as true division in Python or `true_divide` in NumPy.
 
@@ -1298,11 +1299,11 @@ def expm1(input):
 
 
 def log(input):
-    """
+    r"""
     Returns the natural logarithm of a tensor element-wise.
 
     .. math::
-        y_i = log_e(x_i)
+        y_i = \log_e(x_i)
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -1831,7 +1832,7 @@ def sin(input):
 
     .. math::
 
-        out_i = sin(input_i)
+        out_i = \sin(input_i)
 
     Args:
         input (Tensor): The shape of tensor is
@@ -1892,7 +1893,7 @@ def cos(input):
     Computes cosine of input element-wise.
 
     .. math::
-        out_i = cos(x_i)
+        out_i = \cos(x_i)
 
     .. warning::
         Supported dtypes are float16 and float32, and using float64 may
@@ -1934,8 +1935,8 @@ def cosine_similarity(x1, x2, dim=1, eps=1e-08):
     Args:
         x1 (Tensor): The first input Tensor.
         x2 (Tensor): The second input Tensor.
-        dim (int, optional): Axis for calculating cosine similarity. Default: 1.
-        eps (float, optional): Minimal value to avoid division by zero. Default: 1e-08.
+        dim (int, optional): Axis for calculating cosine similarity. Default: ``1`` .
+        eps (float, optional): Minimal value to avoid division by zero. Default: ``1e-08`` .
 
     Returns:
         Tensor, cosine similarity between x1 and x2.
@@ -2023,14 +2024,14 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         correction (int, optional): The difference between sample size and sample degrees of freedom.
             Defaults to Bessel's correction, `correction = 1` which returns the unbiased estimate,
             even if both `fweights` and `aweights` are specified. `correction = 0`
-            will return the simple average. Default: 1.
+            will return the simple average. Default: ``1`` .
         fweights (Tensor, optional): Scalar or one-dimensional Tensor containing integer frequency weight, indicating
             the number of repetition of each observation vector. Its numel must equal the number of columns of `input`.
-            Ignored if `None`. Default: None.
+            Ignored if `None`. Default: ``None`` .
         aweights (Tensor, optional): A scalar or 1D Tensor containing float observation weights represents
             the importance of each observation vector. The higher the importance, the greater the corresponding value.
             Its numel must equal the number of columns of `input`. Must have floating point dtype. Ignored if `None`.
-            Default: None.
+            Default: ``None`` .
 
     Returns:
         Tensor, The covariance matrix Tensor of `input`.
@@ -2147,7 +2148,7 @@ def tan(input):
 
     .. math::
 
-        out_i = tan(input_i)
+        out_i = \tan(input_i)
 
     Args:
         input (Tensor): The input Tensor, valid for any dimensions.
@@ -2264,7 +2265,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
 
     .. math::
 
-        y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
+        y_{i} =  abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
 
     Args:
         abs (Tensor): Radial distance. The shape of tensor is
@@ -2275,6 +2276,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
 
     Returns:
         Tensor, has the same shape as `abs`.
+
         - If the inputs are float32, data type must be complex64.
         - If the inputs are float64, data type must be complex128.
 
@@ -2303,7 +2305,7 @@ def asin(input):
 
     .. math::
 
-        out_i = sin^{-1}(input_i)
+        out_i = \sin^{-1}(input_i)
 
     Args:
         input (Tensor): The shape of tensor is
@@ -2334,7 +2336,7 @@ def acos(input):
 
     .. math::
 
-        out_i = cos^{-1}(input_i)
+        out_i = \cos^{-1}(input_i)
 
     Args:
         input (Tensor): The shape of tensor is
@@ -2375,7 +2377,7 @@ def atan(input):
 
     .. math::
 
-        out_i = tan^{-1}(input_i)
+        out_i = \tan^{-1}(input_i)
 
     Args:
         input (Tensor): The shape of tensor is
@@ -2436,7 +2438,7 @@ def cosh(input):
 
     .. math::
 
-        out_i = cosh(input_i)
+        out_i = \cosh(input_i)
 
     Args:
         input (Tensor): The input tensor of hyperbolic cosine function, its data type
@@ -3755,7 +3757,7 @@ def logit(input, eps=None):
     Args:
         input (Tensor): The input tensor.
         eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
-            otherwise, the input `input` is not clamped. Default: None.
+            otherwise, the input `input` is not clamped. Default: ``None`` .
 
     Returns:
         Tensor, with the same shape and dtype as the `input`.
@@ -4903,12 +4905,12 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
 
 
 def logaddexp(input, other):
-    """
+    r"""
     Computes the logarithm of the sum of exponentiations of the inputs.
 
     .. math::
 
-        out_i = log(exp(input_i) + exp(other_i))
+        out_i = \log(exp(input_i) + \exp(other_i))
 
     Args:
         input (Tensor): Input Tensor. The dtype of `input` must be float.
@@ -4949,12 +4951,12 @@ def logaddexp(input, other):
 
 
 def logaddexp2(input, other):
-    """
+    r"""
     Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
 
     .. math::
 
-        out_i = log_2(2^{input_i} + 2^{other_i})
+        out_i = \log_2(2^{input_i} + 2^{other_i})
 
     Args:
         input (Tensor): Input tensor. The dtype of `input` must be float.
@@ -5637,9 +5639,9 @@ def addmv(x, mat, vec, *, beta=1, alpha=1):
 
     Keyword Args:
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
-            float or bool. Default: 1.
+            float or bool. Default: ``1`` .
         alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
-            be int or float or bool. Default: 1.
+            be int or float or bool. Default: ``1`` .
 
     Returns:
         Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
@@ -6620,19 +6622,19 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         x (Tensor): Input tensor.
             Full support for signed integers, partial support for floats and complex numbers
         n (int, optional): The number of times values are differenced. If zero,
-            the input is returned as-is. Currently only 1 is supported. Default: 1.
+            the input is returned as-is. Currently only 1 is supported. Default: ``1`` .
         axis (int, optional): The axis along which the difference is taken, default
-            is the last axis. Default: -1.
+            is the last axis. Default: ``-1`` .
         prepend (Tensor, optional): Values to prepend to `x` along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
             array along all other axis. Otherwise the dimension and shape must
-            match `x` except along `axis`. Default: None.
+            match `x` except along `axis`. Default: ``None`` .
         append (Tensor, optional): Values to append to `x` along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
             array along all other axis. Otherwise the dimension and shape must
-            match `x` except along `axis`. Default: None.
+            match `x` except along `axis`. Default: ``None`` .
 
     Returns:
         Tensor, the n-th differences of input. The shape of the output is the same as `x`
@@ -6694,11 +6696,11 @@ def tril_indices(row, col, offset=0, *, dtype=mstype.int64):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
+            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: ``mstype.int64`` .
 
     Returns:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type is specified by `dtype`.
@@ -6741,11 +6743,11 @@ def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
     Args:
         row (int): number of rows in the 2-D matrix.
         col (int): number of columns in the 2-D matrix.
-        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: `mindspore.int64`.
+            An optional data type of `mindspore.int32` and `mindspore.int64`. Default: ``mstype.int64``.
 
     Returns:
         - **y** (Tensor) - indices of the elements in upper triangular part of matrix. The type is specified by `dtype`.
@@ -7018,8 +7020,8 @@ def combinations(x, r=2, with_replacement=False):
 
     Args:
         x (Tensor): One-dimensional tensors.
-        r (int, optional): Number of elements to perform combination. Default: 2.
-        with_replacement (bool, optional): Allow duplication or not. Default: False.
+        r (int, optional): Number of elements to perform combination. Default: ``2`` .
+        with_replacement (bool, optional): Allow duplication or not. Default: ``False`` .
 
     Returns:
         Tensor, contains all possible combinations of elements sampled from input Tensor.
@@ -8861,7 +8863,7 @@ def log2(input):
     Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
 
     .. math::
-        y_i = log_2(input_i)
+        y_i = \log_2(input_i)
 
     .. warning::
         If the input value of operator log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -9040,8 +9042,8 @@ def xdivy(x, y):
         When `x` and `y` are both of datatype complex, they should be both complex64 or complex128 at the same time.
 
     Args:
-        x (Union[Tensor, Number, bool]):  Tensor of datatype number.Number或bool, or it can be a bool or number.
-        y (Union[Tensor, Number, bool]): Tensor of datatype number.Number或bool, or it can be a bool or number.
+        x (Union[Tensor, Number, bool]):  Tensor of datatype number.Number or bool, or it can be a bool or number.
+        y (Union[Tensor, Number, bool]): Tensor of datatype number.Number or bool, or it can be a bool or number.
             `x` and `y` can not be both bool at the same time.
 
     Returns:
@@ -9073,7 +9075,7 @@ def log10(input):
     Returns a new Tensor by taking the base 10 logarithm of the elements in the input Tensor.
 
     .. math::
-        y_i = log_{10}(input_i)
+        y_i = \log_{10}(input_i)
 
     .. warning::
         If the input value of operator log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -9456,7 +9458,7 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
             Data type must be either float16, float32 or float64.
         mode (string): The mode is used to specify the calculation method,
             now supporting 'iou' (intersection over union) or 'iof' (intersection over foreground) mode.
-            Default: 'iou'.
+            Default: ``'iou'`` .
 
     Returns:
         Tensor, the 'iou' values, tensor of shape :math:`(M, N)` , with the same data type as `anchor_boxes`.
@@ -9613,14 +9615,14 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
     Args:
         y (Tensor): Input tensor to integrate.
         x (Tensor, optional): The sample points corresponding to the `y` values. If `x` is None,
-            the sample points are assumed to be evenly spaced `dx` apart. Default: None.
+            the sample points are assumed to be evenly spaced `dx` apart. Default: ``None`` .
             If `x` is not None, after subtracting 1 from the axis specified by `dim`, the shape of `x`
             should be same as `y` or can broadcast to `y`.
 
     Keyword Args:
         dx (float, optional): The spacing between sample points when `x` is None. If `x` is specified,
-            `dx` does not take effect. Default: 1.0.
-        dim (int, optional): The dim along which to integrate. Default: -1.
+            `dx` does not take effect. Default: ``1.0`` .
+        dim (int, optional): The dim along which to integrate. Default: ``-1`` .
 
     Returns:
         Tensor of float, definite integral as approximated by trapezoidal rule.
@@ -10625,13 +10627,13 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
 
     Args:
         input (Tensor): Values to fill diagonal.
-        offset (int, optional): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. Default: 0.
+        offset (int, optional): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. Default: ``0`` .
 
             - If :math:`offset>0`, fill the diagonals that are `offset` units upward from the main diagonal.
             - If :math:`offset<0`, fill the diagonals that are `|offset|` units downward from the main diagonal.
 
-        dim1 (int, optional): The first dimension in `input` with respect to which to fill diagonal. Default: -2.
-        dim2 (int, optional): The second dimension in `input` with respect to which to fill diagonal. Default: -1.
+        dim1 (int, optional): The first dimension in `input` with respect to which to fill diagonal. Default: ``-2`` .
+        dim2 (int, optional): The second dimension in `input` with respect to which to fill diagonal. Default: ``-1`` .
 
     Returns:
         Tensor, has the same dtype as `input`, but the shape of output is one dimension higher than the `input`.

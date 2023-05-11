@@ -6,7 +6,7 @@ mindspore.ops.tan
     计算输入元素的正切值。
 
     .. math::
-        out_i = tan(input_i)
+        out_i = \tan(input_i)
 
     参数：
         - **input** (Tensor) - Tan的输入，任意维度的Tensor。

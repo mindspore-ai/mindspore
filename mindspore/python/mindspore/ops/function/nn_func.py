@@ -2040,17 +2040,17 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
         size (Union[int, tuple[int], list[int]], optional): The target size.
             If size is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
-            One and only one of size and scale_factor can be set to None. Default: None.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
         scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
             If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
-            One and only one of size and scale_factor can be set to None. Default: None.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
         mode (str): The sampling algorithm.
             One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
-            'area', 'nearest-exact'(3D and 4D). Default: "nearest".
+            'area', 'nearest-exact'(3D and 4D). Default: ``"nearest"`` .
         align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
-            Default: None.
+            Default: ``None`` .
 
             .. code-block::
 
@@ -2058,11 +2058,11 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
                 old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-            This is only valid for 'linear', 'bilinear', or 'bicubic' modes. Default: False.
+            This is only valid for 'linear', 'bilinear', or 'bicubic' modes. Default: ``False`` .
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
-            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: None.
+            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: ``None`` .
 
     .. note::
         The 'nearest-exact' mode is the same as the nearest-neighbor interpolation algorithm used in
@@ -2847,7 +2847,8 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`\text{padding_top}, \text{padding_bottom}`,
             :math:`\text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, "constant", "reflect" or "replicate". Default: 'constant'.
+        mode (str, optional): Pad filling mode, ``"constant"`` , ``"reflect"`` or ``"replicate"`` .
+            Default: ``'constant'`` .
 
             For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
@@ -2864,7 +2865,7 @@ def pad(input_x, padding, mode='constant', value=None):
 
         value (Union[int, float, None], optional): Valid only in "constant" mode.
             Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
-            Default: None.
+            Default: ``None`` .
 
     Returns:
         Tensor, the tensor after padding.
@@ -4071,16 +4072,16 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str): An optional string specifying the interpolation method. The optional values are
-            "bilinear", "nearest". Default: "bilinear". Note: `bicubic` is not supported yet. When
+            'bilinear', 'nearest'. Default: ``'bilinear'`` . Note: `bicubic` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
-            Default: 'bilinear'.
+            Default: ``'bilinear'`` .
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
-            "reflection". Default: 'zeros'.
+            "reflection". Default: ``'zeros'`` .
         align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
             the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
-            `False`.
+            ``False`` .
 
     Returns:
         Tensor, dtype is the same as `input` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
