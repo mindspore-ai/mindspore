@@ -12,6 +12,7 @@ Tensor
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.tensor
     mindspore.Tensor
     mindspore.COOTensor
     mindspore.CSRTensor
