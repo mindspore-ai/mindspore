@@ -61,6 +61,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.DynamicRNN
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Flatten
+    mindspore.ops.FractionalMaxPool3DWithFixedKsize
     mindspore.ops.GridSampler2D
     mindspore.ops.GridSampler3D
     mindspore.ops.LayerNorm
@@ -436,6 +437,7 @@ Tensor创建
     mindspore.ops.RandomGamma
     mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
+    mindspore.ops.RandpermV2
     mindspore.ops.StandardLaplace
     mindspore.ops.StandardNormal
     mindspore.ops.UniformInt
@@ -452,7 +454,6 @@ Array操作
     mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
-    mindspore.ops.BatchToSpaceNDV2
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle

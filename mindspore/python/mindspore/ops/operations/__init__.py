@@ -48,7 +48,8 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
                         FillDiagonal, Fills, ResizeNearestNeighborV2, RightShift, ScatterAddWithAxis,
                         ScatterNdMul, SegmentMean, SegmentProd, SegmentSum, SegmentMax, SegmentMin, Tril, Triu,
-                        UniqueConsecutive, UnravelIndex, FillV2, CountNonZero, TensorScatterElements)
+                        UniqueConsecutive, UnravelIndex, FillV2, CountNonZero, TensorScatterElements, IndexPut,
+                        MaskedScatter)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -87,7 +88,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
                        CumulativeLogsumexp, Gcd, Polygamma, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
                        Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin, Quantile, Sinc, Angle, Bernoulli,
-                       NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac)
+                       NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac, Ormqr)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -124,7 +125,8 @@ from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse, NonDeterministicInts,
-                         ParameterizedTruncatedNormal, RandomPoisson, MultinomialWithReplacement, RandomShuffle)
+                         ParameterizedTruncatedNormal, RandomPoisson, MultinomialWithReplacement, RandomShuffle,
+                         RandpermV2)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
@@ -675,7 +677,11 @@ __all__ = [
     "InplaceIndexAdd",
     "Igammac",
     "MaxUnpool3D",
-    "Pdist"
+    "Pdist",
+    "IndexPut",
+    "MaskedScatter",
+    "Ormqr",
+    "RandpermV2"
 ]
 
 __custom__ = [
