@@ -39,8 +39,8 @@
 
 namespace mindspore {
 namespace opt {
-static const std::unordered_set<schema::PrimitiveType> kNNACLToOpsInfer = {schema::PrimitiveType_Abs,
-                                                                           schema::PrimitiveType_Resize};
+static const std::unordered_set<schema::PrimitiveType> kNNACLToOpsInfer = {
+  schema::PrimitiveType_Abs, schema::PrimitiveType_Resize, schema::PrimitiveType_ReduceFusion};
 namespace {
 constexpr int kInputChannal = 3;
 constexpr size_t INITIAL_SIZE = 1024;
