@@ -15,7 +15,6 @@
 
 import numpy as np
 import pytest
-
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -31,7 +30,7 @@ class NetLeftShift(nn.Cell):
         return self.leftshift(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_leftshift_1d():
@@ -42,7 +41,7 @@ def test_leftshift_1d():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = (np.array([-1, -5, -3, -14, 64])).astype(np.int8)
-    y_np = (np.array([5, 0, 7, 11, 66])).astype(np.int8)
+    y_np = (np.array([5, 0, 7, 11, 1])).astype(np.int8)
     z_np = np.left_shift(x_np, y_np)
     print(z_np)
 
@@ -55,7 +54,7 @@ def test_leftshift_1d():
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_leftshift_2d():
@@ -66,7 +65,7 @@ def test_leftshift_2d():
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_np = (np.array([[-1, -5, -3], [-14, 64, 0]])).astype(np.int8)
-    y_np = (np.array([[5, 0, 7], [11, 66, 0]])).astype(np.int8)
+    y_np = (np.array([[5, 0, 7], [11, 1, 0]])).astype(np.int8)
     z_np = np.left_shift(x_np, y_np)
     print(z_np)
 
