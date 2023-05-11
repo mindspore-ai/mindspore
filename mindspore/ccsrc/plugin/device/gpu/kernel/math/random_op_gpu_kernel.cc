@@ -118,8 +118,9 @@ bool RandomOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
           curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
           "Failed to generate normal");
       } else {
-        StandardNormal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
+        StandardNormal(seed_, seed2_, seed_offset_, devStates, output_addr, outputs[0]->size / sizeof(T),
                        reinterpret_cast<cudaStream_t>(cuda_stream_));
+        seed_offset_ += 1;
       }
       break;
     }

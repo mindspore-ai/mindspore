@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void StandardNormal(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
+CUDA_LIB_EXPORT void StandardNormal(int seed, int seed2, int seed_offset, curandStatePhilox4_32_10_t *globalState,
                                     T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT bool UniformInt(int seed, int seed2, curandStatePhilox4_32_10_t *globalState,
