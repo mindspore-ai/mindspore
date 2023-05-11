@@ -23,19 +23,21 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int ExpFP32Coder::Prepare(CoderContext *context) {
-  exp_parameter_ = reinterpret_cast<ExpParameter *>(parameter_);
-  float log_ = (exp_parameter_->base_ == -1) ? 1 : logf(exp_parameter_->base_);
-  exp_parameter_->in_scale_ = exp_parameter_->scale_ * log_;
-  if (exp_parameter_->shift_ == 0) {
-    exp_parameter_->out_scale_ = 1;
+  ExpParameter *exp_param = reinterpret_cast<ExpParameter *>(parameter_);
+  exp_struct_.base_.param_ = parameter_;
+
+  float log_ = (exp_param->base_ == -1) ? 1 : logf(exp_param->base_);
+  exp_struct_.in_scale_ = exp_param->scale_ * log_;
+  if (exp_param->shift_ == 0) {
+    exp_struct_.out_scale_ = 1;
   } else {
     if (log_ == 1) {
-      exp_parameter_->out_scale_ = expf(exp_parameter_->shift_);
+      exp_struct_.out_scale_ = expf(exp_param->shift_);
     } else {
-      exp_parameter_->out_scale_ = powf(exp_parameter_->base_, exp_parameter_->shift_);
+      exp_struct_.out_scale_ = powf(exp_param->base_, exp_param->shift_);
     }
   }
-  exp_parameter_->element_num_ = input_tensor_->ElementsNum();
+  exp_struct_.element_num_ = input_tensor_->ElementsNum();
   return RET_OK;
 }
 
@@ -48,8 +50,8 @@ int ExpFP32Coder::DoCode(CoderContext *ctx) {
             "exp_fp32.c",
           });
   nnacl::NNaclFp32Serializer code;
-  code.CodeStruct("exp_parameter", *exp_parameter_);
-  code.CodeFunction("ExpFusionFp32", input_tensor_, output_tensor_, "(ExpParameter *)&exp_parameter", kDefaultTaskId);
+  code.CodeStruct("exp_struct", exp_struct_);
+  code.CodeFunction("ExpFusionFp32", input_tensor_, output_tensor_, "&exp_struct", kDefaultTaskId);
   ctx->AppendCode(code.str());
   return RET_OK;
 }

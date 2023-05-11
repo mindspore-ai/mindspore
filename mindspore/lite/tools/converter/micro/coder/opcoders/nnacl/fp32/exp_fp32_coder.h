@@ -33,7 +33,7 @@ class ExpFP32Coder final : public OperatorCoder {
   int DoCode(CoderContext *context) override;
 
  private:
-  ExpParameter *exp_parameter_{nullptr};
+  ExpStruct exp_struct_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H_

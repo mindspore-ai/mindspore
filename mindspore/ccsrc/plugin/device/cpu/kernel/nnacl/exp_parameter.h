@@ -23,11 +23,6 @@ typedef struct ExpParameter {
   float base_;
   float scale_;
   float shift_;
-
-  /* micro */
-  float in_scale_;
-  float out_scale_;
-  int element_num_;
 } ExpParameter;
 
 #endif  // MINDSPORE_NNACL_EXP_PARAMETER_H_

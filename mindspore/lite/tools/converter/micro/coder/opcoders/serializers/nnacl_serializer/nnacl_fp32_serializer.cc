@@ -141,9 +141,13 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceParame
                  nullptr, splice_parameter.output_dim_);
 }
 
-void NNaclFp32Serializer::CodeStruct(const std::string &name, const ExpParameter &exp_parameter) {
-  CodeBaseStruct("ExpParameter", name, exp_parameter.op_parameter_, exp_parameter.base_, exp_parameter.scale_,
-                 exp_parameter.shift_, exp_parameter.in_scale_, exp_parameter.out_scale_, exp_parameter.element_num_);
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ExpStruct &exp_struct) {
+  CodeBaseStruct("ExpParameter", "exp_param", reinterpret_cast<ExpParameter *>(exp_struct.base_.param_)->op_parameter_,
+                 reinterpret_cast<ExpParameter *>(exp_struct.base_.param_)->base_,
+                 reinterpret_cast<ExpParameter *>(exp_struct.base_.param_)->scale_,
+                 reinterpret_cast<ExpParameter *>(exp_struct.base_.param_)->shift_);
+  CodeBaseStruct("ExpStruct", name, "{}", exp_struct.in_scale_, exp_struct.out_scale_, exp_struct.element_num_);
+  code << "    " << name << ".base_.param_ = &exp_param;\n";
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter) {
