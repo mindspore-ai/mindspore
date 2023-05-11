@@ -89,50 +89,6 @@ DataType
     ``env_type``                    Used to store the gradient of the free variable of a function, where the key is the ``symbolic_key`` of the free variable's node and the value is the gradient.
     ============================   =================
 
-  * **Tree Topology**
-
-    The relationships of the above types are as follows:
-
-    .. code-block::
-
-
-        └─────── number
-            │   ├─── bool_
-            │   ├─── int_
-            │   │   ├─── int8, byte
-            │   │   ├─── int16, short
-            │   │   ├─── int32, intc
-            │   │   └─── int64, intp
-            │   ├─── uint
-            │   │   ├─── uint8, ubyte
-            │   │   ├─── uint16, ushort
-            │   │   ├─── uint32, uintc
-            │   │   └─── uint64, uintp
-            │   ├─── float_
-            │   │   ├─── float16
-            │   │   ├─── float32
-            │   │   └─── float64
-            │   └─── complex
-            │       ├─── complex64
-            │       └─── complex128
-            ├─── tensor
-            │   ├─── Array[Float32]
-            │   └─── ...
-            ├─── list_
-            │   ├─── List[Int32,Float32]
-            │   └─── ...
-            ├─── tuple_
-            │   ├─── Tuple[Int32,Float32]
-            │   └─── ...
-            ├─── function
-            │   ├─── Func
-            │   ├─── Func[(Int32, Float32), Int32]
-            │   └─── ...
-            ├─── type_type
-            ├─── type_none
-            ├─── symbolic_key
-            └─── env_type
-
 
 .. autosummary::
     :toctree: mindspore
