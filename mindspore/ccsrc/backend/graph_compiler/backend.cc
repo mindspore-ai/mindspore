@@ -570,39 +570,8 @@ TensorPtr CreateOutputTensorDynamic(const AnfNodePtr &output_node, size_t output
   }
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  const auto &shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
-
-  return CreateOutputTensorDynamicImpl(output_node, output_index, address, type_id, shape);
-}
-
-TensorPtr CreateOutputTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
-                                    const std::shared_ptr<device::DeviceAddress> &address,
-                                    const abstract::AbstractBasePtr &out_abstract, const size_t abstract_index) {
-  MS_EXCEPTION_IF_NULL(output_node);
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
-  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
-    return CreateOutputMapTensorDynamic(output_node, output_index, address);
-  }
-  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
-  // when infer type is not equal to device type.
-  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-
-  ShapeVector shape;
-  auto op_run_info_abstract = out_abstract;
-  if (out_abstract->isa<abstract::AbstractTuple>()) {
-    auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
-    if (abstract_index >= abstract_tuple->elements().size()) {
-      MS_LOG(EXCEPTION) << "abstract_tuple size is " << abstract_tuple->elements().size() << " ,but get index is"
-                        << abstract_index;
-    }
-    op_run_info_abstract = abstract_tuple->elements()[abstract_index];
-  }
-  auto output_shape_ptr = op_run_info_abstract->BuildShape();
-  MS_EXCEPTION_IF_NULL(output_shape_ptr);
-  auto shape_vector = output_shape_ptr->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_vector);
-  shape = shape_vector->shape();
+  auto type_id = address->type_id();
+  const auto &shape = address->host_shape();
 
   return CreateOutputTensorDynamicImpl(output_node, output_index, address, type_id, shape);
 }
@@ -1116,7 +1085,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
       op_compiler_info, op_run_info->base_op_run_info.abstract);
     // Create output tensor
-    UpdateOutputDynamic(op_compiler_info, outputs, device_address_list, op_run_info->base_op_run_info.abstract);
+    UpdateOutputDynamic(op_compiler_info, outputs, device_address_list);
     DispatchOpTaskDynamic(single_op_cache_hit, outputs, op_compiler_info, op_run_info, device_address_list);
     return;
   }
@@ -1139,7 +1108,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   }
 
   // Create output tensor
-  UpdateOutputDynamic(op_compiler_info, outputs, device_address_list, nullptr);
+  UpdateOutputDynamic(op_compiler_info, outputs, device_address_list);
   ClearInputDeviceAddressDynamic(graph, device_context);
   UpdateOutputAbstract(*outputs, op_run_info);
 }
@@ -1214,8 +1183,7 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
 }
 
 void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
-                                        const vector<device::DeviceAddressPtr> &device_address_list,
-                                        const abstract::AbstractBasePtr &out_abstract) const {
+                                        const vector<device::DeviceAddressPtr> &device_address_list) const {
   MS_LOG(DEBUG) << "UpdateOutputDynamic";
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   auto output_nodes = op_compiler_info->graph_output_nodes_;
@@ -1228,13 +1196,7 @@ void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_inf
     }
     auto output_address = device_address_list[i];
     MS_EXCEPTION_IF_NULL(output_address);
-    TensorPtr output_tensor;
-    if (out_abstract != nullptr) {
-      output_tensor =
-        CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address, out_abstract, i);
-    } else {
-      output_tensor = CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address);
-    }
+    TensorPtr output_tensor = CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address);
     MS_EXCEPTION_IF_NULL(output_tensor);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
     outputs->emplace_back(output_tensor);

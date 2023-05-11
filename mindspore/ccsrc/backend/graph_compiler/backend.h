@@ -128,8 +128,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
 
   void UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
-                           const vector<device::DeviceAddressPtr> &device_address_list,
-                           const abstract::AbstractBasePtr &out_abstract) const;
+                           const vector<device::DeviceAddressPtr> &device_address_list) const;
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 
