@@ -49,6 +49,135 @@ std::string TagForSendRecDepend(const AnfNodePtr &prior_node, const AnfNodePtr &
   return std::string(SEND_REC_DEPEND);
 }
 }  // namespace
+
+static bool IsFirstStage() {
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto stage_id = g_device_manager->stage_id();
+  return stage_id == 0;
+}
+
+bool IsLastStage() {
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto stage_num = g_device_manager->stage_num();
+  auto stage_id = g_device_manager->stage_id();
+  return ((stage_num - 1) == stage_id);
+}
+
+static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
+  std::queue<CNodePtr> que;
+  std::set<AnfNodePtr> visited;
+  que.push(cnode);
+  while (!que.empty()) {
+    auto front = que.front();
+    que.pop();
+    visited.insert(front);
+    for (size_t i = 1; i < front->inputs().size(); ++i) {
+      auto input = front->input(i);
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+      auto cinput = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cinput);
+      if (IsPrimitiveCNode(cinput, prim::kPrimReceive)) {
+        return cinput->GetPrimalAttr(MICRO);
+      }
+      if (visited.find(cinput) == visited.end()) {
+        que.push(cinput);
+      }
+    }
+  }
+  return nullptr;
+}
+
+static bool EnableShareCell() {
+  const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  return cell_reuse_env == "1" || cell_reuse_env == "2";
+}
+
+static AnfNodePtr GetCallBackwardEndNext(const AnfNodePtr &node) {
+  if (!node->has_user_data(CALL_BACKWARD_END_NEXT)) {
+    return node;
+  }
+  return node->user_data<AnfNode>(CALL_BACKWARD_END_NEXT);
+}
+
+static bool IsValidNode(const AnfNodePtr &node, const AnfNodePtr &return_node, const NodeUsersMap &node_user_map) {
+  if (node == return_node) {
+    return true;
+  }
+  auto iter = node_user_map.find(node);
+  if (iter == node_user_map.end()) {
+    return false;
+  }
+  const auto &users = (*iter).second;
+  return std::any_of(users.begin(), users.end(),
+                     [&return_node, &node_user_map](const std::pair<AnfNodePtr, int> &user) {
+                       return IsValidNode(user.first, return_node, node_user_map);
+                     });
+}
+
+static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
+  auto share_cell = EnableShareCell();
+  if (!share_cell) {
+    return;
+  }
+  if (!IsFirstStage()) {
+    return;
+  }
+  FuncGraphPtr grad_main_graph;
+  auto nodes = DeepScopedGraphSearch(root->get_return());
+  for (auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode->HasPrimalAttr(PARAMETER_START_SHARE_CELL) && cnode->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
+      grad_main_graph = cnode->func_graph();
+      break;
+    }
+  }
+  const auto &manager = root->manager();
+  auto node_user_map = manager->node_users();
+  auto all_nodes = root->GetOrderedCnodes();
+  for (auto &node : all_nodes) {
+    // if cnode is a call_backward node
+    if (!IsPrimitiveCNode(node->input(0), prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    const auto &abs = node->input(0)->abstract();
+    if (abs == nullptr || !abs->isa<abstract::AbstractFunction>()) {
+      continue;
+    }
+    const auto &abs_func = abs->cast<abstract::AbstractFunctionPtr>();
+    if (abs_func->isa<abstract::FuncGraphAbstractClosure>()) {
+      const auto &abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+      auto fg = abs_func_graph->func_graph();
+      if (fg != nullptr && fg == grad_main_graph) {
+        auto micro = GetReceiveMicro(node);
+        MS_EXCEPTION_IF_NULL(micro);
+        auto node_abs = node->abstract();
+        if (node_abs->isa<abstract::AbstractTuple>()) {
+          CNodePtr next = nullptr;
+          const auto &users = node_user_map[node];
+          for (const auto &user : users) {
+            const auto &cuser = user.first->cast<CNodePtr>();
+            MS_EXCEPTION_IF_NULL(cuser);
+            if (IsPrimitiveCNode(cuser, prim::kPrimTupleGetItem) &&
+                IsValidNode(cuser, root->get_return(), node_user_map)) {
+              next = cuser;
+              break;
+            }
+          }
+          node->set_user_data<AnfNode>(CALL_BACKWARD_END_NEXT, next);
+        }
+        node->AddPrimalAttr(MICRO, micro);
+        node->AddPrimalAttr(PARAMETER_START, micro);
+      }
+    }
+  }
+  return;
+}
+
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode) {
   auto pre_node = cnode->input(1);
   size_t depth = 0;
@@ -69,13 +198,6 @@ AnfNodePtr FindAccuGrad(const CNodePtr &cnode) {
     }
   }
   return nullptr;
-}
-
-bool IsLastStage() {
-  MS_EXCEPTION_IF_NULL(g_device_manager);
-  auto stage_num = g_device_manager->stage_num();
-  auto stage_id = g_device_manager->stage_id();
-  return ((stage_num - 1) == stage_id);
 }
 
 void SetStridedSliceStrategy(const AnfNodePtr &node) {
@@ -360,6 +482,9 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
     }
     auto prim1 = GetCNodePrimitive(cnode1);
     auto prim2 = GetCNodePrimitive(cnode2);
+    if (EnableShareCell() && prim1 == nullptr && prim2 == nullptr) {
+      return false;
+    }
     MS_EXCEPTION_IF_NULL(prim1);
     MS_EXCEPTION_IF_NULL(prim2);
     auto rank_tag1 = prim1->GetAttr(SRC_RANK);
@@ -432,6 +557,7 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
     auto post_node1 = backward_start_pair.first[LongToSize(SizeToLong(i) - stage_num + stage_id + 1)];
     InsertDepend(prior_node1, post_node1, manager, root, TagForSendRecDepend(prior_node1, post_node1));
     auto prior_node2 = backward_end_pair.second[LongToSize(SizeToLong(i) - stage_num + stage_id)];
+    prior_node2 = GetCallBackwardEndNext(prior_node2);
     auto post_node2 = forward_start_pair.first[i];
     InsertDepend(prior_node2, post_node2, manager, root, TagForSendRecDepend(prior_node2, post_node2));
   }
@@ -448,6 +574,7 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
   for (size_t j = LongToSize(SizeToLong(backward_start_pair.first.size()) - stage_num + stage_id + 1);
        j < backward_start_pair.first.size(); ++j) {
     auto prior_node5 = backward_end_pair.second[j - 1];
+    prior_node5 = GetCallBackwardEndNext(prior_node5);
     auto post_node5 = backward_start_pair.first[j];
     InsertDepend(prior_node5, post_node5, manager, root, TagForSendRecDepend(prior_node5, post_node5));
   }
@@ -470,6 +597,7 @@ void ReorderForParams(const PipelinePair &backward_params_pair, const PipelinePa
   }
   if (!backward_params_pair.first.empty()) {
     auto prior_node2 = backward_end_pair.second.back();
+    prior_node2 = GetCallBackwardEndNext(prior_node2);
     auto post_node2 = backward_params_pair.first.front();
     InsertDepend(prior_node2, post_node2, manager, root);
   }
@@ -509,6 +637,7 @@ PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncG
     std::sort(temp_vec.begin(), temp_vec.end(), CompFunc);
     for (size_t j = 0; j < temp_vec.size() - 1; ++j) {
       auto prior_node = temp_vec[j];
+      prior_node = GetCallBackwardEndNext(prior_node);
       auto post_node = temp_vec[j + 1];
       InsertDepend(prior_node, post_node, manager, root);
     }
@@ -643,8 +772,13 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     }
     auto cnode = node->cast<CNodePtr>();
     auto prim = GetCNodePrimitive(node);
+    if (prim && prim->HasAttr(PARAMETER_START_SHARE_CELL)) {
+      cnode->AddPrimalAttr(PARAMETER_START_SHARE_CELL, prim->GetAttr(PARAMETER_START_SHARE_CELL));
+      continue;
+    }
     if (prim && prim->HasAttr(PARAMETER_START)) {
       auto micro = Micro(cnode, &node_users_map, 0);
+      MS_EXCEPTION_IF_NULL(micro);
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
     }
@@ -691,6 +825,10 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
     }
     auto prim = GetCNodePrimitive(node);
     auto cnode = node->cast<CNodePtr>();
+    auto share_cell = EnableShareCell();
+    if (share_cell && cnode->HasPrimalAttr(PARAMETER_START)) {
+      backward_end->push_back(node);
+    }
     if (cnode->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
       auto forward_node_name = cnode->GetPrimalAttr(kPrimalAttrForwardNodeName);
       if (std::find(name_list.begin(), name_list.end(), forward_node_name) != name_list.end()) {
@@ -703,7 +841,7 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
       if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
         backward_end->push_back(node);
       }
-      if (cnode->HasPrimalAttr(PARAMETER_START)) {
+      if (!share_cell && cnode->HasPrimalAttr(PARAMETER_START)) {
         backward_end->push_back(node);
       }
       if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
@@ -766,6 +904,7 @@ void Reorder(const FuncGraphPtr &root) {
   std::vector<AnfNodePtr> backward_end;
   std::vector<AnfNodePtr> backward_params;
   std::vector<AnfNodePtr> allreduce_params;
+  SetParameterStartForCellShare(root);
   GetBorderNode(&forward_start, &forward_end, &backward_start, &backward_end, &forward_params, &backward_params,
                 &allreduce_params, root);
   int64_t micro_max = 0;
