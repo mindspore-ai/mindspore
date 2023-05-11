@@ -449,11 +449,11 @@ void SetAdapterTensorAttr(const py::object &obj) {
 }
 
 ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
+  SetAdapterTensorAttr(obj);
   ValuePtr converted_ret;
   if (stub) {
     converted_ret = parse::data_converter::PyDataToStubNode(obj);
   } else {
-    SetAdapterTensorAttr(obj);
     converted_ret = parse::data_converter::PyDataToValue(obj);
   }
   if (converted_ret == nullptr) {

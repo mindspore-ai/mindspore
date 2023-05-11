@@ -25,6 +25,7 @@
 #include "ir/param_info.h"
 #include "ir/value.h"
 #include "ir/map_tensor.h"
+#include "ir/adapter_tensor.h"
 #include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
@@ -150,6 +151,12 @@ ValuePtr GetParameterValue(const py::object &param_obj) {
     MS_EXCEPTION_IF_NULL(param_info);
     map_tensor->set_param_info(param_info);
     return map_tensor;
+  }
+  if (py::hasattr(param_obj, PYTHON_ADAPTER_TENSOR)) {
+    bool is_adapter_param = py::getattr(param_obj, PYTHON_ADAPTER_TENSOR).cast<bool>();
+    if (is_adapter_param) {
+      return std::make_shared<tensor::AdapterTensor>(py::cast<tensor::TensorPtr>(param_obj));
+    }
   }
   return py::cast<tensor::MetaTensorPtr>(param_obj);
 }

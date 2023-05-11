@@ -73,7 +73,9 @@ class ConvertTensorEliminate : public AnfVisitor {
     auto abs = node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto abs_tensor = dyn_cast<abstract::AbstractTensor>(abs);
-    MS_EXCEPTION_IF_NULL(abs_tensor);
+    if (abs_tensor == nullptr) {
+      MS_LOG(EXCEPTION) << "Expect tensor type, but got " << abs->ToString();
+    }
     return abs_tensor->is_adapter();
   }
 };
