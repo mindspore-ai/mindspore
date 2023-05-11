@@ -40,7 +40,7 @@ mindspore.ops.MaxUnpool3D
             同时 `output_shape` 必须属于 :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]` 范围。
         
-        - **data_format** (str，可选) - 可选的数据格式。当前支持 `NCDHW` 和 `NDHWC` 。默认值： ``NCDHW`` 。
+        - **data_format** (str，可选) - 可选的数据格式。当前支持 ``'NCDHW'`` 和 ``'NDHWC'`` 。默认值： ``'NCDHW'`` 。
 
     输入：
         - **x** (Tensor) - 求逆的输入Tensor。其shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(N, D_{in}, H_{in}, W_{in}, C)` 。

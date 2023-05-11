@@ -8,7 +8,7 @@ mindspore.ops.Range
     更多参考详见 :func:`mindspore.ops.range`。
 
     参数：
-        - **maxlen** (int，可选) - 该算子将会被分配能够存储 `maxlen` 个数据的内存。 该参数是可选的，必须为正数，且默认值为 ``1000000`` 。 如果输出的数量超过 `maxlen` ，将会引起运行时错误。
+        - **maxlen** (int，可选) - 该算子将会被分配能够存储 `maxlen` 个数据的内存。 该参数是可选的，必须为正数，默认值： ``1000000`` 。 如果输出的数量超过 `maxlen` ，将会引起运行时错误。
 
     输入：
         - **start** (Tensor) - 标量Tensor，序列中的第一个数字。数据类型必须为int32，int64，float32或者float64。

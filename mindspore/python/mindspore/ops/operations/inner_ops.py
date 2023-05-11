@@ -61,7 +61,7 @@ class Randperm(Primitive):
     Args:
         max_length (int): Number of items expected to get and the number must be greater than 0. Default: ``1`` .
         pad (int): The pad value to be filled. Default: ``-1`` .
-        dtype (mindspore.dtype): The type of output. Default: ``mindspore.int32`` .
+        dtype (mindspore.dtype): The type of output. Default: ``mstype.int32`` .
 
     Inputs:
         - **n** (Tensor) - The input tensor with shape :math:`(1,)` with and dtype int32 or int64.

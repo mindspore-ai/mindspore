@@ -9,7 +9,7 @@ mindspore.ops.GridSampler2D
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为： ``"bilinear"`` 、 ``"nearest"`` ，默认值：``"bilinear"`` 。
+        - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为： ``"bilinear"`` 、 ``"nearest"`` ，默认值： ``"bilinear"`` 。
         - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``"zeros"`` 、 ``"border"`` 或者 ``"reflection"`` ，默认值：``"zeros"`` 。
           当采样grid超出输入Tensor的边界时，各种填充模式效果如下：
 

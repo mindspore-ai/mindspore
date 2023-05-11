@@ -380,7 +380,7 @@ class HookBackward(PrimitiveWithInfer):
         hook_fn (Function): Python function. hook function.
         cell_id (str, optional): Used to identify whether the function registered by the hook is actually registered on
                        the specified cell object. For example, 'nn.Conv2d' is a cell object.
-                       The default value of `cell_id` is empty string(""), in this case, the system will automatically
+                       Default: "", in this case, the system will automatically
                        register a value of `cell_id`.
                        The value of `cell_id` currently does not support custom values.
 

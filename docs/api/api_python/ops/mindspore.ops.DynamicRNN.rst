@@ -25,17 +25,17 @@ mindspore.ops.DynamicRNN
     例如， :math:`W_{ix}, b_{ix}` 是把 :math:`x` 转换为 :math:`i` 的权重和偏置。
 
     参数：
-        - **cell_type** (str) - 指定Cell类型。当前仅支持 ``LSTM`` 。默认值： ``LSTM`` 。
-        - **direction** (str) - 指定单向或双向。默认值： ``UNIDIRECTIONAL`` 。当前仅支持 ``UNIDIRECTIONAL`` 。
-        - **cell_depth** (int) - 指定cell的层数。默认值： ``1`` 。
-        - **use_peephole** (bool) - 是否使用"peephole connections"。默认值： ``False`` 。
-        - **keep_prob** (float) - 指定保留率，即每个元素被保留的概率。 ``1.0`` 表示所有元素全部保留。默认值： ``1.0`` 。
-        - **cell_clip** (float) - 将Cell裁剪到指定的值，负值表示禁用。默认值： ``-1.0`` 。
-        - **num_proj** (int) - 投影矩阵的输出维数。默认值： ``0`` 。
-        - **time_major** (bool) - 指定输入 `x` 的数据排列格式。如果为 ``True`` ，格式为 :math:`(num\_step, batch\_size, input\_size)`，如果为 ``False`` ，格式为：:math:`(batch\_size, num\_step, input\_size)` 。默认值： ``True`` 。当前仅支持 ``True`` 。
-        - **activation** (str) - 指定激活函数。默认值： ``"tanh"`` 。当前仅支持 ``"tanh"`` 。
-        - **forget_bias** (float) - 指定遗忘门的偏置。默认值： ``0.0`` 。
-        - **is_training** (bool) - 指定是否开启训练。默认值： ``True`` 。
+        - **cell_type** (str，可选) - 指定Cell类型。当前仅支持 ``'LSTM'`` 。默认值： ``'LSTM'`` 。
+        - **direction** (str，可选) - 指定单向或双向。默认值： ``'UNIDIRECTIONAL'`` 。当前仅支持 ``'UNIDIRECTIONAL'`` 。
+        - **cell_depth** (int，可选) - 指定cell的层数。默认值： ``1`` 。
+        - **use_peephole** (bool，可选) - 是否使用"peephole connections"。默认值： ``False`` 。
+        - **keep_prob** (float，可选) - 指定保留率，即每个元素被保留的概率。 ``1.0`` 表示所有元素全部保留。默认值： ``1.0`` 。
+        - **cell_clip** (float，可选) - 将Cell裁剪到指定的值，负值表示禁用。默认值： ``-1.0`` 。
+        - **num_proj** (int，可选) - 投影矩阵的输出维数。默认值： ``0`` 。
+        - **time_major** (bool，可选) - 指定输入 `x` 的数据排列格式。如果为 ``True`` ，格式为 :math:`(num\_step, batch\_size, input\_size)`，如果为 ``False`` ，格式为：:math:`(batch\_size, num\_step, input\_size)` 。默认值： ``True`` 。当前仅支持 ``True`` 。
+        - **activation** (str，可选) - 指定激活函数。默认值： ``'tanh'`` 。当前仅支持 ``'tanh'`` 。
+        - **forget_bias** (floa，可选t) - 指定遗忘门的偏置。默认值： ``0.0`` 。
+        - **is_training** (bool，可选) - 指定是否开启训练。默认值： ``True`` 。
 
     输入：
         - **x** (Tensor) - 输入的词汇。shape为 :math:`(num\_step, batch\_size, input\_size)` 的Tensor。数据类型必须为float16。

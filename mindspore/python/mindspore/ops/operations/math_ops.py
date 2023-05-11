@@ -2889,7 +2889,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Args:
         nbins (int): The number of histogram bins, the type is a positive integer.
-        dtype (str, optional): An optional attribute. The dtype must be str. Default: ``"int32"`` .
+        dtype (str, optional): An optional attribute. The dtype must be str. Default: ``'int32'`` .
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
@@ -7476,7 +7476,7 @@ class Median(Primitive):
 
     Args:
         global_median (bool, optional): Whether the output tensor is the median of all
-            input tensor elements or not. Default: ``Fasle`` .
+            input tensor elements or not. Default: ``False`` .
         axis (int, optional): The specified dimension to compute median. Default: ``0`` .
         keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not.
             Default: ``False`` .

@@ -1966,19 +1966,19 @@ class MaxPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the depth, height of movement but also the width of movement,, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value of pad mode is ``"same"`` , ``"valid"`` or ``"pad"`` .
-            Default: ``"valid"`` .
+        pad_mode (str): The optional value of pad mode is ``"SAME"`` , ``"VALID"`` or ``"PAD"`` .
+            Default: ``"VALID"`` .
 
-            - ``"same"``: Adopts the way of completion. The height and width of the output will be the same
+            - ``"SAME"``: Adopts the way of completion. The height and width of the output will be the same
               as the input. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top, bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output
+            - ``"VALID"``: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
-            - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of
-              ``"pad"`` will be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
+            - ``"PAD"``: Implicit paddings on both sides of the input in depth, height and width. The number of
+              ``"PAD"`` will be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
 
         pad_list (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the
             paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
@@ -2002,8 +2002,8 @@ class MaxPool3D(Primitive):
         TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
         TypeError: If `pad_mode` or `data_format` is not a string.
         ValueError: If numbers in `kernel_size` or `strides` are not positive.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `pad_mode` is 'same' or 'valid', 'ceil_mode' is not None.
+        ValueError: If `pad_mode` is not one of 'SAME', 'VALID' or 'PAD'.
+        ValueError: If `pad_mode` is 'SAME' or 'VALID', 'ceil_mode' is not None.
         ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not 'NCDHW'.
 
@@ -2012,7 +2012,7 @@ class MaxPool3D(Primitive):
 
     Examples:
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
-        >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="valid")
+        >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="VALID")
         >>> output = max_pool3d(x)
         >>> print(output)
         [[[[[10. 11.]]]
@@ -2104,7 +2104,7 @@ class MaxUnpool2D(Primitive):
               (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
 
         data_format (str, optional): The optional value for data format.
-            Currently support ``'NCHW'`` and ``'NHWC'`` . Default: ``'NCHW'`` .
+            Currently support ``"NCHW"`` and ``"NHWC"`` . Default: ``"NCHW"`` .
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
@@ -2280,7 +2280,7 @@ class AvgPool(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        pad_mode (str): The optional value for pad mode, is ``'same'`` or ``'valid'`` .
+        pad_mode (str, optional): The optional value for pad mode, is ``'same'`` or ``'valid'`` .
             Default: ``'valid'`` .
 
             - ``'same'``: The height and width of the output are the same as the input divided by 'strides'
@@ -2288,7 +2288,7 @@ class AvgPool(Primitive):
 
             - ``'valid'``: Returns the output of the valid calculation without filling. Redundant pixels that
               do not satisfy the calculation will be discarded.
-        data_format (str): The format of input and output data. It should be ``'NHWC'`` or ``'NCHW'`` .
+        data_format (str, optional): The format of input and output data. It should be ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
     Inputs:
@@ -2555,7 +2555,7 @@ class MaxPool3DWithArgmax(Primitive):
             represent depth, height and width of movement respectively.
         pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Default: ``'(1, 1, 1)'`` .
+        dilation (Union[int, tuple[int]]): Default: ``(1, 1, 1)`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
         data_format (str) : The optional value for data format. Currently only support ``'NCDHW'`` .
             Default: ``'NCDHW'`` .
@@ -2696,7 +2696,8 @@ class BiasAdd(Primitive):
     consistent with the shape of the input Tensor.
 
     Args:
-        data_format (str): The format of input and output data. It should be ``'NHWC'`` , ``'NCHW'`` or ``'NCDHW'`` .
+        data_format (str, optional): The format of input and output data.
+            It should be ``'NHWC'`` , ``'NCHW'`` or ``'NCDHW'`` .
             Default is ``'NCHW'`` .
 
     Inputs:
@@ -3060,7 +3061,7 @@ class SmoothL1Loss(Primitive):
         beta (float, optional): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default: ``'none'`` .
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
@@ -7349,23 +7350,23 @@ class DynamicRNN(Primitive):
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
     Args:
-        cell_type (str): A string identifying the cell type in the operator. Default: ``'LSTM'`` .
+        cell_type (str, optional): A string identifying the cell type in the operator. Default: ``'LSTM'`` .
             Only 'LSTM' is currently supported.
-        direction (str): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
+        direction (str, optional): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
             Only 'UNIDIRECTIONAL' is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the operator. Default: ``1`` .
-        use_peephole (bool): A bool identifying if use peephole in the operator. Default: ``False`` .
-        keep_prob (float): A float identifying the keep prob in the operator. Default: ``1.0`` .
-        cell_clip (float): A float identifying the cell clip in the operator. Default: ``-1.0`` .
-        num_proj (int): An integer identifying the number projection in the operator. Default: ``0`` .
-        time_major (bool): A bool specify the data format of `x`. If it is set to ``True`` , the format is
+        cell_depth (int, optional): An integer identifying the cell depth in the operator. Default: ``1`` .
+        use_peephole (bool, optional): A bool identifying if use peephole in the operator. Default: ``False`` .
+        keep_prob (float, optional): A float identifying the keep prob in the operator. Default: ``1.0`` .
+        cell_clip (float, optional): A float identifying the cell clip in the operator. Default: ``-1.0`` .
+        num_proj (int, optional): An integer identifying the number projection in the operator. Default: ``0`` .
+        time_major (bool, optional): A bool specify the data format of `x`. If it is set to ``True`` , the format is
             :math:`(num\_step, batch\_size, input\_size)`, if it is set to False, the format is
             :math:`(batch\_size, num\_step, input\_size)`.
             Default: ``True`` . Only supports ``True`` at present.
-        activation (str): A string identifying the type of activation function in the operator.
+        activation (str, optional): A string identifying the type of activation function in the operator.
             Default: ``'tanh'`` . Only 'tanh' is currently supported.
-        forget_bias (float): A float identifying the forget bias in the operator. Default: ``0.0`` .
-        is_training (bool): A bool identifying is training in the operator. Default: ``True`` .
+        forget_bias (float, optional): A float identifying the forget bias in the operator. Default: ``0.0`` .
+        is_training (bool, optional): A bool identifying is training in the operator. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
@@ -7849,7 +7850,7 @@ class Conv3D(Primitive):
             and width of the 3D convolution window. It can be a single int or a tuple of 3 integers.
             Single int means the value is for the depth, height and width
             of the kernel. A tuple of 3 ints corresponds to the depth, height and width of the kernel respectively.
-        mode (int): Modes for different convolutions. It is currently not used. Default: ``1`` .
+        mode (int, optional): Modes for different convolutions. It is currently not used. Default: ``1`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, it can be an int number
             that represents the depth, height and width of movement or a tuple of three int numbers that
             represent depth, height and width movement respectively. Default: ``1`` .
@@ -7869,10 +7870,11 @@ class Conv3D(Primitive):
             - ``"pad"``: Implicit paddings on both sides of the input in depth, height and width. The number of `pad`
               will be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: ``0`` . If `pad` is an integer, the paddings
-                    of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-                    pad[3], pad[4] and pad[5] correspondingly.
+        pad (Union(int, tuple[int]), optional): The pad value to be filled. Default: ``0`` .
+            If `pad` is an integer, the paddings
+            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+            pad[3], pad[4] and pad[5] correspondingly.
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
             :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
@@ -7881,7 +7883,7 @@ class Conv3D(Primitive):
             respectively. Default: ``1`` .
         group (int, optional):The number of groups into which the filter is divided. `in_channels`
             and `out_channels` must be divisible by `group`. Default: ``1`` .
-        data_format (str): The optional value for data format. Currently only support ``"NCDHW"`` .
+        data_format (str, optional): The optional value for data format. Currently only support ``"NCDHW"`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -9815,7 +9817,7 @@ class TripletMarginLoss(Primitive):
 
     Args:
         p (int, optional): The norm degree for pairwise distance. Default: ``2`` .
-        eps (float, optional): Default: ``1e-06`` .
+        eps (float, optional): Default: ``1e-6`` .
         swap (bool, optional): The distance swap. Default: ``False`` .
         reduction (str, optional): Apply specific reduction method to the
             output: ``"none"`` , ``"mean"`` , ``"sum"`` . Default: ``"mean"`` .
@@ -10670,15 +10672,18 @@ class MaxPoolWithArgmaxV2(Primitive):
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+        strides (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``None`` , meaning that
             `strides = kernel_size`.
-        pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
-            strides, or a tuple of two int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``'(1, 1)'`` .
+        pads (Union[int, tuple[int]], optional): An int number that represents the depth,
+            height and width of movement are both strides, or a tuple of two int numbers that represent
+            depth, height and width of movement respectively.
+            Default: 0.
+        dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: ``(1, 1)`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
-        argmax_type (mindspore.dtype) : The dtype for argmax. Default: ``mstype.int64`` . [Disabled in Ascend.]
+        argmax_type (mindspore.dtype, optional) : The dtype for argmax.
+            Default: ``mstype.int64`` . [Disabled in Ascend.]
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,
