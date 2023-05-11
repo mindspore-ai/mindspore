@@ -26,7 +26,6 @@
 #include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
-// namespace to support composite operators definition
 namespace prim {
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractDictionary;
@@ -39,9 +38,28 @@ using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
+namespace {
+void HandleSideEffect(const FuncGraphPtr res_graph, const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(res_graph);
+  auto abs_fn = args_abs_list[0]->cast<abstract::FuncGraphAbstractClosurePtr>();
+  if (abs_fn == nullptr) {
+    return;
+  }
+  auto fn = abs_fn->func_graph();
+  if (fn == nullptr) {
+    return;
+  }
+  if (fn->has_side_effect_node()) {
+    res_graph->set_has_side_effect_node(true);
+  } else {
+    res_graph->set_has_side_effect_node(
+      std::any_of(fn->children().cbegin(), fn->children().cend(),
+                  [](const auto &child_graph) { return child_graph->has_side_effect_node(); }));
+  }
+}
+}  // namespace
+
 FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  // slice a tensor
-  // args: tensor, slice or slice tuple
   size_t arg_length = args_abs_list.size();
   const size_t min_args_size = 2;
   if (arg_length < min_args_size) {
@@ -92,11 +110,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_abs_l
   }
   // Add to order list to trace if fn_node had side effect.
   res_graph->set_output(res_graph->NewCNodeInOrder(elems));
-
-  auto abs_fn = args_abs_list[0]->cast<abstract::FuncGraphAbstractClosurePtr>();
-  if (abs_fn != nullptr) {
-    res_graph->set_has_side_effect_node(abs_fn->func_graph()->has_side_effect_node());
-  }
+  HandleSideEffect(res_graph, args_abs_list);
   return res_graph;
 }
 }  // namespace prim
