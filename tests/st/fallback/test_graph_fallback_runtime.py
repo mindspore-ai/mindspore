@@ -393,10 +393,10 @@ def test_dynamic_shape_dtype_tensor():
 
 class MakeTensorAsConstant(ms.nn.Cell):
     def construct(self, x):
-        shape_tensor1 = ms.make_tensor(ops.shape(x), ms.int32)
+        shape_tensor1 = ms.tensor(ops.shape(x), ms.int32)
         output1 = ops.FillV2()(shape_tensor1, ms.Tensor(1, ms.int32))
 
-        shape_tensor2 = ms.make_tensor(ops.shape(x), ms.int32)
+        shape_tensor2 = ms.tensor(ops.shape(x), ms.int32)
         output2 = ops.FillV2()(shape_tensor2, ms.Tensor(1, ms.int32))
         return output1 + output2
 
@@ -409,7 +409,7 @@ class MakeTensorAsConstant(ms.nn.Cell):
 def test_make_tensor_as_constant():
     """
     Feature: Fallback runtime.
-    Description: Test make_tensor API, create constant Tensor on compile time.
+    Description: Test tensor API, create constant Tensor on compile time.
     Expectation: No error.
     """
     net = MakeTensorAsConstant()
@@ -421,10 +421,10 @@ def test_make_tensor_as_constant():
 class MakeTensorWithShapeDtype(nn.Cell):
     def construct(self, x):
         dtype = ms.int32
-        shape_tensor1 = ms.make_tensor(ms.mutable(ops.shape(x)), dtype)  # shape is mutable, so dtype is used in RT.
+        shape_tensor1 = ms.tensor(ms.mutable(ops.shape(x)), dtype)  # shape is mutable, so dtype is used in RT.
         output1 = ops.FillV2()(shape_tensor1, Tensor(1, dtype))
 
-        shape_tensor2 = ms.make_tensor(ms.mutable(ops.shape(x)), dtype)
+        shape_tensor2 = ms.tensor(ms.mutable(ops.shape(x)), dtype)
         output2 = ops.FillV2()(shape_tensor2, Tensor(1, ms.int32))
         return output1 + output2
 
@@ -437,7 +437,7 @@ class MakeTensorWithShapeDtype(nn.Cell):
 def test_make_tensor_with_dynamic_shape_dtype():
     """
     Feature: Fallback runtime.
-    Description: Test make_tensor API, in which the PyExecute output type is set by the annotation from comment.
+    Description: Test tensor API, in which the PyExecute output type is set by the annotation from comment.
     Expectation: No error.
     """
     net = MakeTensorWithShapeDtype()
