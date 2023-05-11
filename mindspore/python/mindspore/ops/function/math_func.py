@@ -572,9 +572,9 @@ def argmin(input, axis=None, keepdims=False):
 
     Args:
         input (Tensor): Input tensor.
-        axis (Union[int, None], optional): Axis where the Argmin operation applies to. Default: None.
+        axis (Union[int, None], optional): Axis where the Argmin operation applies to. Default: ``None`` .
         keepdims (bool, optional): Whether the output tensor retains the specified
-            dimension. Ignored if `axis` is None. Default: False.
+            dimension. Ignored if `axis` is None. Default: ``False`` .
 
     Returns:
         Tensor, indices of the min value of input tensor across the axis.
@@ -4369,7 +4369,7 @@ def fmax(input, other):
     Computes the maximum of input tensors element-wise.
 
     .. math::
-        output_i = max(x1_i, x2_i)
+        output_i = \max(x1_i, x2_i)
 
     Note:
         - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
@@ -4555,8 +4555,9 @@ def median(input, axis=-1, keepdims=False):
 
     Args:
         input (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
-        axis (int, optional): The dimension need to reduce. Default: -1.
-        keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+        axis (int, optional): The dimension need to reduce. Default: ``-1`` .
+        keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not.
+            Default: ``False`` .
 
     Returns:
         y (Tensor), has the same dtype as the `input`. If `keepdims` is true,
@@ -4822,8 +4823,8 @@ def histc(input, bins=100, min=0., max=0.):
     Args:
         input (Tensor): the input tensor, type support list :math:`[float16, float32, int32]`.
         bins (int, optional): Number of histogram bins, optional. If specified, must be positive. Default: ``100`` .
-        min (int, float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
-        max (int, float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+        min (int, float, optional): An optional float of the lower end of the range (inclusive). Default: ``0.0`` .
+        max (int, float, optional): An optional float of the upper end of the range (inclusive). Default: ``0.0`` .
 
     Returns:
         Tensor, 1-D Tensor with type int32.
@@ -6244,7 +6245,7 @@ def cummin(input, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y_{i} = min(x_{1}, x_{2}, ... , x_{i})
+            y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:
@@ -6253,7 +6254,7 @@ def cummin(input, axis):
             `[-input.ndim, input.ndim - 1]`.
 
     Returns:
-        tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
+        tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index.
         The shape of each output tensor is the same as input `input`.
 
     Raises:
@@ -6296,7 +6297,7 @@ def cummax(input, axis):
 
     .. math::
         \begin{array}{ll} \\
-            y_{i} = max(x_{1}, x_{2}, ... , x_{i})
+            y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     Args:
@@ -6305,7 +6306,7 @@ def cummax(input, axis):
             `[-input.ndim, input.ndim - 1]`.
 
     Returns:
-        tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index,
+        tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index.
         The shape of each output tensor is the same as input `input`.
 
     Raises:
@@ -6355,7 +6356,7 @@ def cumsum(x, axis, dtype=None):
         axis (int): Axis along which the cumulative sum is computed.
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
             the input Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
-            If not specified, stay the same as original Tensor. Default: None.
+            If not specified, stay the same as original Tensor. Default: ``None`` .
 
     Returns:
         Tensor, the shape of the output Tensor is consistent with the input Tensor's.
@@ -7303,8 +7304,8 @@ def logsumexp(input, axis, keep_dims=False):
         input (Tensor): The input tensor. With float16 or float32 data type.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
-            If False, don't keep these dimensions.
-            Default : False.
+            If ``False`` , don't keep these dimensions.
+            Default : ``False`` .
 
     Returns:
         Tensor, has the same dtype as the `input`.
@@ -7347,17 +7348,17 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
-            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
+            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
-            these dimensions. Default: False.
+            these dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
-            on empty slice. Default: None.
+            on empty slice. Default: ``None`` .
         where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
             with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -7448,26 +7449,26 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
-            dimensions. Default: False.
+            dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
-            on empty slice. Default: None.
+            on empty slice. Default: ``None`` .
         where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
             with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
         - If `axis` is None, and `keepdims` is False, the output is a 0-D tensor representing the product of all
-            elements in the input tensor.
+          elements in the input tensor.
         - If `axis` is int, set as 1, and `keepdims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False, the shape of output is
-            :math:`(x_0, x_3, ..., x_R)`.
+          :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -7533,10 +7534,10 @@ def mean(x, axis=None, keep_dims=False):
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
           Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+                          If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -7545,7 +7546,7 @@ def mean(x, axis=None, keep_dims=False):
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is False,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -9246,18 +9247,18 @@ def all(input, axis=None, keep_dims=False):
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
-            r, axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
+            r, axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : False.
+            If false, don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If axis is None, and keep_dims is False,
+        - If `axis` is None, and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
-        - If axis is int, such as 2, and keep_dims is False,
+        - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If axis is tuple(int), such as (2, 3), and keep_dims is False,
+        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is False,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
@@ -9303,18 +9304,18 @@ def any(input, axis=None, keep_dims=False):
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
-            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
+            axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : False.
+            If false, don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If axis is None, and keep_dims is False,
+        - If `axis` is None, and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical OR" of all elements in the input Tensor.
-        - If axis is int, such as 2, and keep_dims is False,
+        - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If axis is tuple(int), such as (2, 3), and keep_dims is False,
+        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
@@ -10101,7 +10102,7 @@ def cumprod(input, dim, dtype=None):
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
         dtype (:class:`mindspore.dtype`, optional): The desired data type of output.
-            If not specified, remains the same as the original Tensor. Default: None.
+            If not specified, remains the same as the original Tensor. Default: ``None`` .
 
     Returns:
         Tensor, has the same shape and dtype as the `input` unless `dtype` is specified.

@@ -7,7 +7,7 @@ mindspore.ops.cummax
 
     .. math::
         \begin{array}{ll} \\
-            y_{i} = max(x_{1}, x_{2}, ... , x_{i})
+            y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     参数：

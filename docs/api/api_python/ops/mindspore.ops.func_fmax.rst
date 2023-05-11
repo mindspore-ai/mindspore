@@ -6,7 +6,7 @@ mindspore.ops.fmax
     逐元素计算输入Tensor的最大值。
 
     .. math::
-        output_i = max(x1_i, x2_i)
+        output_i = \max(x1_i, x2_i)
 
     .. note::
         - 输入 `input` 和 `other` 遵循隐式转换法则使数据类型一致。

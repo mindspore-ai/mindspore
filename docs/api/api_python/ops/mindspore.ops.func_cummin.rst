@@ -7,7 +7,7 @@ mindspore.ops.cummin
 
     .. math::
         \begin{array}{ll} \\
-            y_{i} = min(x_{1}, x_{2}, ... , x_{i})
+            y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     参数：
