@@ -1748,7 +1748,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 format of `mindspore.dtype.float32` or `numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
-                of a copy. Default: True.
+                of a copy. Default: ``True`` .
 
         Returns:
             Tensor, with the designated dtype.
