@@ -4359,12 +4359,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             Tensor, with the same type and shape as the "self Tensor".
 
         Raises:
-            TypeError: If `mask` or `tensor` is not a Tensor.
+            TypeError: If `mask` or `x` is not a Tensor.
             TypeError: If data type of the "self Tensor" is not be supported.
             TypeError: If dtype of `mask` is not bool.
             TypeError: If the dim of the "self Tensor" less than the dim of `mask`.
             ValueError: If `mask` can not be broadcastable to the "self Tensor".
-            ValueError: If the number of elements in `tensor` is less than the number required for the updates.
+            ValueError: If the number of elements in `x` is less than the number required for the updates.
 
         Supported Platforms:
             ``CPU``
