@@ -300,8 +300,8 @@ void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<strin
   for (auto &info : *infos) {
     buf << " (" << info.first << ", " << info.second << ")";
   }
-  MS_LOG(INFO) << "Start converting attr to input for aicpu op[" << AnfUtils::GetCNodeName(kernel_node)
-               << "] with attr_name and input_index pairs:" << buf.str();
+  MS_LOG(DEBUG) << "Start converting attr to input for aicpu op[" << AnfUtils::GetCNodeName(kernel_node)
+                << "] with attr_name and input_index pairs:" << buf.str();
 
   std::sort(infos->begin(), infos->end(),
             [](const std::pair<string, size_t> &a, const std::pair<string, size_t> &b) { return a.second < b.second; });
@@ -316,7 +316,7 @@ void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<strin
       auto attr_name = infos->at(attr_tmp_idx).first;
       auto value = primitive->GetAttr(attr_name);
       if (value == nullptr) {
-        MS_LOG(INFO) << "Can not get attr[" << attr_name << "].";
+        MS_LOG(DEBUG) << "Can not get attr[" << attr_name << "].";
         return;
       }
       tensor::TensorPtr tensor_ptr = nullptr;
@@ -327,11 +327,11 @@ void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<strin
       } else if (value->isa<ValueTuple>()) {
         tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
       } else {
-        MS_LOG(INFO) << "The value of attr[" << attr_name << "] should be a tensor or scalar or value tuple.";
+        MS_LOG(DEBUG) << "The value of attr[" << attr_name << "] should be a tensor or scalar or value tuple.";
         return;
       }
       if (tensor_ptr == nullptr) {
-        MS_LOG(INFO) << "Convert attr[" << attr_name << "] to tensor value failed.";
+        MS_LOG(DEBUG) << "Convert attr[" << attr_name << "] to tensor value failed.";
         return;
       }
       auto value_node = kernel_graph->NewValueNode(tensor_ptr);

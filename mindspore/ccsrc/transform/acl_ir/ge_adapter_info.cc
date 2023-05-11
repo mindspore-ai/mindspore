@@ -91,20 +91,20 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
 void GeAdapterInfo::InitInputSupportedDataType() {
   info_.input_supported_dtypes.clear();
   for (const auto &[k, v] : adapter_->getInputMap()) {
-    info_.input_supported_dtypes.emplace(k - 1, v.supported_dtypes);
+    (void)info_.input_supported_dtypes.emplace(k - 1, v.supported_dtypes);
   }
   for (const auto &[k, v] : adapter_->getDynInputMap()) {
-    info_.input_supported_dtypes.emplace(k - 1, v.supported_dtypes);
+    (void)info_.input_supported_dtypes.emplace(k - 1, v.supported_dtypes);
   }
 }
 
 void GeAdapterInfo::InitOutputSupportedDataType() {
   info_.output_supported_dtypes.clear();
   for (const auto &[k, v] : adapter_->getOutputMap()) {
-    info_.output_supported_dtypes.emplace(k, v.supported_dtypes);
+    (void)info_.output_supported_dtypes.emplace(k, v.supported_dtypes);
   }
   for (const auto &[k, v] : adapter_->getDynOutputMap()) {
-    info_.output_supported_dtypes.emplace(k, v.supported_dtypes);
+    (void)info_.output_supported_dtypes.emplace(k, v.supported_dtypes);
   }
 }
 
@@ -142,14 +142,14 @@ void GeAdapterInfo::GetGeAttrValueByMsInputValue(const uint32_t &input_idx, cons
 void GeAdapterInfo::InitAttrMap() {
   info_.attr_map.clear();
   for (const auto &[k, v] : adapter_->getAttrMap()) {
-    info_.attr_map.emplace(k, v.name);
+    (void)info_.attr_map.emplace(k, v.name);
   }
 }
 
 void GeAdapterInfo::InitInputToAttrMap() {
   info_.input_attr_map.clear();
   for (const auto &[k, v] : adapter_->getInputAttrMap()) {
-    info_.input_attr_map.emplace(k - 1, v.name);
+    (void)info_.input_attr_map.emplace(k - 1, v.name);
   }
 }
 
@@ -180,8 +180,8 @@ void GeAdapterInfo::InitInfo() {
   InitAttrToInputMap();
 
   InitAclInputsAndOutputs();
-  MS_LOG(INFO) << "INIT INFO:" << info_.op_type << " -- " << info_.input_supported_dtypes[0] << " --- "
-               << info_.output_supported_dtypes[0];
+  MS_LOG(DEBUG) << "INIT INFO:" << info_.op_type << " -- " << info_.input_supported_dtypes[0] << " --- "
+                << info_.output_supported_dtypes[0];
 }
 
 GeAdapterManager &GeAdapterManager::GetInstance() {

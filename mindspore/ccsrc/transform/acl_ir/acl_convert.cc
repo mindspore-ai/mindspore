@@ -222,7 +222,7 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
   if (value_sequence.size() == 0) {
     MS_LOG(EXCEPTION) << "value sequence is empty, failed to get data type";
   }
-  shape->push_back(value_sequence.size());
+  (void)shape->push_back(value_sequence.size());
   auto val = value_sequence[0];
   if (val->isa<Scalar>()) {
     *data_type = val->type();
@@ -265,7 +265,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::map<ui
     // skip attribute convert input
     auto attr_iter = info->attr_input_map().find(ms_idx);
     if ((attr_iter != info->attr_input_map().end()) && (prim->attrs().count(attr_iter->second) > 0)) {
-      MS_LOG(INFO) << "Skip input " << ms_idx << " converted from attribute " << attr_iter->second;
+      MS_LOG(DEBUG) << "Skip input " << ms_idx << " converted from attribute " << attr_iter->second;
       continue;
     }
 
@@ -276,7 +276,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::map<ui
     auto opt_ge_input_info = info->GetOptGeInputByMsInputIndex(ms_idx);
     // mindpore input mapped to GE attribute
     if (!opt_ge_input_info.has_value()) {
-      MS_LOG(INFO) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive " << prim_name;
+      MS_LOG(DEBUG) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive " << prim_name;
       ms_real_idx += 1;
       continue;
     }
@@ -291,11 +291,10 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::map<ui
       std::string arg_name =
         (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? ge_input_info.name + std::to_string(i) : ge_input_info.name);
       size_t acl_real_input_idx = ge_start_idx + i;
-      MS_LOG(INFO) << "Fill acl real input " << acl_real_input_idx << " use ms real input " << ms_real_idx;
+      MS_LOG(DEBUG) << "Fill acl real input " << acl_real_input_idx << " use ms real input " << ms_real_idx;
       auto [acl_desc, acl_data] =
-        (host_tensor != nullptr)
-          ? ConvertTensorToAclDesc(host_tensor, input_params[ms_real_idx], arg_name, true, &dump_str)
-          : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, true, &dump_str);
+        (host_tensor != nullptr) ? ConvertTensorToAclDesc(host_tensor, input_params[ms_real_idx], arg_name, &dump_str)
+                                 : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, &dump_str);
 
       input_str_[acl_real_input_idx] = dump_str;
       runner_.SetInput(acl_real_input_idx, acl_desc, acl_data);
@@ -334,8 +333,8 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
     auto opt_ge_output_info = info->GetOptGeOutputByMsOutputIndex(ms_idx);
     // mindpore op contains extra output parameters, e.g. ApplyAdagradV2, ApplyAdam
     if (!opt_ge_output_info.has_value()) {
-      MS_LOG(INFO) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive "
-                   << kernel_name;
+      MS_LOG(DEBUG) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive "
+                    << kernel_name;
       ms_real_idx += 1;
       continue;
     }
@@ -350,9 +349,9 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
                                                                              : ge_output_info.name);
 
       size_t acl_real_output_idx = ge_start_idx + i;
-      MS_LOG(INFO) << "Fill acl real output " << acl_real_output_idx << " use ms real output " << ms_real_idx;
+      MS_LOG(DEBUG) << "Fill acl real output " << acl_real_output_idx << " use ms real output " << ms_real_idx;
       auto [acl_desc, acl_data] =
-        ConvertTensorToAclDesc(outputs[ms_real_idx], output_params[ms_real_idx], arg_name, false, &dump_str);
+        ConvertTensorToAclDesc(outputs[ms_real_idx], output_params[ms_real_idx], arg_name, &dump_str);
 
       output_str_[acl_real_output_idx] = dump_str;
       runner_.SetOutput(acl_real_output_idx, acl_desc, acl_data);
@@ -371,15 +370,15 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
   for (const auto &[input_idx, ms_attr_name] : info->attr_input_map()) {
     auto iter = attrs.find(ms_attr_name);
     if (iter == attrs.end()) {
-      MS_LOG(INFO) << "Not found attr " << ms_attr_name << " for primitive " << kernel_name << ", ignore it.";
+      MS_LOG(DEBUG) << "Not found attr " << ms_attr_name << " for primitive " << kernel_name << ", ignore it.";
       continue;
     }
 
     auto opt_ge_input_info = info->GetOptGeInputByMsInputIndex(input_idx);
     // mindpore input mapped to GE attribute
     if (!opt_ge_input_info.has_value()) {
-      MS_LOG(INFO) << "Not found matched GE input for mindspore input idx:" << input_idx << " of primitive "
-                   << kernel_name;
+      MS_LOG(DEBUG) << "Not found matched GE input for mindspore input idx:" << input_idx << " of primitive "
+                    << kernel_name;
       continue;
     }
 
@@ -395,12 +394,12 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
     AclDumpString dump_str;
     attr_coverter.ConvertValueToRealType(iter->second, ms_attr_name, this, &new_params);
     auto input_tensor = attr_coverter.GetTensor();
-    inputs_on_host->emplace(std::pair{input_idx, input_tensor});
-    auto [acl_desc, acl_data] = ConvertTensorToAclDesc(input_tensor, new_params, ge_input_info.name, true, &dump_str);
+    (void)inputs_on_host->emplace(std::pair{input_idx, input_tensor});
+    auto [acl_desc, acl_data] = ConvertTensorToAclDesc(input_tensor, new_params, ge_input_info.name, &dump_str);
     input_str_[acl_real_input_idx] = dump_str;
     runner_.SetInput(acl_real_input_idx, acl_desc, acl_data);
-    MS_LOG(INFO) << "Fill acl real input " << acl_real_input_idx << " with attribute " << ms_attr_name
-                 << " of primitive " << kernel_name;
+    MS_LOG(DEBUG) << "Fill acl real input " << acl_real_input_idx << " with attribute " << ms_attr_name
+                  << " of primitive " << kernel_name;
   }
   MS_LOG(DEBUG) << "Convert attr to acl input over";
 }
@@ -428,7 +427,7 @@ void AclConverter::ConvertInputToAclAttr(const std::map<uint32_t, tensor::Tensor
 void AclConverter::ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs,
                                     const std::string &prim_name, std::vector<std::string> *ms_attr_str) {
   MS_EXCEPTION_IF_NULL(ms_attr_str);
-  MS_LOG(INFO) << "Start convert mindspore attr to acl attr";
+  MS_LOG(DEBUG) << "Start convert mindspore attr to acl attr";
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
   auto ms_ge_attr_map = info->attr_map();
 
@@ -448,7 +447,7 @@ void AclConverter::ConvertToAclAttr(const mindspore::HashMap<std::string, ValueP
     AttrConverter attr_coverter;
     attr_coverter.ConvertValueToRealType(ge_attr_value, ge_attr_name, this);
   }
-  MS_LOG(INFO) << "convert mindspore attr to acl attr over";
+  MS_LOG(DEBUG) << "convert mindspore attr to acl attr over";
 }
 
 void AclConverter::ConvertToAclOpType(const std::string &prim_name) {
@@ -472,7 +471,7 @@ void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
       MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of primitive " << prim_name << " is "
                         << dyn_input_sizes << ", of which size is not 1";
     }
-    num_folded_inputs_ = dyn_input_sizes[0];
+    num_folded_inputs_ = LongToSize(dyn_input_sizes[0]);
     num_max_inputs = info->GetNumInputsOfMsOpProto() + num_folded_inputs_ - 1;
   }
 
@@ -511,8 +510,7 @@ aclFormat AclConverter::ConvertFormat(const std::string &format) {
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const AddressPtr &address,
                                                                                  const TensorParams &params,
                                                                                  const std::string &desc_name,
-                                                                                 bool is_input,
-                                                                                 AclDumpString *dump_str) {
+                                                                                 AclDumpString *dump_str) const {
   AclTensorDescMaker tensor;
   dump_str->tensor_name = desc_name;
 
@@ -549,8 +547,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const tensor::TensorPtr &host_tensor,
                                                                                  const TensorParams &params,
                                                                                  const std::string &desc_name,
-                                                                                 bool is_input,
-                                                                                 AclDumpString *dump_str) {
+                                                                                 AclDumpString *dump_str) const {
   AclTensorDescMaker tensor;
   dump_str->tensor_name = desc_name;
 
@@ -587,8 +584,8 @@ void AclConverter::AclRunnerAddAttr(const std::string &attrName, T value) {
   runner_.AddAttr(attrName, value);
   std::stringstream ss;
   ss << "attr name: " << attrName << ", value: " << value;
-  attr_map_str_.emplace_back(ss.str());
-  MS_LOG(INFO) << "set acl attr:" << attrName << " value:" << value;
+  (void)attr_map_str_.emplace_back(ss.str());
+  MS_LOG(DEBUG) << "set acl attr:" << attrName << " value:" << value;
 }
 
 std::string AclConverter::DebugString() const {

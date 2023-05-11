@@ -546,7 +546,7 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
 
 void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Status record: start ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
   PROF_START(ascend_backend_optimize_acl);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -572,13 +572,13 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   }
 #endif
   PROF_END(ascend_backend_optimize_acl);
-  MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
-               << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
+                << kernel_graph->graph_id();
   PROF_START(ascend_backend_optimize_acl_after_kernel_select);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -603,7 +603,7 @@ void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::Ke
   }
 #endif
   PROF_END(ascend_backend_optimize_acl_after_kernel_select);
-  MS_LOG(INFO) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {

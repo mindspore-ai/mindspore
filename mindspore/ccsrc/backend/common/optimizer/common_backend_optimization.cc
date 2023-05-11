@@ -262,7 +262,7 @@ void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel
 
 void OptimizationWithoutBackend(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Start OptimizationWithoutBackend for kernel graph id:" << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "Start OptimizationWithoutBackend for kernel graph id:" << kernel_graph->graph_id();
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -275,7 +275,7 @@ void OptimizationWithoutBackend(const std::shared_ptr<session::KernelGraph> &ker
   EliminateIllegalDataTypePass(kernel_graph);
   CommonUnifyMindIR(kernel_graph);
   BackendCommonOptimization(kernel_graph);
-  MS_LOG(INFO) << "End OptimizationWithoutBackend for kernel graph id:" << kernel_graph->graph_id();
+  MS_LOG(DEBUG) << "End OptimizationWithoutBackend for kernel graph id:" << kernel_graph->graph_id();
 #ifdef ENABLE_DUMP_IR
   if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name =

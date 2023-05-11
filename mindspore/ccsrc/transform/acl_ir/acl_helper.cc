@@ -86,7 +86,7 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
-      MS_LOG(INFO) << "Op prototype input idx:" << ms_proto_idx << " is attr to input, skip check";
+      MS_LOG(DEBUG) << "Op prototype input idx:" << ms_proto_idx << " is attr to input, skip check";
       continue;
     }
 
@@ -97,8 +97,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     auto opt_ge_input_info = info->GetOptGeInputByMsInputIndex(ms_proto_idx);
     // skip input which will be converted to attribute, or some extra inputs defined by mindspore, such as AvgPoolGrad
     if (!opt_ge_input_info.has_value()) {
-      MS_LOG(INFO) << "Unsupported op prototype input idx:" << ms_proto_idx
-                   << " of node:" << cnode->fullname_with_scope();
+      MS_LOG(DEBUG) << "Unsupported op prototype input idx:" << ms_proto_idx
+                    << " of node:" << cnode->fullname_with_scope();
       ms_real_idx += 1;
       continue;
     }
@@ -109,14 +109,14 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
           input_supported_dtypes[ms_proto_idx].begin(), input_supported_dtypes[ms_proto_idx].end(),
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
       if (base_type == kMetaTypeNone && ge_input_info.type == Ms2GeParamInfo::OPTIONAL) {
-        MS_LOG(INFO) << "Input is a placeholder, continue!";
+        MS_LOG(DEBUG) << "Input is a placeholder, continue!";
         continue;
       }
       if (GetMoreDataTypeSupported(base_type, info->op_type())) {
         continue;
       }
-      MS_LOG(INFO) << "Unsupported input dtype:" << TypeIdLabel(base_type)
-                   << " in ACL, node:" << cnode->fullname_with_scope();
+      MS_LOG(DEBUG) << "Unsupported input dtype:" << TypeIdLabel(base_type)
+                    << " in ACL, node:" << cnode->fullname_with_scope();
       return UNKNOWN_KERNEL_TYPE;
     }
 
@@ -129,7 +129,7 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
         MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
                           << ", of which size is not 1";
       }
-      ms_real_idx += dyn_input_sizes[0];
+      ms_real_idx += LongToSize(dyn_input_sizes[0]);
     } else {
       ms_real_idx += 1;
     }
@@ -148,8 +148,8 @@ KernelType AclHelper::GetKernelInfoByOutputs(const AnfNodePtr &node, const std::
     auto base_type = common::AnfAlgo::GetOutputInferDataType(node, i);
     if (!std::any_of(output_supported_dtypes[i].begin(), output_supported_dtypes[i].end(),
                      [base_type](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
-      MS_LOG(INFO) << "Unsupported output dtype:" << TypeIdLabel(base_type)
-                   << " in ACL, node:" << node->fullname_with_scope();
+      MS_LOG(DEBUG) << "Unsupported output dtype:" << TypeIdLabel(base_type)
+                    << " in ACL, node:" << node->fullname_with_scope();
       return false;
     }
     return true;
@@ -347,7 +347,7 @@ std::string AclHelper::GetFormatFromAttr(const PrimitivePtr &primitive) {
     if (attr_value->isa<StringImm>()) {
       format = GetValue<std::string>(attr_value);
     } else {
-      MS_LOG(WARNING) << "The attr format is not a valid value.";
+      MS_LOG(DEBUG) << "The attr format is not a valid value.";
     }
   }
   return format;
@@ -362,7 +362,7 @@ int64_t AclHelper::GetFracZGroupFromAttr(const PrimitivePtr &primitive) {
     if (attr_value->isa<Int64Imm>()) {
       fracz_group = GetValue<int64_t>(attr_value);
     } else {
-      MS_LOG(WARNING) << "The FracZGroup attr format is not a valid value.";
+      MS_LOG(DEBUG) << "The FracZGroup attr format is not a valid value.";
     }
   }
   return fracz_group;

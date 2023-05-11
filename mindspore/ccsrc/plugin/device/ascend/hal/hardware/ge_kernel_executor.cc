@@ -85,7 +85,7 @@ std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
 }
 
 using AclKernelFormatList = std::vector<std::pair<std::vector<string>, std::vector<string>>>;
-AclKernelFormatList GetValidFormat(const AnfNodePtr &node, size_t input_num, size_t output_num) {
+AclKernelFormatList GetValidFormat(size_t input_num, size_t output_num) {
   std::vector<std::string> inputs_format(input_num, kOpFormat_DEFAULT);
   std::vector<std::string> outputs_format(output_num, kOpFormat_DEFAULT);
   return {std::make_pair(inputs_format, outputs_format)};
@@ -103,17 +103,17 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
   if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
     type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_idx);
     if (type == kTypeUnknown) {
-      MS_LOG(INFO) << "This node kernel build info in valid, it may be parameter or value node: "
-                   << kernel_node->DebugString() << ", idx: " << input_idx
-                   << ", input node: " << input_node->DebugString();
+      MS_LOG(DEBUG) << "This node kernel build info in valid, it may be parameter or value node: "
+                    << kernel_node->DebugString() << ", idx: " << input_idx
+                    << ", input node: " << input_node->DebugString();
       type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
       auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
       MS_EXCEPTION_IF_NULL(build_info);
       build_info->SetOutputDeviceType(type, idx);
     }
   } else {
-    MS_LOG(INFO) << "Node no build info, node name: " << kernel_node->DebugString() << ", idx: " << input_idx
-                 << ", input node: " << input_node->DebugString();
+    MS_LOG(DEBUG) << "Node no build info, node name: " << kernel_node->DebugString() << ", idx: " << input_idx
+                  << ", input node: " << input_node->DebugString();
     type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
   }
   return type;
@@ -130,7 +130,7 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
     transform::AclHelper::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
                                                   &output_reshape_types);
   } else {
-    auto cand_format = GetValidFormat(kernel, input_num, output_num);
+    auto cand_format = GetValidFormat(input_num, output_num);
     if (cand_format.empty()) {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope()
                         << " does not have a supported dynamic shape format on the Ascend platform.";
@@ -157,14 +157,14 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
   output_object_types.reserve(output_num);
 
   for (size_t i = 0; i < input_num; i++) {
-    input_types.push_back(GetInputDeviceType(kernel, i));
+    (void)input_types.push_back(GetInputDeviceType(kernel, i));
     // no tuple in PyNative dynamic shape
-    input_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    (void)input_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
   for (size_t i = 0; i < output_num; i++) {
-    output_types.push_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
+    (void)output_types.push_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
     // no tuple in PyNative dynamic shape
-    output_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    (void)output_object_types.push_back(kernel::KernelObjectType::TENSOR);
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);
@@ -347,8 +347,8 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Addres
                                        const vector<AddressPtr> &outputs) const {
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(INFO) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
-                 << " input size is:" << inputs.size() << " output size is:" << outputs.size();
+    MS_LOG(DEBUG) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
+                  << " input size is:" << inputs.size() << " output size is:" << outputs.size();
   }
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);

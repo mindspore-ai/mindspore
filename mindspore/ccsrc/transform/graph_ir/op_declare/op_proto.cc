@@ -155,15 +155,15 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
 OpProto::OpProto(const std::string &name) : name_(name) {}
 
 OpProto &OpProto::SetInput(const std::string &name, const std::string &tensor_type, bool is_optional) {
-  input_names_.emplace_back(name);
-  input_optional_flags_.push_back(is_optional);
-  input_types_.emplace(name, ParseGeTypes(tensor_type));
+  (void)input_names_.emplace_back(name);
+  (void)input_optional_flags_.push_back(is_optional);
+  (void)input_types_.emplace(name, ParseGeTypes(tensor_type));
   return *this;
 }
 
 OpProto &OpProto::SetOutput(const std::string &name, const std::string &tensor_type) {
-  output_names_.emplace_back(name);
-  output_types_.emplace(name, ParseGeTypes(tensor_type));
+  (void)output_names_.emplace_back(name);
+  (void)output_types_.emplace(name, ParseGeTypes(tensor_type));
   return *this;
 }
 

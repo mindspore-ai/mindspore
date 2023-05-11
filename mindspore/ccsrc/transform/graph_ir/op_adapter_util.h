@@ -30,8 +30,8 @@ class GeDataTypeImm final : public IntegerImm {
   ~GeDataTypeImm() override = default;
   MS_DECLARE_PARENT(GeDataTypeImm, IntegerImm)
   std::size_t hash() const override { return hash_; }
-  bool IsZero() override { return v_ == 0; }
-  bool IsOne() override { return v_ == 1; }
+  bool IsZero() override { return v_ == static_cast<::ge::DataType>(0); }
+  bool IsOne() override { return v_ == static_cast<::ge::DataType>(1); }
   ::ge::DataType value() const { return v_; }
   bool operator==(const Value &other) const override;
   bool operator==(const GeDataTypeImm &other) const;

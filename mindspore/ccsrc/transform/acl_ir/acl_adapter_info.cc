@@ -28,7 +28,7 @@ AclAdapterInfo &AclAdapterManager::Register(const std::string &op_type) {
     return op_cache_.at(op_type);
   }
 
-  op_cache_.emplace(op_type, AclAdapterInfo(op_type));
+  (void)op_cache_.emplace(op_type, AclAdapterInfo(op_type));
   return op_cache_.at(op_type);
 }
 

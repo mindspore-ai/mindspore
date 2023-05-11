@@ -43,12 +43,14 @@ abstract::ShapePtr AvgPoolGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(x_shape);
   auto value = x->BuildValue();
   MS_EXCEPTION_IF_NULL(value);
-  if (x->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
-    // The first input is Tensor(convert from a tuple), the value of Tuple is the real "x_origin" shape.
-    auto check_shape = x_shape->cast<abstract::ShapePtr>()->shape();
-    auto x_origin = CheckAndConvertUtils::CheckTensorIntValue("x_origin", value, prim_name);
-    if (check_shape != x_origin) {
-      return std::make_shared<abstract::Shape>(x_origin);
+  if (primitive->HasAttr("x_from_tensor") && GetValue<bool>(primitive->GetAttr("x_from_tensor"))) {
+    if (x->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
+      // The first input is Tensor(convert from a tuple), the value of Tuple is the real "x_origin" shape.
+      auto check_shape = x_shape->cast<abstract::ShapePtr>()->shape();
+      auto x_origin = CheckAndConvertUtils::CheckTensorIntValue("x_origin", value, prim_name);
+      if (check_shape != x_origin) {
+        return std::make_shared<abstract::Shape>(x_origin);
+      }
     }
   }
   auto shape_element = x_shape->cast<abstract::ShapePtr>();

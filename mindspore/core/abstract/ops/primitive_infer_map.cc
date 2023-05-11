@@ -325,7 +325,7 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
       ori = op_infer->GetValueDependArgIndices();
     }
   } else if (ori.empty()) {
-    MS_LOG(WARNING) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
+    MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
   }
   if (ori.empty()) {
     return ori;

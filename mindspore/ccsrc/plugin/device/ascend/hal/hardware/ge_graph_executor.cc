@@ -53,13 +53,13 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
     TypeId me_type = cnode_data->BuildType()->type_id();
     if (me_type == kObjectTypeTensorType) {
       me_type = dyn_cast<TensorType>(cnode_data->BuildType())->element()->type_id();
-      me_types->emplace_back(me_type);
+      (void)me_types->emplace_back(me_type);
     }
     return;
   }
   if (cnode_data->isa<abstract::AbstractScalar>()) {
     TypeId me_type = cnode_data->BuildType()->type_id();
-    me_types->emplace_back(me_type);
+    (void)me_types->emplace_back(me_type);
   }
   auto abstract_tuple = cnode_data->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
@@ -85,10 +85,10 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
       auto build_shape = para->abstract()->BuildShape();
       if (build_shape != nullptr) {
         tensor->set_shape(build_shape->cast<abstract::ShapePtr>()->shape());
-        MS_LOG(INFO) << "ref abstract Parameter: " << para->name() << ", tensor: " << tensor->ToString();
+        MS_LOG(DEBUG) << "ref abstract Parameter: " << para->name() << ", tensor: " << tensor->ToString();
       }
       res.emplace(para->name(), tensor);
-      MS_LOG(INFO) << "Parameter " << para->name() << " has default value.";
+      MS_LOG(DEBUG) << "Parameter " << para->name() << " has default value.";
     }
   }
   return res;
@@ -139,7 +139,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
       MS_LOG(EXCEPTION) << "Exec " << run_options.name << " graph failed.";
     }
 
-    MS_LOG(INFO) << "Exec " << run_options.name << " graph success.";
+    MS_LOG(DEBUG) << "Exec " << run_options.name << " graph success.";
 
     if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
         (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
@@ -149,7 +149,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
       if (ret != transform::Status::SUCCESS) {
         MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
       }
-      MS_LOG(INFO) << "Exec broadcast graph success.";
+      MS_LOG(DEBUG) << "Exec broadcast graph success.";
     }
   }
 }
@@ -173,7 +173,7 @@ void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_t
       shapes.push_back(output_shape);
     } else {
       types.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-      shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
+      (void)shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
     }
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, node.get());
@@ -184,7 +184,7 @@ void SetDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
   auto nodes = TopoSort(kernel_graph->output());
   for (auto &node : nodes) {
     if (common::AnfAlgo::IsDynamicShape(node)) {
-      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node : " << node->fullname_with_scope();
+      MS_LOG(DEBUG) << "Set Dynamic Shape Attr to Node : " << node->fullname_with_scope();
       kernel_graph->SetGraphDynamicAttr(true);
       return;
     }
@@ -277,7 +277,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
+  MS_LOG(DEBUG) << "GE run graph " << graph_name << " start.";
   // copy input from device to host
   const auto &cur_inputs = graph->get_inputs();
   std::vector<tensor::TensorPtr> input_tensors;
@@ -290,7 +290,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(output_addr, false);
     tensor->data_sync();
-    input_tensors.emplace_back(std::move(tensor));
+    (void)input_tensors.emplace_back(std::move(tensor));
   }
   auto ge_inputs = transform::ConvertInputTensors(input_tensors, kOpFormat_NCHW);
 
@@ -353,8 +353,8 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
         MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
                           << "'s output data type is string now.";
       }
-      MS_LOG(INFO) << "Zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data) << " as aligned with "
-                   << kTensorAlignBytes << " types.";
+      MS_LOG(DEBUG) << "Zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data) << " as aligned with "
+                    << kTensorAlignBytes << " types.";
       output_addr->set_is_ptr_persisted(false);
       output_addr->set_from_mem_pool(false);
       output_addr->set_deleter(deleter);
@@ -372,7 +372,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   ConfigManager::GetInstance().ResetConfig();
   ConfigManager::GetInstance().ResetIterNum();
 
-  MS_LOG(INFO) << "GE run graph end.";
+  MS_LOG(DEBUG) << "GE run graph end.";
   return true;
 }
 

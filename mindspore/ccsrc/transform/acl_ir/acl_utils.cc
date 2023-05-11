@@ -108,10 +108,10 @@ void AclAttrMaker::SetAttr(const string &attr_name, const ::ge::DataType value, 
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {
-  std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), aclDestroyTensorDesc);
-  std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
-  std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(), aclDestroyDataBuffer);
-  std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
+  (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), aclDestroyTensorDesc);
+  (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
+  (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(), aclDestroyDataBuffer);
+  (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
   if (acl_param_.attr != nullptr) {
     aclopDestroyAttr(acl_param_.attr);
     acl_param_.attr = nullptr;
@@ -177,7 +177,7 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
     }
   }
 
-  MS_LOG(INFO) << "Start aclopCompileAndExecute of op_type: " << op_type_;
+  MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {
     bool ret = aclrtSynchronizeStream(stream_ptr);
     if (ret != ACL_SUCCESS) {
@@ -202,7 +202,7 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
     }
   }
 
-  MS_LOG(INFO) << "Success launch of op_type_: " << op_type_;
+  MS_LOG(DEBUG) << "Success launch of op_type_: " << op_type_;
 }
 
 std::vector<std::vector<int64_t>> AclRunner::SyncData() {
@@ -220,10 +220,10 @@ std::vector<std::vector<int64_t>> AclRunner::SyncData() {
         MS_LOG(EXCEPTION) << "Acl get output shape failed, op_type_:" << op_type_;
       }
     }
-    outputs_shape.emplace_back(output_shape);
+    (void)outputs_shape.emplace_back(output_shape);
   }
 
-  MS_LOG(INFO) << "Acl SyncData success, op_type_: " << op_type_ << ", output_shape: " << outputs_shape;
+  MS_LOG(DEBUG) << "Acl SyncData success, op_type_: " << op_type_ << ", output_shape: " << outputs_shape;
   return outputs_shape;
 }
 }  // namespace transform

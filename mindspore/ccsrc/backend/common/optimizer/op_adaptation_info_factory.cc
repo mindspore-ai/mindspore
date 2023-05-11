@@ -52,7 +52,7 @@ OpAdaptationInfo &OpAdaptationInfo::set_input_attr_info(size_t input_index, cons
 }
 
 OpAdaptationInfo &OpAdaptationInfo::set_is_ascend_mindir() {
-  is_ascend_mindir_ = True;
+  is_ascend_mindir_ = true;
   return *this;
 }
 
