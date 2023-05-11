@@ -15,8 +15,19 @@
  */
 
 #include <algorithm>
+#include <limits>
 #include "maxpool_with_argmax_v2_impl.cuh"
 #include "include/cuda_fp16.h"
+
+template <typename T>
+__device__ __forceinline__ void NumericLimits(T *init_val) {
+  *init_val = std::numeric_limits<T>::max();
+}
+
+// For half, different assignment.
+__device__ __forceinline__ void NumericLimits(half *init_val) {
+  *init_val = __int2half_rd(65504);
+}
 
 template <typename T, typename S>
 __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const int inputN, const int inputC,
@@ -42,7 +53,9 @@ __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const i
     S input_start = pos_n * inputC * inputH * inputW;
     S stride = pos_c * inputH * inputW;
     S max_idx = stride + start_h * inputW + start_w;
-    T max_data = input[input_start + max_idx];
+    T max_data;
+    NumericLimits(&max_data);
+    max_data = static_cast<T>(-max_data);
     for (int cur_h = start_h; cur_h < end_h; cur_h += dilationH) {
       for (int cur_w = start_w; cur_w < end_w; cur_w += dilationW) {
         S input_idx = stride + cur_h * inputW + cur_w;

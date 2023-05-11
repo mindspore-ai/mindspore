@@ -131,7 +131,9 @@ abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(x_shape);
+    return std::make_shared<abstract::Shape>(
+      std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                           abstract::Shape::kShapeDimAny});
   }
   (void)CheckAndConvertUtils::CheckInteger("x_shape", x_shape.size(), kEqual, kInputDims, op_name);
   (void)CheckAndConvertUtils::CheckInteger("argmax_shape", argmax_shape.size(), kEqual, kInputDims, op_name);
@@ -146,6 +148,10 @@ abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
   auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr(kDilation));
   (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation.size()), kEqual, kAttrsSize,
                                            prim->name());
+  if (IsDynamic(x_shape)) {
+    return std::make_shared<abstract::Shape>(
+      std::vector<int64_t>{x_shape[0], x_shape[1], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
+  }
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

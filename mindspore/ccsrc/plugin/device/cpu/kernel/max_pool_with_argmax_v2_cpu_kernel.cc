@@ -147,7 +147,7 @@ void MaxPoolWithArgmaxV2CpuKernelMod::MaxPoolWithArgmaxV2SingleCompute(DATA_T *i
   INDICES_T input_start = pos_n * in_channel * iH * iW;
   INDICES_T stride = pos_c * iH * iW;
   INDICES_T max_idx = stride + start_h * iW + start_w;
-  DATA_T max_data = input[input_start + max_idx];
+  DATA_T max_data = static_cast<DATA_T>(-std::numeric_limits<DATA_T>::max());
   for (int cur_h = start_h; cur_h < end_h; cur_h += dH) {
     for (int cur_w = start_w; cur_w < end_w; cur_w += dW) {
       INDICES_T input_idx = stride + cur_h * iW + cur_w;

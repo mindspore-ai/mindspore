@@ -64,7 +64,10 @@ class MaxPoolGradWithArgmaxV2GpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
 
   int64_t x_hw_{1};
+  int64_t x_chw_{1};
+  int64_t x_nchw_{1};
   int64_t dy_hw_{1};
+  int64_t dy_chw_{1};
   int64_t dy_nchw_{1};
   bool is_null_input_{false};
 };

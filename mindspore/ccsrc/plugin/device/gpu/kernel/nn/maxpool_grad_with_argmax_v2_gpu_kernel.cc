@@ -38,8 +38,8 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<Address
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'MaxPoolWithArgmaxGradV2' failed to cudaMemsetAsync");
-  CalMaxPoolGradWithArgmaxV2(dy_addr, index_addr, x_hw_, dy_hw_, dy_nchw_, dx_addr, device_id_,
-                             reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalMaxPoolGradWithArgmaxV2(dy_addr, index_addr, x_hw_, x_chw_, x_nchw_, dy_hw_, dy_chw_, dy_nchw_, dx_addr,
+                             device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
@@ -92,10 +92,18 @@ int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     return KRET_RESIZE_FAILED;
   }
 
-  constexpr size_t nc_offset = 2;
-  x_hw_ = std::accumulate(x_shape.begin() + nc_offset, x_shape.end(), 1, std::multiplies<int64_t>());
-  dy_hw_ = std::accumulate(dy_shape.begin() + nc_offset, dy_shape.end(), 1, std::multiplies<int64_t>());
+  const size_t offset_c = 1;
+  const size_t offset_h = 2;
+  x_hw_ = std::accumulate(x_shape.begin() + offset_h, x_shape.end(), 1, std::multiplies<int64_t>());
+  x_chw_ = std::accumulate(x_shape.begin() + offset_c, x_shape.end(), 1, std::multiplies<int64_t>());
+  x_nchw_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
+  dy_hw_ = std::accumulate(dy_shape.begin() + offset_h, dy_shape.end(), 1, std::multiplies<int64_t>());
+  dy_chw_ = std::accumulate(dy_shape.begin() + offset_c, dy_shape.end(), 1, std::multiplies<int64_t>());
   dy_nchw_ = std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies<int64_t>());
+  if ((dy_chw_ == 0) || (dy_hw_ == 0)) {
+    MS_LOG(ERROR) << "The shape of input_grads is invalid.";
+    return KRET_RESIZE_FAILED;
+  }
   return KRET_OK;
 }
 

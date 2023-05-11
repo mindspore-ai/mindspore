@@ -23,12 +23,9 @@ namespace kernel {
 namespace {
 constexpr size_t kMaxPoolGradWithArgmaxV2InputsNum = 3;
 constexpr size_t kMaxPoolGradWithArgmaxV2OutputsNum = 1;
-const size_t kZero = 0;
-const size_t kOne = 1;
-const size_t kTwo = 2;
-const size_t kThree = 3;
-const size_t DIM_SIZE_1 = 1;
-const size_t DIM_SIZE_4 = 4;
+constexpr int64_t kIndexChannel = 1;
+constexpr int64_t kIndexHeight = 2;
+constexpr int64_t kIndexWidth = 3;
 }  // namespace
 
 bool MaxPoolGradWithArgmaxV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -37,8 +34,8 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::Init(const BaseOperatorPtr &base_opera
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->GetPrim()->name();
 
-  x_dtype_ = inputs[kZero]->GetDtype();
-  argmax_dtype_ = inputs[kTwo]->GetDtype();
+  x_dtype_ = inputs[kIndex0]->GetDtype();
+  argmax_dtype_ = inputs[kIndex2]->GetDtype();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradWithArgmaxV2>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
@@ -66,69 +63,23 @@ int MaxPoolGradWithArgmaxV2CpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     return ret;
   }
 
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grads_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  y_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  grads_shape_ = inputs[kIndex1]->GetShapeVector();
+  y_shape_ = outputs[kIndex0]->GetShapeVector();
+  if (std::any_of(y_shape_.begin(), y_shape_.end(), [](int64_t dim) { return dim == 0; })) {
+    MS_LOG(ERROR) << "The shape of output_y is invalid.";
+    return KRET_RESIZE_FAILED;
+  }
   return KRET_OK;
 }
 
 std::vector<int64_t> MaxPoolGradWithArgmaxV2CpuKernelMod::GetValidAttr(const std::vector<int64_t> &src_attr) const {
-  if (src_attr.size() == DIM_SIZE_1) {
-    return {src_attr[kZero], src_attr[kZero]};
-  } else if (src_attr.size() == DIM_SIZE_4) {
-    return {src_attr[kTwo], src_attr[kThree]};
+  if (src_attr.size() == kShape1dDims) {
+    return {src_attr[kDim0], src_attr[kDim0]};
+  } else if (src_attr.size() == kShape4dDims) {
+    return {src_attr[kDim2], src_attr[kDim3]};
   } else {
-    return {src_attr[kZero], src_attr[kOne]};
-  }
-}
-
-template <typename DATA_T>
-void MaxPoolGradWithArgmaxV2CpuKernelMod::OutPutInitKernel(DATA_T *output, size_t length) const {
-  for (size_t s = 0; s < length; s++) {
-    output[s] = (DATA_T)0;
-  }
-}
-
-void MaxPoolGradWithArgmaxV2CpuKernelMod::CheckPadsValue(size_t k_width, size_t p_width, size_t k_height,
-                                                         size_t p_height) const {
-  if (k_width / kTwo < p_width && k_height / kTwo < p_height) {
-    MS_EXCEPTION(ValueError)
-      << "for " << kernel_name_
-      << ", pads should be smaller than or equal to half of kernel size, but the height, width of pads is [" << p_height
-      << ", " << p_width << "], the height, width of kernel size is [" << k_height << ", " << k_width << "].";
-  }
-}
-
-void MaxPoolGradWithArgmaxV2CpuKernelMod::CheckDilationValue(size_t d_width, size_t in_width, size_t d_height,
-                                                             size_t in_height) const {
-  if (d_width >= in_width && d_height >= in_height) {
-    MS_EXCEPTION(ValueError)
-      << "for " << kernel_name_
-      << ", dilation should be smaller than or equal to input, but the height, width of dilation is [" << d_height
-      << ", " << d_width << "], while the height,width of input is [" << in_height << ", " << in_width << "].";
-  }
-}
-
-template <typename DATA_T, typename INDICES_T>
-void MaxPoolGradWithArgmaxV2CpuKernelMod::MaxPoolGradWithArgmaxV2SingleCompute(
-  DATA_T *input_grad, INDICES_T *input_argmax, DATA_T *output_y, size_t iH, size_t iW, size_t oH, size_t oW, size_t kH,
-  size_t kW, size_t sH, size_t sW, size_t pH, size_t pW, size_t dH, size_t dW) {
-  DATA_T *in_grad = input_grad;
-  INDICES_T *argmax = input_argmax;
-  DATA_T *out_y = output_y;
-
-  /* calculate max points */
-  for (size_t i = 0; i < oH; i++) {
-    for (size_t j = 0; j < oW; j++) {
-      /* retrieve position of max */
-      size_t index = i * oW + j;
-      size_t maxp = static_cast<size_t>(argmax[index]);
-
-      if (maxp != -kOne) {
-        /* update gradient */
-        out_y[maxp] += in_grad[index];
-      }
-    }
+    return {src_attr[kDim0], src_attr[kDim1]};
   }
 }
 
@@ -138,48 +89,73 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<Address
                                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradWithArgmaxV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradWithArgmaxV2OutputsNum, kernel_name_);
-  auto input_grads = static_cast<DATA_T *>(inputs[kOne]->addr);
-  auto input_argmax = static_cast<INDICES_T *>(inputs[kTwo]->addr);
-  auto output_y = static_cast<DATA_T *>(outputs[kZero]->addr);
-  auto input_shape_vec = x_shape_;
-  auto output_shape_vec = grads_shape_;
-  const size_t in_width = static_cast<size_t>(input_shape_vec[kThree]);
-  const size_t in_height = static_cast<size_t>(input_shape_vec[kTwo]);
-  const size_t in_channel = static_cast<size_t>(input_shape_vec[kOne]);
-  const size_t in_batch = static_cast<size_t>(input_shape_vec[kZero]);
-  const size_t out_width = static_cast<size_t>(output_shape_vec[kThree]);
-  const size_t out_height = static_cast<size_t>(output_shape_vec[kTwo]);
-  const size_t in_stride = in_width * in_height;
-  const size_t out_stride = out_width * out_height;
-  const size_t batch = in_batch * in_channel;
+  auto input_grads = reinterpret_cast<DATA_T *>(inputs[kIndex1]->addr);
+  auto input_argmax = reinterpret_cast<INDICES_T *>(inputs[kIndex2]->addr);
+  auto output_y = reinterpret_cast<DATA_T *>(outputs[kIndex0]->addr);
+
+  const int64_t grads_channel = grads_shape_.at(kIndexChannel);
+  const int64_t grads_height = grads_shape_.at(kIndexHeight);
+  const int64_t grads_width = grads_shape_.at(kIndexWidth);
+  const int64_t y_height = y_shape_.at(kIndexHeight);
+  const int64_t y_width = y_shape_.at(kIndexWidth);
+  const int64_t y_nchw = std::accumulate(y_shape_.begin(), y_shape_.end(), 1, std::multiplies<int64_t>());
 
   auto valid_ksize_list = GetValidAttr(ksize_list_);
   auto valid_strides_list = GetValidAttr(strides_list_);
   auto valid_pads_list = GetValidAttr(pads_list_);
   auto valid_dilation_list = GetValidAttr(dilation_list_);
-  const size_t k_width = static_cast<size_t>(valid_ksize_list[kOne]);
-  const size_t k_height = static_cast<size_t>(valid_ksize_list[kZero]);
-  const size_t s_width = static_cast<size_t>(valid_strides_list[kOne]);
-  const size_t s_height = static_cast<size_t>(valid_strides_list[kZero]);
-  const size_t p_width = static_cast<size_t>(valid_pads_list[kOne]);
-  const size_t p_height = static_cast<size_t>(valid_pads_list[kZero]);
-  const size_t d_width = static_cast<size_t>(valid_dilation_list[kOne]);
-  const size_t d_height = static_cast<size_t>(valid_dilation_list[kZero]);
-  const size_t length = batch * in_width * in_height;
+  const int64_t k_width = valid_ksize_list[kDim1];
+  const int64_t k_height = valid_ksize_list[kDim0];
+  const int64_t s_width = valid_strides_list[kDim1];
+  const int64_t s_height = valid_strides_list[kDim0];
+  const int64_t p_width = valid_pads_list[kDim1];
+  const int64_t p_height = valid_pads_list[kDim0];
+  const int64_t d_width = valid_dilation_list[kDim1];
+  const int64_t d_height = valid_dilation_list[kDim0];
 
-  (void)CheckPadsValue(k_width, p_width, k_height, p_height);
-  (void)CheckDilationValue(d_width, in_width, d_height, in_height);
-  if (p_width * p_height < kZero) {
-    MS_EXCEPTION(ValueError) << "for " << kernel_name_
-                             << ", pads should be no less than zero, but get p_width * p_height * p_depth = "
-                             << p_width * p_height;
-  }  // attributes limitations
-  (void)OutPutInitKernel(output_y, length);
-  for (size_t i = 0; i < batch; i++) {
-    MaxPoolGradWithArgmaxV2SingleCompute(input_grads + i * out_stride, input_argmax + i * out_stride,
-                                         output_y + i * in_stride, in_height, in_width, out_height, out_width, k_height,
-                                         k_width, s_height, s_width, p_height, p_width, d_height, d_width);
-  }
+  // Init output_y
+  auto init = [output_y](size_t start, size_t end) {
+    const DATA_T zero = static_cast<DATA_T>(0);
+    for (size_t i = start; i < end; ++i) {
+      output_y[i] = zero;
+    }
+  };
+  ParallelLaunchAutoSearch(init, y_nchw, this, &parallel_search_info_);
+
+  // Run Parallel task
+  auto task = [input_grads, input_argmax, output_y, &grads_channel, &grads_height, &grads_width, &y_height, &y_width,
+               &k_height, &k_width, &s_height, &s_width, &p_height, &p_width, &d_height,
+               &d_width](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      const int pos_n = i / (grads_channel * y_height * y_width);
+      const int pos_c = i / (y_height * y_width) % grads_channel;
+      const int pos_h = i / y_width % y_height;
+      const int pos_w = i % y_width;
+      const int grads_start = pos_n * grads_channel * grads_height * grads_width;
+      const int grads_stride = pos_c * grads_height * grads_width;
+      for (int cur_grads_h = 0; cur_grads_h < grads_height; cur_grads_h++) {
+        for (int cur_grads_w = 0; cur_grads_w < grads_width; cur_grads_w++) {
+          int start_h = cur_grads_h * s_height - p_height;
+          int start_w = cur_grads_w * s_width - p_width;
+          int end_h = std::min<int>(start_h + (k_height - 1) * d_height + 1, y_height);
+          int end_w = std::min<int>(start_w + (k_width - 1) * d_width + 1, y_width);
+          if (start_h < 0) {
+            start_h += ceil(-start_h / static_cast<double>(d_height)) * d_height;
+          }
+          if (start_w < 0) {
+            start_w += ceil(-start_w / static_cast<double>(d_width)) * d_width;
+          }
+          if ((pos_h >= start_h && pos_h < end_h) && (pos_w >= start_w && pos_w < end_w)) {
+            if (input_argmax[grads_start + grads_stride + cur_grads_h * grads_width + cur_grads_w] ==
+                pos_h * y_width + pos_w) {
+              output_y[i] += input_grads[grads_start + grads_stride + cur_grads_h * grads_width + cur_grads_w];
+            }
+          }
+        }
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, y_nchw, this, &parallel_search_info_);
   return true;
 }
 
