@@ -24,6 +24,7 @@ Neural Network
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
+    mindspore.ops.bidense
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv1d
     mindspore.ops.conv2d

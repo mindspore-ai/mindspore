@@ -24,6 +24,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
+    mindspore.ops.bidense
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv1d
     mindspore.ops.conv2d

@@ -436,6 +436,7 @@ from .nn_func import (
     max_pool2d,
     max_pool3d,
     batch_norm,
+    bidense,
     celu,
     bias_add,
     binary_cross_entropy,
