@@ -91,7 +91,7 @@ class GroupLossScaleManager(Cell):
         >>>                      "grad_accumulation": False, "dim_reduce": False, "loss_scale_group": True}}
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
         >>>               boost_level="O1", boost_config_dict=boost_config_dict)
-        >>> # For details about how to build the dataset, please refer to the variable `dataset_train` in tutorial
+        >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
         >>> # document on the official website:
         >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
         >>> dataset = create_custom_dataset()

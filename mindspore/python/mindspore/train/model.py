@@ -195,7 +195,7 @@ class Model:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-        >>> # For details about how to build the dataset, please refer to the variable `dataset_train` in tutorial
+        >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
         >>> # document on the official website:
         >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
         >>> dataset = create_custom_dataset()
@@ -1000,8 +1000,9 @@ class Model:
             >>> from mindspore import nn
             >>> from mindspore.train import Model
             >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
+            >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
+            >>> # document on the official website:
+            >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -1149,8 +1150,9 @@ class Model:
             >>> from mindspore import nn
             >>> from mindspore.train import Model
             >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
+            >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
+            >>> # document on the official website:
+            >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
             >>> train_dataset = create_custom_dataset()
             >>> valid_dataset = create_custom_dataset()
             >>> net = Net()
@@ -1240,8 +1242,9 @@ class Model:
             >>> from mindspore.train import Model
             >>> from mindspore.amp import FixedLossScaleManager
             >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
+            >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
+            >>> # document on the official website:
+            >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -1410,8 +1413,9 @@ class Model:
             >>> from mindspore import nn
             >>> from mindspore.train import Model
             >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
+            >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
+            >>> # document on the official website:
+            >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -1646,8 +1650,9 @@ class Model:
             >>> init()
             >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
-            >>> # For details about how to build the dataset, please refer to the tutorial
-            >>> # document on the official website.
+            >>> # For details about how to build the dataset, please refer to the variable `train_dataset` in tutorial
+            >>> # document on the official website:
+            >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
