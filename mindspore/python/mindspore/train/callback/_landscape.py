@@ -187,9 +187,9 @@ class SummaryLandscape:
         ...     # If the device_target is Ascend, set the device_target to "Ascend"
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="GPU")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
-        ...     # The detail of create_dataset method shown in model_zoo.official.cv.lenet.src.dataset.py
+        ...     # The detail of create_dataset method shown in models.research.cv.lenet.src.dataset.py
         ...     ds_train = create_dataset(mnist_dataset_dir, 32)
-        ...     # The detail of LeNet5 shown in model_zoo.official.cv.lenet.src.lenet.py
+        ...     # The detail of LeNet5 shown in models.research.cv.lenet.src.lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
