@@ -5067,7 +5067,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Momentum value must be `[0, 1]`. Default: 0.1.
-        eps (float, optional): A small value added for numerical stability. Default: 1e-5, value must be `[0, 1)`.
+        eps (float, optional): A small value added for numerical stability. Default: 1e-5, value must be `(0, 1]`.
 
     Returns:
         output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
