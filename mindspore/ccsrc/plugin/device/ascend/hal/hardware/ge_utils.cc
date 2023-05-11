@@ -24,6 +24,7 @@
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/dev.h"
+#include "utils/phase.h"
 
 namespace mindspore {
 namespace device {
@@ -49,10 +50,20 @@ std::string ShapesToString(const ShapeArray &shapes) {
   return buffer.str();
 }
 
+std::string GetPhasePrefix() {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  auto pos = phase.find('.');
+  if (pos != std::string::npos) {
+    return phase.substr(0, pos);
+  }
+
+  return "";
+}
+
 bool IsGeTrain() {
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto env_training = common::GetEnv("MS_GE_TRAIN");
-  if (env_ge == "1" && env_training == "1") {
+  if (env_ge == "1" && (env_training == "1" || GetPhasePrefix() == "eval")) {
     return true;
   }
   return false;
@@ -74,7 +85,7 @@ std::string GetGraphName(const FuncGraphPtr &graph) {
 
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
   OptionMap options{};
-  if (common::GetEnv("GE_TRAIN") == "1") {
+  if (IsGeTrain() && GetPhasePrefix() != "eval") {
     (void)options.emplace("ge.exec.variable_acc", "1");
   }
   if (!is_dynamic_shape) {
@@ -87,7 +98,7 @@ OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic
 
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
-  auto converter = transform::NewConverter(anf_graph);
+  auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);

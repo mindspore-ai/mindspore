@@ -68,7 +68,7 @@ BACKEND_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
 FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 
 // convert
-BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph);
+BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix = "");
 
 BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
 BACKEND_EXPORT void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,

@@ -399,7 +399,8 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 
   // set up init sub graph
-  if (init_input->size() != 0) {
+  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ == "eval";
+  if (init_input->size() != 0 && !is_eval_after_train) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(*init_input);
@@ -1022,7 +1023,7 @@ void DfGraphConvertor::ConvertWhileBody(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr anf_graph = graph_node->value()->cast<FuncGraphPtr>();
   MS_EXCEPTION_IF_NULL(anf_graph);
-  DfGraphConvertor converter(anf_graph);
+  DfGraphConvertor converter(anf_graph, phase_prefix_);
   converter.use_inputs_ = true;
 
   const auto &params = anf_graph->parameters();
@@ -1155,7 +1156,7 @@ void DfGraphConvertor::ConvertWhileCond(const AnfNodePtr &node) {
   auto func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
 
-  DfGraphConvertor converter(func_graph);
+  DfGraphConvertor converter(func_graph, phase_prefix_);
   converter.use_inputs_ = true;
 
   converter.inputs_ = func_graph->parameters();
@@ -1200,7 +1201,7 @@ void DfGraphConvertor::ConvertWhileAfter(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr anf_graph = graph_node->value()->cast<FuncGraphPtr>();
   MS_EXCEPTION_IF_NULL(anf_graph);
-  DfGraphConvertor converter(anf_graph);
+  DfGraphConvertor converter(anf_graph, phase_prefix_);
   converter.use_inputs_ = true;
 
   const auto &params = anf_graph->parameters();
@@ -2404,7 +2405,7 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(graph_node);
   auto anf_graph = graph_node->value()->cast<AnfGraphPtr>();
   MS_EXCEPTION_IF_NULL(anf_graph);
-  DfGraphConvertor converter(anf_graph);
+  DfGraphConvertor converter(anf_graph, phase_prefix_);
   converter.graph_type_ = GraphType::kBranch;
 
   auto &params = anf_graph->parameters();

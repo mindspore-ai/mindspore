@@ -28,6 +28,7 @@ std::string ShapesToString(const ShapeArray &shapes);
 std::string GetGraphName(const FuncGraphPtr &graph);
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape);
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air);
+std::string GetPhasePrefix();
 bool IsGeTrain();
 }  // namespace ascend
 }  // namespace device

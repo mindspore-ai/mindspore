@@ -57,4 +57,12 @@ uint32_t GetOptInfo(uint32_t mode, const std::string &soc_ver, std::map<std::str
   return 0;
 }
 }  // namespace gelc
+
+namespace mindspore {
+namespace device {
+namespace ascend {
+std::string GetPhasePrefix() { return ""; }
+}  // namespace ascend
+}  // namespace device
+}  // namespace mindspore
 #endif

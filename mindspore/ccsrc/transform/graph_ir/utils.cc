@@ -282,8 +282,8 @@ DfGraphWrapperPtr GetGraphByName(const std::string &name) { return DfGraphManage
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix) {
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix);
   return converter;
 }
 
