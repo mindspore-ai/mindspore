@@ -98,11 +98,11 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> from mindspore.ops import abs
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
-            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
+            >>> new_node = stree.create_call_function(abs, ["x"], node)
         """
         Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
         Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
@@ -129,11 +129,10 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> for node in stree.nodes():
-            ...     node.set_attribute("channel", 3)
+            ...     print(node.get_name())
         """
         for node in self._symbol_tree.nodes():
             yield Node(node)
@@ -167,8 +166,7 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> for node in stree.nodes():
             ...     if node.get_name() == "conv1":
@@ -196,8 +194,7 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> for node in stree.nodes():
             ...     if node.get_name() == "conv1":
@@ -227,12 +224,12 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> from mindspore.ops import abs
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> position = stree.after(node)
-            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
+            >>> new_node = stree.create_call_function(abs, ["x"], node)
             >>> stree.insert(position, new_node)
         """
         Validator.check_value_type("position", position, [Position], "SymbolTree")
@@ -254,8 +251,7 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> input_node = node.get_inputs()[0]
@@ -298,11 +294,12 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> from mindspore.ops import abs
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
+            >>> input_node = stree.get_node("input_x")
             >>> node = stree.get_node("conv1")
-            >>> new_node = stree.create_call_function(F.abs, ["x"], node)
+            >>> new_node = stree.create_call_function(abs, ["x"], input_node)
             >>> stree.replace(node, [new_node])
         """
         Validator.check_value_type("old_node", old_node, [Node], "SymbolTree")
@@ -333,10 +330,10 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
-            >>> stree.get_code()
+            >>> codes = stree.get_code()
+            >>> print(codes)
         """
         return self._symbol_tree.get_code()
 
@@ -350,10 +347,9 @@ class SymbolTree:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
-            >>> stree.get_network()
+            >>> new_net = stree.get_network()
         """
         return self._symbol_tree.get_network()
 

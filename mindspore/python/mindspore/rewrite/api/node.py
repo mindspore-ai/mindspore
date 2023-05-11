@@ -119,8 +119,7 @@ class Node:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> users = node.get_users()
@@ -149,8 +148,7 @@ class Node:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> node.set_arg(0, "x")
@@ -184,8 +182,7 @@ class Node:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> src_node = stree.get_node("conv1")
             >>> dst_node = stree.get_node("conv2")
@@ -215,8 +212,7 @@ class Node:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> name = node.get_name()
@@ -232,8 +228,7 @@ class Node:
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
-            >>> from lenet import Lenet
-            >>> net = Lenet()
+            >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> node_type = node.get_node_type()
