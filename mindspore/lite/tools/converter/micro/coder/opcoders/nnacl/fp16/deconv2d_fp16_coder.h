@@ -28,7 +28,9 @@ class DeConvolutionFP16Coder final : public DeConvolutionFP32Coder {
  public:
   DeConvolutionFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const LiteGraph::Node *node, size_t node_index, Target target)
-      : DeConvolutionFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+      : DeConvolutionFP32Coder(in_tensors, out_tensors, node, node_index, target) {
+    data_type_ = kNumberTypeFloat16;
+  }
 
   int DoCode(CoderContext *const context) override;
 
@@ -38,7 +40,6 @@ class DeConvolutionFP16Coder final : public DeConvolutionFP32Coder {
   int InitRunBuf() override;
   int InitWeightBias(CoderContext *const context) override;
   void CollectFilesForFunc(CoderContext *const context) override;
-  TypeId data_type_{kNumberTypeFloat16};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_DECONV2D_FP16_CODER_H_

@@ -37,6 +37,7 @@ class ConvolutionWinogradFP16Coder : public ConvolutionWinogradFP32Coder {
                                const LiteGraph::Node *node, size_t node_index, Target target, int output_unit)
       : ConvolutionWinogradFP32Coder(in_tensors, out_tensors, node, node_index, target, output_unit) {
     is_weight_online_ = true;
+    data_type_ = kNumberTypeFloat16;
   }
 
   int Prepare(CoderContext *const context) override;
@@ -54,7 +55,6 @@ class ConvolutionWinogradFP16Coder : public ConvolutionWinogradFP32Coder {
   std::string GetOutputTransFunc(int input_unit, int output_unit, ActType act_type) override;
   void CollectFilesForFunc(CoderContext *const context) override;
   int InitTmpBuffer() override;
-  TypeId data_type_{kNumberTypeFloat16};
   TransFuncFp16Str trans_func_str_;
 };
 }  // namespace mindspore::lite::micro::nnacl
