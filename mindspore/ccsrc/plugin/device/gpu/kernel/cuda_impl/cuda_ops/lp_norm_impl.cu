@@ -74,12 +74,19 @@ __global__ void NormCalHighPrecisionKernel(const float *middle_output, T *output
   }
 }
 
+template <typename T>
+__global__ void NormCalIndentity(const float *middle_output, T *output, size_t output_elements) {
+  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (output_elements);
+       index += blockDim.x * gridDim.x) {
+    output[index] = middle_output[index];
+  }
+}
+
 template <>
-void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length,
-                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                      size_t output_shape_length, size_t output_elements, float p, float eps,
-                      float *middle_output, float *output, const uint32_t &device_id,
-                      cudaStream_t cuda_stream) {
+void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
+                      const size_t *output_axis, const size_t *output_stride, size_t output_shape_length,
+                      size_t output_elements, float p, float eps, float *middle_output, float *output,
+                      const uint32_t &device_id, cudaStream_t cuda_stream) {
   int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
@@ -91,11 +98,10 @@ void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t inpu
 }
 
 template <>
-void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length,
-                     size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                     size_t output_shape_length, size_t output_elements, float p, float eps,
-                     float *middle_output, half *output, const uint32_t &device_id,
-                     cudaStream_t cuda_stream) {
+void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
+                     const size_t *output_axis, const size_t *output_stride, size_t output_shape_length,
+                     size_t output_elements, float p, float eps, float *middle_output, half *output,
+                     const uint32_t &device_id, cudaStream_t cuda_stream) {
   int64_t int_p = p;
   LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
@@ -103,19 +109,20 @@ void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_
   if (int_p != 0) {
     NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       middle_output, output, output_elements, p, eps);
+  } else {
+    NormCalIndentity<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      middle_output, output, output_elements);
   }
 }
 
-template CUDA_LIB_EXPORT
-void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length,
-                      size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                      size_t output_shape_length, size_t output_elements, float p, float eps,
-                      float *middle_output, float *output, const uint32_t &device_id,
-                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length,
+                                               size_t input_elements, const size_t *output_axis,
+                                               const size_t *output_stride, size_t output_shape_length,
+                                               size_t output_elements, float p, float eps, float *middle_output,
+                                               float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT
-void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length,
-                     size_t input_elements, const size_t *output_axis, const size_t *output_stride,
-                     size_t output_shape_length, size_t output_elements, float p, float eps,
-                     float *middle_output, half *output, const uint32_t &device_id,
-                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length,
+                                              size_t input_elements, const size_t *output_axis,
+                                              const size_t *output_stride, size_t output_shape_length,
+                                              size_t output_elements, float p, float eps, float *middle_output,
+                                              half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
