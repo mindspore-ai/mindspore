@@ -3111,12 +3111,14 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
                          f"but got upper: {upper}, lower: {lower}. ")
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'rrelu', the 'input' must be a Tensor but got {type(input)}.")
+    _lower = Tensor(lower, mstype.float32)
+    _upper = Tensor(upper, mstype.float32)
     _size = input.shape
     sign_matrix = _get_cache_prim(P.Sign)()(input)
     negative_filter = sign_matrix.clip(None, 0)
     positive_filter = sign_matrix.clip(0, None)
     _dtype = _get_cache_prim(P.DType)()(input)
-    mask = ops.uniform(_size, lower, upper).astype(_dtype)
+    mask = ops.uniform(_size, _lower, _upper).astype(_dtype)
     negative_mask = negative_filter * mask * -1
     total_mask = negative_mask + positive_filter
     out = total_mask * input

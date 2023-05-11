@@ -2731,15 +2731,15 @@ def bitwise_left_shift(input, other):
         \end{aligned}
 
     Args:
-        input (Union[Tensor, Scalar]): The input to be left shifted.
-        other (Union[Tensor, Scalar]): The number of bit to be applied on left arithmetic shift.
+        input (Union[Tensor, int, bool]): The input to be left shifted.
+        other (Union[Tensor, int, bool]): The number of bit to be applied on left arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise left shift.
 
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
-        TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If either `input` or `other` is not a bool, int or a tensor of dtype: int or uint.
         TypeError: If `input` and `other` do not have the same dtype.
         ValueError: If `input` and `other` could not be broadcast.
 
@@ -2781,15 +2781,15 @@ def bitwise_right_shift(input, other):
         \end{aligned}
 
     Args:
-        input (Union[Tensor, Scalar]): The input to be right shifted.
-        other (Union[Tensor, Scalar]): The number of bit to be applied on right arithmetic shift.
+        input (Union[Tensor, int, bool]): The input to be right shifted.
+        other (Union[Tensor, int, bool]): The number of bit to be applied on right arithmetic shift.
 
     Returns:
         Tensor, the result after bitwise right shift.
 
     Raises:
         TypeError: If neither `input` nor `other` is a tensor.
-        TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
+        TypeError: If either `input` or `other` is not a bool, int or a tensor of dtype: int or uint.
         TypeError: If `input` and `other` do not have the same dtype.
         ValueError: If `input` and `other` could not be broadcast.
 
