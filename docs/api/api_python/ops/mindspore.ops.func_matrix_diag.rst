@@ -31,7 +31,8 @@ mindspore.ops.matrix_diag
         - **TypeError** - `x` 与 `padding_value` 数据类型不同。
         - **TypeError** - `k` 、 `num_rows` 、 `num_cols` 数据类型不为int32。
         - **ValueError** - `k` 的维度不为0或1。
-        - **ValueError** - `padding_value` 、 `num_rows` 、 `num_cols` 的维度不为0。
+        - **ValueError** - `num_rows` 、 `num_cols` 的维度不为0。
+        - **ValueError** - `padding_value` 的维度不为0/1。
         - **ValueError** - `k` 的大小不为1或2。
         - **ValueError** - `k` 的取值不在 (-num_rows, num_cols) 范围内。
         - **ValueError** - 当k[0] != k[1]时，k[1]小于k[0]。
