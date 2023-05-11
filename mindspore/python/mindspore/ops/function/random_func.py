@@ -135,9 +135,9 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     Args:
         logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
         num_sample (int):  Number of sample to be drawn. Only constant values is allowed.
-        seed (int):  Random seed. Only constant values is allowed. Default: 0.
+        seed (int):  Random seed. Only constant values is allowed. Default: ``0`` .
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
-            mindspore.int32 and mindspore.int64. Default: mstype.int64.
+            mindspore.int32 and mindspore.int64. Default: ``mstype.int64`` .
 
     Returns:
         Tensor, The output Tensor with shape :math:`(batch\_size, num\_samples)`.
@@ -364,8 +364,8 @@ def uniform_candidate_sampler(true_classes,
         unique (bool): Whether all sampled classes in a batch are unique.
         range_max (int): The number of possible classes, must be positive.
         seed (int): Used for random number generation, must be non-negative. If seed has a value of 0,
-            the seed will be replaced with a randomly generated value. Default: 0.
-        remove_accidental_hits (bool): Whether accidental hit is removed. Default: False.
+            the seed will be replaced with a randomly generated value. Default: ``0`` .
+        remove_accidental_hits (bool): Whether accidental hit is removed. Default: ``False`` .
 
     Returns:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
@@ -512,13 +512,13 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
     Args:
         true_classes (Tensor): The target classes. With data type of int64 and
           shape :math:`(batch\_size, num\_true)` .
-        num_true (int): The number of target classes per training example. Default: 1.
-        num_sampled (int): The number of classes to randomly sample. Default: 5.
+        num_true (int): The number of target classes per training example. Default: ``1`` .
+        num_sampled (int): The number of classes to randomly sample. Default: ``5`` .
         unique (bool): Determines whether sample with rejection. If `unique` is True,
-          all sampled classes in a batch are unique. Default: True.
+          all sampled classes in a batch are unique. Default: ``True`` .
         range_max (int): The number of possible classes. When `unique` is True,
-          `range_max` must be greater than or equal to `num_sampled`. Default: 5.
-        seed (int): Random seed, must be non-negative. Default: 0.
+          `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
+        seed (int): Random seed, must be non-negative. Default: ``0`` .
 
     Returns:
         Tuple of 3 Tensors.
