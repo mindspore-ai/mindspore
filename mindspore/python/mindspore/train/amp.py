@@ -621,9 +621,9 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
 
     Examples:
         >>> from mindspore import amp
-        >>> net = MyNet()
+        >>> net = LeNet5()
         >>> custom_white_list = amp.get_white_list()
-        >>> custom_white_list.append(nn.Tanhshrink)
+        >>> custom_white_list.append(nn.Flatten)
         >>> net = amp.custom_mixed_precision(net, white_list=custom_white_list)
     """
     if not isinstance(network, nn.Cell):
