@@ -25,6 +25,7 @@ laplace_op_info = AiCPURegOp("StandardLaplace") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default, DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(laplace_op_info)
