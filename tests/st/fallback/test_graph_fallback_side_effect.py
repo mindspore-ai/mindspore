@@ -47,7 +47,6 @@ class UNet(ms.nn.Cell):
         return out, self.para + 10
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -130,7 +129,6 @@ def test_fallback_side_effect_dict_2():
     assert out[1] == {'a': 1, 'b': 4, 'c': 3, 'd': 22}
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -325,7 +323,6 @@ class PrintPyExecuteNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

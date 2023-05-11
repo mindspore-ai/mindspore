@@ -716,7 +716,6 @@ def test_raise_none_with_variable_control_flow3():
     assert "('ddddd, ', Tensor(" in str(control.value)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -731,7 +730,7 @@ def test_none_in_value_list_tuple_dict():
         return list((1, "a", None, [1, "a", None], dict(y=1, u=None)))
 
     out = foo()
-    assert out == (1, "a", None, [1, "a", None], dict(y=1, u=None))
+    assert out == [1, "a", None, [1, "a", None], {"y": 1, "u": None}]
 
 
 @pytest.mark.level0
