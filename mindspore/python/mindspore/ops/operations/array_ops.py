@@ -2207,7 +2207,7 @@ class ArgMaxWithValue(Primitive):
         - If there are multiple maximum values, the index of the first maximum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
-    Also see: func: `mindspore.ops.max`.
+    Also see :func:`mindspore.ops.max`.
 
     Args:
         axis (int): The dimension to reduce. Default: ``0`` .
