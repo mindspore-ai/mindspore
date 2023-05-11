@@ -51,28 +51,40 @@ PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const on
     size_t element_size;
     switch (node_iter->data_type()) {
       case onnx::TensorProto_DataType_FLOAT:
-        element_size = node_iter->raw_data().size() / sizeof(float);
-        if (element_size != 1) {
-          MS_LOG(ERROR) << "element size is incorrect.";
-          return nullptr;
+        if (node_iter->float_data_size() > 0) {
+          value = node_iter->float_data(0);
+        } else {
+          element_size = node_iter->raw_data().size() / sizeof(float);
+          if (element_size != 1) {
+            MS_LOG(ERROR) << "element size is incorrect.";
+            return nullptr;
+          }
+          value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
         }
-        value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
         break;
       case onnx::TensorProto_DataType_INT32:
-        element_size = node_iter->raw_data().size() / sizeof(int32_t);
-        if (element_size != 1) {
-          MS_LOG(ERROR) << "element size is incorrect.";
-          return nullptr;
+        if (node_iter->int32_data_size() > 0) {
+          value = static_cast<float>(node_iter->int32_data(0));
+        } else {
+          element_size = node_iter->raw_data().size() / sizeof(int32_t);
+          if (element_size != 1) {
+            MS_LOG(ERROR) << "element size is incorrect.";
+            return nullptr;
+          }
+          value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
         }
-        value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
         break;
       case onnx::TensorProto_DataType_INT64:
-        element_size = node_iter->raw_data().size() / sizeof(int64_t);
-        if (element_size != 1) {
-          MS_LOG(ERROR) << "element size is incorrect.";
-          return nullptr;
+        if (node_iter->int64_data_size() > 0) {
+          value = static_cast<float>(node_iter->int64_data(0));
+        } else {
+          element_size = node_iter->raw_data().size() / sizeof(int64_t);
+          if (element_size != 1) {
+            MS_LOG(ERROR) << "element size is incorrect.";
+            return nullptr;
+          }
+          value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
         }
-        value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
         break;
       default:
         MS_LOG(ERROR) << "do not support data_type: " << node_iter->data_type();
