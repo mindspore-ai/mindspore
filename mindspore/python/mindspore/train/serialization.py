@@ -1327,7 +1327,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>>
-        >>> net = LeNet()
+        >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
 
