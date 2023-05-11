@@ -28,49 +28,47 @@
 extern "C" {
 #endif
 int ElementEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
-int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                        const ArithmeticParameter *param);
+int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size, bool first_scalar);
 int ElementEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                         const ArithmeticParameter *param);
+                         bool first_scalar);
 
 int ElementNotEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
 int ElementOptNotEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 int ElementNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                            const ArithmeticParameter *param);
+                            bool first_scalar);
 int ElementNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size);
 int ElementOptNotEqualInt64(const int64_t *input0, const int64_t *input1, uint8_t *output, int element_size,
-                            const ArithmeticParameter *param);
+                            bool first_scalar);
 
 int ElementLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
-int ElementOptLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                       const ArithmeticParameter *param);
+int ElementOptLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size, bool first_scalar);
 int ElementLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                        const ArithmeticParameter *param);
+                        bool first_scalar);
 
 int ElementLessEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
 int ElementOptLessEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                            const ArithmeticParameter *param);
+                            bool first_scalar);
 int ElementLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                             const ArithmeticParameter *param);
+                             bool first_scalar);
 
 int ElementGreaterFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
 int ElementOptGreaterFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                          const ArithmeticParameter *param);
+                          bool first_scalar);
 int ElementGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                           const ArithmeticParameter *param);
+                           bool first_scalar);
 
 int ElementGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
 int ElementOptGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
-                               const ArithmeticParameter *param);
+                               bool first_scalar);
 int ElementGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
 int ElementOptGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
-                                const ArithmeticParameter *param);
+                                bool first_scalar);
 #ifdef __cplusplus
 }
 #endif
