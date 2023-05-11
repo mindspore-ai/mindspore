@@ -949,6 +949,11 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_abs_list_.size()
                       << ", arguments no: " << args_abs_list.size();
   }
+  const auto args_abs_list_size = args_abs_list.size() - 1;
+  bool sense_param_flag = false;
+  if (this->bound_node()->isa<CNode>()) {
+    sense_param_flag = this->bound_node()->cast<CNodePtr>()->HasAttr("sens_param_");
+  }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_abs_list.size(); i++) {
@@ -959,10 +964,20 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
                    << "]: " << args_abs_list[i]->ToString();
       SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
     }
+    if (i == args_abs_list_size && sense_param_flag) {
+      const auto &sense_shape = args_abs_list[i]->BuildShape();
+      MS_EXCEPTION_IF_NULL(sense_shape);
+      if (sense_shape->IsDynamic()) {
+        MS_EXCEPTION(ValueError) << "The shape of sense must not be dynamic shape."
+                                 << "\nFor more details with 'sense', please refer to "
+                                 << "https://www.mindspore.cn/docs/zh-CN/master/faq/network_compilation.html.";
+      }
+    }
     (void)args_abs_list[i]->Join(args_abs_list_[i]);
   }
   return std::make_shared<EvalResult>(output_, std::make_shared<AttrValueMap>());
 }
+
 EvalResultPtr Evaluator::SingleRun(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                    const AnfNodeConfigPtr &out_conf) {
   EvalResultPtr result;

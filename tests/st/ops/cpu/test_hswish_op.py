@@ -30,12 +30,12 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
 
     @jit
-    def construct(self, input_, output_grad):
-        return self.grad(self.network)(input_, output_grad)
+    def construct(self, input_):
+        return self.grad(self.network)(input_)
 
 
 class Net(nn.Cell):
@@ -56,9 +56,8 @@ def test_net():
     y = hswish(Tensor(x))
     expect = np.array([-0.33333334, -0.33333334, 0., 1.6666666, 0.6666667]).astype(np.float32)
     assert np.all(y.asnumpy() == expect)
-    sens = np.random.randn(5).astype(np.float32)
     backword_net = Grad(Net())
-    output = backword_net(Tensor(x), Tensor(sens))
+    output = backword_net(Tensor(x))
     print(len(output))
     print(output[0].asnumpy())
 
@@ -93,10 +92,8 @@ def test_hswish_grad_cpu_dynamic_shape():
     net = Net()
     grad = Grad(net)
     dy_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
-    x_dyn = Tensor(shape=[3, None], dtype=mindspore.float32)
-    grad.set_inputs(dy_dyn, x_dyn)
+    grad.set_inputs(dy_dyn)
     dy = np.random.randn(3, 32)
-    x = np.random.randn(3, 32)
-    output = grad(Tensor(dy, mindspore.float32), Tensor(x, mindspore.float32))
+    output = grad(Tensor(dy, mindspore.float32))
     expect_shape = (3, 32)
     assert output[0].asnumpy().shape == expect_shape

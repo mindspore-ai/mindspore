@@ -68,15 +68,13 @@ def test_tile_multiple_tensor_cpu():
 class GradTile(nn.Cell):
     def __init__(self, network):
         super().__init__()
-        self.grad = GradOperation(sens_param=True)
+        self.grad = GradOperation()
         self.network = network
         self.unique = P.Unique()
         self.reshape = P.Reshape()
 
-    def construct(self, input_x, multiples, grad):
-        dy = self.unique(grad)[0]
-        dy = self.reshape(dy, (2, 4))
-        return self.grad(self.network)(input_x, multiples, dy)
+    def construct(self, input_x, multiples):
+        return self.grad(self.network)(input_x, multiples)
 
 
 @pytest.mark.level0
@@ -93,9 +91,8 @@ def test_tile_multiple_tensor_grad_cpu():
     multiples = Tensor(np.array([2, 1]), mstype.int64)
     x0 = Tensor(np.array([[1, 2, 3, 4]]), mstype.float32)
     tile_net = GradTile(TileNet())
-    dout = Tensor(np.arange(1, 9), mstype.float32)
-    output = tile_net(x0, multiples, dout)
-    expect = np.array([[6., 8., 10., 12.]])
+    output = tile_net(x0, multiples)
+    expect = np.array([[2., 2., 2., 2.]])
     assert (output.asnumpy() == expect).all()
 
 
@@ -157,15 +154,13 @@ class ConcatNet(nn.Cell):
 class GradConcat(nn.Cell):
     def __init__(self, network):
         super().__init__()
-        self.grad = GradOperation(sens_param=True)
+        self.grad = GradOperation()
         self.network = network
         self.unique = P.Unique()
         self.reshape = P.Reshape()
 
-    def construct(self, x, y, z, shape, grad):
-        # grad = self.reshape(grad, (-1,))
-        dy = self.reshape(self.unique(grad)[0], (-1, 1, 2, 1))
-        return self.grad(self.network)(x, y, z, shape, dy)
+    def construct(self, x, y, z, shape):
+        return self.grad(self.network)(x, y, z, shape)
 
 
 @pytest.mark.level0
@@ -183,10 +178,9 @@ def test_concat_dynamic_grad_cpu():
     x2 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
     x3 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
     shape = Tensor(np.array([3, 1, 2, 1]), mstype.int64)
-    dout = Tensor(np.arange(1, 19), mstype.float32)
     net = GradConcat(ConcatNet())
-    output = net(x, x2, x3, shape, dout)
-    expect = np.array([1., 2., 3., 4., 5., 6.])
+    output = net(x, x2, x3, shape)
+    expect = np.array([1., 1., 1., 1., 1., 1.])
     assert (output.asnumpy() == expect).all()
 
 
@@ -227,16 +221,13 @@ def test_slice_begin_size_tensor_cpu():
 class GradSlice(nn.Cell):
     def __init__(self, network):
         super().__init__()
-        self.grad = GradOperation(sens_param=True)
+        self.grad = GradOperation()
         self.network = network
         self.unique = P.Unique()
         self.reshape = P.Reshape()
 
-    def construct(self, input_x, begin, size, grad):
-        # grad = self.reshape(grad, (-1,))
-        dy = self.unique(grad)[0]
-        dy = self.reshape(dy, size)
-        return self.grad(self.network)(input_x, begin, size, dy)
+    def construct(self, input_x, begin, size):
+        return self.grad(self.network)(input_x, begin, size)
 
 
 @pytest.mark.level0
@@ -250,7 +241,6 @@ def test_slice_begin_size_tensor_grad():
     """
     if sys.platform != 'linux':
         return
-    dy = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
     x = Tensor(
         np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]), mstype.float32)
     begin = Tensor(
@@ -259,12 +249,12 @@ def test_slice_begin_size_tensor_grad():
         np.array([2, 1, 2]), mstype.int64)
 
     net = GradSlice(SliceNet())
-    output = net(x, begin, size, dy)
+    output = net(x, begin, size)
     expect = np.array([[[0., 0., 0.],
-                        [1., 2., 0.]],
+                        [1., 1., 0.]],
 
                        [[0., 0., 0.],
-                        [3., 4., 0.]],
+                        [1., 1., 0.]],
 
                        [[0., 0., 0.],
                         [0., 0., 0.]]])
@@ -286,14 +276,13 @@ class ReduceMeanNet(nn.Cell):
 class GradReduceMean(nn.Cell):
     def __init__(self, network):
         super().__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
         self.reshape = P.Reshape()
         self.unique = P.Unique()
 
-    def construct(self, input_x, shape, grad):
-        grad = self.reshape(self.unique(grad)[0], (1, 2))
-        return self.grad(self.network)(input_x, shape, grad)
+    def construct(self, input_x, shape):
+        return self.grad(self.network)(input_x, shape)
 
 
 @pytest.mark.level0
@@ -328,8 +317,7 @@ def test_reducemean_dynamic_grad_cpu():
         return
     x = Tensor(np.array([10, 10, 2, 2]), mstype.float32)
     x2 = Tensor(np.array([2, 2]), mstype.int64)
-    dout = Tensor(np.array([1, 3]), mstype.float32)
     reduce_mean = GradReduceMean(ReduceMeanNet())
-    out = reduce_mean(x, x2, dout)
-    expect = np.array([[0.5, 1.5, 0.5, 1.5]])
+    out = reduce_mean(x, x2)
+    expect = np.array([[0.5, 0.5, 0.5, 0.5]])
     assert (out[0].asnumpy() == expect).all()
