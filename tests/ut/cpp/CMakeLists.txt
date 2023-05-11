@@ -49,9 +49,10 @@ file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} .
 file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc ./c_api/*.cc)
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc)
-file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  ./device/*.cc ./kernel/*.cc ./pre_activate/*.cc
-        ./session/*.cc ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc ./runtime/device/gsm/*.cc
-        ./tbe/*.cc)
+file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  ./device/*.cc ./kernel/*.cc
+        ./pre_activate/*.cc ./session/*.cc ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc
+        ./runtime/device/gsm/*.cc ./tbe/*.cc)
+file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./side_effect/*.cc ./utils/*.cc
@@ -85,7 +86,7 @@ list(SUBLIST UT_MINDDATA_SRCS ${UT_MINDDATA0_SRCS_LENS} ${UT_MINDDATA1_SRCS_LENS
 list(APPEND UT_MINDDATA0_SRCS ${UT_MINDDATA_COMMON_SRCS})
 list(APPEND UT_MINDDATA1_SRCS ${UT_MINDDATA_COMMON_SRCS})
 
-set(ALL_UT_COMPS CORE MINDDATA0 MINDDATA1 API FRONTEND BACKEND PS OTHERS)
+set(ALL_UT_COMPS CORE MINDDATA0 MINDDATA1 API FRONTEND OLD_BACKEND BACKEND PS OTHERS)
 
 set(REPEATED_DEFINED_FILE stub/ps/ps_core_stub.cc)
 list(REMOVE_ITEM UT_SRCS ${REPEATED_DEFINED_FILE})
