@@ -17,7 +17,7 @@ import pytest
 import tests.st.ge.ge_test_utils as utils
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -32,7 +32,7 @@ def test_broadcast_gradient_args():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -47,7 +47,7 @@ def test_conv2d_backprop_filter():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -62,7 +62,7 @@ def test_conv2d_backprop_input():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -77,7 +77,7 @@ def test_conv2d_transpose():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -92,7 +92,7 @@ def test_dynamic_broadcast_to():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
