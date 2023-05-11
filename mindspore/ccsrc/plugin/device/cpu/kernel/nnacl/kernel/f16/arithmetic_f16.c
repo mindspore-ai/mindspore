@@ -15,23 +15,9 @@
  */
 
 #include "nnacl/kernel/f16/arithmetic_f16.h"
-#include "nnacl/kernel/arithmetic.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "nnacl/fp16/utils_fp16.h"
-
-typedef struct ArithmeticF16Funcions {
-  int primitive_type_;
-  int activation_type_;
-  int (*compute_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele);
-  int (*optimzie_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele, bool first_scalar);
-} ArithmeticF16Funcions;
-
-typedef struct ArithmeticF16Struct {
-  ArithmeticStruct arithmetic_;
-  ArithmeticF16Funcions functions_;
-  void *tmp_buffer_[THREE_TENSOR]; /* in_size + out_size */
-} ArithmeticF16Struct;
 
 void InitArithmeticF16RunFunction(KernelBase *base) {
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)base;
@@ -75,7 +61,7 @@ int ArithmeticF16DoExecute(KernelBase *base, const void *input0, const void *inp
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)base;
 
   if (arithmetic_f16->arithmetic_.scalar_opt_) {
-    NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->functions_.compute_);
+    NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->functions_.optimzie_);
     return arithmetic_f16->functions_.optimzie_((const float16_t *)input0, (const float16_t *)input1,
                                                 (float16_t *)output, size,
                                                 arithmetic_f16->arithmetic_.in_elements_num0_ == 1);
