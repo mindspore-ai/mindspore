@@ -11,7 +11,7 @@ mindspore.dataset.config.set_error_samples_mode
         - 如果在多机设置中使用 ``ErrorSamplesMode.SKIP`` 模式，请手动确保每个分片的有效样本数是相同的（否则可能会导致挂起）。一种解决方法是通过Concat操作拼接一个样本全有效的数据集，然后采用Take操作填补跳过的错误样本数。
 
     参数：
-        - **error_samples_mode** (:class:`~.config.ErrorSamplesMode`) - 处理错误样本的方法。默认值： ``ErrorSamplesMode.RETURN`` 。
+        - **error_samples_mode** (:class:`~.config.ErrorSamplesMode`) - 处理错误样本的方法。
 
           - ``ErrorSamplesMode.RETURN``：表示处理过程中遇到错误样本时将报错并抛出异常。
           - ``ErrorSamplesMode.REPLACE``：表示处理过程中遇到错误样本时将使用正确的样本替换处理。

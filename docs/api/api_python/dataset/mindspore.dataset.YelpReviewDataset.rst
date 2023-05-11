@@ -13,7 +13,7 @@ mindspore.dataset.YelpReviewDataset
           对于Polarity数据集， ``'train'`` 将读取560,000个训练样本， ``'test'`` 将读取38,000个测试样本， ``'all'`` 将读取所有598,000个样本。
           对于Full数据集， ``'train'`` 将读取650,000个训练样本， ``'test'`` 将读取50,000个测试样本， ``'all'`` 将读取所有700,000个样本。默认值： ``None`` ，读取所有样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
           如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 

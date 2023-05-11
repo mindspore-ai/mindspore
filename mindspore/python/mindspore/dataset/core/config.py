@@ -654,7 +654,7 @@ def set_sending_batches(batch_num):
 
     Args:
         batch_num (int): the total sending batches, when batch_num is set, it will wait unless sending batches
-         increase, default is ``0`` which means will send all batches in dataset.
+         increase, ``0`` means will send all batches in dataset.
 
     Raises:
         TypeError: If `batch_num` is not of type int.
@@ -708,7 +708,7 @@ def set_enable_watchdog(enable):
     Watchdog is a thread which cleans up hanging subprocesses.
 
     Args:
-        enable (bool): Whether to launch a watchdog Python thread. System default: True.
+        enable (bool): Whether to launch a watchdog Python thread.
 
     Raises:
         TypeError: If `enable` is not a boolean data type.
@@ -744,7 +744,7 @@ def set_multiprocessing_timeout_interval(interval):
 
     Args:
         interval (int): Interval (in seconds) to be used for multiprocessing/multithreading timeout when main
-          process/thread gets data from subprocess/child threads. System default: 300s.
+          process/thread gets data from subprocess/child threads.
 
     Raises:
         TypeError: If `interval` is not of type int.
@@ -816,7 +816,7 @@ def set_fast_recovery(fast_recovery):
     (In fast mode, random augmentations may not get same results as before the failure occurred).
 
     Args:
-        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode. System default: True.
+        fast_recovery (bool): Whether the dataset pipeline recovers in fast mode.
 
     Raises:
         TypeError: If `fast_recovery` is not a boolean data type.
@@ -995,7 +995,6 @@ def set_error_samples_mode(error_samples_mode):
     Args:
         error_samples_mode (ErrorSamplesMode): The method in which erroneous samples should be processed in a dataset
             pipeline. It can be any of [ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP].
-            System default: ``ErrorSamplesMode.RETURN``.
 
             - ``ErrorSamplesMode.RETURN``: means erroneous sample results in error raised and returned.
 

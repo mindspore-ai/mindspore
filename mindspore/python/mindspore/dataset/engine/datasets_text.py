@@ -54,7 +54,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False``, no shuffling will be performed.
             If `shuffle` is ``True``, it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -158,7 +158,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False``, no shuffling will be performed.
             If `shuffle` is ``True``, it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL``.
@@ -252,7 +252,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
+            Default: ``Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is ``False``, no shuffling will be performed.
             If `shuffle` is ``True``, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
@@ -489,7 +489,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to be read. Default: ``None`` ,
             read the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by
@@ -586,7 +586,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -918,7 +918,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False``, no shuffling will be performed.
             If `shuffle` is ``True``, it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1045,7 +1045,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1252,7 +1252,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1347,7 +1347,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , read all samples.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1443,7 +1443,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If ``False`` is provided, no shuffling will be performed.
             If ``True`` is provided, it is the same as setting to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1558,7 +1558,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed;
             If `shuffle` is ``True`` , the behavior is the same as setting shuffle to be Shuffle.GLOBAL
             Set the mode of data shuffling by passing in enumeration variables:
@@ -1653,7 +1653,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , performs global shuffle.
@@ -1712,7 +1712,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1793,7 +1793,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1885,7 +1885,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .
@@ -1981,7 +1981,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads all samples.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to
             ``mindspore.dataset.Shuffle.GLOBAL`` .

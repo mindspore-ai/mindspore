@@ -16,7 +16,7 @@ mindspore.dataset.SQuADDataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'dev'`` 或 ``'all'`` 。默认值： ``None`` ，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 是否混洗数据集。默认值： ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **shuffle** (Union[bool, Shuffle], 可选) - 是否混洗数据集。默认值： ``Shuffle.GLOBAL`` 。
           如果输入 ``False`` ，将不进行混洗。
           如果输入 ``True`` ，效果与设置 `mindspore.dataset.Shuffle.GLOBAL` 相同。
           如果输入Shuffle枚举值，效果如下表所示：

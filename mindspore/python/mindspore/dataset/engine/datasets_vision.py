@@ -866,7 +866,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
-        decode (bool, optional): Decode the images after reading. Default: ``False``.
+        decode (bool, optional): Decode the images after reading. Default: ``None``, default to be ``False``.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -5005,7 +5005,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Bool type and Shuffle enum are both supported to pass in. Default: ``mindspore.dataset.Shuffle.GLOBAL`` .
+            Bool type and Shuffle enum are both supported to pass in. Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to ``mindspore.dataset.Shuffle.GLOBAL``.
             Set the mode of data shuffling by passing in enumeration variables:

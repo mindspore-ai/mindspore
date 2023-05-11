@@ -10,8 +10,8 @@ mindspore
 .. mscnautosummary::
     :toctree: mindspore
 
-    mindspore.tensor
     mindspore.Tensor
+    mindspore.tensor
     mindspore.COOTensor
     mindspore.CSRTensor
     mindspore.RowTensor
