@@ -201,36 +201,3 @@ def test_fallback_sum_with_x_not_iterable_error():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "object is not iterable" in str(ex.value)
-
-
-def test_fallback_sum_with_x_unsupported_operand_type_error_1():
-    """
-    Feature: JIT Fallback
-    Description: Test sum() in graph mode when input x is list of list
-    Expectation: TypeError.
-    """
-    @jit
-    def foo():
-        x = sum([[1, 2], [3, 4]])
-        return x
-    with pytest.raises(RuntimeError) as ex:
-        foo()
-    assert "For operation 'add'" in str(ex.value)
-    assert "is not supported now" in str(ex.value)
-
-
-def test_fallback_sum_with_x_unsupported_operand_type_error_2():
-    """
-    Feature: JIT Fallback
-    Description: Test max() in graph mode when input x is dict with string type key.
-    Expectation: TypeError.
-    """
-
-    @jit
-    def foo():
-        x = sum({'a': 1, 'b': 2, 'c': 3})
-        return x
-    with pytest.raises(RuntimeError) as ex:
-        foo()
-    assert "For operation 'add'" in str(ex.value)
-    assert "is not supported now" in str(ex.value)

@@ -218,3 +218,29 @@ def test_bitwise_xor_3():
     net = Net()
     result = net(x, y)
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bitwise_operator_error_list_input():
+    """
+    Feature: bitwise operator
+    Description: test bitwise operator with lists
+    Expectation: throw TypeError
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.const_x = [10]
+            self.const_y = [11]
+
+        def construct(self):
+            res = self.const_x & self.const_y
+            return res
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)

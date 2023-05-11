@@ -224,23 +224,11 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
 }
 
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
-  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-  bool has_any = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
-  if (allow_fallback_runtime && has_any) {
-    FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-    AnfNodePtrList node_inputs{};
-    for (auto type : types) {
-      node_inputs.push_back(func_graph->add_parameter());
-    }
-    auto ret_node = fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
-    func_graph->set_output(ret_node);
-    return func_graph;
-  }
-
   auto [py_fn, has_extra_u_monad, match_max_idx] = SignMatch(types);
   std::ostringstream buffer;
   buffer << types;
-  if (!py_fn.is_none()) {
+  bool has_any = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
+  if (!py_fn.is_none() && !has_any) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
       MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
@@ -256,6 +244,18 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   if (stub != nullptr) {
     MS_LOG(DEBUG) << "GenerateStubFunc " << buffer.str() << ", function: " << stub->ToString() << ".";
     return stub;
+  }
+
+  const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+  if (allow_fallback_runtime) {
+    FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+    AnfNodePtrList node_inputs{};
+    for (auto type : types) {
+      node_inputs.push_back(func_graph->add_parameter());
+    }
+    auto ret_node = fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
+    func_graph->set_output(ret_node);
+    return func_graph;
   }
 
   auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx);
