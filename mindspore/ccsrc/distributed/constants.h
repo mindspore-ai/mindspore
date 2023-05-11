@@ -96,6 +96,7 @@ constexpr char kControlDstOpName[] = "ControlDst";
 
 static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 static const char URL_IP_PORT_SEPARATOR[] = ":";
+static const char URL_IP_IFNAME_SEPARATOR[] = "%";
 
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \

@@ -70,16 +70,37 @@ struct NodeInfo {
   NodeState state{NodeState::kNew};
 };
 
-inline uint32_t ReorderIpNum(uint32_t ip_num) {
-  uint32_t ret = 0;
-  size_t uint32_byte_num = 4;
-  size_t bit_num_each_byte = 8;
-  for (size_t i = 0; i < uint32_byte_num; i++) {
-    uint32_t tmp = 0;
-    tmp = ((ip_num >> ((uint32_byte_num - 1 - i) * bit_num_each_byte)) & 0xFF);
-    ret = ret | (tmp << (i * bit_num_each_byte));
+inline std::string Dec2Hex(int i, uint32_t width) {
+  std::string temp;
+  std::stringstream ss;
+  ss << std::hex << i;
+  ss >> temp;
+  if (width > temp.size()) {
+    return std::string((width - temp.size()), '0') + temp;
   }
-  return ret;
+  return temp;
+}
+
+inline std::string GenerateIpInOrder(const std::string &ip) {
+  rpc::SocketAddress addr;
+  std::string ordered_ip = "";
+  int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
+  if (result > 0) {
+    for (size_t i = 0; i < sizeof(addr.saIn.sin_addr.s_addr) / sizeof(unsigned char); i++) {
+      ordered_ip += Dec2Hex(*(reinterpret_cast<unsigned char *>(&addr.saIn.sin_addr.s_addr) + i), 2);
+    }
+    return ordered_ip;
+  }
+
+  result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+  if (result > 0) {
+    for (size_t i = 0; i < 16; i++) {
+      ordered_ip += Dec2Hex(addr.saIn6.sin6_addr.s6_addr[i], 2);
+    }
+    return ordered_ip;
+  }
+
+  MS_LOG(EXCEPTION) << "Parse ip failed, result: " << result << ", ip:" << ip;
 }
 
 // The key of nodes consists of node's ip and id.
@@ -88,15 +109,11 @@ struct NodeKey {
   std::string node_id;
 
   bool operator<(const NodeKey &node_key) const {
-    uint32_t this_host_ip_num;
-    uint32_t host_ip_num;
-    (void)inet_pton(AF_INET, host_ip.c_str(), &this_host_ip_num);
-    (void)inet_pton(AF_INET, node_key.host_ip.c_str(), &host_ip_num);
-    this_host_ip_num = ReorderIpNum(this_host_ip_num);
-    host_ip_num = ReorderIpNum(host_ip_num);
-    if (this_host_ip_num < host_ip_num) {
+    auto this_host_ordered_ip = GenerateIpInOrder(host_ip);
+    auto host_ordered_ip = GenerateIpInOrder(node_key.host_ip);
+    if (this_host_ordered_ip < host_ordered_ip) {
       return true;
-    } else if (this_host_ip_num > host_ip_num) {
+    } else if (this_host_ordered_ip > host_ordered_ip) {
       return false;
     } else {
       if (node_id < node_key.node_id) {

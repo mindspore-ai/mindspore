@@ -196,8 +196,8 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     node_info->state = NodeState::kRegistered;
     (void)time(&(node_info->last_update));
     nodes_[node_id] = node_info;
-    MS_LOG(INFO) << "The new node: " << node_id << "(role: " << role << ")"
-                 << ", rank id: " << rank_id << " is registered successfully.";
+    MS_LOG(WARNING) << "The new node: " << node_id << "(role: " << role << ")"
+                    << ", rank id: " << rank_id << " is registered successfully.";
     (void)TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
