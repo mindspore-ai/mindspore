@@ -27,7 +27,7 @@
 
 namespace mindspore::ge::model_runner {
 class RuntimeModel;
-using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *>;
+using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 class ModelRunner {
  public:
   static ModelRunner &Instance();

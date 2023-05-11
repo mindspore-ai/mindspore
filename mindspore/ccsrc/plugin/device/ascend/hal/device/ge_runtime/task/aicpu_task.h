@@ -38,6 +38,8 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
 
   std::string task_name() const override { return task_info_->op_name(); }
 
+  std::string DebugString() const override;
+
  private:
   static void ReleaseRtMem(void **ptr) noexcept;
   void SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num);

@@ -26,7 +26,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
 
 namespace mindspore::ge::model_runner {
-using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *>;
+using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 class Task;
 class RuntimeModel {
  public:

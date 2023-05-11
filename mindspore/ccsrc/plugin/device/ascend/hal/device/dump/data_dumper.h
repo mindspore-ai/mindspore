@@ -34,8 +34,8 @@ class Task;
 namespace mindspore {
 namespace device {
 namespace ascend {
-// tuple(op_name, task_id, stream_id, args)
-using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *>;
+// tuple(op_name, task_id, stream_id, args, task_info)
+using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 class DataDumper {
  public:
   DataDumper(const session::KernelGraph *kernel_graph, NotNull<std::function<void *()>> model_handle)

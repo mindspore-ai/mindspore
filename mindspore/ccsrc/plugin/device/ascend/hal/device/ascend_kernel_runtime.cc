@@ -84,6 +84,7 @@ using std::vector;
 constexpr uint32_t kTupleTaskId = 0;
 constexpr uint32_t kTupleStreamId = 1;
 constexpr uint32_t kTupleArgs = 2;
+constexpr uint32_t kTupleInfoId = 3;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr auto kModuleName = "MindSpore";
 constexpr size_t kPathMax = 4096;
@@ -678,7 +679,7 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
   if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
-    auto node = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
+    auto node = AscendKernelRuntime::GetErrorNodeInfo(task_fail_info->streamid, task_fail_info->taskid).first;
     if (!node) {
       MS_LOG(WARNING) << "Node run task overflow, node name is unknown.";
     } else {
@@ -701,15 +702,16 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   }
 }
 
-CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taskid) {
+std::pair<CNodePtr, std::string> AscendKernelRuntime::GetErrorNodeInfo(uint32_t streamid, uint32_t taskid) {
   if (current_graph_ == nullptr) {
-    return nullptr;
+    return {nullptr, ""};
   }
   auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(current_graph_->graph_id());
   for (const auto &iter : runtime_info_map) {
     MS_EXCEPTION_IF_NULL(iter.second);
-    auto task_id = std::get<kTupleTaskId>(*iter.second);
-    auto stream_id = std::get<kTupleStreamId>(*iter.second);
+    uint32_t task_id = std::get<kTupleTaskId>(*iter.second);
+    uint32_t stream_id = std::get<kTupleStreamId>(*iter.second);
+    std::string task_info = std::get<kTupleInfoId>(*iter.second);
     if (task_id == taskid && stream_id == streamid) {
       MS_EXCEPTION_IF_NULL(current_graph_);
       auto &execute_node = current_graph_->execution_order();
@@ -718,11 +720,11 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
         return node->UniqueName() == iter.first;
       });
       if (node != execute_node.end()) {
-        return *node;
+        return {*node, task_info};
       }
     }
   }
-  return nullptr;
+  return {nullptr, ""};
 }
 
 std::string AscendKernelRuntime::GetDumpPath() {
@@ -749,7 +751,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
 }
 
 #ifndef ENABLE_SECURITY
-void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* graph */) {
+void AscendKernelRuntime::PrintDebugInfoAndDumpFailNode(const session::KernelGraph & /* graph */) {
   const std::string path = GetDumpPath();
   if (access(path.c_str(), F_OK) == 0) {
     if (!DeleteDumpDir(path)) {
@@ -757,10 +759,19 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
     }
   }
   for (const auto &task_fail_info : task_fail_infoes_) {
-    MS_LOG(ERROR) << "Task fail infos task_id: " << task_fail_info.taskid << ", stream_id: " << task_fail_info.streamid
-                  << ", tid: " << task_fail_info.tid << ", device_id: " << task_fail_info.deviceid
-                  << ", retcode: " << task_fail_info.retcode << " (" << GetErrorMsg(task_fail_info.retcode) << ")";
-    auto node = AscendKernelRuntime::GetErrorNodeName(task_fail_info.streamid, task_fail_info.taskid);
+    MS_LOG(ERROR) << "Task fail infos, rt task_id: " << task_fail_info.taskid
+                  << ", rt stream_id: " << task_fail_info.streamid << ", tid: " << task_fail_info.tid
+                  << ", device_id: " << task_fail_info.deviceid << ", retcode: " << task_fail_info.retcode << " ("
+                  << GetErrorMsg(task_fail_info.retcode) << ")";
+    auto error_node_info = AscendKernelRuntime::GetErrorNodeInfo(task_fail_info.streamid, task_fail_info.taskid);
+    CNodePtr &node = error_node_info.first;
+    std::string &task_info = error_node_info.second;
+    // step1: print task info
+    if (!task_info.empty()) {
+      MS_LOG(ERROR) << "Task DebugString, " << task_info;
+    }
+
+    // step2: dump fail node
     // Dump error data in local path
     if (node == nullptr) {
       continue;
@@ -1107,7 +1118,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
       }
     }
 #ifndef ENABLE_SECURITY
-    DumpTaskExceptionInfo(graph);
+    PrintDebugInfoAndDumpFailNode(graph);
 #endif
 #ifdef WITH_BACKEND
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DataQueueOp hostPush hung

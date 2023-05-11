@@ -37,6 +37,8 @@ class Task {
 
   virtual std::string task_name() const { return ""; }
 
+  virtual std::string DebugString() const { return ""; }
+
   void set_model_handle(rtModel_t model_handle) { model_handle_ = model_handle; }
 
  protected:
