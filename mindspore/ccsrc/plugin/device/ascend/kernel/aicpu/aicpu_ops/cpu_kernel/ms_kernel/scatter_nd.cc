@@ -17,9 +17,10 @@
 #include "scatter_nd.h"
 
 #include <complex>
-
+#include <cmath>
 #include "eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 3;
@@ -174,19 +175,30 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
   auto Output_data = reinterpret_cast<data_type_x *>(ctx.Output(0)->GetData());
 
   memset(Output_data, 0, sizeof(data_type_x) * output_flat_size);
-  for (int64_t i = 0; i < n_slices; ++i) {
-    int64_t to_pos = 0;
-    bool out_bound = false;
-    for (int64_t j = 0; j < indices_nd; ++j) {
-      int64_t idx = Indices_data[i * indices_nd + j];
-      out_bound |= (idx < 0 || idx >= data_shape[j]);
-      to_pos += idx * dims_to_count[j];
+  auto task = [&](int64_t start, int64_t end) {
+    for (int64_t i = start; i < end; ++i) {
+      int64_t to_pos = 0;
+      for (int64_t j = 0; j < indices_nd; ++j) {
+        int64_t idx = Indices_data[i * indices_nd + j];
+
+        if (idx < 0 || idx >= data_shape[j]) {
+          KERNEL_LOG_ERROR("The indices[%d] is so big or small", idx);
+        }
+
+        to_pos += idx * dims_to_count[j];
+      }
+      for (int64_t j = 0; j < slice_size; j++) {
+        Output_data[to_pos + j] += Updates_data[i * slice_size + j];
+      }
     }
-    if (out_bound) continue;
-    for (int64_t j = 0; j < slice_size; j++) {
-      Output_data[to_pos + j] += Updates_data[i * slice_size + j];
-    }
+  };
+  int64_t max_core_num = std::max((uint32_t)1, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
+  int64_t max_core_num_total = max_core_num;
+  if (max_core_num_total > n_slices) {
+    max_core_num_total = n_slices;
   }
+  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, n_slices, n_slices / max_core_num_total, task),
+                      "ScatterND task Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_CPU_KERNEL(kScatterNd, ScatterNdCpuKernel);
