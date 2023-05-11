@@ -16,7 +16,6 @@
 
 #include <unordered_map>
 #include <algorithm>
-#include <utility>
 
 #include "extendrt/graph_compiler/default_graph_compiler.h"
 #include "extendrt/graph_compiler/factory.h"
@@ -24,21 +23,20 @@
 #include "extendrt/mock/lite_runtime/converters.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "ops/core_ops.h"
-#include "include/common/utils/utils.h"
 #include "extendrt/utils/func_graph_utils.h"
 #include "ir/manager.h"
 #include "base/base_ref.h"
 #include "abstract/abstract_value.h"
-#include "extendrt/graph_compiler/single_graph_compiler.h"
 #include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
+#include "src/extendrt/graph_compiler/compile_result_builder.h"
 
-namespace mindspore {
+namespace mindspore::infer {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static constexpr auto ms_infer_backend_name = "mindspore_lite_backend";
 
-std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
+std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
 
   inner_context_ = ContextUtils::Convert(context_.get());
@@ -56,7 +54,7 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph End";
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Schedule Graph Execute Plan Begin";
-  auto execution_plan = Schedule(graph_segments, graph);
+  auto execution_plan = NonCFGCompile(graph_segments, graph);
   if (execution_plan == nullptr) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Compile Schedule graph segments failed";
     return nullptr;
@@ -69,7 +67,7 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
   auto partition = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, ms_infer_backend_name);
   if (partition == nullptr) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Partition create graph partition failed, maybe not enough memory";
-    return std::vector<GraphSegmentPtr>();
+    return {};
   }
 
   // if the context target is cpu, graph should convert to NHWC, call related pass
@@ -77,7 +75,7 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
   auto status = FuncGraphUtils::UnifyGraphToNHWCFormat(graph);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Partition unify graph to NHWC failed";
-    return std::vector<GraphSegmentPtr>();
+    return {};
   }
 
   // multi_target set false
@@ -85,9 +83,22 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
   return partition->Partition(graph, &is_multi_target);
 }
 
-std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
-  const std::vector<GraphSegmentPtr> &graph_segments, FuncGraphPtr func_graph) {
-  auto execution_plan = std::make_shared<infer::ExecutionPlan>();
+CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, const std::vector<AnfNodePtr> &inputs,
+                                               const std::vector<AnfNodePtr> &outputs) {
+  auto builder = std::make_shared<CompileResultBuilder>(Format::NHWC);
+  return builder->Build(segment, inputs, outputs);
+}
+
+std::vector<abstract::Kernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
+  if (MS_UNLIKELY(scheduler_ == nullptr)) {
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_.get(), option_);
+  }
+  return {scheduler_->Schedule(compile_result)};
+}
+
+std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
+  const std::vector<GraphSegmentPtr> &graph_segments, const FuncGraphPtr &func_graph) {
+  auto execution_plan = std::make_shared<ExecutionPlan>();
   anf_tensor_map_.clear();
 
   // set func graph manager
@@ -100,20 +111,20 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
   // Convert FuncGraph Input and Output AnfNode to Tensor and save in Execution Plan
   auto graph_inputs = func_graph->get_inputs();
   if (graph_inputs.empty()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule get graph inputs node failed";
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
     return nullptr;
   }
   std::vector<AnfNodePtr> graph_outputs;
   auto graph_output = func_graph->output();
   if (graph_output == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule get graph output node failed";
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph output node failed";
     return nullptr;
   }
   graph_outputs.emplace_back(graph_output);
-  std::vector<infer::abstract::Tensor *> graph_input_tensors;
+  std::vector<abstract::Tensor *> graph_input_tensors;
   auto graph_output_tensors = CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule create graph output tensor failed";
+    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
     return nullptr;
   }
   for (size_t i = 0; i < graph_outputs.size(); i++) {
@@ -126,11 +137,8 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
   }
   execution_plan->SetOutputs(graph_output_tensors);
   execution_plan->SetContext(inner_context_);
-  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *input_isolate_map =
-    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
-  std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *> *output_isolate_map =
-    new std::unordered_map<infer::abstract::Tensor *, infer::abstract::Tensor *>();
-  for (auto graph_segment : graph_segments) {
+  auto *output_isolate_map = new std::unordered_map<abstract::Tensor *, abstract::Tensor *>();
+  for (const auto &graph_segment : graph_segments) {
     if (graph_segment->nodes_.size() == 1) {
       auto node = graph_segment->nodes_[0];
       if (node->isa<CNode>()) {
@@ -148,16 +156,22 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = FuncGraphUtils::TransformSegmentToAnfGraph(graph_segment->nodes_);
-    auto execution_flow = this->Schedule(graph_segment, inputs, outputs);
-    if (execution_flow == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::Schedule schedule graph segment failed";
-      delete input_isolate_map;
+    auto compile_result = this->Compile(graph_segment, inputs, outputs);
+    if (compile_result == nullptr) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile convert to CompileResult failed";
       delete output_isolate_map;
       return nullptr;
     }
-    execution_flow->SetContext(inner_context_);
-    for (size_t i = 0; i < execution_flow->GetInputs().size(); i++) {
-      auto input_tensor = execution_flow->GetInputs()[i];
+    auto kernels = this->Schedule(compile_result);
+    if (kernels.size() != 1 || kernels[0] == nullptr) {
+      MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile schedule graph segment failed";
+      delete output_isolate_map;
+      return nullptr;
+    }
+    auto kernel = kernels[0];
+    kernel->set_context(inner_context_.get());
+    for (size_t i = 0; i < kernel->in_tensors().size(); i++) {
+      auto input_tensor = kernel->in_tensors()[i];
       auto input_node = inputs[i];
       auto it = std::find_if(graph_inputs.begin(), graph_inputs.end(),
                              [&input_node](const AnfNodePtr &node) { return node == input_node; });
@@ -166,8 +180,8 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
         graph_input_tensors.emplace_back(input_tensor);
       }
     }
-    for (size_t i = 0; i < execution_flow->GetOutputs().size(); i++) {
-      auto output_tensor = execution_flow->GetOutputs()[i];
+    for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
+      auto output_tensor = kernel->out_tensors()[i];
       auto output_node = outputs[i];
       auto it = anf_tensor_map_.find(output_node);
       if (it != anf_tensor_map_.end()) {
@@ -177,16 +191,15 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Schedule(
         anf_tensor_map_[output_node] = output_tensor;
       }
     }
-    execution_plan->AddExecutionFlow(execution_flow);
+    execution_plan->AddKernel(kernel);
   }
   execution_plan->SetInputs(graph_input_tensors);
-  execution_plan->SetInputsMap(input_isolate_map);
   execution_plan->SetOutputsMap(output_isolate_map);
 
   return execution_plan;
 }
 
-infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
+abstract::Tensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
@@ -198,8 +211,8 @@ infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
       MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor abstract is nullptr";
       return nullptr;
     }
-    if (utils::isa<abstract::AbstractTensorPtr>(abstract)) {
-      auto tensor = infer::TensorAdapter::Convert2Tensor(abstract, node->fullname_with_scope());
+    if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
+      auto tensor = TensorAdapter::Convert2Tensor(abstract, node->fullname_with_scope());
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
         return nullptr;
@@ -237,7 +250,7 @@ infer::abstract::Tensor *DefaultGraphCompiler::CreateTensor(AnfNodePtr node) {
   return nullptr;
 }
 
-Status DefaultGraphCompiler::GetDTAndShapeFromParameter(ParameterPtr parameter, TypeId *data_type,
+Status DefaultGraphCompiler::GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type,
                                                         ShapeVector *shape_vector) {
   MS_ASSERT(parameter != nullptr && data_type != nullptr && shape_vector != nullptr);
   auto abstract_base = parameter->abstract();
@@ -245,7 +258,7 @@ Status DefaultGraphCompiler::GetDTAndShapeFromParameter(ParameterPtr parameter, 
     MS_LOG(ERROR) << "abstract base is nullptr";
     return kLiteError;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto abstract_tensor = utils::cast<mindspore::abstract::AbstractTensorPtr>(abstract_base);
   if (abstract_tensor == nullptr) {
     MS_LOG(ERROR) << "abstract tensor is nullptr";
     return kLiteError;
@@ -253,8 +266,8 @@ Status DefaultGraphCompiler::GetDTAndShapeFromParameter(ParameterPtr parameter, 
   return GetDTAndShapeFromAbTensor(abstract_tensor, data_type, shape_vector);
 }
 
-Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const abstract::AbstractTensorPtr &abstract, TypeId *data_type,
-                                                       ShapeVector *shape_vector) {
+Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract,
+                                                       TypeId *data_type, ShapeVector *shape_vector) {
   MS_ASSERT(abstract != nullptr && data_type != nullptr && shape_vector != nullptr);
   if (abstract->element() == nullptr) {
     MS_LOG(ERROR) << "'element' of abstract is nullptr";
@@ -266,34 +279,24 @@ Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const abstract::AbstractT
     return kLiteError;
   }
   *data_type = type_ptr->type_id();
-  if (!utils::isa<abstract::ShapePtr>(abstract->BuildShape())) {
+  if (!utils::isa<mindspore::abstract::ShapePtr>(abstract->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract of Parameter should be ShapePtr";
     return kLiteError;
   }
-  *shape_vector = utils::cast<abstract::ShapePtr>(abstract->BuildShape())->shape();
+  *shape_vector = utils::cast<mindspore::abstract::ShapePtr>(abstract->BuildShape())->shape();
   return kSuccess;
 }
 
-std::vector<infer::abstract::Tensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
-  std::vector<infer::abstract::Tensor *> tensors;
+std::vector<abstract::Tensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
+  std::vector<abstract::Tensor *> tensors;
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(tensors),
-                 [this](AnfNodePtr node) { return this->CreateTensor(node); });
+                 [this](const AnfNodePtr &node) { return this->CreateTensor(node); });
   return tensors;
 }
 
-std::shared_ptr<infer::abstract::ExecutionFlow> DefaultGraphCompiler::Schedule(const GraphSegmentPtr &graph_segment,
-                                                                               const std::vector<AnfNodePtr> &inputs,
-                                                                               const std::vector<AnfNodePtr> &outputs) {
-  // implementation by hangangqiang
-  auto compiler = std::make_shared<mindspore::infer::SingleGraphCompiler>(inner_context_);
-  infer::abstract::CompileOption option;
-  return compiler->Compile(graph_segment, inputs, outputs, option);
-}
-
-static std::shared_ptr<infer::abstract::GraphCompiler> DefaultGraphCompilerCreator(
-  const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<abstract::GraphCompiler> DefaultGraphCompilerCreator(const std::shared_ptr<Context> &ctx) {
   auto graph_compiler = std::make_shared<DefaultGraphCompiler>(ctx);
   return graph_compiler;
 }
 REG_GRAPH_COMPILER(kDefaultCompiler, DefaultGraphCompilerCreator);
-}  // namespace mindspore
+}  // namespace mindspore::infer

@@ -42,9 +42,6 @@ class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
   ///
   /// \return ExecutionPlan pointer.
   virtual ExecutionPlanPtr Compile(FuncGraphPtr graph) = 0;
-
-  virtual ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                   const AnfNodePtrList &outputs, const CompileOption &option) = 0;
 };
 }  // namespace mindspore::infer::abstract
 

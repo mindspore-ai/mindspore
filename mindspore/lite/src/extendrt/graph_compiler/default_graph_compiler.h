@@ -21,45 +21,44 @@
 
 #include "infer/graph_compiler.h"
 #include "infer/context.h"
+#include "src/extendrt/graph_compiler/compile_result.h"
+#include "src/extendrt/graph_compiler/single_graph_scheduler.h"
 
-namespace mindspore {
-class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
+namespace mindspore::infer {
+class DefaultGraphCompiler : public abstract::GraphCompiler {
  public:
   explicit DefaultGraphCompiler(const std::shared_ptr<Context> &context) : context_(context) {
     inner_context_ = nullptr;
   }
-  virtual ~DefaultGraphCompiler() = default;
+  ~DefaultGraphCompiler() override = default;
 
-  std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
-
-  infer::abstract::ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
-                                            const AnfNodePtrList &outputs,
-                                            const infer::abstract::CompileOption &option) override {
-    return nullptr;
-  }
+  std::shared_ptr<abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
  protected:
+  std::shared_ptr<abstract::ExecutionPlan> NonCFGCompile(const std::vector<GraphSegmentPtr> &graph_segments,
+                                                         const FuncGraphPtr &func_graph);
+
   virtual std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &graph);
 
-  virtual std::shared_ptr<infer::abstract::ExecutionPlan> Schedule(const std::vector<GraphSegmentPtr> &graph_segments,
-                                                                   FuncGraphPtr func_graph);
+  CompileResultPtr Compile(const GraphSegmentPtr &segment, const std::vector<AnfNodePtr> &inputs,
+                           const std::vector<AnfNodePtr> &outputs);
 
-  virtual std::shared_ptr<infer::abstract::ExecutionFlow> Schedule(const GraphSegmentPtr &graph_segment,
-                                                                   const std::vector<AnfNodePtr> &inputs,
-                                                                   const std::vector<AnfNodePtr> &outputs);
+  std::vector<abstract::Kernel *> Schedule(const CompileResultPtr &compile_result);
 
  private:
-  infer::abstract::Tensor *CreateTensor(AnfNodePtr node);
-  std::vector<infer::abstract::Tensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
-  Status GetDTAndShapeFromParameter(ParameterPtr parameter, TypeId *data_type, ShapeVector *shape_vector);
-  Status GetDTAndShapeFromAbTensor(const abstract::AbstractTensorPtr &abstract, TypeId *data_type,
+  abstract::Tensor *CreateTensor(const AnfNodePtr &node);
+  std::vector<abstract::Tensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
+  Status GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type, ShapeVector *shape_vector);
+  Status GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
 
  private:
   mindspore::HashMap<AnfNodePtr, infer::abstract::Tensor *> anf_tensor_map_;
+  SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;
   std::shared_ptr<mindspore::infer::abstract::Context> inner_context_;
+  abstract::CompileOption option_{};
 };
-}  // namespace mindspore
+}  // namespace mindspore::infer
 
 #endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_DEFAULT_GRAPH_COMPILER_H_

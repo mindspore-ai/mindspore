@@ -19,15 +19,15 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/lite_kernel.h"
-#include "src/litert/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 #include "src/extendrt/kernel/kernel_lib.h"
 #include "src/extendrt/graph_compiler/cnode_infer_manager.h"
 #include "src/extendrt/kernel/default_kernel_selector.h"
+#include "src/litert/pass/format_pass/format_pass.h"
 
 namespace mindspore {
 namespace infer {
-ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
+abstract::Kernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   // infer shape
   auto infer_ret = InferShape(node_list);
   if (!infer_ret) {
@@ -54,9 +54,12 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
   }
 
   // append kernel with transpose
-  // optimize transpose
-  std::cout << execution_flow_->Dump() << std::endl;
-  return execution_flow_;
+  auto kernel = execution_flow_->ConstructFusionKernel();
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Construct subgraph kernel failed.";
+    return nullptr;
+  }
+  return kernel;
 }
 
 int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
@@ -111,7 +114,15 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
   return true;
 }
 
-bool SingleGraphScheduler::OptimizeTranspose(const std::vector<kernel::KernelExec *> &kernels) { return false; }
+Status SingleGraphScheduler::OptimizeTranspose(std::vector<kernel::KernelExec *> *kernels) {
+  auto tensors = execution_flow_->GetTensors();
+  auto ret = lite::pass::RuntimeFormatPass(kernels, &tensors, compile_option_.format);
+  if (ret != RET_OK) {
+    MS_LOG(INFO) << "Run Optimize transpose pass failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
 
 bool SingleGraphScheduler::InferShape(const CompileResultPtr &node_list) {
   for (const auto &node : node_list->GetNodes()) {

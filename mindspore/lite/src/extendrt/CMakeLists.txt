@@ -76,7 +76,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/primitive_type.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/cnode_infer_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_compiler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/anfnode_tensor_adapter.cc

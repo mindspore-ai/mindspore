@@ -220,7 +220,7 @@ build_python_wheel_package() {
       find src/extendrt/delegate/graph_executor/litert/ -name "*_python.so" -exec cp '{}' package/mindspore_lite/lib/ \;
       find src/extendrt/unified_executor/ -name "*.so" -exec cp '{}' package/mindspore_lite/lib/ \;
       find src/extendrt/convert/ -name "*_python.so" -exec cp '{}' package/mindspore_lite/lib/ \;
-      if [[ "${MSLITE_ENABLE_ACL}" ]]; then
+      if [[ "X${MSLITE_ENABLE_ACL}" == "Xon" ]]; then
         cp src/extendrt/kernel/ascend/*_python.so package/mindspore_lite/lib/
         local dvpp_utils=minddata/kernels-dvpp-image/utils/libdvpp_utils.so
         if [ -f ${dvpp_utils} ]; then
@@ -237,7 +237,7 @@ build_python_wheel_package() {
         cp src/extendrt/delegate/ascend_ge/libascend_ge_plugin_python.so package/mindspore_lite/lib/
       fi
     else
-      if [[ "${MSLITE_ENABLE_ACL}" ]]; then
+      if [[ "X${MSLITE_ENABLE_ACL}" == "Xon" ]]; then
         cp src/litert/kernel/ascend/*.so package/mindspore_lite/lib/
       fi
       cp src/*.so package/mindspore_lite/lib/
