@@ -147,6 +147,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/tensor_utils.cc
         ${TOP_DIR}/mindspore/lite/src/litert/cxx_api/tensor/tensor_impl.cc
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
+        ${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.c
         ${TOP_DIR}/mindspore/lite/src/common/utils.cc
         ${TOP_DIR}/mindspore/lite/src/common/string_util.cc
         ${CORE_DIR}/utils/status.cc
