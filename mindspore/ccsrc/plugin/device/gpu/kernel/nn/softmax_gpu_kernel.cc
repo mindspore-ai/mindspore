@@ -118,7 +118,6 @@ bool SoftmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     Softmax<T, false>(input_addr, output_addr, shape_[axis_acc_], outer_size_, inner_size_, device_id_,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
   }
-  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaGetLastError(), "For '" << kernel_name_ << "', it failed to Softmax.");
 
   return true;
 }
