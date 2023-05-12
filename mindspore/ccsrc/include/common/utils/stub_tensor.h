@@ -21,6 +21,8 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <condition_variable>
+#include <mutex>
 
 #include "pybind11/pytypes.h"
 #include "pybind11/pybind11.h"
@@ -60,7 +62,8 @@ class COMMON_EXPORT StubNode : public Value {
  protected:
   AbstractBasePtr abstract_;
   ValuePtr value_;
-  std::atomic<bool> wait_flag_{false};
+  std::condition_variable cond_var_;
+  std::mutex mutex_;
   std::exception_ptr e_ptr_{};
 };
 
