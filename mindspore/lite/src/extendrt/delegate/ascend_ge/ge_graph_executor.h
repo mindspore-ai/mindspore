@@ -64,7 +64,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool AddGraph(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &options,
                 uint32_t *graph_id);
   bool RunGeInitGraph(uint32_t init_graph_id, const std::vector<tensor::TensorPtr> &init_tensors);
-  tensor::TensorPtr ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
+  tensor::TensorPtr ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr, uint32_t graph_id, size_t idx);
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();
@@ -75,6 +75,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
                              std::vector<::ge::Tensor> *outputs);
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
+  std::map<uint32_t, std::vector<tensor::TensorPtr>> original_graph_outputs_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_GRAPH_EXECUTOR_H_

@@ -325,6 +325,10 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   }
   compute_graph_id_list_.push_back(compute_graph_id);
   *graph_id = compute_graph_id;
+  std::vector<tensor::TensorPtr> orig_output;
+  std::vector<std::string> output_names;
+  FuncGraphUtils::GetFuncGraphOutputsInfo(anf_graph, &orig_output, &output_names);
+  original_graph_outputs_[*graph_id] = orig_output;
   return true;
 }
 
@@ -484,7 +488,7 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   } else {
     for (size_t i = 0; i < ge_outputs.size(); i++) {
       auto &ge_tensor = ge_outputs[i];
-      auto ms_tensor = ConvertGeTensorNoCopy(&ge_tensor);
+      auto ms_tensor = ConvertGeTensorNoCopy(&ge_tensor, graph_id, i);
       if (ms_tensor == nullptr) {
         MS_LOG(ERROR) << "Failed to converter output " << i << " GE Tensor to ME Tensor";
         return false;
@@ -504,11 +508,19 @@ std::vector<tensor::Tensor> GeGraphExecutor::GetInputInfos(uint32_t graph_id) {
                                                              : std::vector<tensor::Tensor>();
 }
 
-tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr) {
+tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr, uint32_t graph_id, size_t idx) {
   auto &ge_tensor = *ge_tensor_ptr;
   auto ge_tensor_desc = ge_tensor.GetTensorDesc();
   auto me_shape = transform::TransformUtil::ConvertGeShape(ge_tensor_desc.GetShape());
-  TypeId type_id = transform::TransformUtil::ConvertGeDataType(ge_tensor_desc.GetDataType());
+  if (original_graph_outputs_.find(graph_id) == original_graph_outputs_.end()) {
+    MS_LOG(ERROR) << "Graph original outputs with the given graph id is not found.";
+    return nullptr;
+  }
+  auto original_outputs = original_graph_outputs_[graph_id];
+  if (idx >= original_outputs.size()) {
+    MS_LOG(ERROR) << "Graph output index is out of range.";
+  }
+  TypeId type_id = static_cast<TypeId>(original_outputs[idx]->data_type_c());
   if (type_id == kTypeUnknown) {
     MS_LOG(ERROR) << "Could not convert Ge Tensor because of unsupported data type: "
                   << static_cast<int>(ge_tensor_desc.GetDataType());
@@ -534,6 +546,10 @@ tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor
   int64_t elem_num = 1;
   for (size_t i = 0; i < me_shape.size(); ++i) {
     elem_num *= me_shape[i];
+  }
+  if (GetTypeByte(TypeIdToType(type_id)) * elem_num != ge_tensor.GetSize()) {
+    MS_LOG(ERROR) << "Output datatype error! Output tensor size from GE RunGraph does not match.";
+    return nullptr;
   }
   auto tensor_data = std::make_shared<TensorRefData>(ge_data, elem_num, ge_tensor.GetSize(), me_shape.size(), deleter);
   return std::make_shared<tensor::Tensor>(type_id, me_shape, tensor_data);
