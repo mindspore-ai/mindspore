@@ -51,6 +51,8 @@ class RandomCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  uint64_t seed_offset_{0};
+
  private:
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
   int seed_{0};

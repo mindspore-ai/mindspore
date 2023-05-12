@@ -82,6 +82,7 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
   bool use_curand_{false};
   void *cuda_stream_{nullptr};
   std::string kernel_type_;
+  int seed_offset_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
