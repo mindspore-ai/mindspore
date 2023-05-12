@@ -213,6 +213,7 @@ using RangeCost = CastCost;
 using SplitCost = CastCost;
 using ScatterUpdateCost = CastCost;
 using UniformRealCost = CastCost;
+using FillV2Cost = CastCost;
 using ResizeBilinearCost = CastCost;
 using BoundingBoxEncodeCost = CastCost;
 using IOUCost = CastCost;
