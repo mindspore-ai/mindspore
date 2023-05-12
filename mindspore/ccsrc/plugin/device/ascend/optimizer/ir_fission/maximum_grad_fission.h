@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_TRANSMAXIMUM_GRAD_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_TRANSMAXIMUM_GRAD_FISSION_H_
 
-#include <vector>
 #include <string>
 #include "include/backend/optimizer/optimizer.h"
 
