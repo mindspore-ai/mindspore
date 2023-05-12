@@ -142,6 +142,12 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     ExecuteKernelInfo exe_kernel_info;
     exe_kernel_info.kernel_ = node;
 
+    auto &inputs = node->inputs();
+    if (inputs.empty()) {
+      MS_LOG(EXCEPTION) << "Invalid inputs.";
+    }
+    exe_kernel_info.primitive_ = common::AnfAlgo::GetCNodePrimitive(node);
+
     // Save inputs
     auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {

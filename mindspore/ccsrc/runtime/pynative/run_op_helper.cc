@@ -517,13 +517,13 @@ void InferNodeRealShape(const CNodePtr &kernel) {
   opt::InferOp(kernel);
 }
 
-void InferNodeRealShape(const CNodePtr &kernel, const std::vector<device::DeviceAddressPtr> &device_address_list,
+void InferNodeRealShape(const CNodePtr &kernel, const pynative::ExecuteKernelInfo &execute_kernel,
                         const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(kernel);
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
     MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
-  opt::dynamic_shape::InferOp(kernel, device_address_list, input_tensors);
+  opt::dynamic_shape::InferOp(kernel, execute_kernel, input_tensors);
 }
 
 void ResizeNodeInput(const CNodePtr &kernel) {
@@ -918,7 +918,7 @@ void LaunchKernelsDynamicNew(const pynative::OpCompilerInfoPtr &op_compiler_info
     std::vector<tensor::TensorPtr> tensors = GetAllInputTensor(
       execute_kernel.inputs_device_address_, address_map_to_tensor, op_compiler_info->value_map_to_tensor_);
     if (is_need_infer) {
-      InferNodeRealShape(kernel, execute_kernel.inputs_device_address_, tensors);
+      InferNodeRealShape(kernel, execute_kernel, tensors);
     } else {
       kernel->set_abstract(op_run_info->base_op_run_info.abstract);
       opt::dynamic_shape::SetOpArgs(kernel, execute_kernel.inputs_device_address_, tensors);

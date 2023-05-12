@@ -23,11 +23,12 @@
 #include "utils/ms_utils.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/helper.h"
+#include "runtime/pynative/op_compiler.h"
 
 namespace mindspore::opt::dynamic_shape {
 bool IsRealCNode(const BaseRef &n);
 void InferOp(const CNodePtr &node, void *args = nullptr);
-void InferOp(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
+void InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
              const std::vector<tensor::TensorPtr> &input_tensors);
 void SetOpArgs(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
                const std::vector<tensor::TensorPtr> &input_tensors);

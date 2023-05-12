@@ -34,6 +34,7 @@ struct ExecuteKernelInfo {
   std::vector<device::DeviceAddressPtr> inputs_device_address_;
   std::vector<device::DeviceAddressPtr> outputs_device_address_;
   CNodePtr kernel_;
+  PrimitivePtr primitive_;
 };
 using ExecuteKernelInfoList = std::vector<ExecuteKernelInfo>;
 
