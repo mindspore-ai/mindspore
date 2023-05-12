@@ -18,14 +18,6 @@
 #include "transform/graph_ir/op_declare/selection_ops_declare.h"
 
 namespace mindspore::transform {
-// CumsumD
-INPUT_MAP(CumsumD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(CumsumD) = {{2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
-ATTR_MAP(CumsumD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                     {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(CumsumD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(CumsumD))
-
 // CumulativeLogsumexp
 INPUT_MAP(CumulativeLogsumexp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
@@ -40,6 +32,7 @@ ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
 OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
+REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(Cumsum))
 
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};

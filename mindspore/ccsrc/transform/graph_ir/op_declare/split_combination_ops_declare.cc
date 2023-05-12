@@ -28,7 +28,7 @@ REG_ADPT_DESC(Split, kNameSplit, ADPT_DESC(SplitD))
 // Split
 INPUT_MAP(Split) = {{1, INPUT_DESC(split_dim)}, {2, INPUT_DESC(x)}};
 ATTR_INPUT_MAP(Split) = {{"axis", "split_dim"}};
-ATTR_MAP(Split) = {{"num_split", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+ATTR_MAP(Split) = {{"output_num", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Split) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SplitD, kSplitDOpName, ADPT_DESC(Split))
 

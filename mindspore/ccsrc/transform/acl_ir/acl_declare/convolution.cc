@@ -22,7 +22,7 @@ REGISTER_ACL_OP(Conv2D)
   .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"})
   .Input(1, {"NCHW"}, {"DefaultFormat", "NCHW", "FRACTAL_Z"})
   .Input(2, {"NCHW"}, {"NCHW"})
-  .Output(0, {"NCHW"}, {"NCHW", "NC1HWC0"});
+  .Output(0, {"NCHW"}, {"NCHW"});
 
 REGISTER_ACL_OP(Conv3D)
   .Input(0, {"NCHW"}, {"NDC1HWC0"})
@@ -34,7 +34,7 @@ REGISTER_ACL_OP(Conv2DBackpropInput)
   .Input(0, {"NCHW"}, {"NCHW"})
   .Input(1, {"NCHW"}, {"DefaultFormat", "NCHW", "FRACTAL_Z"})
   .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Output(0, {"NCHW"}, {"NCHW", "NC1HWC0"});
+  .Output(0, {"NCHW"}, {"NCHW"});
 
 REGISTER_ACL_OP(Conv3DBackpropInput)
   .Input(0, {"NCHW"}, {"ND"})

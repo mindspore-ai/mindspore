@@ -612,6 +612,10 @@ void AclConverter::SetRunnerSpecialInfo(const std::string &prim_name, const std:
   auto opinfo = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    // Default fuzz compile.
+    runner_.SetDynamicMode();
+    // 910 default fp16 mode.
+    runner_.SetRunMode("allow_fp32_to_fp16");
     return;
   }
   auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
