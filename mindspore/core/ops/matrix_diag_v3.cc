@@ -123,6 +123,7 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   auto k_rank = SizeToLong(k_shape.size());
   auto row_rank = SizeToLong(row_shape.size());
   auto col_rank = SizeToLong(col_shape.size());
+  auto padding_value_rank = SizeToLong(padding_shape.size());
 
   constexpr int64_t number_one = 1;
   constexpr int64_t number_two = 2;
@@ -139,11 +140,7 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   if (!is_dynamic) {
     (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);
-    const std::vector<ShapeVector> expect_padding_shapes = {{}, {1}};
-    if (std::find(expect_padding_shapes.begin(), expect_padding_shapes.end(), padding_shape) ==
-        expect_padding_shapes.end()) {
-      MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the padding_value's shape should be () or (1,)";
-    }
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'padding_value'", padding_value_rank, kEqual, 0, prim_name);
   }
 
   std::vector<AbstractBasePtr> depend_args = {input_args[kInputIndex1], input_args[kInputIndex2],
