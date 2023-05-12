@@ -75,8 +75,12 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
     std::string plugin_path;
     auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, "libruntime_convert_plugin.so", &plugin_path);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
-      return nullptr;
+      ret =
+        DLSoPath({"libmindspore-extendrt_python.so", "_c_lite"}, "libruntime_convert_plugin_python.so", &plugin_path);
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+        return nullptr;
+      }
     }
     void *function = nullptr;
     ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);

@@ -55,6 +55,8 @@ endif()
 
 if(MSLITE_DEPS_PYBIND11)
     find_package(Python3 COMPONENTS Interpreter Development)
+    set(PYTHON_LIBRARIES ${Python3_LIBRARIES})
+    message("PYTHON_LIBRARIES: ${PYTHON_LIBRARIES}")
     if(Python3_FOUND)
         find_package(Python3 COMPONENTS NumPy Development)
         if(Python3_NumPy_FOUND)

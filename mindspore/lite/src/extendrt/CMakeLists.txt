@@ -148,12 +148,23 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
 
-    add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
+    add_library(mindspore-extendrt_mid OBJECT ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
+    add_library(mindspore-extendrt SHARED $<TARGET_OBJECTS:mindspore-extendrt_mid>)
+
+    # for static mindspore lite
     add_dependencies(mindspore-extendrt fbs_inner_src)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
     add_subdirectory(delegate/graph_executor/litert)
+
+    # for mindspore lite python api
+    add_library(mindspore-extendrt_python SHARED $<TARGET_OBJECTS:mindspore-extendrt_mid>)
+    add_dependencies(mindspore-extendrt_python fbs_inner_src)
+    add_dependencies(mindspore-extendrt_python mindspore-infer-anfalgo)
+    add_dependencies(mindspore-extendrt_python mindspore-kernel-graph)
+
+    # for mindspore lite static
     add_library(mindspore-extendrt_static STATIC ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt_static fbs_inner_src)
     add_dependencies(mindspore-extendrt_static mindspore-infer-anfalgo)
@@ -162,10 +173,18 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
     add_subdirectory(${CCSRC_DIR}/backend/operator backend_operator)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
+
     target_link_libraries(mindspore-extendrt mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
         mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
         _mindspore_backend_common_pass_obj)
+
+    target_link_libraries(mindspore-extendrt_python mindspore_infer_shared_lib_obj)
+    target_link_libraries(mindspore-extendrt_python mindspore-infer-anfalgo
+            mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
+            _mindspore_backend_common_pass_obj)
+    target_link_libraries(mindspore-extendrt_python mindspore_core mindspore::protobuf)
+
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf)
     target_link_libraries(mindspore-extendrt_static mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt_static mindspore-infer-anfalgo
@@ -206,6 +225,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     add_library(_mindspore_cpu_kernel_mod_depend_obj OBJECT ${KERNEL_MOD_DEPEND_SRC})
     target_link_libraries(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
             mindspore-lite-proto mindspore::dnnl)
+    target_link_libraries(mindspore-extendrt_python _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
     target_link_libraries(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
             mindspore-lite-proto mindspore::dnnl)
 
@@ -213,12 +234,14 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel lite_kernel_mod)
     foreach(number RANGE 1 ${CPU_KERNEL_OBJECT_COUNT})
         target_link_libraries(mindspore-extendrt _mindspore_plugin_device_cpu_kernel_obj_${number})
+        target_link_libraries(mindspore-extendrt_python _mindspore_plugin_device_cpu_kernel_obj_${number})
         target_link_libraries(mindspore-extendrt_static _mindspore_plugin_device_cpu_kernel_obj_${number})
     endforeach()
     endif()
 
     if(NOT WIN32)
         target_link_libraries(mindspore-extendrt dl)
+        target_link_libraries(mindspore-extendrt_python dl)
         target_link_libraries(mindspore-extendrt_static dl)
     endif()
 
@@ -241,6 +264,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
         add_subdirectory(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops cuda_ops)
         target_link_libraries(mindspore-extendrt cuda_lite_kernel_mid cuda_ops)
+        target_link_libraries(mindspore-extendrt_python cuda_lite_kernel_mid cuda_ops)
         target_link_libraries(mindspore-extendrt_static cuda_lite_kernel_mid cuda_ops)
     endif()
 
@@ -252,6 +276,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     if(MSLITE_ENABLE_CONVERTER)
         add_subdirectory(convert)
         target_link_libraries(mindspore-extendrt -Wl,--no-as-needed mindspore_converter)
+        target_link_libraries(mindspore-extendrt_python -Wl,--no-as-needed mindspore_converter)
     endif()
 
     set(TEST_CLOUD_INFER off)
@@ -264,7 +289,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
         add_executable(cloud_infer_test ${CLOUD_INFER_TEST_SRC})
         add_dependencies(cloud_infer_test mindspore-extendrt)
+        add_dependencies(cloud_infer_test mindspore-extendrt_python)
         target_link_libraries(cloud_infer_test mindspore-extendrt)
+        target_link_libraries(cloud_infer_test mindspore-extendrt_python)
+    endif()
+    if(MSLITE_DEPS_PYBIND11)
+        set(PYTHON_VERSION ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR})
+        if(PYTHON_VERSION MATCHES "3.10" OR PYTHON_VERSION MATCHES "3.9")
+            target_link_libraries(mindspore-extendrt ${PYTHON_LIBRARIES})
+        endif()
     endif()
     add_executable(unify-cpu-infer graph_compiler/main.cc)
     add_dependencies(unify-cpu-infer mindspore-extendrt)
@@ -273,6 +306,10 @@ else()
     set(MSLITE_EXTEND_RUNTIME_SRC ${MODEL_LOADER_FRAMEWORK_SRC})
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
+
+    add_library(mindspore-extendrt_python OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
+    add_dependencies(mindspore-extendrt_python fbs_inner_src)
+
     add_library(mindspore-extendrt_static OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt_static fbs_inner_src)
 endif()
