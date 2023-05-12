@@ -109,6 +109,8 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
       return DTYPE_CHOOSE<std::complex<float>>(ctx);
     case DT_COMPLEX128:
       return DTYPE_CHOOSE<std::complex<double>>(ctx);
+    case DT_BOOL:
+      return DTYPE_CHOOSE<bool>(ctx);
     default:
       KERNEL_LOG_ERROR("ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_x).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
