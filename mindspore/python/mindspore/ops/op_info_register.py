@@ -578,7 +578,7 @@ class TBERegOp(RegOp):
         Define the calculation efficiency of the operator, whether the asynchronous calculation is supported.
 
         Args:
-            async_flag (bool): Value of async flag. Default: ``false`` .
+            async_flag (bool): Value of async flag. Default: ``False`` .
         """
         self._is_bool(async_flag)
         self.async_flag_ = async_flag
@@ -648,7 +648,7 @@ class TBERegOp(RegOp):
         Whether the operator supports dynamic shape.
 
         Args:
-            dynamic_shape (bool): Value of dynamic shape. Default: ``false`` .
+            dynamic_shape (bool): Value of dynamic shape. Default: ``False`` .
         """
         self._is_bool(dynamic_shape)
         self.dynamic_shape_support_ = dynamic_shape
@@ -659,7 +659,7 @@ class TBERegOp(RegOp):
         Whether the operator supports dynamic compile static.
 
         Args:
-            dynamic_compile_static (bool): Value of dynamic compile static. Default: ``false`` .
+            dynamic_compile_static (bool): Value of dynamic compile static. Default: ``False`` .
         """
         self._is_bool(dynamic_compile_static)
         self.dynamic_compile_static_ = dynamic_compile_static
@@ -670,7 +670,7 @@ class TBERegOp(RegOp):
         Whether the operator needs check supports.
 
         Args:
-            need_check_supported (bool): Value of need_check_supported. Default: ``false`` .
+            need_check_supported (bool): Value of need_check_supported. Default: ``False`` .
         """
         self._is_bool(need_check_supported)
         self.need_check_support_ = need_check_supported
@@ -681,7 +681,7 @@ class TBERegOp(RegOp):
         Whether the operator needs calop_select_format api.
 
         Args:
-            is_dynamic_format (bool): Value of is_dynamic_format. Default: ``false`` .
+            is_dynamic_format (bool): Value of is_dynamic_format. Default: ``False`` .
         """
         self._is_bool(is_dynamic_format)
         self.dynamic_format_ = is_dynamic_format

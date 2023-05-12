@@ -6,7 +6,7 @@ mindspore.ops.BiasAdd
     返回输入Tensor与偏置Tensor之和。相加前会把偏置Tensor广播成与输入Tensor的shape一致。
 
     参数：
-        - **data_format** (str) - 输入和输出数据的格式。取值为 ``'NHWC'`` 、 ``'NCHW'`` 或 ``'NCDHW'`` 。默认值： ``'NCHW'`` 。
+        - **data_format** (str，可选) - 输入和输出数据的格式。取值为 ``'NHWC'`` 、 ``'NCHW'`` 或 ``'NCDHW'`` 。默认值： ``'NCHW'`` 。
 
     输入：
         - **input_x** (Tensor) -输入Tensor。shape可以有2~5个维度。数据类型应为float16或float32。

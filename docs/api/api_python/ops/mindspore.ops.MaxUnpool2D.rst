@@ -39,7 +39,7 @@ mindspore.ops.MaxUnpool2D
             同时 `output_shape` 必须属于 :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
             (N, C, H_{out} + strides[0], W_{out} + strides[1])]` 。
         
-        - **data_format** (str，可选) - 可选的数据格式。当前支持 ``NCHW`` 和 ``NHWC`` 。默认值： ``NCHW`` 。
+        - **data_format** (str，可选) - 可选的数据格式。当前支持 ``"NCHW"`` 和 ``"NHWC"`` 。默认值： ``"NCHW"`` 。
 
     输入：
         - **x** (Tensor) - 求逆的输入Tensor。其shape为 :math:`(N, C, H_{in}, W_{in})` 或 :math:`(N, H_{in}, W_{in}, C)` 。
@@ -56,6 +56,6 @@ mindspore.ops.MaxUnpool2D
         - **ValueError** - 如果 `strides` (也支持0和(0, 0)) 或 `ksize` 的值不是正数。
         - **ValueError** - 如果 `pads` 的值是负数。
         - **ValueError** - 如果  `ksize` 、 `strides` 或 `pads` 不是长度为2的tuple。
-        - **ValueError** - 如果 `data_format` 不是str，同时也不是 ``NCHW`` 或 ``NHWC`` 。
+        - **ValueError** - 如果 `data_format` 不是str，同时也不是 ``"NCHW"`` 或 ``"NHWC"`` 。
         - **ValueError** - 如果 `output_shape` 的长度不是0或4。
         - **ValueError** - 如果 `output_shape` 不在由 `ksize` 、 `strides` 和 `pads` 计算出的输出尺寸范围内。

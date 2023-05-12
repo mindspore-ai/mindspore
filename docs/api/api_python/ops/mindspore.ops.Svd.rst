@@ -1,7 +1,7 @@
 mindspore.ops.Svd
 =================
 
-.. py:class:: mindspore.ops.Svd
+.. py:class:: mindspore.ops.Svd(full_matrices=False, compute_uv=True)
 
     计算一个或多个矩阵的奇异值分解。
 

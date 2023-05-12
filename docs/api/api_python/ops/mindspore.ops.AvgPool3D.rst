@@ -28,7 +28,7 @@
         - **ceil_mode** (bool) - 是否使用ceil函数计算输出高度和宽度。默认值： ``False`` 。
         - **count_include_pad** (bool) - 如果为 ``True`` ，平均计算将包括零填充。默认值： ``True`` 。
         - **divisor_override** (int) - 如果指定了该值，它将在平均计算中用作除数，否则将使用kernel_size作为除数。默认值： ``0`` 。
-        - **data_format** (str) - 输入和输出的数据格式。目前仅支持'NCDHW'。默认值：'NCDHW'。
+        - **data_format** (str) - 输入和输出的数据格式。目前仅支持'NCDHW'。默认值： ``"NCDHW"`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型为float16和float32。

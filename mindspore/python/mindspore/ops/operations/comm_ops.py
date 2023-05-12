@@ -118,7 +118,8 @@ class AllReduce(Primitive):
     Args:
         op (str): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
                   On the CPU, only 'sum' is supported. Default: ``ReduceOp.SUM`` .
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+                  means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -197,7 +198,8 @@ class AllGather(PrimitiveWithInfer):
         - Currently only supports GRAPH_MODE and it should be called in Cell.
 
     Args:
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -414,9 +416,9 @@ class ReduceScatter(Primitive):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        op (str): Specifies an operation used for element-wise reductions,
+        op (str, optional): Specifies an operation used for element-wise reductions,
                   like SUM and MAX. Default: ``ReduceOp.SUM`` .
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
         - **input_x** (Tensor) - Input Tensor, suppose it has a shape :math:`(N, *)`, where `*`
@@ -552,7 +554,7 @@ class Broadcast(PrimitiveWithInfer):
     Args:
         root_rank (int): Source rank. Required in all processes except the one
                    that is sending the data.
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
         - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -705,7 +707,7 @@ class NeighborExchange(Primitive):
         recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
         send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
         - **input_x** (tuple[Tensor]) - Shapes are same as args of send_shapes.
@@ -779,7 +781,7 @@ class AlltoAll(PrimitiveWithInfer):
         split_count (int): On each process, divide blocks into split_count number.
         split_dim (int): On each process, split blocks along the split_dim.
         concat_dim (int): On each process, gather the received blocks along the concat_dimension.
-        group (str): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` .
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -896,7 +898,7 @@ class NeighborExchangeV2(Primitive):
         recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
                                [recv_top, recv_bottom, recv_left, recv_right].
         data_format (str): Data format, only support NCHW now.
-        group (str, optional): The communication group to work on. Default: ``"GlobalComm.WORLD_COMM_GROUP"`` , which
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
                      means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:

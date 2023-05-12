@@ -8,7 +8,7 @@
     参数：    
         - **max_length** (int) - 取样数量，必须大于0。默认值： ``1`` 。
         - **pad** (int) - 填充值。默认值： ``-1`` 。
-        - **dtype** (mindspore.dtype) - 输出的数据类型。默认值： ``mindspore.int32`` 。
+        - **dtype** (mindspore.dtype) - 输出的数据类型。默认值： ``mstype.int32`` 。
 
     输入：
         - **n** (Tensor) - shape为 :math:`(1,)` 的输入Tensor，其数据类型为int32或int64，须在[0, `max_length`]内取值。

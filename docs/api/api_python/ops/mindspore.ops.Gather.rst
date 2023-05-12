@@ -1,11 +1,14 @@
 mindspore.ops.Gather
 ======================
 
-.. py:class:: mindspore.ops.Gather
+.. py:class:: mindspore.ops.Gather(batch_dims=0)
 
     返回输入Tensor在指定 `axis` 上 `input_indices` 索引对应的元素组成的切片。
 
     更多参考详见 :func:`mindspore.ops.gather`。
+
+    参数：
+        - **batch_dims** (int，可选) - 指定batch维的数量。它必须要小于或等于 `input_indices` 的rank。默认值： ``0`` 。
 
     输入：
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。

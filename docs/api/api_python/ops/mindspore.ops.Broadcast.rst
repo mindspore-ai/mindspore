@@ -10,7 +10,7 @@
 
     参数：
         - **root_rank** (int) - 表示发送源的进程编号。除发送数据的进程外，存在于所有进程中。
-        - **group** (str) - 表示通信域。默认值： ``"hccl_world_group"`` 。
+        - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     输入：
         - **input_x** (tuple[Tensor]) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。

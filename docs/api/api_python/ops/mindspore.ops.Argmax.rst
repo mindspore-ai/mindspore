@@ -9,7 +9,7 @@
 
     参数：
         - **axis** (int) - 指定Argmax计算轴。默认值： ``-1`` 。
-        - **output_type** (:class:`mindspore.dtype`) - 指定输出数据类型。默认值： ``mindspore.dtype.int32`` 。
+        - **output_type** (:class:`mindspore.dtype`) - 指定输出数据类型。默认值： ``mstype.int32`` 。
 
     输入：
         - **input_x** (Tensor) - Argmax的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。支持的数据类型如下所示：

@@ -767,8 +767,8 @@ class RandomCategorical(PrimitiveWithInfer):
     Generates random samples from a given categorical distribution tensor.
 
     Args:
-        dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
-            mindspore.int32 and mindspore.int64. Default: ``mindspore.int64`` .
+        dtype (mindspore.dtype): The type of output. Its value must be one of mstype.int16,
+            mstype.int32 and mstype.int64. Default: ``mstype.nt64`` .
 
     Inputs:
         - **logits** (Tensor) - The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
@@ -779,7 +779,7 @@ class RandomCategorical(PrimitiveWithInfer):
         - **output** (Tensor) - The output Tensor with shape :math:`(batch_size, num_samples)`.
 
     Raises:
-        TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
+        TypeError: If `dtype` is not one of the following: mstype.int16, mstype.int32, mstype.int64.
         TypeError: If `logits` is not a Tensor.
         TypeError: If neither `num_sample` nor `seed` is an int.
 
@@ -827,7 +827,7 @@ class Multinomial(Primitive):
     Args:
         seed (int): Random seed, must be non-negative. Default: ``0`` .
         seed2 (int): Random seed2, must be non-negative. Default: ``0`` .
-        dtype(dtype): The type of output, must be int32 or int64. Default: int32.
+        dtype(dtype): The type of output, must be mstype.int32 or mstype.int64. Default: mstype.int32.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
@@ -840,7 +840,7 @@ class Multinomial(Primitive):
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
         TypeError: If dtype of `num_samples` is not int.
-        TypeError: If `dtype` is not int32 or int64.
+        TypeError: If `dtype` is not mstype.int32 or mstype.int64.
         ValueError: If `seed` or `seed2` is less than 0.
 
     Supported Platforms:
