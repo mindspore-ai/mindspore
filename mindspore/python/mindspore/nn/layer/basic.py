@@ -439,13 +439,15 @@ class Flatten(Cell):
         self.start_dim = start_dim
         self.end_dim = end_dim
 
+    def check_axis_valid(self, axis, ndim):
+        if axis < -ndim or axis >= ndim:
+            raise ValueError("'start_dim' or 'end_dim' out of range.")
+
     def construct(self, x):
         x_rank = F.rank(x)
         ndim = x_rank if x_rank != 0 else 1
-        if self.start_dim < -ndim or self.start_dim >= ndim:
-            const_utils.raise_value_error("'start_dim' out of range.")
-        if self.end_dim < -ndim or self.end_dim >= ndim:
-            const_utils.raise_value_error("'end_dim' out of range.")
+        self.check_axis_valid(self.start_dim, ndim)
+        self.check_axis_valid(self.end_dim, ndim)
         return F.flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
 
 

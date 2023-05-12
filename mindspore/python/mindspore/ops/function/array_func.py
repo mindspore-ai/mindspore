@@ -1635,10 +1635,17 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         >>> print(output.shape)
         (1, 24)
     """
+    def check_axis_valid(axis, ndim):
+        if axis < -ndim or axis >= ndim:
+            raise ValueError("'start_dim' or 'end_dim' out of range.")
+
+    def check_dim_valid(start_dim, end_dim):
+        if start_dim > end_dim:
+            raise ValueError("For 'flatten', 'start_dim' cannot come after 'end_dim'.")
+
     def canonicalize_axis(axis, x_rank):
         ndim = x_rank if x_rank != 0 else 1
-        if axis < -ndim or axis >= ndim:
-            const_utils.raise_value_error("'start_dim' or 'end_dim' out of range.")
+        check_axis_valid(axis, ndim)
         return axis if axis >= 0 else axis + ndim
 
     # Check the types of arguments.
@@ -1664,8 +1671,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     # Check axis.
     start_dim = canonicalize_axis(start_dim, x_rank)
     end_dim = canonicalize_axis(end_dim, x_rank)
-    if start_dim > end_dim:
-        const_utils.raise_value_error("For 'flatten', 'start_dim' cannot come after 'end_dim'.")
+    check_dim_valid(start_dim, end_dim)
     # If input is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
     if x_rank in (0, 1):
         return reshape_(input, (-1,))

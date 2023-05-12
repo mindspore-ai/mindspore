@@ -48,6 +48,19 @@ class NetFlattenTensor(nn.Cell):
         return x.flatten(), x.flatten(start_dim=start_dim, end_dim=end_dim)
 
 
+class NetFlattenDynamic(nn.Cell):
+    def __init__(self, order='C'):
+        super(NetFlattenDynamic, self).__init__()
+        self.relu = ops.ReLU()
+        self.reduce_sum = ops.ReduceSum(keep_dims=True)
+        self.order = order
+
+    def construct(self, x, indices, start_dim=1, end_dim=-1):
+        unique_indices = self.relu(indices)
+        x = self.reduce_sum(x, unique_indices)
+        return ops.flatten(x, self.order, start_dim=start_dim, end_dim=end_dim)
+
+
 class NetAllFlatten(nn.Cell):
     def __init__(self):
         super(NetAllFlatten, self).__init__()
@@ -427,6 +440,29 @@ def test_ops_flatten_dynamic_shape():
     end_dim = -1
     net.set_inputs(x_dyn, start_dim, end_dim)
     out = net(x, start_dim, end_dim)
+    print(out.shape)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_ops_flatten_dynamic_rank():
+    """
+    Feature: Flatten ops.
+    Description: test flatten with dynamic rank.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    net = NetFlattenDynamic()
+    x = Tensor(np.ones(shape=[1, 2, 3, 4]), mstype.int32)
+    x_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
+    indices = Tensor(np.random.randint(0, 3, size=6).astype(np.int32))
+    indices_dyn = Tensor(shape=[None], dtype=indices.dtype)
+    start_dim = 0
+    end_dim = -1
+    net.set_inputs(x_dyn, indices_dyn, start_dim, end_dim)
+    out = net(x, indices, start_dim, end_dim)
     print(out.shape)
 
 
