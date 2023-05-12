@@ -18,9 +18,8 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(Add)
-  .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Input(1, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Output(0, {"NCHW"}, {"NCHW"});
+REGISTER_ACL_OP(Add).Input(0, {}, {"NC1HWC0"}).Input(1, {}, {"NC1HWC0"});
+
+REGISTER_ACL_OP(Cast).Input(0, {}, {"FRACTAL_Z"});
 }  // namespace transform
 }  // namespace mindspore
