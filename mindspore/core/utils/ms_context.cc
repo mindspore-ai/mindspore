@@ -31,11 +31,9 @@
 
 namespace mindspore {
 namespace {
-std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},
-                                                     {"vm", kMsBackendVmOnly},
-                                                     {"ms", kMsBackendMsPrior},
-                                                     {"ge_only", kMsBackendGeOnly},
-                                                     {"vm_prior", kMsBackendVmPrior}};
+std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},     {"bisheng", kMsBackendBishengPrior},
+                                                     {"vm", kMsBackendVmOnly},      {"ms", kMsBackendMsPrior},
+                                                     {"ge_only", kMsBackendGeOnly}, {"vm_prior", kMsBackendVmPrior}};
 constexpr auto kDeviceTargetSize2 = 2;
 }  // namespace
 std::atomic<bool> thread_1_must_end(false);

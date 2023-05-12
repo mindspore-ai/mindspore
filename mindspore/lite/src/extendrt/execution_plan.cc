@@ -48,14 +48,9 @@ ExecutionPlan::~ExecutionPlan() {
 std::vector<abstract::Kernel *> ExecutionPlan::ToKernelList() { return kernel_list_; }
 
 bool ExecutionPlan::PrepareKernels() {
-  for (auto flow : execution_flows_) {
-    if (flow == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels get nullptr execution flow.";
-      return false;
-    }
-    auto kernel = flow->ConstructFusionKernel();
+  for (auto kernel : kernels_) {
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels construct execution flow to Sub Graph Kernel failed.";
+      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels get nullptr execution flow.";
       return false;
     }
     auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
@@ -65,6 +60,11 @@ bool ExecutionPlan::PrepareKernels() {
         MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels node: " << node->name() << " prepare failed.";
         return false;
       }
+    }
+    auto ret = subgraph_kernel->Prepare();
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels prepare subgraph failed.";
+      return false;
     }
     if (!MallocTensorData(subgraph_kernel)) {
       MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels malloc memory for kernel: " << subgraph_kernel->name()
@@ -76,16 +76,16 @@ bool ExecutionPlan::PrepareKernels() {
   return true;
 }
 
-bool ExecutionPlan::MallocTensorData(abstract::Kernel *kernel) {
-  auto subgraph_kernel = dynamic_cast<kernel::SubGraphKernel *>(kernel);
-  if (subgraph_kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
+bool ExecutionPlan::MallocTensorData(abstract::Kernel *subgraph_kernel) {
+  auto subgraph = dynamic_cast<kernel::SubGraphKernel *>(subgraph_kernel);
+  if (subgraph->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     MS_LOG(ERROR)
       << "ExecutionPlan::MallocTensorData subgraph target is not CPU, cannot malloc data with default allocator";
     return false;
   }
-  auto kernel_list = subgraph_kernel->nodes();
-  for (auto kernel : kernel_list) {
-    for (auto tensor : kernel->in_tensors()) {
+  auto kernel_list = subgraph->nodes();
+  for (auto kernel_ : kernel_list) {
+    for (auto tensor : kernel_->in_tensors()) {
       if (tensor->category() == lite::VAR) {
         auto ref_count = tensor->init_ref_count();
         tensor->set_init_ref_count(ref_count + 1);

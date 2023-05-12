@@ -47,6 +47,8 @@ class ExecutionPlan : public std::enable_shared_from_this<ExecutionPlan> {
   /// \return void.
   virtual void AddExecutionFlow(std::shared_ptr<ExecutionFlow> execution_flow) = 0;
 
+  virtual void AddKernel(abstract::Kernel *kernel) = 0;
+
   /// \brief Get FuncGraph of Model need to run.
   ///
   /// \return FuncGraph pointer.

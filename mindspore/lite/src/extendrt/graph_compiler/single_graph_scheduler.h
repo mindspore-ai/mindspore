@@ -24,6 +24,7 @@
 #include "src/extendrt/execution_flow.h"
 #include "src/litert/inner_context.h"
 #include "src/infer/graph_compiler.h"
+#include "src/infer/kernel.h"
 #include "src/extendrt/kernel/kernel_selector.h"
 
 namespace mindspore {
@@ -33,12 +34,12 @@ class SingleGraphScheduler {
   explicit SingleGraphScheduler(lite::InnerContext *context, const abstract::CompileOption &option)
       : context_(context), compile_option_(option) {}
   virtual ~SingleGraphScheduler() = default;
-  ExecutionFlowPtr Schedule(const CompileResultPtr &node_list);
+  abstract::Kernel *Schedule(const CompileResultPtr &node_list);
 
  private:
   int SelectKernel(const CompileResultPtr &node_list);
   bool HandleWeightForKernels();
-  bool OptimizeTranspose(const std::vector<kernel::KernelExec *> &kernels);
+  Status OptimizeTranspose(std::vector<kernel::KernelExec *> *kernels);
   bool InferShape(const CompileResultPtr &node_list);
 
  private:

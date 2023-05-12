@@ -18,26 +18,27 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_EXECUTION_PLAN_H_
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 
 #include "infer/execution_plan.h"
+#include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::infer {
 class ExecutionPlan : public abstract::ExecutionPlan {
  public:
   ExecutionPlan() = default;
-  virtual ~ExecutionPlan();
+  ~ExecutionPlan() override;
 
-  std::vector<std::shared_ptr<abstract::ExecutionFlow>> GetExecutionFLows() override { return execution_flows_; }
+  std::vector<std::shared_ptr<abstract::ExecutionFlow>> GetExecutionFLows() override { return {}; }
+  std::vector<abstract::Kernel *> GetKernels() { return kernels_; }
 
-  void SetExecutionFlows(std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows) override {
-    execution_flows_ = execution_flows;
-  }
+  void SetExecutionFlows(std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows) override {}
+  void SetKernels(std::vector<abstract::Kernel *> kernels) { this->kernels_ = std::move(kernels); }
 
-  void AddExecutionFlow(std::shared_ptr<abstract::ExecutionFlow> execution_flow) override {
-    execution_flows_.emplace_back(execution_flow);
-  }
+  void AddExecutionFlow(std::shared_ptr<abstract::ExecutionFlow> execution_flow) override {}
+  void AddKernel(abstract::Kernel *kernel) override { this->kernels_.emplace_back(kernel); }
 
   FuncGraphPtr GetFuncGraph() override { return func_graph_; }
 
@@ -83,7 +84,7 @@ class ExecutionPlan : public abstract::ExecutionPlan {
   bool MallocTensorData(abstract::Kernel *kernel);
 
  private:
-  std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows_;
+  std::vector<abstract::Kernel *> kernels_;
   FuncGraphPtr func_graph_;
   std::vector<abstract::Tensor *> inputs_;
   std::vector<abstract::Tensor *> outputs_;

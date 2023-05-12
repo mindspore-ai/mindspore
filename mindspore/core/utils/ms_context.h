@@ -34,7 +34,8 @@ enum MsBackendPolicy {
   kMsBackendGePrior = 2,
   kMsBackendVmPrior = 3,
   kMsBackendMsPrior = 4,
-  kMsBackendUnknown = 5,
+  kMsBackendBishengPrior = 5,
+  kMsBackendUnknown = 6,
 };
 
 enum DumpLevel : int {

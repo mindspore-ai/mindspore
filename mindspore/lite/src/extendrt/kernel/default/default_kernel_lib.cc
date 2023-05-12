@@ -33,12 +33,12 @@ std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType
   }
   auto kernel_mod = Factory<NativeCpuKernelMod>::Instance().Create(op_type.PBType());
   if (kernel_mod == nullptr) {
-    MS_LOG(INFO) << "Create kernel mod failed. kernel: " << op_type.PBType();
+    MS_LOG(INFO) << "Create kernel mod failed. kernel: " << op_type;
     return nullptr;
   }
   auto match_ret = MatchKernelAttr(attr, kernel_mod->GetOpSupport());
   if (!match_ret.first) {
-    MS_LOG(INFO) << "For '" << op_type.PBType() << "' does not support this kernel type: " << attr;
+    MS_LOG(INFO) << "For '" << op_type << "' does not support this kernel type: " << attr;
     return nullptr;
   }
   return kernel_mod;
@@ -53,7 +53,7 @@ LiteKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::ve
                                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
   auto kernel_mod = DefaultKernelLib::CreateKernelMod(spec.op_type, spec.attr, spec.format, spec.backend);
   if (kernel_mod == nullptr) {
-    MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type.PBType();
+    MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type;
     return nullptr;
   }
   return new (std::nothrow) LiteKernelMod(kernel_mod, spec.primitive, inputs, outputs, ctx);

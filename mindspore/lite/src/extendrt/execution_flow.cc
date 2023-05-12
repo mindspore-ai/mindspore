@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-#include <vector>
-
 #include "src/extendrt/execution_flow.h"
-
-#include "src/extendrt/tensor.h"
+#include <vector>
 #include "src/litert/kernel_exec_util.h"
 #include "src/executor/sub_graph_kernel.h"
 
@@ -30,26 +27,17 @@ ExecutionFlow::~ExecutionFlow() {
 }
 
 abstract::Kernel *ExecutionFlow::ConstructFusionKernel() {
-  auto lite_kernel = new (std::nothrow) mindspore::kernel::LiteKernel(nullptr, inputs_, outputs_, context_.get());
-  if (lite_kernel == nullptr) {
-    MS_LOG(ERROR) << "ExecutionFlow::ConstructFusionKernel create lite kernel failed, may be memory is not enough";
+  kernel::KernelExecUtil::FindAllInoutKernels(kernels_);
+  kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
+  MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
+  // SCHEMA_VERSION::SCHEMA_CUR = 0
+  auto subgraph_kernel =
+    kernel::KernelExecUtil::CreateSubGraphKernel(kernels_, &inputs_, &outputs_, cur_sub_graph_type, *context_, 0);
+  if (subgraph_kernel == nullptr) {
+    MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
     return nullptr;
   }
-
-  std::vector<mindspore::kernel::KernelExec *> input_kernels =
-    mindspore::kernel::KernelExecUtil::SubgraphInputNodes(kernels_);
-  std::vector<mindspore::kernel::KernelExec *> output_kernels =
-    mindspore::kernel::KernelExecUtil::SubgraphOutputNodes(kernels_);
-
-  mindspore::kernel::SubGraphKernel *sub_graph_kernel =
-    new mindspore::kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels_, lite_kernel);
-  if (sub_graph_kernel == nullptr) {
-    MS_LOG(ERROR) << "ExecutionFlow::ConstructFusionKernel create sub graph kernel failed, may be memory is not enough";
-    delete lite_kernel;
-    return nullptr;
-  }
-  sub_graph_kernel->set_context(context_.get());
-  return sub_graph_kernel;
+  return subgraph_kernel;
 }
 
 std::string ExecutionFlow::Dump() const {
