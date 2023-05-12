@@ -598,6 +598,11 @@ uint32_t MetaServerNode::AllocateRankId(const std::string &role) {
 void MetaServerNode::ReassignNodeRank() {
   if (std::all_of(nodes_.begin(), nodes_.end(), [](const auto &node) { return common::IsStrNumeric(node.first); })) {
     MS_LOG(WARNING) << "Rank ids are already set by numeric node ids. No need to reassign them.";
+    for (const auto &n : nodes_) {
+      const std::shared_ptr<NodeInfo> &node_info = n.second;
+      const std::string &role = node_info->role;
+      (void)metadata_.insert(std::make_pair(role + node_info->node_id, std::to_string(node_info->rank_id)));
+    }
     return;
   }
 

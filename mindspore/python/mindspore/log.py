@@ -478,6 +478,7 @@ def _get_rank_id():
     """Get rank id."""
     rank_id = os.getenv('RANK_ID')
     gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
+    ms_node_id = os.getenv('MS_NODE_ID')
     rank = '0'
     if rank_id and gpu_rank_id and rank_id != gpu_rank_id:
         warnings.warn(
@@ -487,6 +488,8 @@ def _get_rank_id():
         rank = rank_id
     elif gpu_rank_id:
         rank = gpu_rank_id
+    elif ms_node_id:
+        rank = ms_node_id
     return rank
 
 

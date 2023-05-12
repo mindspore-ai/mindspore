@@ -240,7 +240,7 @@ void Connection::Disconnect(int fd) {
 void Connection::Close() {
   if (recv_event_loop != nullptr) {
     if (recv_event_loop->DeleteEpollEvent(socket_fd) == RPC_ERROR) {
-      MS_LOG(ERROR) << "Failed to delete epoll event " << socket_fd;
+      MS_LOG(WARNING) << "Failed to delete epoll event " << socket_fd;
     }
   }
 

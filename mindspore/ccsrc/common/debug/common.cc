@@ -413,11 +413,14 @@ struct GlogLogDirRegister {
       }
       const char *rank_id = std::getenv("RANK_ID");
       const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
+      const char *ms_node_id = std::getenv("MS_NODE_ID");
       std::string rank = "0";
       if (rank_id != nullptr) {
         rank = std::string(rank_id);
       } else if (gpu_rank_id != nullptr) {
         rank = std::string(gpu_rank_id);
+      } else if (ms_node_id != nullptr) {
+        rank = std::string(ms_node_id);
       }
       log_dir_str += "/rank_" + rank + "/logs/";
       auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str, true);
