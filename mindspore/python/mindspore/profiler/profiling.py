@@ -761,7 +761,7 @@ class Profiler:
         """Analyse step trace info."""
         points, is_training_mode_flag = None, False
         try:
-            if self._is_support_step_info_collect() and not self._dynamic_status:
+            if not self._dynamic_status:
                 points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
             logger.warning(err.message)
@@ -997,13 +997,12 @@ class Profiler:
         parser = GpuFrameWorkParser(self._output_path, self._dev_id)
         graph_ids = parser.get_graph_ids()
         ProfilerInfo.set_graph_ids(graph_ids)
-        if self._is_support_step_info_collect():
-            self._analyse_step_trace(
-                is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
-                is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
-            )
-            if self._dynamic_status:
-                parser.analyse_dynamic_shape_data(self._timeline_meta)
+        self._analyse_step_trace(
+            is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
+            is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
+        )
+        if self._dynamic_status:
+            parser.analyse_dynamic_shape_data(self._timeline_meta)
 
     def _get_step_reduce_op_type(self):
         """Gets all communication operator names."""
@@ -1031,7 +1030,8 @@ class Profiler:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.') from err
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative mode is not supported on CPU currently.")
+            raise RuntimeError("Currently, the CPU platform does not support Pynative mode to collect performance "
+                               "data.")
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):
