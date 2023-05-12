@@ -24,8 +24,10 @@ from mindspore.ops.composite import base
 from mindspore.common import Tensor
 from ...operations._sequence_ops import SequenceSliceSetItem
 
-DOC_URL = "https://mindspore.cn/docs/zh-CN/r2.0/note/index_support.html"
-setitem = base.MultitypeFuncGraph('setitem', doc_url=DOC_URL)
+DOC_URL = "https://mindspore.cn/search/en?inputValue=Index%20value%20assignment"
+
+setitem = base.MultitypeFuncGraph('setitem')
+setitem.set_doc_url(DOC_URL)
 slice_get_item = SliceGetItem()
 sequence_slice_setitem = SequenceSliceSetItem()
 
