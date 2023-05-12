@@ -39,7 +39,7 @@
 
 namespace mindspore {
 namespace opt {
-void GeOptimization(const FuncGraphPtr &func_graph) {
+void GeOptimization(const FuncGraphPtr &func_graph, const std::string &phase_prefix) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "GE optimization start, graph: " << func_graph->ToString() << ".";
 
@@ -56,7 +56,7 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   auto pm = std::make_shared<opt::PassManager>("ge_optimization_pm");
   pm->AddPass(std::make_shared<opt::BatchNormTransform>());
   auto env_train = common::GetEnv("MS_GE_TRAIN");
-  if (env_train == "1") {
+  if (env_train == "1" && phase_prefix != "eval") {
     pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
     pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
   } else {

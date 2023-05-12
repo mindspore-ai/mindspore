@@ -41,6 +41,7 @@
 #include "runtime/config.h"
 #include "runtime/dev.h"
 #include "include/backend/distributed/init.h"
+#include "utils/phase.h"
 
 namespace mindspore {
 namespace device {
@@ -116,6 +117,25 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   return res;
 }
 
+std::string GetPhasePrefix() {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  auto pos = phase.find('.');
+  if (pos != std::string::npos) {
+    return phase.substr(0, pos);
+  }
+
+  return "";
+}
+
+bool IsGeTrain() {
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
+  auto env_training = common::GetEnv("MS_GE_TRAIN");
+  if (env_ge == "1" && (env_training == "1" || GetPhasePrefix() == "eval")) {
+    return true;
+  }
+  return false;
+}
+
 std::string ShapesToString(const ShapeArray &shapes) {
   std::stringstream buffer;
   for (size_t i = 0; i < shapes.size(); ++i) {
@@ -137,7 +157,7 @@ std::string ShapesToString(const ShapeArray &shapes) {
 
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
   OptionMap options{};
-  if (common::GetEnv("GE_TRAIN") == "1") {
+  if (IsGeTrain() && GetPhasePrefix() != "eval") {
     (void)options.emplace("ge.exec.variable_acc", "1");
   }
   if (!is_dynamic_shape) {
@@ -150,7 +170,7 @@ OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic
 
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
-  auto converter = transform::NewConverter(anf_graph);
+  auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
@@ -222,15 +242,6 @@ void SetDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
     }
   }
 }
-
-bool IsGeTrain() {
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  if (env_ge == "1" && env_training == "1") {
-    return true;
-  }
-  return false;
-}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -299,7 +310,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
-  opt::GeOptimization(kg);
+  opt::GeOptimization(kg, GetPhasePrefix());
   (void)BuildDFGraph(kg, GetParams(kg), false);
   SetDynamicShapeAttr(kg);
   AllocInputHostMemory(kg);
@@ -407,6 +418,10 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
     UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
+
+  ConfigManager::GetInstance().ResetConfig();
+  ConfigManager::GetInstance().ResetIterNum();
+
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
@@ -612,8 +627,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
   (*ge_options)["graphType"] = "1";
 
-  bool training = IsGeTrain();
-  if (training) {
+  if (IsGeTrain()) {
     (*ge_options)["ge.graphRunMode"] = "1";
   } else {
     (*ge_options)["ge.graphRunMode"] = "0";
