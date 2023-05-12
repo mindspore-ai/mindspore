@@ -1474,14 +1474,12 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
   return *res;
 }
 
-TASK_CONTENT ShardReader::GetNextById(const int64_t &task_id, const int32_t &consumer_id) {
-  auto task_content_ptr =
-    std::make_shared<TASK_CONTENT>(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
+Status ShardReader::GetNextById(const int64_t &task_id, const int32_t &consumer_id,
+                                std::shared_ptr<TASK_CONTENT> *task_content_ptr) {
   if (interrupt_) {
-    return *task_content_ptr;
+    return Status::OK();
   }
-  (void)ConsumerOneTask(task_id, consumer_id, &task_content_ptr);
-  return std::move(*task_content_ptr);
+  RETURN_IF_NOT_OK_MR(ConsumerOneTask(task_id, consumer_id, task_content_ptr));
 }
 
 Status ShardReader::UnCompressBlob(const std::vector<uint8_t> &raw_blob_data,

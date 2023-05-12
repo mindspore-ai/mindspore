@@ -259,8 +259,10 @@ Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrec
 Status GraphLoader::WorkerEntry(int32_t worker_id) {
   // Handshake
   TaskManager::FindMe()->Post();
-  auto ret = shard_reader_->GetNextById(row_id_++, worker_id);
-  ShardTuple rows = ret.second;
+  auto task_content_ptr = std::make_shared<mindrecord::TASK_CONTENT>(
+    mindrecord::TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>());
+  RETURN_IF_NOT_OK(shard_reader_->GetNextById(row_id_++, worker_id, &task_content_ptr));
+  ShardTuple rows = task_content_ptr->second;
   while (rows.empty() == false) {
     RETURN_IF_INTERRUPTED();
     for (const auto &tupled_row : rows) {
@@ -281,8 +283,18 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
         MS_LOG(WARNING) << "attribute:" << attr << " is neither edge nor node.";
       }
     }
-    auto rc = shard_reader_->GetNextById(row_id_++, worker_id);
-    rows = rc.second;
+    {
+      // judge row_id_ and row_id_++ must be an automatic operation
+      std::lock_guard<std::mutex> lck(mutex_);
+      // finish get all data from mindrecord
+      if (row_id_ >= shard_reader_->GetNumRows()) {
+        break;
+      }
+      task_content_ptr = std::make_shared<mindrecord::TASK_CONTENT>(
+        mindrecord::TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>());
+      RETURN_IF_NOT_OK(shard_reader_->GetNextById(row_id_++, worker_id, &task_content_ptr));
+      rows = task_content_ptr->second;
+    }
   }
   return Status::OK();
 }

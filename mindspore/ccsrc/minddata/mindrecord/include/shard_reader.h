@@ -174,7 +174,9 @@ class MINDRECORD_API ShardReader {
 
   /// \brief return a row by id
   /// \return a batch of images and image data
-  TASK_CONTENT GetNextById(const int64_t &task_id, const int32_t &consumer_id);
+  Status GetNextById(const int64_t &task_id, const int32_t &consumer_id,
+                     std::shared_ptr<TASK_CONTENT> *task_content_ptr);
+
   /// \brief  get blob filed list
   /// \return blob field list
   std::pair<ShardType, std::vector<std::string>> GetBlobFields();
