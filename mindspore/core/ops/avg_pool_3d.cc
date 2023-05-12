@@ -227,7 +227,9 @@ TypePtr AvgPool3DInferType(const PrimitivePtr &primitive, const std::vector<Abst
 MIND_API_OPERATOR_IMPL(AvgPool3D, BaseOperator);
 AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(AvgPool3DInferShape(primitive, input_args), AvgPool3DInferType(primitive, input_args));
+  auto type = AvgPool3DInferType(primitive, input_args);
+  auto shape = AvgPool3DInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 
 // AG means auto generated
