@@ -268,3 +268,23 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
     x_np = np.array([[-1., 1., 2.], [3., 4., 5.]])
     # allclose
     assert np.allclose(x_ms.asnumpy(), x_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bool_tensor_input_set_item_x_3_index_bool3_bool_value():
+    """
+    Feature: bool tensor indexing with index of bool tensor
+    Description: Verify the result of bool tensor indexing
+    Expectation: success
+    """
+    a = Tensor([True, False, False])
+    index = Tensor([True, True, True])
+    data = Tensor([False, True, True])
+    a[index] = data
+    assert np.allclose(a.asnumpy(), np.array([False, True, True]))
