@@ -111,6 +111,7 @@ constexpr const char kNameEluGrad[] = "EluGrad";
 constexpr const char kNameTensorScatterUpdate[] = "TensorScatterUpdate";
 constexpr const char kNameTensorScatterElements[] = "TensorScatterElements";
 constexpr const char kNameTensorScatterAdd[] = "TensorScatterAdd";
+constexpr const char kNameTriu[] = "Triu";
 constexpr const char kNameScatterElements[] = "ScatterElements";
 constexpr const char kNameNonZero[] = "NonZero";
 constexpr const char kNameNonZeroWithValue[] = "NonZeroWithValue";

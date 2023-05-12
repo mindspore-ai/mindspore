@@ -39,6 +39,7 @@
 #include "tools/optimizer/common/helper.h"
 #include "ops/op_utils.h"
 #include "ops/custom.h"
+#include "ops/tensor_copy.h"
 #include "include/common/utils/anfalgo.h"
 #include "tools/optimizer/common/format_utils.h"
 
@@ -1484,5 +1485,30 @@ bool IsReduceModeMeetOutEqualIn(const PrimitivePtr &prim) {
   std::set<int64_t> meet_mode = {Reduce_Mean, Reduce_Max, Reduce_Min, Reduce_Prod, Reduce_Sum};
   return meet_mode.find(mode) != meet_mode.end();
 }
-}  // namespace opt
+
+STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
+  auto func_graph = cnode->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func graph is nullptr.";
+    return RET_ERROR;
+  }
+  ops::TensorMove tensor_move;
+  auto tensor_move_prim = tensor_move.GetPrim();
+  if (tensor_move_prim == nullptr) {
+    MS_LOG(ERROR) << "tensor move prim is nullptr.";
+    return RET_ERROR;
+  }
+  auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->inputs()[input_index]});
+  auto manager = Manage(func_graph);
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "manager is nullptr.";
+    return RET_ERROR;
+  }
+  tensor_move_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "tensor_move_1");
+  auto temp_abstract = cnode->input(input_index)->abstract()->Clone();
+  tensor_move_cnode->set_abstract(temp_abstract);
+  manager->SetEdge(cnode, input_index, tensor_move_cnode);
+  return RET_OK;
+}
+};  // namespace opt
 }  // namespace mindspore

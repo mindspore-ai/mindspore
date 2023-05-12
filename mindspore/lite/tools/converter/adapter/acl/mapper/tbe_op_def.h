@@ -63,6 +63,8 @@ ADD_CONVERTER_TBE_OP(CommonLSTM)
 ADD_CONVERTER_TBE_OP(Swish)
 ADD_CONVERTER_TBE_OP(Where)
 ADD_CONVERTER_TBE_OP(SelectV2)
+ADD_CONVERTER_TBE_OP(ScatterNdUpdate)
+ADD_CONVERTER_TBE_OP(Triu)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
