@@ -397,8 +397,6 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
     graph->set_run_mode(device::RunMode::kGraphMode);
     graph->set_is_loop_count_sink(true);
     graph->set_attrs(func_graph->attrs());
-    // Convert the illegal data type.
-    //    opt::EliminateIllegalDataTypePass(graph);
     opt::OptimizationWithoutBackend(graph);
   }
 
@@ -441,15 +439,6 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   }
 #endif
 
-  // Unify the MindIR, must be before of the graph optimization.
-  //  auto deprecated_kernel_executor =
-  //    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->GetKernelExecutor(false).get());
-  //  if (deprecated_kernel_executor != nullptr) {
-  //    deprecated_kernel_executor->UnifyMindIR(root_graph);
-  //  }
-  //
-  //  // The graph common optimization.
-  //  opt::BackendCommonOptimization(root_graph);
   root_graph->SetInputNodes();
 
   GraphId graph_id = 0;
