@@ -4248,11 +4248,9 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         \ \text{eps}\right)\right) + \frac{\left(\text{x} - \text{target}\right)^2}
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
-    where :math:`eps` is used for stability of :math:`log`. When :math:`full=True`,
-    a constant will be added to the loss. If
-    the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
-    their shapes must allow
-    correct broadcasting.
+    where :math:`eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to the
+    loss. If the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
+    their shapes must allow correct broadcasting.
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
@@ -4272,9 +4270,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `target` is not a Tensor.
-        TypeError: If `var` is not a Tensor.
+        TypeError: If `x`, `target` or `var` is not a Tensor.
         TypeError: If `full` is not a bool.
         TypeError: If `eps` is not a float.
         ValueError: If `eps` is not a float within (0, inf).
@@ -4316,6 +4312,13 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     if reduction not in ('none', 'mean', 'sum'):
         raise ValueError(f"For 'gaussian_nll_loss', 'reduction' must be one of 'none', 'mean', or 'sum',\
         but got {reduction}.")
+    if x.shape[:-1] == var.shape:
+        var = var.unsqueeze(dim=-1)
+    # Heterosclerotic case
+    elif x.shape[:-1] == var.shape[:-1] and var.shape[-1] == 1:
+        pass
+    else:
+        raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
     max_op = P.Maximum()
     log_op = P.Log()
     square_op = P.Square()
