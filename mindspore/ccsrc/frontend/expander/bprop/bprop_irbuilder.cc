@@ -22,7 +22,6 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
-#include "frontend/expander/bprop/grad_ops/shape_calc_functors.h"
 
 namespace mindspore {
 namespace expander {
@@ -34,6 +33,40 @@ NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, c
   instance_name_ = instance_name;
   return handle.func(this);
 }
+
+class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc)
+  explicit BroadcastGradientArgsShapeCalc(size_t shift)
+      : ShapeCalcFunctor("ShapeCalc_BroadcastGradientArgs"), shift_(shift) {}
+  ValuePtr ToValue() const override { return MakeValue(shift_); }
+  void FromValue(const ValuePtr &value) override { shift_ = GetValue<size_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto shape_x = inputs.at(kIndex0);
+    ShapeVector broadcast_shape_of_x;
+    auto x_shape_num = shape_x.size() > shift_ ? (shape_x.size() - shift_) : 0;
+    for (size_t i = 0; i < x_shape_num; ++i) {
+      broadcast_shape_of_x.push_back(shape_x[i]);
+    }
+    auto shape_y = inputs.at(kIndex1);
+    ShapeVector broadcast_shape_of_y;
+    auto y_shape_num = shape_y.size() > shift_ ? (shape_y.size() - shift_) : 0;
+    for (size_t i = 0; i < y_shape_num; ++i) {
+      broadcast_shape_of_y.push_back(shape_y[i]);
+    }
+    auto broadcast_axis = bprop::BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
+    return broadcast_axis;
+  }
+  std::vector<int64_t> Infer(const ShapeArray &, const HashSet<size_t> &) const override {
+    constexpr int64_t kShapeDimAny = -1;
+    return {kShapeDimAny, kShapeDimAny};
+  }
+
+ protected:
+  size_t shift_{0};
+};
+REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
 NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) const {
   auto check_shp_valid_func = [shift](size_t i, const ShapeVector &shape) -> bool {
@@ -147,6 +180,16 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
                {kAttrEllipsisMask, zero},
                {kAttrNewAxisMask, zero},
                {kAttrShrinkAxisMask, MakeValue(SizeToLong(shrink_axis_mask))}});
+}
+
+DEF_PURE_SHAPE_CALC(g_dyn_size)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node) const {
+  if (!IsDynamic(GetShape(node))) {
+    return Value(GetSize(node));
+  }
+  return ShapeCalc(g_dyn_size, {node})[0];
 }
 
 NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) const {

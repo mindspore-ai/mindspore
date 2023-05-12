@@ -246,20 +246,6 @@ class COMMON_EXPORT Emitter {
   /// \brief get the ExpanderInferPtr
   ExpanderInferPtr infer() const { return infer_; }
 
-  /// \brief Deprecated, Shape calculation.
-  ///
-  /// \param[in] inputs The input tensors.
-  /// \param[in] shape_func The lambda function that encapsulated the shape calculation logic. Apply 'func' on input
-  ///     tensor's shape or value to get the calculated outputs shape.
-  /// \param[in] infer_func The lambda function that calculate the rank of each output shape, this function will be
-  ///     used in infer_shape of 'ShapeCalc' op.
-  /// \param[in] value_depend_indices If index i exists in 'value_depend', then the value of i'th input tensor instead
-  ///     of its shape will be passed to 'func'.
-  /// \return NodePtrList, the outputs shape list.
-  NodePtrList ShapeCalc(const NodePtrList &inputs, const deprecated::ShapeFunc &shape_func,
-                        const deprecated::InferFunc &infer_func, const std::vector<int64_t> &value_depend_indices = {},
-                        const ShapeValidFunc &valid_func = nullptr) const;
-
   /// \brief Shape calculation. This interface is used to unify the code between static-shape and dynamic-shape
   /// situation, the output type is depend on types of inputs.
   ///

@@ -20,6 +20,8 @@
 #include <vector>
 #include <utility>
 #include <set>
+#include <string>
+#include <memory>
 #include "include/common/expander/core/node.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 
@@ -38,6 +40,50 @@ constexpr size_t i10 = 10;
 inline const auto pi = std::acos(-1.0);
 inline const auto log_2 = std::log(2.0);
 inline const auto log_pi = std::log(pi);
+
+class PureShapeCalc : public ShapeCalcFunctor {
+ public:
+  using CalcFunc = ShapeArray (*)(const ShapeArray &);
+  using InferFunc = std::vector<int64_t> (*)(const ShapeArray &, const HashSet<size_t> &);
+  explicit PureShapeCalc(const std::string &name) : ShapeCalcFunctor(name) {
+    FunctorRegistry::Instance().Register(name, [this]() { return shared_from_base<Functor>(); });
+  }
+  PureShapeCalc(const PureShapeCalc &) = delete;
+  PureShapeCalc(PureShapeCalc &&) = delete;
+  PureShapeCalc &operator=(const PureShapeCalc &) = delete;
+  PureShapeCalc &operator=(PureShapeCalc &&) = delete;
+  ~PureShapeCalc() override = default;
+  MS_DECLARE_PARENT(PureShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    MS_EXCEPTION_IF_CHECK_FAIL(calc_func_ != nullptr, "The calc_func of " + name() + " is nullptr");
+    return calc_func_(inputs);
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const override {
+    MS_EXCEPTION_IF_CHECK_FAIL(infer_func_ != nullptr, "The infer_func of " + name() + " is nullptr");
+    return infer_func_(inputs, unknown_inputs);
+  }
+
+  PureShapeCalc &SetCalc(const CalcFunc &calc_func) {
+    calc_func_ = calc_func;
+    return *this;
+  }
+  std::shared_ptr<PureShapeCalc> SetInfer(const InferFunc &infer_func) {
+    infer_func_ = infer_func;
+    return shared_from_base<PureShapeCalc>();
+  }
+
+  CalcFunc calc_func_{nullptr};
+  InferFunc infer_func_{nullptr};
+};
+
+#define DEF_PURE_SHAPE_CALC(name) \
+  static const std::shared_ptr<PureShapeCalc> name = (*(std::make_shared<PureShapeCalc>("ShapeCalc_" #name)))
+
+// normalize the axis to [0, rank)
+int64_t NormalizeAxis(int64_t axis, size_t rank);
 
 std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
                                                         const std::vector<int64_t> &y_shape);

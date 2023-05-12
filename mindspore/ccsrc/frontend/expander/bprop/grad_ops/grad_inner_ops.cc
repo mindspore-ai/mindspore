@@ -122,21 +122,23 @@ REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 
+DEF_PURE_SHAPE_CALC(g_dynamic_resize_nearest_neighbor)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    ShapeVector shape2(x_shape.begin() + 2, x_shape.end());
+    return {shape2};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    auto new_shape = inputs.at(0);
+    int64_t rank = IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) - 2;
+    return {rank};
+  });
+
 REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto inputs = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto x_shape = inputs.at(0);
-    ShapeVector shape2(x_shape.begin() + 2, x_shape.end());
-    return {shape2};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    auto rank = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 2;
-    return {rank};
-  };
-  auto res = ib->ShapeCalc({inputs}, shape_func, infer_func, {})[0];
+  auto res = ib->ShapeCalc(g_dynamic_resize_nearest_neighbor, {inputs})[0];
   return {ib->Emit("ResizeNearestNeighborGrad", {dout, res}, {{"align_corners", ib->GetAttr("align_corners")}}),
           ib->ZerosLike(size)};
 });
