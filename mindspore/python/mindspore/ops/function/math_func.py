@@ -15,6 +15,8 @@
 
 """Defines math operators with functional form."""
 
+import collections
+from functools import cmp_to_key
 import math
 import numbers
 import numpy as np
@@ -72,6 +74,7 @@ from mindspore.ops.operations.math_ops import (
     Igammac,
     Polar,
     Angle,
+    FFTWithSize,
 )
 from mindspore.common.tensor import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -182,10 +185,10 @@ square_ = P.Square()
 sqrt_ = P.Sqrt()
 cumsum_ = P.CumSum()
 
-
 #####################################
 # Element-wise Operation Functions.
 #####################################
+
 
 def addn(x):
     """
@@ -10903,6 +10906,581 @@ def matrix_power(input, n):
     return matrix_power_ops(input)
 
 
+def _maybe_wrap_dims_n(ret_dim, input_dim):
+    """Check the dim"""
+    if input_dim <= 0:
+        input_dim = 1
+
+    min = -input_dim
+    max = input_dim - 1
+    for i, value in enumerate(ret_dim):
+        dim = value
+        if dim < min or dim > max:
+            raise ValueError(f"Dimension out of range, it must be in range of [{min}, {max}], "
+                             f"but got {dim}.")
+
+        if dim < 0:
+            ret_dim[i] = dim + input_dim
+    return ret_dim
+
+
+def _canonicalize_fft_shape_and_dim(input, shape, dim):
+    """Check the input's shape and dim"""
+    input_dim = input.ndim
+    input_sizes = input.shape
+    ret_dim = None
+    ret_shape = None
+
+    if dim is not None:
+        ret_dim = list(dim)
+        ret_dim = _maybe_wrap_dims_n(ret_dim, input_dim)
+        # check if dim is duplicated
+        set_ret_dim = set(ret_dim)
+        if len(set_ret_dim) != len(ret_dim):
+            raise ValueError(f"FFT dims must be unique.")
+
+    if shape is not None:
+        if dim is not None and len(dim) != len(shape):
+            raise ValueError(f"shape and dim must have the same length, but now they are "
+                             f"{len(dim)} and {len(shape)}.")
+        if len(shape) > input_dim:
+            raise ValueError(f"Got shape with {len(shape)} values but input tensor only "
+                             f"has {input_dim} dimensions.")
+
+        transform_ndim = len(shape)
+        if dim is None:
+            ret_dim = [0] * transform_ndim
+            value = input_dim - transform_ndim
+            for i in range(transform_ndim):
+                ret_dim[i] = value + i
+
+        ret_shape = [0] * transform_ndim
+        for i in range(transform_ndim):
+            if shape[i] == -1:
+                ret_shape[i] = input_sizes[ret_dim[i]]
+            else:
+                ret_shape[i] = shape[i]
+    elif dim is None:
+        ret_dim = list(range(input_dim))
+        ret_shape = [0] * input_dim
+        for i in range(input_dim):
+            ret_shape[i] = input_sizes[i]
+    else:
+        ret_shape = [0] * len(ret_dim)
+        for i, value in enumerate(ret_dim):
+            ret_shape[i] = input_sizes[value]
+
+    for value in ret_shape:
+        if value <= 0:
+            raise ValueError(f"The value of ret_shape must be greater than 0, "
+                             f"but got '{value}'.")
+
+    return ret_shape, ret_dim
+
+
+def as_strided(x, shape=None, strides=None):
+    n = np.dtype(mstype.dtype_to_nptype(x.dtype)).itemsize
+    strides = tuple(np.array(strides) * n)
+    return Tensor(np.lib.stride_tricks.as_strided(x.asnumpy(), shape, strides, False, True), dtype=x.dtype)
+
+
+def _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes):
+    """Resize the input"""
+    paddings = [0] * input_dim * 2
+    must_copy = False
+    for i, value in enumerate(ret_dim):
+        # resize input based on n & dim
+        if ret_shape[i] == -1:
+            continue
+
+        if input_sizes[value] < ret_shape[i]:
+            pad_idx = len(paddings) - 2 * value - 1
+            paddings[pad_idx] = ret_shape[i] - input_sizes[value]
+            must_copy = True
+
+        if input_sizes[value] > ret_shape[i]:
+            start_index = [0] * input_dim
+            input_sizes[value] = ret_shape[i]
+            input = P.Slice()(input, start_index, input_sizes)
+
+    if must_copy:
+        paddings = np.reshape(paddings, (input_dim, 2)).tolist()
+        paddings.reverse()
+        paddings = (*paddings,)
+        input = P.Pad(paddings)(input)
+
+    return input
+
+
+def _permute_input(input, input_dim, ret_dim):
+    """Permute input based on dim"""
+    dim_permute = list(range(input_dim))
+    # is_transformed_dim
+    is_transformed_dim = [0] * input_dim
+    for value in ret_dim:
+        is_transformed_dim[value] = True
+
+   # partition dim_permute
+    dim_permute_a, dim_permute_b = [], []
+    for i, value in enumerate(dim_permute):
+        (dim_permute_a if not is_transformed_dim[i] else dim_permute_b).append(value)
+
+    # strides
+    type_size = np.dtype(mstype.dtype_to_nptype(input.dtype)).itemsize
+    input_strides = [int(x / type_size) for x in input.strides]
+
+    def cmp(x, y):
+        if input_strides[x] > input_strides[y]:
+            return -1
+        if input_strides[x] < input_strides[y]:
+            return 1
+        return 0
+
+    # sort
+    if dim_permute_a:
+        dim_permute_a = sorted(dim_permute_a, key=cmp_to_key(cmp))
+
+    # copy
+    if dim_permute_b:
+        ret_dim = sorted(ret_dim, key=cmp_to_key(cmp))
+        for i, value in enumerate(ret_dim):
+            dim_permute_b[i] = value
+
+    # merge
+    dim_permute = dim_permute_a + dim_permute_b
+
+    # permute
+    input = P.Transpose()(input, tuple(dim_permute))
+
+    return input, dim_permute
+
+
+def _reshape_input(input, signal_ndim, batch_dims):
+    """Reshape input"""
+    # Collapse batch dimensions into a single dimension
+    batched_sizes = [0] * (signal_ndim + 1)
+    batched_sizes[0] = -1
+    i = batch_dims
+    j = 1
+    while i < len(input.shape):
+        batched_sizes[j] = input.shape[i]
+        j += 1
+        i += 1
+        if j >= len(batched_sizes):
+            break
+    input = P.Reshape()(input, tuple(batched_sizes))
+    return input
+
+
+def _check_fftwithsize_input(input, s, dim, norm, fft_func_name):  # pylint: disable=redefined-outer-name
+    """Check the input of fftwithsize"""
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For '{fft_func_name}', 'input' must be Tensor.")
+    dtypeop = P.DType()
+    input_dtype = dtypeop(input)
+    if fft_func_name in ('FFTN', 'IFFTN'):
+        if not input_dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For '{fft_func_name}', the dtype of 'input' must be complex64, complex128, "
+                            f"but got '{input_dtype}'.")
+    else:
+        raise TypeError("For '{fft_func_name}', it is not supported now.")
+
+    if s is not None:
+        if isinstance(s, int):
+            s = (s,)
+        elif not isinstance(s, tuple):
+            raise TypeError("For '{fft_func_name}', 's' must be tuple(int).")
+        for ele in s:
+            if not isinstance(ele, int):
+                raise TypeError(f"For '{fft_func_name}', each elements of 's' must be int, but got {type(ele)}")
+
+    if dim is not None:
+        if isinstance(dim, int):
+            dim = (dim,)
+        elif not isinstance(dim, tuple):
+            raise TypeError("For '{fft_func_name}', 'dim' must be tuple(int).")
+        for ele in dim:
+            if not isinstance(ele, int):
+                raise TypeError(f"For '{fft_func_name}', each elements of 'dim' must be int, but got {type(ele)}")
+
+    ret_shape, ret_dim = _canonicalize_fft_shape_and_dim(input, s, dim)
+    input_dim = input.ndim
+    signal_ndim = len(ret_dim)
+    batch_dims = input_dim - signal_ndim
+    input_sizes = list(input.shape)
+
+    if fft_func_name in ('FFTN', 'IFFTN'):
+        input = _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes)
+        out_sizes = input.shape
+        input, dim_permute = _permute_input(input, input_dim, ret_dim)
+
+    input = _reshape_input(input, signal_ndim, batch_dims)
+
+    if norm is None:
+        norm = "backward"
+    else:
+        _check_attr_dtype("norm", norm, [str], fft_func_name)
+
+    FFTInput = collections.namedtuple('FFTInput', ['input', 'signal_ndim', 'norm', 'input_dim',
+                                                   'batch_dims', 'dim_permute', 'out_sizes'])
+    return FFTInput(input=input, signal_ndim=signal_ndim, norm=norm, input_dim=input_dim,
+                    batch_dims=batch_dims, dim_permute=dim_permute, out_sizes=out_sizes)
+
+
+def _handle_fftwithsize_output(out, input_dim, batch_dims, dim_permute, out_sizes):
+    """Handle the output of fftwithsize"""
+    out_strides = [0] * input_dim
+    batch_numel = 1
+    for i in range(batch_dims - 1, -1, -1):
+        out_strides[dim_permute[i]] = batch_numel * out.strides[0]
+        batch_numel *= out_sizes[dim_permute[i]]
+
+    for i in range(batch_dims, input_dim):
+        out_strides[dim_permute[i]] = out.strides[1 + (i - batch_dims)]
+
+    type_size = np.dtype(mstype.dtype_to_nptype(out.dtype)).itemsize
+    if out.shape != out_sizes or out.strides != out_strides:
+        out = as_strided(out, out_sizes, [int(i/type_size) for i in out_strides])
+    return out
+
+
+def fft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the one dimensional discrete Fourier transform of `input`.
+
+    Args:
+        input (Tensor): The input tensor.
+        n (int, optional): Signal length.
+            If given, the input will either be zero-padded or trimmed to this length before computing the FFT.
+            Default: None.
+        dim (int, optional): The dimension along which to take the one dimensional FFT.
+            Default: -1.
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"`` (normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"`` (normalize by :math: `1/\sqrt{n}`).
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `fft()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If `n` or `dim` type is not int32.
+        ValueError: If `input` dimension is less than 1.
+        ValueError: If `n` is less than 1.
+        ValueError: If `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([ 1.6243454+0.j, -0.6117564+0.j, -0.5281718+0.j, -1.0729686+0.j])
+        >>> y = ops.fft(input)
+        >>> print(y)
+        [-0.5885514+0.j          2.1525173-0.46121222j  2.7808986+0.j
+         2.1525173+0.46121222j]
+    """
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For 'FFT', 'input' must be Tensor.")
+    dtypeop = P.DType()
+    input_dtype = dtypeop(input)
+    if not input_dtype in (mstype.complex64, mstype.complex128):
+        raise TypeError("For 'FFT', the dtype of 'input' must be complex64, complex128, "
+                        f"but got '{input_dtype}'.")
+    _check_attr_dtype("dim", dim, [int], "FFT")
+
+    input_dim = input.ndim
+    signal_ndim = 1
+    batch_dims = input_dim - signal_ndim
+    input_sizes = list(input.shape)
+    dim = _maybe_wrap_dims_n([dim], input_dim)[0]
+    n_opt = n
+    if n is None:
+        n = input.shape[dim]
+    else:
+        _check_attr_dtype("n", n, [int], "FFT")
+    if n < 1:
+        raise ValueError("For 'FFT', the value of 'n' must be greater than or equal to 1, "
+                         f"but got '{n}'.")
+    if n_opt is not None:
+        input = _resize_input(input, input_dim, [dim], [n], input_sizes)
+    out_sizes = input.shape
+
+    input, dim_permute = _permute_input(input, input_dim, [dim])
+    input = _reshape_input(input, signal_ndim, batch_dims)
+
+    if norm is None:
+        norm = "backward"
+    else:
+        _check_attr_dtype("norm", norm, [str], "FFT")
+
+    fft_ = FFTWithSize(signal_ndim=1, inverse=False, real=False, norm=norm)
+    out = fft_(input)
+    return _handle_fftwithsize_output(out, input_dim, batch_dims, dim_permute, out_sizes)
+
+
+def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the two dimensional discrete Fourier transform of `input`.
+
+    Args:
+        input (Tensor): The input tensor.
+        s (Tuple[int], optional): Signal size in the transformed dimensions.
+            If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before
+            computing the FFT. If a length `-1` is specified, no padding is done in that dimension.
+            Default: `s = [input.size(d) for d in dim]`
+        dim (Tuple[int], optional): Dimensions to be transformed.
+            Default: last two dimensions.
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `fft2()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If the `s` or `dim` is not tuple(int).
+        ValueError: If `input` dimension is less than 2.
+        ValueError: If the length of `s` and `dim` are not the same.
+        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([[ 1.6243454+0.j, -0.6117564+0.j], [-0.5281718+0.j, -1.0729686+0.j]])
+        >>> y = ops.fft2(input)
+        >>> print(y)
+        [[-0.5885514+0.j  2.7808986+0.j]
+        [ 2.6137294+0.j  1.691305 +0.j]]
+    """
+    return fftn(input, s, dim, norm)
+
+
+def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the N dimensional discrete Fourier transform of `input`.
+
+   Args:
+        input (Tensor): The input tensor.
+        s (Tuple[int], optional): Signal size in the transformed dimensions.
+            If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before
+            computing the FFT. If a length `-1` is specified, no padding is done in that dimension.
+            Default: `s = [input.size(d) for d in dim]`
+        dim (Tuple[int], optional): Dimensions to be transformed.
+            Default: all dimensions, or the last `len(s)` dimensions if `s` is given.
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `fftn()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If the `s` or `dim` is not tuple(int).
+        ValueError: If the length of `s` and `dim` are not the same.
+        ValueError: If `input` dimension is less than 1.
+        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([[[ 1.6243454 +0.j, -0.6117564 +0.j, -0.5281718 +0.j],
+        ...                  [-1.0729686 +0.j, 0.86540765+0.j, -2.3015387 +0.j]]])
+        >>> y = ops.fftn(input)
+        >>> print(y)
+        [[[-2.02468245+0.j          1.83940642-2.6702696j
+           1.83940642+2.6702696j ]
+         [ 2.99351685+0.j          2.54921257+2.81504238j
+           2.54921257-2.81504238j]]]
+    """
+    fftninput = _check_fftwithsize_input(input, s, dim, norm, "FFTN")
+    fftn_ = FFTWithSize(signal_ndim=fftninput.signal_ndim, inverse=False, real=False, norm=fftninput.norm)
+    out = fftn_(fftninput.input)
+    return _handle_fftwithsize_output(out, fftninput.input_dim, fftninput.batch_dims,
+                                      fftninput.dim_permute, fftninput.out_sizes)
+
+
+def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the inverse of `fft()`.
+
+    Args:
+        input (Tensor): The input tensor.
+        n (int, optional): Signal length.
+            If given, the input will either be zero-padded or trimmed to this length before computing the IFFT.
+            Default: None.
+        dim (int, optional): The dimension along which to take the one dimensional IFFT.
+            Default: -1.
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"``(normalize by :math: `1/\sqrt{n}`).
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `ifft()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If `n` or `dim` type is not int32.
+        ValueError: If `input` dimension is less than 1.
+        ValueError: If `n` is less than 1.
+        ValueError: If `dim` is not in the range of "[ `-input_dim` , `input_dim-1` ]".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([ 1.6243454+0.j, -0.6117564+0.j, -0.5281718+0.j, -1.0729686+0.j])
+        >>> y = ops.ifft(input)
+        >>> print(y)
+        [-0.14713785+0.j          0.5381293 +0.11530305j  0.69522465+0.j
+         0.5381293 -0.11530305j]
+    """
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For 'IFFT', 'input' must be Tensor.")
+    dtypeop = P.DType()
+    input_dtype = dtypeop(input)
+    if not input_dtype in (mstype.complex64, mstype.complex128):
+        raise TypeError("For 'IFFT', the dtype of 'input' must be complex64, complex128, "
+                        f"but got '{input_dtype}'.")
+    _check_attr_dtype("dim", dim, [int], "IFFT")
+
+    input_dim = input.ndim
+    signal_ndim = 1
+    batch_dims = input_dim - signal_ndim
+    input_sizes = list(input.shape)
+    dim = _maybe_wrap_dims_n([dim], input_dim)[0]
+    n_opt = n
+    if n is None:
+        n = input.shape[dim]
+    else:
+        _check_attr_dtype("n", n, [int], "IFFT")
+    if n < 1:
+        raise ValueError("For 'IFFT', the value of 'n' must be greater than or equal to 1, "
+                         f"but got '{n}'.")
+    if n_opt is not None:
+        input = _resize_input(input, input_dim, [dim], [n], input_sizes)
+    out_sizes = input.shape
+
+    input, dim_permute = _permute_input(input, input_dim, [dim])
+    input = _reshape_input(input, signal_ndim, batch_dims)
+
+    if norm is None:
+        norm = "backward"
+    else:
+        _check_attr_dtype("norm", norm, [str], "IFFT")
+
+    fft_ = FFTWithSize(signal_ndim=1, inverse=True, real=False, norm=norm)
+    out = fft_(input)
+
+    return _handle_fftwithsize_output(out, input_dim, batch_dims, dim_permute, out_sizes)
+
+
+def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the inverse of `fft2()`.
+
+    Args:
+        input (Tensor): The input tensor.
+        s (Tuple[int], optional): Signal size in the transformed dimensions.
+            If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before
+            computing the FFT. If a length `-1` is specified, no padding is done in that dimension.
+            Default: `s = [input.size(d) for d in dim]`
+        dim (Tuple[int], optional): Dimensions to be transformed.
+            Default: (-2, -1).
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `ifft2()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If the `s` or `dim` is not tuple(int).
+        ValueError: If the length of `s` and `dim` are not the same.
+        ValueError: If `input` dimension is less than 2.
+        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([[ 1.6243454+0.j, -0.6117564+0.j], [-0.5281718+0.j, -1.0729686+0.j]])
+        >>> y = ops.ifft2(input)
+        >>> print(y)
+        [[-0.14713785+0.j  0.69522465+0.j]
+        [ 0.65343235+0.j  0.42282625+0.j]]
+    """
+    return ifftn(input, s, dim, norm)
+
+
+def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer-name
+    r"""
+    Calculates the inverse of `fftn()`.
+
+    Args:
+        input (Tensor): The input tensor.
+        s (Tuple[int], optional): Signal size in the transformed dimensions.
+            If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before
+            computing the FFT. If a length `-1` is specified, no padding is done in that dimension.
+            Default: `s = [input.size(d) for d in dim]`
+        dim (Tuple[int], optional): Dimensions to be transformed.
+            Default: all dimensions, or the last `len(s)` dimensions if `s` is given.
+        norm (string, optional): Normalization mode. Three modes are defined as,
+            ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
+            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
+            Default: None that means ``"backward"``.
+
+    Returns:
+        Tensor, The result of `ifftn()` function.
+
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: complex64, complex128.
+        TypeError: If the `s` or `dim` is not tuple(int).
+        ValueError: If the length of `s` and `dim` are not the same.
+        ValueError: If `input` dimension is less than 1.
+        ValueError: If the value in `dim` is not in the range of "[ `-input_dim` , `input_dim-1` )".
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([[[ 1.6243454 +0.j, -0.6117564 +0.j, -0.5281718 +0.j],
+        ...                  [-1.0729686 +0.j, 0.86540765+0.j, -2.3015387 +0.j]]])
+        >>> y = ops.ifftn(input)
+        >>> print(y)
+        [[[-0.33744708+0.j          0.30656774+0.44504493j
+           0.30656774-0.44504493j]
+         [ 0.49891948+0.j          0.42486876-0.46917373j
+           0.42486876+0.46917373j]]]
+    """
+    ifftninput = _check_fftwithsize_input(input, s, dim, norm, "IFFTN")
+    ifftn_ = FFTWithSize(signal_ndim=ifftninput.signal_ndim, inverse=True, real=False, norm=ifftninput.norm)
+    out = ifftn_(ifftninput.input)
+    return _handle_fftwithsize_output(out, ifftninput.input_dim, ifftninput.batch_dims,
+                                      ifftninput.dim_permute, ifftninput.out_sizes)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -11157,6 +11735,12 @@ __all__ = [
     'histc',
     'nextafter',
     'triu_indices',
-    'zeta'
+    'zeta',
+    'fft',
+    'fft2',
+    'fftn',
+    'ifft',
+    'ifft2',
+    'ifftn',
 ]
 __all__.sort()
