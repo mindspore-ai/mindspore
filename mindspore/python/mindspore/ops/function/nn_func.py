@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from math import pi, log
 
+from mindspore import context
 from mindspore import log as logger
 import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -552,6 +553,12 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 
 
 @constexpr
+def is_ascend_backend():
+    """Check if the Ascend is used"""
+    return context.get_context('device_target') == 'Ascend'
+
+
+@constexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
     validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_max_pool1d')
@@ -568,7 +575,8 @@ def adaptive_max_pool1d(input, output_size):
     shape :math:`(N, C, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        :math:`L_{in}` must be divisible by `output_size`.
+        - :math:`L_{in}` must be divisible by `output_size`.
+        - Ascend platform only supports float16 type for input.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, L_{in})`, with float16 or float32 data type.
@@ -611,16 +619,31 @@ def adaptive_max_pool1d(input, output_size):
     if x_in_shape[2] % output_size != 0:
         raise ValueError("For adaptive_max_pool1d input's last dimension must be divisible by "
                          "output size {}, but got {}.".format(output_size, x_in_shape[2]))
-    if x_dtype not in [mstype.float16, mstype.float32]:
-        raise TypeError("For adaptive_max_pool1d, the input dtype must be float16 or float32, "
-                        "but got {}.".format(x_dtype))
+    if is_ascend_backend():
+        if x_dtype not in [mstype.float16]:
+            raise TypeError("For adaptive_max_pool1d in Ascend platform, the input dtype must be float16, "
+                            "but got {}.".format(x_dtype))
+    else:
+        if x_dtype not in [mstype.float16, mstype.float32]:
+            raise TypeError("For adaptive_max_pool1d, the input dtype must be float16 or float32, "
+                            "but got {}.".format(x_dtype))
 
     expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
+
+    width = x_in_shape[2]
+    stride = width // output_size
+    kernel_size = width - (output_size - 1) * stride
+    stride = (1, width // output_size)
+    kernel_size = (1, kernel_size)
+
+    max_pool_ = _get_cache_prim(NN_OPS.MaxPool)(kernel_size=kernel_size, strides=stride)
+
     input = expand_(input, 2)
-    output = adaptive_avg_pool2d(input, (1, output_size))
-    output = squeeze_(output)
-    return output
+    input = max_pool_(input)
+    input = squeeze_(input)
+
+    return input
 
 
 @constexpr
