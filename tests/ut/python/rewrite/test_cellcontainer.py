@@ -263,9 +263,8 @@ def test_cellcontainer_del_node_in_subtree():
                     _del_node(sub_tree)
                     assert len(sub_tree._nodes) == original_nodes_size - 1
 
-    new_net = stree.get_network()
-    cell_container = getattr(new_net, "layer1")
-    assert not hasattr(cell_container._cells["1"], "conv2")
+    cell_container = stree.get_node("layer1").get_handler().node_list[1].symbol_tree
+    assert "conv2" not in [node.get_name() for node in cell_container.nodes()]
 
 
 def test_cellcontainer_replace():
@@ -285,9 +284,9 @@ def test_cellcontainer_replace():
     net = ResNetSimple()
     stree = SymbolTree.create(net)
     _replace_bn(stree)
-    new_net = stree.get_network()
-    assert not hasattr(new_net, "layer1")
-    assert hasattr(new_net, "new_conv")
+
+    assert "conv2" not in [node.get_name() for node in stree.nodes()]
+    assert "new_conv" in [node.get_name() for node in stree.nodes()]
 
 
 def test_cellcontainer_replace_node():
@@ -333,10 +332,10 @@ def test_cellcontainer_replace_in_subtree():
                 if n.get_node_type() == NodeType.Tree:
                     _replace_bn(TreeNodeHelper.get_sub_tree(Node(n)))
                     break
-    new_net = stree.get_network()
-    cell_container = getattr(new_net, "layer1")
-    assert not hasattr(cell_container._cells["0"], "bn1")
-    assert hasattr(cell_container._cells["0"], "new_conv")
+
+    cell_container = stree.get_node("layer1").get_handler().node_list[0].symbol_tree
+    assert "bn1" not in [node.get_name() for node in cell_container.nodes()]
+    assert "new_conv" in [node.get_name() for node in cell_container.nodes()]
 
 
 def test_cellcontainer_pattern():
@@ -381,13 +380,19 @@ def test_cellcontainer_pattern():
     stree = SymbolTree.create(net)
     _pattern = ConvReluPattern()
     _pattern.apply(stree)
+
+    assert "conv1" not in [node.get_name() for node in stree.nodes()]
+    assert "bn1" not in [node.get_name() for node in stree.nodes()]
+    subtree = stree.get_node("layer1").get_handler().node_list[0].symbol_tree
+    assert "conv1" not in [node.get_name() for node in subtree.nodes()]
+    subtree = stree.get_node("layer1").get_handler().node_list[1].symbol_tree
+    assert "conv1" not in [node.get_name() for node in subtree.nodes()]
+    subtree = stree.get_node("layer1").get_handler().node_list[2].symbol_tree
+    assert "conv1" not in [node.get_name() for node in subtree.nodes()]
+
     new_net = stree.get_network()
     cell_container = getattr(new_net, "layer1")
-    assert not hasattr(cell_container, "conv1")
-    assert not hasattr(cell_container, "bn1")
-    assert not hasattr(cell_container._cells["0"], "conv1")
-    assert not hasattr(cell_container._cells["1"], "conv1")
-    assert not hasattr(cell_container._cells["2"], "conv1")
+
     assert hasattr(cell_container._cells["0"], "new_relu")
     assert hasattr(cell_container._cells["0"], "new_maxpool1")
     assert isinstance(getattr(getattr(cell_container._cells["0"], "down_sample_layer"), "0"), nn.MaxPool2d)

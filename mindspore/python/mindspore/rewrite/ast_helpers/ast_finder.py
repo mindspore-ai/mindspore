@@ -198,3 +198,30 @@ class CheckPropertyIsUsed(ast.NodeVisitor):
         self._hit = False
         self.generic_visit(self._context)
         return self._hit
+
+
+class GetPropertyOfObj(ast.NodeVisitor):
+    """
+    Check whether a property is used.
+
+    Args:
+        node (ast.AST): An instance of ast node.
+    """
+    def __init__(self, node: ast.AST):
+        self._context = node
+        self._property = set()
+
+    def visit_Assign(self, node: ast.Assign) -> Any:  # pylint: disable=invalid-name
+        """Visit a node of type ast.Attribute."""
+        target = node.targets[0]
+        if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == "self":
+            self._property.add(target.attr)
+        return super(GetPropertyOfObj, self).generic_visit(node)
+
+    def get(self):
+        """
+        Check whether `value` and `attr` exists.
+        """
+        self._property = set()
+        self.generic_visit(self._context)
+        return self._property
