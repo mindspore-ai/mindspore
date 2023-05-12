@@ -369,7 +369,6 @@ class BACKEND_EXPORT KernelMod {
 
   // Some kernels, e.g., Shape/Reshape, don't use some input addresses in the kernel launch.
   virtual std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const { return {}; }
-  virtual bool IsLaunchIgnoredInputAddress(size_t input_index) const { return false; }
 
   // Get input kernel tensor.
   virtual std::vector<KernelTensorPtr> GetInputKernelTensor() { return {}; }

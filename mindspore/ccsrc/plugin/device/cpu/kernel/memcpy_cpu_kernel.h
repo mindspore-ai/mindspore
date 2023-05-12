@@ -42,7 +42,6 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
 
   // The input addresses that are not used in the kernel launch.
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
-  bool IsLaunchIgnoredInputAddress(size_t input_index) const override { return input_index == kIndex1; }
 
  private:
   std::string kernel_type_{"Unknown"};

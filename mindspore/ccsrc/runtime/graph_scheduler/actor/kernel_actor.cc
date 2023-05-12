@@ -55,6 +55,7 @@ void KernelActor::Init() {
   if (is_dynamic_shape_ && IsSomasEnable(somas_info_)) {
     MS_LOG(EXCEPTION) << "Not support the somas for the dynamic shape: " << GetAID().Name();
   }
+  launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
   // Init the device tensors and kernel launch info.
   InitInputInfo();
@@ -606,7 +607,8 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     // May be the ignored input address that is not used in the kernel launch.
-    if (kernel_mod_->IsLaunchIgnoredInputAddress(i)) {
+    if (!launch_ignored_inputs_.empty() &&
+        (std::find(launch_ignored_inputs_.begin(), launch_ignored_inputs_.end(), i) != launch_ignored_inputs_.end())) {
       MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << i;
       continue;
     }
