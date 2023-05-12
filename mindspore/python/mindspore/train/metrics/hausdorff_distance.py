@@ -86,7 +86,7 @@ class HausdorffDistance(Metric):
     Args:
         distance_metric (string): Three distance measurement methods are supported:
                             ``"euclidean"`` , ``"chessboard"`` or
-                           ``"taxicab"`` . Default: ``"euclidean"`` .
+                            ``"taxicab"`` . Default: ``"euclidean"`` .
         percentile (float): Floating point numbers between 0 and 100. Specify the percentile parameter to get the
                             percentile of the Hausdorff distance. Default: ``None`` .
         directed (bool): If True, it only calculates h(y_pred, y) distance, otherwise, max(h(y_pred, y), h(y, y_pred))
