@@ -425,10 +425,9 @@ static py::array CastToInt(const py::array &input) {
 }
 
 static bool CheckLargeTensor(const ShapeVector &data_shape) {
-  constexpr int64_t max_dim_size = 3;
   constexpr int64_t max_dim = 1024 * 32;
   int64_t data_shape_dim = std::accumulate(data_shape.begin(), data_shape.end(), 1, std::multiplies<>());
-  return data_shape.size() > max_dim_size || data_shape_dim > max_dim;
+  return data_shape_dim > max_dim;
 }
 
 // ***********************************************for get_item*******************************************
@@ -721,7 +720,7 @@ py::object TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, cons
   data_transfer_args->emplace_back(py::make_tuple(
     VectorToPyTuple(broadcast_shape), VectorToPyTuple(final_shape), VectorToPyTuple(index_tensor_new_shape),
     VectorToPyTuple(slice_shapes), VectorToPyTuple(tensor_positions), fancy_position));
-  if (CheckLargeTensor(final_shape)) {
+  if (CheckLargeTensor(data_shape)) {
     return py::make_tuple(tuple_index_new, VectorToPyTuple(*data_transfer_types), VectorToPyTuple(*data_transfer_args));
   }
   py::array new_index = GenerateIndices(tuple_index_new, broadcast_shape, index_tensor_new_shape, final_shape,
@@ -767,7 +766,8 @@ TensorPtr TensorIndex::IntToTensor(int64_t int_index, const ShapeVector &shape) 
   return TensorPy::MakeTensor(TensorIndex::np_module_.attr("array")(output_index));
 }
 
-py::object TensorIndex::GenerateIndicesFromTupleOfTensor(const std::vector<TensorIndex> &tuple_index,
+py::object TensorIndex::GenerateIndicesFromTupleOfTensor(const ShapeVector &data_shape,
+                                                         const std::vector<TensorIndex> &tuple_index,
                                                          ShapeVector *output_index_shape,
                                                          py::object *data_transfer_arg) {
   std::vector<ShapeVector> tensor_index_shape;
@@ -793,7 +793,7 @@ py::object TensorIndex::GenerateIndicesFromTupleOfTensor(const std::vector<Tenso
 
   *output_index_shape = broadcast_shape;
   output_index_shape->emplace_back(tuple_index.size());
-  if (CheckLargeTensor(broadcast_shape)) {
+  if (CheckLargeTensor(data_shape)) {
     *data_transfer_arg = py::make_tuple(VectorToPyTuple(broadcast_shape));
     return VectorToPyTuple(tuple_index_vector);
   }
@@ -844,14 +844,23 @@ TensorIndex TensorIndex::FormatIndex(const TensorIndex &idx, const ShapeVector &
   const TensorPtr &tensor_idx = idx.tensor();
   MS_EXCEPTION_IF_NULL(tensor_idx);
   if (CheckTypeIsInstance<TypeId>(tensor_idx->data_type(), kIntTypes)) {
+    if (CheckLargeTensor(data_shape)) {
+      *need_format = true;
+      return idx;
+    }
+    py::array new_idx = TensorPy::SyncAsNumpy(*tensor_idx);
     if (tensor_idx->DataDim() == 0) {
-      py::array new_idx = TensorPy::SyncAsNumpy(*tensor_idx);
       auto new_int_idx = new_idx.cast<int64_t>();
       new_int_idx = new_int_idx < 0 ? new_int_idx + dims_size : new_int_idx;
       return TensorIndex(std::make_shared<Tensor>(new_int_idx));
     }
-    *need_format = true;
-    return idx;
+    // numpy op select is very slow for one dim array
+    new_idx = TensorIndex::np_module_.attr("expand_dims")(new_idx, 0);
+    new_idx = TensorIndex::np_module_.attr("select")(TensorIndex::np_module_.attr("less")(new_idx, 0),
+                                                     TensorIndex::np_module_.attr("add")(new_idx, py::int_(dims_size)),
+                                                     new_idx);
+    new_idx = TensorIndex::np_module_.attr("squeeze")(new_idx, 0);
+    return TensorIndex(TensorPy::MakeTensor(CastToInt(new_idx)));
   } else if (tensor_idx->data_type() != kNumberTypeBool) {
     string index_op_type = index_op_type_ == IndexOpType::GetItem ? "tensor getitem" : "tensor setitem";
     MS_EXCEPTION(IndexError) << "For '" << index_op_type << "', the index tensor data type '"
@@ -1045,7 +1054,7 @@ py::object TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
   *output_index_shape = final_shape;
   output_index_shape->emplace_back(tuple_index_new.size());
   int64_t fancy_position = std::get<fancy_position_index>(index_info);
-  if (CheckLargeTensor(final_shape)) {
+  if (CheckLargeTensor(data_shape)) {
     *data_transfer_arg = py::make_tuple(VectorToPyTuple(broadcast_shape), VectorToPyTuple(final_shape),
                                         VectorToPyTuple(index_tensor_new_shape), VectorToPyTuple(slice_shapes),
                                         VectorToPyTuple(tensor_positions), fancy_position);
@@ -1136,7 +1145,8 @@ py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, 
   ShapeVector output_index_shape;
   py::object data_transfer_args = py::none();
   if (std::all_of(new_tuple_index.begin(), new_tuple_index.end(), [](const TensorIndex &x) { return x.IsTensor(); })) {
-    output_index = GenerateIndicesFromTupleOfTensor(new_tuple_index, &output_index_shape, &data_transfer_args);
+    output_index =
+      GenerateIndicesFromTupleOfTensor(data_shape, new_tuple_index, &output_index_shape, &data_transfer_args);
   } else {
     by_pass = false;
     output_index = GenerateIndicesFromTuple(data_shape, new_tuple_index, idx_advanced, &by_pass, &output_index_shape,
