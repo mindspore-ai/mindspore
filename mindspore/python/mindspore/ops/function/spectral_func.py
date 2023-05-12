@@ -42,11 +42,11 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
         window_length (Tensor): The size of returned window, with data type int32, int64.
             The input data should be an integer with a value of [0, 1000000].
         periodic (bool, optional): Indicates whether to returns a window to be used as periodic function or
-            a symmetric window. Default: True.
+            a symmetric window. Default: ``True`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The data type of returned tensor.
-            Only float16, float32 and float64 is allowed. Default: None.
+            Only float16, float32 and float64 is allowed. Default: ``None`` .
 
     Returns:
         A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.
@@ -104,11 +104,11 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         window_length (Tensor): The size of returned window, with data type int32, int64.
             The input data should be an integer with a value of [0, 1000000].
         periodic (bool, optional): Indicates whether to returns a window to be used as periodic function or
-            a symmetric window. Default: True.
+            a symmetric window. Default: ``True`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The datatype of returned tensor.
-            Only float16, float32 and float64 are allowed. Default: None.
+            Only float16, float32 and float64 are allowed. Default: ``None`` .
 
     Returns:
         A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.

@@ -184,7 +184,7 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
           generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
         offset (int): Offset used to avoid seed collision.
         numsamples (int): the number of samples to draw.
-        replacement (bool, optional): Whether to draw with replacement or not. Default: False.
+        replacement (bool, optional): Whether to draw with replacement or not. Default: ``False`` .
 
     Returns:
         Tensor with the same rows as `x`, each row has `numsamples` sampled indices.
@@ -742,7 +742,7 @@ def laplace(shape, mean, lambda_param, seed=None):
         lambda_param (Tensor): The parameter used for controlling the variance of this random distribution. The
           variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: None, which will be treated as 0.
+          Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape should be the broadcasted shape of input `shape` and shapes of `mean` and `lambda_param`.
@@ -785,7 +785,7 @@ def gamma(shape, alpha, beta, seed=None):
         alpha (Tensor): The :math:`\alpha` distribution parameter. It should be greater than 0 with float32 data type.
         beta (Tensor): The :math:`\beta` distribution parameter. It should be greater than 0 with float32 data type.
         seed (int): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
+          pseudo-random numbers, must be non-negative. Default: ``None`` , which will be treated as ``0`` .
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -890,8 +890,8 @@ def rand(*size, dtype=None, seed=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            `mindspore.float32` will be applied. Default: None.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+            `mindspore.float32` will be applied. Default: ``None`` .
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and ``0`` will be used.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -931,11 +931,11 @@ def rand_like(input, seed=None, *, dtype=None):
 
     Args:
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and ``0`` will be used.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            the same dtype of `input` will be applied. Default: None.
+            the same dtype of `input` will be applied. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -1073,11 +1073,11 @@ def randint(low, high, size, seed=None, *, dtype=None):
         low (int): Start value of interval.
         high (int): End value of interval.
         size (tuple): Shape of the new tensor.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and ``0`` will be used.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If None,
-            `mindspore.int64` will be used. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If ``None`` ,
+            `mindspore.int64` will be used. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random integers from low (inclusive)
@@ -1129,11 +1129,11 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
         low(int): Start value of interval.
         high(int): End value of interval.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and 0 will be used.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If None,
-            `mindspore.int64` will be used. Default is `mindspore.int64`.
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If ``None`` ,
+            `mindspore.int64` will be used. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random integers from low (inclusive)
@@ -1243,9 +1243,9 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         input (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
           float32 data type.
         num_samples (int): Number of samples to draw.
-        replacement (bool, optional): Whether to draw with replacement or not, default: True.
+        replacement (bool, optional): Whether to draw with replacement or not. Default: ``True`` .
         seed (int, optional): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: None.
+          pseudo-random numbers, must be non-negative. Default: ``None`` .
 
     Returns:
         Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.

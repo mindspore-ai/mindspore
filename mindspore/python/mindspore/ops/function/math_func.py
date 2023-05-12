@@ -3464,7 +3464,7 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
     Args:
         matrix (Tensor): The shape of tensor is :math:`(..., M, M)` .
         rhs (Tensor): The shape of tensor is :math:`(..., M, K)` . `rhs` must have the same dtype as `matrix`.
-        adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: False.
+        adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: ``False`` .
 
     Returns:
         x (Tensor), The dtype and shape is the same as 'rhs'.
@@ -4089,7 +4089,7 @@ def not_equal(input, other):
 
 def approximate_equal(x, y, tolerance=1e-5):
     r"""
-    Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
+    Returns ``True`` if abs(x-y) is smaller than tolerance element-wise, otherwise ``False`` .
 
     .. math::
 
@@ -4108,7 +4108,7 @@ def approximate_equal(x, y, tolerance=1e-5):
         x (Tensor): A tensor. Must be one of the following types: float32, float16.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): A tensor of the same type and shape as `x`.
-        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-5.
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: ``1e-5`` .
 
     Returns:
         Tensor, the shape is the same as the shape of `x`, and the data type is bool.
@@ -4209,9 +4209,9 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     Args:
         x1 (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
         x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
-        rtol (float, optional): Relative tolerance. Default: 1e-05.
-        atol (float, optional): Absolute tolerance. Default: 1e-08.
-        equal_nan (bool, optional): If True, then two NaNs will be considered equal. Default: False.
+        rtol (float, optional): Relative tolerance. Default: ``1e-05`` .
+        atol (float, optional): Absolute tolerance. Default: ``1e-08`` .
+        equal_nan (bool, optional): If True, then two NaNs will be considered equal. Default: ``False`` .
 
     Returns:
         A bool Tensor, with the shape as broadcasted result of the input `x1` and `x2`.
@@ -4405,7 +4405,7 @@ def fmax(input, other):
 
 
 def maximum(x, y):
-    """
+    r"""
     Computes the maximum of input tensors element-wise.
 
     Note:
@@ -4419,7 +4419,7 @@ def maximum(x, y):
         - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
-        output_i = max(x_i, y_i)
+        output_i = \max(x_i, y_i)
 
     Args:
         x (Union[Tensor, Number, bool]): The first input is a number or
@@ -4508,7 +4508,7 @@ def minimum(x, y):
         - If one of the elements being compared is a NaN, then that element is returned.
 
     .. math::
-        output_i = min(x_i, y_i)
+        output_i = \min(x_i, y_i)
 
     Args:
         x (Union[Tensor, Number, bool]): The first input is a number or
@@ -4696,9 +4696,9 @@ def ormqr(input, tau, other, left=True, transpose=False):
         other (Tensor): Tensor of shape :math:`(*, m, n)` where `*` is zero or more batch dimensions,
             and its type is the same as `input`.
         left (bool, optional): determines the order of multiplication. If True, computes op(Q) \* `other` ,
-            otherwise, compute `other` \* op(Q). Default: True.
+            otherwise, compute `other` \* op(Q). Default: ``True`` .
         transpose (bool, optional): If True, the matrix Q is conjugate transposed,
-            otherwise, not conjugate transposing matrix Q. Default: False.
+            otherwise, not conjugate transposing matrix Q. Default: ``False`` .
 
     Returns:
         Tensor, with the same type and shape as `other`.
@@ -4873,8 +4873,8 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         start (Union[float, Tensor]): Start value of interval.
         end (Union[float, Tensor]): End value of interval.
         steps (int): The steps must be a non-negative integer.
-        base (int, optional): The base must be a non-negative integer. Default: 10.
-        dtype (mindspore.dtype, optional): The dtype of output. Default: mstype.float32.
+        base (int, optional): The base must be a non-negative integer. Default: ``10`` .
+        dtype (mindspore.dtype, optional): The dtype of output. Default: ``mstype.float32`` .
 
     Returns:
         Tensor has the shape as :math:`(step, )`. Its datatype is set by the attr 'dtype'.
@@ -5025,26 +5025,26 @@ def var(input, axis=None, ddof=0, keepdims=False):
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
-            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: ``None`` , reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
             If ddof is False, will through the biased estimation to calculate variance.
-            Default: 0.
+            Default: ``0`` .
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
-            If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default: False.
+            If ``true`` , keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, the variance.
         Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
 
-        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+        - If `axis` is () and `keepdims` is set to ``False`` , returns a 0-D Tensor, indicating
           the standard deviation of all elements in `input`.
-        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+        - If `axis` is int 1 and `keepdims` is set to ``False`` , then the returned Tensor
           has shape :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to ``False`` ,
           then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
 
     Raises:
@@ -5083,26 +5083,26 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
-            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: ``None`` , reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
             If ddof is False, will through the biased estimation to calculate the variance.
-            Default: 0.
+            Default: ``0`` .
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
             If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default: False.
+            If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         A tuple containing the variance and mean.
         Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
 
-        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+        - If `axis` is () and `keepdims` is set to ``False`` , returns a 0-D Tensor, indicating
           the standard deviation of all elements in `input`.
-        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+        - If `axis` is int 1 and `keepdims` is set to ``False`` , then the returned Tensor
           has shape :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to ``False`` ,
           then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
 
     Raises:
@@ -5156,16 +5156,16 @@ def std(input, axis=None, ddof=0, keepdims=False):
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
-            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+            Must be in the range [-rank(`input`), rank(`input`)). Default: ``None`` , reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
             If ddof is False, will through the biased estimation to calculate the standard deviation.
-            Default: 0.
+            Default: ``0`` .
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
             If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default: False.
+            If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, the standard deviation.
@@ -5215,26 +5215,26 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
             where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): Specifies the dimensions from which to calculate the standard
             deviation and mean. Only constant value is allowed. Must be in the range [-rank(`input`), rank(`input`)).
-            Default: None, reduce all dimensions.
+            Default: ``None`` , reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
             If ddof is False, will through the biased estimation to calculate the standard deviation.
-            Default: 0.
+            Default: ``0`` .
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
             If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default: False.
+            If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         A tuple containing the standard deviation and mean.
         Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
 
-        - If `axis` is () and `keepdims` is set to False, returns a 0-D Tensor, indicating
+        - If `axis` is () and `keepdims` is set to ``False`` , returns a 0-D Tensor, indicating
           the standard deviation of all elements in `input`.
-        - If `axis` is int 1 and `keepdims` is set to False, then the returned Tensor
+        - If `axis` is int 1 and `keepdims` is set to ``False`` , then the returned Tensor
           has shape :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to False,
+        - If `axis` is tuple(int) or list(int), e.g. (1, 2) and `keepdims` is set to ``False`` ,
           then the returned Tensor has shape :math:`(x_0, x_2, ..., x_R)`.
 
     Raises:
@@ -5535,8 +5535,8 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
         batch2 (Tensor): The second batch of tensor to be multiplied.
 
     Keyword Args:
-        beta (Union[int, float], optional): Multiplier for `input`. Default: 1.
-        alpha (Union[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `input`. Default: ``1`` .
+        alpha (Union[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: ``1`` .
 
     Returns:
         Tensor, has the same dtype as `input`.
@@ -5587,8 +5587,8 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
         mat2 (Tensor): The second tensor to be multiplied.
 
     Keyword Args:
-        beta (Union[int, float], optional): Multiplier for `input`. Default: 1.
-        alpha (Union[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `input`. Default: ``1`` .
+        alpha (Union[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: ``1`` .
 
     Returns:
         Tensor, has the same dtype as `input`.
@@ -5733,9 +5733,9 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
 
     Keyword Args:
         beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
-            float or bool, Default: 1.
+            float or bool. Default: ``1`` .
         alpha (scalar[int, float, bool], optional): Multiplier for `vec1` ⊗ `vec2` (α). The `alpha` must
-            be int or float or bool, Default: 1.
+            be int or float or bool. Default: ``1`` .
 
     Returns:
         Tensor, the shape of the output tensor is :math:`(N, M)`, has the same dtype as `x`.
@@ -5953,9 +5953,9 @@ def bernoulli(input, p=0.5, seed=None):
                         type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         p (Union[Tensor, float], optional): Success probability, representing the probability of setting 1 for the
             corresponding position of the current Tensor. It has the same shape as `input`, the value of `p`
-            must be in the range `[0, 1]`. Default: 0.5.
+            must be in the range `[0, 1]`. Default: ``0.5`` .
         seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
-            positive integer, and -1 means using the current timestamp. Default: None,
+            positive integer, and -1 means using the current timestamp. Default: ``None`` ,
             which will be treated as 0.
 
     Returns:
@@ -7241,11 +7241,11 @@ def hann_window(window_length, periodic=True, *, dtype=None):
 
     Args:
         window_length (int): Length of window.
-        periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
-            When set to False, generates a symmetric window for filter design.Default: True.
+        periodic (bool, optional): When set to ``True`` , generates a periodic window for spectral analysis.
+            When set to ``False`` , generates a symmetric window for filter design.Default: ``True`` .
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: None.
+        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: ``None`` .
 
     Returns:
         Tensor, a Hann window.
@@ -7613,10 +7613,10 @@ def prod(input, axis=None, keep_dims=False):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
           Only constant value is allowed. Assume the rank of `input` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
+                          If false, don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -7795,8 +7795,9 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
         ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
-            behavior. Default: None.
-        dim (Union[int, Tuple(int)], optional): calculate the dimension of vector norm or matrix norm. Default: None.
+            behavior. Default: ``None`` .
+        dim (Union[int, Tuple(int)], optional): calculate the dimension of vector norm or matrix norm.
+            Default: ``None`` .
 
             - When `dim` is int, it will be calculated by vector norm.
 
@@ -7807,11 +7808,11 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
             - If `dim` is None and `ord` is not None, `A` must be 1D or 2D.
 
-        keepdim (bool): whether the output Tensor retains the original dimension. Default: False.
+        keepdim (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
         Tensor, the result of norm calculation on the specified dimension, `dim`, has the same dtype as `A`.
@@ -7993,10 +7994,10 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         LU_pivots (Tensor): The packed LU factorization pivots. A Tensor of shape :math:`(*, min(M, N))`,
             where :math:`*` is
             batch dimensions, with data type int8, uint8, int16, int32, int64.
-        unpack_data (bool, optional): A flag indicating if the `LU_data` should be unpacked. If False,
-            then the returned L and U are None. Default: True.
+        unpack_data (bool, optional): A flag indicating if the `LU_data` should be unpacked. If ``False`` ,
+            then the returned L and U are None. Default: ``True`` .
         unpack_pivots (bool, optional): A flag indicating if the `LU_pivots` should be unpacked into
-            a permutation matrix P. If False, then the returned P is None. Default: True.
+            a permutation matrix P. If ``False`` , then the returned P is None. Default: ``True`` .
 
     Returns:
         - pivots(Tensor) - The permutation matrix of LU factorization.
@@ -8208,12 +8209,12 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
 
     Args:
         window_length (int): Length of window.
-        periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
-            When set to False, generates a symmetric window for filter design. Default: True.
-        beta (float, optional): Shape parameter, when `beta` gets large, the window narrows. Default: 12.0.
+        periodic (bool, optional): When set to ``True`` , generates a periodic window for spectral analysis.
+            When set to ``False`` , generates a symmetric window for filter design. Default: ``True`` .
+        beta (float, optional): Shape parameter, when `beta` gets large, the window narrows. Default: ``12.0`` .
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: None.
+        dtype (mindspore.dtype, optional): The output window data type, it must be float. Default: ``None`` .
 
     Returns:
         Tensor, a Kaiser window.
@@ -8807,8 +8808,8 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
             :math:`(C, T, H)` Tensor, input must be broadcastable with :math:`(C, W, H)` Tensor.
         batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
         batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
-        beta (Union[float, int], optional): multiplier for input. The default is 1.
-        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. The default is 1.
+        beta (Union[float, int], optional): multiplier for input. Default: ``1`` .
+        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. Default: ``1`` .
             Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
             be a real number.
 
@@ -9688,7 +9689,7 @@ def cholesky(input_x, upper=False):
         input_x (Tensor): Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
             consisting of symmetric positive-definite matrices, with float32 or float64 data type.
         upper (bool): If `upper` is `True`, returns an upper-triangular matrix. If `upper` is `False`, returns
-            a lower-triangular matrix. Default: False.
+            a lower-triangular matrix. Default: ``False`` .
 
     Returns:
         Tensor, has the same shape and data type as `input_x`.

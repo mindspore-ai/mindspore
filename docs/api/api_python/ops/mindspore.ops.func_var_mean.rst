@@ -10,7 +10,7 @@ mindspore.ops.var_mean
 
     参数：
         - **input** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **axis** (Union[int, tuple(int)]，可选) - 要进行归约计算的维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。默认值:  ``None`` ，计算所有元素的均值和方差。
+        - **axis** (Union[int, tuple(int)]，可选) - 要进行归约计算的维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。默认值： ``None`` ，计算所有元素的均值和方差。
         - **ddof** (Union[int, bool]，可选) - δ自由度。如果为整数，计算中使用的除数是 :math:`N - ddof` ，其中 :math:`N` 表示元素的数量。如果为 ``True`` ，使用Bessel校正。如果是 ``False`` ，使用偏置估计来计算方差。默认值： ``0`` 。
         - **keepdims** (bool，可选) - 是否保留输出Tensor的维度。如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
