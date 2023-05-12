@@ -1992,7 +1992,7 @@ def is_floating_point(input):
         input (Tensor): The input Tensor.
 
     Returns:
-        Bool. If the dtype of `input` is a floating point data type, return True. Otherwise, return False.
+        Bool. If the dtype of `input` is a floating point data type, return ``True`` . Otherwise, return ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

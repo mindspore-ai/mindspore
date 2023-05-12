@@ -290,8 +290,8 @@ def tensor_dot(x1, x2, axes):
             as axes for each respectively.
 
     Returns:
-        Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
-        contracted in both inputs
+        Tensor, the shape of the output tensor is :math:`(N + M)`, where :math:`N` and :math:`M` are the free axes not
+        contracted in both inputs.
 
     Raises:
         TypeError: If `x1` or `x2` is not a Tensor.
@@ -369,9 +369,9 @@ def dot(input, other):
     Computation a dot product between samples in two tensors.
 
     Args:
-        input (Tensor): First tensor in Dot op with datatype float16 or float32,
+        input (Tensor): First tensor in Dot op with datatype float16 or float32.
             The rank must be greater than or equal to 2.
-        other (Tensor): Second tensor in Dot op with datatype float16 or float32,
+        other (Tensor): Second tensor in Dot op with datatype float16 or float32.
             The rank must be greater than or equal to 2.
 
     Returns:
@@ -603,7 +603,7 @@ def batch_dot(x1, x2, axes=None):
         axes (Union[int, tuple(int), list(int)]): Single value or tuple/list of length 2 with dimensions
           specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
           `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
-          Default: None.
+          Default: ``None`` .
 
     Returns:
         Tensor, batch dot product of `x1` and `x2`. For example, the Shape of output

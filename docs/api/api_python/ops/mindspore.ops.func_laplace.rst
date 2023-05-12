@@ -17,4 +17,4 @@ mindspore.ops.laplace
         - **seed** (int，可选) - 随机种子，用作生成随机数。默认值： ``None`` ，此时使用0作为seed。
 
     返回：
-        Tensor。输出shape应该是使用输入 `shape` 、 `mean` 和 `lambda_param`  广播后的shape。数据类型为float32。
+        Tensor。输出shape应该是使用输入 `shape` 、 `mean` 和 `lambda_param` 广播后的shpmultinomialape。数据类型为float32。

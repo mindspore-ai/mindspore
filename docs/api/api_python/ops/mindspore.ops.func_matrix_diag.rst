@@ -24,7 +24,7 @@ mindspore.ops.matrix_diag
 
     返回：
         Tensor，与 `x` 的类型相同。
-        设 `x` 有r维 :math:`(I, J, ..., M, N)` 。当只给出一条对角线（k是整数或k[0]==k[1]）时，输出Tensor的维度是r + 1，具有shape :math:`(I, J, ..., M, num_rows, num_cols)` 。否则，输出Tensor的维度是r，具有shape :math:`(I, J, ..., num_rows, num_cols)` 。
+        设 `x` 有r维 :math:`(I, J, ..., M, N)` 。当只给出一条对角线（k是整数或k[0]==k[1]）时，输出Tensor的维度是r + 1，具有shape :math:`(I, J, ..., M, num\_rows, num\_cols)` 。否则，输出Tensor的维度是r，具有shape :math:`(I, J, ..., num\_rows, num\_cols)` 。
 
     异常：
         - **TypeError** - `x` 不为Tensor。

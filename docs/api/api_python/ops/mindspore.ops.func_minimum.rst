@@ -14,7 +14,7 @@ mindspore.ops.minimum
         - 如果一个元素和NaN比较，则返回该元素。
 
     .. math::
-        output_i = min(x_i, y_i)
+        output_i = \min(x_i, y_i)
 
     参数：
         - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
@@ -24,5 +24,5 @@ mindspore.ops.minimum
         一个Tensor，其shape与广播后的shape相同，其数据类型为两个输入中精度较高的类型。
 
     异常：
-        - **TypeError** - `x` 和 `y` 不是以下之一：Tensor，Number，bool。
+        - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、Number、bool。
         - **ValueError** - `x` 和 `y` 的广播后的shape不相同。

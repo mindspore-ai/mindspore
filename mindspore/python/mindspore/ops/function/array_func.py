@@ -179,12 +179,12 @@ def arange(start=0, end=None, step=1, *, dtype=None):
 
     Args:
         start (Union[float, int, Tensor], optional): The start of the interval.
-            If Tensor, the shape must be (). Default: ``0`` .
+            If Tensor, the shape must be :math:`()` . Default: ``0`` .
         end (Union[float, int, Tensor], optional): The end of the interval, exclusive.
-            If Tensor, the shape must be ().
+            If Tensor, the shape must be :math:`()`.
             Default: ``None`` . If ``None`` , it defaults to the value of `start`, and 0 is used as the starting value.
         step (Union[float, int, Tensor], optional): Number that increments `start`.
-            If Tensor, the shape must be (). Default: ``1`` .
+            If Tensor, the shape must be :math:`()`. Default: ``1`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
@@ -4068,8 +4068,8 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     Returns:
         A Tensor. Has the same type as `x`.
         Suppose `x` has r dimensions with shape :math:`(I, J, ..., M, N)` . The output Tensor has rank r + 1 with shape
-        :math:`(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
-        Otherwise, it has rank r with shape :math:`(I, J, ..., num_rows, num_cols)` .
+        :math:`(I, J, ..., M, num\_rows, num\_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
+        Otherwise, it has rank r with shape :math:`(I, J, ..., num\_rows, num\_cols)` .
 
     Raises:
         TypeError: If `x` is not Tensor.
@@ -4206,10 +4206,10 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
             single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
             a matrix band. k[0] must not be larger than k[1].
             The alue of k has restructions, meaning value of k must be in :math:`(-x.shape[-2], x.shape[-1])`.
-            Input k must be const Tensor when taking Graph mode.
-        align (str, optional): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT",
-            "RIGHT_RIGHT". Align is a string specifying how superdiagonals and subdiagonals should be aligned,
-            respectively. "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals
+            Input k must be const Tensor when taking Graph mode. Default: ``0`` .
+        align (str, optional): An optional string from: ``"RIGHT_LEFT"`` (default), ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` ,
+            ``"RIGHT_RIGHT"`` . Align is a string specifying how superdiagonals and subdiagonals should be aligned,
+            respectively. ``"RIGHT_LEFT"`` aligns superdiagonals to the right (left-pads the row) and subdiagonals
             to the left (right-pads the row).
 
     Returns:
