@@ -176,6 +176,9 @@ class KernelActor : public DebugAwareActor {
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
 
+  // The ignore input addresses when the kernel launch.
+  std::vector<size_t> launch_ignored_inputs_;
+
   // Whether the inputs need continuous memory, used to check the inputs legitimacy.
   bool inputs_continuous_memory_;
 
