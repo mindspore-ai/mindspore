@@ -62,7 +62,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             Default: ``None``, will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
+            Default: ``Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .
@@ -273,7 +273,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``mindspore.dataset.Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
+            Default: ``Shuffle.GLOBAL`` . Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is ``False``, no shuffling will be performed.
             If `shuffle` is ``True``, perform global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .

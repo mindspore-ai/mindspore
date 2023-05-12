@@ -2750,7 +2750,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input tensor is used. Default: ``None`` .
-            mode ('raise', 'wrap', 'clip', optional):
+            mode (str, optional): Support ``'raise'``, ``'wrap'``, ``'clip'``.
 
                 - ``raise``: Raises an error;
 
@@ -2818,17 +2818,17 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 `choices` must be broadcasted to the same shape. If `choices` is itself a tensor,
                 then its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
                 is taken as defining the "sequence".
-            mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
-                ``[0, n-1]`` will be treated:
+            mode (str, optional): Specifies how indices outside
+                ``[0, n-1]`` will be treated. Support ``'raise'``, ``'wrap'``, ``'clip'``.
 
-                - raise: Raises an error;
+                - ``raise``: Raises an error;
 
-                - wrap: Wraps around;
+                - ``wrap``: Wraps around;
 
-                - clip: Clips to the range. 'clip' mode means that values greater than n-1 are mapped to n-1.
-                  Note that this disables indexing with negative numbers.
+                - ``clip``: Clips to the range. The values greater than n-1 will be mapped to n-1.
+                  Note that this mode disables indexing with negative numbers.
 
-                Default: 'clip'.
+                Default: ``'clip'``.
 
         Returns:
             Tensor, the merged result.

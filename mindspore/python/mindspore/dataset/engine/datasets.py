@@ -452,7 +452,7 @@ class Dataset:
         Serialize a pipeline into JSON string and dump into file if filename is provided.
 
         Args:
-            filename (str): filename of JSON file to be saved as. Default: ``''``.
+            filename (str): filename of JSON file to be saved as. Default: ``""``.
 
         Returns:
             str, JSON string of the pipeline.

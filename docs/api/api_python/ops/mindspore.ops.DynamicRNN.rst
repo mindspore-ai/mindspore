@@ -34,7 +34,7 @@ mindspore.ops.DynamicRNN
         - **num_proj** (int，可选) - 投影矩阵的输出维数。默认值： ``0`` 。
         - **time_major** (bool，可选) - 指定输入 `x` 的数据排列格式。如果为 ``True`` ，格式为 :math:`(num\_step, batch\_size, input\_size)`，如果为 ``False`` ，格式为：:math:`(batch\_size, num\_step, input\_size)` 。默认值： ``True`` 。当前仅支持 ``True`` 。
         - **activation** (str，可选) - 指定激活函数。默认值： ``'tanh'`` 。当前仅支持 ``'tanh'`` 。
-        - **forget_bias** (floa，可选t) - 指定遗忘门的偏置。默认值： ``0.0`` 。
+        - **forget_bias** (float，可选) - 指定遗忘门的偏置。默认值： ``0.0`` 。
         - **is_training** (bool，可选) - 指定是否开启训练。默认值： ``True`` 。
 
     输入：
