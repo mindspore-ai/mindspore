@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <condition_variable>
-#include <mutex>
 #include "utils/ms_exception.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
@@ -23,9 +21,6 @@
 namespace mindspore {
 namespace stub {
 namespace {
-std::condition_variable stub_cond_var_;
-std::mutex stub_mutex_;
-
 static std::string MakeId() {
   // Use atomic to make id generator thread safe.
   static std::atomic<uint64_t> last_id{1};
@@ -89,44 +84,34 @@ py::object MakeOutput(const StubNodePtr &node) {
 StubNode::StubNode() : id_(MakeId()) {}
 
 bool StubNode::SetAbstract(const AbstractBasePtr &abs) {
+  std::unique_lock<std::mutex> lock(mutex_);
   abstract_ = abs;
-  if (wait_flag_.load()) {
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.notify_all();
-  }
+  cond_var_.notify_all();
   return true;
 }
 
 void StubNode::SetValue(const ValuePtr &val) {
+  std::unique_lock<std::mutex> lock(mutex_);
   value_ = val;
-  if (wait_flag_.load()) {
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.notify_all();
-  }
+  cond_var_.notify_all();
 }
 
 void StubNode::SetException(const std::exception_ptr &e_ptr) {
+  // cppcheck-suppress unreadVariable
+  std::unique_lock<std::mutex> lock(mutex_);
   e_ptr_ = e_ptr;
-  if (wait_flag_.load()) {
-    // cppcheck-suppress unreadVariable
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.notify_all();
-  }
+  cond_var_.notify_all();
 }
 
 AbstractBasePtr StubNode::WaitAbstract() {
   // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
-  if (abstract_.get() == nullptr) {
-    wait_flag_.store(true);
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
-    wait_flag_.store(false);
-    if (e_ptr_ != nullptr) {
-      // Need to clear exception in the instance.
-      MsException::Instance().CheckException();
-      std::rethrow_exception(e_ptr_);
-    }
+  std::unique_lock<std::mutex> lock(mutex_);
+  cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
+  if (e_ptr_ != nullptr) {
+    // Need to clear exception in the instance.
+    MsException::Instance().CheckException();
+    std::rethrow_exception(e_ptr_);
   }
   return abstract_;
 }
@@ -134,16 +119,12 @@ AbstractBasePtr StubNode::WaitAbstract() {
 ValuePtr StubNode::WaitValue() {
   // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
-  if (value_.get() == nullptr) {
-    wait_flag_.store(true);
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr || e_ptr_ != nullptr; });
-    wait_flag_.store(false);
-    if (e_ptr_ != nullptr) {
-      // Need to clear exception in the instance.
-      MsException::Instance().CheckException();
-      std::rethrow_exception(e_ptr_);
-    }
+  std::unique_lock<std::mutex> lock(mutex_);
+  cond_var_.wait(lock, [this] { return value_.get() != nullptr || e_ptr_ != nullptr; });
+  if (e_ptr_ != nullptr) {
+    // Need to clear exception in the instance.
+    MsException::Instance().CheckException();
+    std::rethrow_exception(e_ptr_);
   }
   return value_;
 }

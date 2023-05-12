@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include "thread/hqueue.h"
+#include "thread/semaphore.h"
 #include "actor/msg.h"
 #include "actor/mailbox.h"
 
@@ -209,7 +210,7 @@ class MS_CORE_API ActorBase {
 
   AID id;
   std::map<std::string, ActorFunction> actionFunctions;
-  std::mutex waiterLock;
+  Semaphore waiterLock{1};
   std::string msgRecords[MAX_ACTOR_RECORD_SIZE];
   uint32_t recordNextPoint = 0;
 
