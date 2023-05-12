@@ -45,9 +45,12 @@ class ConvGradFilterCpuKernelMod : public MKLCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {filter_size_index_}; }
+
  private:
   size_t src_index_{0};
   size_t diff_dst_index_{1};
+  const size_t filter_size_index_{2};
   std::string kernel_type_;
   std::string format_;
   int64_t group_;

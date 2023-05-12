@@ -120,6 +120,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
   void DestroyResource() noexcept override {
     input_size_list_.clear();
     output_size_list_.clear();

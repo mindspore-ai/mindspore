@@ -203,6 +203,8 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
   void ResetResource() noexcept {
     cudnn_handle_ = nullptr;
     dw_desc_ = nullptr;

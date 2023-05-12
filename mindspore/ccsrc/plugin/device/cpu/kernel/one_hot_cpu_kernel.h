@@ -42,6 +42,8 @@ class OneHotCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {depth_index_}; }
+
  private:
   template <typename ID, typename OD>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -49,6 +51,7 @@ class OneHotCpuKernelMod : public NativeCpuKernelMod {
   TypeId input_dtype_{kTypeUnknown};
   TypeId output_dtype_{kTypeUnknown};
   size_t depth_{0};
+  const size_t depth_index_{1};
   size_t stride_{0};
   size_t axis_{0};
   static std::vector<KernelAttr> support_list_;

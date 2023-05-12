@@ -44,6 +44,8 @@ class OneHotGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {depth_index_}; }
+
  private:
   template <typename T, typename S, typename G = int>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -56,6 +58,7 @@ class OneHotGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, OneHotLaunchFunc>> func_list_;
   OneHotLaunchFunc kernel_func_;
   size_t depth_{0};
+  const size_t depth_index_{1};
   size_t left_dim_size_{1};
   size_t right_dim_size_{1};
 };

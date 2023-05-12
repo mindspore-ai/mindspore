@@ -81,6 +81,8 @@ class UnsortedSegmentMinGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
     kernel_name_ = base_operator->name();

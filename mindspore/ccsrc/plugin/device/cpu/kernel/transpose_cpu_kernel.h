@@ -43,6 +43,8 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

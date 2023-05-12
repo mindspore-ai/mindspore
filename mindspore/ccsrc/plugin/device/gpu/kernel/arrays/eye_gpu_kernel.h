@@ -44,6 +44,8 @@ class EyeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<EyeG
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex0, kIndex1, kIndex2}; }
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 

@@ -45,6 +45,7 @@ class ResizeBilinearGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
   using ResizeBilinearFunc =
     std::function<bool(ResizeBilinearGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                        const std::vector<AddressPtr> &, void *)>;

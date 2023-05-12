@@ -48,6 +48,8 @@ class UnsortedSegmentSumGpuKernelMod : public NativeGpuKernelMod,
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
