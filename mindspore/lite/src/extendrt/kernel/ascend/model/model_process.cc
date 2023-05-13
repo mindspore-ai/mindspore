@@ -83,6 +83,7 @@ bool ModelProcess::PreInitModelResource() {
   }
   dynamic_shape_options_.batch_size = GetDynamicBatch();
   dynamic_shape_options_.image_size = GetDynamicImage();
+  dynamic_shape_options_.dynamic_dims = GetDynamicDims();
   data_input_num_ = input_infos_.size();
   if (IsDynamicShape() && data_input_num_ > 0) {
     data_input_num_ -= 1;
@@ -118,6 +119,35 @@ std::set<uint64_t> ModelProcess::GetDynamicBatch() {
     batch.insert(dynamic_batch.batch[i]);
   }
   return batch;
+}
+
+std::pair<aclmdlIODims *, size_t> ModelProcess::GetDynamicDims() {
+  if (model_desc_ == nullptr) {
+    MS_LOG(ERROR) << " Model desc is nullptr.";
+    return std::make_pair(nullptr, 0);
+  }
+  size_t gear_conut = 0;
+  auto ret = aclmdlGetInputDynamicGearCount(model_desc_, -1, &gear_conut);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "aclmdlGetInputDynamicGearCount failed.";
+    return std::make_pair(nullptr, 0);
+  }
+  MS_LOG(INFO) << "gear_conut is: " << gear_conut;
+  if (gear_conut == 0) {
+    MS_LOG(INFO) << "gear_conut is zero";
+    return std::make_pair(nullptr, 0);
+  }
+  dynamic_dims_ = new aclmdlIODims[gear_conut];
+  if (dynamic_dims_ == nullptr) {
+    MS_LOG(ERROR) << "new aclmldIODims failed.";
+    return std::make_pair(nullptr, 0);
+  }
+  if (aclmdlGetInputDynamicDims(model_desc_, -1, dynamic_dims_, gear_conut) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "aclmdlGetInputDynamicDims failed.";
+    delete[] dynamic_dims_;
+    return std::make_pair(nullptr, 0);
+  }
+  return std::make_pair(dynamic_dims_, gear_conut);
 }
 
 std::set<std::pair<uint64_t, uint64_t>> ModelProcess::GetDynamicImage() {
@@ -482,11 +512,13 @@ bool ModelProcess::UnLoad() {
   return true;
 }
 
-bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize() || IsDynamicImageSize(); }
+bool ModelProcess::IsDynamicShape() { return IsDynamicBatchSize() || IsDynamicImageSize() || IsDynamicDims(); }
 
 bool ModelProcess::IsDynamicBatchSize() { return !dynamic_shape_options_.batch_size.empty(); }
 
 bool ModelProcess::IsDynamicImageSize() { return !dynamic_shape_options_.image_size.empty(); }
+
+bool ModelProcess::IsDynamicDims() { return dynamic_shape_options_.dynamic_dims.second != 0; }
 
 bool ModelProcess::ResetInputSize(const std::vector<ShapeVector> &new_shapes) {
   for (size_t index = 0; index < new_shapes.size(); index++) {
@@ -640,6 +672,17 @@ bool ModelProcess::ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector>
     ret = aclmdlSetDynamicHWSize(model_id_, inputs_, index, height, width);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Set dynamic batch size failed, model_id is " << model_id_;
+      return false;
+    }
+  } else if (IsDynamicDims()) {
+    aclmdlIODims dynamic_dims;
+    if (!dyn_shape_proc_.CheckAndGetDynamicDims(new_shapes, &dynamic_dims)) {
+      MS_LOG(ERROR) << "CheckAndGetDynamicDims failed.";
+      return false;
+    }
+    ret = aclmdlSetInputDynamicDims(model_id_, inputs_, index, &dynamic_dims);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclmdlSetInputDynamicDims failed.";
       return false;
     }
   } else {
