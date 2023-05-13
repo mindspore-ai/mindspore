@@ -733,3 +733,33 @@ def test_list_slice_only_with_step():
         return a
 
     assert ms_func() == py_func()
+
+
+def test_list_assign_on_left():
+    """
+    Feature: List assign
+    Description: Test list assign on left.
+    Expectation: No error.
+    """
+
+    @jit
+    def ms_func():
+        [a, b, c, d] = [1, 2, 3, 4]
+        return a, b, c, d
+
+    assert ms_func() == (1, 2, 3, 4)
+
+
+def test_list_assign_on_left_2():
+    """
+    Feature: List assign
+    Description: Test list assign on left.
+    Expectation: No error.
+    """
+
+    @jit
+    def ms_func():
+        [a, b, c, d, [e, f]] = [1, 2, 3, 4, [5, 6]]
+        return a, b, c, d, e, f
+
+    assert ms_func() == (1, 2, 3, 4, 5, 6)

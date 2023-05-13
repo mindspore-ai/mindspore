@@ -82,9 +82,10 @@ AST_SUB_TYPE_AND = 3                   # ast.And
 AST_SUB_TYPE_OR = 4                    # ast.Or
 AST_SUB_TYPE_NAME = 5                  # ast.Name
 AST_SUB_TYPE_TUPLE = 6                 # ast.Tuple
-AST_SUB_TYPE_SUBSCRIPT = 7             # ast.Subscript
-AST_SUB_TYPE_STARRED = 8               # ast.Starred
-AST_SUB_TYPE_ATTRIBUTE = 9             # ast.Attribute
+AST_SUB_TYPE_LIST = 7                  # ast.List
+AST_SUB_TYPE_SUBSCRIPT = 8             # ast.Subscript
+AST_SUB_TYPE_STARRED = 9               # ast.Starred
+AST_SUB_TYPE_ATTRIBUTE = 10            # ast.Attribute
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Syntax support
@@ -693,6 +694,8 @@ def get_ast_type(node):
         ast_type = AST_SUB_TYPE_NAME
     elif isinstance(node, ast.Tuple):
         ast_type = AST_SUB_TYPE_TUPLE
+    elif isinstance(node, ast.List):
+        ast_type = AST_SUB_TYPE_LIST
     elif isinstance(node, ast.Subscript):
         ast_type = AST_SUB_TYPE_SUBSCRIPT
     elif isinstance(node, ast.Starred):
