@@ -330,7 +330,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     const auto &node = parameters[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, context, fg);
     always_eval_flag = always_eval_flag || CheckIfAlwaysEval(conf, arg);
-    engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
+    auto result = std::make_shared<EvalResult>(arg, nullptr);
+    engine->SaveEvalResultInCache(conf, result);
     MS_LOG(DEBUG) << GetInferThread() << ", Save argument[" << i << "] result for " << fg->ToString()
                   << ", NodeConfig: " << conf->ToString() << ", result: " << arg << "/" << arg->ToString();
   }
@@ -369,20 +370,19 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
 
 void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args, bool broaden_scalar) {
   MS_EXCEPTION_IF_NULL(broaded_args);
-  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
-                       [&broaden_scalar](const AbstractBasePtr &arg) -> AbstractBasePtr {
-                         if (arg->isa<AbstractSequence>() && !arg->cast<AbstractSequencePtr>()->dynamic_len() &&
-                             !arg->isa<AbstractSparseTensor>()) {
-                           arg->Clone()->cast<AbstractSequencePtr>()->CheckAndConvertToDynamicLenSequence(false);
-                         }
-                         if (arg->GetValueTrack() != kValueAny) {
-                           if (broaden_scalar) {
-                             return AbstractBroaden(arg);
-                           }
-                           return arg->Broaden();
-                         }
-                         return arg;
-                       });
+  (void)std::transform(
+    args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
+    [&broaden_scalar](const AbstractBasePtr &arg) -> AbstractBasePtr {
+      auto arg_sequence = arg->cast<AbstractSequencePtr>();
+      if (arg_sequence != nullptr && !arg_sequence->dynamic_len() && !arg->isa<AbstractSparseTensor>()) {
+        MS_LOG(DEBUG) << "set as arg of dyn len param, arg:" << arg->ToString();
+        return broaden_scalar ? AbstractBroaden(arg) : arg->Broaden();
+      }
+      if (arg->GetValueTrack() != kValueAny) {
+        return broaden_scalar ? AbstractBroaden(arg) : arg->Broaden();
+      }
+      return arg;
+    });
 }
 
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {

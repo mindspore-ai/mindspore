@@ -488,7 +488,7 @@ std::string AbstractSequence::ToString() const {
     }
     ss << "}";
   }
-  ss << ", dynamic_len:" << dynamic_len_;
+  ss << ", dynamic_len:" << dynamic_len_ << ", is dyn arg:" << dyn_len_arg_;
   ss << "}";
   ss << "\n";
   return ss.str();
@@ -680,6 +680,7 @@ bool AbstractSequence::PurifyElements() {
   return true;
 }
 
+// Convert self from a fixed length sequence to dynamic length sequence.
 void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception) {
   // Can not use size() since it will raise error when sequence is already dynamic length.
   const size_t input_len = elements_.size();
@@ -722,6 +723,26 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
   // Set sequence nodes to nulltpr to disable DDE.
   sequence_nodes_ = nullptr;
   set_dynamic_len(true);
+}
+
+// Convert self's cloned abstract from a fixed length sequence to dynamic length sequence, just like tensor broaden.
+AbstractSequencePtr AbstractSequence::BroadenToDynamicLenSequence() {
+  if (dynamic_len()) {
+    return shared_from_base<AbstractSequence>();
+  }
+  if (isa<AbstractSparseTensor>()) {
+    return shared_from_base<AbstractSequence>();
+  }
+  auto clone_sequence = Clone()->cast<AbstractSequencePtr>();
+  clone_sequence->CheckAndConvertToDynamicLenSequence(false);
+  if (clone_sequence->dynamic_len()) {
+    set_dyn_len_arg();
+    // Set all sequence inputs as used if trans from fixed length to dynamic length.
+    SetSequenceElementsUseFlagsRecursively(shared_from_base<AbstractSequence>(), true);
+    return clone_sequence;
+  }
+  // Convert to dynamic len failed, return original abstract.
+  return shared_from_base<AbstractSequence>();
 }
 
 TypePtrList AbstractSequence::ElementsType() const {
@@ -921,6 +942,7 @@ BaseShapePtr AbstractTuple::BuildShape() const {
 
 AbstractBasePtr AbstractTuple::Clone() const {
   auto ret = std::make_shared<AbstractTuple>(ElementsClone(), sequence_nodes());
+  ret->dyn_len_arg_ = dyn_len_arg_;
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
   return ret;
@@ -1036,6 +1058,7 @@ BaseShapePtr AbstractList::BuildShape() const {
 
 AbstractBasePtr AbstractList::Clone() const {
   auto ret = std::make_shared<AbstractList>(ElementsClone(), sequence_nodes());
+  ret->dyn_len_arg_ = dyn_len_arg_;
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
   return ret;
@@ -1064,17 +1087,19 @@ ValuePtr AbstractList::RealBuildValue() const {
 
 std::shared_ptr<AbstractSequence> AbstractSequence::DynamicLenSequenceJoin(const AbstractSequencePtr &other) {
   auto other_dyn_sequence_abs = other;
-  if (!other->dynamic_len()) {
-    other_dyn_sequence_abs = other->Clone()->cast<AbstractSequencePtr>();
-    other_dyn_sequence_abs->CheckAndConvertToDynamicLenSequence();
+  if (!dynamic_len() || !other->dynamic_len()) {
+    MS_LOG(EXCEPTION) << "Can't join fixed length sequence. \nthis:" << ToString() << ", \nother:" << other->ToString();
   }
   auto element_abs1 = dynamic_len_element_abs_;
   auto element_abs2 = other_dyn_sequence_abs->dynamic_len_element_abs();
   AbstractBasePtr join_element_abs = nullptr;
-
   // When two element abstracts are not nullptr, join them to get the new element abstract.
-  // When one or none of the element abstract is nullptr, the result element abstract is nullptr.
-  if (element_abs1 != nullptr && element_abs2 != nullptr) {
+  // When one or none of the element abstract is nullptr, the result element abstract is another.
+  if (element_abs1 == nullptr) {
+    join_element_abs = element_abs2;
+  } else if (element_abs2 == nullptr) {
+    join_element_abs = element_abs1;
+  } else {
     join_element_abs = element_abs1->Join(element_abs2);
   }
   auto ret = Clone()->cast<AbstractSequencePtr>();
@@ -1083,24 +1108,27 @@ std::shared_ptr<AbstractSequence> AbstractSequence::DynamicLenSequenceJoin(const
 }
 
 AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
-  auto other_sequence = other->cast<AbstractSequencePtr>();
+  auto other_sequence = other->cast<AbstractTuplePtr>();
   if (other_sequence == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   try {
     if (dynamic_len_) {
-      return DynamicLenSequenceJoin(other_sequence);
+      return DynamicLenSequenceJoin(other_sequence->BroadenToDynamicLenSequence());
     }
     if (other_sequence->dynamic_len()) {
-      return other->Join(shared_from_base<AbstractTuple>());
+      return other_sequence->DynamicLenSequenceJoin(BroadenToDynamicLenSequence());
     }
     if (other_sequence->size() != size()) {
-      auto dyn_len_sequence = Clone()->cast<AbstractTuplePtr>();
-      dyn_len_sequence->CheckAndConvertToDynamicLenSequence();
-      return dyn_len_sequence->Join(other_sequence);
+      auto dyn_len_sequence = BroadenToDynamicLenSequence();
+      return dyn_len_sequence->Join(other_sequence->BroadenToDynamicLenSequence());
     }
-  } catch (std::exception &) {
-    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
+  } catch (std::exception &e) {
+    std::ostringstream oss;
+    oss << e.what();
+    oss << "Failed to join abstract sequence: " << ToString()
+        << ", with other abstract sequence: " << other_sequence->ToString();
+    MS_EXCEPTION(TypeError) << oss.str();
   }
   auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractTuple>(other_sequence));
   MS_EXCEPTION_IF_NULL(res);
@@ -1109,23 +1137,23 @@ AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
 }
 
 AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
-  auto other_sequence = other->cast<AbstractSequencePtr>();
+  auto other_sequence = other->cast<AbstractListPtr>();
   if (other_sequence == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   try {
     if (dynamic_len_) {
-      return DynamicLenSequenceJoin(other_sequence);
+      return DynamicLenSequenceJoin(other_sequence->BroadenToDynamicLenSequence());
     }
     if (other_sequence->dynamic_len()) {
-      return other->Join(shared_from_base<AbstractList>());
+      return other_sequence->DynamicLenSequenceJoin(BroadenToDynamicLenSequence());
     }
     if (other_sequence->size() != size()) {
-      auto dyn_len_sequence = Clone()->cast<AbstractListPtr>();
-      dyn_len_sequence->CheckAndConvertToDynamicLenSequence();
-      return dyn_len_sequence->Join(other_sequence);
+      auto dyn_len_sequence = BroadenToDynamicLenSequence();
+      return dyn_len_sequence->Join(other_sequence->BroadenToDynamicLenSequence());
     }
-  } catch (std::exception &) {
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << e.what();
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
 

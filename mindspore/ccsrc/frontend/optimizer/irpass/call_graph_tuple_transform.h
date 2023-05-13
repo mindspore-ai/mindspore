@@ -52,7 +52,7 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
       MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
     // Dynamic length tuple input can not be flattened.
-    if (!IsConstantTuple(arg)) {
+    if (!IsSequenceExpandable(arg->abstract())) {
       new_args->push_back(arg);
       continue;
     }

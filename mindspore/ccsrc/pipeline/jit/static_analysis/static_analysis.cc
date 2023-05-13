@@ -698,7 +698,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
   // Check if func graph contains isolated side-effect, and sync.
   if (check_side_effect()) {
-    func->Visit([this, &contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
+    func->Visit([&contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
       const auto &real_func_atom = GetRealFuncAtom(possible_func);
       if (CheckFuncSideEffect(real_func_atom)) {
         contains_side_effect = CheckFuncSideEffect(real_func_atom);

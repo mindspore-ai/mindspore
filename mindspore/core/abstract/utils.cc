@@ -147,7 +147,7 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     if (sequence_abs->dynamic_len()) {
       auto elem_abs = sequence_abs->dynamic_len_element_abs();
       auto cloned_abs = sequence_abs->Clone()->cast<AbstractSequencePtr>();
-      cloned_abs->set_dynamic_len_element_abs(AbstractBroaden(elem_abs));
+      cloned_abs->set_dynamic_len_element_abs(elem_abs);
       return cloned_abs;
     }
     std::vector<AbstractBasePtr> new_elements;

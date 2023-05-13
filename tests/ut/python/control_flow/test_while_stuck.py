@@ -82,16 +82,39 @@ def test_auto_broaden_scalar_in_while():
     scalar_add_in_while()
 
 
-def test_auto_broaden_list_in_while():
+def test_mutable_list_in_while():
     """
-    Feature: Broaden list arg if it is an arg of no-expanding while header.
-    Description: Check whether scalar is broaden.
+    Feature: Broaden mutable(list) arg if it is an arg of no-expanding while header.
+    Description: Check whether mutable(list) is broaden.
     Expectation: while won't stuck in infer process.
     """
 
     @jit
     def scalar_add_in_while():
         list1 = mutable([10], True)
+        i = 0
+        j = Tensor([1])
+        while j < 10:
+            list1.append(i)
+            j = j + 2
+            i = i + 1
+        return list1
+
+    ms.context.set_context(precompile_only=True)
+    out = scalar_add_in_while()
+    print("out:", out)
+
+
+def test_auto_broaden_list_in_while():
+    """
+    Feature: Broaden list arg if it is an arg of no-expanding while header.
+    Description: Check whether list is broaden.
+    Expectation: while won't stuck in infer process.
+    """
+
+    @jit
+    def scalar_add_in_while():
+        list1 = mutable([10, 20], True)
         i = 0
         j = Tensor([1])
         while j < 10:
