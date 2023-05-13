@@ -7962,7 +7962,7 @@ class FFTWithSize(Primitive):
         A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.
 
     Raises:
-        TypeError: If the input type of FFT/IFFT/IRFF is not one of: complex64, complex128.
+        TypeError: If the input type of FFT/IFFT/IRFFT is not one of: complex64, complex128.
         TypeError: If the input type of RFFT is not one of: float32, float64.
         TypeError: If the input type is not Tensor.
         ValueError: If `x` dimension is less than signal_ndim.

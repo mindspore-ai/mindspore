@@ -420,7 +420,13 @@ from .math_func import (
     histc,
     nextafter,
     trace,
-    zeta
+    zeta,
+    fft,
+    fft2,
+    fftn,
+    ifft,
+    ifft2,
+    ifftn,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
