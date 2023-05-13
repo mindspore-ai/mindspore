@@ -23,6 +23,9 @@
 #include "extendrt/kernel/ascend/options/acl_model_options.h"
 #include "kernel/kernel.h"
 #include "include/api/types.h"
+#include "acl/acl.h"
+#include "acl/acl_mdl.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -30,12 +33,15 @@ class DynShapeProcess {
  public:
   bool Init(const AclDynamicShapeOptions &options);
   bool CheckAndGetBatchSize(const std::vector<ShapeVector> &new_shapes, int32_t *batch_size);
+  bool CheckAndGetDynamicDims(const std::vector<ShapeVector> &new_shapes, aclmdlIODims *dynamic_dims);
   bool CheckAndGetImageSize(const std::vector<ShapeVector> &new_shapes, int32_t *height, int32_t *width);
 
  private:
   bool CheckBatchSize(const std::vector<ShapeVector> &new_shapes);
+  bool CheckDynamicDims(const std::vector<ShapeVector> &new_shapes);
   bool CheckImageSize(const std::vector<ShapeVector> &new_shapes);
   bool GetRealBatchSize(const std::vector<ShapeVector> &new_shapes, int32_t *batch_size);
+  bool GetRealDynamicDims(const std::vector<ShapeVector> &new_shapes, aclmdlIODims *dynamic_dims);
   bool GetRealImageSize(const std::vector<ShapeVector> &new_shapes, int32_t *height, int32_t *width);
 
   AclDynamicShapeOptions acl_options_;
