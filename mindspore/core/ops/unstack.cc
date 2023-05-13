@@ -51,8 +51,7 @@ bool IsDynamicOutputs(const std::vector<int64_t> &x_shape, const PrimitivePtr &p
   return x_shape[axis] == -1;
 }
 
-TypePtr UnstackInferType(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name,
-                         int64_t output_num) {
+TypePtr UnstackInferType(const std::vector<AbstractBasePtr> &input_args, int64_t output_num) {
   auto type = input_args[kInputIndex0]->BuildType();
   std::vector<TypePtr> type_tuple;
   for (int64_t i = 0; i < output_num; ++i) {
@@ -86,7 +85,7 @@ AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vect
     auto output_num = x_shape[unstack_axis];
     (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
     (void)primitive->AddAttr(kAttrNum, MakeValue(output_num));
-    auto output_type = UnstackInferType(input_args, prim_name, output_num);
+    auto output_type = UnstackInferType(input_args, output_num);
     auto output_shape = UnstackInferShape(x_shape, unstack_axis);
     return abstract::MakeAbstract(output_shape, output_type);
   }
