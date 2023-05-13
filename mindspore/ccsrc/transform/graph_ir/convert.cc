@@ -2547,6 +2547,28 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
   return nullptr;
 }
 
+void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
+  auto value_ptr = node->input(2)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (value_ptr->isa<tensor::Tensor>()) {
+    // tensor case is already converted to int32 in TransDependValueToInt32
+    return;
+  }
+  std::ostringstream ss;
+  ss << "op" << value_ptr.get();
+  op_draw_name_[value_ptr.get()] = ss.str();
+  compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
+  auto input_value = value_ptr->value();
+  auto int64_value = GetValue<int64_t>(input_value);
+  OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
+  MS_EXCEPTION_IF_NULL(adpt);
+  auto op = adpt->generate(value_ptr);
+  (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
+  op_cache_[value_ptr.get()] = op;
+}
+
 AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {
   auto func_graph = input->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -2877,6 +2899,8 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
 
   const mindspore::HashMap<std::string, std::function<void(decltype(this), const CNodePtr &)>>
     auxiliary_node_converters{
+      // Convert TopK second input from int64 to int32.
+      {prim::kPrimTopK->name(), &DfGraphConvertor::ConvertTopK},
       // Convert Reshape add const input to attr(shape)
       {prim::kPrimReshape->name(), &DfGraphConvertor::ConvertReshape},
       {prim::kPrimOCRRecognitionPreHandle->name(), &DfGraphConvertor::ConvertOCRRecPreHandle},
