@@ -180,6 +180,8 @@ void DataDumper::UnloadDumpInfo() {
     MS_EXCEPTION_IF_NULL(iter->second);
     auto task_id = std::get<kTupleTaskId>(*iter->second);
     task.set_task_id(task_id);
+    auto stream_id = std::get<kTupleStreamId>(*iter->second);
+    task.set_stream_id(stream_id);
     MS_EXCEPTION_IF_NULL(op_mapping_info.mutable_task());
     op_mapping_info.mutable_task()->Add(std::move(task));
   }
