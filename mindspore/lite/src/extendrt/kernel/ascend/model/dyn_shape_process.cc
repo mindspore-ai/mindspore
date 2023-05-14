@@ -77,6 +77,17 @@ bool DynShapeProcess::CheckAndGetBatchSize(const std::vector<ShapeVector> &new_s
   return GetRealBatchSize(new_shapes, batch_size);
 }
 
+bool DynShapeProcess::CheckAndGetDynamicDims(const std::vector<ShapeVector> &new_shapes, aclmdlIODims *dynamic_dims) {
+  if (dynamic_dims == nullptr) {
+    MS_LOG(ERROR) << "Input parameter dynamic dims cannot be nullptr";
+    return false;
+  }
+  if (!CheckDynamicDims(new_shapes)) {
+    return false;
+  }
+  return GetRealDynamicDims(new_shapes, dynamic_dims);
+}
+
 bool DynShapeProcess::CheckAndGetImageSize(const std::vector<ShapeVector> &new_shapes, int32_t *height,
                                            int32_t *width) {
   if (acl_options_.image_size.empty()) {
@@ -120,6 +131,30 @@ bool DynShapeProcess::CheckBatchSize(const std::vector<ShapeVector> &new_shapes)
       return false;
     }
   }
+  return true;
+}
+
+bool DynShapeProcess::CheckDynamicDims(const std::vector<ShapeVector> &new_shapes) {
+  std::vector<std::vector<int64_t>> original_shapes = acl_options_.input_shapes;
+  if (original_shapes.size() != new_shapes.size() || new_shapes.empty()) {
+    MS_LOG(ERROR) << "new shape size is: [" << new_shapes.size() << "], not equal original shapes size: ["
+                  << original_shapes.size() << "].";
+    return false;
+  }
+  for (size_t i = 0; i < new_shapes.size(); i++) {
+    if (new_shapes[i].size() != original_shapes[i].size()) {
+      MS_LOG(ERROR) << "new shapes[" << i << "] size: " << new_shapes[i].size() << ", not equal original shapes[" << i
+                    << "] size: " << original_shapes[i].size();
+      return false;
+    }
+    for (size_t j = 0; j < new_shapes[i].size(); j++) {
+      if (new_shapes[i][j] != original_shapes[i][j] && original_shapes[i][j] != -1) {
+        MS_LOG(ERROR) << "input shape is wrong.";
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 
@@ -188,6 +223,26 @@ bool DynShapeProcess::GetRealBatchSize(const std::vector<ShapeVector> &new_shape
   }
   *batch_size = cur_batch_size;
   MS_LOG(DEBUG) << "Current batch size " << cur_batch_size;
+  return true;
+}
+
+bool DynShapeProcess::GetRealDynamicDims(const std::vector<ShapeVector> &new_shapes, aclmdlIODims *dynamic_dims) {
+  if (input_data_idx_ >= new_shapes.size()) {
+    MS_LOG(ERROR) << " Input data index " << input_data_idx_ << " is larger than input size " << new_shapes.size();
+    return false;
+  }
+  std::vector<int64_t> dims;
+  for (auto shape : new_shapes) {
+    for (auto dim : shape) {
+      MS_LOG(INFO) << "input shape dim: " << dim;
+      dims.push_back(dim);
+    }
+  }
+  dynamic_dims->dimCount = dims.size();
+  for (size_t i = 0; i < dims.size(); i++) {
+    MS_LOG(INFO) << "dynamic dim: " << dims[i];
+    dynamic_dims->dims[i] = dims[i];
+  }
   return true;
 }
 
