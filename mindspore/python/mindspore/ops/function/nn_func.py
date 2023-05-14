@@ -3273,8 +3273,10 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
             `input` is expected to be log-probabilities, data type must be float16 or float32.
-        target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
-            high-dimensional loss.
+        target (Tensor) - For class indices, tensor of shape :math:`()`, :math:`(N)` or
+            :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32.
+            For probabilities, tensor of shape :math:`(C,)` :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` ,
+            data type must be float16 or float32.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`,
             data type must be float16 or float32. Default: ``None`` .
