@@ -48,7 +48,12 @@ struct AclTensorInfo {
 class ModelProcess {
  public:
   explicit ModelProcess(const AclModelOptionsPtr &options) : options_(options) {}
-  ~ModelProcess() {}
+  ~ModelProcess() {
+    if (dynamic_dims_ != nullptr) {
+      delete[] dynamic_dims_;
+      dynamic_dims_ = nullptr;
+    }
+  }
 
   bool Load(const void *om_data, size_t om_data_size);
   bool UnLoad();
@@ -59,6 +64,7 @@ class ModelProcess {
 
   std::set<uint64_t> GetDynamicBatch();
   std::set<std::pair<uint64_t, uint64_t>> GetDynamicImage();
+  std::pair<aclmdlIODims *, size_t> GetDynamicDims();
   std::vector<Format> GetInputFormat();
   const std::vector<ShapeVector> GetOutputShape();
   const std::vector<ShapeVector> GetInputShape();
@@ -89,6 +95,7 @@ class ModelProcess {
   bool IsDynamicShape();
   bool IsDynamicBatchSize();
   bool IsDynamicImageSize();
+  bool IsDynamicDims();
   bool ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs);
   bool ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes);
@@ -112,6 +119,7 @@ class ModelProcess {
   std::vector<ShapeVector> cur_input_shapes_;
   bool is_dynamic_output_ = false;
   bool is_dynamic_input_ = false;
+  aclmdlIODims *dynamic_dims_ = nullptr;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel

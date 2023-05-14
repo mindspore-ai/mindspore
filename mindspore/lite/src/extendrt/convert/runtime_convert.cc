@@ -23,7 +23,7 @@
 #include "tools/converter/config_parser/config_file_parser.h"
 
 static int ParseShapeStrToShapeMap(const std::string &input_shape_str,
-                                   std::map<std::string, std::vector<int64_t>> *input_shape_map) {
+                                   std::vector<std::vector<int64_t>> *input_shapes) {
   std::vector<int64_t> shape;
   auto shape_strs = mindspore::lite::StrSplit(input_shape_str, std::string(";"));
   for (const auto &shape_str : shape_strs) {
@@ -65,7 +65,7 @@ static int ParseShapeStrToShapeMap(const std::string &input_shape_str,
       }
       shape.push_back(dim_value);
     }
-    (*input_shape_map)[name] = shape;
+    input_shapes->push_back(shape);
   }
   return RET_OK;
 }
@@ -75,22 +75,21 @@ static int UpdateDynamicInputShape(mindspore::FuncGraphPtr func_graph, const std
     MS_LOG(ERROR) << "funcGraph is nullptr";
     return RET_ERROR;
   }
-  std::map<std::string, std::vector<int64_t>> input_shape_map;
-  auto ret = ParseShapeStrToShapeMap(input_shape_str, &input_shape_map);
+  std::vector<std::vector<int64_t>> input_shapes;
+  auto ret = ParseShapeStrToShapeMap(input_shape_str, &input_shapes);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parse shape string to shape map error";
     return RET_ERROR;
   }
 
-  if (input_shape_map.size() != func_graph->get_inputs().size()) {
-    MS_LOG(ERROR) << "Number of inputs from the config [" << input_shape_map.size() << "] does not match graph inputs ["
+  if (input_shapes.size() != func_graph->get_inputs().size()) {
+    MS_LOG(ERROR) << "Number of inputs from the config [" << input_shapes.size() << "] does not match graph inputs ["
                   << func_graph->get_inputs().size() << "]";
     return RET_ERROR;
   }
 
   size_t input_index = 0;
-  for (auto shape_pair : input_shape_map) {
-    std::vector<int64_t> shape_vec = shape_pair.second;
+  for (auto shape_vec : input_shapes) {
     auto shape_ptr = std::make_shared<mindspore::abstract::Shape>(shape_vec);
     func_graph->get_inputs()[input_index]->abstract()->set_shape(shape_ptr);
     input_index++;
@@ -180,6 +179,15 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
       if (!((param->aclModelOptionCfgParam.input_shape).empty())) {
         auto ret = UpdateDynamicInputShape(std::dynamic_pointer_cast<mindspore::FuncGraph>(graph->impl()),
                                            param->aclModelOptionCfgParam.input_shape);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Runtime convert update dynamic input shape failed";
+          return ret;
+        }
+      } else if (!param->aclModelOptionCfgParam.build_options_map.empty() &&
+                 param->aclModelOptionCfgParam.build_options_map.find("input_shape") !=
+                   param->aclModelOptionCfgParam.build_options_map.end()) {
+        auto shape_str = param->aclModelOptionCfgParam.build_options_map.at("input_shape");
+        auto ret = UpdateDynamicInputShape(std::dynamic_pointer_cast<mindspore::FuncGraph>(graph->impl()), shape_str);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Runtime convert update dynamic input shape failed";
           return ret;

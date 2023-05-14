@@ -23,6 +23,7 @@
 #include <utility>
 #include <memory>
 #include "mindapi/base/format.h"
+#include "acl/acl_mdl.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -37,6 +38,7 @@ struct AclModelOptions {
 struct AclDynamicShapeOptions {
   std::set<uint64_t> batch_size;
   std::set<std::pair<uint64_t, uint64_t>> image_size;
+  std::pair<aclmdlIODims *, size_t> dynamic_dims;
   std::vector<Format> input_format;
   std::vector<std::vector<int64_t>> input_shapes;
 };
