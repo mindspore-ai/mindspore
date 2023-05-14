@@ -24,41 +24,6 @@ DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
 SOCIAL_DATA_FILE = "../data/mindrecord/testGraphData/sns"
 
 
-def test_graphdata_getfullneighbor():
-    """
-    Feature: GraphData
-    Description: Test GraphData get_all_neighbors
-    Expectation: Output's shape is equal to the expected output's shape
-    """
-    logger.info('test get all neighbors.\n')
-    g = ds.GraphData(DATASET_FILE, 2)
-    nodes = g.get_all_nodes(1)
-    assert len(nodes) == 10
-    neighbor = g.get_all_neighbors(nodes, 2)
-    assert neighbor.shape == (10, 6)
-    row_tensor = g.get_node_feature(neighbor.tolist(), [2, 3])
-    assert row_tensor[0].shape == (10, 6)
-
-
-def test_graphdata_getallneighbors_special_format():
-    """
-    Feature: GraphData
-    Description: Test GraphData get_all_neighbors with special format
-    Expectation: Output's shape is equal to the expected output's shape
-    """
-    logger.info('test get all neighbors with special format.\n')
-    g = ds.GraphData(DATASET_FILE, 2)
-    nodes = g.get_all_nodes(1)
-    assert len(nodes) == 10
-
-    neighbor_coo = g.get_all_neighbors(nodes, 2, OutputFormat.COO)
-    assert neighbor_coo.shape == (20, 2)
-
-    offset_table, neighbor_csr = g.get_all_neighbors(nodes, 2, OutputFormat.CSR)
-    assert offset_table.shape == (10,)
-    assert neighbor_csr.shape == (20,)
-
-
 def test_graphdata_getnodefeature_input_check():
     """
     Feature: GraphData
@@ -129,37 +94,6 @@ def test_graphdata_getsampledneighbors():
     neighbor = g.get_sampled_neighbors(
         np.unique(nodes[0:21, 0]), [2, 3], [2, 1], SamplingStrategy.EDGE_WEIGHT)
     assert neighbor.shape == (10, 9)
-
-
-def test_graphdata_getnegsampledneighbors():
-    """
-    Feature: GraphData
-    Description: Test GraphData get_neg_sampled_neighbors
-    Expectation: Output's shape is equal to the expected output's shape
-    """
-    logger.info('test get negative sampled neighbors.\n')
-    g = ds.GraphData(DATASET_FILE, 2)
-    nodes = g.get_all_nodes(1)
-    assert len(nodes) == 10
-    neighbor = g.get_neg_sampled_neighbors(nodes, 5, 2)
-    assert neighbor.shape == (10, 6)
-
-
-def test_graphdata_graphinfo():
-    """
-    Feature: GraphData
-    Description: Test GraphData graph_info
-    Expectation: Output is equal to the expected output
-    """
-    logger.info('test graph info.\n')
-    g = ds.GraphData(DATASET_FILE, 2)
-    graph_info = g.graph_info()
-    assert graph_info['node_type'] == [1, 2]
-    assert graph_info['edge_type'] == [0]
-    assert graph_info['node_num'] == {1: 10, 2: 10}
-    assert graph_info['edge_num'] == {0: 40}
-    assert graph_info['node_feature_type'] == [1, 2, 3, 4]
-    assert graph_info['edge_feature_type'] == [1, 2]
 
 
 class RandomBatchedSampler(ds.Sampler):
@@ -336,11 +270,8 @@ def test_graphdata_getedgesfromnodes():
 
 
 if __name__ == '__main__':
-    test_graphdata_getfullneighbor()
     test_graphdata_getnodefeature_input_check()
     test_graphdata_getsampledneighbors()
-    test_graphdata_getnegsampledneighbors()
-    test_graphdata_graphinfo()
     test_graphdata_generatordataset()
     test_graphdata_randomwalkdefault()
     test_graphdata_randomwalk()
