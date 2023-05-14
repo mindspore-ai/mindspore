@@ -3,7 +3,8 @@ mindspore.ops.TensorScatterElements
 
 .. py:class:: mindspore.ops.TensorScatterElements(axis=0, reduction="none")
 
-    根据指定的规约算法逐元素更新输入Tensor的值。
+    将 `updates` 中所有的元素按照 `reduction` 指定的归约操作写入 `input_x` 中 `indices` 指定的索引处。
+    `axis` 控制scatter操作的方向。
 
     更多参考相见 :func:`mindspore.ops.tensor_scatter_elements`。
 
@@ -19,8 +20,8 @@ mindspore.ops.TensorScatterElements
 
     输入：
         - **data** (Tensor) - 输入Tensor。 其rank必须至少为1。
-        - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64的。其rank必须和 `data` 一致。取值范围是[-s, s)，这里的s是 `data` 在 `axis` 指定轴的size。
-        - **updates** (Tensor) - 指定与 `data` 进行reduction操作的Tensor，其数据类型和shape与 `data` 相同。
+        - **indices** (Tensor) - `data` 执行scatter操作的目标索引，数据类型为int32或int64。其rank必须和 `data` 一致。取值范围是[-s, s)，s是 `data` 在 `axis` 指定轴的size。
+        - **updates** (Tensor) - 指定与 `data` 进行scatter操作的Tensor，其数据类型与 `data` 类型相同，shape与 `indices` 的shape相同。
 
     输出：
         Tensor，shape和数据类型与输入 `data` 相同。

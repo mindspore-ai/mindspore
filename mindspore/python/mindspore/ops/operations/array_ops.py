@@ -7557,7 +7557,9 @@ class SplitV(Primitive):
 
 class TensorScatterElements(Primitive):
     """
-    Updates the value of the input Tensor through specified reduction operation.
+    Write all elements in `updates` to the index specified by `indices` in `input_x` according to the reduction
+    operation specified by `reduction`.
+    `axis` controls the direction of the scatter operation.
 
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
@@ -7574,10 +7576,12 @@ class TensorScatterElements(Primitive):
 
     Inputs:
         - **data** (Tensor) - The target tensor. Its rank must be at least 1.
-        - **indices** (Tensor) - The index to do scatter operation whose data type must be int32 or
+        - **indices** (Tensor) - The index of `input_x` to do scatter operation whose data type must be int32 or
           int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
         - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same shape and type as `data`.
+        - **update** (Tensor) - The tensor doing the scatter operation with `data`,
+          it has the same type as `data` and the same shape as `indices`.
 
     Outputs:
         Tensor, has the same shape and type as `data`.
@@ -7586,6 +7590,9 @@ class TensorScatterElements(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>> op = ops.TensorScatterElements(0, "none")
         >>> data = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
         >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
@@ -7595,9 +7602,12 @@ class TensorScatterElements(Primitive):
         [[ 0.0  0.0  3.0]
          [ 0.0  5.0  0.0]
          [ 7.0  0.0  0.0]]
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>> op = ops.TensorScatterElements(1, "add")
-        >>> data = Tensor(np.array([[1, 2, 3, 4, 5]), mindspore.float32)
-        >>> indices = Tensor(np.array([[2, 4]), mindspore.int32)
+        >>> data = Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
         >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
         >>> output = op(data, indices, updates)
         >>> print(output)

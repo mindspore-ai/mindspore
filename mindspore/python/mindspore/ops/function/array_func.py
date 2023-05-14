@@ -3739,13 +3739,11 @@ def tensor_scatter_min(input_x, indices, updates):
 
 def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none"):
     """
-    Updates the value of the input tensor through the reduction operation.
+    Write all elements in `updates` to the index specified by `indices` in `input_x` according to the reduction
+    operation specified by `reduction`.
+    `axis` controls the direction of the scatter operation.
 
-    tensor_scatter_elements takes three inputs data, updates, and indices of the same rank r >= 1,
-    an optional attribute axis that identifies an axis of data (default is 0),  and another optional attribute reduction
-    that identifies reduction operation. When reduction is set to "none", the update value will be assigned to the
-    output value according to the indices. When reduction is set to "add", the update value will be added to the output
-    value according to the indices.
+    `tensor_scatter_elements` takes three inputs `input_x`, `updates` and `indices` of the same rank r >= 1.
 
     For a 3-D tensor, the output is:
 
@@ -3764,21 +3762,23 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
 
-    .. note::
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
+    Note::
+        If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
+        an index error, the corresponding `updates` will not be updated to `input_x`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input_x (Tensor): The target tensor. The rank of `input` must be at least 1.
-        indices (Tensor): The index to do add operation whose data type must be mindspore.int32 or
-          mindspore.int64. Same rank as input_x. And accepted range is [-s, s) where s is the size along axis.
-        updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
-          and update.shape should be equal to indices.shape.
+        input_x (Tensor): The target tensor. The rank must be at least 1.
+        indices (Tensor): The index of `input_x` to do scatter operation whose data type must be mindspore.int32 or
+            mindspore.int64. Same rank as  `input_x`. And accepted range is [-s, s) where s is the size along axis.
+        updates (Tensor): The tensor doing the scatter operation with `input_x`, has the same type as `input_x` and
+            the same shape as `indices`.
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input_x). Default: ``0``.
         reduction (str): Which reduction operation to scatter, supports ``"none"`` , ``"add"`` . Default: ``"none"``.
+            When `reduction` is set to ``"none"``, `updates` will be assigned to `input_x` according to  `indices`.
+            When `reduction` is set to ``"add"``, `updates` will be added to `input_x` according to  `indices`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3795,14 +3795,26 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.float32), name="x")
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Parameter
+        >>> import numpy as np
+        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32), name="x")
         >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[8, 8]]), mindspore.float32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
         >>> axis = 1
         >>> reduction = "none"
         >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
         >>> print(output)
-        [[ 1  2  8  4  8]]
+        [[ 1, 2, 8, 4, 8]]
+        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32), name="x")
+        >>> indices = Tensor(np.array([[1, -1, 2], [0, 2, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[1, 2, 2], [4, 5, 8]]), mindspore.int32)
+        >>> axis = 0
+        >>> reduction = "add"
+        >>> output = ops.tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> print(output)
+        [[5, 2, 3], [5, 5, 14], [7, 15, 11]]
     """
     _tensor_scatter_elements = _get_cache_prim(TensorScatterElements)(axis, reduction)
     return _tensor_scatter_elements(input_x, indices, updates)
