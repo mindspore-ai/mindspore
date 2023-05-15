@@ -1165,7 +1165,7 @@ def unique(input):
     The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be deduplicated,
     and the shape of Tensor `idx` is consistent with the input.
 
-    To get the same shape between `idx` and `y`, please ref to :class:'mindspore.ops.UniqueWithPad' operator.
+    To get the same shape between `idx` and `y`, please ref to :class:`mindspore.ops.UniqueWithPad` operator.
 
     Args:
         input (Tensor): The input tensor.
@@ -2468,7 +2468,7 @@ def scatter_max(input_x, indices, updates):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
-        = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+        = \max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` follow the implicit type conversion rules to keep the data types consistent.
     If they have different data types, the lower priority data type will be converted to the relatively highest
@@ -2558,7 +2558,7 @@ def scatter_min(input_x, indices, updates):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
-        = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+        = \min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to

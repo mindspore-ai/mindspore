@@ -6,7 +6,7 @@ mindspore.ops.csr_atan
     逐元素计算输入CSRTensor的反正切值。
 
     .. math::
-        out_i = tan^{-1}(x_i)
+        out_i = \tan^{-1}(x_i)
 
     参数：
         - **x** (CSRTensor) - 数据类型支持：float16、float32。

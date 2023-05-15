@@ -18,9 +18,9 @@
         - **remove_accidental_hits** (bool，可选) - 表示是否移除accidental hit。默认值：False。
 
     输入：
-        - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch_size, num_true)`。
+        - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch\_size, num\_true)`。
 
     输出：
-        - **sampled_candidates** (Tensor) -  候选采样与目标类之间不存在联系，其shape为 :math:`(num_sampled, )`。
-        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数。Shape为 :math:`(batch_size, num_true)`。
-        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数。Shape为 :math:`(num_sampled, )`。
+        - **sampled_candidates** (Tensor) -  候选采样与目标类之间不存在联系，其shape为 :math:`(num\_sampled, )`。
+        - **true_expected_count** (Tensor) - 在每组目标类的采样分布下的预期计数。Shape为 :math:`(batch\_size, num\_true)`。
+        - **sampled_expected_count** (Tensor) - 每个候选采样分布下的预期计数。Shape为 :math:`(num\_sampled, )`。

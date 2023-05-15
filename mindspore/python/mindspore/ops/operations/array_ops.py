@@ -1373,8 +1373,8 @@ class MatrixDiagV3(Primitive):
     Outputs:
         A Tensor. Has the same type as `x`.
         Suppose `x` has r dimensions with shape :math:`(I, J, ..., M, N)` . The output Tensor has rank r + 1 with shape
-        :math:`(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
-        Otherwise, it has rank r with shape :math:`(I, J, ..., num_rows, num_cols)` .
+        :math:`(I, J, ..., M, num\_rows, num\_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
+        Otherwise, it has rank r with shape :math:`(I, J, ..., num\_rows, num\_cols)` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2272,7 +2272,7 @@ class ArgMinWithValue(Primitive):
         - If there are multiple minimum values, the index of the first minimum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
-    Also see: func: `mindspore.ops.min`.
+    Also see :func:`mindspore.ops.min`.
 
     Args:
         axis (int): The dimension to reduce. Default: ``0`` .
@@ -5880,8 +5880,8 @@ class SpaceToBatchND(Primitive):
 
 class BatchToSpaceND(Primitive):
     r"""
-    `ops.BatchToSpaceND` is deprecated from version 2.0 and will be removed in a future version,
-    use `ops.batch_to_space_nd` instead.
+    :class:`mindspore.ops.BatchToSpaceND` is deprecated from version 2.0 and will be removed in a future version,
+    use :func:`mindspore.ops.batch_to_space_nd` instead.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -4927,9 +4927,9 @@ class AdamWeightDecay(Primitive):
         TypeError: If `lr`, `beta1`, `beta2`, `epsilon` or `decay` is not a float32.
         TypeError: If `var`, `m` or `v` is not a Parameter with dtype float16 or float32.
         TypeError: If `gradient` is not a Tensor.
-        ValueError: - If `eps` <= 0.
-        ValueError: - If `beta1`, `beta2` is not in range (0.0,1.0).
-        ValueError: - If `decay` < 0.
+        ValueError: If `eps` <= 0.
+        ValueError: If `beta1`, `beta2` is not in range (0.0,1.0).
+        ValueError: If `decay` < 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

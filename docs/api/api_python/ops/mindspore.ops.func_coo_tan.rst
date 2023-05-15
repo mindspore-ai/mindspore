@@ -6,7 +6,7 @@ mindspore.ops.coo_tan
     计算COOTensor输入元素的正切值。
 
     .. math::
-        out_i = tan(x_i)
+        out_i = \tan(x_i)
 
     参数：
         - **x** (COOTensor) - Tan的输入，任意维度的COOTensor。

@@ -5,7 +5,7 @@
 
     逐元素计算输入Tensor的反双曲余弦。
 
-    获取更多详情请查看： :class:`mindspore.ops.acosh` 。
+    获取更多详情请查看： :func:`mindspore.ops.acosh` 。
 
     输入：
         - **x** (Tensor) - Tensor的shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。

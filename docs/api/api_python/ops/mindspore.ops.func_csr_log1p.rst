@@ -6,7 +6,7 @@ mindspore.ops.csr_log1p
     对输入CSRTensor逐元素加一后计算自然对数。
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = \text{log_e}(x_i + 1)
 
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。数据类型为float16或float32。

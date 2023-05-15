@@ -6,7 +6,7 @@ mindspore.ops.csr_acos
     逐元素计算输入CSRTensor的反余弦。
 
     .. math::
-        out_i = cos^{-1}(x_i)
+        out_i = \cos^{-1}(x_i)
 
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。

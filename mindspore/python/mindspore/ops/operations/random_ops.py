@@ -776,7 +776,7 @@ class RandomCategorical(PrimitiveWithInfer):
         - **seed** (int) - Random seed. Default: ``0`` . Only constant values is allowed.
 
     Outputs:
-        - **output** (Tensor) - The output Tensor with shape :math:`(batch_size, num_samples)`.
+        - **output** (Tensor) - The output Tensor with shape :math:`(batch\_size, num\_samples)`.
 
     Raises:
         TypeError: If `dtype` is not one of the following: mstype.int16, mstype.int32, mstype.int64.
@@ -938,15 +938,15 @@ class UniformCandidateSampler(Primitive):
 
     Inputs:
         - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of
-          :math:`(batch_size, num_true)`.
+          :math:`(batch\_size, num\_true)`.
 
     Outputs:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          Shape: :math:`(num_sampled, )`.
+          Shape: :math:`(num\_sampled, )`.
         - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. Shape: :math:`(batch_size, num_true)`.
+          of true_classes. Shape: :math:`(batch\_size, num\_true)`.
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. Shape: :math:`(num_sampled, )`.
+          each of sampled_candidates. Shape: :math:`(num\_sampled, )`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

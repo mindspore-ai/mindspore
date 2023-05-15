@@ -14,7 +14,7 @@ mindspore.ops.RandomCategorical
         - **seed** (int) - 随机种子。只允许使用常量值。默认值： ``0`` 。
 
     输出：
-        - **output** (Tensor) - Shape为 :math:`(batch_size, num_samples)` 的输出Tensor。
+        - **output** (Tensor) - Shape为 :math:`(batch\_size, num\_samples)` 的输出Tensor。
 
     异常：
         - **TypeError** - 如果 `dtype` 不是以下之一：mstype.int16、mstype.int32、mstype.int64。

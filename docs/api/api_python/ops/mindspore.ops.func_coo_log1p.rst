@@ -6,7 +6,7 @@ mindspore.ops.coo_log1p
     对输入COOTensor逐元素加一后计算自然对数。
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = \text{log_e}(x_i + 1)
 
     参数：
         - **x** (COOTensor) - 输入COOTensor。数据类型为float16或float32。

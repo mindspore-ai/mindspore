@@ -1445,11 +1445,11 @@ class Cdist(Primitive):
 
 
 class LpNorm(Primitive):
-    """
+    r"""
     Returns the matrix norm or vector norm of a given tensor.
 
     .. math::
-        output = sum(abs(input)**p)**(1/p)
+        output = \sum(abs(input)**p)**(1/p)
 
     Args:
         axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.

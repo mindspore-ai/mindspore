@@ -11,6 +11,8 @@
     .. warning::
         - 如果有多个最小值，则取第一个最小值的索引。
         - "axis"的取值范围为[-dims, dims - 1]。"dims"为"input_x"的维度长度。
+        
+    参考 :func:`mindspore.ops.min` 。
 
     参数：
         - **axis** (int) - 指定计算维度。默认值： ``0`` 。
