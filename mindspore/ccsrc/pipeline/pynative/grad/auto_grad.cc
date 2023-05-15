@@ -562,7 +562,7 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
 
   // Call pass for optimize graph, such as inline
   auto after_opt_fg = OptimizeBpropBuilder(bprop_builder);
-
+  ad_param()->tape_->set_flag(kFlagMSFunctionGraph, true);
   // Call by tape_
   MS_EXCEPTION_IF_NULL(tape_dout);
   *tape_dout = ZerosLike(ad_param()->tape_, grad_param->cnode->abstract());
