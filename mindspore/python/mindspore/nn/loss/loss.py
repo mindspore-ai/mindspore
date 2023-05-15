@@ -2367,6 +2367,16 @@ class KLDivLoss(LossBase):
         return F.kl_div(logits, labels, self.reduction)
 
 
+def _check_ctcloss_targets_shape(targets):
+    """Internal function, used to check whether the shape of CTC targets meets the requirements."""
+    if targets.ndim > 2:
+        raise ValueError(f"For CTCLoss, when the shape of log_probs is (T, C), the dimension of targets should"
+                         f"be 1 or 2, but got {targets.ndim}.")
+    if targets.ndim == 2 and targets.shape[0] != 1:
+        raise ValueError(f"For CTCLoss, the first dimension of 2-D targets should be 1,"
+                         f"but got {targets.shape[0]}.")
+
+
 class CTCLoss(LossBase):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss. It's mainly used to calculate the loss between
@@ -2452,12 +2462,7 @@ class CTCLoss(LossBase):
         _check_is_tensor('log_probs', log_probs, self.cls_name)
         _check_is_tensor('targets', targets, self.cls_name)
         if log_probs.ndim == 2:
-            if targets.ndim > 2:
-                raise ValueError(f"For CTCLoss, when the shape of log_probs is (T, C), the dimension of targets should"
-                                 f"be 1 or 2, but got {targets.ndim}.")
-            if targets.ndim == 2 and targets.shape[0] != 1:
-                raise ValueError(f"For CTCLoss, the first dimension of 2-D targets should be 1,"
-                                 f"but got {targets.shape[0]}.")
+            _check_ctcloss_targets_shape(targets)
             if targets.ndim == 1:
                 targets = targets.expand_dims(0)
             log_probs = log_probs.expand_dims(-2)

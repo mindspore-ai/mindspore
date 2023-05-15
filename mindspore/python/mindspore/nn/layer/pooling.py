@@ -1646,8 +1646,9 @@ class AdaptiveMaxPool3d(Cell):
 class FractionalMaxPool2d(Cell):
     r"""
     Applies the 2D FractionalMaxPool operatin over input. The output Tensor shape can be determined by either
-    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used or set to None at the same time.
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
+    effect when `output_size` and `output_ratio` are set at the same time.
+    And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1748,8 +1749,9 @@ class FractionalMaxPool2d(Cell):
 class FractionalMaxPool3d(Cell):
     r"""
     Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
-    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used or set to None at the same time.
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
+    effect when `output_size` and `output_ratio` are set at the same time.
+    And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 

@@ -19,4 +19,5 @@ mindspore.nn.PixelUnshuffle
     异常：
         - **ValueError** - `downscale_factor` 不是正整数。
         - **ValueError** - 输入 `input` 倒数第一和倒数第二维度对应的值不能被 `downscale_factor` 整除。
-        - **TypeError** - 输入 `input` 维度小于3。
+        - **ValueError** - `input` 维度小于3。
+        - **TypeError** - `input` 不是Tensor。
