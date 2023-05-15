@@ -71,7 +71,7 @@ int L2NormalizeGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   ShapeVector output_reduce_shape = output_shape;
-  if ((size_t)axis_ >= output_shape.size()) {
+  if (static_cast<size_t>(axis_) >= output_shape.size()) {
     MS_LOG(ERROR) << "For 'L2NormalizeGradGpuKernelMod', axis_ must be less than the rank of output "
                   << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
     return KRET_RESIZE_FAILED;
@@ -83,9 +83,9 @@ int L2NormalizeGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_shape_.resize(MAX_DIMS, 1);
   all_match_ = true;
   for (size_t i = 0; i < output_shape.size(); i++) {
-    output_shape_[i] = LongToSizeClipNeg(output_shape[i]);
-    lhs_shape_[i] = LongToSizeClipNeg(output_shape[i]);
-    rhs_shape_[i] = LongToSizeClipNeg(output_reduce_shape[i]);
+    output_shape_[i] = output_shape[i];
+    lhs_shape_[i] = output_shape[i];
+    rhs_shape_[i] = output_reduce_shape[i];
     if (lhs_shape_[i] != rhs_shape_[i]) {
       all_match_ = false;
     }
@@ -137,8 +137,15 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   }
   GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, output_shape_, output_shape_, BinaryOpType::kMul, y_addr, dy_addr, dx_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+  std::vector<int64_t> simplified_in0_shape;
+  std::vector<int64_t> simplified_in1_shape;
+  std::vector<int64_t> simplified_out_shape;
+  SimplifyBinaryBroadcastShape(output_shape_, output_shape_, output_shape_, &simplified_in0_shape,
+                               &simplified_in1_shape, &simplified_out_shape);
+  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(false, simplified_in0_shape, simplified_in1_shape,
+                                                             simplified_out_shape, y_addr, dy_addr, dx_addr, device_id_,
+                                                             reinterpret_cast<cudaStream_t>(stream_ptr));
+
   if (all_match_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(reduce_y_dy_workspace_addr, dx_addr, output_size_list_[0], cudaMemcpyDeviceToDevice,
@@ -161,13 +168,24 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
         kernel_name_ + " cudnnReduceTensor failed.");
     }
   }
-  BroadcastArith(rhs_shape_, lhs_shape_, output_shape_, BinaryOpType::kMul, reduce_y_dy_workspace_addr, y_addr, dx_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, output_shape_, output_shape_, BinaryOpType::kSub, dy_addr, dx_addr, dx_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-  BroadcastArith(output_shape_, rhs_shape_, output_shape_, BinaryOpType::kRealDiv, dx_addr, reduce_workspace_addr,
-                 dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 
+  SimplifyBinaryBroadcastShape(rhs_shape_, lhs_shape_, output_shape_, &simplified_in0_shape, &simplified_in1_shape,
+                               &simplified_out_shape);
+  bool is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
+  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(
+    is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, reduce_y_dy_workspace_addr, y_addr,
+    dx_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  SimplifyBinaryBroadcastShape(output_shape_, output_shape_, output_shape_, &simplified_in0_shape,
+                               &simplified_in1_shape, &simplified_out_shape);
+  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kSub, T, T, T>(false, simplified_in0_shape, simplified_in1_shape,
+                                                             simplified_out_shape, dy_addr, dx_addr, dx_addr,
+                                                             device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  SimplifyBinaryBroadcastShape(output_shape_, rhs_shape_, output_shape_, &simplified_in0_shape, &simplified_in1_shape,
+                               &simplified_out_shape);
+  is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
+  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, T, T, T>(
+    is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, dx_addr, reduce_workspace_addr,
+    dx_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 

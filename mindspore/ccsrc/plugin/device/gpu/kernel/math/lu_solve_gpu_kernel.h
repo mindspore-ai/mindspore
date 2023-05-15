@@ -63,9 +63,9 @@ class LuSolveGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   int64_t k_{0};
   bool is_null_input_{false};
 
-  std::vector<size_t> lhs_shape_;
-  std::vector<size_t> rhs_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> lhs_shape_;
+  std::vector<int64_t> rhs_shape_;
+  std::vector<int64_t> output_shape_;
   int64_t a_shape_len_{0};
   int64_t b_shape_len_{0};
   int64_t out_shape_len_{0};
