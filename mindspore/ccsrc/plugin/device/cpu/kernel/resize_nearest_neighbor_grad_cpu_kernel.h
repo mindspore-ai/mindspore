@@ -56,6 +56,8 @@ class ResizeNearestNeighborGradCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

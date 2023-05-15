@@ -50,6 +50,8 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod, public MatchKern
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
   void DestroyResource() noexcept override {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyConvolutionDescriptor(conv_desc_),
                                        "cudnnDestroyConvolutionDescriptor failed");

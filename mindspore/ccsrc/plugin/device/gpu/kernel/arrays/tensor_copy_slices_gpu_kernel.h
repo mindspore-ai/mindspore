@@ -102,6 +102,10 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override {
+    return {kBeginIndex_, kEndIndex_, kStrideIndex_};
+  }
+
   void ResetResource() noexcept {
     input_size_ = 1;
     output_size_ = 1;

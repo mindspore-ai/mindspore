@@ -46,6 +46,9 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
   std::vector<KernelAttr> GetOpSupport();
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override {
+    return {kShapexIndex_, kBeginIndex_, kEndIndex_, kStrideIndex_};
+  }
 
  protected:
   bool is_null_input_{false};

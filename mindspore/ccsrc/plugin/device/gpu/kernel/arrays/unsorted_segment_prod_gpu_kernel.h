@@ -52,6 +52,8 @@ class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod,
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

@@ -49,6 +49,8 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

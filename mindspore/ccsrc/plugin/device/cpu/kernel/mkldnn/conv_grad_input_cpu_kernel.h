@@ -45,9 +45,12 @@ class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {input_size_index_}; }
+
  private:
   size_t weight_index_{0};
   size_t diff_dst_index_{1};
+  const size_t input_size_index_{2};
   std::string kernel_type_;
   std::string format_;
   std::string pad_mode_;

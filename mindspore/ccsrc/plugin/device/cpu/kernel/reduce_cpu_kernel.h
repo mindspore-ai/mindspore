@@ -46,6 +46,7 @@ class ReduceCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   std::shared_ptr<CpuKernelFunc> func_obj_;

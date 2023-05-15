@@ -87,6 +87,8 @@ class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
+
   void ResetResource() noexcept {
     num_segments_ = 1;
     inner_size_ = 1;

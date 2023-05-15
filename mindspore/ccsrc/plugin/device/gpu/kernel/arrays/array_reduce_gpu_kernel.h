@@ -94,6 +94,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   void InferArrayReduceType();
   void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape);
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);

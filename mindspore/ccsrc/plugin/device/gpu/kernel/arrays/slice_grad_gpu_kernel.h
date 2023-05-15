@@ -56,6 +56,8 @@ class SliceGradGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kBeginIndex_, kSizeIndex_}; }
+
  private:
   void ProccessAttr(const std::vector<KernelTensorPtr> &inputs);
   void CalcBeginAndSize(const mindspore::Format &data_format, size_t dim = kDim4);

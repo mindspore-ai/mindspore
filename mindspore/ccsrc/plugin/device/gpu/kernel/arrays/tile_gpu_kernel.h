@@ -45,6 +45,8 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
   void ResetResource() noexcept {
     input_size_ = 1;
     output_size_ = 1;
