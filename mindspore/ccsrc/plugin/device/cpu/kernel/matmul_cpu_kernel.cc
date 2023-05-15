@@ -27,11 +27,19 @@ namespace kernel {
 namespace {
 constexpr auto kMatMul = "MatMul";
 constexpr auto kBatchMatMul = "BatchMatMul";
+constexpr auto kMatMulBiasAdd = "MatMulBiasAddFusion";
+constexpr auto kMatMulBiasAddRelu = "MatMulBiasAddReluFusion";
 
 using MatMulFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator>>> support_list_map = {
   {kMatMul,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<MatMulCpuKernelFunc>(); }},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      []() { return std::make_shared<MatMulCpuKernelFunc>(); }},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }},
@@ -47,6 +55,20 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }}}},
+  {kMatMulBiasAdd,
+   {{KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<MatMulCpuKernelFunc>(); }}}},
+  {kMatMulBiasAddRelu,
+   {{KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<MatMulCpuKernelFunc>(); }}}},
   {kBatchMatMul,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      []() { return std::make_shared<MatMulCpuKernelFunc>(); }},
@@ -124,5 +146,9 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMul,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kMatMul); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, BatchMatMul,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kBatchMatMul); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMulBiasAddFusion,
+                                 []() { return std::make_shared<MatMulCpuKernelMod>(kMatMulBiasAdd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMulBiasAddReluFusion,
+                                 []() { return std::make_shared<MatMulCpuKernelMod>(kMatMulBiasAddRelu); });
 }  // namespace kernel
 }  // namespace mindspore

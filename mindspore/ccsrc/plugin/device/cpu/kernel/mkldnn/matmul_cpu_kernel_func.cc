@@ -33,6 +33,8 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMatMulInputsNum = 2;
+constexpr size_t kMatMulWithBiasAddInputsNum = 3;
+constexpr size_t kBiasAddInputIndex = kMatMulWithBiasAddInputsNum - 1;
 constexpr size_t kMatMulOutputsNum = 1;
 constexpr size_t kIndexOffset = 2;
 constexpr size_t kRankMin = 2;
@@ -55,8 +57,17 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
   auto a_shape = inputs[kIndex0]->GetShapeVector();
   auto b_shape = inputs[kIndex1]->GetShapeVector();
+  if (base_operator->HasAttr(kAttrWithBiasAdd)) {
+    with_bias_add_ = GetValue<bool>(base_operator->GetAttr(kAttrWithBiasAdd));
+  }
+
+  if (base_operator->HasAttr(kAttrWithRelu)) {
+    with_relu_ = GetValue<bool>(base_operator->GetAttr(kAttrWithRelu));
+  }
+
   auto o_shape = outputs[kIndex0]->GetShapeVector();
-  if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
+  bool flag = a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin;
+  if (flag) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be greater than or equal to " << kRankMin;
   }
   auto rank = a_shape.size();
@@ -74,7 +85,7 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     dim_k = a_shape[rank - 1];
   }
 
-  dims src_dims, weights_dims, dst_dims, a_strides, b_strides, o_strides;
+  dims src_dims, weights_dims, bias_dims, dst_dims, a_strides, b_strides, o_strides, bias_strides;
   if (batch > 1) {
     src_dims = {batch, dim_m, dim_k};
     weights_dims = {batch, dim_k, dim_n};
@@ -82,6 +93,10 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     a_strides = {trans_a_ ? dims{dim_m * dim_k, 1, dim_m} : dims{dim_m * dim_k, dim_k, 1}};
     b_strides = {trans_b_ ? dims{dim_n * dim_k, 1, dim_k} : dims{dim_n * dim_k, dim_n, 1}};
     o_strides = {dim_n * dim_m, dim_n, 1};
+    if (with_bias_add_) {
+      bias_dims = {1, 1, dim_n};
+      bias_strides = dims{dim_n, dim_n, 1};
+    }
   } else {
     src_dims = {dim_m, dim_k};
     weights_dims = {dim_k, dim_n};
@@ -89,15 +104,37 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     a_strides = {trans_a_ ? dims{1, dim_m} : dims{dim_k, 1}};
     b_strides = {trans_b_ ? dims{1, dim_k} : dims{dim_n, 1}};
     o_strides = {dim_n, 1};
+    if (with_bias_add_) {
+      bias_dims = {1, dim_n};
+      bias_strides = dims{dim_n, 1};
+    }
   }
 
   auto src_md = CreateDesc<dnnl::memory::desc>(src_dims, dnnl::memory::data_type::f32, a_strides);
   auto weights_md = CreateDesc<dnnl::memory::desc>(weights_dims, dnnl::memory::data_type::f32, b_strides);
   auto dst_md = CreateDesc<dnnl::memory::desc>(dst_dims, dnnl::memory::data_type::f32, o_strides);
   auto matmul_desc = CreateDesc<dnnl::matmul::desc>(src_md, weights_md, dst_md);
-  auto prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, engine_);
-  primitive_ = CreatePrimitive<dnnl::matmul>(prim_desc);
 
+  if (with_bias_add_) {
+    auto bias_md = CreateDesc<dnnl::memory::desc>(bias_dims, dnnl::memory::data_type::f32, bias_strides);
+    matmul_desc = CreateDesc<dnnl::matmul::desc>(src_md, weights_md, bias_md, dst_md);
+    AddArgument(DNNL_ARG_BIAS, bias_md);
+  }
+
+  auto prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, engine_);
+
+  if (with_relu_) {
+    const float scale = 1.0f;
+    const float alpha = 0.f;
+    const float beta = 0.f;
+    dnnl::post_ops matmul_ops;
+    matmul_ops.append_eltwise(scale, dnnl::algorithm::eltwise_relu, alpha, beta);
+    dnnl::primitive_attr matmul_attr;
+    matmul_attr.set_post_ops(matmul_ops);
+    prim_desc = CreateDesc<dnnl::matmul::primitive_desc>(matmul_desc, matmul_attr, engine_);
+  }
+
+  primitive_ = CreatePrimitive<dnnl::matmul>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_md);
   AddArgument(DNNL_ARG_WEIGHTS, weights_md);
   AddArgument(DNNL_ARG_DST, dst_md);
@@ -108,8 +145,13 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
 bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
+  if (with_bias_add_) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulWithBiasAddInputsNum, kernel_name_);
+    SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->addr));
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
+  }
   const auto input_a = reinterpret_cast<float *>(inputs[0]->addr);
   const auto input_b = reinterpret_cast<float *>(inputs[1]->addr);
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
