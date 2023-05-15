@@ -6,7 +6,7 @@ mindspore.ops.LpNorm
     返回输入Tensor的矩阵范数或向量范数。
 
     .. math::
-        output = sum(abs(input)**p)**(1/p)
+        output = \sum(abs(input)**p)**(1/p)
 
     参数：
         - **axis** (int,list,tuple) - 指定计算范数的维度。

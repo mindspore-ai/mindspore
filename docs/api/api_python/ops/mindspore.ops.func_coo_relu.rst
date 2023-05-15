@@ -8,7 +8,7 @@ mindspore.ops.coo_relu
     返回 :math:`\max(x,\  0)` 的值。负值神经元将被设置为0，正值神经元将保持不变。
 
     .. math::
-        ReLU(x) = (x)^+ = max(0, x)
+        ReLU(x) = (x)^+ = \max(0, x)
 
     .. note::
         一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。

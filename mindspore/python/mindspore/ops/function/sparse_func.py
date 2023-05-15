@@ -621,7 +621,7 @@ def coo_concat(sp_input, concat_dim=0):
 
     Raises:
         ValueError: If only one sparse tensor input.
-        ValueError: If Input COOTensor shape dim > 3. COOtensor shape dim size must be 2 now
+        ValueError: If Input COOTensor shape dim > 3. COOtensor shape dim size must be 2 now.
 
     Supported Platforms:
         ``CPU``

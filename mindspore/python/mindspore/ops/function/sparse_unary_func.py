@@ -21,11 +21,11 @@ from mindspore.ops.function import math_func, nn_func
 
 
 def csr_cos(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes cosine of input element-wise.
 
     .. math::
-        out_i = cos(x_i)
+        out_i = \cos(x_i)
 
     .. warning::
         Currently support data types float16 and float32. If use Float64, there may be a problem of missing precision.
@@ -60,11 +60,11 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
 
 
 def coo_cos(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes cosine of input element-wise.
 
     .. math::
-        out_i = cos(x_i)
+        out_i = \cos(x_i)
 
     .. warning::
         If use Float64, there may be a problem of missing precision.
@@ -103,7 +103,7 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i = tan(x_i)
+        out_i = \tan(x_i)
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -138,7 +138,7 @@ def coo_tan(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        out_i = tan(x_i)
+        out_i = \tan(x_i)
 
     Args:
         x (COOTensor): The input COOTensor.
@@ -305,7 +305,7 @@ def coo_inv(x: COOTensor) -> COOTensor:
 
 
 def csr_relu(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes ReLU (Rectified Linear Unit activation function) of input csr_tensors element-wise.
 
     It returns max(x, 0) element-wise. Specially, the neurons with the negative output
@@ -313,7 +313,7 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        ReLU(x) = (x)^+ = max(0, x)
+        ReLU(x) = (x)^+ = \max(0, x)
 
     Note:
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
@@ -356,7 +356,7 @@ def coo_relu(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        ReLU(x) = (x)^+ = max(0, x)
+        ReLU(x) = (x)^+ = \max(0, x)
 
     Note:
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
@@ -538,12 +538,12 @@ def coo_isfinite(x: COOTensor) -> COOTensor:
 
 
 def csr_asin(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes arcsine of input csr_tensors element-wise.
 
     .. math::
 
-        out_i = sin^{-1}(x_i)
+        out_i = \sin^{-1}(x_i)
 
     Args:
         x (CSRTensor): Input CSRTensor. The data types should be one of the following types:
@@ -575,12 +575,12 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
 
 
 def coo_asin(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes arcsine of input coo_tensors element-wise.
 
     .. math::
 
-        out_i = sin^{-1}(x_i)
+        out_i = \sin^{-1}(x_i)
 
     Args:
         x (COOTensor): Input COOTensor. The shape of COOTensor is :math:`(N,*)` ,
@@ -681,11 +681,11 @@ def coo_sqrt(x: COOTensor) -> COOTensor:
 
 
 def csr_log(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Returns the natural logarithm of a CSRTensor element-wise.
 
     .. math::
-        y_i = log_e(x_i)
+        y_i = \log_e(x_i)
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -721,11 +721,11 @@ def csr_log(x: CSRTensor) -> CSRTensor:
 
 
 def coo_log(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Returns the natural logarithm of a COOTensor element-wise.
 
     .. math::
-        y_i = log_e(x_i)
+        y_i = \log_e(x_i)
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -839,12 +839,12 @@ def coo_isnan(x: COOTensor) -> COOTensor:
 
 
 def csr_acos(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes arccosine of input csr_tensors element-wise.
 
     .. math::
 
-        out_i = cos^{-1}(x_i)
+        out_i = \cos^{-1}(x_i)
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -876,12 +876,12 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
 
 
 def coo_acos(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes arccosine of input coo_tensors element-wise.
 
     .. math::
 
-        out_i = cos^{-1}(x_i)
+        out_i = \cos^{-1}(x_i)
 
     Args:
         x (COOTensor): Input COOTensor.
@@ -987,7 +987,7 @@ def csr_atan(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i = tan^{-1}(x_i)
+        out_i = \tan^{-1}(x_i)
 
     Args:
         x (CSRTensor): The data type should be one of the following types: float16, float32.
@@ -1018,12 +1018,12 @@ def csr_atan(x: CSRTensor) -> CSRTensor:
 
 
 def coo_atan(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
     .. math::
 
-        out_i = tan^{-1}(x_i)
+        out_i = \tan^{-1}(x_i)
 
     Args:
         x (COOTensor): The data type should be one of the following types: float16, float32.
@@ -1489,7 +1489,7 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
     Returns the natural logarithm of one plus the input CSRTensor element-wise.
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = \text{log_e}(x_i + 1)
 
     Args:
         x (CSRTensor): The input CSRTensor. With float16 or float32 data type.
@@ -1525,7 +1525,7 @@ def coo_log1p(x: COOTensor) -> COOTensor:
     Returns the natural logarithm of one plus the input COOTensor element-wise.
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = \text{log_e}(x_i + 1)
 
     Args:
         x (COOTensor): The input COOTensor, should have dtype of float16 or float32
@@ -2218,12 +2218,12 @@ def coo_abs(x: COOTensor) -> COOTensor:
 
 
 def csr_sin(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes sine of the input element-wise.
 
     .. math::
 
-        out_i = sin(x_i)
+        out_i = \sin(x_i)
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -2255,12 +2255,12 @@ def csr_sin(x: CSRTensor) -> CSRTensor:
 
 
 def coo_sin(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes sine of the input element-wise.
 
     .. math::
 
-        out_i = sin(x_i)
+        out_i = \sin(x_i)
 
     Args:
         x (COOTensor): Input COOTensor.

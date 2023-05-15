@@ -6,7 +6,7 @@ mindspore.ops.csr_asin
     逐元素计算输入CSRTensor的反正弦。
 
     .. math::
-        out_i = sin^{-1}(x_i)
+        out_i = \sin^{-1}(x_i)
 
     参数：
         - **x** (CSRTensor) - CSRTensor的输入。数据类型应该是以下类型之一：float16、float32、float64。

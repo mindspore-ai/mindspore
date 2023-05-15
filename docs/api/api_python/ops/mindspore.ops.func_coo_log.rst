@@ -6,7 +6,7 @@ mindspore.ops.coo_log
     逐元素返回COOTensor的自然对数。
 
     .. math::
-        y_i = log_e(x_i)
+        y_i = \log_e(x_i)
 
     .. warning::
         如果算子Log的输入值在(0, 0.01]或[0.95, 1.05]范围内，则输出精度可能会存在误差。

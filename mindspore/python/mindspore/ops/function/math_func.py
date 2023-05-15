@@ -8068,7 +8068,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
 def renorm(input, p, axis, maxnorm):
     """
     Renormalizes the sub-tensors along dimension `axis`, and each sub-tensor's p-norm should not exceed the
-    'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
+    `maxnorm`. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
     `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
