@@ -50,6 +50,8 @@ class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
     return true;
   }
 
+  bool with_bias_add_{false};
+  bool with_relu_{false};
   bool trans_a_{false};
   bool trans_b_{false};
 };

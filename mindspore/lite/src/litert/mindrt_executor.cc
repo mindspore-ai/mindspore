@@ -25,6 +25,7 @@
 #ifdef ENABLE_FP16
 #include "nnacl/base/cast_base.h"
 #endif
+#include "nnacl/nnacl_common.h"
 #include "src/litert/kernel_exec_util.h"
 
 namespace mindspore::lite {
@@ -254,17 +255,23 @@ int MindrtExecutor::TransferGraphOutput() {
     }
     dst_tensor->set_shape(src_tensor->shape());
     /* dst tensor free in FreeOutputTensor */
-#ifdef ENABLE_FP16
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       auto ret = dst_tensor->MallocData();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "MallocData failed";
         return ret;
       }
+#ifdef ENABLE_FP16
       Fp16ToFloat32(reinterpret_cast<float16_t *>(src_tensor->MutableData()),
                     reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
-    } else {
+#else
+      auto src_data = reinterpret_cast<const uint16_t *>(src_tensor->MutableData());
+      auto dst_data = reinterpret_cast<float *>(dst_tensor->data());
+      for (int i = 0; i < dst_tensor->ElementsNum(); i++) {
+        dst_data[i] = ShortToFloat32(src_data[i]);
+      }
 #endif
+    } else {
       if (dst_tensor->allocator() != src_tensor->allocator()) {
         dst_tensor->set_allocator(src_tensor->allocator());
       }
@@ -275,9 +282,7 @@ int MindrtExecutor::TransferGraphOutput() {
         dst_tensor->set_data(src_tensor->data());
         src_tensor->set_data(nullptr);
       }
-#ifdef ENABLE_FP16
     }
-#endif
     src_tensor->DecRefCount();
   }
   return RET_OK;
