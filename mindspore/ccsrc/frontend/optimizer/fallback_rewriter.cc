@@ -411,10 +411,29 @@ class BeforeOptARewriter : public BaseRewriter {
     return node->input(input_index);
   }
 
+  bool CheckUserHasPyExecute(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    auto func = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func);
+    auto mng = func->manager();
+    auto users = mng->node_users()[node];
+    for (auto &user : users) {
+      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute)) {
+        return true;
+      } else if (IsPrimitiveCNode(user.first, prim::kPrimMakeTuple)) {
+        if (CheckUserHasPyExecute(user.first->cast<CNodePtr>())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || !is_dict_output_) {
-      return EraseMakeDictNode(node);
+    if (!allow_fallback_runtime || (!is_dict_output_ && !CheckUserHasPyExecute(node))) {
+      auto new_node = EraseMakeDictNode(node);
+      return new_node;
     }
     return nullptr;
   }

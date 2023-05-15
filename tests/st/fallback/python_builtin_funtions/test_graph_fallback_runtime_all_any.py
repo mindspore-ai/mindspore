@@ -21,7 +21,6 @@ import mindspore as ms
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -46,7 +45,6 @@ def test_fallback_all_dict():
     assert out[0] and out[1]
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -117,3 +115,26 @@ def test_fallback_any_asnumpy():
 
     out = foo()
     assert out[0] and out[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_all_dict_get():
+    """
+    Feature: JIT Fallback
+    Description: Test all(dict) in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x, y):
+        dict_y = {"1": (x, None), "2": y}
+        return all(dict_y["1"]), any((dict_y["1"], None)) # pylint: disable=get-dict-value-exception
+
+    x = ms.Tensor(np.array(10, np.float64))
+    y = ms.Tensor(np.array(20, np.float64))
+    out = foo(x, y)
+    assert not out[0] and out[1]
