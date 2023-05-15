@@ -480,6 +480,7 @@ from .nn_func import (
     softsign,
     silu,
     selu,
+    soft_margin_loss,
     softmax,
     softmin,
     softshrink,
