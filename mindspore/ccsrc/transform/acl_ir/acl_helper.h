@@ -45,7 +45,7 @@ class AclHelper {
                                       std::vector<std::string> *output_reshape_types);
 
   // Convert mindspore's origin information to acl's origin information.
-  static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, bool is_input,
+  static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                  ShapeVector *shape);
 
   // Get attribute to input information.

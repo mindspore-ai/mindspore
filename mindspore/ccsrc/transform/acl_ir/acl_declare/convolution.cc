@@ -18,34 +18,23 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(Conv2D)
-  .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Input(1, {"NCHW"}, {"DefaultFormat", "NCHW", "FRACTAL_Z"})
-  .Input(2, {"NCHW"}, {"NCHW"})
-  .Output(0, {"NCHW"}, {"NCHW"});
+REGISTER_ACL_OP(Conv2D).Input(0, {"NCHW"}, {"NC1HWC0"}).Input(1, {"NCHW"}, {"FRACTAL_Z"}).Input(2, {"NCHW"}, {});
 
-REGISTER_ACL_OP(Conv3D)
-  .Input(0, {"NCHW"}, {"NDC1HWC0"})
-  .Input(1, {"NCHW"}, {"FRACTAL_Z_3D"})
-  .Input(2, {"NCHW"}, {"ND"})
-  .Output(0, {"NCHW"}, {"NDC1HWC0"});
+REGISTER_ACL_OP(Conv3D).Input(0, {"NCHW"}, {"NDC1HWC0"}).Input(1, {"NCHW"}, {"FRACTAL_Z_3D"}).Input(2, {"NCHW"}, {});
 
 REGISTER_ACL_OP(Conv2DBackpropInput)
-  .Input(0, {"NCHW"}, {"NCHW"})
-  .Input(1, {"NCHW"}, {"DefaultFormat", "NCHW", "FRACTAL_Z"})
-  .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Output(0, {"NCHW"}, {"NCHW"});
+  .Input(0, {"NCHW"}, {})
+  .Input(1, {"NCHW"}, {"FRACTAL_Z"})
+  .Input(2, {"NCHW"}, {"NC1HWC0"});
 
 REGISTER_ACL_OP(Conv3DBackpropInput)
-  .Input(0, {"NCHW"}, {"ND"})
-  .Input(1, {"NCHW"}, {"ND", "FRACTAL_Z_3D"})
-  .Input(2, {"NCHW"}, {"NDC1HWC0"})
-  .Output(0, {"NCHW"}, {"NDC1HWC0"});
+  .Input(0, {"NCHW"}, {})
+  .Input(1, {"NCHW"}, {"FRACTAL_Z_3D"})
+  .Input(2, {"NCHW"}, {"NDC1HWC0"});
 
 REGISTER_ACL_OP(Conv2DBackpropFilter)
-  .Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Input(1, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Input(2, {"NCHW"}, {"NCHW", "NC1HWC0"})
-  .Output(0, {"NCHW"}, {"NCHW"});
+  .Input(0, {"NCHW"}, {"NC1HWC0"})
+  .Input(1, {"NCHW"}, {"NC1HWC0"})
+  .Input(2, {"NCHW"}, {"NC1HWC0"});
 }  // namespace transform
 }  // namespace mindspore

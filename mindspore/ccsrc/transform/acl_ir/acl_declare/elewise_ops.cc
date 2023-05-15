@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(TensorMove).Input(0, {"NCHW"}, {"NCHW", "NC1HWC0"}).Output(0, {"NCHW"}, {"NCHW"});
+REGISTER_ACL_OP(TensorMove).Input(0, {}, {"NC1HWC0"});
 }  // namespace transform
 }  // namespace mindspore

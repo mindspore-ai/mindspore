@@ -239,21 +239,9 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
   }
 }
 
-void GetOutputBuildInfo(const size_t output_num, const AclAdapterInfo &acl_info, const GeAdapterInfoPtr &ge_info,
-                        std::vector<std::string> *output_formats, std::vector<std::string> *output_reshape_types) {
-  // TODO(DYNAMIC)
-  auto output_info = acl_info.outputs();
+void GetOutputBuildInfo(const size_t output_num, std::vector<std::string> *output_formats) {
   for (size_t i = 0; i < output_num; ++i) {
-    auto ge_idx = ge_info->GetGeOutputByMsOutputIndex(i).index;
-    if (ge_idx >= output_info.size()) {
-      continue;
-    }
-    auto special_info = output_info.at(ge_idx);
-    std::string output_format = kOpFormat_DEFAULT;
-    output_formats->at(i) = output_format;
-    if (!special_info.reshape_type.empty()) {
-      output_reshape_types->at(i) = special_info.reshape_type;
-    }
+    output_formats->at(i) = kOpFormat_DEFAULT;
   }
 }
 }  // namespace
@@ -297,43 +285,43 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
 
   auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
-  GetOutputBuildInfo(output_num, acl_info, info, output_formats, output_reshape_types);
+  GetOutputBuildInfo(output_num, output_formats);
 }
 
-std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, bool is_input,
+std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                    ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
   auto op_type = info->op_type();
-  std::string default_format = (shape->size() == kDim4) ? kOpFormat_NCHW : kOpFormat_DEFAULT;
+  std::string ret_format = (shape->size() == kDim4) ? kOpFormat_NCHW : kOpFormat_DEFAULT;
+  // case0: normal
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
-    return default_format;
+    return ret_format;
   }
-
+  // case1: 3d operator
   auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
   if (acl_info.is_3d()) {
     *shape = trans::PaddingShape(*shape, kOpFormat_NCDHW);
     return kOpFormat_NCDHW;
   }
-
-  auto info_list = is_input ? acl_info.inputs() : acl_info.outputs();
+  // case2: no special config
+  auto info_list = acl_info.inputs();
   if (info_list.empty()) {
-    return default_format;
+    return ret_format;
   }
-  auto ge_idx = is_input ? info->GetGeInputByMsInputIndex(idx).index : info->GetGeOutputByMsOutputIndex(idx).index;
-  auto special_info = info_list.at(ge_idx);
-  if (!special_info.ori_format.empty()) {
-    auto iter = std::find(special_info.ori_format.begin(), special_info.ori_format.end(), default_format);
-    if (iter != special_info.ori_format.end()) {
-      return default_format;
-    }
-    if (default_format == kOpFormat_DEFAULT) {
-      *shape = trans::PaddingShape(*shape, kOpFormat_NCHW, special_info.reshape_type);
-      return kOpFormat_NCHW;
-    }
-    return kOpFormat_DEFAULT;
+  auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;
+  auto special_iter = info_list.find(ge_idx);
+  if (special_iter == info_list.end() || special_iter->second.ori_format.empty()) {
+    return ret_format;
   }
-  return default_format;
+  // case3: if config input ori format or dev_format is special
+  if (!special_iter->second.ori_format.empty() || !CheckDefaultSupportFormat(dev_format)) {
+    if (ret_format == kOpFormat_DEFAULT && shape->size() < kDim4) {
+      *shape = trans::PaddingShape(*shape, kOpFormat_NCHW, special_iter->second.reshape_type);
+      ret_format = kOpFormat_NCHW;
+    }
+  }
+  return ret_format;
 }
 
 bool AclHelper::NeedCheckAttrToInput(const CNodePtr &node,

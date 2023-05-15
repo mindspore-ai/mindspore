@@ -50,16 +50,6 @@ class AclAdapterInfo {
     return *this;
   }
 
-  AclAdapterInfo &Output(size_t index, const std::vector<std::string> &ori_format = {},
-                         const std::vector<std::string> &dev_format = {}, const std::string &reshape_type = {}) {
-    AclSpecialInfo info;
-    info.ori_format = ori_format;
-    info.dev_format = dev_format;
-    info.reshape_type = reshape_type;
-    output_info_.emplace(index, info);
-    return *this;
-  }
-
   AclAdapterInfo &set_is_3d_ops() {
     is_3d_ops_ = true;
     return *this;
@@ -91,7 +81,6 @@ class AclAdapterInfo {
   const bool &is_dynamic() const { return is_dynamic_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
-  const std::map<size_t, AclSpecialInfo> &outputs() const { return output_info_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
 
  private:
@@ -101,7 +90,6 @@ class AclAdapterInfo {
   bool is_dynamic_{true};
   AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
   std::map<size_t, AclSpecialInfo> input_info_{};
-  std::map<size_t, AclSpecialInfo> output_info_{};
   std::vector<ge::DataType> extra_supported_datatype_{};
 };
 
