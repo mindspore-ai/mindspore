@@ -27,6 +27,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/expander.h"
+#include "frontend/optimizer/environ_conversion.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -1081,7 +1082,11 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph, true);
-  resource->optimize_graph()->set_flag(kFlagHasControlFlow, PyNativeAlgo::Common::IsControlFlowGraph(bprop_graph));
+  bool is_control_flow = PyNativeAlgo::Common::IsControlFlowGraph(bprop_graph);
+  if (is_control_flow) {
+    opt::EnvironConversion(resource);
+    resource->optimize_graph()->set_flag(kFlagHasControlFlow, true);
+  }
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   SaveForwardTensorInfoInBpropGraph(resource);
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
@@ -1220,6 +1225,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, co
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(bprop_graph);
   } else {
     top_cell()->resource()->set_optimize_graph(bprop_graph);
+  }
+  if (top_cell()->need_do_final_opt()) {
+    bprop_graph = LiftingClone(bprop_graph);
   }
   need_renormalize_ = false;
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -1360,7 +1368,9 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     auto r = std::make_shared<pipeline::Resource>();
     set_eliminate_forward(false);
     (void)first_grad_fg->transforms().erase(kGrad);
-    grad_fg = ad::Grad(first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
+    auto opt = opt::Optimizer::MakeEmptyOptimizer(r);
+    opt->set_is_first_order_j(false);
+    grad_fg = ad::Grad(first_grad_fg, opt);
     set_eliminate_forward(true);
   }
   auto grad_param =

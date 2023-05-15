@@ -258,7 +258,6 @@ FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_ren
   auto func_graph = resource->func_graph();
   auto graph_opt = opt::Optimizer::MakeOptimizer("ms_function_bprop_graph_opt", resource, map);
   func_graph = graph_opt->step(func_graph, false);
-  func_graph = LiftingClone(func_graph);
   return func_graph;
 }
 
@@ -269,14 +268,24 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
     irpass.tuple_list_get_item_eliminator_,
     irpass.zero_like_fill_zero_,
   });
+
+  opt::OptPassConfig env_eliminate = opt::OptPassConfig({
+    irpass.environ_get_eliminate_,
+    irpass.environ_get_add_eliminate_,
+    irpass.environ_get_set_eliminate_,
+    irpass.environ_get_depend_swap_,
+    irpass.environ_add_const_eliminate_,
+  });
   OptPassGroupMap map({
     {"ad_grad_graph_opt", grad_graph_opt},
+    {"env_eliminate", env_eliminate},
   });
 
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   auto graph_opt = opt::Optimizer::MakeOptimizer("final_bprop_graph_opt", resource, map);
-  return graph_opt->step(func_graph, false);
+  func_graph = graph_opt->step(func_graph, false);
+  return func_graph;
 }
 
 namespace {
