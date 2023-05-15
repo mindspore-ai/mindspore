@@ -157,30 +157,24 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   std::vector<int64_t> tmp_pos;
   int64_t copy_size = element_size * input_shape_[dims_ - 1];
   const size_t input_length = IntToSize(input_elements_);
-  auto cpy_task = [this, outputs_addr, copy_size, inputs_addr, &output_pos, &paddings, &output_strides_](size_t start,
-                                                                                                         size_t end) {
-    for (size_t i = start; i < end; i += input_shape_[dims_ - 1]) {
-      std::vector<int64_t> pos(dims_, 0);
-      auto idx = i / input_shape_[dims_ - 1];
-      for (int j = dims_ - 2; j >= 0; --j) {
-        if (idx == 0) {
-          break;
-        }
-        pos[j] = idx % input_shape_[j];
-        idx /= input_shape_[j];
-      }
-      int64_t output_index = 0;
-      for (size_t j = 0; j < pos.size(); j++) {
-        output_index += (pos[j] + paddings[j * PADDING_SIZE]) * output_strides_[j];
-      }
-      int ret = memcpy_s(outputs_addr + output_index, copy_size, inputs_addr + i, copy_size);
-      if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-      }
-      output_pos[i / input_shape_[dims_ - 1]] = output_index;
+  for (size_t i = 0; i < input_length; i += input_shape_[dims_ - 1]) {
+    std::vector<int64_t> pos(dims_, 0);
+    auto idx = i / input_shape_[dims_ - 1];
+    for (int j = dims_ - 2; j >= 0; --j) {
+      if (idx == 0) break;
+      pos[j] = idx % input_shape_[j];
+      idx /= input_shape_[j];
     }
-  };
-  ParallelLaunchAutoSearch(cpy_task, input_length, this, &parallel_search_info_);
+    int64_t output_index = 0;
+    for (size_t j = 0; j < pos.size(); j++) {
+      output_index += (pos[j] + paddings[j * PADDING_SIZE]) * output_strides_[j];
+    }
+    int ret = memcpy_s(outputs_addr + output_index, copy_size, inputs_addr + i, copy_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    }
+    output_pos[i / input_shape_[dims_ - 1]] = output_index;
+  }
   for (int64_t i = dims_ - 1; i >= 0; --i) {
     int64_t block_size = output_strides_[i];
     copy_size = block_size * element_size;
