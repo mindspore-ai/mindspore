@@ -519,6 +519,7 @@ tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor
   auto original_outputs = original_graph_outputs_[graph_id];
   if (idx >= original_outputs.size()) {
     MS_LOG(ERROR) << "Graph output index is out of range.";
+    return nullptr;
   }
   TypeId type_id = static_cast<TypeId>(original_outputs[idx]->data_type_c());
   if (type_id == kTypeUnknown) {
