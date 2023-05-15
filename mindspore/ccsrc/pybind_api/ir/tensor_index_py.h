@@ -591,7 +591,8 @@ class TensorIndex final {
   // Convert list indices to array or list indices based on its contents.
   static TensorIndex FormatList(const TensorIndex &tensor_index, int64_t length);
   static TensorPtr IntToTensor(int64_t i, const ShapeVector &shape);
-  static py::object GenerateIndicesFromTupleOfTensor(const std::vector<TensorIndex> &tuple_index,
+  static py::object GenerateIndicesFromTupleOfTensor(const ShapeVector &data_shape,
+                                                     const std::vector<TensorIndex> &tuple_index,
                                                      ShapeVector *output_index_shape, py::object *data_transfer_arg);
   static void RemNotExpandedDims(int64_t *idx_advanced, bool expand_true, int64_t tensor_index_ndim, int64_t rem_ndim,
                                  std::vector<bool> *not_expanded_dim);
