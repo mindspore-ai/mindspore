@@ -2560,3 +2560,16 @@ class SetitemTensorIndexInfo(Primitive):
 
     def __call__(self, data, index, value):
         return Tensor_.setitem_index_info(data, index, value, self.is_ascend)
+
+
+class IsConstant(Primitive):
+    r"""
+        Check if the input is constant
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize IsConstant"""
+
+    def __call__(self, x):
+        return True

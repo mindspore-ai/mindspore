@@ -1614,7 +1614,7 @@ GVAR_DEF(PrimitivePtr, kPrimIs_, std::make_shared<Primitive>("is_"));
 GVAR_DEF(PrimitivePtr, kPrimIsNot, std::make_shared<Primitive>("is_not"));
 GVAR_DEF(PrimitivePtr, kPrimInDict, std::make_shared<Primitive>("in_dict"));
 GVAR_DEF(PrimitivePtr, kPrimNotInDict, std::make_shared<Primitive>("not_in_dict"));
-GVAR_DEF(PrimitivePtr, kPrimIsConstant, std::make_shared<Primitive>("is_constant"));
+GVAR_DEF(PrimitivePtr, kPrimIsConstant, std::make_shared<Primitive>("IsConstant"));
 GVAR_DEF(PrimitivePtr, kPrimEquivFormat, std::make_shared<Primitive>("EquivFormat"));
 GVAR_DEF(PrimitivePtr, kPrimLshProjection, std::make_shared<Primitive>("LshProjection"));
 GVAR_DEF(PrimitivePtr, kPrimHashtableLookup, std::make_shared<Primitive>("HashtableLookup"));
