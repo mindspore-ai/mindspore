@@ -22,6 +22,7 @@ import subprocess
 from enum import Enum
 
 from mindspore import log as logger, context
+from mindspore.context import get_auto_parallel_context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
@@ -363,6 +364,11 @@ class Profiler:
             self._ascend_analyse()
         logger.info("Profiling: all the data have been analyzed.")
         self._init_profiler_info()
+
+        parallel_mode = get_auto_parallel_context("parallel_mode")
+        stage_num = get_auto_parallel_context("pipeline_stages")
+
+        ProfilerInfo.set_parallel_info(parallel_mode, stage_num)
         ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         ProfilerInfo.set_rank_size(self._rank_size)
         ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
