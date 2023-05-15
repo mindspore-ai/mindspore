@@ -15,14 +15,14 @@ mindspore.ops.SparseSoftmaxCrossEntropyWithLogits
         \end{array}
 
     参数：
-        - **is_grad** (bool) - 如果为True，则返回计算的梯度。默认值：False。
+        - **is_grad** (bool) - 如果为 ``True`` ，则返回计算的梯度。默认值： ``False`` 。
 
     输入：
         - **logits** (Tensor) - 输入的预测值，其shape为 :math:`(N, C)` 。数据类型必须为float16或float32。
         - **labels** (Tensor) - 输入的标签，其shape为 :math:`(N)` 。数据类型必须为int32或int64。
 
     输出：
-        Tensor，如果 `is_grad` 为False，则输出Tensor是损失值，是一个Tensor；如果 `is_grad` 为True，则输出记录的是输入的梯度，其shape与 `logits` 相同。
+        Tensor，如果 `is_grad` 为 ``False`` ，则输出Tensor是损失值，是一个Tensor；如果 `is_grad` 为 ``True`` ，则输出记录的是输入的梯度，其shape与 `logits` 相同。
 
     异常：
         - **TypeError** - 如果 `is_grad` 不是bool。

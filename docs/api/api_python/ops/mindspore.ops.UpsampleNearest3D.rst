@@ -10,8 +10,8 @@ mindspore.ops.UpsampleNearest3D
     必须指定 `output_size` 或 `scales` 中的一个值，并且不能同时指定两者。
 
     参数：
-        - **output_size** (Union[tuple[int], list[int]]，可选) - 指定输出体积大小的元组或int列表。默认值：None。
-        - **scales** (Union[tuple[float], list[float]]，可选) - 指定上采样因子的元组或float列表。默认值：None。
+        - **output_size** (Union[tuple[int], list[int]]，可选) - 指定输出体积大小的元组或int列表。默认值： ``None`` 。
+        - **scales** (Union[tuple[float], list[float]]，可选) - 指定上采样因子的元组或float列表。默认值： ``None`` 。
 
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：[float16, float32, float64]。

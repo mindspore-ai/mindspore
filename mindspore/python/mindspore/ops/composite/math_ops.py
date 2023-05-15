@@ -52,12 +52,12 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         x (Tensor): Input data is used to count non-zero numbers. With shape
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Default: (), reduce all dimensions.
+            Default: ``()`` , reduce all dimensions.
         keep_dims (bool, optional): Whether to maintain dimensions specified by `axis`.
             If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default: False.
+            If false, don't keep these dimensions. Default: ``False`` .
         dtype (Union[Number, mindspore.bool\_], optional): The data type of the output tensor.
-            Default: mstype.int32.
+            Default: ``mstype.int32`` .
 
     Returns:
           Tensor, number of nonzero element across axis specified by `axis`.

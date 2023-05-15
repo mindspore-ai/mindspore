@@ -47,7 +47,7 @@ def random_gamma(shape, alpha, seed=None):
         alpha (Tensor): The :math:`\alpha` distribution parameter.
             A Tensor. Must be one of the following types: half, float32, float64.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-            Default: None, which will be treated as 0.
+            Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the concat shape between the input `shape` and the broadcast
@@ -100,7 +100,7 @@ def standard_laplace(shape, seed=None):
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: None, which will be treated as 0.
+          Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
@@ -241,7 +241,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
           It defines the maximum possible generated value, with int32 or float32 data type.
           If dtype is int32, only one number is allowed.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers,
-          must be non-negative. Default: None, which will be treated as 0.
+          must be non-negative. Default: ``None`` , which will be treated as 0.
         dtype (mindspore.dtype): Type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
           supports these two data types. Default: mstype.float32.
@@ -316,7 +316,7 @@ def standard_normal(shape, seed=None):
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-          Default: None, which will be treated as 0.
+          Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
@@ -423,7 +423,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
           and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
           mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate pseudo-random
-          numbers and must be non-negative. Default: None, which will be treated as 0.
+          numbers and must be non-negative. Default: ``None`` , which will be treated as 0.
         dtype (mindspore.dtype): The data type of output: mindspore.dtype.int64, mindspore.dtype.int32,
           mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16. Default: mindspore.dtype.float32.
 
@@ -478,7 +478,7 @@ def shuffle(x, seed=None):
     Args:
         x (Tensor): The Tensor need be shuffled.
         seed (int, optional): Random seed used for random number generation, must be non-negative. If `seed` is 0,
-            which will be replaced with a randomly generated value. Default: None, which will be treated as 0.
+            which will be replaced with a randomly generated value. Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape and type are the same as the input `x`.
@@ -514,9 +514,9 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
           shape :math:`(batch\_size, num\_true)` .
         num_true (int): The number of target classes per training example. Default: ``1`` .
         num_sampled (int): The number of classes to randomly sample. Default: ``5`` .
-        unique (bool): Determines whether sample with rejection. If `unique` is True,
+        unique (bool): Determines whether sample with rejection. If `unique` is ``True`` ,
           all sampled classes in a batch are unique. Default: ``True`` .
-        range_max (int): The number of possible classes. When `unique` is True,
+        range_max (int): The number of possible classes. When `unique` is ``True`` ,
           `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
         seed (int): Random seed, must be non-negative. Default: ``0`` .
 
@@ -621,10 +621,10 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
     Args:
         n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
             The value of `n` must be greater than zero.
-        seed (int, optional): Random seed. Default: 0. When seed is -1(only negative value), offset is 0,
+        seed (int, optional): Random seed. Default: ``0`` . When seed is -1(only negative value), offset is 0,
             it's determined by time.
         offset (int, optional): Offset to generate random numbers. Priority is higher than random seed.
-            Default: 0. It must be non-negative.
+            Default: ``0`` . It must be non-negative.
         dtype (mindspore.dtype, optional): The type of output.
             Its value must be one of the following types: int32, int16, int8,
             uint8, int64, float64, float32, float16. Default: mstype.int64.
@@ -670,7 +670,7 @@ def normal(shape, mean, stddev, seed=None):
         stddev (Union[Tensor, int, float]): The deviation σ distribution parameter. It should be greater than 0,
           with data type in [int8, int16, int32, int64, float16, float32].
         seed (int): Seed is used as entropy source for the Random number engines to generate pseudo-random numbers.
-          The value must be non-negative. Default: None, which will be treated as 0.
+          The value must be non-negative. Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -982,8 +982,8 @@ def randn(*size, dtype=None, seed=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            `mindspore.float32` will be used. Default: None.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+            `mindspore.float32` will be used. Default: ``None`` .
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and 0 will be used.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with a sample (or samples) from the
@@ -1024,11 +1024,11 @@ def randn_like(input, seed=None, *, dtype=None):
 
     Args:
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
-        seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
+        seed (int, optional): Random seed, must be greater or equal to 0. Default: ``None`` , and 0 will be used.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            `mindspore.float32` will be used. Default: None.
+            `mindspore.float32` will be used. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with a sample (or samples) from the
@@ -1190,7 +1190,7 @@ def poisson(shape, mean, seed=None):
           The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         mean (Tensor): The mean μ distribution parameter. It should be greater than 0 with float32 data type.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers
-          and must be non-negative. Default: None, which will be treated as 0.
+          and must be non-negative. Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes of `mean`.

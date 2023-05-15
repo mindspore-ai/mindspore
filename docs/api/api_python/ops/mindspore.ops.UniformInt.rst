@@ -15,8 +15,8 @@ mindspore.ops.UniformInt
         - 如果 `seed` 和 `seed2` 都没有被赋非零值，则生成一个随机值当做随机种子
 
     参数：
-        - **seed** (int) - 随机种子，非负值。默认值：0。
-        - **seed2** (int) - 随机种子2，用来防止随机种子冲突，非负值。默认值：0。
+        - **seed** (int) - 随机种子，非负值。默认值： ``0`` 。
+        - **seed2** (int) - 随机种子2，用来防止随机种子冲突，非负值。默认值： ``0`` 。
 
     输入：
         - **shape** (Union[tuple, Tensor]) - 目标Tensor的shape。只允许常量值。

@@ -16,7 +16,7 @@ mindspore.ops.SparseApplyProximalAdagrad
     如果它们具有不同的数据类型，则较低精度的数据类型将转换为相对最高精度的数据类型。
 
     参数：
-        - **use_locking** (bool) - 如果为True，则将保护 `var` 和 `accum` 参数不被更新。默认值：False。
+        - **use_locking** (bool) - 如果为 ``True`` ，则将保护 `var` 和 `accum` 参数不被更新。默认值： ``False`` 。
 
     输入：
         - **var** (Parameter) - 公式中的"var"。数据类型必须为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任何附加维度。

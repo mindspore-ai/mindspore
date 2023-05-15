@@ -47,8 +47,8 @@ def add_flags(fn=None, **flags):
         Only supports bool value.
 
     Args:
-        fn (Function): Function or cell to add flag. Default: None.
-        flags (dict): Flags use kwargs. Default: None.
+        fn (Function): Function or cell to add flag. Default: ``None`` .
+        flags (dict): Flags use kwargs. Default: ``None`` .
 
     Returns:
         Function, the function with added flags.
@@ -71,9 +71,9 @@ def core(fn=None, **flags):
     set flag to a graph.
 
     Args:
-        fn (Function, optional): Function to add flag. Default: None.
+        fn (Function, optional): Function to add flag. Default: ``None`` .
         flags (dict, optional): The following flags can be set core, which indicates that this is a core function or
-                      other flag. Default: None.
+                      other flag. Default: ``None`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -188,16 +188,16 @@ class GradOperation(GradOperation_):
         - Return an empty tuple for no result.
 
     Args:
-        get_all (bool): If True, get all the gradients with respect to inputs. Default: False.
-        get_by_list (bool): If True, get all the gradients with respect to Parameter free variables.
-            If get_all and get_by_list are both False, get the gradient with respect to first input.
-            If get_all and get_by_list are both True, get the gradients with respect to inputs and
+        get_all (bool): If ``True`` , get all the gradients with respect to inputs. Default: ``False`` .
+        get_by_list (bool): If ``True`` , get all the gradients with respect to Parameter free variables.
+            If get_all and get_by_list are both ``False`` , get the gradient with respect to first input.
+            If get_all and get_by_list are both ``True`` , get the gradients with respect to inputs and
             Parameter free variables at the same time in the form of ("gradients with respect to inputs",
-            "gradients with respect to parameter free variables"). Default: False.
+            "gradients with respect to parameter free variables"). Default: ``False`` .
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
-            If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically.
-            Default: False.
-            If the sensor_param is True, a sensitivity (gradient with respect to output) needs to be transferred
+            If sens_param is ``False`` , a 'ones_like(outputs)' sensitivity will be attached automatically.
+            Default: ``False`` .
+            If the sensor_param is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
             through the location parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
 
@@ -683,7 +683,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
     Args:
         name (str): Operator name.
         read_value (bool, optional): If the registered function do not need to set value on Parameter,
-            and all inputs will pass by value, set `read_value` to True. Default: False.
+            and all inputs will pass by value, set `read_value` to ``True`` . Default: ``False`` .
 
     Raises:
         ValueError: If failed to find a matching function for the given arguments.
@@ -860,10 +860,10 @@ class Map(Map_):
 
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
-            the operations should be put in the first input of the instance. Default: None
+            the operations should be put in the first input of the instance. Default: ``None`` .
         reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
           general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
-          Only supported in graph mode. Default is False.
+          Only supported in graph mode. Default is ``False`` .
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
