@@ -364,7 +364,7 @@ class _MindsporeFunctionExecutor:
         compile_args = _restore_mutable_attr(args, compile_args)
 
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+                        str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
@@ -373,7 +373,9 @@ class _MindsporeFunctionExecutor:
         # Add key with obj
         if self.obj is not None:
             if self.obj.__module__ != self.fn.__module__:
-                logger.info(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
+                logger.info(
+                    f'The module of `self.obj`: `{self.obj.__module__}` is not same with the module of `self.fn`: `'
+                    f'{self.fn.__module__}`')
             self.obj.__parse_method__ = method_name
             if isinstance(self.obj, ms.nn.Cell):
                 generate_name = generate_name + '.' + str(self.obj.create_time)
@@ -1231,7 +1233,6 @@ class _PyNativeExecutor:
         """
         self._executor.set_hook_changed(cell)
 
-
     def get_top_cell(self):
         """
         Get the top cell object.
@@ -1240,7 +1241,6 @@ class _PyNativeExecutor:
             The top cell object.
         """
         return self._top_cell
-
 
     def constant_folding(self, *args):
         """
