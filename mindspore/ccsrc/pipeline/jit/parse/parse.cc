@@ -2766,8 +2766,8 @@ void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &t
   block->WriteVariable(name_id, assigned_node);
 }
 
-void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &target,
-                               const AnfNodePtr &assigned_node) {
+void Parser::HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::object &target,
+                                     const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   py::list items = python_adapter::GetPyObjAttr(target, "elts");
@@ -2938,8 +2938,8 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
                 << ", ast_type: " << ast_type;
   if (ast_type == AST_SUB_TYPE_NAME) {
     HandleAssignName(block, target_object, value_node);
-  } else if (ast_type == AST_SUB_TYPE_TUPLE) {
-    HandleAssignTuple(block, target_object, value_node);
+  } else if (ast_type == AST_SUB_TYPE_TUPLE || ast_type == AST_SUB_TYPE_LIST) {
+    HandleAssignTupleOrList(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_SUBSCRIPT) {
     HandleAssignSubscript(block, target_object, value_node);
   } else if (ast_->IsClassMemberOfSelf(target_object)) {

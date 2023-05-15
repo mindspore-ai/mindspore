@@ -301,7 +301,8 @@ class Parser {
   void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
 
   // Assign value to tuple.
-  void HandleAssignTuple(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
+  void HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::object &target,
+                               const AnfNodePtr &assigned_node);
 
   // Assign value to class Parameter member. Return false if not a Parameter member.
   bool HandleAssignClassParameterMember(const FunctionBlockPtr &block, const py::object &target,
