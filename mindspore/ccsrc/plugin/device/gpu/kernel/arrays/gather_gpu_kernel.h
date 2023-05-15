@@ -72,7 +72,6 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
   size_t dims_[4] = {};
   TypeId dim_type_{0};
   bool is_null_input_{false};
-  bool is_get_dim_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

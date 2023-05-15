@@ -122,7 +122,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   size_t indices_type_size_ = 0;
   size_t axis_type_size_ = 0;
   std::string kernel_type_{kUnKnown};
-  bool is_get_axis_{false};
   TypeId axis_type_{0};
 };
 }  // namespace kernel

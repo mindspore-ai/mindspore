@@ -54,8 +54,9 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
   }
-  if (TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_)) {
-    is_get_axis_ = true;
+  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_)) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
+    return KRET_RESIZE_FAILED;
   }
   ResetResource();
   input_shapes_ = inputs[kIndexZero]->GetShapeVector();
@@ -103,9 +104,7 @@ bool GatherV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  if (!is_get_axis_) {
-    axis_ = GetDimValue<int64_t>(inputs, kIndex2, kernel_name_, axis_type_);
-  }
+
   auto input_dim1 = input_shapes_[IntToSize(axis_)];
 
   MS_EXCEPTION_IF_NULL(input_addr);
