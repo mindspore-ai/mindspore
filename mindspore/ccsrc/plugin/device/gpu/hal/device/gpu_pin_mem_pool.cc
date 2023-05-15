@@ -51,6 +51,10 @@ bool GPUPinMemPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   free(addr);
   return true;
 }
+
+void GPUPinMemPool::RegisterPinnedMem(void *addr, size_t size) { CudaDriver::CudaHostRegister(addr, size); }
+
+void GPUPinMemPool::UnRegisterPinnedMem(void *addr) { CudaDriver::CudaHostUnregister(addr); }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
