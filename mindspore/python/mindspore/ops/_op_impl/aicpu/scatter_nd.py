@@ -35,6 +35,7 @@ scatter_nd_op_info = AiCPURegOp("ScatterNd") \
     .dtype_format(DataType.I32_Default, DataType.F64_Default, DataType.I32_Default, DataType.F64_Default) \
     .dtype_format(DataType.I32_Default, DataType.C64_Default, DataType.I32_Default, DataType.C64_Default) \
     .dtype_format(DataType.I32_Default, DataType.C128_Default, DataType.I32_Default, DataType.C128_Default) \
+    .dtype_format(DataType.I32_Default, DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I64_Default, DataType.I8_Default, DataType.I64_Default, DataType.I8_Default) \
     .dtype_format(DataType.I64_Default, DataType.I16_Default, DataType.I64_Default, DataType.I16_Default) \
     .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.I64_Default, DataType.I32_Default) \
@@ -48,6 +49,7 @@ scatter_nd_op_info = AiCPURegOp("ScatterNd") \
     .dtype_format(DataType.I64_Default, DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I64_Default, DataType.C64_Default, DataType.I64_Default, DataType.C64_Default) \
     .dtype_format(DataType.I64_Default, DataType.C128_Default, DataType.I64_Default, DataType.C128_Default) \
+    .dtype_format(DataType.I64_Default, DataType.BOOL_Default, DataType.I64_Default, DataType.BOOL_Default) \
     .get_op_info()
 
 
