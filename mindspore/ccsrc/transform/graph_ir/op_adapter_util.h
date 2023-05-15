@@ -104,6 +104,7 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ValueAny>);
 
 bool IsCustomPrim(const PrimitivePtr &prim);
 bool IsCustomCNode(const AnfNodePtr &node);
+bool IsNoNeedConstantFoldCNode(const PrimitivePtr &prim);
 std::string GetOpIOFormat(const AnfNodePtr &node);
 }  // namespace transform
 }  // namespace mindspore

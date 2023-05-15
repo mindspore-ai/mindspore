@@ -1218,33 +1218,6 @@ STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
-STATUS AclPassImpl::QuantDTypeCastDeparse(const FuncGraphPtr &func_graph) {
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
-      continue;
-    }
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " will mapper to ascend quant or dequant";
-    auto prim = GetCNodePrimitive(cnode);
-    if (prim == nullptr) {
-      MS_LOG(ERROR) << "prim is nullptr.";
-      return RET_ERROR;
-    }
-    std::string name = prim->name();
-    auto mapper = lite::PrimitiveMapperRegister::GetInstance().GetPrimitiveMapper(name);
-    if (mapper == nullptr) {
-      MS_LOG(DEBUG) << "Name: " << name << " not need to mapper.";
-      return RET_ERROR;
-    }
-    MS_LOG(INFO) << "Deparser cnode: " << name;
-    auto status = mapper->Mapper(cnode);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "Deparser primitive failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
 STATUS AclPassImpl::Quantization(const FuncGraphPtr &func_graph) {
   auto ret = PreQuantization(func_graph);
   if (ret != lite::RET_OK) {

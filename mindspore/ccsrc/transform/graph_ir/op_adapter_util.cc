@@ -333,6 +333,11 @@ bool IsCustomPrim(const PrimitivePtr &prim) {
   return false;
 }
 
+bool IsNoNeedConstantFoldCNode(const PrimitivePtr &prim) {
+  // ON_THE_FLY Quantization node dont need constant folding.
+  return prim->GetAttr("no_need_constant_folding") != nullptr;
+}
+
 bool IsCustomCNode(const AnfNodePtr &anf) {
   if (anf == nullptr) {
     return false;
