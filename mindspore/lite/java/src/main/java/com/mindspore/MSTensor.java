@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.logging.Logger;
+import javax.xml.crypto.Data;
 
 /**
  * The MSTensor class defines a tensor in MindSpore.
@@ -130,6 +131,9 @@ public class MSTensor {
      * @return The float array containing all MSTensor output data.
      */
     public float[] getFloatData() {
+        if (this.getDataType() == DataType.kNumberTypeFloat16) {
+            return this.getFloat16Data(this.tensorPtr);
+        }
         return this.getFloatData(this.tensorPtr);
     }
 
@@ -335,6 +339,8 @@ public class MSTensor {
     private native int[] getIntData(long tensorPtr);
 
     private native float[] getFloatData(long tensorPtr);
+
+    private native float[] getFloat16Data(long tensorPtr);
 
     private native boolean setByteData(long tensorPtr, byte[] data, long dataLen);
 

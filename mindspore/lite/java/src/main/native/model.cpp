@@ -210,6 +210,69 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
   return true;
 }
 
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_buildWithInc(JNIEnv *env, jclass clazz,
+                                                                           jstring model_path, jstring inc_model_path,
+                                                                           jint model_type, jlong context_ptr,
+                                                                           jstring config_file_path) {
+  jclass array_list = env->FindClass("java/util/ArrayList");
+  jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
+  jobject ret_arr = env->NewObject(array_list, array_list_construct);
+  jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
+
+  auto c_model_path = env->GetStringUTFChars(model_path, JNI_FALSE);
+  auto c_inc_model_path = env->GetStringUTFChars(inc_model_path, JNI_FALSE);
+  auto c_config_file_path = env->GetStringUTFChars(config_file_path, JNI_FALSE);
+  mindspore::ModelType c_model_type;
+  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
+    c_model_type = static_cast<mindspore::ModelType>(model_type);
+  } else {
+    MS_LOG(ERROR) << "Invalid model type : " << model_type;
+    env->DeleteLocalRef(array_list);
+    env->ReleaseStringUTFChars(model_path, c_model_path);
+    env->ReleaseStringUTFChars(model_path, c_inc_model_path);
+    env->ReleaseStringUTFChars(model_path, c_config_file_path);
+    return ret_arr;
+  }
+  auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
+  if (c_context_ptr == nullptr) {
+    MS_LOG(ERROR) << "Context pointer from java is nullptr";
+    env->DeleteLocalRef(array_list);
+    env->ReleaseStringUTFChars(model_path, c_model_path);
+    env->ReleaseStringUTFChars(model_path, c_inc_model_path);
+    env->ReleaseStringUTFChars(model_path, c_config_file_path);
+    return ret_arr;
+  }
+  auto context = std::make_shared<mindspore::Context>(*c_context_ptr);
+  mindspore::Status status;
+
+  auto models_vec = mindspore::Model::Build(c_model_path, c_inc_model_path, c_model_type, context, c_config_file_path);
+  if (models_vec.size() == 0) {
+    status = mindspore::kLiteError;
+  }
+
+  env->ReleaseStringUTFChars(model_path, c_model_path);
+  env->ReleaseStringUTFChars(model_path, c_inc_model_path);
+  env->ReleaseStringUTFChars(model_path, c_config_file_path);
+  if (status != mindspore::kSuccess) {
+    MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
+    return ret_arr;
+  }
+
+  jclass long_object = env->FindClass("java/lang/Long");
+  jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
+  for (auto model : models_vec) {
+    std::shared_ptr<mindspore::Model> *model_ptr = new std::shared_ptr<mindspore::Model>;
+    *model_ptr = model;
+    jobject model_addr = env->NewObject(long_object, long_object_construct, reinterpret_cast<jlong>(model_ptr));
+    env->CallBooleanMethod(ret_arr, array_list_add, model_addr);
+    env->DeleteLocalRef(model_addr);
+  }
+  env->DeleteLocalRef(array_list);
+  env->DeleteLocalRef(long_object);
+
+  return ret_arr;
+}
+
 jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_input) {
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
@@ -276,33 +339,52 @@ jlong GetTensorByInOutName(JNIEnv *env, jlong model_ptr, jstring tensor_name, bo
   return jlong(tensor_ptr.release());
 }
 
+jlong CheckAndConvertSharedPtrToPtr(JNIEnv *env, jobject thiz, jlong model_ptr) {
+  jlong model_ptr_local = model_ptr;
+  jclass clazz_model = env->GetObjectClass(thiz);
+  jfieldID fieldID_isModelSharePtr = env->GetFieldID(clazz_model, "isModelSharePtr", "Z");
+  jboolean is_shared = env->GetIntField(thiz, fieldID_isModelSharePtr);
+  if (is_shared) {
+    std::shared_ptr<mindspore::Model> *model_shared_ptr =
+      reinterpret_cast<std::shared_ptr<mindspore::Model> *>(model_ptr);
+    model_ptr_local = reinterpret_cast<jlong>((*model_shared_ptr).get());
+  }
+  return model_ptr_local;
+}
+
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getInputs(JNIEnv *env, jobject thiz, jlong model_ptr) {
-  return GetInOrOutTensors(env, thiz, model_ptr, true);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+  return GetInOrOutTensors(env, thiz, model_ptr_local, true);
 }
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_getInputByTensorName(JNIEnv *env, jobject thiz,
                                                                                  jlong model_ptr, jstring tensor_name) {
-  return GetTensorByInOutName(env, model_ptr, tensor_name, true);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+  return GetTensorByInOutName(env, model_ptr_local, tensor_name, true);
 }
 
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputs(JNIEnv *env, jobject thiz, jlong model_ptr) {
-  return GetInOrOutTensors(env, thiz, model_ptr, false);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+  return GetInOrOutTensors(env, thiz, model_ptr_local, false);
 }
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_getOutputByTensorName(JNIEnv *env, jobject thiz,
                                                                                   jlong model_ptr,
                                                                                   jstring tensor_name) {
-  return GetTensorByInOutName(env, model_ptr, tensor_name, false);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+  return GetTensorByInOutName(env, model_ptr_local, tensor_name, false);
 }
 
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputTensorNames(JNIEnv *env, jobject thiz,
                                                                                    jlong model_ptr) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
   jobject ret = env->NewObject(array_list, array_list_construct);
   jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
 
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Session pointer from java is nullptr";
     return ret;
@@ -320,6 +402,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputTensorNam
 
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeName(JNIEnv *env, jobject thiz,
                                                                                    jlong model_ptr, jstring node_name) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
   jobject ret = env->NewObject(array_list, array_list_construct);
@@ -327,7 +411,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Session pointer from java is nullptr";
     return ret;
@@ -357,7 +441,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_getTrainMode(JNIEnv *env, jobject thiz,
                                                                             jlong model_ptr) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -368,7 +454,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_getTrainMode(JNIE
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setTrainMode(JNIEnv *env, jobject thiz, jlong model_ptr,
                                                                             jboolean train_mode) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return jlong(false);
@@ -379,7 +467,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setTrainMode(JNIE
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *env, jobject thiz, jlong model_ptr) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -413,7 +503,9 @@ std::vector<mindspore::MSTensor> convertArrayToVector(JNIEnv *env, jlongArray in
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_predict(JNIEnv *env, jobject thiz, jlong model_ptr,
                                                                        jlongArray inputs, jlongArray outputs) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -427,8 +519,10 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_predict(JNIEnv *e
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *env, jobject thiz, jlong model_ptr,
                                                                       jlongArray inputs, jobjectArray dims) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
   std::vector<std::vector<int64_t>> c_dims;
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -484,13 +578,15 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
   return (jboolean)(ret.IsOk());
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_loadConfig(JNIEnv *env, jobject thiz, jstring model_ptr,
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_loadConfig(JNIEnv *env, jobject thiz, jlong model_ptr,
                                                                           jstring config_path) {
-  if (model_ptr == nullptr || config_path == nullptr) {
+  if (config_path == nullptr) {
     MS_LOG(ERROR) << "input params from java is nullptr";
     return (jboolean) false;
   }
-  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr_local);
   auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
   const char *c_config_path = env->GetStringUTFChars(config_path, nullptr);
   std::string str_config_path(c_config_path, env->GetStringLength(config_path));
@@ -499,10 +595,11 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_loadConfig(JNIEnv
   return (jboolean)(ret.IsOk());
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateConfig(JNIEnv *env, jobject thiz,
-                                                                            jstring model_ptr, jstring section,
-                                                                            jobject hashMapConfig) {
-  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateConfig(JNIEnv *env, jobject thiz, jlong model_ptr,
+                                                                            jstring section, jobject hashMapConfig) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr_local);
   if (model_pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -565,7 +662,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
                                                                       jstring model_name, jint quantization_type,
                                                                       jboolean export_inference_only,
                                                                       jobjectArray tensorNames) {
-  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr_local);
   if (model_pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -594,8 +693,10 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_export(JNIEnv *en
   return (jboolean)(ret.IsOk());
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateFeatureMaps(JNIEnv *env, jclass, jlong model_ptr,
-                                                                                 jlongArray features) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateFeatureMaps(JNIEnv *env, jobject thiz,
+                                                                                 jlong model_ptr, jlongArray features) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
   auto size = static_cast<int>(env->GetArrayLength(features));
   jlong *input_data = env->GetLongArrayElements(features, nullptr);
   std::vector<mindspore::MSTensor> newFeatures;
@@ -608,13 +709,15 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_updateFeatureMaps
     auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(tensor_pointer);
     newFeatures.emplace_back(*ms_tensor_ptr);
   }
-  auto lite_model_ptr = reinterpret_cast<mindspore::Model *>(model_ptr);
+  auto lite_model_ptr = reinterpret_cast<mindspore::Model *>(model_ptr_local);
   auto ret = lite_model_ptr->UpdateFeatureMaps(newFeatures);
   return (jboolean)(ret.IsOk());
 }
 
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNIEnv *env, jobject thiz,
                                                                              jlong model_ptr) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
   jobject ret = env->NewObject(array_list, array_list_construct);
@@ -622,7 +725,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNI
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return ret;
@@ -641,9 +744,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getFeatureMaps(JNI
   return ret;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setLearningRate(JNIEnv *env, jclass, jlong model_ptr,
-                                                                               jfloat learning_rate) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setLearningRate(JNIEnv *env, jobject thiz,
+                                                                               jlong model_ptr, jfloat learning_rate) {
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -655,7 +760,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setLearningRate(J
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setupVirtualBatch(
   JNIEnv *env, jobject thiz, jlong model_ptr, jint virtual_batch_factor, jfloat learning_rate, jfloat momentum) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
+  jlong model_ptr_local = CheckAndConvertSharedPtrToPtr(env, thiz, model_ptr);
+
+  auto *pointer = reinterpret_cast<void *>(model_ptr_local);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
     return (jboolean) false;
@@ -665,12 +772,23 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_setupVirtualBatch
   return (jboolean)(ret.IsOk());
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr) {
-  auto *pointer = reinterpret_cast<void *>(model_ptr);
-  if (pointer == nullptr) {
-    MS_LOG(ERROR) << "Model pointer from java is nullptr";
-    return;
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_Model_free(JNIEnv *env, jobject thiz, jlong model_ptr,
+                                                                jboolean is_shared) {
+  if (!is_shared) {
+    auto *pointer = reinterpret_cast<void *>(model_ptr);
+    if (pointer == nullptr) {
+      MS_LOG(ERROR) << "Model pointer from java is nullptr";
+      return;
+    }
+    auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
+    delete (lite_model_ptr);
+  } else {
+    std::shared_ptr<mindspore::Model> *model_shared_ptr =
+      reinterpret_cast<std::shared_ptr<mindspore::Model> *>(model_ptr);
+    if (model_shared_ptr == nullptr) {
+      MS_LOG(ERROR) << "Model shared pointer from java is nullptr";
+      return;
+    }
+    delete model_shared_ptr;
   }
-  auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
-  delete (lite_model_ptr);
 }

@@ -18,6 +18,7 @@
 #include <cstring>
 #include "common/log_adapter.h"
 #include "include/api/types.h"
+#include "common/jni_utils.h"
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_MSTensor_getShape(JNIEnv *env, jobject thiz,
                                                                             jlong tensor_ptr) {
@@ -180,6 +181,53 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_MSTensor_getFloatDat
     return env->NewFloatArray(0);
   }
   env->SetFloatArrayRegion(ret, 0, local_element_num, local_data);
+  return ret;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_MSTensor_getFloat16Data(JNIEnv *env, jobject thiz,
+                                                                                    jlong tensor_ptr) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+    return env->NewFloatArray(0);
+  }
+
+  auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+
+  auto *local_data_cpp = reinterpret_cast<uint16_t *>(ms_tensor_ptr->MutableData());
+  if (local_data_cpp == nullptr) {
+    MS_LOG(DEBUG) << "Tensor has no data";
+    return env->NewFloatArray(0);
+  }
+
+  if (ms_tensor_ptr->DataType() != mindspore::DataType::kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "data type is error : " << static_cast<int>(ms_tensor_ptr->DataType());
+    return env->NewFloatArray(0);
+  }
+
+  auto local_element_num = ms_tensor_ptr->ElementNum();
+  if (local_element_num <= 0) {
+    MS_LOG(ERROR) << "ElementsNum of tensor is negative: " << static_cast<int>(local_element_num);
+    return env->NewFloatArray(0);
+  }
+  auto ret = env->NewFloatArray(local_element_num);
+  if (ret == nullptr) {
+    MS_LOG(ERROR) << "malloc failed.";
+    return env->NewFloatArray(0);
+  }
+
+  float *local_data_float = new float[local_element_num];
+  if (local_data_float == nullptr) {
+    MS_LOG(ERROR) << "malloc failed.";
+    return env->NewFloatArray(0);
+  }
+  for (int i = 0; i < ms_tensor_ptr->ElementNum(); i++) {
+    uint16_t tmpInt = local_data_cpp[i];
+    local_data_float[i] = ShortToFloat32(tmpInt);
+  }
+
+  env->SetFloatArrayRegion(ret, 0, local_element_num, local_data_float);
+  delete[] local_data_float;
   return ret;
 }
 
@@ -542,4 +590,3 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByObj
   }
   return jlong(tensor);
 }
-

@@ -19,6 +19,7 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include "nnacl/nnacl_common.h"
 
 std::string RealPath(const char *path);
 

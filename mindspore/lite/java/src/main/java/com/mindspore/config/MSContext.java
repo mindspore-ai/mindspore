@@ -69,6 +69,16 @@ public class MSContext {
     }
 
     /**
+     * Add device info to context.
+     * 
+     * @param ascendDeviceInfo Device info for Ascend backend.
+     * @return add status.
+     */
+    public boolean addDeviceInfo(AscendDeviceInfo ascendDeviceInfo) {
+        return addDeviceInfo(msContextPtr, ascendDeviceInfo);
+    }
+
+    /**
      * Init Context,default use 2 thread,no bind mode.
      *
      * @return init status.
@@ -298,6 +308,8 @@ public class MSContext {
     private native long createDefaultMSContext();
 
     private native boolean addDeviceInfo(long msContextPtr, int deviceType, boolean isEnableFloat16, int npuFrequency);
+
+    private native boolean addDeviceInfo(long msContextPtr, AscendDeviceInfo ascendDeviceInfo);
 
     private native void free(long msContextPtr);
 
