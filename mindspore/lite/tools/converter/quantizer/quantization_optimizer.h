@@ -30,7 +30,13 @@ class QuantizationOptimizer {
   ~QuantizationOptimizer() = default;
   int Run(const FuncGraphPtr &func_graph);
 
+  int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
+  int DoWeightQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
  private:
+  int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
+
   const std::shared_ptr<ConverterPara> &param_;
 };
 }  // namespace mindspore::lite::quant

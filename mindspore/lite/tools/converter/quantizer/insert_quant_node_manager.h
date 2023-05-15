@@ -57,6 +57,8 @@ class InsertQuantNodeManager {
 
   int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
+  int InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                                TypeId src_dtype, TypeId dst_dtype, int axis);
   int InsertTransposeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index);
 
   int AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph);
@@ -99,6 +101,12 @@ class InsertQuantNodeManager {
 
   ValueNodePtr NewFSEDecodePrimitive(int dst_type, uint64_t curr_chunk, int64_t curr_chunk_index,
                                      int64_t curr_bit_count, int64_t table_log);
+
+  CNodePtr NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int dst_type);
+
+  CNodePtr NewMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
+
+  CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
   template <typename T>
   void Transpose2Dim(const T *in_data, T *out_data, const int *strides, const int *perm, const int *output_shape) {

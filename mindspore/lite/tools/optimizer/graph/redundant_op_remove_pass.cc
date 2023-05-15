@@ -491,7 +491,7 @@ int RemoveRedundantOpPass::RemoveRedundantOp(const FuncGraphPtr &func_graph, con
   if (CheckPrimitiveType(node, prim::kPrimTensorMove)) {
     status = ReplaceOp(node, manager);
   }
-  if (CheckPrimitiveType(node, prim::kPrimUpdateState)) {
+  if (CheckPrimitiveType(node, prim::kPrimUpdateState) && !keep_update_state_) {
     status = ReplaceUpdateStateOp(func_graph, node);
   }
   if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {

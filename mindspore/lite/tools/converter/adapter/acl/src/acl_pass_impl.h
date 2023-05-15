@@ -89,7 +89,7 @@ class AclPassImpl {
   STATUS Quantization(const FuncGraphPtr &func_graph);
   STATUS PreQuantization(const FuncGraphPtr &func_graph);
   STATUS PostQuantization(const FuncGraphPtr &func_graph);
-  STATUS AscendDistributeFakeQuantDeparse(const FuncGraphPtr &func_graph);
+  STATUS QuantDTypeCastDeparse(const FuncGraphPtr &func_graph);
 
  private:
   std::shared_ptr<ConverterPara> param_;
@@ -102,7 +102,7 @@ class AclPassImpl {
   AnfNodePtrList graph_outputs_;
   std::vector<size_t> tuple_idx_;
   std::vector<std::vector<int64_t>> graph_output_dims_;
-  bool is_ascend_quant_ = false;
+  bool is_ptq_quant_ = false;
 };
 }  // namespace opt
 }  // namespace mindspore

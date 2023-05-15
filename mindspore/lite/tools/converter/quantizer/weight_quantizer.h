@@ -92,8 +92,13 @@ class WeightQuantizer : public Quantizer {
     quant_type_ = param_->commonQuantParam.quant_type;
     dequant_strategy_ = param_->weightQuantParam.dequant_strategy;
     max_segments_ = param_->weightQuantParam.max_segments;
+    ascend_backend_ = param_->ascendQuantParam.mode != AscendQuantMode::NONE;
     if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
-      weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_LAYER;
+      if (ascend_backend_) {
+        weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_LAYER;
+      } else {
+        weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+      }
     }
   }
 
@@ -124,6 +129,8 @@ class WeightQuantizer : public Quantizer {
                     int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
   int InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
                         const tensor::TensorPtr &tensor_info);
+  int InsertAscendDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const ParameterPtr &parameter,
+                              int idx, const tensor::TensorPtr &tensor_info);
 
  private:
   bool is_auto_tune_{false};
@@ -145,6 +152,7 @@ class WeightQuantizer : public Quantizer {
   int max_segments_{1};
   // Support for mark shared weight node.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
+  bool ascend_backend_ = false;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_
