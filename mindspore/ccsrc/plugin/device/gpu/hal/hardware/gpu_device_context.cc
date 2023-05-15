@@ -342,7 +342,7 @@ void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     if (ret) {
       MS_LOG(INFO) << "Somas allocate success for graph " << kernel_graph->graph_id()
                    << " somas size: " << kernel_graph->somas_whole_block_size();
-    } else {
+    } else if (somas->IsSupportSomas(*kernel_graph)) {
       MS_LOG(WARNING) << "Somas allocate failed for graph " << kernel_graph->graph_id();
     }
   }

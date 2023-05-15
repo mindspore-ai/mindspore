@@ -256,7 +256,7 @@ void AscendKernelExecutor::DoSomas(const KernelGraphPtr &graph) {
     if (ret) {
       MS_LOG(INFO) << "Somas allocate success for graph " << graph->graph_id()
                    << " somas size: " << graph->somas_whole_block_size();
-    } else {
+    } else if (somas->IsSupportSomas(*graph)) {
       MS_LOG(WARNING) << "Somas allocate failed for graph " << graph->graph_id();
     }
   }
