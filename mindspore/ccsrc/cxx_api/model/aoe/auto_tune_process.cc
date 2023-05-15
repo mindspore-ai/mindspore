@@ -81,6 +81,8 @@ static Status ExecuteAoe(const std::shared_ptr<AclModelOptions> &options, const 
     dynamic_option = " --dynamic_batch_size=\"" + build_options[ge::ir_option::DYNAMIC_BATCH_SIZE] + "\"";
   } else if (build_options.find(ge::ir_option::DYNAMIC_IMAGE_SIZE) != build_options.end()) {
     dynamic_option = " --dynamic_image_size=\"" + build_options[ge::ir_option::DYNAMIC_IMAGE_SIZE] + "\"";
+  } else if (build_options.find(ge::ir_option::DYNAMIC_DIMS) != build_options.end()) {
+    dynamic_option = " --input_format=ND --dynamic_dims=\"" + build_options[ge::ir_option::DYNAMIC_DIMS] + "\"";
   }
   std::string input_shape;
   if (build_options.find(ge::ir_option::INPUT_SHAPE) != build_options.end()) {
