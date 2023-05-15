@@ -136,12 +136,13 @@
         返回：
             Dict，用于加载分布式checkpoint的参数layout字典。
 
-    .. py:method:: predict(*predict_data)
+    .. py:method:: predict(*predict_data, backend=None)
 
         输入样本得到预测结果。
 
         参数：
             - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+            - **backend** (str) - 选择预测后端，值为None。
 
         返回：
             返回预测结果，类型是Tensor或Tensor元组。
