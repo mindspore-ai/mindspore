@@ -344,15 +344,23 @@ bool PluginLoader::GetPluginPath(std::string *file_path) {
 }  // namespace plugin_loader
 
 namespace device {
-const DeviceContext *FetchRealDeviceContext(const CNodePtr &node, const DeviceContext *device_context) {
+const DeviceContext *FetchRealDeviceContext(const AnfNodePtr &node, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
 
-  if (!common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, node)) {
-    return device_context;
+  std::string target = "";
+  auto ud_target = node->user_data<std::string>(kAttrPrimitiveTarget);
+  if (ud_target != nullptr) {
+    target = *ud_target;
+  } else if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+      target = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);
+    }
   }
-  const auto &target = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrPrimitiveTarget);
-  if (target == device_context->device_context_key().device_name_) {
+
+  if (target.empty() || (target == device_context->device_context_key().device_name_)) {
     return device_context;
   }
 

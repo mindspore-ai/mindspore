@@ -78,7 +78,7 @@ class DataPrepareActor : public DebugAwareActor {
   void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const;
 
   void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
-                                      const KernelGraphPtr &graph, const DeviceContext *device_context);
+                                      const KernelGraphPtr &graph);
 
   void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                        OpContext<DeviceTensor> *const context);
@@ -134,7 +134,7 @@ class DataPrepareActor : public DebugAwareActor {
   std::vector<const DeviceContext *> continuous_memory_device_contexts_;
   std::vector<std::vector<TensorPtr>> init_tensors_;
 
-  // Record the address modified input ndoes to refresh the ref node.
+  // Record the address modified input nodes to refresh the ref node.
   std::set<AnfNode *> address_modified_input_nodes_;
 };  // namespace runtime
 

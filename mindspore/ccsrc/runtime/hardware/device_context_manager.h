@@ -45,7 +45,7 @@ class PluginLoader {
 namespace device {
 using DeviceContextCreator = std::function<std::shared_ptr<DeviceContext>(const DeviceContextKey &)>;
 
-const DeviceContext *FetchRealDeviceContext(const CNodePtr &node, const DeviceContext *device_context);
+const DeviceContext *FetchRealDeviceContext(const AnfNodePtr &node, const DeviceContext *device_context);
 
 class BACKEND_EXPORT DeviceContextManager {
  public:

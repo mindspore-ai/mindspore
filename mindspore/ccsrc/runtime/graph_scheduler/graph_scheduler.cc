@@ -1001,7 +1001,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
 
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
-    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    const auto &graph_device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
     // Build host queue data source actor.
     const std::vector<AnfNodePtr> &input_nodes = graph->input_nodes();
@@ -1010,6 +1010,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     for (size_t j = 0; j < input_nodes.size(); j++) {
       const auto &input_node = input_nodes[j];
       MS_EXCEPTION_IF_NULL(input_node);
+      const auto &device_context = device::FetchRealDeviceContext(input_node, graph_device_context);
+      MS_EXCEPTION_IF_NULL(device_context);
 
       if (IsHostQueueDSActor(input_node, graph, root_parameters, graph_compiler_info.strategy_)) {
         // In control flow, parameters from subgraph need not init in data source actor.
@@ -1075,7 +1077,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           graph_compiler_info.name_ + kDeviceDSActorNameSuffix + "_" + std::to_string(graph->graph_id());
         MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
         auto device_queue_ds_actor = std::make_shared<DeviceQueueDataSourceActor>(
-          actor_name, 1, device_context, memory_manager_aid_, debug_aid_, recorder_aid_);
+          actor_name, 1, graph_device_context, memory_manager_aid_, debug_aid_, recorder_aid_);
         MS_EXCEPTION_IF_NULL(device_queue_ds_actor);
         InsertActor(device_queue_ds_actor.get());
         (void)data_source_actors.emplace_back(device_queue_ds_actor);
@@ -2495,7 +2497,9 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
     }
 
     for (auto &input_node : graph->input_nodes()) {
-      PersistDeviceTensorForParameter(input_node, graph, graph_compiler_info, device_context);
+      const auto &real_device_context = device::FetchRealDeviceContext(input_node, device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context);
+      PersistDeviceTensorForParameter(input_node, graph, graph_compiler_info, real_device_context);
     }
 
     // The device tensor store used by backoff kernel need update with the real device context.

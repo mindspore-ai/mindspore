@@ -591,6 +591,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Adjust kernel graph before run graph.
   device_context->kernel_executor_->PreprocessBeforeRun(graph);
   graph->UpdateInternalParameter();
+  // Set device target for parameter affinity.
+  AnfAlgo::SetParameterDeviceTarget(graph);
+
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context);
 

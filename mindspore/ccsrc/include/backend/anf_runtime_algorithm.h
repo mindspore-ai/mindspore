@@ -206,7 +206,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
                                          const std::pair<std::string, ExceptionType> &failure_info);
   static std::pair<std::string, ExceptionType> GetKernelSelectBackoffInfo(const AnfNodePtr &node);
 
+  // The related interface of device target.
   static std::string FetchDeviceTarget(const AnfNodePtr &node, const KernelGraph *graph);
+  // Set device target for parameter affinity by the user nodes in the graph.
+  static void SetParameterDeviceTarget(const KernelGraphPtr graph);
 
   // Get the real output num(which can be build and run in device).
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
