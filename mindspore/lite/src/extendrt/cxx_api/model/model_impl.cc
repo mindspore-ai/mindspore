@@ -240,7 +240,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteError;
   }
-  auto ret = session_->Init(model_context);
+  auto ret = session_->Init(model_context, config_info_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
