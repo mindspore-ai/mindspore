@@ -17,4 +17,5 @@ mindspore.ops.pixel_shuffle
     异常：
         - **ValueError** - `upscale_factor` 不是正整数。
         - **ValueError** - `input` 倒数第三维度的length不能被 `upscale_factor` 的平方整除。
-        - **TypeError** - `input` 维度小于3。
+        - **ValueError** - `input` 维度小于3。
+        - **TypeError** - `input` 不是Tensor。
