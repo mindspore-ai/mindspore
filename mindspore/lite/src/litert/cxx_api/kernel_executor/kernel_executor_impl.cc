@@ -42,6 +42,7 @@ std::unordered_set<std::string> support_ops = {
 std::unordered_map<std::string, int> ops_output_num = {
   {"TopK", 2},
 };
+constexpr auto kNameCustom = "Custom";
 }  // namespace
 
 KernelExecutorImpl::KernelExecutorImpl() {
@@ -232,12 +233,17 @@ Status KernelExecutorImpl::BuildInit(const std::shared_ptr<ops::BaseOperator> &o
 
   std::unique_ptr<mindspore::schema::PrimitiveT> prim_t = lite::GetPrimitiveT(converter_op);
   primitive_ = lite::ConvertToPrimitive(prim_t.get(), fbb_.get());
+  if (fbb_) {
+    fbb_->Clear();
+  }
   if (primitive_ == nullptr) {
     MS_LOG(ERROR) << "convert to primitive nullptr.";
     return kLiteNullptr;
   }
   prim_type_ = lite::GetPrimitiveType(primitive_, schema_version_);
-
+  if (op->name() == kNameCustom) {
+    return kSuccess;
+  }
   context_ = ContextUtils::Convert(ms_context.get());
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "failed to convert Context to LiteContext.";
@@ -265,28 +271,20 @@ Status KernelExecutorImpl::GetOpParameter() {
 
 Status KernelExecutorImpl::GetCustomKernel(const std::shared_ptr<Context> &ms_context) {
   int get_kernel = lite::RET_ERROR;
-  // find kernel match arch, data_type, kernel_arch and provider
-  for (auto &&device : context_->device_list_) {
-    if (!device.provider_.empty() && !device.provider_device_.empty()) {
-      kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type_,      NHWC, prim_type_,
-                             device.provider_device_,   device.provider_};
-      get_kernel = lite::KernelRegistry::GetInstance()->GetKernelExec(
-        inputs_, outputs_, context_.get(), ms_context.get(), desc, nullptr, &kernel_, primitive_);
-    }
-  }
 
   // find kernel only match arch and data_type
   if (get_kernel != RET_OK) {
     kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type_, NHWC, prim_type_, "", ""};
-    get_kernel = lite::KernelRegistry::GetInstance()->GetKernelExec(inputs_, outputs_, context_.get(), ms_context.get(),
-                                                                    desc, nullptr, &kernel_, primitive_);
+    get_kernel = lite::KernelRegistry::GetInstance()->GetCustomKernel(inputs_, outputs_, ms_context.get(), desc,
+                                                                      &kernel_, primitive_);
   }
   if (get_kernel != RET_OK) {
     MS_LOG(ERROR) << "get custom KernelExec error.";
     return static_cast<StatusCode>(get_kernel);
   }
 
-  int ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
+  std::set<std::string> providers;
+  int ret = KernelInferShape(inputs_, outputs_, primitive_, std::move(providers), schema_version_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "custom kernel infer shape error. please check inputs size and shape.";
     return static_cast<StatusCode>(ret);
