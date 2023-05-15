@@ -452,6 +452,121 @@ def test_fallback_meta_fg_not_support_type_in_3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_add():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "STR"
+            return x + y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_bitwise_and():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = 1
+            return x & y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_bitwise_or():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = 1
+            return x | y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_bitwise_xor():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = 1
+            return x ^ y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_div():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = 1
+            return x / y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_meta_fg_not_support_type_equal():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -474,7 +589,31 @@ def test_fallback_meta_fg_not_support_type_equal():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_meta_fg_not_support_type_greater_equal():
+def test_fallback_meta_fg_not_support_type_floordiv():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            x = "STR"
+            y = 1
+            return x // y
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.skip(reason="list is converted to tuple before fallback")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_greater_equal_1():
     """
     Feature: Support JIT Fallback runtime feature.
     Description: Support JIT Fallback runtime feature.
@@ -487,8 +626,215 @@ def test_fallback_meta_fg_not_support_type_greater_equal():
             return x >= y
 
     net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_greater_equal_2():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x >= y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "'>=' not supported between" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_less_equal():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x <= y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "'<=' not supported between" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_less():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x < y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "'<' not supported between" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_or():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = [1, 2]
+            y = 2
+            return x or y
+
+    net = InnerClass()
     res = net()
-    assert res
+    assert res == [1, 2]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_mod():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x % y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_pow():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x**y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_right_shift():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x >> y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_sub():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x - y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_uadd():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = 1
+            y = "str"
+            return x % y
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "unsupported operand type" in str(err.value)
 
 
 @pytest.mark.level0
