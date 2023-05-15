@@ -10,8 +10,8 @@ mindspore.dataset.Places365Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - ``'train-standard'`` 、 ``'train-challenge'`` 或 ``'val'`` 。默认值： ``'train-standard'`` 。
-        - **small** (bool, 可选) - 是否使用256*256的低分辨率图像（True）或高分辨率图像（False）。默认值： ``False`` ，使用低分辨率图像。
+        - **usage** (str, 可选) - ``'train-standard'`` 、 ``'train-challenge'`` 或 ``'val'`` 。默认值： ``None``，默认设置为 ``'train-standard'`` 。
+        - **small** (bool, 可选) - 是否使用256*256的低分辨率图像（True）或高分辨率图像（False）。默认值： ``True`` ，使用低分辨率图像。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``False`` ，不解码。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。

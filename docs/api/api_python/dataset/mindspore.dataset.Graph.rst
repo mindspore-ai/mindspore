@@ -9,9 +9,9 @@ mindspore.dataset.Graph
 
     参数：
         - **edges** (Union[list, numpy.ndarray]) - 以COO格式表示的边，shape为 [2, num_edges]。
-        - **node_feat** (dict, 可选) - 节点的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight' 等；value应该是shape为 [num_nodes, num_node_features] 的NumPy数组。
-        - **edge_feat** (dict, 可选) - 边的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight' 等；value应该是shape为 [num_edges, num_edge_features] 的NumPy数组。
-        - **graph_feat** (dict, 可选) - 附加特征，不能分配给 `node_feat` 或者 `edge_feat`，输入数据格式应该是dict，key是特征的类型，用字符串表示; value应该是NumPy数组，其shape可以不受限制。
+        - **node_feat** (dict, 可选) - 节点的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight' 等；value应该是shape为 [num_nodes, num_node_features] 的NumPy数组。默认值： ``None`` 。
+        - **edge_feat** (dict, 可选) - 边的特征，输入数据格式应该是dict，其中key表示特征的类型，用字符串表示，比如 'weight' 等；value应该是shape为 [num_edges, num_edge_features] 的NumPy数组。默认值： ``None`` 。
+        - **graph_feat** (dict, 可选) - 附加特征，不能分配给 `node_feat` 或者 `edge_feat`，输入数据格式应该是dict，key是特征的类型，用字符串表示; value应该是NumPy数组，其shape可以不受限制。默认值： ``None`` 。
         - **node_type** (Union[list, numpy.ndarray], 可选) - 节点的类型，每个元素都是字符串，表示每个节点的类型。默认值： ``None`` ，每个节点的默认类型为“0”。
         - **edge_type** (Union[list, numpy.ndarray], 可选) - 边的类型，每个元素都是字符串，表示每条边的类型。默认值： ``None`` ，每条边的默认类型为“0”。
         - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
@@ -44,7 +44,7 @@ mindspore.dataset.Graph
         获取图的所有边。
 
         参数：
-            - **edge_type** (str) - 指定边的类型。默认值： ``'0'`` 。
+            - **edge_type** (str) - 指定获取的边的类型。图被默认初始化后，会包含一个默认的边，类型为 ``'0'`` 。
 
         返回：
             numpy.ndarray，包含边的数组。
@@ -143,7 +143,7 @@ mindspore.dataset.Graph
         参数：
             - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
             - **neighbor_type** (str) - 指定相邻节点的类型。
-            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值： ``mindspore.dataset.OutputFormat.NORMAL`` ，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
+            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值： ``OutputFormat.NORMAL`` ，可取值： ``OutputFormat.NORMAL`` 、 ``OutputFormat.COO`` 、 ``OutputFormat.CSR`` 。
 
         返回：
             对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示相邻节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示相邻节点。

@@ -333,8 +333,8 @@ class GraphData:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor node.
             output_format (OutputFormat, optional): Output storage format.
-                Default: ``mindspore.dataset.OutputFormat.NORMAL``.
-                It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
+                Default: ``OutputFormat.NORMAL``.
+                It can be ``OutputFormat.NORMAL``, ``OutputFormat.COO``, ``OutputFormat.CSR``.
 
         Returns:
             For NORMAL format or COO format
@@ -382,8 +382,8 @@ class GraphData:
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
                 neighbor_types should be int.
             strategy (SamplingStrategy, optional): Sampling strategy.
-                Default: ``mindspore.dataset.SamplingStrategy.RANDOM``.
-                It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
+                Default: ``SamplingStrategy.RANDOM``.
+                It can be ``SamplingStrategy.RANDOM``, ``SamplingStrategy.EDGE_WEIGHT``.
 
                 - ``SamplingStrategy.RANDOM``, random sampling with replacement.
                 - ``SamplingStrategy.EDGE_WEIGHT``, sampling with edge weight as probability.
@@ -559,13 +559,13 @@ class Graph(GraphData):
         edges(Union[list, numpy.ndarray]): edges of graph in COO format with shape [2, num_edges].
         node_feat(dict, optional): feature of nodes, input data format should be dict, key is feature type, which is
             represented with string like 'weight' etc, value should be numpy.array with shape
-            [num_nodes, num_node_features].
+            [num_nodes, num_node_features]. Default: ``None``.
         edge_feat(dict, optional): feature of edges, input data format should be dict, key is feature type, which is
             represented with string like 'weight' etc, value should be numpy.array with shape
-            [num_edges, num_edge_features].
+            [num_edges, num_edge_features]. Default: ``None``.
         graph_feat(dict, optional): additional feature, which can not be assigned to node_feat or edge_feat, input data
             format should be dict, key is feature type, which is represented with string, value should be numpy.array,
-            its shape is not restricted.
+            its shape is not restricted. Default: ``None``.
         node_type(Union[list, numpy.ndarray], optional): type of nodes, each element should be string which represent
             type of corresponding node. Default: ``None`` , default type for each node is "0".
         edge_type(Union[list, numpy.ndarray], optional): type of edges, each element should be string which represent
@@ -719,8 +719,8 @@ class Graph(GraphData):
         Get all edges in the graph.
 
         Args:
-            edge_type (str): Specify the type of edge, default `edge_type` is ``"0"`` when init graph without specify
-                edge_type.
+            edge_type (str): Specify the type of edge. If the graph is initialized by default,
+                there is a default edge with type ``"0"`` in it.
 
         Returns:
             numpy.ndarray, array of edges.
@@ -835,8 +835,8 @@ class Graph(GraphData):
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (str): Specify the type of neighbor node.
             output_format (OutputFormat, optional): Output storage format.
-                Default: ``mindspore.dataset.OutputFormat.NORMAL``.
-                It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
+                Default: ``OutputFormat.NORMAL``.
+                It can be ``OutputFormat.NORMAL``, ``OutputFormat.COO``, ``OutputFormat.CSR``.
 
         Returns:
             For NORMAL format or COO format
@@ -888,8 +888,8 @@ class Graph(GraphData):
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop, type of each element in
                 neighbor_types should be str.
             strategy (SamplingStrategy, optional): Sampling strategy.
-                Default: ``mindspore.dataset.SamplingStrategy.RANDOM``.
-                It can be any of [SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT].
+                Default: ``SamplingStrategy.RANDOM``.
+                It can be ``SamplingStrategy.RANDOM``, ``SamplingStrategy.EDGE_WEIGHT``.
 
                 - ``SamplingStrategy.RANDOM``, random sampling with replacement.
                 - ``SamplingStrategy.EDGE_WEIGHT``, sampling with edge weight as probability.
@@ -1431,7 +1431,7 @@ class ArgoverseDataset(InMemoryGraphDataset):
             option could be beneficial if the Python operation is computational heavy.
             Default: ``True``.
         perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
-            `__getitem__` method in this process). Default ``True``, will save all the data in graph
+            `__getitem__` method in this process). Default: ``True``, will save all the data in graph
             (like edge index, node feature and graph feature) into graph feature.
 
     Raises:

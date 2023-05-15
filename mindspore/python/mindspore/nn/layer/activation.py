@@ -522,8 +522,8 @@ class RReLU(Cell):
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     Args:
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1/8`` .
-        upper (Union[int, float]): Slope of the activation function at x < 0. Default: ``1/3`` .
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1 / 8`` .
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: ``1 / 3`` .
 
     Inputs:
         - **x** (Tensor) - The input of RReLU is a Tensor of any dimension.
@@ -823,7 +823,7 @@ class GELU(Cell):
     Args:
         approximate (bool): Whether to enable approximation. Default: ``True`` .
 
-            If approximate is True, The gaussian error linear activation is:
+            If `approximate` is ``True``, The gaussian error linear activation is:
 
             :math:`0.5 * x * (1 + tanh(\sqrt(2 / \pi) * (x + 0.044715 * x^3)))`
 

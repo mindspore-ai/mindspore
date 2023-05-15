@@ -768,7 +768,7 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Args:
         dtype (mindspore.dtype): The type of output. Its value must be one of mstype.int16,
-            mstype.int32 and mstype.int64. Default: ``mstype.nt64`` .
+            mstype.int32 and mstype.int64. Default: ``mstype.int64`` .
 
     Inputs:
         - **logits** (Tensor) - The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.

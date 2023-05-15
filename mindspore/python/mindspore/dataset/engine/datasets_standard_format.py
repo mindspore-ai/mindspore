@@ -146,7 +146,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             :class:`mindspore.dataset.PKSampler`, :class:`mindspore.dataset.RandomSampler`,
             :class:`mindspore.dataset.SequentialSampler`, :class:`mindspore.dataset.DistributedSampler`.
         padded_sample (dict, optional): Samples will be appended to dataset, where
-            keys are the same as column_list.
+            keys are the same as column_list. Default: ``None``.
         num_padded (int, optional): Number of padding samples. Dataset size
             plus num_padded should be divisible by num_shards. Default: ``None``.
         num_samples (int, optional): The number of samples to be included in the dataset.
@@ -380,7 +380,7 @@ class OBSMindDataset(GeneratorDataset):
             create it on cloud storage in advance. Path is in the format of s3://bucketName/objectKey.
         columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: ``None`` , performs global shuffle. Bool type and Shuffle enum are both supported to pass in.
+            Default: ``Shuffle.GLOBAL``. Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is ``False`` , no shuffling will be performed.
             If `shuffle` is ``True`` , performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by :class:`mindspore.dataset.Shuffle` .

@@ -146,16 +146,16 @@ class JiebaTokenizer(TextTensorOperation):
             The dictionary can be obtained on the official website of cppjieba.
         mp_path (str): Dictionary file is used by MPSegment algorithm.
             The dictionary can be obtained on the official website of cppjieba.
-        mode (JiebaMode, optional): Valid values can be any of [JiebaMode.MP, JiebaMode.HMM,
-            JiebaMode.MIX]. Default: JiebaMode.MIX.
+        mode (JiebaMode, optional): Valid values can be ``JiebaMode.MP``, ``JiebaMode.HMM``,
+            ``JiebaMode.MIX``. Default: ``JiebaMode.MIX``.
 
-            - JiebaMode.MP, tokenize with MPSegment algorithm.
+            - ``JiebaMode.MP``, tokenize with MPSegment algorithm.
 
-            - JiebaMode.HMM, tokenize with Hidden Markov Model Segment algorithm.
+            - ``JiebaMode.HMM``, tokenize with Hidden Markov Model Segment algorithm.
 
-            - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
+            - ``JiebaMode.MIX``, tokenize with a mix of MPSegment and HMMSegment algorithm.
 
-        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
+        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
 
     Raises:
         ValueError: If path of HMMSegment dict is not provided.
@@ -219,7 +219,7 @@ class JiebaTokenizer(TextTensorOperation):
             word (str): The word to be added to the JiebaTokenizer instance.
                 The added word will not be written into the built-in dictionary on disk.
             freq (int, optional): The frequency of the word to be added. The higher the frequency,
-                the better chance the word will be tokenized. Default: None, use default frequency.
+                the better chance the word will be tokenized. Default: ``None``, use default frequency.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -327,9 +327,9 @@ class Lookup(TextTensorOperation):
         vocab (Vocab): A vocabulary object.
         unknown_token (str, optional): Word is used for lookup. In case of the word is out of vocabulary (OOV),
             the result of lookup will be replaced with unknown_token. If the unknown_token is not specified or
-            it is OOV, runtime error will be thrown. Default: None, means no unknown_token is specified.
+            it is OOV, runtime error will be thrown. Default: ``None``, means no unknown_token is specified.
         data_type (mindspore.dtype, optional): The data type that lookup operation maps
-            string to. Default: mindspore.int32.
+            string to. Default: ``mstype.int32``.
 
     Raises:
         TypeError: If `vocab` is not of type text.Vocab.
@@ -373,13 +373,13 @@ class Ngram(TextTensorOperation):
             an empty string produced.
         left_pad (tuple, optional): Padding performed on left side of the sequence shaped like ("pad_token", pad_width).
             `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
-            sequence with "__". Default: ('', 0).
+            sequence with "__". Default: ``('', 0)``.
         right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
             ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("_", 2)
-            would pad right side of the sequence with "__". Default: ('', 0).
+            would pad right side of the sequence with "__". Default: ``('', 0)``.
         separator (str, optional): Symbol used to join strings together. For example, if 2-gram is
-            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"].
-            Default: ' ', which will use whitespace as separator.
+            ["mindspore", "amazing"] with separator is ``"-"``, the result would be ["mindspore-amazing"].
+            Default: ``' '``, which will use whitespace as separator.
 
     Raises:
         TypeError: If values of `n` not positive is not of type int.
@@ -464,11 +464,11 @@ class SentencePieceTokenizer(TextTensorOperation):
         mode (Union[str, SentencePieceVocab]): SentencePiece model.
             If the input parameter is a file, it represents the path of SentencePiece mode to be loaded.
             If the input parameter is a SentencePieceVocab object, it should be constructed in advanced.
-        out_type (SPieceTokenizerOutType): The type of output, it can be any of [SPieceTokenizerOutType.STRING,
-            SPieceTokenizerOutType.INT].
+        out_type (SPieceTokenizerOutType): The type of output, it can be ``SPieceTokenizerOutType.STRING``,
+            ``SPieceTokenizerOutType.INT``.
 
-            - SPieceTokenizerOutType.STRING, means output type of SentencePice Tokenizer is string.
-            - SPieceTokenizerOutType.INT, means output type of SentencePice Tokenizer is int.
+            - ``SPieceTokenizerOutType.STRING``, means output type of SentencePice Tokenizer is string.
+            - ``SPieceTokenizerOutType.INT``, means output type of SentencePice Tokenizer is int.
 
     Raises:
         TypeError: If `mode` is not of type string or SentencePieceVocab.
@@ -505,7 +505,7 @@ class SlidingWindow(TextTensorOperation):
 
     Args:
         width (int): The width of the window. It must be an integer and greater than zero.
-        axis (int, optional): The axis along which the sliding window is computed. Default: 0.
+        axis (int, optional): The axis along which the sliding window is computed. Default: ``0``.
 
     Raises:
         TypeError: If `width` is not of type int.
@@ -589,10 +589,11 @@ class ToVectors(TextTensorOperation):
     Args:
         vectors (Vectors): A vectors object.
         unk_init (sequence, optional): Sequence used to initialize out-of-vectors (OOV) token.
-            Default: None, initialize with zero vectors.
-        lower_case_backup (bool, optional): Whether to look up the token in the lower case. If False, each token in the
-            original case will be looked up; if True, each token in the original case will be looked up first, if not
-            found in the keys of the property stoi, the token in the lower case will be looked up. Default: False.
+            Default: ``None``, initialize with zero vectors.
+        lower_case_backup (bool, optional): Whether to look up the token in the lower case. If ``False``,
+            each token in the original case will be looked up; if ``True``, each token in the original
+            case will be looked up first, if not found in the keys of the property stoi, the token in the
+            lower case will be looked up. Default: ``False``.
 
     Raises:
         TypeError: If `unk_init` is not of type sequence.
@@ -708,7 +709,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
 
     Args:
-        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
+        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
 
     Raises:
         TypeError: If `with_offsets` is not of type bool.
@@ -743,13 +744,13 @@ class WordpieceTokenizer(TextTensorOperation):
 
     Args:
         vocab (Vocab): Vocabulary used to look up words.
-        suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: '##'.
+        suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: ``'##'``.
         max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
-                not be split. Default: 100.
+                not be split. Default: ``100``.
         unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
                 unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
-                output. Default: '[UNK]'.
-        with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
+                output. Default: ``'[UNK]'``.
+        with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
 
     Raises:
         TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
@@ -892,30 +893,32 @@ if platform.system().lower() != 'windows':
 
         Args:
             vocab (Vocab): Vocabulary used to look up words.
-            suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: '##'.
+            suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: ``'##'``.
             max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
-                not be split. Default: 100.
+                not be split. Default: ``100``.
             unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
                 unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
-                output. Default: '[UNK]'.
-            lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
-                text to lower case and strip accented characters. If False, will only perform normalization on the
-                text, with mode specified by `normalization_form` . Default: False.
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
+                output. Default: ``'[UNK]'``.
+            lower_case (bool, optional): Whether to perform lowercase processing on the text. If ``True``, will fold the
+                text to lower case and strip accented characters. If ``False``, will only perform normalization on the
+                text, with mode specified by `normalization_form` . Default: ``False``.
+            keep_whitespace (bool, optional): If ``True``, the whitespace will be kept in the output.
+                Default: ``False``.
             normalization_form (NormalizeForm, optional):
                 `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
-                is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
-                NormalizeForm.NFKD. Default: NormalizeForm.NONE.
+                is ``False``, can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``, ``NormalizeForm.NFKC``,
+                ``NormalizeForm.NFD`` or ``NormalizeForm.NFKD``. Default: ``NormalizeForm.NONE``.
 
-                - NormalizeForm.NONE, no normalization.
-                - NormalizeForm.NFC, Canonical Decomposition, followed by Canonical Composition.
-                - NormalizeForm.NFKC, Compatibility Decomposition, followed by Canonical Composition.
-                - NormalizeForm.NFD, Canonical Decomposition.
-                - NormalizeForm.NFKD, Compatibility Decomposition.
+                - ``NormalizeForm.NONE``, no normalization.
+                - ``NormalizeForm.NFC``, Canonical Decomposition, followed by Canonical Composition.
+                - ``NormalizeForm.NFKC``, Compatibility Decomposition, followed by Canonical Composition.
+                - ``NormalizeForm.NFD``, Canonical Decomposition.
+                - ``NormalizeForm.NFKD``, Compatibility Decomposition.
 
-            preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
-                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
-            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
+            preserve_unused_token (bool, optional): Whether to preserve special tokens. If ``True``,
+                will not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'.
+                Default: ``True``.
+            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
 
         Raises:
             TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
@@ -1036,16 +1039,16 @@ if platform.system().lower() != 'windows':
             NormalizeUTF8 is not supported on Windows platform yet.
 
         Args:
-            normalize_form (NormalizeForm, optional): Valid values can be [NormalizeForm.NONE, NormalizeForm.NFC,
-                NormalizeForm.NFKC, NormalizeForm.NFD, NormalizeForm.NFKD] any of the four unicode
-                normalized forms. Default: NormalizeForm.NFKC.
+            normalize_form (NormalizeForm, optional): Valid values can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``,
+                ``NormalizeForm.NFKC``,`` NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
+                normalized forms. Default: ``NormalizeForm.NFKC``.
                 See http://unicode.org/reports/tr15/ for details.
 
-                - NormalizeForm.NONE, do nothing for input string tensor.
-                - NormalizeForm.NFC, normalize with Normalization Form C.
-                - NormalizeForm.NFKC, normalize with Normalization Form KC.
-                - NormalizeForm.NFD, normalize with Normalization Form D.
-                - NormalizeForm.NFKD, normalize with Normalization Form KD.
+                - ``NormalizeForm.NONE``, do nothing for input string tensor.
+                - ``NormalizeForm.NFC``, normalize with Normalization Form C.
+                - ``NormalizeForm.NFKC``, normalize with Normalization Form KC.
+                - ``NormalizeForm.NFD``, normalize with Normalization Form D.
+                - ``NormalizeForm.NFKD``, normalize with Normalization Form KD.
 
         Raises:
             TypeError: If `normalize_form` is not of type NormalizeForm.
@@ -1084,8 +1087,8 @@ if platform.system().lower() != 'windows':
         Args:
             pattern (str): the regex expression patterns.
             replace (str): the string to replace matched element.
-            replace_all (bool, optional): If False, only replace first matched element;
-                if True, replace all matched elements. Default: True.
+            replace_all (bool, optional): If ``False``, only replace first matched element;
+                if ``True``, replace all matched elements. Default: ``True``.
 
         Raises:
             TypeError: If `pattern` is not of type string.
@@ -1128,8 +1131,8 @@ if platform.system().lower() != 'windows':
                 The original string will be split by matched elements.
             keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. The default value is an empty str
-                which means that delimiters will not be kept as an output token. Default: ''.
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
+                which means that delimiters will not be kept as an output token. Default: ``''``.
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
 
         Raises:
             TypeError: If `delim_pattern` is not of type string.
@@ -1173,8 +1176,8 @@ if platform.system().lower() != 'windows':
             UnicodeScriptTokenizer is not supported on Windows platform yet.
 
         Args:
-            keep_whitespace (bool, optional): Whether or not emit whitespace tokens. Default: False.
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
+            keep_whitespace (bool, optional): Whether or not emit whitespace tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
 
         Raises:
             TypeError: If `keep_whitespace` is not of type bool.
@@ -1217,7 +1220,7 @@ if platform.system().lower() != 'windows':
             WhitespaceTokenizer is not supported on Windows platform yet.
 
         Args:
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: False.
+            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
 
         Raises:
             TypeError: If `with_offsets` is not of type bool.

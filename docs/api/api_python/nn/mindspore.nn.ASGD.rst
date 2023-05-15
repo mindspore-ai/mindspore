@@ -37,7 +37,7 @@ mindspore.nn.ASGD
 
         - **lambd** (float) - 衰减项。默认值： ``1e-4`` 。
         - **alpha** (float) -  :math:`\eta` 更新的系数。默认值： ``0.75`` 。
-        - **t0** (float) - 开始平均的点。默认值： ``1e-6`` 。
+        - **t0** (float) - 开始平均的点。默认值： ``1e6`` 。
         - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst

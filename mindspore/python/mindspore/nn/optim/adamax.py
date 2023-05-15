@@ -121,7 +121,7 @@ class AdaMax(Optimizer):
         beta2 (float): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
                        Default: ``0.999`` .
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
-                     Default: ``1e-8`` .
+                     Default: ``1e-08`` .
 
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: ``0.0`` .
 

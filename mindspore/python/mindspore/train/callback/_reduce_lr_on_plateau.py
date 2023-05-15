@@ -49,11 +49,11 @@ class ReduceLROnPlateau(Callback):
 
     Args:
         monitor (str): quantity to be monitored. If evaluation is performed on
-            the end of train epochs, the valid monitors can be "loss",
-            "eval_loss" or metric names passed when instantiate the `Model`;
-            otherwise the valid monitor is "loss".
-            When monitor is "loss", if train network has multiple outputs,
-            the first element will be returned as training loss.
+            the end of train epochs, the valid monitors can be ``"loss"``,
+            ``"eval_loss"`` or metric names passed when instantiate the `Model`;
+            otherwise the valid monitor is ``"loss"``.
+            When `monitor` is ``"loss"``, if train network has multiple outputs,
+            the first element will be returned as training loss. Default: ``'eval_loss'``.
 
         factor (float): factor by which the learning rate will be reduced.
             `new_lr = lr * factor`. Default: ``0.1`` .

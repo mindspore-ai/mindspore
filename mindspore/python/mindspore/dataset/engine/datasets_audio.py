@@ -740,7 +740,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             ``'all'`` will read from all samples.
             For `release3`, can only be ``'all'``, it will read from data samples. Default: ``None`` , all samples.
         extensions (str, optional): Extensions of the SPH files, only ``'.sph'`` is valid.
-            Default: ``None`` , ``".sph"``.
+            Default: ``None`` , set to ``".sph"``.
         num_samples (int, optional): The number of audio samples to be included in the dataset.
             Default: ``None`` , all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.

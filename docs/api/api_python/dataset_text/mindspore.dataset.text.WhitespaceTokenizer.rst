@@ -8,7 +8,7 @@ mindspore.dataset.text.WhitespaceTokenizer
     .. note:: Windows平台尚不支持 `WhitespaceTokenizer` 。
 
     参数：
-        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量。默认值：False。
+        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量。默认值： ``False`` 。
 
     异常：
         - **TypeError** - 参数 `with_offsets` 的类型不为bool。

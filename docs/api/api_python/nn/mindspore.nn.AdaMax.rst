@@ -37,7 +37,7 @@ mindspore.nn.AdaMax
 
         - **beta1** (float) - 第一个动量矩阵的指数衰减率。参数范围（0.0,1.0）。默认值： ``0.9`` 。
         - **beta2** (float) - 第二个动量矩阵的指数衰减率。参数范围（0.0,1.0）。默认值： ``0.999``。
-        - **eps** (float) - 加在分母上的值，以确保数值稳定。必须大于0。默认值： ``1e-8`` 。
+        - **eps** (float) - 加在分母上的值，以确保数值稳定。必须大于0。默认值： ``1e-08`` 。
         - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值： ``0.0`` 。
 
           .. include:: mindspore.nn.optim_arg_dynamic_wd.rst

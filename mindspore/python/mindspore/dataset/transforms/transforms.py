@@ -346,10 +346,11 @@ class Concatenate(TensorOperation):
     Tensor operation that concatenates all columns into a single tensor, only 1D tenspr is supported.
 
     Args:
-        axis (int, optional): Concatenate the tensors along given axis. Default: 0.
+        axis (int, optional): Concatenate the tensors along given axis. Default: ``0``.
         prepend (numpy.ndarray, optional): NumPy array to be prepended to the already concatenated tensors.
-            Default: None.
-        append (numpy.ndarray, optional): NumPy array to be appended to the already concatenated tensors. Default: None.
+            Default: ``None``.
+        append (numpy.ndarray, optional): NumPy array to be appended to the already concatenated tensors.
+            Default: ``None``.
 
     Raises:
         TypeError: If `axis` is not of type int.
@@ -463,10 +464,11 @@ class Mask(TensorOperation):
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
 
     Args:
-        operator (Relational): relational operators, it can be any of [Relational.EQ, Relational.NE, Relational.LT,
-            Relational.GT, Relational.LE, Relational.GE], take Relational.EQ as example, EQ refers to equal.
+        operator (Relational): relational operators, it can be ``Relational.EQ``, ``Relational.NE``, ``Relational.LT``,
+            ``Relational.GT``, ``Relational.LE``, ``Relational.GE``, take ``Relational.EQ`` as example,
+            EQ refers to equal.
         constant (Union[str, int, float, bool]): Constant to be compared to.
-        dtype (mindspore.dtype, optional): Type of the generated mask. Default: mindspore.dtype.bool\_.
+        dtype (mindspore.dtype, optional): Type of the generated mask. Default: ``mstype.bool\_``.
 
     Raises:
         TypeError: `operator` is not of type Relational.
@@ -513,7 +515,7 @@ class OneHot(TensorOperation):
         num_classes (int): Number of classes of objects in dataset.
             It should be larger than the largest label number in the dataset.
         smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
-            Default: 0.0, means no smoothing is applied.
+            Default: ``0.0``, means no smoothing is applied.
 
     Raises:
         TypeError: `num_classes` is not of type int.
@@ -547,10 +549,10 @@ class PadEnd(TensorOperation):
     Pad input tensor according to pad_shape, input tensor needs to have same rank.
 
     Args:
-        pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to `None` will
+        pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to ``None`` will
             not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
-        pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default to 0 or empty
-            string in case of tensors of strings.
+        pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default: ``None``.
+            Default to ``0`` in case of tensors of Numbers, or empty string in case of tensors of strings.
 
     Raises:
         TypeError: If `pad_shape` is not of type list.
@@ -629,7 +631,7 @@ class RandomApply(CompoundOperation):
 
     Args:
         transforms (list): List of transformations to be applied.
-        prob (float, optional): The probability to apply the transformation list. Default: 0.5.
+        prob (float, optional): The probability to apply the transformation list. Default: ``0.5``.
 
     Raises:
         TypeError: If `transforms` is not of type list.
@@ -775,8 +777,8 @@ class Relational(IntEnum):
     """
     Relationship operator.
 
-    Possible enumeration values are: Relational.EQ, Relational.NE, Relational.GT, Relational.GE, Relational.LT,
-    Relational.LE.
+    Possible enumeration values are: ``Relational.EQ``, ``Relational.NE``, ``Relational.GT``, ``Relational.GE``,
+    ``Relational.LT``, ``Relational.LE``.
 
     - Relational.EQ: refers to Equality.
     - Relational.NE: refers not equal, or Inequality.

@@ -7,7 +7,7 @@ mindspore.dataset.transforms.OneHot
 
     参数：
         - **num_classes** (int) - 数据集的类别数，它应该大于数据集中最大的label编号。
-        - **smoothing_rate** (float，可选) - 标签平滑的系数。默认值：0.0。
+        - **smoothing_rate** (float，可选) - 标签平滑的系数。默认值： ``0.0`` 。
 
     异常：
         - **TypeError** - 参数 `num_classes` 类型不为int。

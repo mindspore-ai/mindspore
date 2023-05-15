@@ -39,7 +39,7 @@ mindspore.ops.Conv3DTranspose
         - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸，指定应用卷积核的间隔。默认值： ``1`` 。
         - **group** (int) - 将过滤器拆分为组。默认值： ``1`` 。目前仅支持取值1。
         - **output_padding** (Union(int, tuple[int])) - 为输出的各个维度添加额外长度。默认值： ``0`` 。
-        - **data_format** (str) - 支持的数据模式。目前仅支持 ``"NCDHW"`` 。
+        - **data_format** (str) - 支持的数据模式。目前仅支持 ``"NCDHW"`` 。默认值： ``"NCDHW"`` 。
 
     输入：
         - **dout** (Tensor) - 卷积操作的输出的梯度Tensor。shape： :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})` 。目前数据类型仅支持float16和float32。

@@ -908,13 +908,13 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
             all samples.
         language_pair (sequence, optional): Sequence containing source and target language, supported values are
             ``('en', 'fr')``, ``('en', 'de')``, ``('en', 'cs')``, ``('en', 'ar')``, ``('fr', 'en')``,
-            ``('de', 'en')``, ``('cs', 'en')``, ``('ar', 'en')``. Default: ``('de', 'en')``.
+            ``('de', 'en')``, ``('cs', 'en')``, ``('ar', 'en')``. Default: ``None``, set to ``('de', 'en')``.
         valid_set (str, optional): A string to identify validation set, when usage is valid or all, the validation set
             of `valid_set` type will be read, supported values are ``'dev2010'``, ``'tst2010'``, ``'tst2011'``,
-            ``'tst2012'``, ``'tst2013'`` and ``'tst2014'``. Default: ``'tst2013'``.
+            ``'tst2012'``, ``'tst2013'`` and ``'tst2014'``. Default: ``None``, set to ``'tst2013'``.
         test_set (str, optional): A string to identify test set, when usage is test or all, the test set of `test_set`
             type will be read, supported values are ``'dev2010'``, ``'tst2010'``, ``'tst2011'``, ``'tst2012'``,
-            ``'tst2013'`` and ``'tst2014'``. Default: ``'tst2014'``.
+            ``'tst2013'`` and ``'tst2014'``. Default: ``None``, set to ``'tst2014'``.
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
@@ -1041,7 +1041,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
             ``('en', 'de')``, ``('en', 'it')``, ``('en', 'ro')``, ``('nl', 'en')``, ``('nl', 'de')``, ``('nl', 'it')``,
             ``('nl', 'ro')``, ``('de', 'en')``, ``('de', 'nl')``, ``('de', 'it')``, ``('de', 'ro')``, ``('it', 'en')``,
             ``('it', 'nl')``, ``('it', 'de')``, ``('it', 'ro')``, ``('ro', 'en')``, ``('ro', 'nl')``, ``('ro', 'de')``,
-            ``('ro', 'it')``. Default: ``('de', 'en')``.
+            ``('ro', 'it')``. Default: ``None``, set to ``('de', 'en')``.
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.

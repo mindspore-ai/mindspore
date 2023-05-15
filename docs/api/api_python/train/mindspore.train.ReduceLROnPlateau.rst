@@ -11,7 +11,7 @@ mindspore.train.ReduceLROnPlateau
         暂不支持分组学习率场景。
 
     参数：
-        - **monitor** (str) - 监控指标。如果是边训练边推理场景，合法的monitor配置值可以为"loss", "eval_loss"以及实例化 `Model` 时传入的metric名称；如果在训练时不做推理，合法的monitor配置值为"loss"。当monitor为"loss"时，如果训练网络有多个输出，默认取第一个值为训练损失值。默认值： ``'eval_loss'`` 。
+        - **monitor** (str) - 监控指标。如果是边训练边推理场景，配置值可以为 ``"loss"`` 、 ``"eval_loss"`` 以及实例化 `Model` 时传入的metric名称；如果在训练时不做推理，配置值可以为 ``"loss"`` 。当 `monitor` 为 ``"loss"`` 时，如果训练网络有多个输出，默认取第一个值为训练损失值。默认值： ``'eval_loss'`` 。
         - **factor** (float) - 学习率变化系数，范围在0-1之间。默认值： ``0.1`` 。
         - **patience** (int) - `moniter` 相对历史最优值变好超过 `min_delta` 视为当前epoch的模型效果有所改善，`patience` 为等待的无改善epoch的数量，当内部等待的epoch数 `self.wait` 大于等于 `patience` 时，训练停止。默认值： ``10`` 。
         - **verbose** (bool) - 是否打印相关信息。默认值： ``False`` 。
