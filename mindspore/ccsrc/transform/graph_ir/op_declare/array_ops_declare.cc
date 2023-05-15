@@ -179,7 +179,7 @@ REG_ADPT_DESC(Where, kNameWhere, ADPT_DESC(Where))
 
 // Unique
 INPUT_MAP(Unique) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Unique) = EMPTY_ATTR_MAP;
+ATTR_MAP(Unique) = {{"out_idx", ATTR_DESC(out_idx, AnyTraits<GEType>())}};
 OUTPUT_MAP(Unique) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}};
 REG_ADPT_DESC(Unique, kNameUnique, ADPT_DESC(Unique))
 

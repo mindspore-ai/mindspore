@@ -179,6 +179,11 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                                bn_training_update_grad_outputs[0], bn_training_update_grad_outputs[1]};
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
+  std::vector<AbstractBasePtr> abstract_list;
+  for (size_t i = 1; i < make_tuple_inputs.size(); ++i) {
+    (void)abstract_list.emplace_back(make_tuple_inputs[i]->abstract());
+  }
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
 }
 }  // namespace opt

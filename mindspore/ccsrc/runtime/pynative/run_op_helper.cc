@@ -926,7 +926,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
 
     // Launch kernel
     const size_t stream_id = AnfAlgo::GetStreamId(kernel);
-    if (!device_context->kernel_executor_->LaunchKernel(kernel, inputs, workspaces, outputs, stream_id)) {
+    if (!device_context->GetKernelExecutor(true)->LaunchKernel(kernel, inputs, workspaces, outputs, stream_id)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << kernel->fullname_with_scope();
     }
 
@@ -982,7 +982,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
     const size_t stream_id = AnfAlgo::GetStreamId(node);
-    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
+    if (!device_context->GetKernelExecutor(false)->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 

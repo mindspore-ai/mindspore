@@ -186,6 +186,8 @@ class MIND_API AGDynamicStitchInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return DynamicStitchInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicStitch, prim::kPrimDynamicStitch, AGDynamicStitchInfer, false);

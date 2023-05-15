@@ -869,6 +869,7 @@ constexpr auto kUnsortedSegmentMinDOpName = "UnsortedSegmentMinD";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentProdDOpName = "UnsortedSegmentProdD";
 constexpr auto kUnsortedSegmentSumOpName = "UnsortedSegmentSum";
+constexpr auto kTransShapeOpName = "TransShape";
 constexpr auto kUnsortedSegmentSumDOpName = "UnsortedSegmentSumD";
 constexpr auto kUnravelIndexOpName = "UnravelIndex";
 constexpr auto kUpdateCacheOpName = "UpdateCache";

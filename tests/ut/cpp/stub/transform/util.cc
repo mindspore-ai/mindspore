@@ -103,8 +103,13 @@ Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, const std::shared
 }
 
 std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const { return ""; }
+std::map<std::string, ValuePtr> OpAdapterImpl::GetOpAttrList(const OperatorPtr &) const { return {}; }
+int OpAdapterImpl::setAttr(const OperatorPtr &, const uint32_t &, const ValuePtr &) { return 0; }
+int OpAdapterImpl::getAttr(const OperatorPtr &, const std::string &, ValuePtr *) { return 0; }
+int OpAdapterImpl::getAttr(const OperatorPtr &, uint32_t, ValuePtr *) { return 0; }
 
 bool IsCustomCNode(const mindspore::AnfNodePtr &node) { return true; }
 std::string TransformUtil::NormOpName(const std::string &anf_name) { return ""; }
+GeDataType TransformUtil::ConvertDataType(const MeDataType &type) { return GeDataType::DT_UNDEFINED; }
 }  // namespace transform
 }  // namespace mindspore

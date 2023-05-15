@@ -115,6 +115,8 @@ class MIND_API AGHistogramFixedWidthInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return HistogramFixedWidthInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(HistogramFixedWidth, prim::kPrimHistogramFixedWidth, AGHistogramFixedWidthInfer,

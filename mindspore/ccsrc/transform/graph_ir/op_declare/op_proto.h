@@ -35,8 +35,9 @@ class OpProto {
 
   size_t GetInputIndexByName(const std::string &name) const;
   size_t GetOutputIndexByName(const std::string &name) const;
-  bool GetInputOptionalTypeByName(const std::string &name) const;
-  bool GetAttrOptionalTypeByName(const std::string &name) const;
+
+  bool IsInputOptionalTypeByName(const std::string &name) const;
+  bool IsAttrOptionalTypeByName(const std::string &name) const;
   std::vector<enum ge::DataType> GetInputTypesByName(const std::string &name) const;
   std::vector<enum ge::DataType> GetOutputTypesByName(const std::string &name) const;
 

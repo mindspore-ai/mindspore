@@ -776,7 +776,7 @@ TensorPtr SessionBasic::GetCNodeOutputTensor(const KernelWithIndex &kernel_with_
   return iter->second;
 }
 
-void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const {
+void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::set<int64_t> *const_input_attr_index) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(const_input_attr_index);
   auto ms_context = MsContext::GetInstance();
@@ -785,20 +785,21 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
   if (device_target != kAscendDevice) {
     return;
   }
+  *const_input_attr_index = abstract::GetValueDependArgIndices(cnode);
+  if (!const_input_attr_index->empty()) {
+    return;
+  }
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  auto op_adaptation_info =
-    opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, true);
+  auto op_adaptation_info = opt::OpAdaptationInfoRegister::GetOpAdaptationInfo(op_name, kAscendDevice, true);
   if (op_adaptation_info == nullptr) {
-    MS_LOG(DEBUG) << "Cannot get op_adaptation_info for " << op_name << " no need to convert input to attr.";
     return;
   }
-  // No need to convert input to attr for dynamic op.
-  if (op_adaptation_info->need_tbe_check_supported() && common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
-    return;
+  if (op_adaptation_info->is_ascend_mindir()) {
+    auto input_to_attr_map = op_adaptation_info->input_attr_map();
+    for (const auto &input_attr_info : input_to_attr_map) {
+      (void)const_input_attr_index->insert(SizeToLong(input_attr_info.first));
+    }
   }
-  auto input_to_attr_map = op_adaptation_info->input_attr_map();
-  (void)std::transform(input_to_attr_map.begin(), input_to_attr_map.end(), std::back_inserter(*const_input_attr_index),
-                       [](auto iter) { return iter.first; });
 }
 
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
@@ -810,9 +811,9 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  std::vector<size_t> const_input_attr_index = {};
+  std::set<int64_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
-  MS_LOG(DEBUG) << "const_input_attr_index " << const_input_attr_index;
+  //  MS_LOG(DEBUG) << "const_input_attr_index " << const_input_attr_index;
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
@@ -826,8 +827,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       MS_EXCEPTION_IF_NULL(value_ptr);
       auto is_value_node = value_ptr->isa<StringImm>();
       if (!const_input_attr_index.empty()) {
-        is_value_node = std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i - 1) !=
-                        const_input_attr_index.end();
+        is_value_node = (const_input_attr_index.count(SizeToLong(i - 1)) != 0);
       }
 
       bool is_forward_output = false;
@@ -1569,10 +1569,9 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
       uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       const auto &device_context =
         device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-      auto deprecated_kernel_executor =
-        dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
-      if (deprecated_kernel_executor != nullptr) {
-        rank_id = deprecated_kernel_executor->GetRankID();
+      auto kernel_executor = device_context->GetKernelExecutor(false);
+      if (kernel_executor != nullptr) {
+        rank_id = kernel_executor->GetRankID();
       }
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());

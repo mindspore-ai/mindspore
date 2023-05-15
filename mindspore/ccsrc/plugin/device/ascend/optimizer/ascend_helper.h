@@ -128,6 +128,8 @@ inline bool NeedInsertTransData(const ShapeVector &origin_shape, const std::stri
 }
 
 void NormalizeReduceAttrAxis(const CNodePtr &cnode);
+
+void ConvertAttrAndInputBeforeAicpuKernelSelect(const CNodePtr &kernel_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_HELPER_H_

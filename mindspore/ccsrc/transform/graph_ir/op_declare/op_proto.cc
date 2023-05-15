@@ -126,7 +126,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
     {"UnaryDataType", {DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_BF16}},
     {"FloatingDataType", {DT_DOUBLE, DT_FLOAT, DT_FLOAT16}},
     {"IndexNumberType", {DT_INT32, DT_INT64}},
-    // TODO(DELETE): CANN BUGs
+    // ACL: CANN BUGs
     {"REALNUMBERTYPE",
      {DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8,
       DT_BF16}},
@@ -192,7 +192,7 @@ size_t OpProto::GetOutputIndexByName(const std::string &name) const {
   return std::numeric_limits<size_t>::max();
 }
 
-bool OpProto::GetInputOptionalTypeByName(const std::string &name) const {
+bool OpProto::IsInputOptionalTypeByName(const std::string &name) const {
   auto index = GetInputIndexByName(name);
   if (index == std::numeric_limits<size_t>::max()) {
     return false;
@@ -200,7 +200,7 @@ bool OpProto::GetInputOptionalTypeByName(const std::string &name) const {
   return input_optional_flags_[index];
 }
 
-bool OpProto::GetAttrOptionalTypeByName(const std::string &name) const {
+bool OpProto::IsAttrOptionalTypeByName(const std::string &name) const {
   auto iter = attr_optional_flags_.find(name);
   if (iter != attr_optional_flags_.end()) {
     return iter->second;

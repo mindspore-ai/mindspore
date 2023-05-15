@@ -79,7 +79,8 @@ class BACKEND_EXPORT OpCompiler {
 
   // Accumulate a certain number of operators,
   // and then compile the operators in parallel to improve compilation efficiency.
-  void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
+  void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
+                  bool is_dynamic_shape = false);
 
   std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim);
 

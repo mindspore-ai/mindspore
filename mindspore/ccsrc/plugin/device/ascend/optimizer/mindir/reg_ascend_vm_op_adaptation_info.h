@@ -41,10 +41,10 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPullWeightOpName).set_input_attr_info(1).set_input_attr_info(2);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushWeightOpName).set_input_attr_info(1).set_input_attr_info(2);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradName).set_input_attr_info(2);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradName).set_input_attr_info(2, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSimpleMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSubscalarOpName).set_input_attr_info(1);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherDGradV2OpName).set_input_attr_info(1);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherDGradV2OpName).set_input_attr_info(1).set_is_ascend_mindir();
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReshapeOpName).set_input_attr_info(1, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kTensorCopySlicesOpName)
@@ -152,11 +152,14 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName).set_backend_op_name(kArgMinOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName)
+  .set_backend_op_name(kArgMinOpName)
+  .set_target_op_name(kArgMinDOpName)
+  .set_need_tbe_check_supported(true)
+  .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kAvgPoolGradOpName)
   .set_target_op_name(kAvgPoolGradDOpName)
-  .set_need_tbe_check_supported(true)
   .set_input_attr_info(0, "listInt");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kAvgPoolGradVmOpName)
@@ -175,7 +178,11 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceOpName)
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceNDOpName).set_backend_op_name(kBatchToSpaceNDDOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName).set_target_op_name(kCastOpName).set_input_attr_info(1, "int");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName)
+  .set_target_op_name(kCastOpName)
+  .set_input_attr_info(1, "int")
+  .set_is_ascend_mindir();
+
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarCastOpName).set_target_op_name(kScalarCastOpName).set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarToTensorOpName)
@@ -378,11 +385,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kSpaceToBatchOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSpaceToBatchNDOpName)
-  .set_target_op_name(kSpaceToBatchNDDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt")
-  .set_input_attr_info(2, "listInt");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSpaceToBatchNDOpName).set_backend_op_name(kSpaceToBatchNDDOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyAdadeltaOpName)
   .set_target_op_name(kSparseApplyAdadeltaDOpName)
@@ -446,6 +449,8 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kUnsortedSegmentSumOpName)
   .set_target_op_name(kUnsortedSegmentSumDOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(2, "int");
+
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kTransShapeOpName).set_input_attr_info(1, "int");
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_

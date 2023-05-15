@@ -97,9 +97,8 @@ void GPUDeviceContext::Initialize() {
   }
 
   device_res_manager_->Initialize();
-  auto gpu_kernel_executor = dynamic_cast<GPUKernelExecutor *>(kernel_executor_.get());
-  MS_EXCEPTION_IF_NULL(gpu_kernel_executor);
-  gpu_kernel_executor->Initialize();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Initialize();
 #ifndef ENABLE_SECURITY
   // Dump json config file if dump is enabled.
   uint32_t rank_id = 0;
@@ -214,8 +213,8 @@ void GPUDeviceContext::Destroy() {
     }
   }
 #endif
-  auto gpu_kernel_executor = dynamic_cast<GPUKernelExecutor *>(kernel_executor_.get());
-  gpu_kernel_executor->Destroy();
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Destroy();
   device_res_manager_->Destroy();
 }
 
@@ -585,11 +584,21 @@ std::lock_guard<std::mutex> LockLaunchKernel(const void *stream) {
 }  // namespace
 
 void GPUKernelExecutor::Initialize() {
+  if (initialized_) {
+    return;
+  }
   res_manager_ = dynamic_cast<GPUDeviceResManager *>(device_context_->device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(res_manager_);
+  initialized_ = true;
 }
 
-void GPUKernelExecutor::Destroy() { res_manager_ = nullptr; }
+void GPUKernelExecutor::Destroy() {
+  if (!initialized_) {
+    return;
+  }
+  res_manager_ = nullptr;
+  initialized_ = false;
+}
 
 void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);

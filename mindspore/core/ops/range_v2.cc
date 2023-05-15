@@ -190,6 +190,8 @@ class MIND_API AGRangeV2Infer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return RangeV2Infer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0, 1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RangeV2, prim::kPrimRangeV2, AGRangeV2Infer, false);

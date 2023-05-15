@@ -768,16 +768,8 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info, cons
     op_run_info->base_op_run_info.input_mask = new_masks;
   };
 
-  if (device_target == kAscendDevice) {
-    auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
-      op_run_info->base_op_run_info.op_name, device_target, true);
-    if (reg_info != nullptr) {
-      auto no_need_input_to_attr = reg_info->need_tbe_check_supported();
-      if (no_need_input_to_attr) {
-        replace_tensor_mask(op_run_info);
-      }
-    }
-  } else {
+  // value to parameter(onehot)
+  if (device_target != kAscendDevice) {
     replace_tensor_mask(op_run_info);
   }
 }

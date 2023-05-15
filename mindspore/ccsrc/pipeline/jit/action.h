@@ -33,7 +33,6 @@ bool ParseAction(const ResourcePtr &resource);
 bool SymbolResolveAction(const ResourcePtr &resource);
 bool AutoMonadAction(const ResourcePtr &resource);
 bool AbstractSpecializeAction(const ResourcePtr &resource);
-bool GeOptimizeAction(const ResourcePtr &resource);
 bool VmOptimizeAction(const ResourcePtr &resource);
 bool TaskEmitAction(const ResourcePtr &resource);
 bool ExecuteAction(const ResourcePtr &resource);
@@ -42,7 +41,6 @@ bool StartPSSchedulerAction(const ResourcePtr &resource);
 bool DistributedSplitAction(const ResourcePtr &resource);
 #endif
 
-std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> MindIRPipeline();
 #if defined(__linux__) && defined(WITH_BACKEND)

@@ -463,12 +463,6 @@ void AicpuOpKernelMod::SyncData() {
 
   MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
   UpdateOutputShapeFromExtInfo(cnode);
-  // update runtime cache
-  auto op_runtime_info = node->user_data<runtime::OpRuntimeInfo>();
-  if (op_runtime_info != nullptr) {
-    op_runtime_info->Resize(node);
-  }
-  FreeExtInfoDeviceAddr();
 }
 
 void AicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {

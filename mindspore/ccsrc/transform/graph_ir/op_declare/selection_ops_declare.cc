@@ -18,13 +18,11 @@
 #include "transform/graph_ir/op_declare/selection_ops_declare.h"
 
 namespace mindspore::transform {
-// CumsumD
-INPUT_MAP(CumsumD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(CumsumD) = {{2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
-ATTR_MAP(CumsumD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                     {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(CumsumD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(CumsumD))
+// CumulativeLogsumexp
+INPUT_MAP(CumulativeLogsumexp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
+ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
+                                 {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
 
 // Cumsum
 INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
@@ -34,6 +32,7 @@ ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
 OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
+REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(Cumsum))
 
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};
@@ -50,6 +49,7 @@ ATTR_MAP(Cumprod) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                      {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(Cumprod) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumprodD, ADPT_DESC(Cumprod))
+REG_ADPT_DESC(CumProd, kNameCumProd, ADPT_DESC(Cumprod))
 
 INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
 ATTR_INPUT_MAP(Tile) = {{"multiples", "multiples"}};
@@ -142,7 +142,7 @@ REG_ADPT_DESC(RangeV2, kNameRangeV2, ADPT_DESC(Range))
 
 // InplaceAddD
 INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-ATTR_MAP(InplaceAddD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(InplaceAddD) = {{"indices", ATTR_DESC(indices, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(InplaceAddD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceAddD, kNameInplaceAddD, ADPT_DESC(InplaceAddD))
 
@@ -177,7 +177,6 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
-ATTR_INPUT_MAP(StridedSlice) = {{"begin", "begin"}, {"end", "end"}, {"strides", "strides"}};
 ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
                           {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
                           {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},

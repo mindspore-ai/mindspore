@@ -124,4 +124,14 @@ OUTPUT_MAP(CombinedNonMaxSuppression) = {{0, OUTPUT_DESC(nmsed_boxes)},
                                          {3, OUTPUT_DESC(valid_detections)}};
 REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->name(),
               ADPT_DESC(CombinedNonMaxSuppression))
+
+// NonMaxSuppressionV3
+INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},
+                                  {2, INPUT_DESC(scores)},
+                                  {3, INPUT_DESC(max_output_size)},
+                                  {4, INPUT_DESC(iou_threshold)},
+                                  {5, INPUT_DESC(score_threshold)}};
+ATTR_MAP(NonMaxSuppressionV3) = {{"offset", ATTR_DESC(offset, AnyTraits<int>())}};
+OUTPUT_MAP(NonMaxSuppressionV3) = {{0, OUTPUT_DESC(selected_indices)}};
+REG_ADPT_DESC(NonMaxSuppressionV3, prim::kPrimNonMaxSuppressionV3->name(), ADPT_DESC(NonMaxSuppressionV3))
 }  // namespace mindspore::transform

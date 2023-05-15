@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -49,6 +50,18 @@ const AnfNodePtr HistogramFixedWidthFusion::Process(const FuncGraphPtr &graph, c
   // Convert the specific attr to input and erase the specific attr.
   auto attr_value = origin_prim->GetAttr(kNbins);
   MS_EXCEPTION_IF_NULL(attr_value);
+  if (attr_value->isa<Scalar>()) {
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto tensor_ptr = ScalarToTensor(attr_value->cast<ScalarPtr>());
+    auto tensor_node = std::make_shared<ValueNode>(tensor_ptr);
+    MS_EXCEPTION_IF_NULL(tensor_node);
+    tensor_node->set_abstract(tensor_ptr->ToAbstract());
+    tensor_node = kernel_graph->NewValueNode(tensor_node);
+    kernel_graph->AddValueNodeToGraph(tensor_node);
+    cnode->add_input(tensor_node);
+    return cnode;
+  }
   auto new_value_node = std::make_shared<ValueNode>(attr_value);
   MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(attr_value->ToAbstract());

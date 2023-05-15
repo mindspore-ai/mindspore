@@ -849,8 +849,6 @@ bool OptInlineAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool GeOptimizeAction(const ResourcePtr &resource) { return OptimizeAction(resource, kGePasses); }
-
 bool VmOptimizeAction(const ResourcePtr &resource) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode()) {
@@ -1573,25 +1571,6 @@ static std::vector<ActionItem> CommonPipeline() {
   return actions;
 }
 
-std::vector<ActionItem> GePipeline() {
-  auto actions = CommonPipeline();
-  // Optimize
-  (void)actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
-  (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
-  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
-  (void)actions.emplace_back(std::make_pair("convert_list_to_tuple_for_export", ConvertListToTupleForExport));
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-#ifdef WITH_BACKEND
-  // Compile the ANF graph
-  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
-
-  // Execute the graph
-  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
-#endif
-  return actions;
-}
-
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
@@ -1622,12 +1601,19 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     }
   }
 #endif
-  // Compile the ANF graph
-  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+#ifndef WITH_BACKEND
+  if (ms_context->backend_policy() != "ge") {
+#endif
+    // Compile the ANF graph
+    (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
 
-  // Execute the graph
-  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
-
+    // Execute the graph
+    (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
+#ifndef WITH_BACKEND
+  }
+#endif
   return actions;
 }
 

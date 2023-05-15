@@ -34,9 +34,11 @@ def test_dtype_and_shape_as_attr():
             dtype = x.dtype
             return shape, dtype
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
     ret = net(x)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert ret == ((1, 2, 3), mstype.int32)
 
 

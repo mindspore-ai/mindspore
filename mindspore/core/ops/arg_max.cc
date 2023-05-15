@@ -93,6 +93,8 @@ class ArgMaxAbsInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(type_ptr);
     return std::make_shared<TensorType>(type_ptr);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 void Argmax::Init(const int64_t axis, const TypeId output_type) {
