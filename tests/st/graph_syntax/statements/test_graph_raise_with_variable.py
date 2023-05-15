@@ -621,7 +621,8 @@ def test_raise_with_variable_1():
     """
     class RaiseNet(nn.Cell):
         def construct(self, x):
-            raise ValueError(f"The input can not be {x}.")
+            if x > 10:
+                raise ValueError(f"The input can not be {x}.")
 
     with pytest.raises(ValueError) as raise_info_9:
         net = RaiseNet()
@@ -642,7 +643,8 @@ def test_raise_with_variable_2():
     """
     class RaiseNet(nn.Cell):
         def construct(self, x):
-            raise ValueError(f"The input can not be %s." % x)
+            if x > 10:
+                raise ValueError(f"The input can not be %s." % x)
 
     with pytest.raises(ValueError) as raise_info_10:
         net = RaiseNet()
@@ -662,7 +664,8 @@ def test_raise_with_variable_3():
     """
     class RaiseNet(nn.Cell):
         def construct(self, x):
-            raise ValueError(f"The input can not be ", x, ".")
+            if x > 10:
+                raise ValueError(f"The input can not be ", x, ".")
 
     with pytest.raises(ValueError) as raise_info_11:
         net = RaiseNet()
@@ -683,13 +686,15 @@ def test_raise_with_variable_list():
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
-        def construct(self):
+        def construct(self, y):
             x = [Tensor(1), Tensor(2), Tensor(3), Tensor(4)]
-            raise ValueError(x)
+            if y > 10:
+                raise ValueError(x)
 
     with pytest.raises(ValueError) as raise_info_list:
         net = RaiseNet()
-        res = net()
+        y = Tensor(11)
+        res = net(y)
         print("res:", res)
     assert "[Tensor(shape=[], dtype=Int64, value= 1)," or \
         "(Tensor(shape=[1], dtype=Int64, value= [1])," in str(
@@ -706,13 +711,15 @@ def test_raise_with_variable_tuple_1():
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
-        def construct(self):
+        def construct(self, y):
             x = (Tensor(1), Tensor(2), Tensor(3), Tensor(4))
-            raise ValueError(x)
+            if y > 10:
+                raise ValueError(x)
 
     with pytest.raises(ValueError) as raise_info_tuple:
         net = RaiseNet()
-        res = net()
+        y = Tensor(11)
+        res = net(y)
         print("res:", res)
     assert "(Tensor(shape=[], dtype=Int64, value= 1)," or \
         "(Tensor(shape=[1], dtype=Int64, value= [1])," in str(
@@ -729,13 +736,15 @@ def test_raise_with_variable_tuple_2():
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
-        def construct(self):
+        def construct(self, y):
             x = (Tensor(1), Tensor(2), Tensor(3), Tensor(4))
-            raise ValueError("test_string_tuple", x)
+            if y > 10:
+                raise ValueError("test_string_tuple", x)
 
     with pytest.raises(ValueError) as raise_info_string_tuple:
         net = RaiseNet()
-        res = net()
+        y = Tensor(11)
+        res = net(y)
         print("res:", res)
     assert "('test_string_tuple', (Tensor(shape=[], dtype=Int64, value= 1)" or \
         "('test_string_tuple', (Tensor(shape=[1], dtype=Int64, value= [1])" in str(
@@ -753,7 +762,8 @@ def test_raise_with_variable_joinedstr_tensor():
     """
     class RaiseNet(nn.Cell):
         def construct(self, x):
-            raise RuntimeError(f"The input should not be {x}.")
+            if x > 0:
+                raise RuntimeError(f"The input should not be {x}.")
 
     with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
         net = RaiseNet()
@@ -775,15 +785,17 @@ def test_raise_with_variable_dic():
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
-        def construct(self):
+        def construct(self, z):
             x = Tensor(1)
             y = Tensor(2)
             z = {"x": x, "y": y}
-            raise ValueError(z)
+            if z > 10:
+                raise ValueError(z)
 
     with pytest.raises(ValueError) as raise_info_list:
         net = RaiseNet()
-        res = net()
+        z = Tensor(11)
+        res = net(z)
         print("res:", res)
     assert "{'x': Tensor(shape=[], dtype=Int64, value= 1)" or \
         "{'x': Tensor(shape=[1], dtype=Int64, value= [1])" in str(
@@ -875,9 +887,9 @@ def test_isolated_raise():
     np_data = np.random.randint(6, size=(4,))
     data = ms.Tensor(np_data, dtype=ms.float32)
     net = CheckNet()
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(RuntimeError) as err:
         net(data)
-    assert "Check failed. Wrong shape, " in str(err.value)
+    assert "Using raise with variable under a constant" in str(err.value)
 
 
 @pytest.mark.level0
@@ -1011,7 +1023,8 @@ def test_raise_with_input_error_type_1():
     """
     class RaiseNet(nn.Cell):
         def construct(self, x, y=ValueError):
-            raise y(f"The input can not be {x}.")
+            if x > 10:
+                raise y(f"The input can not be {x}.")
 
     with pytest.raises(ValueError) as raise_info:
         net = RaiseNet()
@@ -1033,7 +1046,8 @@ def test_raise_with_input_error_type_2():
     class RaiseNet(nn.Cell):
         def construct(self, x):
             y = ValueError
-            raise y(f"The input can not be {x}.")
+            if x > 10:
+                raise y(f"The input can not be {x}.")
 
     with pytest.raises(ValueError) as raise_info:
         net = RaiseNet()
@@ -1041,3 +1055,24 @@ def test_raise_with_input_error_type_2():
         res = net(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_variable_and_constant_condition():
+    """
+    Feature: graph raise.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x):
+            raise ValueError(f"The input can not be {x}.")
+
+    with pytest.raises(RuntimeError) as raise_info_9:
+        net = RaiseNet()
+        x = Tensor(11)
+        res = net(x)
+        print("res:", res)
+    assert "Using raise with variable under a constant condition." in str(raise_info_9.value)

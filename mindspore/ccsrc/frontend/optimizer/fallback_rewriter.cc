@@ -19,7 +19,6 @@
 #include "frontend/optimizer/fallback_rewriter.h"
 #include <iterator>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -897,11 +896,66 @@ class AfterOptARewriter : public BaseRewriter {
     const auto &fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     MS_LOG(DEBUG) << "Raise node: " << cnode->DebugString();
-    auto raise_pyexecute_node = std::make_shared<CNode>(*cnode);
+    const auto &inputs = cnode->inputs();
+    std::shared_ptr<raiseutils::KeyValueInfo> key_value = std::make_shared<raiseutils::KeyValueInfo>();
+    key_value->keys = {NewValueNode(prim::kPrimMakeTuple)};
+    key_value->values = {NewValueNode(prim::kPrimMakeTuple)};
+    size_t index_begin = 2;
+    constexpr auto end_num = 2;
+    size_t index_end = inputs.size() - end_num;
+    size_t size_if_empty = 4;
+    std::string exception_type = raiseutils::GetExceptionType(inputs[1]->abstract(), inputs[index_end], key_value);
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::string exception_string;
+    // Process raise ValueError()
+    if (inputs.size() == size_if_empty) {
+      std::string key = raiseutils::MakeRaiseKey(key_value->num_str);
+      (void)key_value->keys.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)key_value->values.emplace_back(NewValueNode(std::make_shared<StringImm>("")));
+      exception_string = key;
+    }
+    // Processed in units of nodes. Raise ValueError(xxxx)
+    for (size_t index = index_begin; index < index_end; ++index) {
+      const auto input = inputs[index];
+      auto input_abs = input->abstract();
+      MS_EXCEPTION_IF_NULL(input_abs);
+      const bool need_symbol = raiseutils::CheckNeedSymbol(input_abs);
+      if (need_symbol) {
+        exception_string += "'";
+      }
+      bool need_comma = !IsPrimitiveCNode(input, prim::kPrimMakeTuple);
+      exception_string += raiseutils::GetExceptionString(input_abs, input, key_value, need_symbol, need_comma);
+      if (need_symbol) {
+        exception_string += "'";
+      }
+      if (index != inputs.size() - 1) {
+        exception_string += ", ";
+      }
+    }
+    bool need_out_symbol = inputs.size() > 5;
+    if (need_out_symbol) {
+      exception_string = "(" + exception_string + ")";
+    }
+    // Condition has variable but script does not.
+    if (key_value->keys.size() <= 1) {
+      std::string key = raiseutils::MakeRaiseKey(key_value->num_str);
+      (void)key_value->keys.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+      (void)key_value->values.emplace_back(NewValueNode(std::make_shared<StringImm>(exception_string)));
+      exception_string = key;
+    }
+    // Build PyExecute node for raise
+    const std::string error_msg =
+      "__import__('mindspore').common._utils._jit_fallback_raise_func(" + exception_type + "," + exception_string + ")";
+    const auto script_str = std::make_shared<StringImm>(error_msg);
+    // Pack local parameter keys
+    const auto key_value_name_tuple = fg->NewCNodeInOrder(key_value->keys);
+    // Pack local parameter values
+    const auto key_value_tuple = fg->NewCNodeInOrder(key_value->values);
+    // Build the PyExecute node for raise error.
+    const auto raise_pyexecute_node =
+      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple,
+                           key_value_tuple, inputs[inputs.size() - 1]});
     raise_pyexecute_node->CloneUserData(cnode);
-    auto raise_prim = std::make_shared<Primitive>(*prim::kPrimPyExecute);
-    raise_prim->set_attr("is_raise_prim", MakeValue(true));
-    raise_pyexecute_node->set_input(0, NewValueNode(raise_prim));
     raise_pyexecute_node->set_debug_info(cnode->debug_info());
     MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
     return raise_pyexecute_node;

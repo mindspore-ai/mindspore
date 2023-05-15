@@ -19,10 +19,12 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
 #include "include/common/utils/python_adapter.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace fallback {
@@ -80,6 +82,42 @@ std::shared_ptr<U> GetRealShape(const std::shared_ptr<T> &owner) {
   return owner->template user_data<U>("__py_execute_real_shape__");
 }
 }  // namespace fallback
+
+namespace raiseutils {
+using ClassTypePtr = std::shared_ptr<parse::ClassType>;
+
+struct KeyValueInfo {
+  int num_str = 0;
+  std::vector<AnfNodePtr> keys;
+  std::vector<AnfNodePtr> values;
+};
+
+std::string GetScalarStringValue(const AbstractBasePtr &abs);
+
+std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &cnode,
+                             const std::shared_ptr<KeyValueInfo> &key_value, bool has_variable = true);
+
+std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input,
+                                 const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol = false,
+                                 bool need_comma = false);
+
+bool CheckHasVariable(const AbstractBasePtr &arg);
+
+std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, const std::shared_ptr<KeyValueInfo> &key_value,
+                        std::string exception_str);
+
+std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input,
+                               const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol = false,
+                               bool need_comma = false);
+
+bool CheckNeedSymbol(const AbstractBasePtr &abs);
+
+bool CheckIsStr(const AbstractBasePtr &abs);
+
+std::string MakeRaiseKey(const int index);
+
+bool HasVariableCondition(FuncGraphPtr cur_graph, FuncGraphPtr prev_graph = nullptr);
+}  // namespace raiseutils
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_FALLBACK_H_
