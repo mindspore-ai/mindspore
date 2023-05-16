@@ -80,6 +80,10 @@ TypePtr DynamicBroadcastToInferType(const PrimitivePtr &prim, const std::vector<
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
+  if (x_dtype == nullptr) {
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim->name() << "], the input must be a Tensor, but got " << x_dtype
+                            << ".";
+  }
   std::set<TypePtr> template_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
   return x_dtype->element();
