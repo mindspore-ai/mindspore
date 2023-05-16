@@ -30,6 +30,11 @@ class RemoveRedundantOpPass : public Pass {
       : Pass("remove_redundant_op_pass"), is_train_model_(is_train_model) {}
   explicit RemoveRedundantOpPass(bool is_train_model, bool remove_side_effect)
       : Pass("remove_redundant_op_pass"), is_train_model_(is_train_model), remove_side_effect_(remove_side_effect) {}
+  RemoveRedundantOpPass(bool is_train_model, bool remove_side_effect, bool keep_update_state)
+      : Pass("remove_redundant_op_pass"),
+        is_train_model_(is_train_model),
+        remove_side_effect_(remove_side_effect),
+        keep_update_state_(keep_update_state) {}
   ~RemoveRedundantOpPass() override = default;
   int RemoveUmonad(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager);
   int ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
@@ -46,6 +51,7 @@ class RemoveRedundantOpPass : public Pass {
   int RemoveRedundantOp(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   bool is_train_model_ = false;
   bool remove_side_effect_ = false;
+  bool keep_update_state_ = false;
   std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt

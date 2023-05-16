@@ -214,7 +214,11 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       }
     }
     if (dequant_strategy_ == ON_THE_FLY) {
-      status = InsertDequantNode(func_graph, cnode, parameter, idx, tensor_info);
+      if (!ascend_backend_) {
+        status = InsertDequantNode(func_graph, cnode, parameter, idx, tensor_info);
+      } else {
+        status = InsertAscendDequantNode(func_graph, cnode, parameter, idx, tensor_info);
+      }
       if (status == RET_NO_CHANGE) {
         continue;
       } else if (status != RET_OK) {
@@ -315,6 +319,40 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
   return status;
 }
 
+int WeightQuantizer::InsertAscendDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                             const ParameterPtr &parameter, int idx,
+                                             const tensor::TensorPtr &tensor_info) {
+  InsertQuantNodeManager quant_manager;
+  CHECK_NULL_RETURN(func_graph);
+  TypeId type_id;
+  auto tensor_name = parameter->fullname_with_scope();
+  if (opt::GetDataTypeFromAnfNode(cnode, &type_id) != RET_OK) {
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " Get data type failed.";
+    return RET_NO_CHANGE;
+  }
+  if (parameter->has_default() &&
+      parameter->default_param()->cast<tensor::TensorPtr>()->compression_type() == mindspore::kFSEInfer) {
+    MS_LOG(ERROR) << tensor_name << " is fse encode. It will support in the further.";
+    return RET_ERROR;
+  } else {
+    MS_LOG(INFO) << tensor_name << " insert Ascend AntiQuant node";
+    auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
+    int status;
+    if (type_id == kNumberTypeFloat32) {
+      status =
+        quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
+    } else {
+      status =
+        quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
+    }
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";
+      return status;
+    }
+  }
+  return RET_OK;
+}
+
 int WeightQuantizer::InsertDequantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                        const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info) {
   InsertQuantNodeManager quant_manager;
@@ -408,13 +446,20 @@ int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
 int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   CHECK_NULL_RETURN(func_graph);
   weight_quantized_tensors_.clear();
-  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
-                                                          prim::kPrimMatMulFusion,  prim::kPrimFullConnection,
-                                                          prim::kPrimLstm,          prim::kPrimGather,
-                                                          prim::kPrimAdam,          prim::kPrimSGD,
-                                                          prim::kPrimApplyMomentum, prim::kPrimConv2D,
-                                                          prim::kPrimMatMul};
-  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
+  std::set<PrimitivePtr> support_primitive_types;
+  std::set<PrimitivePtr> per_layer_primitive_types;
+  if (ascend_backend_) {
+    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul};
+    per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul};
+  } else {
+    support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
+                               prim::kPrimMatMulFusion,  prim::kPrimFullConnection,
+                               prim::kPrimLstm,          prim::kPrimGather,
+                               prim::kPrimAdam,          prim::kPrimSGD,
+                               prim::kPrimApplyMomentum, prim::kPrimConv2D,
+                               prim::kPrimMatMul};
+    per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
+  }
   auto ret = WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types, {});
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight Quant failed.";

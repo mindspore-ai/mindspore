@@ -39,7 +39,7 @@
 #include "tools/optimizer/graph/infershape_pass.h"
 
 namespace mindspore::lite::quant {
-int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+int QuantizationOptimizer::DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto quantizer = std::make_unique<FullQuantQuantizer>(param);
   if (quantizer == nullptr) {
     MS_LOG(ERROR) << "New FullQuantQuantizer failed";
@@ -53,7 +53,7 @@ int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPa
   return RET_OK;
 }
 
-int DoWeightQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+int QuantizationOptimizer::DoWeightQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   double init_scale = param->mixedBitWeightQuantParam.init_scale;
   if (param->commonQuantParam.bit_num == 0 && param->mixedBitWeightQuantParam.auto_tune) {
     ParameterOptimizer optimizer;
@@ -247,7 +247,8 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
   return RET_OK;
 }
 
-int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+int QuantizationOptimizer::DoSingleGraphQuantize(const FuncGraphPtr &func_graph,
+                                                 const std::shared_ptr<ConverterPara> &param) {
   CHECK_NULL_RETURN(param);
   int status = PrepareQuantize(func_graph, param);
   if (status != RET_OK) {

@@ -30,8 +30,11 @@
 #include "tools/converter/quantizer/fse_decoder.h"
 #include "ops/fse_decode.h"
 #include "ops/op_name.h"
-#include "ir/dtype.h"
+#include "ops/cast.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ir/dtype.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -42,6 +45,7 @@ constexpr size_t kAlignOffset = 7;
 constexpr size_t kInt32Mask = 31;
 constexpr int kLastFisrtIndex = -1;
 constexpr int kLastSecondIndex = -2;
+const char *ATTR_NO_NEED_CONSTANT_FOLDING = "no_need_constant_folding";
 }  // namespace
 int InsertQuantNodeManager::SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node,
                                                 const CNodePtr &cast_cnode) {
@@ -538,6 +542,7 @@ int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, co
   }  // node_users
   return RET_OK;
 }
+
 int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                         size_t input_index, TypeId src_dtype, TypeId dst_dtype,
                                                         int axis) {
@@ -605,6 +610,68 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
   MS_LOG(INFO) << "InsertCastNode cnode name: " << quant_cast_cnode->fullname_with_scope()
                << " src_dtype: " << src_dtype << " dst_dtype: " << dst_dtype;
 
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                      size_t input_index, TypeId src_dtype, TypeId dst_dtype,
+                                                      int axis) {
+  auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto input_node = cnode->input(input_index);
+  auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
+  auto node_map = manager->node_users();
+  auto node_user = node_map[input_node];
+  if (!input_node->isa<mindspore::Parameter>()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
+    return RET_ERROR;
+  }
+
+  auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
+  if (curr_primitive_quant_param_holder == nullptr ||
+      curr_primitive_quant_param_holder->get_input_quant_params().size() < input_index) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " quant param is invalid.";
+    return RET_ERROR;
+  }
+  auto input_quant_params = curr_primitive_quant_param_holder->get_input_quant_params().at(input_index - kPrimOffset);
+
+  // Insert cast node
+  auto cast_cnode = NewCastNode(func_graph, input_node, dst_dtype);
+  CHECK_NULL_RETURN(cast_cnode);
+  ParameterPtr scales_node;
+  ParameterPtr zps_node;
+  if (dst_dtype == kNumberTypeFloat16) {
+    std::vector<float16> scales;
+    std::vector<float16> zps;
+    for (size_t i = 0; i < input_quant_params.size(); ++i) {
+      scales.push_back(static_cast<float16>(input_quant_params.at(i).scale));
+      zps.push_back(static_cast<float16>(-input_quant_params.at(i).zeroPoint));
+    }
+    scales_node = opt::BuildFloat16VecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
+    zps_node = opt::BuildFloat16VecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
+  } else {
+    std::vector<float> scales;
+    std::vector<float> zps;
+    for (size_t i = 0; i < input_quant_params.size(); ++i) {
+      scales.push_back(static_cast<float>(input_quant_params.at(i).scale));
+      zps.push_back(static_cast<float>(-input_quant_params.at(i).zeroPoint));
+    }
+    scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
+    zps_node = opt::BuildFloatVecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
+  }
+
+  auto add_cnode = NewAddNode(func_graph, cast_cnode, zps_node);
+  CHECK_NULL_RETURN(add_cnode);
+
+  auto mul_cnode = NewMulNode(func_graph, add_cnode, scales_node);
+  CHECK_NULL_RETURN(mul_cnode);
+  for (const auto &user : node_user) {
+    manager->SetEdge(user.first, user.second, mul_cnode);
+  }
   return RET_OK;
 }
 
@@ -746,6 +813,52 @@ int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, cons
   free(bit_count_table);
   free(symbol_table);
   return RET_OK;
+}
+
+CNodePtr InsertQuantNodeManager::NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                             int dst_type) {
+  auto prim_c = std::make_shared<ops::Cast>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
+  MS_LOG(INFO) << "dst_type:" << dst_type;
+  TypePtr type_ptr = TypeIdToType(TypeId(dst_type));
+  prim->AddAttr(ops::kDstType, type_ptr);
+  prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
+  auto dtype_node = opt::BuildIntValueParameterNode(func_graph, dst_type, input_node->fullname_with_scope() + "-dtype");
+  std::vector<AnfNodePtr> cast_op_inputs = {NewValueNode(prim), input_node, dtype_node};
+  auto cast_cnode = func_graph->NewCNode(cast_op_inputs);
+  cast_cnode->set_fullname_with_scope(input_node->fullname_with_scope() + "-Cast");
+  cast_cnode->set_abstract(input_node->abstract());
+  return cast_cnode;
+}
+
+CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1,
+                                            const AnfNodePtr &input_2) {
+  auto prim_c = std::make_shared<ops::MulFusion>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
+  prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
+  std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
+  auto cnode = func_graph->NewCNode(op_inputs);
+  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Mul");
+  cnode->set_abstract(input_1->abstract());
+  return cnode;
+}
+
+CNodePtr InsertQuantNodeManager::NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1,
+                                            const AnfNodePtr &input_2) {
+  auto prim_c = std::make_shared<ops::AddFusion>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
+  prim->AddAttr(ATTR_NO_NEED_CONSTANT_FOLDING, MakeValue(true));
+  std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
+  auto cnode = func_graph->NewCNode(op_inputs);
+  cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Add");
+  cnode->set_abstract(input_1->abstract());
+  return cnode;
 }
 
 ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst_type,
