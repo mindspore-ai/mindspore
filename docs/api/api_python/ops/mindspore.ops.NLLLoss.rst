@@ -5,7 +5,7 @@ mindspore.ops.NLLLoss
 
     获取预测值和目标值之间的负对数似然损失。
 
-    reduction为'none'时，负对数似然损失如下：
+    reduction为 ``"none"`` 时，负对数似然损失如下：
 
     .. math::
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
@@ -23,7 +23,7 @@ mindspore.ops.NLLLoss
         \end{array}\right.
 
     参数：
-        - **reduction** (str) - 指定应用于输出结果的计算方式，比如 ``'none'`` 、 ``'mean'`` ， ``'sum'`` ，默认值： ``"mean"`` 。
+        - **reduction** (str) - 指定应用于输出结果的计算方式，比如 ``"none'`` 、 ``"mean"`` ， ``"sum"`` ，默认值： ``"mean"`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 。数据类型仅支持float32或float16。
