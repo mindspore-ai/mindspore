@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
+from mindspore import nn
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim import Optimizer
 from mindspore.common import Tensor
@@ -211,7 +212,7 @@ class GradientFreeze:
         self._freeze_type = freeze_type
         self._freeze_p = freeze_p
         self._total_steps = total_steps
-        self.grad_reducer = F.identity
+        self.grad_reducer = nn.Identity()
 
     def split_parameters_groups(self, net, freeze_para_groups_number):
         r"""
@@ -350,7 +351,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for reducer, opt in zip(grad_reducers, optimizer.opts))
     else:
-        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, F.identity,
+        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, nn.Identity(),
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for opt in optimizer.opts)
     return freeze_nets

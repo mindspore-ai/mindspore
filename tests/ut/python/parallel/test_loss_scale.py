@@ -65,7 +65,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
-        self.grad_reducer = F.identity
+        self.grad_reducer = nn.Identity()
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()

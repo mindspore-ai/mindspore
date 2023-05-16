@@ -361,7 +361,7 @@ class TrainOneStepCell(Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
-        self.grad_reducer = F.identity
+        self.grad_reducer = nn.Identity()
         self.parallel_mode = _get_parallel_mode()
         self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL) or \
                             _is_pynative_parallel()
