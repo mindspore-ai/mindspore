@@ -10681,7 +10681,7 @@ class MaxPoolWithArgmaxV2(Primitive):
             depth, height and width of movement respectively.
             Default: 0.
         dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: ``(1, 1)`` .
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        ceil_mode (bool, optional): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
         argmax_type (mindspore.dtype, optional) : The dtype for argmax.
             Default: ``mstype.int64`` . [Disabled in Ascend.]
 

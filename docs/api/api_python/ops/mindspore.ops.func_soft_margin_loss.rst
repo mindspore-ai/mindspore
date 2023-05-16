@@ -1,7 +1,7 @@
 mindspore.ops.soft_margin_loss
 ===============================
 
-.. py:class:: mindspore.ops.soft_margin_loss(input, target, reduction='mean')
+.. py:function:: mindspore.ops.soft_margin_loss(input, target, reduction='mean')
 
     计算 `input` 和 `target` 之间的soft margin loss。
 
