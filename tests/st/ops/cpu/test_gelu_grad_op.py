@@ -38,11 +38,11 @@ class GeluNet(nn.Cell):
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, input_data, sens):
-        gout = self.grad(self.network)(input_data, sens)
+    def construct(self, input_data):
+        gout = self.grad(self.network)(input_data)
         return gout
 
 
@@ -58,7 +58,7 @@ def test_gelugrad():
     net = GeluNet()
     grad = Grad(net)
 
-    output = grad(x_ms, dy_ms)
+    output = grad(x_ms) * dy_ms
     expect = [0.50963277, 0.9414753, 0.2667653, 0.21358444, 0.25243032, 0.0352667,
               0.34266686, 0.57757664, 0.04707306, 0.51536125]
     assert np.allclose(output[0].asnumpy(), expect)
@@ -76,10 +76,8 @@ def test_gelu_grad_cpu_dynamic_shape():
     net = GeluNet()
     grad = Grad(net)
     dy_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
-    x_dyn = Tensor(shape=[3, None], dtype=mindspore.float32)
-    grad.set_inputs(dy_dyn, x_dyn)
+    grad.set_inputs(dy_dyn)
     dy = np.random.randn(3, 32)
-    x = np.random.randn(3, 32)
-    output = grad(Tensor(dy, mindspore.float32), Tensor(x, mindspore.float32))
+    output = grad(Tensor(dy, mindspore.float32))
     expect_shape = (3, 32)
     assert output[0].asnumpy().shape == expect_shape
