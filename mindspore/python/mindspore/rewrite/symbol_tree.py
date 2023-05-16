@@ -1458,7 +1458,7 @@ class SymbolTree(Observer, Observable):
         elif isinstance(node, ast.BinOp):
             self._update_names_for_unique(node.left)
             self._update_names_for_unique(node.right)
-        elif isinstance(node, (ast.Attribute, ast.Subscript, ast.Return)):
+        elif isinstance(node, (ast.Expr, ast.Attribute, ast.Subscript, ast.Return)):
             self._update_names_for_unique(node.value)
         elif isinstance(node, (ast.List, ast.Tuple)):
             for elt in node.elts:
