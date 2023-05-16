@@ -896,7 +896,9 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     argument.
 
     Args:
-        shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
+        shape (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 1-D Tensor with int32 or int64 dtypes.
         dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is None,
             `mindspore.float32` will be used. Default: None.
 
@@ -904,7 +906,7 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
         Tensor, has the same type and shape as input shape value.
 
     Raises:
-        TypeError: If `shape` is neither tuple nor int.
+        TypeError: If `shape` is not tuple, int or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -970,7 +972,9 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     Creates a tensor filled with 0 with shape described by `shape` and fills it with value 0 in type of `dtype`.
 
     Args:
-        size (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
+        size (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 1-D Tensor with int32 or int64 dtypes.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
             mindspore.float32 will be used. Default: None.
 
@@ -978,7 +982,7 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
         Tensor, has the same dtype and size as input.
 
     Raises:
-        TypeError: If `size` is neither a tuple of int nor an int.
+        TypeError: If `size` is not tuple, int or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
