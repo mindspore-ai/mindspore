@@ -271,13 +271,13 @@ FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_ren
   MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   auto graph_opt = opt::Optimizer::MakeOptimizer("ms_function_bprop_graph_opt", resource, map);
-  func_graph = graph_opt->step(func_graph, false);
-  func_graph = LiftingClone(func_graph);
-  return func_graph;
+  return graph_opt->step(func_graph, false);
 }
 
 FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   opt::irpass::OptimizeIRPassLib irpass;
+  auto func_graph = resource->func_graph();
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
     irpass.tuple_list_get_item_eliminator_,
@@ -287,8 +287,16 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
     {"ad_grad_graph_opt", grad_graph_opt},
   });
 
-  MS_EXCEPTION_IF_NULL(resource);
-  auto func_graph = resource->func_graph();
+  if (func_graph->has_flag(kFlagMSFunctionGraph)) {
+    opt::OptPassConfig env_eliminate = opt::OptPassConfig({
+      irpass.environ_get_eliminate_,
+      irpass.environ_get_add_eliminate_,
+      irpass.environ_get_set_eliminate_,
+      irpass.environ_get_depend_swap_,
+      irpass.environ_add_const_eliminate_,
+    });
+    (void)map.emplace_back(std::make_pair("env_eliminate", env_eliminate));
+  }
   auto graph_opt = opt::Optimizer::MakeOptimizer("final_bprop_graph_opt", resource, map);
   return graph_opt->step(func_graph, false);
 }

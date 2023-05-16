@@ -26,6 +26,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
+#include "frontend/optimizer/environ_conversion.h"
 #include "frontend/expander/utils.h"
 #include "pipeline/jit/pass.h"
 #include "frontend/expander/bprop/bprop.h"
@@ -1087,7 +1088,9 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph, true);
-  resource->optimize_graph()->set_flag(kFlagHasControlFlow, PyNativeAlgo::Common::IsControlFlowGraph(bprop_graph));
+  if (bprop_graph->has_flag(kFlagMSFunctionGraph)) {
+    opt::EnvironConversion(resource);
+  }
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   SaveForwardTensorInfoInBpropGraph(resource);
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
@@ -1225,6 +1228,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, co
   } else {
     top_cell()->resource()->set_optimize_graph(bprop_graph);
   }
+  if (bprop_graph->has_flag(kFlagMSFunctionGraph)) {
+    bprop_graph = LiftingClone(bprop_graph);
+  }
   need_renormalize_ = false;
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
@@ -1359,12 +1365,14 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   ValuePtrList input_args(forward_args);
   (void)input_args.insert(input_args.end(), weights_args.cbegin(), weights_args.cend());
   auto grad_fg = first_grad_fg;
-  bool is_not_support_by_expander = first_grad_fg->has_flag(kFlagHasControlFlow);
+  bool is_not_support_by_expander = first_grad_fg->has_flag(kFlagMSFunctionGraph);
   if (is_not_support_by_expander) {
     auto r = std::make_shared<pipeline::Resource>();
     set_eliminate_forward(false);
     (void)first_grad_fg->transforms().erase(kGrad);
-    grad_fg = ad::Grad(first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
+    auto opt = opt::Optimizer::MakeEmptyOptimizer(r);
+    opt->set_is_first_order_j(false);
+    grad_fg = ad::Grad(first_grad_fg, opt);
     set_eliminate_forward(true);
   }
   auto grad_param = std::make_shared<autograd::GradParam>(
