@@ -79,7 +79,7 @@ void Task::operator()() {
     ShutdownGroup();
   } catch (const std::exception &e) {
     rc_ = STATUS_ERROR(StatusCode::kMDUnexpectedError, e.what());
-    MS_LOG(ERROR) << rc_;
+    MS_LOG(INFO) << rc_;
     ShutdownGroup();
   }
 }
