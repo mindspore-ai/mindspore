@@ -21,6 +21,7 @@
 #include "eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
 
 namespace {
 const uint32_t kInputNum = 3;
@@ -180,17 +181,15 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(CpuKernelContext &ctx) {
   auto task = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
       int64_t to_pos = 0;
+      bool out_bound = false;
       for (int64_t j = 0; j < indices_nd; ++j) {
         int64_t idx = Indices_data[i * indices_nd + j];
-
-        if (idx < 0 || idx >= data_shape[j]) {
-          KERNEL_LOG_ERROR("The indices[%d] is so big or small", idx);
-        }
-
+        out_bound |= (idx < 0 || idx >= data_shape[j]);
         to_pos += idx * dims_to_count[j];
       }
+      if (out_bound) continue;
       for (int64_t j = 0; j < slice_size; j++) {
-        Output_data[to_pos + j] += Updates_data[i * slice_size + j];
+        AtomicAdd(&Output_data[to_pos + j], Updates_data[i * slice_size + j]);
       }
     }
   };
