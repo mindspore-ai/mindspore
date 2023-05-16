@@ -640,8 +640,8 @@ class Model:
         """
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
         dataset_size = train_dataset.get_dataset_size()
-        if dataset_size // sink_size != 0:
-            logger.warning("In dataset_sink mode (dataset_size // sink_size) should equal to 0, "
+        if dataset_size % sink_size != 0:
+            logger.warning("In dataset_sink mode (dataset_size % sink_size) should equal to 0, "
                            "it is suggested to pad/drop data or adjust sink_size. "
                            "But got 'dataset_size': {}, 'sink_size': {}.".format(dataset_size, sink_size))
         if sink_size == -1:
