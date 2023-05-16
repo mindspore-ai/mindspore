@@ -41,12 +41,11 @@ class ProfilerInfo:
         ProfilerInfo._file_name = ProfilerInfo._file_name.format(rank_id)
 
     @staticmethod
-    def set_parallel_info(parallel_mode="", pipeline_stage_num=1, pipeline_stage_id=0):
+    def set_parallel_info(parallel_mode="", stage_num=1):
         """Set parallel info include parallel_mode, pipeline_stage_num and pipeline_stage_id."""
         info = dict()
         info["parallel_mode"] = parallel_mode
-        info["pipeline_stage_num"] = pipeline_stage_num
-        info["pipeline_stage_id"] = pipeline_stage_id
+        info["stage_num"] = stage_num
         ProfilerInfo._profiler_info_dict.update(info)
 
     @staticmethod
