@@ -105,6 +105,11 @@ void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_block
 }
 
 bool Somas::IsSupportSomas(const session::KernelGraph &graph) const {
+  if (graph.is_from_single_op()) {
+    MS_LOG(INFO) << "Not use somas when pynative forward.";
+    return false;
+  }
+
   if (graph.is_dynamic_shape()) {
     MS_LOG(WARNING) << "Somas can't allocate graph with dynamic shape now.";
     return false;
@@ -177,6 +182,9 @@ bool Somas::Assign(const KernelGraphPtr &graph_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(graph_ptr);
+  if (!IsSupportSomas(*graph_ptr)) {
+    return false;
+  }
 #ifndef ENABLE_SECURITY
   if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "somas_input_graph_" + std::to_string(graph_ptr->graph_id()) + ".ir";
