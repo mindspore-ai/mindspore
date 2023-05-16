@@ -29,12 +29,12 @@ class Grad(nn.Cell):
     """Grad Net"""
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
 
     @jit
-    def construct(self, input_, output_grad):
-        return self.grad(self.network)(input_, output_grad)
+    def construct(self, input_):
+        return self.grad(self.network)(input_)
 
 
 class Net(nn.Cell):
@@ -58,9 +58,7 @@ def test_net():
     Expectation: print output y.
     """
     x = np.random.randn(64, 128, 128).astype(np.float32)
-    sens = np.random.randn(64, 128, 128).astype(np.float32)
     dynamic_x = Tensor(shape=[64, None, None], dtype=mindspore.float32)
-    sens_x = Tensor(shape=[64, None, None], dtype=mindspore.float32)
     net = Grad(Net())
-    net.set_inputs(dynamic_x, sens_x)
-    net(Tensor(x), Tensor(sens))
+    net.set_inputs(dynamic_x)
+    net(Tensor(x))

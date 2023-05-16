@@ -40,12 +40,12 @@ class NetGatherD(nn.Cell):
 class NetGatherDGrad(nn.Cell):
     def __init__(self, network):
         super(NetGatherDGrad, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True)
         self.network = network
 
     @jit
-    def construct(self, inputx, index, output_grad):
-        return self.grad(self.network)(inputx, index, output_grad)
+    def construct(self, inputx, index):
+        return self.grad(self.network)(inputx, index)
 
 
 @pytest.mark.level1
@@ -59,8 +59,7 @@ def test_gatherd_grad_fp32():
 
     gatherd = NetGatherD(dim)
     grad = NetGatherDGrad(gatherd)
-    dout = np.random.randint(0, 5, index.shape).astype(np.float32) * prop
-    output_grad = grad(Tensor(x), Tensor(index), Tensor(dout))
+    output_grad = grad(Tensor(x), Tensor(index))
     if isinstance(output_grad, (tuple, list)):
         output_grad = output_grad[0]
     print(output_grad.asnumpy())
@@ -77,8 +76,7 @@ def test_gatherd_grad_fp16():
 
     gatherd = NetGatherD(dim)
     grad = NetGatherDGrad(gatherd)
-    dout = np.random.randint(0, 5, index.shape).astype(np.float16) * prop
-    output_grad = grad(Tensor(x), Tensor(index), Tensor(dout))
+    output_grad = grad(Tensor(x), Tensor(index))
     if isinstance(output_grad, (tuple, list)):
         output_grad = output_grad[0]
     print(output_grad.asnumpy())
@@ -95,8 +93,7 @@ def test_gatherd_grad_int32():
 
     gatherd = NetGatherD(dim)
     grad = NetGatherDGrad(gatherd)
-    dout = np.random.randint(0, 5, index.shape).astype(np.int32) * prop
-    output_grad = grad(Tensor(x), Tensor(index), Tensor(dout))
+    output_grad = grad(Tensor(x), Tensor(index))
     if isinstance(output_grad, (tuple, list)):
         output_grad = output_grad[0]
     print(output_grad.asnumpy())
@@ -113,12 +110,11 @@ def test_gatherd_grad_checkresult():
 
     gatherd = NetGatherD(dim)
     grad = NetGatherDGrad(gatherd)
-    dout = np.array([[[-1.23, 119.84], [91.22607, -145.67]], [[37.67479, -8.696029], [100.89, -23.369316]]], np.float32)
-    output = grad(Tensor(x), Tensor(index), Tensor(dout))
+    output = grad(Tensor(x), Tensor(index))
 
     if isinstance(output, (tuple, list)):
         output = output[0]
-    expect = np.array([[[89.99606, -145.67], [0., 119.84]], [[138.56479, -8.696029], [0., -23.369316]]], np.float32)
+    expect = np.array([[[2., 1.], [0., 1.]], [[2., 1.], [0., 1.]]], np.float32)
     error = np.ones(shape=expect.shape) * 1.0e-6
     assert np.all(np.abs(output.asnumpy() - expect) < error)
 
@@ -138,11 +134,8 @@ def test_gatherd_grad_dynamic_shape():
     dim = 0
     index_dyn = Tensor(shape=[None, 5], dtype=ms.int64)
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), dtype=ms.int64)
-    grad_dyn = Tensor(shape=[2, None], dtype=ms.float16)
-    grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
-                            [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), dtype=ms.float16)
     except_shape = (2, 5)
     grad_net = NetGatherDGrad(NetGatherD(dim))
-    grad_net.set_inputs(x_dyn, index_dyn, grad_dyn)
-    output = grad_net(x, index, grad)
+    grad_net.set_inputs(x_dyn, index_dyn)
+    output = grad_net(x, index)
     assert output[0].asnumpy().shape == except_shape

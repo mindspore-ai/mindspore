@@ -33,11 +33,11 @@ class SoftplusNet(nn.Cell):
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, input_data, sens):
-        gout = self.grad(self.network)(input_data, sens)
+    def construct(self, input_data):
+        gout = self.grad(self.network)(input_data)
         return gout
 
 
@@ -54,22 +54,19 @@ def test_dynamic_shape_softplus_grad(dtype):
     """
     np.random.seed(0)
     x_np = np.random.randn(2, 3, 4).astype(dtype)
-    dout_np = np.random.randn(2, 3, 4).astype(dtype)
-    expect = dout_np * np.exp(x_np) / (1 + np.exp(x_np))
+    expect = np.exp(x_np) / (1 + np.exp(x_np))
     loss = 1e-3
     net = SoftplusNet()
     grad_net = Grad(net)
     x_tensor = Tensor(x_np)
-    dout_tensor = Tensor(dout_np)
     dy_shape = [None for _ in x_tensor.shape]
     x_dyn = Tensor(shape=dy_shape, dtype=x_tensor.dtype)
-    dout_dyn = Tensor(shape=dy_shape, dtype=x_tensor.dtype)
-    grad_net.set_inputs(x_dyn, dout_dyn)
+    grad_net.set_inputs(x_dyn)
 
     # Graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    ms_result = grad_net(x_tensor, dout_tensor)[0]
+    ms_result = grad_net(x_tensor)[0]
     np.testing.assert_allclose(expect, ms_result.asnumpy(), rtol=loss, atol=loss)
     context.set_context(mode=context.PYNATIVE_MODE)
-    ms_result = grad_net(x_tensor, dout_tensor)[0]
+    ms_result = grad_net(x_tensor)[0]
     np.testing.assert_allclose(expect, ms_result.asnumpy(), rtol=loss, atol=loss)

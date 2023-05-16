@@ -38,10 +38,10 @@ class GatherDGradNet(nn.Cell):
     def __init__(self, net):
         super(GatherDGradNet, self).__init__()
         self.net = net
-        self.grad = GradOperation(get_all=True, sens_param=True)(self.net)
+        self.grad = GradOperation(get_all=True)(self.net)
 
-    def construct(self, x, index, grad):
-        return self.grad(x, index, grad)
+    def construct(self, x, index):
+        return self.grad(x, index)
 
 
 @pytest.mark.level1
@@ -211,11 +211,8 @@ def test_gatherd_grad_dynamic_shape():
     dim = 0
     index_dyn = Tensor(shape=[None, 5], dtype=ms.int64)
     index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), dtype=ms.int64)
-    grad_dyn = Tensor(shape=[2, None], dtype=ms.float16)
-    grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
-                            [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), dtype=ms.float16)
     except_shape = (2, 5)
     grad_net = GatherDGradNet(GatherDNet(dim))
-    grad_net.set_inputs(x_dyn, index_dyn, grad_dyn)
-    output = grad_net(x, index, grad)
+    grad_net.set_inputs(x_dyn, index_dyn)
+    output = grad_net(x, index)
     assert output[0].asnumpy().shape == except_shape

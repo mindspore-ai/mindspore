@@ -74,22 +74,21 @@ def compare_acc(outputs, expects):
 class GradNetWrtX(nn.Cell):
     def __init__(self, network):
         super(GradNetWrtX, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True)
+        self.grad = ops.GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, input_, output_grad):
-        return self.grad(self.network)(input_, output_grad)
-
+    def construct(self, input_):
+        return self.grad(self.network)(input_)
 
 
 class GradNetWrtX2inputs(nn.Cell):
     def __init__(self, network):
         super(GradNetWrtX2inputs, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True)
+        self.grad = ops.GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, input1, input2, output_grad):
-        return self.grad(self.network)(input1, input2, output_grad)
+    def construct(self, input1, input2):
+        return self.grad(self.network)(input1, input2)
 
 
 def comm_func(dyn_range, input_shp, data_type, op_net, num=None):
@@ -334,7 +333,7 @@ def test_dynamic_custom_dense():
     batch_size = 16
     dynamic_range = range(2, 64)
     data_type = np.float32
-    input_shape = [(batch_size, None, 64), (batch_size, None, 64)]
+    input_shape = [(batch_size, None, 64)]
     net = GradNetWrtX(CustomDense(64, 64))
     comm_func(dynamic_range, input_shape, data_type, net)
 

@@ -24,7 +24,7 @@ class GradNet(nn.Cell):
 
     def __init__(self, network):
         super(GradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True)
+        self.grad = ops.GradOperation(get_all=True)
         self.net = network
 
     def construct(self, *args):
@@ -61,7 +61,7 @@ class DynamicGradNet(nn.Cell):
 
     def __init__(self, network, is_dynamic_rank=False, skip_convert_in_ids=None, skip_convet_out_ids=None):
         super(DynamicGradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True)
+        self.grad = ops.GradOperation(get_all=True)
         self.skip_convert_in_ids = skip_convert_in_ids if skip_convert_in_ids else []
         self.skip_convet_out_ids = skip_convet_out_ids if skip_convet_out_ids else []
         self.net = NetConvertForward(network, is_dynamic_rank, skip_convet_out_ids)
@@ -73,29 +73,12 @@ class DynamicGradNet(nn.Cell):
             print("[WARNING] Run as graph mode, it maybe not right! Please to run as pynative.")
 
     def construct(self, *args):
-        inputs = args[:-1]
-        sens = args[-1]
-
         new_args = []
-        for i, arg in enumerate(inputs):
+        for i, arg in enumerate(args):
             if i not in self.skip_convert_in_ids and (F.is_sequence_value_unknown(arg.shape) or arg.shape):
                 new_args.append(self.convert_to_dynamic(arg))
             else:
                 new_args.append(arg)
-
-        if isinstance(sens, tuple):
-            raw_sens = []
-            for i, sen in enumerate(sens):
-                if i not in self.skip_convet_out_ids and (F.is_sequence_value_unknown(sen.shape) or sen.shape):
-                    raw_sens.append(self.convert_to_dynamic(sen))
-                else:
-                    raw_sens.append(sen)
-            new_args.append(tuple(raw_sens))
-        else:
-            if 0 not in self.skip_convet_out_ids and (F.is_sequence_value_unknown(sens.shape) or sens.shape):
-                new_args.append(self.convert_to_dynamic(sens))
-            else:
-                new_args.append(sens)
 
         args_tuple = tuple(new_args)
         return self.grad(self.net)(*args_tuple)
@@ -142,8 +125,9 @@ class TestDynamicGrad:
             if not isinstance(inp, Tensor):
                 self.skip_convert_in_ids.append(i)
 
-        args = self._get_grad_args(inputs)
-        static_outs = self.grad_net(*args)
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
+        static_outs = self.grad_net(*inputs)
 
         print("Static gradient case done.")
 
@@ -153,25 +137,8 @@ class TestDynamicGrad:
             context.set_context(save_graphs_path="./{}_graphs".format(graphs_dir))
 
         dyn_grad_net = DynamicGradNet(self.net, is_dynamic_rank, self.skip_convert_in_ids, self.skip_convert_out_ids)
-        dyn_outs = dyn_grad_net(*args)
+        dyn_outs = dyn_grad_net(*inputs)
         print("Dynamic gradient case done.")
 
         output_compare(dyn_outs, static_outs)
         print("Compare done!")
-
-    def _get_grad_args(self, inputs):
-        """Get all args for gradient net (inputs and gradient senes)."""
-        if not isinstance(inputs, (list, tuple)):
-            inputs = [inputs]
-        outs = self.net(*inputs)
-
-        if not isinstance(outs, (list, tuple)):
-            outs = [outs]
-
-        sens = []
-        for out_ms in outs:
-            out = out_ms.asnumpy()
-            # Will be replace by fill latter.
-            sens.append(Tensor(np.ones(out.shape).astype(out.dtype)))
-
-        return (*inputs, tuple(sens) if len(sens) > 1 else sens[0])

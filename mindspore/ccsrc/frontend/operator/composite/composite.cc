@@ -1081,13 +1081,17 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
     bprop_arg = k_child->NewCNodeInOrder({NewValueNode(ones_like), f_app});
   }
   AnfNodePtr b_app = k_child->NewCNodeInOrder({bprop, bprop_arg});
+  // Add sense parameter flag for bound_node_.
+  if (b_app->isa<CNode>() && sens_param_) {
+    b_app->cast<CNodePtr>()->AddAttr("sens_param_", MakeValue(true));
+  }
 
   CNodePtr fv_bprop = nullptr;
   if (get_by_list_) {
     if (is_weights_none) {
       fv_bprop = k_child->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
     } else {
-      // python code: grads = hyper_map(F.partial(env_get, env), weights)
+      // Python code: grads = hyper_map(F.partial(env_get, env), weights)
       AnfNodePtr env =
         k_child->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
       AnfNodePtr partial_env_get =
