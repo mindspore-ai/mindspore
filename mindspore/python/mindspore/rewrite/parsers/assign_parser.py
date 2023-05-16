@@ -32,7 +32,7 @@ from mindspore.rewrite.parser import Parser
 from mindspore.rewrite.parser_register import reg_parser
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
 from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder, FunctionSymbolTreeBuilder
-from mindspore.rewrite.ast_helpers import AstReplacer, AstModifier
+from mindspore.rewrite.ast_helpers import AstReplacer
 from mindspore.rewrite.common.event import Event
 from ..common import error_str
 
@@ -272,40 +272,21 @@ class AssignParser(Parser):
             NotImplementedError: If `func_scope` is not "self", it means corresponding op is inited in forward method.
             NotImplementedError: If targets of ast.Assign of corresponding field in `__init__` method.
         """
-
-        changed = False
         if func_scope != "self":
             logger.warning("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
                            func_name)
         init_func_ast = stree.get_init_func_ast()
         class_name = sub_tree.get_opt_cls_name()
-        for body in init_func_ast.body:
-            if not isinstance(body, ast.Assign):
-                continue
-            if len(body.targets) > 1:
-                raise NotImplementedError(error_str("not support multi-targets in assign now!", father_node=body))
-            target = body.targets[0]
-            if not isinstance(target, ast.Attribute) or not isinstance(target.value, ast.Name):
-                continue
-            if target.value.id != "self" or target.attr != func_name:
-                continue
-            changed = True
-            setattr(stree.get_origin_network(), func_name, sub_tree.get_origin_network())
-            args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                                [ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                 ScopedValue(ValueType.StringValue, "", func_name)])
-            # Add .to_float(mindspore.float16) if origin subnet has this attribute
-            if hasattr(sub_tree.get_origin_network(), "to_float_fp16")\
-                and sub_tree.get_origin_network().to_float_fp16:
-                call_func_value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
-                call_func = ast.Attribute(value=call_func_value, attr='to_float', ctx=ast.Load())
-                call_arg = ast.Attribute(value=ast.Name(id='mindspore', ctx=ast.Load()), attr='float16',
-                                         ctx=ast.Load())
-                body.value = ast.Call(func=call_func, args=[call_arg], keywords=[])
-            else:
-                body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
-            break
-        return changed
+        setattr(stree.get_origin_network(), func_name, sub_tree.get_origin_network())
+        # Add .to_float(mindspore.float16) if origin subnet has this attribute
+        if hasattr(sub_tree.get_origin_network(), "to_float_fp16")\
+            and sub_tree.get_origin_network().to_float_fp16:
+            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}')).to_float16(mindspore.float16)"
+        else:
+            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}'))"
+        new_ast = ast.parse(new_code).body[0]
+        init_func_ast.body.append(new_ast)
+        return True
 
     @staticmethod
     def _convert_ast_binop_to_node(ast_node: ast.BinOp, father_ast_node: ast.Assign) -> Node:
