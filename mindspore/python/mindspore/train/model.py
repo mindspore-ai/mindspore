@@ -1538,7 +1538,8 @@ class Model:
             predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
                 The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
-            backend (str): Select predict backend, the value is None.
+            backend (str): Select predict backend, this parameter is an experimental feature
+                and is mainly used for MindSpore Lite cloud-side inference. Default: ``False`` .
 
         Returns:
             Tensor, array(s) of predictions.

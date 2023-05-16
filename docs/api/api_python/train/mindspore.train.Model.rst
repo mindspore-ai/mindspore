@@ -142,7 +142,7 @@
 
         参数：
             - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
-            - **backend** (str) - 选择预测后端，值为None。
+            - **backend** (str) - 选择预测后端，该参数为实验性质特性，主要用于MindSpore Lite云侧推理。默认值： ``None`` 。
 
         返回：
             返回预测结果，类型是Tensor或Tensor元组。
