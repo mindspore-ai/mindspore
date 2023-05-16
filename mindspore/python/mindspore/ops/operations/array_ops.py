@@ -3130,13 +3130,13 @@ class Slice(Primitive):
     Refer to :func:`mindspore.ops.slice` for more details.
 
     Inputs:
-        - **input_x** (Tensor): The target tensor.
+        - **input_x** (Tensor) - The target tensor.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
-        - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
+        - **begin** (Union[tuple, list]) - The beginning of the slice. Only constant value(>=0) is allowed.
+        - **size** (Union[tuple, list]) - The size of the slice. Only constant value is allowed.
 
     Outputs:
-        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
+        Tensor, the shape is: input `size`, the data type is the same as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4443,7 +4443,7 @@ class ScatterMax(_ScatterOpDynamic):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
-        = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+        = \max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
@@ -4501,7 +4501,7 @@ class ScatterMin(_ScatterOpDynamic):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
-        = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+        = \min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
