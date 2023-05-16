@@ -220,10 +220,12 @@ class MINDRECORD_API ShardReader {
 
   /// \brief read row meta by shard_id and sample_id
   Status ReadRowGroupByShardIDAndSampleID(const std::vector<std::string> &columns, const uint32_t &shard_id,
-                                          const uint32_t &sample_id, std::shared_ptr<ROW_GROUPS> *row_group_ptr);
+                                          const int32_t &consumer_id, const uint32_t &sample_id,
+                                          std::shared_ptr<ROW_GROUPS> *row_group_ptr);
 
   /// \brief read all rows in one shard
-  Status ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
+  Status ReadAllRowsInShard(int shard_id, const int32_t &consumer_id, const std::string &sql,
+                            const std::vector<std::string> &columns,
                             std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
                             std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr);
 
