@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_IM2COL_GPU_KERNEL_H_
 
 #include <map>
-#include <vector>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/im2col_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 
@@ -43,6 +43,8 @@ class Im2ColGpuKernelMod : public NativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, outputs, stream_ptr);
   }
+
+  int maxBlockSize{-1};
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

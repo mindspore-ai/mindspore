@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/im2col_impl.cuh"
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/im2col_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_public/occupancy.h"
 
 template <typename T>
@@ -58,16 +58,15 @@ cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_heigh
                        const int y_out_plane, const int y_height, const int y_width, const int kernel_height,
                        const int kernel_width, const int stride_height, const int stride_width,
                        const int dilation_height, const int dilation_width, const int pad_height, const int pad_width,
-                       T *x, T *y, const uint32_t device_id, cudaStream_t stream) {
+                       T *x, T *y, int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream) {
   const int inner_size_y = y_out_plane * y_height * y_width;
   const int inner_size_x = x_channel * x_height * x_width;
   const int inner_size_c = x_channel * y_height * y_width;
   const int num_kernels = batches * inner_size_c;
-  static int maxBlockSize{0};
-  if (maxBlockSize == 0) {
-    maxBlockSize = FetchMaxBlokcSize(Im2ColKernel<T>, 0);
+  if (*maxBlockSize <= static_cast<int>(0)) {
+    *maxBlockSize = FetchMaxBlokcSize(Im2ColKernel<T>, 0);
   }
-  const int blockSize = std::min(maxBlockSize, num_kernels);
+  const int blockSize = std::max(std::min(*maxBlockSize, num_kernels), static_cast<int>(1));
   const int gridSize = (num_kernels + blockSize - 1) / blockSize;
   Im2ColKernel<T><<<gridSize, blockSize, 0, stream>>>(
     num_kernels, x, y, inner_size_x, inner_size_y, x_height, x_width, kernel_height, kernel_width, pad_height,
@@ -81,7 +80,7 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int stride_height, const int stride_width,
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, half *x, half *y,
-                                                const uint32_t device_id, cudaStream_t stream);
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
                                                 const int x_width, const int y_out_plane, const int y_height,
@@ -89,7 +88,7 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int stride_height, const int stride_width,
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, float *x, float *y,
-                                                const uint32_t device_id, cudaStream_t stream);
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
                                                 const int x_width, const int y_out_plane, const int y_height,
@@ -97,7 +96,7 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int stride_height, const int stride_width,
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, double *x, double *y,
-                                                const uint32_t device_id, cudaStream_t stream);
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
                                                 const int x_width, const int y_out_plane, const int y_height,
@@ -105,7 +104,7 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int stride_height, const int stride_width,
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, Complex64 *x, Complex64 *y,
-                                                const uint32_t device_id, cudaStream_t stream);
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
                                                 const int x_width, const int y_out_plane, const int y_height,
@@ -113,4 +112,4 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int stride_height, const int stride_width,
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, Complex128 *x, Complex128 *y,
-                                                const uint32_t device_id, cudaStream_t stream);
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
