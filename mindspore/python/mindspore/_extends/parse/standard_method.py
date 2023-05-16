@@ -1218,6 +1218,13 @@ def logaddexp2(input, other):
     return F.logaddexp2(input, other)
 
 
+def logcumsumexp(input, axis):
+    """
+    Computes the logarithm of the sum of exponentiations of the inputs along specified dimension.
+    """
+    return F.logcumsumexp(input, axis)
+
+
 def logsumexp(input, axis, keepdims=False):
     """
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,

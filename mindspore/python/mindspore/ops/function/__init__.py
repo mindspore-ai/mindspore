@@ -248,6 +248,7 @@ from .math_func import (
     heaviside,
     gcd,
     log,
+    logcumsumexp,
     logdet,
     log_matrix_determinant,
     slogdet,
