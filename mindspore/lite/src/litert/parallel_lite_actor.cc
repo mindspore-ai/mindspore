@@ -27,6 +27,10 @@
 
 namespace mindspore::lite {
 void ParallelLiteActor::RunOpData(OpData<lite::Tensor> *inputs, mindspore::OpContext<lite::Tensor> *context) {
+  if (call_actor_) {
+    LiteOpActor::RunOpData(inputs, context);
+    return;
+  }
   auto op_uuid = context->sequential_num_;
   input_op_datas_[op_uuid].push_back(inputs);
   inputs_data_[inputs->index_] = inputs->data_;
@@ -106,8 +110,9 @@ int ParallelLiteActor::KernelActorInit() {
   subgraph_kernel->SetGraphChanged(false);
   size_t units_size = split_kernels.units.size();
   if (units_size == 0) {
-    MS_LOG(ERROR) << "split_kernels size is 0.";
-    return RET_ERROR;
+    MS_LOG(DEBUG) << "split_kernels size is 0.";
+    call_actor_ = true;
+    return RET_OK;
   }
 
   if (output_data_arrows_.size() == 0) {

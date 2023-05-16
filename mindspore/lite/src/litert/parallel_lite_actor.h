@@ -57,6 +57,7 @@ class ParallelLiteActor : public LiteOpActor {
   std::vector<size_t> begin_readly_indexs_{};
   std::atomic<int> output_data_count_ = 0;
   bool finish_ = true;
+  bool call_actor_ = false;
 };
 
 class KernelsActor : public ActorBase {
