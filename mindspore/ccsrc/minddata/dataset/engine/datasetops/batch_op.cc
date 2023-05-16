@@ -98,7 +98,7 @@ Status BatchOp::operator()() {
       ep_step = 0;
       RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
     }
-    while (new_row.empty() == false) {
+    while (!new_row.eoe()) {
       // we only call stepBegin when a new batch is starting to be filled.
       if (table->size() == 0) {
         ep_step++;
