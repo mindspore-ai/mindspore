@@ -969,7 +969,6 @@ class AfterOptARewriter : public BaseRewriter {
     const auto raise_pyexecute_node =
       fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple,
                            key_value_tuple, inputs[inputs.size() - 1]});
-    raise_pyexecute_node->CloneUserData(cnode);
     raise_pyexecute_node->set_debug_info(cnode->debug_info());
     MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
     return raise_pyexecute_node;

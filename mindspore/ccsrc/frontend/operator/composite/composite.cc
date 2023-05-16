@@ -658,8 +658,6 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimPyExecute));
-  // Record the PyExecute node.
-  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(out);
   return fg;
 }
 

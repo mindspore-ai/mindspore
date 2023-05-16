@@ -2255,10 +2255,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                                    << "' to be nonconstant.";
         }
       }
-      if (local_abs->isa<abstract::AbstractTensor>()) {
-        MS_LOG(WARNING) << "When using JIT Fallback to handle script '" << script << "', found variable '"
-                        << py_data_name << "' to be a tensor.";
-      }
     }
   }
 
@@ -2845,19 +2841,13 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto cur_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
     if (args_abs_list.empty()) {
-      // process raise
-      MS_LOG(EXCEPTION) << "No active exception to reraise.";
+      // Process raise.
+      MS_LOG(EXCEPTION) << "No active exception to re-raise.";
     }
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    auto inputs = cnode->inputs();
-    has_variable_ = false;
-    size_t index_begin = 2;
-    size_t index_end = inputs.size() - 1;
-    for (size_t index = index_begin; index < inputs.size(); ++index) {
-      CheckHasVariable(args_abs_list[index - 1]);
-    }
-    // continue to fallback if has variable
+
+    // Return Any directly if meet variable condition.
     bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
     if (is_variable_condition) {
       AbstractBasePtr res = std::make_shared<AbstractAny>();
@@ -2869,9 +2859,25 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
       return infer_result;
-    } else if (has_variable_) {
-      MS_LOG(EXCEPTION) << "Using raise with variable under a constant condition. You may need to check your code.";
     }
+
+    // Not accept if raise variable in variable condition.
+    auto inputs = cnode->inputs();
+    bool has_variable = false;
+    size_t index_begin = 2;
+    size_t index_end = inputs.size() - 1;
+    for (size_t index = index_begin; index < inputs.size(); ++index) {
+      if (raiseutils::CheckHasVariable(args_abs_list[index - 1])) {
+        has_variable = true;
+        break;
+      }
+    }
+    if (has_variable) {
+      MS_LOG(EXCEPTION) << "Should not raise with variable under a constant condition.\n\n"
+                        << trace::GetDebugInfo(node->debug_info());
+    }
+
+    // Continue to handle raise in compile time.
     std::shared_ptr<raiseutils::KeyValueInfo> key_value = std::make_shared<raiseutils::KeyValueInfo>();
     std::string exception_type = raiseutils::GetExceptionType(args_abs_list[0], inputs[index_end], key_value, false);
     std::string exception_string;
@@ -2907,23 +2913,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
  private:
-  bool has_variable_ = false;
-  void CheckHasVariable(const AbstractBasePtr &arg) {
-    if (arg->isa<abstract::AbstractSequence>()) {
-      auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
-      MS_EXCEPTION_IF_NULL(arg_tuple);
-      const auto &arg_tuple_elements = arg_tuple->elements();
-      if (arg_tuple_elements.size() == 0) {
-        MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
-      }
-      for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
-        auto &element = arg_tuple_elements[index];
-        CheckHasVariable(element);
-      }
-    } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
-      has_variable_ = true;
-    }
-  }
   void RaiseConstant(const std::string &type, const std::string &exception_string = "") {
     auto iter = exception_types_map.find(type);
     if (iter == exception_types_map.end()) {
@@ -2932,7 +2921,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
                         << SupportedExceptionsToString();
     }
     ExceptionType error_type = iter->second;
-    if (exception_string == "") {
+    if (exception_string.empty()) {
       MS_EXCEPTION(error_type);
     } else {
       MS_EXCEPTION(error_type) << exception_string;

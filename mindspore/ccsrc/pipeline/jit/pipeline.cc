@@ -1076,8 +1076,9 @@ void CheckInterpretNodeLineInfos() {
     const auto &script_node = cnode->input(1);
     const auto &script = GetValueNode<StringImmPtr>(script_node);
     // Usually the script is a value node.
+    std::string script_str;
     if (script != nullptr) {
-      ss << "Script: " << script->value() << "\n\n";
+      script_str = script->value();
     } else {
       const auto &script_abs = script_node->abstract();
       if (script_abs != nullptr) {
@@ -1086,8 +1087,13 @@ void CheckInterpretNodeLineInfos() {
         MS_EXCEPTION_IF_NULL(script_value);
         auto script_value_str = script_value->cast<StringImmPtr>();
         MS_EXCEPTION_IF_NULL(script_value_str);
-        ss << "Script: " << script_value_str->value() << "\n\n";
+        script_str = script->value();
       }
+    }
+    if (!script_str.empty()) {
+      ss << "Script: " << script_str << "\n\n";
+    } else {
+      ss << "Node: " << node->DebugString() << "\n\n";
     }
     const auto line_info = trace::GetDebugInfo(node->debug_info());
     ss << line_info << "\n";
@@ -1097,7 +1103,11 @@ void CheckInterpretNodeLineInfos() {
   ss << "----------------------------------------\n";
 
   // Print the codes run in JIT Fallback.
-  MS_LOG(INFO) << ss.str();
+  if (common::GetEnv("MS_DEV_FALLBACK_DUMP_NODE") == "1") {
+    MS_LOG(ERROR) << ss.str();
+  } else {
+    MS_LOG(INFO) << ss.str();
+  }
   InterpretNodeRecorder::GetInstance().Clear();
 }
 

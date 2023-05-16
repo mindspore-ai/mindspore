@@ -102,27 +102,16 @@ struct KeyValueInfo {
   std::vector<AnfNodePtr> values;
 };
 
-std::string GetScalarStringValue(const AbstractBasePtr &abs);
-
 std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &cnode,
                              const std::shared_ptr<KeyValueInfo> &key_value, bool has_variable = true);
 
-std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input,
-                                 const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol = false,
-                                 bool need_comma = false);
-
 bool CheckHasVariable(const AbstractBasePtr &arg);
-
-std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, const std::shared_ptr<KeyValueInfo> &key_value,
-                        std::string exception_str);
 
 std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input,
                                const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol = false,
                                bool need_comma = false);
 
 bool CheckNeedSymbol(const AbstractBasePtr &abs);
-
-bool CheckIsStr(const AbstractBasePtr &abs);
 
 std::string MakeRaiseKey(const int index);
 
