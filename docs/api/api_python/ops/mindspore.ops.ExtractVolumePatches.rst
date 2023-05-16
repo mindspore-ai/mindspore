@@ -25,7 +25,7 @@ mindspore.ops.ExtractVolumePatches
         - **TypeError** - 如果 `padding` 不是str。
         - **ValueError** - 如果 `kernel_size` 的长度不是3或5，并且 `kernel_size` 不是int。
         - **ValueError** - 如果 `strides` 的长度不是3或5，并且 `strides` 不是int。
-        - **ValueError** - 如果 `padding` 既不是"VALID"也不是"SAME"。
+        - **ValueError** - 如果 `padding` 既不是 ``"VALID"`` 也不是 ``"SAME"`` 。
         - **ValueError** - 如果 `kernel_size` 或 `strides` 的元素不是正整数。
         - **ValueError** - 如果 `input_x` 不是五维的Tensor。
         - **ValueError** - 如果 `input_x` 的shape含有0。

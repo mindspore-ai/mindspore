@@ -8124,7 +8124,7 @@ class TrilIndices(Primitive):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: ``mstype.int32`` .
+            An optional data type of ``mstype.int32`` and ``mstype.int64`` . Default: ``mstype.int32`` .
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
@@ -8358,7 +8358,7 @@ class TriuIndices(Primitive):
         col (int): number of columns in the 2-D matrix.
         offset (int, optional): diagonal offset from the main diagonal. Default: ``0`` .
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mstype.int32` and `mstype.int64`. Default: ``mstype.int32`` .
+            An optional data type of ``mstype.int32`` and ``mstype.int64`` . Default: ``mstype.int32`` .
 
     Outputs:
         - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.

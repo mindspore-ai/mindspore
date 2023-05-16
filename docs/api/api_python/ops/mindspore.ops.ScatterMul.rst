@@ -13,7 +13,7 @@ mindspore.ops.ScatterMul
     输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果数据类型不同，则低精度数据类型将转换为高精度的数据类型。当参数的数据类型需要转换时，则会抛出RuntimeError异常。
 
     参数：
-        - **use_locking** (bool) - 是否启用锁保护。默认值：False。
+        - **use_locking** (bool) - 是否启用锁保护。默认值： ``False`` 。
 
     输入：
         - **input_x** (Parameter) - ScatterMul的输入，任意维度的Parameter。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

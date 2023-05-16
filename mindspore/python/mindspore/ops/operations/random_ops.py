@@ -141,8 +141,8 @@ class StandardNormal(Primitive):
     Refer to :func:`mindspore.ops.standard_normal` for more details.
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
+        seed (int): Random seed, must be non-negative. Default: ``0`` .
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -182,8 +182,8 @@ class StandardLaplace(Primitive):
         \text{f}(x) = \frac{1}{2}\exp(-|x|)
 
     Args:
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
+        seed (int): Random seed. Default: ``0`` .
+        seed2 (int): Random seed2. Default: ``0`` .
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed
@@ -768,7 +768,7 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Args:
         dtype (mindspore.dtype): The type of output. Its value must be one of mstype.int16,
-            mstype.int32 and mstype.int64. Default: ``mstype.nt64`` .
+            mstype.int32 and mstype.int64. Default: ``mstype.int64`` .
 
     Inputs:
         - **logits** (Tensor) - The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.

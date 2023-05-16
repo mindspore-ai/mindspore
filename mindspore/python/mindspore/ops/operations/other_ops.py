@@ -726,7 +726,7 @@ class Pull(PrimitiveWithInfer):
 
 class identity(Primitive):
     """
-    The :func:`mindspore.ops.identity` interface is deprecated, please use the :class:`mindspore.nn.Identity` instead.
+    The :class:`mindspore.ops.identity` interface is deprecated, please use the :class:`mindspore.nn.Identity` instead.
 
     Supported Platforms:
         Deprecated

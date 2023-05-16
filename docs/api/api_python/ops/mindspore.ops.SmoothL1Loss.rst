@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.smooth_l1_loss`。
 
     参数：
-        - **beta** (float，可选) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值应大于零。默认值：1.0。
+        - **beta** (float，可选) - 控制损失函数在L1Loss和L2Loss间变换的阈值，该值应大于零。默认值： ``1.0`` 。
         - **reduction** (str，可选) - 对输出应用特定的规约方法：可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'none'`` 。
 
     输入：
