@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include <tuple>
 #include <algorithm>
-#include <utility>
 #include <map>
 #include <set>
 #include "include/transform/graph_ir/types.h"

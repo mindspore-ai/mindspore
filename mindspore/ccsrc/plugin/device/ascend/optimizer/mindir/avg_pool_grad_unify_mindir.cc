@@ -258,6 +258,7 @@ AnfNodePtr BuildAvgPoolGrad(const PatternMap &m, const AnfNodePtr &new_node) {
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), avgpool_grad_vm);
   auto output_names = std::vector<std::string>{"output"};
   common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), avgpool_grad_vm);
+  common::AnfAlgo::SetNodeAttr("x_from_tensor", MakeValue(true), avgpool_grad_vm);
   return avgpool_grad_vm;
 }
 }  // namespace

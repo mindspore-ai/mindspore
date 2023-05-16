@@ -88,12 +88,12 @@ class AclConverter {
   friend class AttrConverter;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AddressPtr &address,
                                                                      const TensorParams &params,
-                                                                     const std::string &desc_name, bool is_input,
-                                                                     AclDumpString *dump_str);
+                                                                     const std::string &desc_name,
+                                                                     AclDumpString *dump_str) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const tensor::TensorPtr &host_tensor,
                                                                      const TensorParams &params,
-                                                                     const std::string &desc_name, bool is_input,
-                                                                     AclDumpString *dump_str);
+                                                                     const std::string &desc_name,
+                                                                     AclDumpString *dump_str) const;
 
   static aclFormat ConvertFormat(const std::string &format);
 
@@ -123,7 +123,7 @@ class AttrHelper {
   void GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type, ShapeVector *shape);
 
   template <typename T>
-  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) {
+  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) const {
     MS_EXCEPTION_IF_NULL(array_list);
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
     auto val = value_sequence[0];
@@ -170,8 +170,8 @@ class AttrConverter : public AttrHelper<AttrConverter> {
     std::vector<int32_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int64_t> array_list_int64;
-    std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int64),
-                   [](const int val) { return IntToLong(val); });
+    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int64),
+                         [](const int val) { return IntToLong(val); });
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list_int64);
   }
@@ -237,8 +237,8 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int32_t> array_list_int32;
-    std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                   [](const uint8_t val) { return static_cast<int32_t>(val); });
+    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
+                         [](const uint8_t val) { return static_cast<int32_t>(val); });
     tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
     param->data_type = TypeId::kNumberTypeInt32;
     MS_EXCEPTION_IF_NULL(tensor_);
@@ -249,8 +249,8 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int32_t> array_list_int32;
-    std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                   [](const int64_t val) { return LongToInt(val); });
+    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
+                         [](const int64_t val) { return LongToInt(val); });
     tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
     param->data_type = TypeId::kNumberTypeInt32;
     MS_EXCEPTION_IF_NULL(tensor_);

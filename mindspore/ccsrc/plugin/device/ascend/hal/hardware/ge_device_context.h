@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_GE_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_GE_DEVICE_CONTEXT_H_
 
-#include <vector>
 #include <memory>
 #include <string>
 #include <map>

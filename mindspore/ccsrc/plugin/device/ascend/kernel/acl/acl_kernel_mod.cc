@@ -182,8 +182,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   converter_->SetRunnerSpecialInfo(kernel_name_, output_params_);
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-  MS_LOG(INFO) << this->DebugString();
-  MS_LOG(INFO) << converter_->DebugString();
+  MS_LOG(DEBUG) << this->DebugString();
+  MS_LOG(DEBUG) << converter_->DebugString();
   converter_->Run(stream_ptr);
   return true;
 }

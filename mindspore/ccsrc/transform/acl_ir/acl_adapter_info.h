@@ -46,7 +46,7 @@ class AclAdapterInfo {
     info.ori_format = ori_format;
     info.dev_format = dev_format;
     info.reshape_type = reshape_type;
-    input_info_.emplace(index, info);
+    (void)input_info_.emplace(index, info);
     return *this;
   }
 
