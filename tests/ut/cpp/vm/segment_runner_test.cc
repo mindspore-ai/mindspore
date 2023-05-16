@@ -78,13 +78,15 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
 
 TEST_F(TestCompileSegmentRunner, test_RunOperation1) {
   VectorRef args({1});
-  auto res = RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimIdentity->name())), args);
+  auto res =
+    RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimIdentity->name()).cast<std::string>()), args);
   ASSERT_EQ(py::cast<int>(BaseRefToPyData(res)), 1);
 }
 
 TEST_F(TestCompileSegmentRunner, test_RunOperation2) {
   VectorRef args({1, 2});
-  auto res = RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimScalarGt->name())), args);
+  auto res =
+    RunOperation(std::make_shared<PrimitivePy>(py::str(prim::kPrimScalarGt->name()).cast<std::string>()), args);
   ASSERT_EQ(py::cast<bool>(BaseRefToPyData(res)), false);
 }
 }  // namespace compile

@@ -120,6 +120,7 @@ class TrivialPrimEvaluator : public PrimEvaluator {
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list) = 0;
 
  protected:
+  virtual bool inplace_prim() const = 0;
   PrimitiveEvalCachePtr eval_cache_;
 };
 
@@ -133,6 +134,9 @@ class TransitionPrimEvaluator : public PrimEvaluator {
   // Parameter in_conf0 : the first element in args_conf_list;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                                  const ConfigPtr &in_conf, const AnfNodeConfigPtr &out_conf) = 0;
+
+ protected:
+  virtual bool inplace_prim() const { return false; }
 };
 
 class SymbolicPrimEvaluator : public PrimEvaluator {

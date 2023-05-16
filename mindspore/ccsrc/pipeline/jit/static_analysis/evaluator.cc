@@ -556,6 +556,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                                         const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
 
+  EvalResultPtr res;
   // If the arguments contain Any, return Any directly.
   // Only check in TrivialPrimEvaluator, not in TransitionPrimEvaluator.
   const auto standard_prim_eval = dyn_cast_ptr<StandardPrimEvaluator>(shared_from_this());
@@ -564,10 +565,17 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
      ignore_any_type_checking_prims.find(standard_prim_eval->prim()) != ignore_any_type_checking_prims.end());
   if (!ignore_any_type_checking && ContainsAnyType(args_abs_list)) {
     MS_LOG(INFO) << ToString() << " receives arguments that contain Any.";
-    return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
+    res = std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
+  } else {
+    res = EvalPrim(engine, args_abs_list);
   }
-
-  return EvalPrim(engine, args_abs_list);
+  // Update the input abstract for inplace primitive.
+  if (inplace_prim() && !args_abs_list.empty() && args_abs_list[0] != res->abstract()) {
+    MS_LOG(DEBUG) << "Set inplace abstract, " << args_abs_list[0]->ToString() << " -> " << res->abstract()->ToString();
+    // Always update the inplace abstract.
+    args_abs_list[0]->set_inplace_abstract(res->abstract());
+  }
+  return res;
 }
 
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -578,6 +586,12 @@ EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const Confi
   }
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
   EvalResultPtr res = EvalPrim(engine, args_abs_list, args_conf_list[0], out_conf);
+  // Update the input abstract for inplace primitive.
+  if (inplace_prim() && !args_abs_list.empty() && args_abs_list[0] != res->abstract()) {
+    MS_LOG(DEBUG) << "Set inplace abstract, " << args_abs_list[0]->ToString() << " -> " << res->abstract()->ToString();
+    // Always update the inplace abstract.
+    args_abs_list[0]->set_inplace_abstract(res->abstract());
+  }
   // No need to cache.
   return res;
 }

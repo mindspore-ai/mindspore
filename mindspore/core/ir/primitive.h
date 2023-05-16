@@ -45,8 +45,9 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] name The name of primitive.
   /// \param[in] is_base True means the basic Primitive without BProp function inside.
   /// \param[in] prim_type The type of primitive.
-  explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn);
-  Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs);
+  explicit Primitive(const std::string &name, bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn,
+                     bool inplace_prim = false);
+  Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs, bool inplace_prim = false);
   /// \brief The constructor for Primitive, create a primitive for another primitive.
   ///
   /// \param[in] prim The input primitive.
@@ -201,14 +202,14 @@ class MS_CORE_API Primitive : public Named {
   /// \return Return true if the primitive is basic, else return false.
   bool is_base() const { return is_base_; }
   /// \brief Set primitive const flag.
-  /// If the is_const_prim_ of primitive is true means the primitive will be eliminated in constant folding.
+  /// If the const_prim_ of primitive is true means the primitive will be eliminated in constant folding.
   ///
   /// \param is_const_prim The flag of primitive to be set.
-  void set_const_prim(bool is_const_prim) { is_const_prim_ = is_const_prim; }
+  void set_const_prim(bool is_const_prim) { const_prim_ = is_const_prim; }
   /// \brief Check whether the primitive is const primitive.
   ///
   /// \return Return true if primitive is a const primitive, else return false.
-  bool is_const_prim() const { return is_const_prim_; }
+  bool const_prim() const { return const_prim_; }
   /// \brief Set const input index for primitive.
   ///
   /// \param const_input_indexes The const input index of the primitive to be set.
@@ -224,17 +225,27 @@ class MS_CORE_API Primitive : public Named {
   /// \return primitive's Id.
   uint64_t id() const { return id_; }
 
+  /// \brief Check whether the primitive is inplace primitive.
+  ///
+  /// \return Return true if primitive is a inplace primitive, else return false.
+  bool inplace_prim() const { return inplace_prim_; }
+  /// \brief Set primitive inplace flag.
+  ///
+  /// \param inplace_prim The flag of primitive to be set.
+  void set_inplace_prim(bool inplace_prim) { inplace_prim_ = inplace_prim; }
+
  protected:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, ValuePtr> evaluate_added_attrs_;
 
  private:
   std::string instance_name_;
+  PrimType prim_type_;
   bool is_base_;
   bool has_signature_;
-  PrimType prim_type_;
   bool record_evaluate_add_attr_;
-  bool is_const_prim_;
+  bool const_prim_;
+  bool inplace_prim_;
   std::vector<size_t> const_input_indexes_;
   uint64_t id_{0};
 };

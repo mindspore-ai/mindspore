@@ -25,6 +25,7 @@
 #include <utility>
 #include <atomic>
 #include "abstract/abstract_value.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
@@ -601,11 +602,9 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   auto fg = cnode->func_graph();
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_obj_call_node = fg->NewCNode(
-    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node});
+  const auto getattr_obj_call_node =
+    fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node);
   MS_LOG(DEBUG) << "Created getattr_obj_call_node: " << getattr_obj_call_node->DebugString(recursive_level);
-
-  getattr_obj_call_node->set_debug_info(cnode->debug_info());
   AnalysisEnginePtr eng = conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(getattr_obj_call_node, conf->context(), conf->func_graph());

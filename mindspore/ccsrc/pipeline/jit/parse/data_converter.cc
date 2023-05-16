@@ -369,7 +369,7 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
   MS_EXCEPTION_IF_NULL(prim_adapter);
   auto primitive = prim_adapter->attached_primitive();
   if (primitive == nullptr) {
-    primitive = std::make_shared<PrimitivePy>(adapter_obj, prim_adapter);
+    primitive = std::make_shared<PrimitivePy>(adapter_obj);
     prim_adapter->set_attached_primitive(primitive);
   }
 

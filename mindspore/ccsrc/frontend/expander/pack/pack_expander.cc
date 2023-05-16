@@ -190,8 +190,7 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
 
 py::object PackExpander::Emit(const py::object &prim, const py::args &inputs) const {
   MS_EXCEPTION_IF_NULL(graph_);
-  const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
-  auto prim_py = std::make_shared<PrimitivePy>(prim, adapter);
+  auto prim_py = std::make_shared<PrimitivePy>(prim);
   AnfNodePtrList cnode_inputs;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto node = ConvertInput(inputs[i]);

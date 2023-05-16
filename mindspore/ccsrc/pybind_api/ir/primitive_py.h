@@ -43,7 +43,7 @@ class PrimitivePy : public Primitive {
   explicit PrimitivePy(const std::string &name);
   PrimitivePy(const PrimitivePy &prim_py);
   PrimitivePy &operator=(const PrimitivePy &other);
-  PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter);
+  explicit PrimitivePy(const py::object &python_obj);
   ~PrimitivePy() override;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   const bool parse_info_ = true;
@@ -103,6 +103,7 @@ class PrimitivePyAdapter {
   void RemoveBackwardHookFn(int key);
   void set_prim_type(const PrimType t);
   void set_const_prim(bool is_const_prim);
+  void set_inplace_prim(bool inplace_prim);
   void set_const_input_indexes(const std::vector<size_t> &const_input_indexes);
   void set_signatures(const std::vector<Signature> &signatures);
   void set_instance_name(const std::string &s);
@@ -132,7 +133,8 @@ class PrimitivePyAdapter {
     return user_data_.get<T>(key);
   }
 
-  bool is_const_prim_{false};
+  bool const_prim_{false};
+  bool inplace_prim_{false};
   int backward_hook_fn_key_{-1};
   std::string name_;
   std::string instance_name_;

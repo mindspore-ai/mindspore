@@ -27,23 +27,25 @@ static uint64_t MakeId() {
   return last_id.fetch_add(1, std::memory_order_relaxed);
 }
 
-Primitive::Primitive(const std::string &name, const bool is_base, const PrimType prim_type)
+Primitive::Primitive(const std::string &name, bool is_base, const PrimType prim_type, bool inplace_prim)
     : Named(name),
+      prim_type_(prim_type),
       is_base_(is_base),
       has_signature_(false),
-      prim_type_(prim_type),
       record_evaluate_add_attr_(false),
-      is_const_prim_(false),
+      const_prim_(false),
+      inplace_prim_(),
       id_(MakeId()) {}
 
-Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs)
+Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs, bool inplace_prim)
     : Named(name),
       attrs_(attrs),
+      prim_type_(kPrimTypeBuiltIn),
       is_base_(true),
       has_signature_(false),
-      prim_type_(kPrimTypeBuiltIn),
       record_evaluate_add_attr_(false),
-      is_const_prim_(false),
+      const_prim_(false),
+      inplace_prim_(),
       id_(MakeId()) {}
 
 Primitive::Primitive(const Primitive &prim)
@@ -51,11 +53,12 @@ Primitive::Primitive(const Primitive &prim)
       attrs_(prim.attrs_),
       evaluate_added_attrs_(prim.evaluate_added_attrs_),
       instance_name_(prim.instance_name_),
+      prim_type_(prim.prim_type_),
       is_base_(prim.is_base_),
       has_signature_(prim.has_signature_),
-      prim_type_(prim.prim_type_),
       record_evaluate_add_attr_(false),
-      is_const_prim_(false),
+      const_prim_(false),
+      inplace_prim_(prim.inplace_prim_),
       const_input_indexes_(prim.const_input_indexes_),
       id_(prim.id_) {}
 
@@ -71,7 +74,8 @@ Primitive &Primitive::operator=(const Primitive &other) {
   has_signature_ = other.has_signature_;
   prim_type_ = other.prim_type_;
   record_evaluate_add_attr_ = false;
-  is_const_prim_ = false;
+  const_prim_ = false;
+  inplace_prim_ = other.inplace_prim_;
   id_ = other.id_;
   const_input_indexes_ = other.const_input_indexes_;
   return *this;

@@ -25,6 +25,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
+#include "utils/interpret_node_recorder.h"
 #include "utils/symbolic.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/fallback.h"
@@ -137,6 +138,9 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     new_cnode->set_input(input_index_two, local_dict_keys);
     new_cnode->set_input(input_index_three, local_dict_values);
     (void)transact.Replace(cnode, new_cnode);
+
+    // Record the PyExecute node.
+    InterpretNodeRecorder::GetInstance().PushPyExecuteNode(new_cnode);
   }
   transact.Commit();
   return true;

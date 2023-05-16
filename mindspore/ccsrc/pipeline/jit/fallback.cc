@@ -25,6 +25,7 @@
 
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
+#include "utils/interpret_node_recorder.h"
 #include "ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -33,6 +34,44 @@
 
 namespace mindspore {
 namespace fallback {
+CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
+                              const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info) {
+  const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), script, keys, values});
+  interpreted_cnode->set_debug_info(debug_info);
+  // Record the PyExecute node.
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(interpreted_cnode);
+  return interpreted_cnode;
+}
+
+CNodePtr CreatePyExecuteCNode(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
+                              const AnfNodePtr &values) {
+  const FuncGraphPtr &fg = orig_node->func_graph();
+  if (fg == nullptr) {
+    MS_LOG(EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
+  }
+  const auto interpreted_cnode = CreatePyExecuteCNode(fg, script, keys, values, orig_node->debug_info());
+  return interpreted_cnode;
+}
+
+CNodePtr CreatePyExecuteCNodeInOrder(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
+                                     const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info) {
+  const auto interpreted_cnode = fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script, keys, values});
+  interpreted_cnode->set_debug_info(debug_info);
+  // Record the PyExecute node.
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(interpreted_cnode);
+  return interpreted_cnode;
+}
+
+CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
+                                     const AnfNodePtr &values) {
+  const FuncGraphPtr &fg = orig_node->func_graph();
+  if (fg == nullptr) {
+    MS_LOG(EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
+  }
+  const auto interpreted_cnode = CreatePyExecuteCNodeInOrder(fg, script, keys, values, orig_node->debug_info());
+  return interpreted_cnode;
+}
+
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node) {
   auto value_node_key = key;
@@ -55,13 +94,12 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
   // Build new CNode for value node.
   ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
   ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
-  const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str),
-                                               NewValueNode(std::make_shared<ValueTuple>(keys)),
-                                               NewValueNode(std::make_shared<ValueTuple>(values))});
+  const auto interpreted_cnode =
+    CreatePyExecuteCNode(fg, NewValueNode(script_str), NewValueNode(std::make_shared<ValueTuple>(keys)),
+                         NewValueNode(std::make_shared<ValueTuple>(values)), node->debug_info());
   constexpr auto debug_recursive_level = 2;
   MS_LOG(DEBUG) << "original node: " << node->DebugString(debug_recursive_level)
                 << ", interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
-  interpreted_cnode->set_debug_info(node->debug_info());
   fg->ReplaceInOrder(node, interpreted_cnode);
   return interpreted_cnode;
 }
@@ -356,10 +394,10 @@ AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, co
   const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
   // Build the PyExecute node.
-  auto ret_node = func_graph->NewCNodeInOrder(
-    {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
-  MS_LOG(DEBUG) << "Generate PyExecute node: " << ret_node;
-  return ret_node;
+  auto res = CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
+                                         key_value_name_tuple->debug_info());
+  MS_LOG(DEBUG) << "Generate PyExecute node: " << res;
+  return res;
 }
 
 void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src) {

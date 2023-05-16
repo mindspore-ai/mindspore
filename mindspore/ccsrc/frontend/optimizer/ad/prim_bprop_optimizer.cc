@@ -367,7 +367,7 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
   MS_EXCEPTION_IF_NULL(abs_list);
   auto const_input_index = prim->get_const_input_indexes();
   bool have_const_input = !const_input_index.empty();
-  bool is_const_prim = prim->is_const_prim();
+  bool is_const_prim = prim->const_prim();
   for (size_t i = 0; i < op_args.size(); ++i) {
     bool is_const_input =
       have_const_input && std::find(const_input_index.begin(), const_input_index.end(), i) != const_input_index.end();

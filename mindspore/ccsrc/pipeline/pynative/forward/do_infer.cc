@@ -227,7 +227,7 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
-  } else if (op_run_info->op_prim->is_const_prim()) {
+  } else if (op_run_info->op_prim->const_prim()) {
     MS_LOG(DEBUG) << "Get output by const prim.";
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
