@@ -707,6 +707,20 @@ typedef enum TensorCCategory {
   GraphOutput
 } TensorCCategory;
 
+typedef enum ReduceModeC {
+  Reduce_Mean = 0,
+  Reduce_Max = 1,
+  Reduce_Min = 2,
+  Reduce_Prod = 3,
+  Reduce_Sum = 4,
+  Reduce_SumSquare = 5,
+  Reduce_ASum = 6,
+  Reduce_All = 7,
+  Reduce_L2 = 8,
+  Reduce_MIN = Reduce_Mean,
+  Reduce_MAX = Reduce_L2
+} ReduceModeC;
+
 typedef enum CalFixedMultiplierMode {
   Method_No,
   Method_SinglePrecision,

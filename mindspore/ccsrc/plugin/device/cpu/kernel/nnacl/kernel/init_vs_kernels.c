@@ -30,6 +30,7 @@
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/shape.h"
+#include "nnacl/kernel/reduce.h"
 #include "nnacl/kernel/stack.h"
 #include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
@@ -39,6 +40,7 @@
 #include "nnacl/kernel/f16/arithmetic_f16.h"
 #include "nnacl/kernel/f16/arithmetic_compare_f16.h"
 #include "nnacl/kernel/f16/concat_f16.h"
+#include "nnacl/kernel/f16/reduce_f16.h"
 #include "nnacl/kernel/f16/stack_f16.h"
 #endif
 
@@ -70,6 +72,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat16)] = CreateReduceF16;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
   creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat16)] = CreateSoftmax;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeFloat16)] = CreateStackF16;
@@ -159,6 +162,9 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeBool)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
+  creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeBool)] = CreateReduce;
+  creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeInt32)] = CreateReduce;
+  creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat32)] = CreateReduce;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeInt32)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeBool)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat32)] = CreateShape;

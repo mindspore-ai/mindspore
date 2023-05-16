@@ -238,8 +238,4 @@ void ReduceCPUKernel::InitialKernelList() {
     }
   }
 }
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
 }  // namespace mindspore::kernel

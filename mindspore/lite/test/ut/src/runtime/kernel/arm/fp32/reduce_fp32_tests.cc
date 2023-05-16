@@ -19,8 +19,7 @@
 #include "nnacl/fp32/reduce_fp32.h"
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
-#include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/src/litert/inner_allocator.h"
+#include "nnacl/nnacl_manager.h"
 
 using mindspore::lite::Tensor;
 using mindspore::schema::ReduceMode;
@@ -60,6 +59,7 @@ class TestReduceFp32 : public mindspore::CommonTest {
 
 void TestReduceFp32::TearDown() {
   delete ctx_;
+  kernel_->set_parameter(nullptr);
   delete kernel_;
   ctx_ = nullptr;
   kernel_ = nullptr;
@@ -86,12 +86,13 @@ void TestReduceFp32::Prepare(const std::vector<int> &in_shape, const std::vector
 
   ctx_ = new (std::nothrow) lite::InnerContext;
   ASSERT_EQ(lite::RET_OK, ctx_->Init());
-  creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
-  if (ctx_->allocator == nullptr) {
-    ctx_->allocator = Allocator::Create();
-  }
-  ctx_->thread_num_ = thread_num_;
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx_, desc_);
+
+  OpParameter *param = reinterpret_cast<OpParameter *>(&param_);
+  param->thread_num_ = thread_num_;
+  param->type_ = schema::PrimitiveType_ReduceFusion;
+  kernel_ = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx_, desc_);
+  ASSERT_NE(kernel_, nullptr);
+
   auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
