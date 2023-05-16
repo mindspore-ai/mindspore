@@ -178,9 +178,8 @@ class DATASET_API Compose final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto resize_op(new vision::Resize({30, 30}));
-  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
   ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
-  ///     auto compose_op(new transforms::Compose({resize_op, random_crop_op, center_crop_op}));
+  ///     auto compose_op(new transforms::Compose({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({compose_op},  // operations
@@ -194,8 +193,8 @@ class DATASET_API Compose final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  ///     std::shared_ptr<TensorTransform> compose_op(new transforms::Compose({resize_op, random_crop_op}));
+  ///     std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     std::shared_ptr<TensorTransform> compose_op(new transforms::Compose({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({compose_op},  // operations
@@ -209,9 +208,8 @@ class DATASET_API Compose final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     vision::Resize resize_op = vision::Resize({30, 30});
-  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
   ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
-  ///     transforms::Compose compose_op = transforms::Compose({resize_op, random_crop_op, center_crop_op});
+  ///     transforms::Compose compose_op = transforms::Compose({resize_op, center_crop_op});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({compose_op},  // operations
@@ -434,9 +432,8 @@ class DATASET_API RandomApply final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto resize_op(new vision::Resize({30, 30}));
-  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
   ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
-  ///     auto random_op(new transforms::RandomApply({resize_op, random_crop_op, center_crop_op}));
+  ///     auto random_op(new transforms::RandomApply({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
@@ -451,8 +448,8 @@ class DATASET_API RandomApply final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomApply({resize_op, random_crop_op}));
+  ///     std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomApply({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
@@ -467,9 +464,8 @@ class DATASET_API RandomApply final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     vision::Resize resize_op = vision::Resize({30, 30});
-  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
   ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
-  ///     transforms::RandomApply random_op = transforms::RandomApply({resize_op, random_crop_op, center_crop_op});
+  ///     transforms::RandomApply random_op = transforms::RandomApply({resize_op, center_crop_op});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
@@ -499,9 +495,8 @@ class DATASET_API RandomChoice final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     auto resize_op(new vision::Resize({30, 30}));
-  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
   ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
-  ///     auto random_op(new transforms::RandomChoice({resize_op, random_crop_op, center_crop_op}));
+  ///     auto random_op(new transforms::RandomChoice({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
@@ -515,8 +510,8 @@ class DATASET_API RandomChoice final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomChoice({resize_op, random_crop_op}));
+  ///     std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  ///     std::shared_ptr<TensorTransform> random_op(new transforms::RandomChoice({resize_op, center_crop_op}));
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
@@ -530,9 +525,8 @@ class DATASET_API RandomChoice final : public TensorTransform {
   /// \code
   ///     /* Define operations */
   ///     vision::Resize resize_op = vision::Resize({30, 30});
-  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
   ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
-  ///     transforms::RandomChoice random_op = transforms::RandomChoice({resize_op, random_crop_op, center_crop_op});
+  ///     transforms::RandomChoice random_op = transforms::RandomChoice({resize_op, center_crop_op});
   ///
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({random_op},   // operations
