@@ -17,6 +17,7 @@
 #include "nnacl/kernel/init_vs_kernels.h"
 #include "nnacl/kernel/activation.h"
 #include "nnacl/kernel/arithmetic.h"
+#include "nnacl/kernel/arithmetic_compare.h"
 #include "nnacl/kernel/biasadd.h"
 #include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
@@ -36,6 +37,7 @@
 #include "nnacl/kernel/transpose.h"
 #ifdef ENABLE_FP16
 #include "nnacl/kernel/f16/arithmetic_f16.h"
+#include "nnacl/kernel/f16/arithmetic_compare_f16.h"
 #include "nnacl/kernel/f16/concat_f16.h"
 #include "nnacl/kernel/f16/stack_f16.h"
 #endif
@@ -47,6 +49,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat16)] = CreateConcatF16;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Equal][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_Fill][REGIST_DT(kNumberTypeFloat16)] = CreateFill;
   creators[PrimType_Flatten][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
@@ -55,11 +58,16 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat16)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
+  creators[PrimType_Greater][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
+  creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
+  creators[PrimType_Less][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
+  creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
@@ -92,6 +100,8 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
+  creators[PrimType_Equal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_Equal][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
@@ -113,10 +123,18 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_Gather][REGIST_DT(kNumberTypeBool)] = CreateGather;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeFloat32)] = CreateGatherD;
   creators[PrimType_GatherD][REGIST_DT(kNumberTypeInt32)] = CreateGatherD;
+  creators[PrimType_Greater][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_Greater][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
+  creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_GroupNormFusion][REGIST_DT(kNumberTypeFloat32)] = CreateGroupNorm;
 }
 
 void init_vs_kernels_i(KernelCreator **creators) {
+  creators[PrimType_Less][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_Less][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
+  creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_LessEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeBool)] = CreateArithmetic;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
@@ -131,6 +149,9 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
+  creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
+  creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
+  creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
 }
 
 void init_vs_kernels_r(KernelCreator **creators) {

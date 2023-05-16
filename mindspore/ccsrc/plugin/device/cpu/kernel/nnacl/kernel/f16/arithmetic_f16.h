@@ -16,10 +16,27 @@
 
 #ifndef NNACL_KERNEL_F16_ARITHMETIC_F16_H_
 #define NNACL_KERNEL_F16_ARITHMETIC_F16_H_
+
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
+#include "nnacl/kernel/arithmetic.h"
+
+typedef struct ArithmeticF16Funcions {
+  int primitive_type_;
+  int activation_type_;
+  int (*compute_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele);
+  int (*optimzie_)(const float16_t *in1, const float16_t *in2, float16_t *out, int ele, bool first_scalar);
+} ArithmeticF16Funcions;
+
+typedef struct ArithmeticF16Struct {
+  ArithmeticStruct arithmetic_;
+  ArithmeticF16Funcions functions_;
+  void *tmp_buffer_[THREE_TENSOR]; /* in_size + out_size */
+} ArithmeticF16Struct;
 
 KernelBase *CreateArithmeticF16(OpParameter *param, int data_type);
+int arithmetic_f16_resize(KernelBase *self);
+int arithmetic_f16_compute(KernelBase *self);
 
 #endif  // MINDSPORE_NNACL_KERNEL_F16_ARITHMETIC_F16_H_
