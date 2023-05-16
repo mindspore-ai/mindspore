@@ -154,6 +154,7 @@ ATTR_MAP(Identity) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Identity) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IdentityLoad, kNameLoad, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityTupleGetItem, kNameTupleGetItem, ADPT_DESC(Identity))
+REG_ADPT_DESC(IdentityListGetItem, kNameListGetItem, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityIdentity, kNameIdentity, ADPT_DESC(Identity))
 
 // IdentityN
@@ -162,6 +163,7 @@ DYN_INPUT_MAP(IdentityN) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(IdentityN) = EMPTY_ATTR_MAP;
 DYN_OUTPUT_MAP(IdentityN) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
 

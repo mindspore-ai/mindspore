@@ -110,6 +110,7 @@
 #include "backend/common/pass/optimize_dependence.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
+#include "plugin/device/ascend/optimizer/format_type/insert_identity.h"
 #include "plugin/device/ascend/optimizer/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/common/pass/eliminate_redundant_op.h"
 #include "backend/common/pass/common_subexpression_elimination.h"
@@ -592,6 +593,7 @@ void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::Ke
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
