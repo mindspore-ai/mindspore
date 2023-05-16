@@ -8,8 +8,8 @@
     更多参考详见 :func:`mindspore.ops.split`。
 
     参数：
-        - **axis** (int) - 指定分割轴。默认值：0。
-        - **output_num** (int) - 指定分割数量。其值为正整数。默认值：1。
+        - **axis** (int) - 指定分割轴。默认值： ``0`` 。
+        - **output_num** (int) - 指定分割数量。其值为正整数。默认值： ``1`` 。
 
     输入：
         - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。

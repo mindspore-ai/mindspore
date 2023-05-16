@@ -8,11 +8,11 @@
     更多参考详见 :func:`mindspore.ops.strided_slice`。
 
     参数：
-        - **begin_mask** (int，可选) - 表示切片的起始索引掩码。默认值：0。
-        - **end_mask** (int，可选) - 表示切片的结束索引掩码。默认值：0。
-        - **ellipsis_mask** (int，可选) - 维度掩码值为1说明不需要进行切片操作。为int型掩码。默认值：0。
-        - **new_axis_mask** (int，可选) - 表示切片的新增维度掩码。默认值：0。
-        - **shrink_axis_mask** (int，可选) - 表示切片的收缩维度掩码。为int型掩码。默认值：0。
+        - **begin_mask** (int，可选) - 表示切片的起始索引掩码。默认值： ``0`` 。
+        - **end_mask** (int，可选) - 表示切片的结束索引掩码。默认值： ``0`` 。
+        - **ellipsis_mask** (int，可选) - 维度掩码值为1说明不需要进行切片操作。为int型掩码。默认值： ``0`` 。
+        - **new_axis_mask** (int，可选) - 表示切片的新增维度掩码。默认值： ``0`` 。
+        - **shrink_axis_mask** (int，可选) - 表示切片的收缩维度掩码。为int型掩码。默认值： ``0`` 。
 
     输入：
         - **input_x** (Tensor) - 需要切片处理的输入Tensor。

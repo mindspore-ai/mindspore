@@ -6,7 +6,7 @@ mindspore.ops.UpperBound
     返回一个Tensor，该Tensor包含用于查找 `values` 的值的在升序排列的 `sorted_x` 中上界的索引。
 
     参数：
-        - **out_type** (:class:`mindspore.dtype`, 可选) - 指定输出数据类型，支持 `mindspore.dtype.int32` 和 `mindspore.dtype.int64` 。默认值： `mindspore.dtype.int32` 。
+        - **out_type** (:class:`mindspore.dtype`, 可选) - 指定输出数据类型，支持 ``mindspore.dtype.int32`` 和 ``mindspore.dtype.int64`` 。默认值： ``mindspore.dtype.int32`` 。
 
     输入：
         - **sorted_x** (Tensor) - 数据类型为实数的输入Tensor，其秩必须为2， `sorted_x` 每一行都需要按升序排序。

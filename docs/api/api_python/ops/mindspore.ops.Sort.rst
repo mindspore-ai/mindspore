@@ -9,8 +9,8 @@
         目前仅支持float16数据类型。如果使用float32类型可能导致数据精度损失。
 
     参数：
-        - **axis** (int) - 指定排序的轴。默认值：-1。
-        - **descending** (bool) - 指定排序方式。如果 `descending` 为True，则根据value对元素进行降序排序。默认值：False。
+        - **axis** (int) - 指定排序的轴。默认值： ``-1`` 。
+        - **descending** (bool) - 指定排序方式。如果 `descending` 为 ``True`` ，则根据value对元素进行降序排序。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - Sort的输入，任意维度的Tensor，数据类型为float16或float32。

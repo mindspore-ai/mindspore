@@ -165,9 +165,11 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
             The shape must be the same as `x` except the `axis` th dimension.
         axis (int): The dimension along which to index.
         use_lock (bool): Whether to enable a lock to protect the updating process of variable tensors.
-            If true, when updating the value of `x`, this process will be protected by a lock by using atomic operation.
-            If false, the result may be unpredictable. Default: True.
-        check_index_bound (bool): If true, check index boundary. If false, don't check index boundary. Default: True.
+            If ``True`` , when updating the value of `x`, this process will be protected by a lock by using atomic
+            operation.
+            If ``False`` , the result may be unpredictable. Default: ``True`` .
+        check_index_bound (bool): If True, check index boundary. If ``False`` , don't check index boundary.
+            Default: ``True`` .
 
     Returns:
         Tensor, has the same shape and dtype as `x`.

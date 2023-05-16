@@ -12,12 +12,12 @@ mindspore.ops.TruncatedNormal
         - 当 `seed` 或 `seed2` 被赋予一个非零值时，该值将被用作种子。否则，将使用一个随机种子。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。默认值：0。
-        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
-        - **dtype** (mindspore.dtype，可选) - 指定输出类型。可选值为：mindspore.float16、mindspore.float32和mindspore.float64。默认值：mindspore.float32。
+        - **seed** (int，可选) - 随机数种子。默认值： ``0`` 。
+        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值： ``0`` 。
+        - **dtype** (mindspore.dtype，可选) - 指定输出类型。可选值为： ``mindspore.float16`` 、 ``mindspore.float32`` 和 ``mindspore.float64`` 。默认值： ``mindspore.float32`` 。
 
     输入：
-        - **shape** (Tensor) - 生成Tensor的shape。数据类型必须是mindspore.int32或者mindspore.int64。
+        - **shape** (Tensor) - 生成Tensor的shape。数据类型必须是 ``mindspore.int32`` 或者 ``mindspore.int64`` 。
 
     输出：
         Tensor，其shape由 `shape` 决定，数据类型由 `dtype` 决定。其值在[-2,2]范围内。

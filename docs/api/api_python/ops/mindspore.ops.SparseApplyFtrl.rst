@@ -12,7 +12,7 @@ mindspore.ops.SparseApplyFtrl
         - **l1** (float) - l1正则化，必须大于或等于零。
         - **l2** (float) - l2正则化，必须大于或等于零。
         - **lr_power** (float) - 在训练期间控制降低学习率，必须小于或等于零。如果lr_power为零，则使用固定学习率。
-        - **use_locking** (bool, 可选) - 是否对参数更新加锁保护。默认值：False。
+        - **use_locking** (bool, 可选) - 是否对参数更新加锁保护。默认值： ``False`` 。
 
     输入：
         - **var** (Parameter) - 要更新的权重。数据类型必须为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

@@ -12,9 +12,9 @@ mindspore.ops.SGD
         有关更多详细信息，请参阅: :class:`mindspore.nn.SGD` 。
 
     参数：
-        - **dampening** (float) - 动量的抑制因子。默认值：0.0。
-        - **weight_decay** (float) - 权重衰减系数（L2惩罚）。默认值：0.0。
-        - **nesterov** (bool) - 是否启用Nesterov动量。默认值：False。
+        - **dampening** (float) - 动量的抑制因子。默认值： ``0.0`` 。
+        - **weight_decay** (float) - 权重衰减系数（L2惩罚）。默认值： ``0.0`` 。
+        - **nesterov** (bool) - 是否启用Nesterov动量。默认值： ``False`` 。
 
     输入：
         - **parameters** (Tensor) - 待更新的参数。数据类型为float16或float32。

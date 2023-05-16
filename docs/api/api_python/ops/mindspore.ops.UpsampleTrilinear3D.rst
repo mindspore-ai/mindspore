@@ -11,9 +11,9 @@ mindspore.ops.UpsampleTrilinear3D
         必须指定 `output_size` 或 `scales` 中的一个值，并且不能同时指定两者。
 
     参数：
-        - **output_size** (Union[tuple[int], list[int]]，可选) - 包含3个int的元组或列表。元素分别为 :math:`(output\_depth, output\_height, output\_width)` 。只能指定 `output_size` 和 `scales` 中的一个值。默认值：None。
-        - **scales** (Union[tuple[float], list[float]]，可选) - 包含3个float的元组或列表。元素分别为 :math:`(scale\_depth, scale\_height, scale\_width)` 。 默认值：None。
-        - **align_corners** (bool，可选) - 如果为True，则输入和输出Tensor由其角像素的中心点对齐，保留角像素处的值。如果为False，则输入和输出Tensor由其角像素的角点对齐，插值对边界外值使用边值填充。默认值：False。
+        - **output_size** (Union[tuple[int], list[int]]，可选) - 包含3个int的元组或列表。元素分别为 :math:`(output\_depth, output\_height, output\_width)` 。只能指定 `output_size` 和 `scales` 中的一个值。默认值： ``None`` 。
+        - **scales** (Union[tuple[float], list[float]]，可选) - 包含3个float的元组或列表。元素分别为 :math:`(scale\_depth, scale\_height, scale\_width)` 。 默认值： ``None`` 。
+        - **align_corners** (bool，可选) - 如果为True，则输入和输出Tensor由其角像素的中心点对齐，保留角像素处的值。如果为False，则输入和输出Tensor由其角像素的角点对齐，插值对边界外值使用边值填充。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：[float16, float32, float64]。
