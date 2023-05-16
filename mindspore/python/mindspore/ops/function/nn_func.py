@@ -1490,12 +1490,20 @@ def _check_float_range_inc_neither(arg_value, lower_limit, upper_limit, arg_name
     return validator.check_float_range(arg_value, lower_limit, upper_limit, validator.INC_NEITHER, arg_name, prim_name)
 
 
+def _check_fractional_output_size_ratio(output_size, output_ratio, cls_name):
+    """Internal function, used to check whether fractional_max_pool can specify the output shape."""
+    if output_ratio is None and output_size is None:
+        raise ValueError(f"For {cls_name}, 'output_size' and 'output_ratio' can not be None"
+                         f"at the same time, but got {output_ratio} and {output_size} .")
+
+
 def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
     Applies the 2D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
-    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used at the same time.
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
+    effect when `output_size` and `output_ratio` are set at the same time.
+    And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1571,9 +1579,7 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
         [[[[ 1  9]
            [16 24]]]]
     """
-    if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
-        raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
-                         f"at the same time, but got {output_ratio} and {output_size} .")
+    _check_fractional_output_size_ratio(output_size, output_ratio, "fractional_max_pool2d")
     _check_value_type("return_indices", return_indices, [bool], "fractional_max_pool2d")
     dim_flag = False
     if input.ndim == 3:
@@ -1584,7 +1590,7 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
             _random_samples = ops.rand(input.shape[0], input.shape[1], 2, dtype=input.dtype)
         else:
             _random_samples = ops.rand(input.shape[0], input.shape[1], 2)
-    if output_ratio is not None:
+    if output_size is None:
         if isinstance(output_ratio, (float, int)):
             _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool2d")
             output_ratio = (output_ratio, output_ratio)
@@ -1604,8 +1610,9 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
                           _random_samples=None):
     r"""
     Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
-    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used at the same time.
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
+    effect when `output_size` and `output_ratio` are set at the same time.
+    And `output_size` and `output_ratio` can not be ``None`` at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1680,9 +1687,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         >>> print(argmax)
         [[[[[12 15]]]]]
     """
-    if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
-        raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
-                         f"at the same time, but got {output_ratio} and {output_size} .")
+    _check_fractional_output_size_ratio(output_size, output_ratio, "fractional_max_pool3d")
     _check_value_type("return_indices", return_indices, [bool], "fractional_max_pool3d")
     if _random_samples is None:
         n = 1 if input.ndim == 4 else input.shape[0]
@@ -1692,7 +1697,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             _random_samples = ops.rand(n, input.shape[-4], 3)
     if input.ndim == 4:
         _random_samples = _random_samples.transpose(1, 0, 2)
-    if output_ratio is not None:
+    if output_size is None:
         if isinstance(output_ratio, (float, int)):
             _check_value_type("output_ratio", output_ratio, [float], "fractional_max_pool3d")
             output_ratio = (output_ratio, output_ratio, output_ratio)
@@ -5448,6 +5453,12 @@ def _check_pxiel_shuffle_valid(num, factor):
                          "by `upscale_factor` squared.")
 
 
+def _check_pixel_shuffle_unshuffle_input_shape(input, cls_name):
+    """Internal function, used to check whether the shape of pixel shuffle or unshuffle input meets the requirements."""
+    if input.ndim < 3:
+        raise ValueError(f"For {cls_name}, the dimension of `input` should be larger than 2, but got {input.ndim}.")
+
+
 def pixel_shuffle(input, upscale_factor):
     r"""
     Applies the PixelShuffle operation over input `input` which implements sub-pixel convolutions
@@ -5470,7 +5481,8 @@ def pixel_shuffle(input, upscale_factor):
     Raises:
         ValueError: If `upscale_factor` is not a positive integer.
         ValueError: If the length of third to last dimension is not divisible by `upscale_factor` squared.
-        TypeError: If the dimension of `input` is less than 3.
+        ValueError: If the dimension of `input` is less than 3.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5483,10 +5495,10 @@ def pixel_shuffle(input, upscale_factor):
         (3, 2, 1, 12, 12)
     """
     _check_positive_int(upscale_factor, "upscale_factor")
+    _check_is_tensor("input", input, "pixel_shuffle")
+    _check_pixel_shuffle_unshuffle_input_shape(input, "pixel_shuffle")
     idx = P.Shape()(input)
-    length = len(idx)
-    if length < 3:
-        raise TypeError(f"For pixel_shuffle, the dimension of `input` should be larger than 2, but got {length}.")
+    length = input.ndim
     pre = idx[:-3]
     c, h, w = idx[-3:]
     _check_pxiel_shuffle_valid(c, upscale_factor)
@@ -5531,7 +5543,8 @@ def pixel_unshuffle(input, downscale_factor):
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
         ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
-        TypeError: If the dimension of `input` is less than 3.
+        ValueError: If the dimension of `input` is less than 3.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5544,10 +5557,10 @@ def pixel_unshuffle(input, downscale_factor):
         (1, 4, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
+    _check_is_tensor("input", input, "pixel_unshuffle")
+    _check_pixel_shuffle_unshuffle_input_shape(input, "pixel_unshuffle")
     idx = P.Shape()(input)
-    length = len(idx)
-    if length < 3:
-        raise TypeError(f"For pixel_unshuffle, the dimension of `input` should be larger than 2, but got {length}.")
+    length = input.ndim
     pre = idx[:-3]
     c, h, w = idx[-3:]
     _check_pxiel_unshuffle_valid(h, w, downscale_factor)

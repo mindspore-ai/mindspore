@@ -3,7 +3,7 @@ mindspore.nn.FractionalMaxPool3d
 
 .. py:class:: mindspore.nn.FractionalMaxPool3d(kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    在输入上应用三维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 随机决定。 `output_size` 和 `output_ratio` 不能同时使用或同时为None。
+    在输入上应用三维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 随机决定。 `output_size` 和 `output_ratio` 同时设置， `output_size` 会生效。 `output_size` 和 `output_ratio` 不能同时为 ``None`` 。
 
     分数最大池化的详细描述在 `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ 。
 
