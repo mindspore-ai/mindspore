@@ -316,7 +316,7 @@ class OpenCLKernel : public LiteKernel {
   void SetMemType(lite::opencl::MemType mem_type) { out_mem_type_ = mem_type; }
   OpParameter *GetParameter() { return op_parameter_; }
   virtual double GetProfilingTimeMs();
-  virtual int InferShape();
+  int InferShape() override;
 
  protected:
   void PrintShape(lite::Tensor *output_tensor);

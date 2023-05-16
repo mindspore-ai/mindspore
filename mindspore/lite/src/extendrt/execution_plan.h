@@ -65,16 +65,32 @@ class ExecutionPlan : public abstract::ExecutionPlan {
   void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
 
   void SetInputsMap(std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map) {
+    FreeInputIsolateMap();
     input_isolate_map_ = input_isolate_map;
+    own_input_isolate_map_ = false;
   }
 
-  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetInputsMap() { return input_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetInputsMap() {
+    if (input_isolate_map_ == nullptr) {
+      input_isolate_map_ = new std::unordered_map<abstract::Tensor *, abstract::Tensor *>();
+      this->own_input_isolate_map_ = true;
+    }
+    return input_isolate_map_;
+  }
 
   void SetOutputsMap(std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map) {
+    FreeOutputIsolateMap();
     output_isolate_map_ = output_isolate_map;
+    own_output_isolate_map_ = false;
   }
 
-  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetOutputsMap() { return output_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetOutputsMap() {
+    if (output_isolate_map_ == nullptr) {
+      output_isolate_map_ = new std::unordered_map<abstract::Tensor *, abstract::Tensor *>();
+      this->own_output_isolate_map_ = true;
+    }
+    return output_isolate_map_;
+  }
 
   std::vector<abstract::Kernel *> ToKernelList() override;
 
@@ -82,6 +98,18 @@ class ExecutionPlan : public abstract::ExecutionPlan {
 
  private:
   bool MallocTensorData(abstract::Kernel *kernel);
+  void FreeInputIsolateMap() {
+    if (this->own_input_isolate_map_) {
+      delete this->input_isolate_map_;
+      this->own_input_isolate_map_ = false;
+    }
+  }
+  void FreeOutputIsolateMap() {
+    if (this->own_output_isolate_map_) {
+      delete this->output_isolate_map_;
+      this->own_output_isolate_map_ = false;
+    }
+  }
 
  private:
   std::vector<abstract::Kernel *> kernels_;
@@ -93,6 +121,8 @@ class ExecutionPlan : public abstract::ExecutionPlan {
   abstract::KernelCallBack after_;
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map_ = nullptr;
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map_ = nullptr;
+  bool own_input_isolate_map_{false};
+  bool own_output_isolate_map_{false};
   std::vector<abstract::Kernel *> kernel_list_;
 };
 }  // namespace mindspore::infer

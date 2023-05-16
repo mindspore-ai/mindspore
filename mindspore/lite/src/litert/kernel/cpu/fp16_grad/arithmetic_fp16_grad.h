@@ -61,7 +61,6 @@ class ArithmeticGradCPUKernelFp16 : public LiteKernel {
   }
 
   int Prepare() override;
-  int InferShape();
   int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);

@@ -56,7 +56,7 @@ LiteKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::ve
     MS_LOG(ERROR) << "Create kernel mod failed. kernel: " << spec.op_type;
     return nullptr;
   }
-  return new (std::nothrow) LiteKernelMod(kernel_mod, spec.primitive, inputs, outputs, ctx);
+  return new (std::nothrow) LiteKernelMod(kernel_mod, spec.primitive, spec.cnode, inputs, outputs, ctx);
 }
 
 REG_KERNEL_LIB(kDefaultKernelLibName, DefaultKernelLib);

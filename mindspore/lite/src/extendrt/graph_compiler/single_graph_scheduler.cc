@@ -15,21 +15,23 @@
  */
 
 #include "src/extendrt/graph_compiler/single_graph_scheduler.h"
+#include <algorithm>
 #include "src/common/log_util.h"
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "src/litert/kernel_registry.h"
 #include "src/litert/lite_kernel.h"
 #include "src/common/tensor_util.h"
 #include "src/extendrt/kernel/kernel_lib.h"
-#include "src/extendrt/graph_compiler/cnode_infer_manager.h"
 #include "src/extendrt/kernel/default_kernel_selector.h"
 #include "src/litert/pass/format_pass/format_pass.h"
+#include "tools/optimizer/graph/node_infershape.h"
+#include "src/extendrt/graph_compiler/anfnode_tensor_adapter.h"
 
 namespace mindspore {
 namespace infer {
 abstract::Kernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   // infer shape
-  auto infer_ret = InferShape(node_list);
+  auto infer_ret = FallBackInferShape(node_list);
   if (!infer_ret) {
     MS_LOG(ERROR) << "InferShape CompileResult node failed.";
     return nullptr;
@@ -67,9 +69,9 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
   std::vector<abstract::Kernel *> kernels;
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, lite::RET_NULL_PTR);
-    auto lite_kernel =
-      selector.CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_.format, node->GetBaseOperator()},
-                            node->GetInputs(), node->GetOutputs(), context_);
+    auto lite_kernel = selector.CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_.format,
+                                              node->GetBaseOperator(), node->GetCNode(), compile_option_.backend},
+                                             node->GetInputs(), node->GetOutputs(), context_);
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "Create kernel for node: " << node->GetName() << " failed.";
       return lite::RET_NOT_SUPPORT;
@@ -124,26 +126,109 @@ Status SingleGraphScheduler::OptimizeTranspose(std::vector<kernel::KernelExec *>
   return kSuccess;
 }
 
-bool SingleGraphScheduler::InferShape(const CompileResultPtr &node_list) {
+namespace {
+bool SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr &abstract, lite::Tensor *tensor) {
+  if (!utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
+    MS_LOG(ERROR) << "The abstract should be tensor, but got abstract : " << abstract;
+    return false;
+  }
+  ShapeVector shape_vector;
+  TypeId data_type = kTypeUnknown;
+  auto ret = infer::TensorAdapter::GetDTAndShapeFromAbTensor(
+    utils::cast<mindspore::abstract::AbstractTensorPtr>(abstract), &data_type, &shape_vector);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Get dtype and shape from abstract failed, abstract : " << abstract;
+    return false;
+  }
+  std::vector<int32_t> int32_shape;
+  std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(int32_shape),
+                 [](const auto &shape) { return static_cast<int32_t>(shape); });
+  tensor->set_data_type(data_type);
+  tensor->set_shape(int32_shape);
+  tensor->set_format(NHWC);
+  return true;
+}
+}  // namespace
+
+int SingleGraphScheduler::InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter) {
+  auto ret = KernelInferShape(node->GetInputs(), node->GetOutputs(), op_parameter, context_->allocator);
+  if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+    return ret;
+  }
+  if (op_parameters_.find(node->GetName()) == op_parameters_.end()) {
+    op_parameters_[node->GetName()] = op_parameter;
+  }
+  return ret;
+}
+
+int SingleGraphScheduler::InferShapeByOps(CompileNode *node) {
+  auto node_infer_shape = std::make_shared<opt::NodeInferShape>();
+  if (node_infer_shape == nullptr) {
+    MS_LOG(ERROR) << "create NodeInferShape manager failed.";
+    return false;
+  }
+  auto cnode = node->GetCNode();
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cnode is nullptr";
+    return lite::RET_ERROR;
+  }
+  auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
+  if (anf_prim == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr";
+    return lite::RET_ERROR;
+  }
+  (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(compile_option_.format)));
+  auto ret = node_infer_shape->InferShapeByOps(cnode, true);
+  if (ret != lite::RET_OK) {
+    return ret;
+  }
+  // invalid is no need to sync output shape from abstract
+  auto abstract = cnode->abstract();
+  if (utils::isa<mindspore::abstract::AbstractSequencePtr>(abstract)) {
+    auto elements = utils::cast<mindspore::abstract::AbstractSequencePtr>(abstract)->elements();
+    if (elements.size() != node->OutputSize()) {
+      MS_LOG(ERROR) << "The cnode output size: " << elements.size()
+                    << " is not equal to lite tensors size: " << node->OutputSize();
+      return lite::RET_ERROR;
+    }
+    for (size_t i = 0; i < elements.size(); i++) {
+      if (!SetDTAndShapeFromAbTensorToLiteTensor(elements[i], node->GetOutput(i))) {
+        MS_LOG(ERROR) << "Set tensor info from abstract failed, abstract : " << elements[i];
+        return lite::RET_ERROR;
+      }
+    }
+    return lite::RET_OK;
+  }
+  if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
+    if (!SetDTAndShapeFromAbTensorToLiteTensor(abstract, node->GetOutput(0))) {
+      MS_LOG(ERROR) << "Set tensor info from abstract failed, abstract : " << abstract;
+      return lite::RET_ERROR;
+    }
+    return lite::RET_OK;
+  }
+  MS_LOG(ERROR) << "Unsupported abstract type: " << abstract;
+  return lite::RET_ERROR;
+}
+
+int SingleGraphScheduler::FallBackInferShape(const CompileResultPtr &node_list) {
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, false);
     auto base_operator = node->GetBaseOperator();
     MSLITE_CHECK_PTR_RETURN(base_operator, false);
-    auto op_parameter = lite::OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
-    if (op_parameter != nullptr) {
-      auto ret = KernelInferShape(node->GetInputs(), node->GetOutputs(), op_parameter, context_->allocator);
-      if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
-        MS_LOG(ERROR) << "Infer OpParameter kernel failed for op: " << node->GetName();
-        return false;
-      }
-      if (op_parameters_.find(node->GetName()) == op_parameters_.end()) {
-        op_parameters_[node->GetName()] = op_parameter;
+    if (compile_option_.format == Format::NHWC) {  // for efficient
+      auto op_parameter = lite::OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
+      if (op_parameter != nullptr) {
+        auto ret = InferShapeByNNACL(node, op_parameter);
+        if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+          MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
+          return ret;
+        }
       }
     } else {
-      auto ret = CNodeInferShape(node->GetCNode(), node->GetOutputs());
-      if (ret != lite::RET_OK) {
-        MS_LOG(ERROR) << "Infer CNode kernel failed for op: " << node->GetName();
-        return false;
+      auto ret = InferShapeByOps(node);
+      if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+        MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
+        return ret;
       }
     }
   }

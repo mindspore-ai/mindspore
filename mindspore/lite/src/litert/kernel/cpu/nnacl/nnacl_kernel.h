@@ -33,7 +33,7 @@ class NNACLKernel : public kernel::LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int InferShape();
+  int InferShape() override;
   virtual int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);
   const KernelBase *Kernel() const { return kernel_; }
 

@@ -28,14 +28,16 @@ namespace mindspore::kernel {
 class LiteKernelMod : public LiteKernel {
  public:
   explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, BaseOperatorPtr base_operator,
-                         std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-                         const lite::InnerContext *ctx)
+                         CNodePtr cnode, std::vector<lite::Tensor *> in_tensors,
+                         std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx)
       : LiteKernel(nullptr, std::move(in_tensors), std::move(out_tensors), ctx),
         kernel_mod_(std::move(kernel_mod)),
-        base_operator_(std::move(base_operator)) {}
+        base_operator_(std::move(base_operator)),
+        cnode_(std::move(cnode)) {}
   ~LiteKernelMod() override = default;
 
   int Prepare() override;
+  int InferShape() override;
   int ReSize() override;
   int Run() override;
 
@@ -45,6 +47,7 @@ class LiteKernelMod : public LiteKernel {
  private:
   KernelModPtr kernel_mod_;
   BaseOperatorPtr base_operator_;
+  CNodePtr cnode_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_DEFAULT_LITE_KERNEL_MOD_H_
