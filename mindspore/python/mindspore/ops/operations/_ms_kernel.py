@@ -486,9 +486,9 @@ def kernel(fn=None, reg_info=None, compile_attrs=None):
     will enjoy the automatic dtype/shape infer for free.
 
     Args:
-        fn (Function): The Python function that will be run as a custom operator. Default: None.
-        reg_info (tuple[str, dict]): Each item represents registration information in json format. Default: None.
-        compile_attrs (Dict): The Python object is used to distinguish the compiled function. Default: None.
+        fn (Function): The Python function that will be run as a custom operator. Default: ``None`` .
+        reg_info (tuple[str, dict]): Each item represents registration information in json format. Default: ``None`` .
+        compile_attrs (Dict): The Python object is used to distinguish the compiled function. Default: ``None`` .
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the Hybrid DSL function;

@@ -1902,8 +1902,8 @@ class MaxPoolV1(Primitive):
 
 class MaxPoolWithArgmax(Primitive):
     r"""
-    `ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
-    use `ops.MaxPoolWithArgmaxV2` instead.
+    :class:`mindspore.ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
+    use :class:`mindspore.ops.MaxPoolWithArgmaxV2` instead.
 
     Supported Platforms:
         Deprecated
@@ -2761,8 +2761,8 @@ class NLLLoss(Primitive):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` , or ``'sum'`` .
-          Default: ``'mean'`` .
+        reduction (str): Apply specific reduction method to the output: ``"none"`` , ``"mean"`` , or ``"sum"`` .
+          Default: ``"mean"`` .
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
@@ -3109,12 +3109,12 @@ class MultiMarginLoss(Primitive):
     Args:
         p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: ``1`` .
         margin (int, optional): A parameter to change pairwise distance. Default: ``1.0`` .
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` ,
-            ``'mean'`` , ``'sum'`` . Default: ``'mean'`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``"none"`` ,
+            ``"mean"`` , ``"sum"`` . Default: ``"mean"`` .
 
-            - ``'none'``: no reduction will be applied.
-            - ``'mean'``: the sum of the output will be divided by the number of elements in the output.
-            - ``'sum'``: the output will be summed.
+            - ``"none"``: no reduction will be applied.
+            - ``"mean"``: the sum of the output will be divided by the number of elements in the output.
+            - ``"sum"``: the output will be summed.
 
     Inputs:
         - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16
@@ -3165,7 +3165,7 @@ class SoftMarginLoss(Primitive):
     where :math:`x.nelement()` is the number of elements of x.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` or ``'sum'`` .
+        reduction (str): Apply specific reduction method to the output: ``"none"`` , ``"mean"`` or ``"sum"`` .
           Default: ``"mean"`` .
 
     Inputs:
@@ -3180,7 +3180,7 @@ class SoftMarginLoss(Primitive):
         TypeError: If `logits` or `labels` is not a Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of ``"none"`` , ``"mean"`` or ``"sum"`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4540,8 +4540,8 @@ class MirrorPad(Primitive):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies the padding mode. The optional values are ``"REFLECT"`` and ``"SYMMETRIC"`` .
-            Default: ``"REFLECT"`` .
+        mode (str): Specifies the padding mode. The optional values are ``'REFLECT'`` and ``'SYMMETRIC'`` .
+            Default: ``'REFLECT'`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
