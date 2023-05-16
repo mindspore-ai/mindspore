@@ -376,7 +376,8 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
       auto arg_sequence = arg->cast<AbstractSequencePtr>();
       if (arg_sequence != nullptr && !arg_sequence->dynamic_len() && !arg->isa<AbstractSparseTensor>()) {
         MS_LOG(DEBUG) << "set as arg of dyn len param, arg:" << arg->ToString();
-        return broaden_scalar ? AbstractBroaden(arg) : arg->Broaden();
+        auto dyn_len_arg = arg_sequence->BroadenToDynamicLenSequence();
+        return broaden_scalar ? AbstractBroaden(dyn_len_arg) : dyn_len_arg->Broaden();
       }
       if (arg->GetValueTrack() != kValueAny) {
         return broaden_scalar ? AbstractBroaden(arg) : arg->Broaden();
