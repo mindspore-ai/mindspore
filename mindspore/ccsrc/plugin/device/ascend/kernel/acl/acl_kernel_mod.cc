@@ -107,9 +107,10 @@ int AclKernelMod::GetOutputInfo(const BaseOperatorPtr &base_operator, const std:
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       tensor_size = std::max(tensor_size, type_size);
     }
-    params.dev_shape = shape;
-    params.dev_format = output_device_formats_[idx];
     params.ori_shape = shape;
+    params.dev_format = output_device_formats_[idx];
+    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_ptr_);
+    params.dev_shape = trans::TransShapeToDevice(shape, params.dev_format, device_type, groups);
     (void)output_params_.emplace_back(params);
     (void)output_size_list_.emplace_back(tensor_size);
     ++idx;
