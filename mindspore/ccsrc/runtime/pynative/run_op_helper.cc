@@ -993,15 +993,6 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   }
   MS_LOG(DEBUG) << "End";
 }
-
-void WaitCommunicationFinish(const std::vector<tensor::TensorPtr> &input_tensors) {
-  for (auto &input_tensor : input_tensors) {
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    if (input_tensor->NeedWaitDevice()) {
-      input_tensor->WaitDevice();
-    }
-  }
-}
 }  // namespace
 
 // Determine the address of the graph and do not change the address in subsequent executions
@@ -1018,16 +1009,12 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                       const device::DeviceContext *device_context) {
-  WaitCommunicationFinish(input_tensors);
   CopyDataToDevice(graph, input_tensors, device_context);
   LaunchKernels(graph, device_context);
 }
 
 void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                         vector<device::DeviceAddressPtr> *device_address_list) {
-  MS_EXCEPTION_IF_NULL(op_compiler_info);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  WaitCommunicationFinish(op_run_info->base_op_run_info.input_tensor);
   LaunchKernelsDynamic(op_compiler_info, op_run_info, device_address_list);
 }
 }  // namespace mindspore::runtime
