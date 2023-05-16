@@ -1554,6 +1554,8 @@ class Model:
             >>> model = Model(Net())
             >>> result = model.predict(input_data)
         """
+        if backend not in ['lite', None]:
+            raise ValueError(f"For Model.predict, `backend` should be 'lite' or None, but got {backend}")
         if backend == "lite":
             # pylint: disable=broad-except
             try:
