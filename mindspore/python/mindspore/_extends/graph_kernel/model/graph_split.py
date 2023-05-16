@@ -924,6 +924,8 @@ class GraphSplitGpu(GraphSplitByPattern):
         if op.prim == "MatMul":
             return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" and op.attrs['Akg'] else \
                 self.Area.MODE_BASIC
+        if op.prim == "Assign":
+            return self.Area.MODE_BASIC
         pattern = PrimLib.iter_type(op)
         return self.Area.MODE_BASIC if pattern == PrimLib.RESHAPE else self.Area.MODE_COMPOSITE
 

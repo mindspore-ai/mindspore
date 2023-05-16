@@ -34,5 +34,12 @@ void SplitModelCpu::InitFusePatterns() {
   AddPattern(std::make_shared<FuseIsolateReshape>(), true);
 }
 
-AreaMode SplitModelCpu::GetDefaultAreaMode(const PrimOpPtr &) const { return AreaMode::COMPOSITE; }
+AreaMode SplitModelCpu::GetDefaultAreaMode(const PrimOpPtr &node) const {
+  if (node != nullptr) {
+    if (node->op() == kAssignOpName) {
+      return AreaMode::BASIC;
+    }
+  }
+  return AreaMode::COMPOSITE;
+}
 }  // namespace mindspore::graphkernel::inner

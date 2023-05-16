@@ -24,7 +24,7 @@ class SplitModelCpu : public SplitModel {
   virtual ~SplitModelCpu() = default;
 
  protected:
-  AreaMode GetDefaultAreaMode(const PrimOpPtr &) const override;
+  AreaMode GetDefaultAreaMode(const PrimOpPtr &node) const override;
   void InitFusePatterns() override;
 };
 }  // namespace mindspore::graphkernel::inner

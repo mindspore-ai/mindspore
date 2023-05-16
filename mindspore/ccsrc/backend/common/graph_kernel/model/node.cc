@@ -38,7 +38,8 @@ std::string Node::ToString() const {
       oss << ",";
     }
   }
-  oss << "]{" << TypeIdToString(type) << "x" << format << "}";
+  auto type_str = (type == TypeId::kNumberTypeBegin) ? "NOTYPE" : TypeIdToString(type);
+  oss << "]{" << type_str << "x" << format << "}";
   return oss.str();
 }
 

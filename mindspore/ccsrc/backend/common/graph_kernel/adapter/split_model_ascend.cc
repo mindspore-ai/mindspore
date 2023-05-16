@@ -110,8 +110,10 @@ void SplitModelAscend::InitFusePatterns() {
 }
 
 AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
-  if (node != nullptr && node->op() == kReshapeOpName) {
-    return AreaMode::BASIC;
+  if (node != nullptr) {
+    if (node->op() == kReshapeOpName || node->op() == kAssignOpName) {
+      return AreaMode::BASIC;
+    }
   }
   return AreaMode::COMPOSITE;
 }
