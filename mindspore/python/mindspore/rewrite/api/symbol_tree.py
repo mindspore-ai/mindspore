@@ -70,40 +70,7 @@ class SymbolTree:
             if v not in MsDtypes and not isinstance(v, ParamTypes):
                 raise TypeError(f"For call-function Node, got unsupported kwarg value: {v}, type: {type(v)}")
 
-    def create_call_function(self, func, targets, *args, **kwargs):
-        r"""
-        Create a Node object and generate the execution code to insert into the source code.
-        The source code calls the `func` function with `args` and `kwargs` as parameters.
-
-        Args:
-            func (FunctionType): The function to be called.
-            targets (list[str]): indicates the output name. As the output of the node in the source code.
-            args (Union[MsDtypes, ParamTypes]): parameter name of the node. Used as a parameter to a code statement in
-                source code. When no value is provided, it means there is no parameter input in the cell.
-            kwargs (dict{str, Union[MsDtypes, ParamTypes]}): The key type must be str,
-                and the value must be value or type must be ParamTypes.
-                The input parameter name used to describe the formal parameter with a keyword.
-                Enter the name in the source code as the `kwargs` in the statement expression. When no value is
-                provided, it means there is no `kwargs` input.
-
-        Returns:
-            An instance of `Node`.
-
-        Raises:
-            TypeError: If `func` is not FunctionType.
-            TypeError: If `targets` is not `list`.
-            TypeError: If the type of `targets` is not str.
-            TypeError: If arg in `args` is not ParamType.
-            TypeError: If key of `kwarg` is not a str or value of kwarg in `kwargs` is not ParamType.
-
-        Examples:
-            >>> from mindspore.rewrite import SymbolTree
-            >>> from mindspore.ops import abs
-            >>> net = LeNet5()
-            >>> stree = SymbolTree.create(net)
-            >>> node = stree.get_node("conv1")
-            >>> new_node = stree.create_call_function(abs, ["x"], node)
-        """
+    def create_call_function(self, func, targets, *args, **kwargs): # pylint: disable=C0111
         Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
         Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
         args_ = list(args)
