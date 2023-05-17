@@ -131,8 +131,12 @@ AnfNodePtr BuildSpecialLikeSparseTensor(const FuncGraphPtr &tape, const ValuePtr
 AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value, const SpecialType &type) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>() || value->isa<Scalar>()) {
-    auto vlaue_node = NewValueNode(value);
-    auto value_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
+    auto tensor = value;
+    if (value->isa<Scalar>()) {
+      tensor = std::make_shared<tensor::Tensor>(0);
+    }
+    auto vlaue_node = NewValueNode(tensor);
+    auto value_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor->ToAbstract());
     vlaue_node->set_abstract(value_abs);
     auto primitive = GetValueType(type);
     MS_EXCEPTION_IF_NULL(primitive);

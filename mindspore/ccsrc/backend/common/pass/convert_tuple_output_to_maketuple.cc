@@ -85,7 +85,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
       return nullptr;
     }
   }
-  if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(cnode, prim::kPrimBpropCut)) {
     return nullptr;
   }
 

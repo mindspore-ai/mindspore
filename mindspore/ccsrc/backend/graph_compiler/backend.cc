@@ -370,6 +370,44 @@ void MsBackend::SetDebugger() {
 #endif
 
 namespace {
+ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &parent_node,
+                            const AnfNodePtr &input_node, const std::map<KernelWithIndex, TensorPtr> &op_output,
+                            const std::map<AnfNodePtr, size_t> &parameter_index,
+                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info,
+                            size_t input_index) {
+  if (!IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
+    auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
+    MS_EXCEPTION_IF_NULL(real_input);
+    ValuePtr value = nullptr;
+    if (!real_input->isa<ValueNode>()) {
+      if (real_input->abstract() != nullptr && real_input->abstract()->isa<abstract::AbstractSparseTensor>()) {
+        value = TensorListToSparseTensor(real_input->abstract(), graph_inputs);
+      } else {
+        value = graph_compiler->GetSingleOpInputTensorByIndex(parent_node, op_output, parameter_index, graph_inputs,
+                                                              input_tensor_info, input_index);
+      }
+      MS_EXCEPTION_IF_NULL(value);
+    } else {
+      const auto &value_node = real_input->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+    }
+    return value;
+  }
+  auto cnode = input_node->cast<CNodePtr>();
+  std::vector<ValuePtr> args_tuple;
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    auto input = cnode->inputs()[i];
+    auto value = GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs,
+                                    input_tensor_info, i - 1);
+    MS_EXCEPTION_IF_NULL(value);
+    (void)args_tuple.emplace_back(value);
+  }
+  auto arg = std::make_shared<ValueTuple>(args_tuple);
+  return arg;
+}
+
 void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &front_cnode,
                        const CNodePtr &backend_cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -379,82 +417,18 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   MS_EXCEPTION_IF_NULL(backend_cnode);
   MS_EXCEPTION_IF_NULL(graph_compiler);
   MS_EXCEPTION_IF_NULL(args);
-  size_t front_index = 0;     // Point to front end cnode
-  size_t back_index = 0;      // Point to backend end cnode
-  size_t args_tuple_num = 0;  // Record the input num of maketuple cnode
-  std::vector<ValuePtr> args_tuple;
   auto front_size = front_cnode->inputs().size();
   auto back_size = backend_cnode->inputs().size();
-  while (front_index + 1 < front_size && back_index + 1 < back_size) {
-    AnfNodePtr input_node = nullptr;
-    if (args_tuple_num != 0) {
-      input_node = backend_cnode->input(back_index + 1);
-    } else {
-      input_node = front_cnode->input(front_index + 1);
-      if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
-        // Hook multi-input or multi-output.
-        MS_LOG(DEBUG) << "The input node of hook op: " << input_node->DebugString() << " is a make tuple node.";
-        auto make_tuple = input_node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(make_tuple);
-        args_tuple_num = make_tuple->inputs().size() - 1;
-        continue;
-      } else if (input_node->isa<Parameter>()) {
-        auto param = input_node->cast<ParameterPtr>();
-        MS_EXCEPTION_IF_NULL(param);
-        auto abs = param->abstract();
-        MS_EXCEPTION_IF_NULL(abs);
-        if (abs->isa<abstract::AbstractTuple>() && !abs->isa<abstract::AbstractSparseTensor>() &&
-            (!common::AnfAlgo::IsDynamicSequence(param))) {
-          auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
-          MS_EXCEPTION_IF_NULL(abs_tuple);
-          args_tuple_num = abs_tuple->elements().size();
-          continue;
-        }
-      }
-    }
-    // Hook single-input or single-output.
-    auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
-    MS_EXCEPTION_IF_NULL(real_input);
-    ValuePtr value = nullptr;
-    if (!real_input->isa<ValueNode>()) {
-      if (real_input->abstract() != nullptr && real_input->abstract()->isa<abstract::AbstractSparseTensor>()) {
-        value = TensorListToSparseTensor(real_input->abstract(), graph_inputs);
-      } else {
-        value = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
-                                                              graph_inputs, input_tensor_info, back_index);
-      }
-      MS_EXCEPTION_IF_NULL(value);
-      ++back_index;
-    } else {
-      const auto &value_node = real_input->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      value = value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<ValueSequence>()) {
-        const auto &value_sequeue = value->cast<ValueSequencePtr>();
-        MS_EXCEPTION_IF_NULL(value_sequeue);
-        if (std::all_of(value_sequeue->value().begin(), value_sequeue->value().end(),
-                        [](const ValuePtr &v) { return !v->isa<tensor::Tensor>(); })) {
-          ++back_index;
-        } else {
-          back_index += value_sequeue->size();
-        }
-      } else {
-        ++back_index;
-      }
-    }
-    if (args_tuple_num != 0) {
-      (void)args_tuple.emplace_back(value);
-      if (args_tuple.size() == args_tuple_num) {
-        value = std::make_shared<ValueTuple>(args_tuple);
-        args_tuple_num = 0;
-        args_tuple.clear();
-      }
-    }
-    if (args_tuple_num == 0) {
-      args->emplace_back(value);
-      front_index++;
-    }
+  if (front_size != back_size) {
+    MS_LOG(EXCEPTION) << "Bpropcut op front cnode size: " << front_size << ", back cnode size:" << back_size
+                      << ", bpropcut op should not flatten";
+  }
+  for (size_t index = 1; index < back_size; ++index) {
+    auto input_node = backend_cnode->input(index);
+    auto value = GetInputofBpropCut(graph_compiler, backend_cnode, input_node, op_output_map, parameter_index,
+                                    graph_inputs, input_tensor_info, index - 1);
+    MS_EXCEPTION_IF_NULL(value);
+    (void)args->emplace_back(value);
   }
 }
 
