@@ -44,6 +44,7 @@ namespace ops {
 namespace {
 constexpr size_t DIM_SIZE4 = 4;
 constexpr size_t DIM_SIZE5 = 5;
+constexpr size_t kOutputDim = 5;
 constexpr int64_t kInputsSize = 3;
 constexpr size_t kDim4FormatNCDHWIndexC = 0;
 constexpr size_t kDim4FormatNCDHWIndexD = 1;
@@ -83,6 +84,9 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
   auto origin_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto out_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
   auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(origin_input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector(kOutputDim, -1));
+  }
   if (origin_input_shape.size() != DIM_SIZE4 && origin_input_shape.size() != DIM_SIZE5) {
     MS_EXCEPTION(TypeError) << "For '" << op_name
                             << "', the dimension of 'origin_input' must be equal to 4 or 5, but got "
@@ -93,7 +97,7 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
                             << "', the dimension of 'out_backprop' must be equal to 4 or 5, but got "
                             << std::to_string(out_backprop_shape.size()) << ".";
   }
-  if (argmax_shape.size() != DIM_SIZE4 && argmax_shape.size() != DIM_SIZE5) {
+  if (!IsDynamicRank(argmax_shape) && argmax_shape.size() != DIM_SIZE4 && argmax_shape.size() != DIM_SIZE5) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'argmax' must be equal to 4 or 5, but got "
                             << std::to_string(argmax_shape.size()) << ".";
   }

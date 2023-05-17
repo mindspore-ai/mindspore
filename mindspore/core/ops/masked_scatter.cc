@@ -45,8 +45,10 @@ abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map[kShape];
   auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto mask_shape = mask_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("dim of input_x", SizeToLong(x_shape.size()), kGreaterEqual,
-                                           SizeToLong(mask_shape.size()), op_name);
+  if (!IsDynamicRank(x_shape) && !IsDynamicRank(mask_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("dim of input_x", SizeToLong(x_shape.size()), kGreaterEqual,
+                                             SizeToLong(mask_shape.size()), op_name);
+  }
 
   return std::make_shared<abstract::Shape>(x_shape);
 }
