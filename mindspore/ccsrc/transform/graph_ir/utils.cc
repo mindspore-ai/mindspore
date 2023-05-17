@@ -202,6 +202,18 @@ bool IsIfNode(const AnfNodePtr &node) {
   return true;
 }
 
+bool IsInitDataSetQueueNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (IsPrimitiveCNode(cnode, prim::kPrimInitDataSetQueue)) {
+    return true;
+  }
+  return false;
+}
+
 std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   if (IsCaseNode(cnode)) {
     return string(kNameCase);

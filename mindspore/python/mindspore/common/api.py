@@ -1393,7 +1393,6 @@ class _CellGraphExecutor:
 
         obj.check_names()
         _check_full_batch()
-        self._set_dataset_mode(args)
         self._set_compile_cache_dep_files(phase)
 
         enable_ge = context.get_context("enable_ge")

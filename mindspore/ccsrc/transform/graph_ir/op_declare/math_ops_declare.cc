@@ -185,4 +185,19 @@ INPUT_MAP(NextAfter) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(NextAfter) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(NextAfter) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(NextAfter, prim::kPrimNextAfter->name(), ADPT_DESC(NextAfter))
+
+// InitDataSetQueue
+INPUT_MAP(InitData) = EMPTY_INPUT_MAP;
+OUTPUT_MAP(InitData) = EMPTY_OUTPUT_MAP;
+ATTR_MAP(InitData) = {{"queue_name", ATTR_DESC(channel_name, AnyTraits<string>())}};
+REG_ADPT_DESC(InitData, prim::kPrimInitDataSetQueue->name(), ADPT_DESC(InitData))
+
+// GetNext
+INPUT_MAP(GetNext) = EMPTY_INPUT_MAP;
+DYN_OUTPUT_MAP(GetNext) = {{0, DYN_OUTPUT_DESC(y)}};
+ATTR_MAP(GetNext) = {{"types", ATTR_DESC(output_types, AnyTraits<std::vector<GEType>>())},
+                     {"shapes", ATTR_DESC(output_shapes, AnyTraits<std::vector<std::vector<int64_t>>>())},
+                     {"output_num", ATTR_DESC(output_num, AnyTraits<int64_t>())},
+                     {"shared_name", ATTR_DESC(channel_name, AnyTraits<string>())}};
+REG_ADPT_DESC(GetNext, prim::kPrimGetNext->name(), ADPT_DESC(GetNext))
 }  // namespace mindspore::transform

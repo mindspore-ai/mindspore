@@ -188,4 +188,13 @@ INPUT_MAP(BroadcastGradientArgs) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(BroadcastGradientArgs) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BroadcastGradientArgs) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(BroadcastGradientArgs, kNameDynamicBroadcastGradientArgs, ADPT_DESC(BroadcastGradientArgs))
+
+// QueueData
+INPUT_MAP(QueueData) = EMPTY_INPUT_MAP;
+OUTPUT_MAP(QueueData) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(QueueData) = {{"index", ATTR_DESC(index, AnyTraits<int64_t>())},
+                       {"queue_name", ATTR_DESC(queue_name, AnyTraits<string>())},
+                       {"output_types", ATTR_DESC(output_types, AnyTraits<std::vector<GEType>>())},
+                       {"output_shapes", ATTR_DESC(output_shapes, AnyTraits<std::vector<std::vector<int64_t>>>())}};
+REG_ADPT_DESC(QueueData, prim::kPrimQueueData->name(), ADPT_DESC(QueueData))
 }  // namespace mindspore::transform

@@ -229,7 +229,7 @@ def connect_network_with_dataset(network, dataset_helper):
             "The dataset has been connected to other network, please check the code.")
 
     queue_name = dataset.__transfer_dataset__.queue_name
-    if _dynamic_sink_scenario(dataset, dataset_iter, network) and not context.get_context("enable_ge"):
+    if _dynamic_sink_scenario(dataset, dataset_iter, network):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
 
@@ -253,7 +253,7 @@ def connect_network_with_dataset(network, dataset_helper):
     if hasattr(aux, '__sink_network__'):
         network = aux.__sink_network__
     else:
-        if not context.get_context("enable_ge") and context.get_context("device_target") in ("Ascend", "GPU"):
+        if context.get_context("device_target") in ("Ascend", "GPU"):
             network = offload.check_add_offload_sink_mode(
                 dataset, dataset_helper, network)
             network = _generate_network_with_dataset(
@@ -316,22 +316,19 @@ class DatasetHelper:
             sink_size = dataset.get_dataset_size()
 
         if dataset_sink_mode:
-            if context.get_context("enable_ge"):
-                iterclass = _DatasetIterGE
-            else:
-                if context.get_context("mode") == context.GRAPH_MODE:
-                    if _is_role_sched():
-                        iterclass = _DatasetIterPSServer
-                    elif (context.get_context("device_target") == "Ascend") or \
-                            (context.get_context("device_target") == "GPU"):
-                        iterclass = _DatasetIterMSLoopSink
-                    else:
-                        target = context.get_context("device_target")
-                        raise RuntimeError("Currently dataset sink mode is not supported when the device "
-                                           "target is {}, please set dataset_sink_mode to False "
-                                           "in Model.train()".format(target))
+            if context.get_context("mode") == context.GRAPH_MODE:
+                if _is_role_sched():
+                    iterclass = _DatasetIterPSServer
+                elif (context.get_context("device_target") == "Ascend") or \
+                        (context.get_context("device_target") == "GPU"):
+                    iterclass = _DatasetIterMSLoopSink
                 else:
-                    iterclass = _DatasetIterPyNative
+                    target = context.get_context("device_target")
+                    raise RuntimeError("Currently dataset sink mode is not supported when the device "
+                                       "target is {}, please set dataset_sink_mode to False "
+                                       "in Model.train()".format(target))
+            else:
+                iterclass = _DatasetIterPyNative
             self.iter = iterclass(dataset, sink_size, epoch_num)
         else:
             iterclass = _DatasetIterNormal

@@ -21,6 +21,7 @@
 #include "ops/split_combination_ops.h"
 #include "graph/operator_factory_impl.h"
 #include "include/common/utils/convert_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -661,7 +662,11 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Op name is " << op->GetName() << " anf is " << node->DebugString();
+  MS_LOG(INFO) << "Op name is " << op->GetName() << " anf is " << node->DebugString() << ", shape: " << shp->ToString()
+               << ", type: " << type;
+  if (AnfUtils::GetOutputTensorNum(node) == 0) {
+    return;
+  }
 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(shp);
   auto no_shape_ptr = dyn_cast<abstract::NoShape>(shp);

@@ -43,6 +43,7 @@ bool IsIfNode(const AnfNodePtr &node);
 bool IsCaseNode(const AnfNodePtr &node);
 std::string GetCNodeTargetFuncName(const CNodePtr cnode);
 bool IsPartialCNode(const AnfNodePtr node);
+bool IsInitDataSetQueueNode(const AnfNodePtr &node);
 
 void ClearGeSessionAndRunner();
 // convert_type

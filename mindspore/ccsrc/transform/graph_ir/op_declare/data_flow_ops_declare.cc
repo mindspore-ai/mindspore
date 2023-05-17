@@ -47,4 +47,23 @@ DYN_INPUT_MAP(DynamicStitch) = {{1, DYN_INPUT_DESC(indices)}, {2, DYN_INPUT_DESC
 ATTR_MAP(DynamicStitch) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(DynamicStitch) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DynamicStitch, kNameDynamicStitch, ADPT_DESC(DynamicStitch))
+
+// GetNextFromQueue
+INPUT_MAP(GetNextFromQueue) = {{1, INPUT_DESC(x)}};
+DYN_OUTPUT_MAP(GetNextFromQueue) = {{0, DYN_OUTPUT_DESC(y)}};
+ATTR_MAP(GetNextFromQueue) = {
+  {"output_types", ATTR_DESC(output_types, AnyTraits<std::vector<GEType>>())},
+  {"output_shapes", ATTR_DESC(output_shapes, AnyTraits<std::vector<std::vector<int64_t>>>())}};
+REG_ADPT_DESC(GetNextFromQueue, prim::kPrimGetNextFromQueue->name(), ADPT_DESC(GetNextFromQueue))
+
+// DynamicGetNextV2
+INPUT_MAP(DynamicGetNextV2) = EMPTY_INPUT_MAP;
+DYN_OUTPUT_MAP(DynamicGetNextV2) = {{0, DYN_OUTPUT_DESC(y)}};
+ATTR_MAP(DynamicGetNextV2) = {
+  {"output_types", ATTR_DESC(output_types, AnyTraits<std::vector<GEType>>())},
+  {"channel_name", ATTR_DESC(channel_name, AnyTraits<string>())},
+  {"output_shapes", ATTR_DESC(output_shapes, AnyTraits<std::vector<std::vector<int64_t>>>())},
+  {"_dynamic_graph_execute_mode", ATTR_DESC(_dynamic_graph_execute_mode, AnyTraits<string>())},
+  {"_getnext_inputs_shape_range", ATTR_DESC(_getnext_inputs_shape_range, AnyTraits<string>())}};
+REG_ADPT_DESC(DynamicGetNextV2, prim::kPrimDynamicGetNextV2->name(), ADPT_DESC(DynamicGetNextV2))
 }  // namespace mindspore::transform

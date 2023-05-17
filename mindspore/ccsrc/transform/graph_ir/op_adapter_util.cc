@@ -152,6 +152,21 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>) {
   return TransformUtil::ConvertDataType(me_type);
 }
 
+std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<GEType>>) {
+  MS_EXCEPTION_IF_NULL(value);
+  std::vector<GeDataType> data;
+  if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
+    MS_LOG(WARNING) << "error convert Value to vector for value: " << value->ToString()
+                    << ", type: " << value->type_name() << ", value should be a tuple or list";
+    data.push_back(ConvertAnyUtil(value, AnyTraits<GEType>()));
+    return data;
+  }
+  auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+  std::transform(vec.begin(), vec.end(), std::back_inserter(data),
+                 [](const ValuePtr &it) { return ConvertAnyUtil(it, AnyTraits<GEType>()); });
+  return data;
+}
+
 template <typename T1, typename T2>
 GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
   const auto &vec_item =

@@ -187,7 +187,7 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
 
   DfGraphWrapperPtr wrap_ptr = graph_manager_.GetGraphByName(name);
   if (wrap_ptr == nullptr) {
-    MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
+    MS_LOG(WARNING) << "Get graph form DfGraphManager failed!";
     return Status::NOT_FOUND;
   }
 

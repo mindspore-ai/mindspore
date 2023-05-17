@@ -20,8 +20,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+
 #include "transform/graph_ir/op_adapter_base.h"
 #include "ir/scalar.h"
+
 namespace mindspore {
 class GeDataTypeImm final : public IntegerImm {
  public:
@@ -78,6 +80,8 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &fo
                                     const AnyTraits<std::vector<int64_t>>, const AnyTraits<int64_t>);
 
 GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>);
+
+std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<GEType>>);
 
 template <typename P, typename Q>
 std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTraits<std::vector<Q>>) {

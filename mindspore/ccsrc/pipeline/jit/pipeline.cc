@@ -1594,9 +1594,9 @@ void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                      const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
-  std::string name = MsContext::GetInstance()->backend_policy();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  std::string name = ms_context->backend_policy();
 #ifdef WITH_BACKEND
   if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -1607,27 +1607,18 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
       InitPipeline();
     }
   }
-
 #endif
-  if (iter_num == -1) {
-    iter_num = INT32_MAX;
-  }
-  if (name == kMsConvert || name == kMsVm) {
-    return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
-  }
-  std::string backend = ms_context->backend_policy();
+
+  if (name == kMsConvert || name == kMsVm || name == "ge") {
 #ifdef WITH_BACKEND
-  if (backend == "ge") {
-    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-
-    return device_context->GetDeprecatedInterface()->InitExecDataset(queue_name, iter_num, batch_size, types, shapes,
-                                                                     input_indexes, phase);
-  }
+    if (iter_num == -1) {
+      iter_num = INT32_MAX;
+    }
+    return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
 #endif
-  return backend == "ge" ? true : false;
+  }
+
+  return name == "ge" ? true : false;
 }
 
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,

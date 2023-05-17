@@ -227,7 +227,7 @@ INPUT_ATTR_MAP(ApplyRMSPropD) = {{6, ATTR_DESC(rho, AnyTraits<float>())},
                                  {7, ATTR_DESC(momentum, AnyTraits<float>())},
                                  {8, ATTR_DESC(epsilon, AnyTraits<float>())}};
 ATTR_MAP(ApplyRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyRMSPropD) = {{0, OUTPUT_DESC(var)}};
+OUTPUT_MAP(ApplyRMSPropD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(ms)}, {2, OUTPUT_DESC(mom)}};
 REG_ADPT_DESC(ApplyRMSPropD, kNameApplyRMSProp, ADPT_DESC(ApplyRMSPropD))
 
 // ApplyCenteredRMSProp
