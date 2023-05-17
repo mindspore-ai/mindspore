@@ -6,8 +6,8 @@ mindspore.train.BleuScore
     计算BLEU分数。BLEU指的是具有一个或多个引用的机器翻译文本的metric。
 
     参数： 
-        - **n_gram** (int) - 取值范围为1~4。默认值：4。
-        - **smooth** (bool) - 是否采用平滑计算的方式。默认值：False。
+        - **n_gram** (int) - 取值范围为1~4。默认值： ``4`` 。
+        - **smooth** (bool) - 是否采用平滑计算的方式。默认值： ``False`` 。
 
     异常：
         - **ValueError** - `n_gram` 的取值范围不在1~4之间。

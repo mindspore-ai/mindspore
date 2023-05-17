@@ -8,10 +8,10 @@ mindspore.train.OcclusionSensitivity
     遮挡敏感度是指神经网络对图像的类别预测概率如何随着图像被遮挡部分的变化而变化。遮挡敏感度值越高，意味着模型对类别预测的概率值下降越大，说明遮挡区域在神经网络的分类决策过程中越重要。
 
     参数：
-        - **pad_val** (float) - 图像中被遮挡部分的填充值。默认值：0.0。
-        - **margin** (Union[int, Sequence]) - 在要遮挡的像素点周围设置的长方体/立方体。默认值：2。
-        - **n_batch** (int) - 一个batch中样本的数量。默认值：128。
-        - **b_box** (Sequence) - 执行分析的目标区域的边界框(Bounding box)，其大小与输出图像的大小相匹配。如果没有设置此入参，Bounding box将与输入图像的大小相同；如果设置了此入参，输入图像将被裁剪为此大小，此设置值应形如：``[min1, max1, min2, max2,...]``，分别对应除batch size外各维度的最大最小值。默认值：None。
+        - **pad_val** (float) - 图像中被遮挡部分的填充值。默认值： ``0.0`` 。
+        - **margin** (Union[int, Sequence]) - 在要遮挡的像素点周围设置的长方体/立方体。默认值： ``2`` 。
+        - **n_batch** (int) - 一个batch中样本的数量。默认值： ``128`` 。
+        - **b_box** (Sequence) - 执行分析的目标区域的边界框(Bounding box)，其大小与输出图像的大小相匹配。如果没有设置此入参，Bounding box将与输入图像的大小相同；如果设置了此入参，输入图像将被裁剪为此大小，此设置值应形如：``[min1, max1, min2, max2,...]``，分别对应除batch size外各维度的最大最小值。默认值： ``None`` 。
 
     .. py:method:: clear()
 

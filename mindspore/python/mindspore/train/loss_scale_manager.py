@@ -51,10 +51,11 @@ class FixedLossScaleManager(LossScaleManager):
     inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
-        loss_scale (float): Magnification factor of gradients. Note that if `drop_overflow_update` is set to False,
-            the value of `loss_scale` in optimizer should be set to the same as here. Default: 128.0.
-        drop_overflow_update (bool): Whether to execute optimizer if there is an overflow. If True, the optimizer will
-            not executed when overflow occurs. Default: True.
+        loss_scale (float): Magnification factor of gradients. Note that if `drop_overflow_update` is set to ``False`` ,
+            the value of `loss_scale` in optimizer should be set to the same as here. Default: ``128.0`` .
+        drop_overflow_update (bool): Whether to execute optimizer if there is an overflow.
+            If ``True`` , the optimizer will
+            not executed when overflow occurs. Default: ``True`` .
 
     Examples:
         >>> import mindspore as ms
@@ -121,9 +122,9 @@ class DynamicLossScaleManager(LossScaleManager):
     adjusted, inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
-        init_loss_scale (float): Initialize loss scale. Default: 2**24.
-        scale_factor (int): Coefficient of increase and decrease. Default: 2.
-        scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
+        init_loss_scale (float): Initialize loss scale. Default: ``2 ** 24`` .
+        scale_factor (int): Coefficient of increase and decrease. Default: ``2`` .
+        scale_window (int): Maximum continuous normal steps when there is no overflow. Default: ``2000`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU``

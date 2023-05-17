@@ -34,7 +34,7 @@ class Accuracy(EvaluationBase):
     Args:
         eval_type (str): The metric to calculate the accuracy over a dataset. Supports 'classification' and
           'multilabel'. 'classification' means the dataset label is single. 'multilabel' means the dataset has multiple
-          labels. Default: 'classification'.
+          labels. Default: ``'classification'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

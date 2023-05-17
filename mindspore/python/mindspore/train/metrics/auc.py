@@ -29,7 +29,7 @@ def auc(x, y, reorder=False):
         y (Union[np.array, list]): From the ROC curve(tpr), np.array with true positive rates. If multiclass,
                                    this is a list of such np.array, one for each class. The shape :math:`(N)`.
         reorder (bool): If False, x must rise or fall monotonously. If True, x will be sorted in ascending order.
-                           Default: False.
+                           Default: ``False`` .
 
     Returns:
         float, the area under the ROC-curve.

@@ -11,7 +11,7 @@ mindspore.train.Dice
         dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
 
     参数：
-        - **smooth** (float) - 在计算过程中添加到分母里，用于提高数值稳定性，取值需大于0。默认值：1e-5。
+        - **smooth** (float) - 在计算过程中添加到分母里，用于提高数值稳定性，取值需大于0。默认值： ``1e-5`` 。
 
     .. py:method:: clear()
 

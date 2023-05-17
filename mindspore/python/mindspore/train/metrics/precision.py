@@ -36,7 +36,7 @@ class Precision(EvaluationBase):
         In the multi-label cases, the elements of :math:`y` and :math:`y_{pred}` must be 0 or 1.
 
     Args:
-        eval_type (str): 'classification' or 'multilabel' are supported. Default: 'classification'.
+        eval_type (str): ``'classification'`` or ``'multilabel'`` are supported. Default: ``'classification'`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -140,7 +140,7 @@ class Precision(EvaluationBase):
         Computes the precision.
 
         Args:
-            average (bool): Specify whether calculate the average precision. Default: False.
+            average (bool): Specify whether calculate the average precision. Default: ``False`` .
 
         Returns:
             numpy.float64, the computed result.

@@ -271,7 +271,7 @@ class XavierNormal(Initializer):
     :math:`n_{out}` is the number of output units in the weight tensor.
 
     Args:
-        gain (float): An optional scaling factor. Default: 1.
+        gain (float): An optional scaling factor. Default: ``1`` .
 
     Examples:
         >>> import mindspore
@@ -308,7 +308,7 @@ class XavierUniform(Initializer):
     `<http://proceedings.mlr.press/v9/glorot10a.html>`_.
 
     Args:
-        gain (float): An optional scaling factor. Default: 1.
+        gain (float): An optional scaling factor. Default: ``1`` .
 
 
     Examples:
@@ -347,12 +347,12 @@ class HeUniform(Initializer):
 
     Args:
         negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
-            (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
-        mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
-            variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
-            in the backwards pass. Default: 'fan_in'.
-        nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
-            Default: 'leaky_relu'.
+            (only used when `nonlinearity` is 'leaky_relu'). Default: ``0`` .
+        mode (str): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of the
+            variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
+            in the backwards pass. Default: ``'fan_in'`` .
+        nonlinearity (str): The non-linear function, recommended to use only with ``'relu'`` or ``'leaky_relu'`` .
+            Default: ``'leaky_relu'`` .
 
 
     Examples:
@@ -393,12 +393,12 @@ class HeNormal(Initializer):
 
     Args:
         negative_slope (int, float): The negative slope of the rectifier used after this layer
-            (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
-        mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
-            variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
-            in the backwards pass. Default: 'fan_in'.
-        nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
-            Default: 'leaky_relu'.
+            (only used when `nonlinearity` is 'leaky_relu'). Default: ``0`` .
+        mode (str): Either ``'fan_in'`` or ``'fan_out'`` . Choosing ``'fan_in'`` preserves the magnitude of the
+            variance of the weights in the forward pass. Choosing ``'fan_out'`` preserves the magnitudes
+            in the backwards pass. Default: ``'fan_in'`` .
+        nonlinearity (str): The non-linear function, recommended to use only with ``'relu'`` or ``'leaky_relu'`` .
+            Default: ``'leaky_relu'`` .
 
 
     Examples:
@@ -475,7 +475,7 @@ class Sparse(Initializer):
 
     Args:
          sparsity (float): The fraction of elements being set to zero in each column.
-         sigma (float): The standard deviation of the normal distribution. Default: 0.01.
+         sigma (float): The standard deviation of the normal distribution. Default: ``0.01`` .
 
     Raises:
         ValueError: If the dimension of input tensor is not equal to 2.
@@ -512,7 +512,7 @@ class Dirac(Initializer):
     For group convolution, each group of channels will be preserved respectively.
 
     Args:
-        groups (int): The number of group in convolution layer. Default: 1.
+        groups (int): The number of group in convolution layer. Default: ``1`` .
 
     Raises:
         ValueError: If the dimension of the initialized tensor is not in [3, 4, 5].
@@ -564,7 +564,7 @@ class Orthogonal(Initializer):
     If the dimension is greater than 2, the trailing dimensions will be flattened.
 
     Args:
-         gain (float): An optional scaling factor. Default: ``1.``.
+         gain (float): An optional scaling factor. Default: ``1.`` .
 
     Raises:
         ValueError: If the dimension of input tensor is less than 2.
@@ -617,10 +617,10 @@ class VarianceScaling(Initializer):
     :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`.
 
     Args:
-        scale (float): The scaling factor. Default: 1.0.
-        mode (str): Should be 'fan_in', 'fan_out' or 'fan_avg'. Default: 'fan_in'.
+        scale (float): The scaling factor. Default: ``1.0`` .
+        mode (str): Should be ``'fan_in'`` , ``'fan_out'`` or ``'fan_avg'`` . Default: ``'fan_in'`` .
         distribution(str): The type of distribution chose to sample values. It should be
-            'uniform', 'truncated_normal' or 'untruncated_normal'. Default: 'truncated_normal'.
+            ``'uniform'`` , ``'truncated_normal'`` or ``'untruncated_normal'`` . Default: ``'truncated_normal'`` .
 
     Raises:
         ValueError: If `scale` is not greater than 0.
@@ -682,7 +682,7 @@ class Uniform(Initializer):
     to initialize a tensor.
 
     Args:
-        scale (float): The bound of the Uniform distribution. Default: 0.07.
+        scale (float): The bound of the Uniform distribution. Default: ``0.07`` .
 
 
     Examples:
@@ -711,8 +711,8 @@ class Normal(Initializer):
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     Args:
-        sigma (float): The standard deviation of Normal distribution. Default: 0.01.
-        mean (float): The mean of Normal distribution. Default: 0.0.
+        sigma (float): The standard deviation of Normal distribution. Default: ``0.01`` .
+        mean (float): The mean of Normal distribution. Default: ``0.0`` .
 
     Examples:
         >>> import mindspore
@@ -737,7 +737,7 @@ class TruncatedNormal(Initializer):
     Generates an array with values sampled from Truncated Normal distribution in order to initialize a tensor.
 
     Args:
-        sigma (float): The standard deviation of Truncated Normal distribution. Default: 0.01.
+        sigma (float): The standard deviation of Truncated Normal distribution. Default: ``0.01`` .
 
 
     Examples:

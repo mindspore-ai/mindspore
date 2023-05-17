@@ -28,10 +28,10 @@ class ROC(Metric):
 
     Args:
         class_num (int): The number of classes. It is not necessary to provide this argument under the binary
-                            classification scenario. Default: None.
+                            classification scenario. Default: ``None`` .
         pos_label (int): Determine the integer of positive class. For binary problems, it is translated to 1 by default.
                             For multiclass problems, this argument should not be set, as it will
-                            iteratively changed in the range [0,num_classes-1]. Default: None.
+                            iteratively changed in the range [0, num_classes-1]. Default: ``None`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -34,13 +34,13 @@ class OnRequestExit(Callback):
     including checkpoint and mindir, and then exit the training process.
 
     Args:
-        save_ckpt (bool): Whether save the checkpoint before the training process exit. Default: True.
-        save_mindir (bool): Whether save the mindir before the training process exit. Default: True.
+        save_ckpt (bool): Whether save the checkpoint before the training process exit. Default: ``True`` .
+        save_mindir (bool): Whether save the mindir before the training process exit. Default: ``True`` .
         file_name (str): The saved checkpoint and mindir file name,
-            the checkpoint file add suffix '.ckpt', the mindir file add suffix '.mindir'. Default: 'Net'.
-        directory (str): The directory save checkpoint and mindir. Default: './'.
+            the checkpoint file add suffix '.ckpt', the mindir file add suffix '.mindir'. Default: ``'Net'`` .
+        directory (str): The directory save checkpoint and mindir. Default: ``'./'`` .
         sig (int): The user registered exit signal, it must be a captureable and negligible signal.
-            When the process receives the signal, exits the training or eval process. Default: signal.SIGTERM.
+            When the process receives the signal, exits the training or eval process. Default: ``signal.SIGTERM`` .
 
     Raises:
         ValueError: If the 'save_ckpt' is not a bool.
