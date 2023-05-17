@@ -189,16 +189,18 @@ class DiscountedReturn(PrimitiveWithInfer):
 
     def infer_shape(self, reward_shape, done_shape, last_state_value_shape):
         if len(reward_shape) != len(done_shape):
-            raise ValueError(f'{self.name} len(reward) and len(done) must be same, ',
+            raise ValueError(f'For \'{self.name}\', len(reward) and len(done) must be the same, ',
                              f'but got {len(reward_shape)} and {len(done_shape)}.')
 
         if reward_shape[0] != done_shape[0]:
-            raise ValueError(f'{self.name} timestep of reward and done must be same, ',
-                             f'but got {reward_shape[0]} and {done_shape[0]}.')
+            raise ValueError(f'For \'{self.name}\', the first element of the shape of \'reward\' '
+                             f'and \'done\' must be the same, but got reward.shape[0]:'
+                             f' {reward_shape[0]} and done.shape[0]: {done_shape[0]}.')
 
         if reward_shape[1:] != last_state_value_shape:
-            raise ValueError(f'{self.name} state value shape must be match, ',
-                             f'but got {reward_shape[1:]} and {last_state_value_shape}.')
+            raise ValueError(f'For \'{self.name}\', reward.shape[1:] and last_state_value.shape must be the same, '
+                             f'but got reward.shape[1:]: {reward_shape[1:]} '
+                             f'and last_state_value.shape: {last_state_value_shape}.')
         return reward_shape
 
     def infer_dtype(self, reward_dtype, done_dtype, last_state_value_dtype):
@@ -939,7 +941,7 @@ class TensorsQueuePut(PrimitiveWithInfer):
         validator.check_equal_int(len(elements_shape), self.elements_num, "inputs elements", self.name)
         for i, shape in enumerate(elements_shape):
             if tuple(shape) != self.shapes[i]:
-                raise ValueError(f'{self.name} init shape and ipnut shape must be the same, ',
+                raise ValueError(f'{self.name} init shape and input shape must be the same, ',
                                  f'but got {self.shapes[i]} and input {shape} in position {i}.')
         return ()
 
