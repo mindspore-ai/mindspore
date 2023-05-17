@@ -216,6 +216,7 @@ class ClassDefParser(Parser):
             if self._is_super_expr(body):
                 if has_father_class:
                     body.value.args = [ast.Name(id='obj', ctx=ast.Load())]
+                    body.value.keywords = []
                 new_bodies.append(body)
                 continue
         ast_copy_attr = ast.parse(
