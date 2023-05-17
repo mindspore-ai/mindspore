@@ -113,9 +113,9 @@ std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &inp
 
 bool CheckNeedSymbol(const AbstractBasePtr &abs);
 
-std::string MakeRaiseKey(const int index);
+std::string MakeRaiseKey(int index);
 
-bool HasVariableCondition(FuncGraphPtr cur_graph, FuncGraphPtr prev_graph = nullptr);
+bool HasVariableCondition(const FuncGraphPtr &cur_graph, const FuncGraphPtr &prev_graph = nullptr);
 }  // namespace raiseutils
 }  // namespace mindspore
 
