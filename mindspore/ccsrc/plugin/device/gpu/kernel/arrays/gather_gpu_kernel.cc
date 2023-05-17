@@ -38,12 +38,7 @@ bool GatherFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto index_addr = reinterpret_cast<S *>(inputs.at(kIndex2)->addr);
   auto output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  if (!is_get_dim_) {
-    auto dim_value = GetDimValue<int64_t>(inputs, kIndex1, kernel_name_, dim_type_);
-    if (!SetDimParam(dim_value)) {
-      return false;
-    }
-  }
+
   auto status = Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[kIndex2], dims_[kIndex3],
                        cuda_stream, GET_CTX_DEVICE_ID);
   CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
@@ -325,10 +320,12 @@ int GatherFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   int64_t dim_value = 0;
 
   if (TryGetIntValue(inputs, 1, kernel_name_, &dim_value)) {
-    is_get_dim_ = true;
     if (!SetDimParam(dim_value)) {
       return KRET_RESIZE_FAILED;
     }
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get dim.";
+    return KRET_RESIZE_FAILED;
   }
 
   return KRET_OK;
