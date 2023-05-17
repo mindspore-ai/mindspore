@@ -85,6 +85,18 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   if (output_shape.empty()) {
     MS_LOG(INFO) << node->fullname_with_scope() << "'s output shape is empty";
   }
+  auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(clip_by_norm_prim);
+  auto axis_value = clip_by_norm_prim->GetAttr(kAttrAxis);
+  MS_EXCEPTION_IF_NULL(axis_value);
+  if (axis_value->isa<ValueSequence>()) {
+    auto axis = GetValue<std::vector<int64_t>>(axis_value);
+    if (!axis.empty()) {
+      return axis;
+    }
+  } else if (axis_value->isa<Int64Imm>()) {
+    return {GetValue<int64_t>(axis_value)};
+  }
   std::vector<int64_t> range;
   for (size_t i = 0; i < output_shape.size(); i++) {
     (void)range.emplace_back(i);
