@@ -46,6 +46,9 @@ abstract::ShapePtr IndexPutInferShape(const PrimitivePtr &primitive, const std::
   auto x1_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
   auto x2_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex1);
   auto x2_shape = x2_shape_ptr->shape();
+  if (IsDynamic(x1_shape_ptr->shape()) || IsDynamic(x2_shape)) {
+    return x1_shape_ptr;
+  }
   auto x2_rank = SizeToLong(x2_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of x2", x2_rank, kEqual, 1, prim_name);
   auto idx_shape = input_args[kInputIndex2]->isa<abstract::AbstractTuple>()
@@ -56,6 +59,9 @@ abstract::ShapePtr IndexPutInferShape(const PrimitivePtr &primitive, const std::
   for (size_t idx = 0; idx < idx_shape.size(); ++idx) {
     auto shape = idx_shape[idx]->cast<abstract::AbstractTensorPtr>();
     auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape->BuildShape())[kShape];
+    if (IsDynamic(shape_shape)) {
+      return x1_shape_ptr;
+    }
     auto idx_rank = SizeToLong(shape_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of indices[" + std::to_string(idx) + "]", idx_rank, kEqual, 1,
                                              prim_name);

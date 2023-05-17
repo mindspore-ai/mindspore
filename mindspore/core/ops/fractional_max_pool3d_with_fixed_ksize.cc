@@ -86,16 +86,9 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *ksize, std::v
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', invalid output_shape, output_shape must be all positive.";
   }
 }
-
-abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const PrimitivePtr &primitive,
-                                                                    const std::vector<AbstractBasePtr> &input_args) {
+void CheckInputParameter(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto data_format = GetValue<std::string>(primitive->GetAttr(kFormat));
-  if (data_format != "NCDHW" && data_format != "NDHWC") {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', data_format is neither NCDHW nor NDHWC." << data_format
-                             << ".";
-  }
   (void)CheckAndConvertUtils::CheckInteger("input_number", SizeToLong(input_args.size()), kEqual, kInputsNum, op_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
@@ -104,13 +97,60 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  if (input_shape.size() != kDimSize4 && input_shape.size() != kDimSize5) {
+  if (!IsDynamicRank(input_shape) && input_shape.size() != kDimSize4 && input_shape.size() != kDimSize5) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'x' must be equal to 4 or 5, but got "
                             << std::to_string(input_shape.size()) << ".";
   }
-  if (random_samples_shape.size() != kDimSize3) {
+  if (!IsDynamicRank(random_samples_shape) && random_samples_shape.size() != kDimSize3) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'random_samples' must be equal to 3, but got "
                             << std::to_string(random_samples_shape.size()) << ".";
+  }
+
+  if (IsDynamic(input_shape)) {
+    return;
+  }
+
+  if (!IsDynamic(random_samples_shape)) {
+    if (input_shape.size() == kDimSize4) {
+      if (random_samples_shape[0] != input_shape[0]) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << op_name
+          << "', if 'x' is 4 dimensional, the first dimension size of 'x' and 'random_samples' must be equal.";
+      }
+      if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << op_name
+          << "', if 'x' is 4 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
+      }
+    } else {
+      if (random_samples_shape[1] != input_shape[1]) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << op_name
+          << "', if 'x' is 5 dimensional, the second dimension size of 'x' and 'random_samples' must be equal.";
+      }
+      if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << op_name
+          << "', if 'x' is 5 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
+      }
+    }
+  }
+}
+
+abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const PrimitivePtr &primitive,
+                                                                    const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  auto data_format = GetValue<std::string>(primitive->GetAttr(kFormat));
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  if (data_format != "NCDHW" && data_format != "NDHWC") {
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', data_format is neither NCDHW nor NDHWC." << data_format
+                             << ".";
+  }
+  (void)CheckInputParameter(primitive, input_args);
+  auto dyn_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector({-1, -1, -1, -1, -1}));
+  if (IsDynamic(input_shape)) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{dyn_shape_ptr, dyn_shape_ptr});
   }
   std::vector<int64_t> ksize;
   std::vector<int64_t> output_shape;
@@ -154,29 +194,6 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
     }
   }
 
-  if (input_shape.size() == kDimSize4) {
-    if (random_samples_shape[0] != input_shape[0]) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', if 'x' is 4 dimensional, the first dimension size of 'x' and 'random_samples' must be equal.";
-    }
-    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', if 'x' is 4 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
-    }
-  } else {
-    if (random_samples_shape[1] != input_shape[1]) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', if 'x' is 5 dimensional, the second dimension size of 'x' and 'random_samples' must be equal.";
-    }
-    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', if 'x' is 5 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
-    }
-  }
   abstract::ShapePtr output0_shape = std::make_shared<abstract::Shape>(output_size);
   abstract::ShapePtr output1_shape = std::make_shared<abstract::Shape>(output_size);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output0_shape, output1_shape});
