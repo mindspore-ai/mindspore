@@ -4138,7 +4138,7 @@ def _get_dims(shapes):
         raise ValueError('Array must be 2 dimensional')
     dims = tuple(map(operator.itemgetter(0), shapes))
     if any(shape[1] != dim for shape, dim in zip(shapes[:-1], dims[1:])):
-        raise ValueError(f'shapes not aligned')
+        raise ValueError('Shapes{} are not aligned'.format(str(shapes)))
     return dims + (shapes[-1][1],)
 
 
