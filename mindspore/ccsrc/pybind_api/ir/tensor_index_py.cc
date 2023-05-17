@@ -1066,8 +1066,8 @@ py::object TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
 }
 
 py::object TensorIndex::ReSetitemByTensor(const std::vector<TensorIndex> &new_tuple_index,
-                                          std::vector<int64_t> *value_transfer_types,
-                                          std::vector<py::object> *value_transfer_args) {
+                                          const std::vector<int64_t> &value_transfer_types,
+                                          const std::vector<py::object> &value_transfer_args) {
   py::object output_py_index;
   if (new_tuple_index[0].IsSlice()) {
     Slice slice_info = new_tuple_index[0].slice();
@@ -1078,7 +1078,7 @@ py::object TensorIndex::ReSetitemByTensor(const std::vector<TensorIndex> &new_tu
     output_py_index = py::cast(new_tuple_index[0].boolean());
   }
   return py::make_tuple(
-    output_py_index, VectorToPyTuple<int64_t>(*value_transfer_types), VectorToPyTuple<py::object>(*value_transfer_args),
+    output_py_index, VectorToPyTuple<int64_t>(value_transfer_types), VectorToPyTuple<py::object>(value_transfer_args),
     py::make_tuple(static_cast<int>(ValueTransferType::kReSetItemByIndex)), py::make_tuple(py::none()));
 }
 
@@ -1139,7 +1139,7 @@ py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, 
   ShapeVector new_value_shape = tuple_index_info.second;
 
   if (new_tuple_index.size() == 1) {
-    return ReSetitemByTensor(new_tuple_index, value_transfer_types, value_transfer_args);
+    return ReSetitemByTensor(new_tuple_index, *value_transfer_types, *value_transfer_args);
   }
   py::object output_index;
   ShapeVector output_index_shape;

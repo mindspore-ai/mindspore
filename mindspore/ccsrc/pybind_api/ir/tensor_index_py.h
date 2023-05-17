@@ -629,8 +629,8 @@ class TensorIndex final {
                                              int64_t py_fancy_position, bool *by_pass, ShapeVector *output_index_shape,
                                              py::object *data_transfer_arg);
   static py::object ReSetitemByTensor(const std::vector<TensorIndex> &new_tuple_index,
-                                      std::vector<int64_t> *value_transfer_types,
-                                      std::vector<py::object> *value_transfer_args);
+                                      const std::vector<int64_t> &value_transfer_types,
+                                      const std::vector<py::object> &value_transfer_args);
   static py::object SetitemByTupleWithTensor(const ShapeVector &data_shape, const std::vector<TensorIndex> &indices,
                                              const ShapeVector &value_shape, std::vector<int64_t> *value_transfer_type,
                                              std::vector<py::object> *value_transfer_args);
