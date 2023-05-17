@@ -9,11 +9,11 @@ mindspore.train.OnRequestExit
     训练进程执行完当前step后，保存当前训练状态，包括checkpoint和mindir，然后退出训练过程。
 
     参数：
-        - **save_ckpt** (bool) - 退出训练或推理进程时，是否保存checkpoint。默认值：True。
-        - **save_mindir** (bool) - 退出训练或推理进程时，是否保存mindir。默认值：True。
-        - **file_name** (str) - 退出训练或推理进程时，保存的checkpoint和mindir的名字，checkpoint文件加.ckpt后缀，mindir文件加.mindir后缀。默认值：'Net'。
-        - **directory** (str) - 退出训练或推理进程时，保存的checkpoint和mindir的目录。默认值：'./'。
-        - **sig** (int) - 用户注册的退出信号，该信号必须是可捕获可忽略的。当进程收到该信号时，退出训练或者推理。默认值：signal.SIGTERM。
+        - **save_ckpt** (bool) - 退出训练或推理进程时，是否保存checkpoint。默认值： ``True`` 。
+        - **save_mindir** (bool) - 退出训练或推理进程时，是否保存mindir。默认值： ``True`` 。
+        - **file_name** (str) - 退出训练或推理进程时，保存的checkpoint和mindir的名字，checkpoint文件加.ckpt后缀，mindir文件加.mindir后缀。默认值： ``'Net'`` 。
+        - **directory** (str) - 退出训练或推理进程时，保存的checkpoint和mindir的目录。默认值： ``'./'`` 。
+        - **sig** (int) - 用户注册的退出信号，该信号必须是可捕获可忽略的。当进程收到该信号时，退出训练或者推理。默认值： ``signal.SIGTERM`` 。
 
     异常：
         - **ValueError** - `save_ckpt` 不是bool值 。

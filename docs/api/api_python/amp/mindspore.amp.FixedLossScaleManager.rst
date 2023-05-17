@@ -6,15 +6,15 @@ mindspore.amp.FixedLossScaleManager
     损失缩放系数不变的管理器，继承自 :class:`mindspore.amp.LossScaleManager` 。
 
     参数：
-        - **loss_scale** (float) - 梯度放大系数。注：如果将 `drop_overflow_update` 设为False，则定义优化器时需要将优化器的 `loss_scale` 设为相同的值。默认值：128.0。
-        - **drop_overflow_update** (bool) - 出现溢出时，是否执行优化器。如果值为True，则出现溢出时不会执行优化器。默认值：True。
+        - **loss_scale** (float) - 梯度放大系数。注：如果将 `drop_overflow_update` 设为 ``False`` ，则定义优化器时需要将优化器的 `loss_scale` 设为相同的值。默认值： ``128.0`` 。
+        - **drop_overflow_update** (bool) - 出现溢出时，是否执行优化器。如果值为 ``True`` ，则出现溢出时不会执行优化器。默认值： ``True`` 。
 
     .. py:method:: get_drop_overflow_update()
 
         返回 `drop_overflow_update` ，该值表示是否在发生溢出时放弃本轮参数更新。
 
         返回：
-            bool, `drop_overflow_update` 的值。
+            bool， `drop_overflow_update` 的值。
 
     .. py:method:: get_loss_scale()
 

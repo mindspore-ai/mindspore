@@ -28,8 +28,8 @@ class BleuScore(Metric):
     the quality of text translated by machine.
 
     Args:
-        n_gram (int): The n_gram value ranges from 1 to 4. Default: 4.
-        smooth (bool): Whether or not to apply smoothing. Default: False.
+        n_gram (int): The n_gram value ranges from 1 to 4. Default: ``4`` .
+        smooth (bool): Whether or not to apply smoothing. Default: ``False`` .
 
     Raises:
         ValueError: If the value range of n_gram is not from 1 to 4.

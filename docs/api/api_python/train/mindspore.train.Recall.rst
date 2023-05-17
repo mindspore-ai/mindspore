@@ -14,7 +14,7 @@ mindspore.train.Recall
         在多标签情况下， :math:`y` 和 :math:`y_{pred}` 的元素必须为0或1。
 
     参数：
-        - **eval_type** (str) - 支持'classification'和'multilabel'。默认值：'classification'。
+        - **eval_type** (str) - 支持 ``'classification'`` 和 ``'multilabel'`` 。默认值： ``'classification'`` 。
 
     .. py:method:: clear()
 
@@ -25,7 +25,7 @@ mindspore.train.Recall
         计算召回率。
 
         参数：
-            - **average** (bool) - 指定是否计算平均召回率。默认值：False。
+            - **average** (bool) - 指定是否计算平均召回率。默认值： ``False`` 。
 
         返回：
             numpy.float64，计算结果。

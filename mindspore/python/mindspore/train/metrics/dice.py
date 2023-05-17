@@ -33,7 +33,7 @@ class Dice(Metric):
 
     Args:
         smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
-                        Default: 1e-5.
+                        Default: ``1e-5`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

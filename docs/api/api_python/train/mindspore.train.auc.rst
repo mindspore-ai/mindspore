@@ -9,7 +9,7 @@ mindspore.train.auc
     参数：
         - **x** (Union[np.array, list]) - 从ROC曲线（False Positive Rate, FPR）来看，np.array具有假阳性率。如果是多类，则为np.array列表。Shape为 :math:`(N)` 。
         - **y** (Union[np.array, list]) - 从ROC曲线（True Positive Rate, TPR）来看，np.array具有假阳性率。如果是多类，则为np.array列表。Shape为 :math:`(N)` 。
-        - **reorder** (bool) - 如果为False，那么 `x` 必须是单调上升或下降的，如果为True，那么 `x` 将会按照升序排序。默认值：False。
+        - **reorder** (bool) - 如果为False，那么 `x` 必须是单调上升或下降的，如果为True，那么 `x` 将会按照升序排序。默认值： ``False`` 。
 
     返回：
         float，曲线下面积的值AUC。

@@ -26,7 +26,7 @@ mindspore.communication
         - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
 
     参数：
-        - **backend_name** (str) - 分布式后端的名称，可选HCCL或NCCL。在Ascend硬件平台下，应使用HCCL，在GPU硬件平台下，应使用NCCL。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值为None。
+        - **backend_name** (str) - 分布式后端的名称，可选HCCL或NCCL。在Ascend硬件平台下，应使用HCCL，在GPU硬件平台下，应使用NCCL。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。
 
     异常：
         - **TypeError** - 参数 `backend_name` 不是字符串。

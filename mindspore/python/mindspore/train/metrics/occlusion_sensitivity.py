@@ -40,14 +40,14 @@ class OcclusionSensitivity(Metric):
     that the occluded area is more important in the decision-making process.
 
     Args:
-        pad_val (float): The padding value of the occluded part in an image. Default: 0.0.
-        margin (Union[int, Sequence]): Create a cuboid / cube around the voxel you want to occlude. Default: 2.
-        n_batch (int): number of images in a batch. Default: 128.
+        pad_val (float): The padding value of the occluded part in an image. Default: ``0.0`` .
+        margin (Union[int, Sequence]): Create a cuboid / cube around the voxel you want to occlude. Default: ``2`` .
+        n_batch (int): number of images in a batch. Default: ``128`` .
         b_box (Sequence): Bounding box on which to perform the analysis. The output image will also match in size.
                           There should be a minimum and maximum for all dimensions except batch:
                           ``[min1, max1, min2, max2,...]``. If no bounding box is supplied, this will be the same size
                           as the input image. If a bounding box is used, the output image will be cropped to this size.
-                          Default: None.
+                          Default: ``None`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

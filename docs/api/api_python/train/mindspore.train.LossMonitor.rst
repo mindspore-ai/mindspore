@@ -11,7 +11,7 @@ mindspore.train.LossMonitor
         如果 `per_print_times` 为0，则不打印loss。
 
     参数：
-        - **per_print_times** (int) - 表示每隔多少个step打印一次loss。默认值：1。
+        - **per_print_times** (int) - 表示每隔多少个step打印一次loss。默认值： ``1`` 。
 
     异常：
         - **ValueError** - 当 `per_print_times` 不是整数或小于零。

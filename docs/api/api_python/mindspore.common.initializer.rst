@@ -37,7 +37,7 @@ mindspore.common.initializer
     生成一个服从截断正态（高斯）分布的随机数组用于初始化Tensor。
 
     参数：
-        - **sigma** (float) - 截断正态分布的标准差，默认值为0.01。
+        - **sigma** (float) - 截断正态分布的标准差，默认值： ``0.01`` 。
 
 .. py:class:: mindspore.common.initializer.Normal(sigma=0.01, mean=0.0)
 
@@ -47,15 +47,15 @@ mindspore.common.initializer
         f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     参数：
-        - **sigma** (float) - 正态分布的标准差，默认值为0.01。
-        - **mean** (float) - 正态分布的均值，默认值为0.0。
+        - **sigma** (float) - 正态分布的标准差，默认值： ``0.01`` 。
+        - **mean** (float) - 正态分布的均值，默认值： ``0.0`` 。
 
 .. py:class:: mindspore.common.initializer.Uniform(scale=0.07)
 
     生成一个服从均匀分布 :math:`{U}(-\text{scale}, \text{scale})` 的随机数组用于初始化Tensor。
 
     参数：
-        - **scale** (float) - 均匀分布的边界，默认值为0.07。
+        - **scale** (float) - 均匀分布的边界，默认值： ``0.07`` 。
 
 .. py:class:: mindspore.common.initializer.HeUniform(negative_slope=0, mode='fan_in', nonlinearity='leaky_relu')
 
@@ -69,9 +69,9 @@ mindspore.common.initializer
     有关HeUniform算法，详情可参考 https://arxiv.org/abs/1502.01852。
 
     参数：
-        - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值为0。
-        - **mode** (str) - 可选 'fan_in'或 'fan_out'， 'fan_in'会保留前向传递中权重方差的量级， 'fan_out'会保留反向传递的量级，默认为 'fan_in'。
-        - **nonlinearity** (str) - 非线性激活函数，推荐使用 'relu'或 'leaky_relu'，默认为 'leaky_relu'。
+        - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值： ``0`` 。
+        - **mode** (str) - 可选 ``'fan_in'`` 或 ``'fan_out'`` ， ``'fan_in'`` 会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级，默认值： ``'fan_in'`` 。
+        - **nonlinearity** (str) - 非线性激活函数，推荐使用 ``'relu'`` 或 ``'leaky_relu'`` ，默认值： ``'leaky_relu'`` 。
 
 .. py:class:: mindspore.common.initializer.HeNormal(negative_slope=0, mode='fan_in', nonlinearity='leaky_relu')
 
@@ -86,9 +86,9 @@ mindspore.common.initializer
     HeNormal 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 
     参数：
-        - **negative_slope** (int, float) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值为0。
-        - **mode** (str) - 可选 'fan_in'或 'fan_out'， 'fan_in'会保留前向传递中权重方差的量级， 'fan_out'会保留反向传递的量级，默认为 'fan_in'。
-        - **nonlinearity** (str) - 非线性激活函数，推荐使用 'relu'或 'leaky_relu'，默认为 'leaky_relu'。
+        - **negative_slope** (int, float) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数 'leaky_relu'），默认值： ``0`` 。
+        - **mode** (str) - 可选 ``'fan_in'`` 或 ``'fan_out'`` ， 'fan_in'会保留前向传递中权重方差的量级， ``'fan_out'`` 会保留反向传递的量级，默认值： ``'fan_in'`` 。
+        - **nonlinearity** (str) - 非线性激活函数，推荐使用 'relu'或 'leaky_relu'，默认值： ``'leaky_relu'`` 。
 
 .. py:class:: mindspore.common.initializer.XavierNormal(gain=1)
 
@@ -102,7 +102,7 @@ mindspore.common.initializer
     有关 XavierNormal 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
 
     参数：
-        - **gain** (float) - 可选的缩放因子，默认值为1。
+        - **gain** (float) - 可选的缩放因子，默认值： ``1`` 。
 
 .. py:class:: mindspore.common.initializer.XavierUniform(gain=1)
 
@@ -116,7 +116,7 @@ mindspore.common.initializer
     有关 XavierUniform 算法的详细信息，请查看 http://proceedings.mlr.press/v9/glorot10a.html。
 
     参数：
-        - **gain** (float) - 可选的缩放因子，默认值为1。
+        - **gain** (float) - 可选的缩放因子，默认值： ``1`` 。
 
 .. py:class:: mindspore.common.initializer.One(**kwargs)
 
@@ -149,7 +149,7 @@ mindspore.common.initializer
 
     参数：
         - **sparsity** (float) - 矩阵每列中元素被置0的比例。
-        - **sigma** (float) - 正态分布的标准差，默认值为0.01。
+        - **sigma** (float) - 正态分布的标准差，默认值： ``0.01`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不等于2。
@@ -160,7 +160,7 @@ mindspore.common.initializer
     卷积，通道的每个分组会被分别保留。
 
     参数：
-        - **groups** (int) - 卷积层中的分组，默认值为1。
+        - **groups** (int) - 卷积层中的分组，默认值： ``1`` 。
 
     异常：
         - **ValueError** - 被初始化的Tensor的维度不在[3, 4, 5]的范围内。
@@ -186,9 +186,9 @@ mindspore.common.initializer
     当 `distribution` 是 'uniform'时，矩阵中的值将服从均匀分布 :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`。
 
     参数：
-        - **scale** (float) - 比例因子，默认值为1.0。
-        - **mode** (str) - 其值应为 'fan_in'， 'fan_out'或者 'fan_avg'，默认值为 'fan_in'。
-        - **distribution** (str) - 用于采样的分布类型。它可以是 'uniform'， 'truncated_normal'或 'untruncated_normal'，默认值为 'truncated_normal'。
+        - **scale** (float) - 比例因子，默认值； ``1.0`` 。
+        - **mode** (str) - 其值应为 ``'fan_in'`` ， ``'fan_out'`` 或者 ``'fan_avg'`` ，默认值： ``'fan_in'`` 。
+        - **distribution** (str) - 用于采样的分布类型。它可以是 ``'uniform'`` ， ``'truncated_normal'`` 或 ``'untruncated_normal'`` ，默认值： ``'truncated_normal'`` 。
 
     异常：
         - **ValueError** - `scale` 小于等于0。

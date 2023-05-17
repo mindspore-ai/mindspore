@@ -100,7 +100,7 @@ def init(backend_name=None):
     Args:
         backend_name (str): Backend, using HCCL/NCCL/MCCL. HCCL should be used for Ascend hardware platforms and
                             NCCL for GPU hardware platforms. If not set, inference is automatically made based on the
-                            hardware platform type (device_target). Default: None.
+                            hardware platform type (device_target). Default: ``None`` .
 
     Raises:
         TypeError: If `backend_name` is not a string.
@@ -215,7 +215,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+                     otherwise, using the default group. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Returns:
         int, the rank ID of the calling process within the group.

@@ -28,7 +28,7 @@ class TimeMonitor(Callback):
     Args:
         data_size (int): How many steps are the intervals between print information each time.
             if the program get `batch_num` during training, `data_size` will be set to `batch_num`,
-            otherwise `data_size` will be used. Default: None.
+            otherwise `data_size` will be used. Default: ``None`` .
 
     Raises:
         ValueError: If data_size is not positive int.
