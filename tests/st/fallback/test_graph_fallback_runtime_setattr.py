@@ -271,7 +271,6 @@ class OuterAssignTarget:
         self.a = NestedAssignTarget()
 
 
-@pytest.mark.skip(reason="Not found Name.id in Attribute.value, the value is not Name")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -300,7 +299,6 @@ nested_data_obj2 = OuterAssignTarget()
 nested_data_obj2.a.b.x = 100
 
 
-@pytest.mark.skip(reason="Not found Name.id in Attribute.value, the value is not Name")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

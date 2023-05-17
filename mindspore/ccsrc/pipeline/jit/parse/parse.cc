@@ -796,23 +796,23 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
     MS_LOG(EXCEPTION) << "Node type is error : " << node_main_type;
   }
   // Call the process function
-  std::string node_name = node_type->node_name();
-  MS_LOG(DEBUG) << "Ast node is " << node_name << ", location:" << GetLocation(node)->ToString();
-  if (expr_method_map_.count(node_name) != 0) {
-    auto expr_node = (this->*expr_method_map_[node_name])(block, node);
+  const std::string &node_type_name = node_type->node_name();
+  MS_LOG(DEBUG) << "Ast node is " << node_type_name << ", location:" << GetLocation(node)->ToString();
+  if (expr_method_map_.count(node_type_name) != 0) {
+    auto expr_node = (this->*expr_method_map_[node_type_name])(block, node);
     MS_LOG(DEBUG) << "Get parsed anf node:" << expr_node->DebugString();
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
-    MS_LOG(EXCEPTION) << "Unsupported expression '" << node_name
+    MS_LOG(EXCEPTION) << "Unsupported expression '" << node_type_name
                       << "'.\nMore details please refer to syntax support at https://www.mindspore.cn";
   }
 }
 
 std::string Parser::GetExprStr(const AnfNodePtr &node, const py::object &ast_node) {
   auto node_type = ast_->GetNodeType(ast_node);
-  const std::string &node_name = node_type->node_name();
-  if (node_name == "Name") {
+  const std::string &node_type_name = node_type->node_name();
+  if (node_type_name == "Name") {
     return py::cast<std::string>(python_adapter::GetPyObjAttr(ast_node, "id"));
   }
   return fallback::GetNodeExprSrc(node);
@@ -2858,24 +2858,30 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
                                      const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(block);
   const py::object target_obj = python_adapter::GetPyObjAttr(target, "value");
-  const py::object id_obj = python_adapter::GetPyObjAttr(target_obj, "id");
-  // To support nested setattr later.
-  if (!py::isinstance<py::str>(id_obj)) {
-    MS_LOG(EXCEPTION) << "Not found Name.id in Attribute.value, the value is not Name, but " << id_obj;
-  }
-  const auto &target_id_str = id_obj.cast<std::string>();
+  std::string target_id_str;
   AnfNodePtr target_node = nullptr;
-  if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && target_id_str == "self") {
-    const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
-    target_node = NewValueNode(interpreted_obj);
-  } else {
+  auto node_type = ast()->GetNodeType(target_obj);
+  const std::string &node_type_name = node_type->node_name();
+  MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
+  if (node_type_name == "Attribute") {
+    // Do setattr for nested getattr target, parse getattr firstly.
     target_node = ParseExprNode(block, target_obj);
+    target_id_str = GetLocation(target_obj)->expr_src();
+  } else if (node_type_name == "Name") {
+    if (!py::hasattr(target_obj, "id")) {
+      MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
+    }
+    const py::object id_obj = python_adapter::GetPyObjAttr(target_obj, "id");
+    target_id_str = id_obj.cast<std::string>();
+    if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && target_id_str == "self") {
+      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+      target_node = NewValueNode(interpreted_obj);
+    } else {
+      target_node = ParseExprNode(block, target_obj);
+    }
   }
   MS_EXCEPTION_IF_NULL(target_node);
   const auto &attr_str = python_adapter::GetPyObjAttr(target, "attr").cast<std::string>();
-  if (!py::hasattr(target_obj, "id")) {
-    MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
-  }
   MS_LOG(DEBUG) << "target node: " << target_node->DebugString() << ", target name: " << target_id_str
                 << ", attr: " << attr_str;
 
