@@ -587,7 +587,8 @@ class PixelShuffle(Cell):
     Raises:
         ValueError: If `upscale_factor` is not a positive integer.
         ValueError: If the length of third to last dimension of `input` is not divisible by `upscale_factor` squared.
-        TypeError: If the dimension of `input` is less than 3.
+        ValueError: If the dimension of `input` is less than 3.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -632,7 +633,8 @@ class PixelUnshuffle(Cell):
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
         ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
-        TypeError: If the dimension of `input` is less than 3.
+        ValueError: If the dimension of `input` is less than 3.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

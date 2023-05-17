@@ -3,7 +3,7 @@ mindspore.ops.fractional_max_pool2d
 
 .. py:function:: mindspore.ops.fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    在输入 `input` 上应用二维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 随机。 `output_size` 和 `output_ratio` 不能同时使用。
+    在输入 `input` 上应用二维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 随机。 `output_size` 和 `output_ratio` 同时设置， `output_size` 会生效。 `output_size` 和 `output_ratio` 不能同时为 ``None`` 。
 
     分数最大池化的详细描述在 `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_ 。
 
