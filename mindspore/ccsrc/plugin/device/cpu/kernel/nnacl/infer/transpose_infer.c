@@ -99,7 +99,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (perms_num == PERM_NUM_THREE && perm[0] == kPermIndex0 && perm[1] == kPermIndex2) {
     output->format_ = input->format_ == Format_NCHW ? Format_NHWC : Format_NCHW;
   }
-  if (parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
+  if (parameter->quant_type_ == Quant_QuantWeight) {
     output->data_type_ = kNumberTypeFloat32;
   }
   if (!InferFlag(inputs, inputs_size)) {

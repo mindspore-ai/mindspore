@@ -232,8 +232,7 @@ int convolution_delegate_prepare(struct KernelBase *self) {
                       self->in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32,
                     NNACL_CONVOLUTION_BIAS_DATATYPE_INVALID);
 
-  convolution_delegate->input_const_ = IsConst(self->in_[FIRST_INPUT]) && !self->train_session_;
-  convolution_delegate->weight_const_ = IsConst(self->in_[SECOND_INPUT]) && !self->train_session_;
+  convolution_delegate->infershape_done_ = CheckInferShapeDone(self->in_, self->in_size_, self->out_, self->out_size_);
 
   return ConvolutionDelegateGetWeightAndBias(convolution_delegate);
 }

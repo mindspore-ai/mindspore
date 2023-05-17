@@ -20,6 +20,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/kernel/convolution_base.h"
+#include "nnacl/conv_parameter.h"
 
 typedef struct ConvolutionDelegateStruct {
   KernelBase base_;
@@ -28,11 +29,10 @@ typedef struct ConvolutionDelegateStruct {
   float *origin_bias_;
   bool need_free_weight_;
   bool need_free_bias_;
-  bool input_const_;
-  bool weight_const_;
   bool infershape_done_;
 } ConvolutionDelegateStruct;
 
+KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param);
 KernelBase *CreateConv2DFusion(OpParameter *param, int data_type);
 
 #endif  // NNACL_KERNEL_CONVOLUTION_DELEGATE_H_
