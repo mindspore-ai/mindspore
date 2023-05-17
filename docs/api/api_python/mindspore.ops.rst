@@ -236,6 +236,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.expm1
     mindspore.ops.floor
     mindspore.ops.floor_div
+    mindspore.ops.floor_divide
     mindspore.ops.floor_mod
     mindspore.ops.float_power
     mindspore.ops.fmod

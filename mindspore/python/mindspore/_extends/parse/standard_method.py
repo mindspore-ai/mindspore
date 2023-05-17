@@ -2823,6 +2823,10 @@ def floor(x):
     return x.__floor__()
 
 
+def floor_divide(input, other):
+    return F.floor_divide(input, other)
+
+
 def uadd(x):
     """Implementation of `uadd`."""
     return x.__pos__()

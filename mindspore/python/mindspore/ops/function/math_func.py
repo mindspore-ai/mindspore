@@ -1061,9 +1061,19 @@ def float_power(input, exponent):
 
 def floor_div(x, y):
     """
+    Alias for :func:`mindspore.ops.floor_divide` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return tensor_floordiv(x, y)
+
+
+def floor_divide(input, other):
+    """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
@@ -1078,28 +1088,31 @@ def floor_div(x, y):
     please refer to the :class:`mindspore.ops.Floor` operator.
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> output = ops.floor_div(x, y)
+        >>> output = ops.floor_divide(x, y)
         >>> print(output)
         [ 0  1 -1]
     """
-    return tensor_floordiv(x, y)
+    return tensor_floordiv(input, other)
 
 
 def fmod(input, other):
@@ -11579,6 +11592,7 @@ __all__ = [
     'true_divide',
     'tensor_floordiv',
     'floor_div',
+    'floor_divide',
     'floordiv',
     'float_power',
     'fmod',
