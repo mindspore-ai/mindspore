@@ -54,6 +54,7 @@ void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::
 
 void ParallelThreadPoolManager::SetHasIdlePool(std::string runner_id, bool is_idle) {
 #ifndef MS_COMPILE_IOS
+  std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   has_idle_pool_[runner_id] = is_idle;
 #endif
 }
@@ -167,10 +168,10 @@ void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int mo
 
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
 #ifndef MS_COMPILE_IOS
+  std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
   if (!has_idle_pool_[runner_id]) {
     return nullptr;
   }
-  std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
   auto &all_pools = runner_id_pools_[runner_id];
   for (int pool_index = all_pools.size() - 1; pool_index >= 0; pool_index--) {
     auto &pool = all_pools[pool_index];
