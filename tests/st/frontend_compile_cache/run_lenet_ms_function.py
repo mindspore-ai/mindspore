@@ -17,6 +17,6 @@ if __name__ == "__main__":
     x = Tensor(np.array([1]).astype(np.float32))
     y = Tensor(np.array([2]).astype(np.float32))
     res = func(x, y)
-    print("{", res, "}")
-    print("{", res.asnumpy().shape, "}")
+    print("AAA", res, "BBB")
+    print("AAA", res.asnumpy().shape, "BBB")
     context.set_context(enable_compile_cache=False)

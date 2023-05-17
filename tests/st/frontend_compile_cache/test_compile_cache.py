@@ -20,7 +20,7 @@ import pytest
 import numpy as np
 from tests.st.model_zoo_tests import utils
 
-match_output = re.compile(r'[{](.*?)[}]', re.S)
+match_output = re.compile(r'AAA(.*?)BBB', re.S)
 match_num = re.compile(r'\d+\.?\d*', re.S)
 
 

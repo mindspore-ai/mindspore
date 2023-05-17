@@ -45,8 +45,8 @@ def run_net_with_control_flow():
     x = Tensor([10], mstype.int32)
     net = NetWithControlFlow()
     output = net(x)
-    print("{", output, "}")
-    print("{", output.asnumpy().shape, "}")
+    print("AAA", output, "BBB")
+    print("AAA", output.asnumpy().shape, "BBB")
 
 
 if __name__ == "__main__":
