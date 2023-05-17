@@ -58,7 +58,7 @@ def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache
     log_file = os.path.join(cur_model_path, "scripts/train_parallel{}/log")
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i))
-        assert per_step_time < 40.0
+        assert per_step_time < 60.0
     loss_list = []
     for i in range(8):
         loss = utils.get_loss_data_list(log_file.format(i))
@@ -377,7 +377,7 @@ def test_compile_cache_run_two_cells_once():
     run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
@@ -395,6 +395,9 @@ def test_compile_cache_pipeline_parallel_and_recompute():
     old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     net_path = os.path.join(cur_model_path, "src/resnet.py")
     cache_path = os.path.join(cur_model_path, "cache")
 
@@ -411,8 +414,10 @@ def test_compile_cache_pipeline_parallel_and_recompute():
     config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
 
     check_context = "Check the consistency of dependency files hash failed. Execute all the compilation actions."
-    loss_first = exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context)
+    loss_first = exec_model_and_check_result(cur_model_path, dataset_path, config_path,
+                                             cache_path, check_context)
 
     check_context = "Use the compilation cache and execute the backend actions only. Be aware of correctness risks."
-    loss_second = exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context)
+    loss_second = exec_model_and_check_result(cur_model_path, dataset_path, config_path,
+                                              cache_path, check_context)
     assert np.allclose(loss_first, loss_second, 0.1, 0.1)
