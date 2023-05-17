@@ -808,6 +808,8 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     auto tensor = std::make_shared<tensor::Tensor>(type_id, kInt64);
     tensor->set_user_data(kTensorValueIsType, value);
     return tensor;
+  } else if (value->isa<Scalar>()) {
+    return ScalarToTensor(value->cast<ScalarPtr>());
   }
   return nullptr;
 }
