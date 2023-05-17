@@ -193,6 +193,7 @@ mindspore.set_context
 
           - **matmul_allow_hf32** (bool): 是否为Matmul类算子使能FP32转换为HF32。默认值： ``False``。
           - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。
+          - **op_precision_mode** (str): 算子精度模式配置文件的所在路径。如果您想了解更多详细信息, 请查询昇腾社区（https://www.hiascend.com/）了解。
         - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
           其值必须在[STRICT(``0``)，COMPATIBLE(``1``)，LAX(``2``)]范围内，默认值为LAX(``2``)。全部级别都支持所有后端。
 

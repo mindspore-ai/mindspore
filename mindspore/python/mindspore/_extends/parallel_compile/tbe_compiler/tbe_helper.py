@@ -141,10 +141,8 @@ def get_soc_info(initialize_job_info):
     :return: soc info
     """
     soc_param = dict()
-    soc_param["op_impl_mode"] = initialize_job_info["SocInfo"]["op_impl_mode"]
     soc_param["op_debug_level"] = reset_op_debug_level_in_soc_info(initialize_job_info["SocInfo"]["op_debug_level"])
     soc_param["op_debug_config"] = initialize_job_info["SocInfo"]["op_debug_config"]
-    soc_param["op_impl_mode_list"] = initialize_job_info["SocInfo"]["op_impl_mode_list"]
     soc_param["op_debug_dir"] = initialize_job_info["SocInfo"]["op_debug_dir"]
     soc_param["vector_fp_ceiling"] = initialize_job_info["SocInfo"]["vector_fp_ceiling"]
     soc_param['mdl_bank_path'] = initialize_job_info["SocInfo"]["mdl_bank_path"]
@@ -288,14 +286,12 @@ def get_options_info(job_content):
     options["l2Mode"] = job_content["SocInfo"]["l2Mode"]
     options["op_debug_level"] = reset_op_debug_level_in_soc_info(job_content["SocInfo"]["op_debug_level"])
     options["op_debug_config"] = job_content["SocInfo"]["op_debug_config"]
-    options["op_impl_mode"] = job_content["SocInfo"]["op_impl_mode"]
     options["op_debug_dir"] = job_content["SocInfo"]["op_debug_dir"]
     options["mdl_bank_path"] = job_content["SocInfo"]["mdl_bank_path"]
     options["te_version"] = job_content["SocInfo"]["te_version"]
     options["op_bank_path"] = job_content["SocInfo"]["op_bank_path"]
     options["deviceId"] = job_content["SocInfo"]["deviceId"]
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
-    options["op_impl_mode_list"] = job_content["SocInfo"]["op_impl_mode_list"]
     options["kernel_meta_temp_dir"] = job_content["SocInfo"]["kernel_meta_temp_dir"]
     options["deterministic"] = "true" if job_content["SocInfo"]["deterministic"] else "false"
     options["status_check"] = job_content["SocInfo"]["status_check"]

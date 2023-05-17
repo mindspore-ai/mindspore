@@ -183,6 +183,11 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   }
 
   SetAscendHF32Config(ms_context_ptr, ge_options);
+
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE) != "") {
+    (*ge_options)["ge.exec.op_precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
+    MS_LOG(INFO) << "Set op_precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE) << ".";
+  }
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,

@@ -33,6 +33,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
+#include "plugin/device/ascend/kernel/tbe/op_impl_mode_config.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "kernel/oplib/super_bar.h"
 
@@ -493,12 +494,15 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
 
   auto dynamic_compile_static = op_info_ptr->dynamic_compile_static();
   auto is_dynamic_impl = IsKernelDynamicImpl(anf_node);
+  auto full_name = cnode->fullname_with_scope();
+  auto op_impl_mode = OpImplModeConfig::GetInstance().GetOpImplMode(full_name, op_name);
   (*compute_json)[kJType] = op_name;
   (*compute_json)[kJPyModulePath] = python_module_path;
   (*compute_json)[kJDynamicCompileStatic] = dynamic_compile_static;
   (*compute_json)[kJIsDynamicImpl] = is_dynamic_impl;
+  (*compute_json)[kJOpImplMode] = op_impl_mode;
   (*compute_json)[kJInt64Mode] = false;
-  (*compute_json)[kJName] = cnode->fullname_with_scope();
+  (*compute_json)[kJName] = full_name;
   (*compute_json)[kJPattern] = AnfAlgo::GetFusionType(cnode);
   auto file_name = op_info_ptr->op_file().empty() ? func_name : op_info_ptr->op_file();
   (*compute_json)[kJModuleName] = kJModuleNamePrefix + file_name;

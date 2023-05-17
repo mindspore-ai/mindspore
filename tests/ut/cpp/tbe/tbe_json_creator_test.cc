@@ -305,7 +305,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 4734306082379422137U)
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 11650956314039632057U)
     << "Error json is:" << fusion_json << ", for expected json, see file: tbe_fusion_common.json";
 }
 
@@ -366,7 +366,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 11862988587415457119U)
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 7611932013708888551U)
     << "Error json is:" << fusion_json << ", for expected json, see file: test_fusion_add_conv2d.json";
 }
 

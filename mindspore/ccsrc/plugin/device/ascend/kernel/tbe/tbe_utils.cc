@@ -189,12 +189,9 @@ nlohmann::json TbeUtils::GenSocInfo() {
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  std::list<int64_t> list;
   soc_info_json["coreNum"] = device::ascend::GetAICoreNumber();
   soc_info_json["coreType"] = "";
-  soc_info_json["op_impl_mode"] = "";
   soc_info_json["vector_fp_ceiling"] = "";
-  soc_info_json["op_impl_mode_list"] = list;
   soc_info_json["l2Mode"] = "2";
   soc_info_json["l1Fusion"] = "false";
   soc_info_json["l2Fusion"] = "false";

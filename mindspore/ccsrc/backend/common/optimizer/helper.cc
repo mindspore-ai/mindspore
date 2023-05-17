@@ -622,10 +622,12 @@ CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
 }
 
 CNodePtr CreateMakeTupleNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &tuple_inputs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   AbstractBasePtrList make_tuple_abstract;
   std::for_each(tuple_inputs.cbegin(), tuple_inputs.cend(),
                 [&make_tuple_inputs, &make_tuple_abstract](const AnfNodePtr &node) {
+                  MS_EXCEPTION_IF_NULL(node);
                   (void)make_tuple_inputs.emplace_back(node);
                   (void)make_tuple_abstract.emplace_back(node->abstract());
                 });
