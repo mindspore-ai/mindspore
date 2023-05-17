@@ -199,6 +199,8 @@ def get_bprop_index_put(self):
     masked_select = MaskedSelect()
     masked_scatter = MaskedScatter()
     accumulate_grad = self.accumulate
+    equal = P.Equal()
+    cast = P.Cast()
     index_put = IndexPut(accumulate=accumulate_grad)
     is_ascend = context.get_context("device_target") == 'Ascend'
 
@@ -214,9 +216,10 @@ def get_bprop_index_put(self):
         indices_ms = [tile(x, (maxsize,)) if x.shape[0] == 1 else x for x in indices]
         if is_ascend:
             indices_ms = [convert_idx_positive(indices_ms[i], x1.shape[i]) for i in range(len(indices_ms))]
-        indices_grad = stack(indices_ms).T
+        indices_me = stack(indices_ms)
+        indices_grad = F.transpose(indices_me, F.make_range(F.rank(indices_me)-1, -1, -1))
         values_grad = gather_nd(dout, indices_grad)
-        if x2.shape[0] == 1:
+        if equal(cast(x2.shape[0], mstype.int32), Tensor(1)):
             values_grad = values_grad.sum().reshape(1)
         if values_grad.shape != x2.shape and len(indices) < len(x1.shape):
             _, values_grad = binop_grad_common(x1, x2, dout, values_grad)

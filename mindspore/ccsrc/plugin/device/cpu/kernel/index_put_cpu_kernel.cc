@@ -69,20 +69,33 @@ bool IndexPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexPut>(base_operator);
   kernel_name_ = kernel_ptr->name();
-  x1_shape_ = inputs[0]->GetShapeVector();
   auto type_id = inputs[0]->GetDtype();
   input_info_.push_back(type_id);
-  x2_shape_ = inputs[1]->GetShapeVector();
   type_id = inputs[1]->GetDtype();
   input_info_.push_back(type_id);
   for (size_t i = 2; i < inputs.size(); i++) {
-    indices_shape_.push_back(inputs[i]->GetShapeVector());
     type_id = inputs[i]->GetDtype();
     input_info_.push_back(type_id);
   }
   inputs_nums = inputs.size();
   accumulate = GetValue<int64_t>(base_operator->GetAttr("accumulate"));
   return true;
+}
+
+int IndexPutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  x1_shape_ = inputs[0]->GetShapeVector();
+  x2_shape_ = inputs[1]->GetShapeVector();
+  indices_shape_.clear();
+  for (size_t i = 2; i < inputs.size(); i++) {
+    indices_shape_.push_back(inputs[i]->GetShapeVector());
+  }
+  return ret;
 }
 
 void IndexPutCpuKernelMod::CheckParams() {

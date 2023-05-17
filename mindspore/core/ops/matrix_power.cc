@@ -53,11 +53,14 @@ abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
   const constexpr int64_t x_shape_size = 3;
   const constexpr int64_t x_shape_two = 2;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
   if (x_shape.size() != x_shape_size) {
     MS_EXCEPTION(ValueError) << "For MatrixPower, x should be a 3-D tensor"
                              << ", but got x is a " << x_shape.size() << "-D tensor.";
   }
-  if (x_shape[1] != x_shape[x_shape_two]) {
+  if (!IsDynamic(x_shape) && x_shape[1] != x_shape[x_shape_two]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", sizes of dim[1] and dim[2] of x should be the same"
                              << ", but size of dim[1] of got x is " << x_shape[1] << ", size of dim[2] of got x is "
                              << x_shape[x_shape_two] << ".";
