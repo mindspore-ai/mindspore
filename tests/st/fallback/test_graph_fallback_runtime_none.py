@@ -396,7 +396,7 @@ def test_none_is_inner_function_output():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
+@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -432,7 +432,7 @@ def test_none_is_output_of_function_with_side_effect_is():
     assert res == 4
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
+@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -750,7 +750,7 @@ def test_none_in_nest_tuple():
     assert out == (None, ("a", None))
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
+@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -779,6 +779,42 @@ def test_parser_fallback_none_control_flow():
                 out = self.add(x, y)
             else:
                 out = self.add(2 * x, y)
+            return out
+
+    net_ms = NoneNet()
+    res = net_ms(Tensor(1), Tensor(10), Tensor(100))
+    assert res == 11
+
+
+@pytest.mark.skip("PyExecute condition is wrong.")
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parser_fallback_none_control_flow_is_not():
+    """
+    Feature: Support None.
+    Description: Support None is the return of sub_graph in control flow.
+    Expectation: No exception.
+    """
+    class NoneNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = ops.Add()
+
+        @jit
+        def func(self, z):
+            if z == 0:
+                out = None
+            else:
+                out = None
+            return out, z
+
+        def construct(self, x, y, z):
+            if self.func(z)[0] is not None:
+                out = self.add(2 * x, y)
+            else:
+                out = self.add(x, y)
             return out
 
     net_ms = NoneNet()

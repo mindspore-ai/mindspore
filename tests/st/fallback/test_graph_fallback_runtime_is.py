@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import numpy as np
-from mindspore import Tensor, jit, context
+from mindspore import Tensor, context
+import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -25,29 +26,19 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_list_tuple_asnumpy():
+def test_is_none_asnumpy():
     """
-    Feature: JIT Fallback
-    Description: Test list() and tuple() in fallback runtime
+    Feature: Support is.
+    Description: Support is in fallback runtime.
     Expectation: No exception.
     """
+    class Net(nn.Cell):
+        def construct(self):
+            input_x = Tensor([1], dtype=mstype.int32).asnumpy()
+            is_not_res = input_x is not None
+            is_res = input_x is None
+            return is_not_res, is_res
 
-    @jit
-    def foo(x):
-        a = list((1, x, np.array([5, 6]), x.asnumpy()))
-        b = tuple((1, x, np.array([5, 6]), x.asnumpy()))
-        return a, b
-
-    out = foo(Tensor([2, 3]))
-    assert isinstance(out[0], list)
-    assert isinstance(out[1], tuple)
-
-    assert out[0][0] == 1
-    assert (out[0][1] == Tensor([2, 3])).all()
-    assert (out[0][2] == np.array([5, 6])).all()
-    assert (out[0][3] == np.array([2, 3])).all()
-
-    assert out[1][0] == 1
-    assert (out[1][1] == Tensor([2, 3])).all()
-    assert (out[1][2] == np.array([5, 6])).all()
-    assert (out[1][3] == np.array([2, 3])).all()
+    net = Net()
+    res = net()
+    assert res[0], not res[1]

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/fallback.h"
 #include "abstract/param_validator.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "frontend/operator/ops.h"
@@ -362,6 +363,11 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   auto x = args_abs_list[0];
   auto cmp = args_abs_list[1];
   bool result = false;
+
+  // If exist AbstractAny, return AbstractAny. Then the IsInstance will convert PyExecute in fallback_rewriter.
+  if (fallback::ContainsSequenceAnyType(cmp) || fallback::ContainsSequenceAnyType(x)) {
+    return std::make_shared<abstract::AbstractAny>();
+  }
 
   if (!CheckCmpValid(cmp)) {
     auto cmp_type = cmp->BuildType();

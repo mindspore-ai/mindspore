@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/interpret_node_recorder.h"
 #include "ops/core_ops.h"
@@ -58,37 +59,6 @@ std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &com
           << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor_type[{dtype_var}]\n\t...\n---\n\n"
           << trace::GetDebugInfo(node->debug_info());
   return err_buf.str();
-}
-
-std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
-  std::stringstream script_buffer;
-  script_buffer << kPyExecPrefix << std::to_string(index);
-  std::vector<size_t> convert_pos;
-  for (size_t i = 0; i < target.size(); ++i) {
-    auto c = target[i];
-    if (!std::isalnum(c)) {
-      convert_pos.push_back(i);
-    }
-  }
-  size_t start = 0;
-  for (auto end : convert_pos) {
-    std::string sub_non_convert = target.substr(start, end - start);
-    if (sub_non_convert.size() != 0) {
-      script_buffer << kUnderLine << sub_non_convert;
-    }
-    char sub_convert = target[end];
-    std::stringstream hex_s;
-    hex_s << kUnderLine << kHexPrefix << std::hex << static_cast<int>(sub_convert);
-    script_buffer << hex_s.str();
-    start = end + 1;
-  }
-  if (target.substr(start).size() != 0) {
-    script_buffer << kUnderLine << target.substr(start);
-  }
-  script_buffer << kPyExecSuffix;
-  auto unicode_str = script_buffer.str();
-  MS_LOG(DEBUG) << "Get Unicode str: " << unicode_str;
-  return script_buffer.str();
 }
 
 std::string ConvertUnicodeStrToRealStr(const std::string &target) {
@@ -322,6 +292,37 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
   return nullptr;
 }
 
+std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
+  std::stringstream script_buffer;
+  script_buffer << kPyExecPrefix << std::to_string(index);
+  std::vector<size_t> convert_pos;
+  for (size_t i = 0; i < target.size(); ++i) {
+    auto c = target[i];
+    if (!std::isalnum(c)) {
+      convert_pos.push_back(i);
+    }
+  }
+  size_t start = 0;
+  for (auto end : convert_pos) {
+    std::string sub_non_convert = target.substr(start, end - start);
+    if (sub_non_convert.size() != 0) {
+      script_buffer << kUnderLine << sub_non_convert;
+    }
+    char sub_convert = target[end];
+    std::stringstream hex_s;
+    hex_s << kUnderLine << kHexPrefix << std::hex << static_cast<int>(sub_convert);
+    script_buffer << hex_s.str();
+    start = end + 1;
+  }
+  if (target.substr(start).size() != 0) {
+    script_buffer << kUnderLine << target.substr(start);
+  }
+  script_buffer << kPyExecSuffix;
+  auto unicode_str = script_buffer.str();
+  MS_LOG(DEBUG) << "Get Unicode str: " << unicode_str;
+  return script_buffer.str();
+}
+
 std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &script) {
   // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
   std::vector<std::string> res;
@@ -442,6 +443,30 @@ std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const 
   }
   MS_LOG(DEBUG) << "Generate new script for SubScript: " << res;
   return res;
+}
+
+bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
+  if (abs == nullptr) {
+    return false;
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto seq_abs = abs->cast_ptr<abstract::AbstractSequence>();
+    if (seq_abs->dynamic_len()) {
+      auto element_abs = seq_abs->dynamic_len_element_abs();
+      if (ContainsSequenceAnyType(element_abs)) {
+        return true;
+      }
+    } else {
+      const auto &elements = seq_abs->elements();
+      for (size_t item_index = 0; item_index < elements.size(); ++item_index) {
+        const auto &item_abs = elements[item_index];
+        if (ContainsSequenceAnyType(item_abs)) {
+          return true;
+        }
+      }
+    }
+  }
+  return abs->isa<abstract::AbstractAny>();
 }
 }  // namespace fallback
 
