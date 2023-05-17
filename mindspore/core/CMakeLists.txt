@@ -101,7 +101,13 @@ foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     endif()
 endforeach()
 set(CORE_OBJECT_COUNT "${CORE_OBJECT_COUNT}" PARENT_SCOPE)
-
+set(CORE_SRC_LIST
+        ${CORE_SRC_LIST}
+        ${CMAKE_CURRENT_SOURCE_DIR}/abstract/abstract_value.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ir/anf.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/base/base.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/abstract/utils.cc
+        )
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
 if(NOT TARGET_AOS_ARM)
     target_link_libraries(mindspore_core PRIVATE mindspore::protobuf)

@@ -56,38 +56,17 @@ class MS_CORE_API AbstractBase : public Base {
   /// \param[in] type The type of an anf node. Default: kTypeAny.
   /// \param[in] shape The dimension of an anf node. Default: kNoShape.
   explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kTypeAny,
-                        const BaseShapePtr &shape = kNoShape)
-      : value_(value), type_(type), shape_(shape) {}
+                        const BaseShapePtr &shape = kNoShape);
 
   /// \brief Copy constructor
   /// \param[in] abstract_base an abstract
-  AbstractBase(const AbstractBase &other)
-      : Base(other),
-        value_(other.value_),
-        type_(other.type_),
-        shape_(other.shape_),
-        value_desc_(other.value_desc_),
-        name_(other.name_),
-        inplace_abstract_(other.inplace_abstract_) {
-    user_data_ = other.user_data_;
-  }
+  AbstractBase(const AbstractBase &other);
 
   /// \brief Overloads operator '=' for Named.
   ///
   /// \param[in] other An an abstract.
   /// \return An abstract set with the same type, value and shape as abstract_base.
-  AbstractBase &operator=(const AbstractBase &other) {
-    if (&other != this) {
-      this->value_ = other.value_;
-      this->type_ = other.type_;
-      this->shape_ = other.shape_;
-      this->user_data_ = other.user_data_;
-      this->value_desc_ = other.value_desc_;
-      this->name_ = other.name_;
-      this->inplace_abstract_ = other.inplace_abstract_;
-    }
-    return *this;
-  }
+  AbstractBase &operator=(const AbstractBase &other);
 
   /// \brief Destructor of AbstractBase.
   ~AbstractBase() override = default;
@@ -96,7 +75,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Get the hash number of the abstract.
   ///
   /// \return The hash of the object.
-  std::size_t hash() const override { return tid(); }
+  std::size_t hash() const override;
 
   /// \brief Get the formatted text to describe the abstract.
   ///
@@ -118,51 +97,42 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Set the value for the AbstractBase.
   ///
   /// \param[in] value The value of an anf node.
-  void set_value(const ValuePtr &value) {
-    MS_EXCEPTION_IF_NULL(value);
-    value_ = value;
-  }
+  void set_value(const ValuePtr &value);
 
   /// \brief Set the type for the AbstractBase.
   ///
   /// \param[in] type The type of an anf node.
-  void set_type(const TypePtr &type) {
-    MS_EXCEPTION_IF_NULL(type);
-    type_ = type;
-  }
+  void set_type(const TypePtr &type);
 
   /// \brief Set the shape for the AbstractBase.
   ///
   /// \param[in] shape The shape of an anf node.
-  virtual void set_shape(const BaseShapePtr &shape) {
-    MS_EXCEPTION_IF_NULL(shape);
-    shape_ = shape;
-  }
+  virtual void set_shape(const BaseShapePtr &shape);
 
   /// \brief Set the value description for the AbstractBase.
   ///
   /// \param[in] desc The description of value.
-  void set_value_desc(const std::string &desc) { value_desc_ = desc; }
+  void set_value_desc(const std::string &desc);
 
   /// \brief Get the value description.
   ///
   /// \return A string of the value description.
-  const std::string &value_desc() const { return value_desc_; }
+  const std::string &value_desc() const;
 
   /// \brief Get the abstract value, which is tracked.
   ///
   /// \return A pointer to the Value.
-  const ValuePtr &GetValueTrack() const { return value_; }
+  const ValuePtr &GetValueTrack() const;
 
   /// \brief Get the abstract type, which is tracked.
   ///
   /// \return A pointer to the Type.
-  const TypePtr &GetTypeTrack() const { return type_; }
+  const TypePtr &GetTypeTrack() const;
 
   /// \brief Get the abstract shape, which is tracked.
   ///
   /// \return A pointer to the BaseShape.
-  const BaseShapePtr &GetShapeTrack() const { return shape_; }
+  const BaseShapePtr &GetShapeTrack() const;
 
   /// \brief Try to build a real value from an abstract value.
   ///
@@ -183,7 +153,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \note Use this function to get the actual shape, while track shape is not enough accurate.
   ///
   /// \return A pointer to the BaseShape.
-  virtual BaseShapePtr BuildShape() const { return kNoShape; }
+  virtual BaseShapePtr BuildShape() const;
 
   /// \brief Clone an abstract from the abstract.
   ///
@@ -193,9 +163,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Set the function, which prints the debug info.
   ///
   /// \param[in] trace_node_provider The function.
-  static void set_trace_node_provider(const TraceNodeProvider &trace_node_provider) {
-    trace_node_provider_ = trace_node_provider;
-  }
+  static void set_trace_node_provider(const TraceNodeProvider &trace_node_provider);
 
   static TraceNodeProvider trace_node_provider_;
 
@@ -209,8 +177,8 @@ class MS_CORE_API AbstractBase : public Base {
   /// \param[in] other The other abstract to be joined.
   ///
   /// \return A pointer to the combined abstract.
-  virtual AbstractBasePtr Join(const AbstractBasePtr &other) { return shared_from_base<AbstractBase>(); }
-  bool IsBroaden() const { return value_ == kValueAny; }
+  virtual AbstractBasePtr Join(const AbstractBasePtr &other);
+  bool IsBroaden() const;
 
   /// \brief Write the abstract's string to the std::ostream.
   ///
@@ -229,27 +197,31 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the broadened abstract.
   virtual AbstractBasePtr PartialBroaden() const;
 
+  /// \brief Process the abstract with InterpretedObject.
+  using InterpretBoolChecker = std::pair<bool, bool> (*)(const AbstractBasePtr &cond);
+  static inline InterpretBoolChecker interpret_bool_checker_ = nullptr;
+  static void set_interpret_bool_checker(InterpretBoolChecker checker);
+  static InterpretBoolChecker interpret_bool_checker();
+
   /// \brief Process the user date of abstract with PyExecute node.
   using PyExecuteUserDataCatcher = std::pair<bool, ValuePtr> (*)(const AbstractBasePtr &element_abs);
   static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher_ = nullptr;
-  static void set_pyexecute_user_data_catcher(PyExecuteUserDataCatcher catcher) {
-    pyexecute_user_data_catcher_ = catcher;
-  }
-  static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher() { return pyexecute_user_data_catcher_; }
+  static void set_pyexecute_user_data_catcher(PyExecuteUserDataCatcher catcher);
+  static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher();
 
   /// \brief Store for mindir input and output names.
-  std::string name() const { return name_; }
-  void set_name(const std::string &name) { name_ = name; }
+  std::string name() const;
+  void set_name(const std::string &name);
 
   /// \brief Cover *this abstract for inplace primitive. If inplace_abstract() is not null, use it as real abstract.
-  AbstractBasePtr inplace_abstract() const { return inplace_abstract_; }
-  void set_inplace_abstract(const AbstractBasePtr &inplace_abstract) { inplace_abstract_ = inplace_abstract; }
+  AbstractBasePtr inplace_abstract() const;
+  void set_inplace_abstract(const AbstractBasePtr &inplace_abstract);
 
  protected:
   /// \brief Build a value when value is not set.
   ///
   /// \return A pointer to the Value.
-  virtual ValuePtr RealBuildValue() const { return kValueAny; }
+  virtual ValuePtr RealBuildValue() const;
 
  private:
   ValuePtr value_;
@@ -264,53 +236,53 @@ class MS_CORE_API AbstractBase : public Base {
 class MS_CORE_API AbstractScalar final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScalar.
-  AbstractScalar() : AbstractBase(kValueAny, kTypeAny) {}
+  AbstractScalar();
 
   /// \brief Constructor of AbstractScalar.
   ///
   /// \param[in] value The real value of an anf node.
   /// \param[in] type The type of an anf node.
-  AbstractScalar(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+  AbstractScalar(const ValuePtr &value, const TypePtr &type);
 
   /// \brief Constructor of AbstractScalar.
   ///
   /// \param[in] value The real value of an anf node.
-  explicit AbstractScalar(const ValuePtr &value) : AbstractBase(value, value->type()) {}
+  explicit AbstractScalar(const ValuePtr &value);
 
   /// \brief Constructor of AbstractScalar, inited with an int number.
   ///
   /// \param[in] value An int number.
-  explicit AbstractScalar(int value) : AbstractBase(MakeValue(value), kInt32) {}
+  explicit AbstractScalar(int value);
 
   /// \brief Constructor of AbstractScalar, inited with an int64 number.
   ///
   /// \param[in] value An int64 number.
-  explicit AbstractScalar(int64_t value) : AbstractBase(MakeValue(value), kInt64) {}
+  explicit AbstractScalar(int64_t value);
 
   /// \brief Constructor of AbstractScalar, inited with a float number.
   ///
   /// \param[in] value A float number.
-  explicit AbstractScalar(float value) : AbstractBase(MakeValue(value), kFloat32) {}
+  explicit AbstractScalar(float value);
 
   /// \brief Constructor of AbstractScalar, inited with a double number.
   ///
   /// \param[in] value A double number.
-  explicit AbstractScalar(double value) : AbstractBase(MakeValue(value), kFloat64) {}
+  explicit AbstractScalar(double value);
 
   /// \brief Constructor of AbstractScalar, inited with a bool.
   ///
   /// \param[in] value A boolean variable.
-  explicit AbstractScalar(bool value) : AbstractBase(MakeValue(value), kBool) {}
+  explicit AbstractScalar(bool value);
 
   /// \brief Constructor of AbstractScalar, inited with a string.
   ///
   /// \param[in] value A string.
-  explicit AbstractScalar(const std::string &value) : AbstractBase(MakeValue(value), kString) {}
+  explicit AbstractScalar(const std::string &value);
 
   /// \brief Constructor of AbstractScalar, inited with a type.
   ///
   /// \param[in] type The type.
-  explicit AbstractScalar(const TypePtr &type) : AbstractBase(kValueAny, type) {}
+  explicit AbstractScalar(const TypePtr &type);
 
   /// \brief Destructor of AbstractScalar.
   ~AbstractScalar() override = default;
@@ -319,17 +291,13 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   /// \brief Set the flag 'is_variable_' for scalar.
   ///
   /// \param[in] is_variable Boolean value for flag 'is_variable_'.
-  void set_is_variable(bool is_variable) { is_variable_ = is_variable; }
+  void set_is_variable(bool is_variable);
 
-  std::size_t hash() const override { return hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()}); }
+  std::size_t hash() const override;
 
-  TypePtr BuildType() const override { return GetTypeTrack(); }
+  TypePtr BuildType() const override;
 
-  AbstractBasePtr Clone() const override {
-    auto abs = std::make_shared<AbstractScalar>(GetValueTrack(), GetTypeTrack()->Clone());
-    abs->set_is_variable(is_variable_);
-    return abs;
-  }
+  AbstractBasePtr Clone() const override;
 
   AbstractBasePtr Broaden() const override;
 
@@ -360,11 +328,11 @@ class MS_CORE_API AbstractType final : public AbstractBase {
 
   bool operator==(const AbstractBase &other) const override;
 
-  TypePtr BuildType() const override { return std::make_shared<TypeType>(); }
+  TypePtr BuildType() const override;
 
   AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override { return Clone(); }
+  AbstractBasePtr Broaden() const override;
 };
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
@@ -399,23 +367,17 @@ class MS_CORE_API AbstractProblem final : public AbstractBase {
   ///
   /// \param[in] err the error string.
   /// \param[in] node the binding anf node.
-  AbstractProblem(const ValueProblemPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
-    if (err == nullptr || node == nullptr) {
-      MS_LOG(EXCEPTION) << "err or node is nullptr";
-    }
-  }
+  AbstractProblem(const ValueProblemPtr &err, const AnfNodePtr &node);
 
   /// \brief Destructor of AbstractProblem.
   ~AbstractProblem() override = default;
   MS_DECLARE_PARENT(AbstractProblem, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<Problem>(); }
+  TypePtr BuildType() const override;
 
-  AbstractBasePtr Broaden() const override { return Clone(); }
+  AbstractBasePtr Broaden() const override;
 
-  AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractProblem>(GetValueTrack()->cast<ValueProblemPtr>(), node_);
-  }
+  AbstractBasePtr Clone() const override;
 
   std::string ToString() const override;
 
@@ -428,32 +390,30 @@ class MS_CORE_API AbstractProblem final : public AbstractBase {
 class MS_CORE_API AbstractScript final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScript.
-  AbstractScript() : AbstractBase(kValueAny, kTypeAny) {}
+  AbstractScript();
 
   /// \brief Constructor of AbstractScript.
   ///
   /// \param[in] value The real value of an anf node.
   /// \param[in] type The type of an anf node.
-  AbstractScript(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+  AbstractScript(const ValuePtr &value, const TypePtr &type);
 
   /// \brief Constructor of AbstractScript.
   ///
   /// \param[in] value The real value to be set.
-  explicit AbstractScript(const ValuePtr &value) : AbstractBase(value, kString) {}
+  explicit AbstractScript(const ValuePtr &value);
 
   /// \brief Destructor of AbstractScript.
   ~AbstractScript() override = default;
   MS_DECLARE_PARENT(AbstractScript, AbstractBase)
 
-  std::size_t hash() const override { return hash_combine({tid(), GetValueTrack()->hash(), GetTypeTrack()->hash()}); }
+  std::size_t hash() const override;
 
-  TypePtr BuildType() const override { return GetTypeTrack(); }
+  TypePtr BuildType() const override;
 
-  AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractScript>(GetValueTrack(), GetTypeTrack()->Clone());
-  }
+  AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override { return Clone(); }
+  AbstractBasePtr Broaden() const override;
 };
 using AbstractScriptPtr = std::shared_ptr<AbstractScript>;
 
@@ -485,13 +445,11 @@ class MS_CORE_API AbstractFunction : public AbstractBase {
   /// \return A pointer to AbstractFunction.
   virtual AbstractFunctionPtr GetUnique() = 0;
 
-  TypePtr BuildType() const override { return std::make_shared<Function>(); }
+  TypePtr BuildType() const override;
 
-  AbstractBasePtr Clone() const override { return Copy(); }
+  AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override {
-    return const_cast<AbstractFunction *>(this)->shared_from_base<AbstractFunction>();
-  }
+  AbstractBasePtr Broaden() const override;
 
   /// \brief Copy an AbstractFunction.
   ///
@@ -538,19 +496,19 @@ class MS_CORE_API AbstractFunction : public AbstractBase {
   /// \brief Get the tracking id as the memory address of the anf node.
   ///
   /// \return The memory address of to the anf node.
-  virtual std::uintptr_t tracking_id() const { return 0; }
+  virtual std::uintptr_t tracking_id() const;
 
   /// \brief Copy an AbstractFunction without copying tracking id.
   ///
   /// \return A pointer to the copied abstract.
-  virtual AbstractFunctionPtr CopyWithoutTrackingId() const { return Copy(); }
+  virtual AbstractFunctionPtr CopyWithoutTrackingId() const;
 
   /// \brief Get the context which manages the abstract.
   ///
   /// \return A point to the context.
-  virtual AnalysisContextPtr context() const { return nullptr; }
+  virtual AnalysisContextPtr context() const;
 
-  static std::uintptr_t ToTrackingId(const AnfNodePtr &node) { return reinterpret_cast<std::uintptr_t>(node.get()); }
+  static std::uintptr_t ToTrackingId(const AnfNodePtr &node);
 };
 
 using AbstractFunctionPtrList = std::vector<AbstractFunctionPtr>;
@@ -564,7 +522,7 @@ class MS_CORE_API AbstractKeywordArg final : public AbstractBase {
   ///
   /// \param[in] key The key name of the key-value pair.
   /// \param[in] argument The key value of the key-value pair.
-  AbstractKeywordArg(const std::string &key, const AbstractBasePtr &argument) : arg_name_(key), arg_value_(argument) {}
+  AbstractKeywordArg(const std::string &key, const AbstractBasePtr &argument);
 
   /// \brief Destructor of AbstractKeywordArg.
   ~AbstractKeywordArg() override = default;
@@ -590,12 +548,12 @@ class MS_CORE_API AbstractKeywordArg final : public AbstractBase {
   /// \brief Get the key name of the key-value pair.
   ///
   /// \return A string.
-  std::string get_key() const { return arg_name_; }
+  std::string get_key() const;
 
   /// \brief Get the key value of the key-value pair.
   ///
   /// \return A point to the abstract.
-  AbstractBasePtr get_arg() const { return arg_value_; }
+  AbstractBasePtr get_arg() const;
 
   std::string ToString() const override;
 
@@ -614,7 +572,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   /// \brief Constructor of AbstractUndetermined.
   ///
   /// Shape and type are all unknown.
-  AbstractUndetermined() : AbstractBase(kValueAny) {}
+  AbstractUndetermined();
 
   /// \brief Constructor of AbstractUndetermined.
   ///
@@ -622,61 +580,32 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   ///
   /// \param[in] element The abstract which is undetermined.
   /// \param[in] shape The dimension of value.
-  explicit AbstractUndetermined(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractBase(kValueAny), element_(element) {
-    if (element == nullptr) {
-      MS_LOG(EXCEPTION) << "element is nullptr";
-    }
-    if (element->isa<AbstractUndetermined>()) {
-      MS_LOG(EXCEPTION) << "element type error";
-    }
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->isa<NoShape>()) {
-      MS_LOG(EXCEPTION) << "AbstractUndetermined can't set shape as NoShape.";
-    }
-    AbstractBase::set_shape(shape);
-  }
+  explicit AbstractUndetermined(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>());
 
   /// \brief Constructor of AbstractUndetermined.
   ///
   /// \param[in] element_type A type of the undetermined abstract.
   /// \param[in] shape A vector of shape.
-  AbstractUndetermined(const TypePtr &element_type, const ShapeVector &shape)
-      : AbstractBase(kValueAny), element_(std::make_shared<AbstractScalar>(kValueAny, element_type)) {
-    if (element_type == nullptr) {
-      MS_LOG(EXCEPTION) << "element_type is nullptr";
-    }
-    AbstractBase::set_shape(std::make_shared<Shape>(shape));
-  }
+  AbstractUndetermined(const TypePtr &element_type, const ShapeVector &shape);
 
   /// \brief Constructor of AbstractUndetermined.
   ///
   /// \param[in] element_type A type of the undetermined abstract.
   /// \param[in] shape A shape of the undetermined abstract.
-  explicit AbstractUndetermined(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractBase(kValueAny), element_(std::make_shared<AbstractScalar>(kValueAny, element_type)) {
-    if (element_type == nullptr) {
-      MS_LOG(EXCEPTION) << "element_type is nullptr";
-    }
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->isa<NoShape>()) {
-      MS_LOG(EXCEPTION) << "AbstractUndetermined can't set shape as NoShape.";
-    }
-    AbstractBase::set_shape(shape);
-  }
+  explicit AbstractUndetermined(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>());
 
   /// \brief Destructor of AbstractUndetermined.
   ~AbstractUndetermined() override = default;
   MS_DECLARE_PARENT(AbstractUndetermined, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<UndeterminedType>(); }
+  TypePtr BuildType() const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractUndetermined>(); }
+  AbstractBasePtr Clone() const override;
 
   /// \brief Get the element, which is the tracked undetermined abstract.
   ///
   /// \return A pointer to the bind abstract, which is undetermined.
-  AbstractBasePtr element() const { return element_; }
+  AbstractBasePtr element() const;
 
   /// \brief Get the shape of the undetermined abstract.
   ///
@@ -696,26 +625,24 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ///
   /// \param[in] element The abstract to be wrapper as a abstract tensor.
   /// \param[in] shape The dimension of abstract tensor.
-  explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractUndetermined(element, shape) {}
+  explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>());
 
   /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] element_type The type of abstract tensor.
   /// \param[in] shape A vector of the tensor's shape.
-  AbstractTensor(const TypePtr &element_type, const ShapeVector &shape) : AbstractUndetermined(element_type, shape) {}
+  AbstractTensor(const TypePtr &element_type, const ShapeVector &shape);
 
   /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] tensor The tensor to be abstracted.
-  explicit AbstractTensor(const tensor::TensorPtr &tensor) : AbstractUndetermined(tensor->Dtype(), tensor->shape()) {}
+  explicit AbstractTensor(const tensor::TensorPtr &tensor);
 
   /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] element_type The type of a tensor.
   /// \param[in] shape The dimension of a tensor.
-  explicit AbstractTensor(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractUndetermined(element_type, shape) {}
+  explicit AbstractTensor(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>());
 
   /// \brief Destructor of AbstractTensor.
   ~AbstractTensor() override = default;
@@ -725,30 +652,27 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ///
   /// \param[in] min_value The min value of tensor.
   /// \param[in] max_value The max value of tensor.
-  void set_value_range(const ValuePtr &min_value, const ValuePtr &max_value) {
-    min_value_ = min_value;
-    max_value_ = max_value;
-  }
+  void set_value_range(const ValuePtr &min_value, const ValuePtr &max_value);
 
   /// \brief Get the min value.
   ///
   /// \return A pointer to a value.
-  const ValuePtr &get_min_value() const { return min_value_; }
+  const ValuePtr &get_min_value() const;
 
   /// \brief Get the max value.
   ///
   /// \return A pointer to a value.
-  const ValuePtr &get_max_value() const { return max_value_; }
+  const ValuePtr &get_max_value() const;
 
   /// \brief Set shape value
   ///
   /// \param[in] shape_value The shape value of tensor.
-  void set_shape_value(const ValuePtr &shape_value) { shape_value_ = shape_value; }
+  void set_shape_value(const ValuePtr &shape_value);
 
   /// \brief Get the shape value.
   ///
   /// \return A pointer to a value.
-  const ValuePtr &get_shape_value() const { return shape_value_; }
+  const ValuePtr &get_shape_value() const;
 
   TypePtr BuildType() const override;
 
@@ -778,21 +702,12 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 
   std::string ToString() const override;
 
-  std::size_t hash() const override {
-    // We have to exclude value pointer from hash, because CSE (Common Subexpression Elimination)
-    // will use this hash to find duplicate ValueNodes that Tensor values are equal.
-    auto hash_sum = hash_combine(tid(), element_->hash());
-    const auto &shape = GetShapeTrack();
-    if (shape != nullptr) {
-      hash_sum = hash_combine(hash_sum, shape->hash());
-    }
-    return hash_sum;
-  }
+  std::size_t hash() const override;
 
   AbstractBasePtr PartialBroaden() const override;
 
-  bool is_adapter() const { return is_adapter_; }
-  void set_is_adapter(bool is_adapter) { is_adapter_ = is_adapter; }
+  bool is_adapter() const;
+  void set_is_adapter(bool is_adapter);
 
  protected:
   bool equal_to(const AbstractTensor &other) const;
@@ -813,38 +728,27 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
   ///
   /// \param[in] element The abstract to be wrapper as a abstract tensor.
   /// \param[in] shape The dimension of abstract tensor.
-  AbstractAny() : AbstractTensor(DefaultDtype(), std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}))) {}
+  AbstractAny();
 
   /// \brief Destructor of AbstractAny.
   ~AbstractAny() override = default;
   MS_DECLARE_PARENT(AbstractAny, AbstractTensor)
 
-  AbstractBasePtr Join(const AbstractBasePtr &other) override {
-    MS_EXCEPTION_IF_NULL(other);
-    return std::make_shared<AbstractAny>();
-  }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
-  AbstractBasePtr Broaden() const override { return Clone(); }
+  AbstractBasePtr Broaden() const override;
 
-  AbstractBasePtr Clone() const override {
-    auto any_abstract = std::make_shared<AbstractAny>();
-    if (supposed_tensor_dtype()) {
-      MS_EXCEPTION_IF_NULL(element());
-      const auto &dtype = element()->BuildType();
-      any_abstract->element()->set_type(dtype);
-      any_abstract->set_supposed_tensor_dtype(true);
-    }
-    return any_abstract;
-  }
+  AbstractBasePtr Clone() const override;
 
   TypePtr BuildType() const override;
 
-  std::string ToString() const override { return type_name(); }
+  std::string ToString() const override;
 
-  bool supposed_tensor_dtype() const { return supposed_tensor_dtype_; }
-  void set_supposed_tensor_dtype(bool flag) { supposed_tensor_dtype_ = flag; }
+  bool supposed_tensor_dtype() const;
 
-  static TypePtr DefaultDtype() { return kFloat64; }
+  void set_supposed_tensor_dtype(bool flag);
+
+  static TypePtr DefaultDtype();
 
  private:
   bool supposed_tensor_dtype_{false};
@@ -868,24 +772,15 @@ class MS_CORE_API AbstractNegligible : public AbstractAny {
   ~AbstractNegligible() override = default;
   MS_DECLARE_PARENT(AbstractNegligible, AbstractAny)
 
-  AbstractBasePtr Join(const AbstractBasePtr &other) override {
-    MS_EXCEPTION_IF_NULL(other);
-    if (other->isa<AbstractScalar>()) {
-      const auto &value_other = other->GetValueTrack();
-      if (!value_other->isa<ValueAny>()) {
-        return std::make_shared<AbstractAny>();
-      }
-    }
-    return other;
-  }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
-  AbstractBasePtr Broaden() const override { return Clone(); }
+  AbstractBasePtr Broaden() const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractNegligible>(); }
+  AbstractBasePtr Clone() const override;
 
   TypePtr BuildType() const override;
 
-  std::string ToString() const override { return type_name(); }
+  std::string ToString() const override;
 };
 using AbstractNegligiblePtr = std::shared_ptr<AbstractNegligible>;
 using AbstractNegligiblePtrList = std::vector<AbstractNegligiblePtr>;
@@ -908,20 +803,12 @@ class MS_CORE_API AbstractJoinedAny : public AbstractAny {
     kValueError,
   };
 
-  const std::string &message() const { return message_; }
-  void set_message(const std::string &message) { message_ = message; }
-  ExceptionType exception() const { return exception_; }
-  void set_exception(ExceptionType exception) { exception_ = exception; }
+  const std::string &message() const;
+  void set_message(const std::string &message);
+  ExceptionType exception() const;
+  void set_exception(ExceptionType exception);
 
-  void ThrowException() const {
-    if (exception_ == kTypeError) {
-      MS_EXCEPTION(TypeError) << message_;
-    } else if (exception_ == kValueError) {
-      MS_EXCEPTION(ValueError) << message_;
-    } else {
-      MS_LOG(EXCEPTION) << message_;
-    }
-  }
+  void ThrowException() const;
 
  private:
   std::string message_;
@@ -1009,7 +896,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Get the stored elements.
   ///
   /// \return A vector of elements.
-  const AbstractBasePtrList &elements() const { return elements_; }
+  const AbstractBasePtrList &elements() const;
 
   /// \brief Purify the elements list, and clean unused elements.
   ///
@@ -1019,14 +906,12 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Get the sequence nodes where these 'AbstractSequence' evaluated from.
   ///
   /// \return The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
-  const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes() const { return sequence_nodes_; }
+  const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes() const;
 
   /// \brief Set the sequence nodes where these 'AbstractSequence' evaluated from.
   ///
   /// \param[in] sequence_nodes The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
-  void set_sequence_nodes(const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes) {
-    sequence_nodes_ = sequence_nodes;
-  }
+  void set_sequence_nodes(const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes);
 
   /// \brief Insert a node into the sequence nodes.
   ///
@@ -1066,7 +951,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Indicate whether the sequence is dynamic length.
   ///
   /// \return Boolean value indicates whether the sequence is dynamic length.
-  bool dynamic_len() const { return dynamic_len_; }
+  bool dynamic_len() const;
 
   /// \brief Set the sequence to be dynamic length or not.
   ///
@@ -1076,7 +961,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \brief Return the abstract of element for variable len sequence.
   ///
   /// \return Abstract for element for variable len sequence.
-  AbstractBasePtr dynamic_len_element_abs() const { return dynamic_len_element_abs_; }
+  AbstractBasePtr dynamic_len_element_abs() const;
 
   /// \brief Set the abstract of element for variable len sequence.
   ///
@@ -1088,8 +973,8 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 
   std::shared_ptr<AbstractSequence> BroadenToDynamicLenSequence();
 
-  void set_dyn_len_arg() { dyn_len_arg_ = true; }
-  bool dyn_len_arg() const { return dyn_len_arg_; }
+  void set_dyn_len_arg();
+  bool dyn_len_arg() const;
 
  protected:
   AbstractBasePtrList elements_;
@@ -1113,16 +998,14 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   /// \param[in] elements A list of abstracts.
   /// \param[in] tuple_nodes The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
   explicit AbstractTuple(AbstractBasePtrList &&elements,
-                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSequence(std::move(elements), tuple_nodes) {}
+                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   /// \brief Constructor of AbstractTuple.
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] tuple_nodes The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
   explicit AbstractTuple(const AbstractBasePtrList &elements,
-                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSequence(elements, tuple_nodes) {}
+                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   /// \brief Destructor of AbstractTuple.
   ~AbstractTuple() override = default;
@@ -1174,16 +1057,15 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] list_nodes The nodes of list, usually are MakeList CNodes or list ValueNodes.
-  explicit AbstractList(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
-      : AbstractSequence(std::move(elements), list_nodes) {}
+  explicit AbstractList(AbstractBasePtrList &&elements,
+                        const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr);
 
   /// \brief Constructor of AbstractList.
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] list_nodes The nodes of list, usually are MakeList CNodes or list ValueNodes.
   explicit AbstractList(const AbstractBasePtrList &elements,
-                        const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
-      : AbstractSequence(elements, list_nodes) {}
+                        const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr);
 
   /// \brief Destructor of AbstractList.
   ~AbstractList() override = default;
@@ -1254,7 +1136,7 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
   /// \brief Constructor of AbstractDictionary.
   ///
   /// \param[in] key_values The vector of AbstractElementPair.
-  explicit AbstractDictionary(const std::vector<AbstractElementPair> &key_values) : key_values_(key_values) {}
+  explicit AbstractDictionary(const std::vector<AbstractElementPair> &key_values);
 
   /// \brief Destructor of AbstractDictionary.
   ~AbstractDictionary() override = default;
@@ -1275,12 +1157,12 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
   /// \brief Get the size of key values.
   ///
   /// \return A size_t.
-  std::size_t size() const { return key_values_.size(); }
+  std::size_t size() const;
 
   /// \brief Get the key values.
   ///
   /// \return A vector of AbstractElementPair.
-  const std::vector<AbstractElementPair> &elements() const { return key_values_; }
+  const std::vector<AbstractElementPair> &elements() const;
 
  protected:
   ValuePtr RealBuildValue() const override;
@@ -1296,8 +1178,7 @@ class MS_CORE_API AbstractSlice final : public AbstractBase {
   /// \param[in] start The start index of slice.
   /// \param[in] stop The stop index of slice.
   /// \param[in] step The step size of slice.
-  AbstractSlice(const AbstractBasePtr &start, const AbstractBasePtr &stop, const AbstractBasePtr &step)
-      : start_(start), stop_(stop), step_(step) {}
+  AbstractSlice(const AbstractBasePtr &start, const AbstractBasePtr &stop, const AbstractBasePtr &step);
 
   /// \brief Destructor of AbstractSlice.
   ~AbstractSlice() override = default;
@@ -1323,17 +1204,17 @@ class MS_CORE_API AbstractSlice final : public AbstractBase {
   /// \brief Get the start index of slice.
   ///
   /// \return A point to the abstract of start index.
-  AbstractBasePtr start() const { return start_; }
+  AbstractBasePtr start() const;
 
   /// \brief Get the stop index of slice.
   ///
   /// \return A point to the abstract of stop index.
-  AbstractBasePtr stop() const { return stop_; }
+  AbstractBasePtr stop() const;
 
   /// \brief Get the step size of slice.
   ///
   /// \return A point to the abstract of step number.
-  AbstractBasePtr step() const { return step_; }
+  AbstractBasePtr step() const;
 
  protected:
   ValuePtr RealBuildValue() const override;
@@ -1351,7 +1232,7 @@ class MS_CORE_API AbstractJTagged final : public AbstractBase {
   /// \brief Constructor of AbstractJTagged.
   ///
   /// \param[in] element The value to be processed.
-  explicit AbstractJTagged(const AbstractBasePtr &element) : element_(element) {}
+  explicit AbstractJTagged(const AbstractBasePtr &element);
 
   /// \brief Destructor of AbstractJTagged.
   ~AbstractJTagged() override = default;
@@ -1359,9 +1240,9 @@ class MS_CORE_API AbstractJTagged final : public AbstractBase {
 
   TypePtr BuildType() const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractJTagged>(element_->Clone()); }
+  AbstractBasePtr Clone() const override;
 
-  AbstractBasePtr Broaden() const override { return std::make_shared<AbstractJTagged>(element_->Broaden()); }
+  AbstractBasePtr Broaden() const override;
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
@@ -1377,9 +1258,9 @@ class MS_CORE_API AbstractJTagged final : public AbstractBase {
   /// \brief Get the element.
   ///
   /// \return A pointer to a abstract, which is the element_.
-  AbstractBasePtr element() { return element_; }
+  AbstractBasePtr element();
 
-  std::size_t hash() const override { return hash_combine(tid(), element_->hash()); }
+  std::size_t hash() const override;
 
  private:
   AbstractBasePtr element_;
@@ -1390,13 +1271,13 @@ using AbstractJTaggedPtr = std::shared_ptr<AbstractJTagged>;
 class MS_CORE_API AbstractNone final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractNone.
-  AbstractNone() : AbstractBase() { set_type(std::make_shared<TypeNone>()); }
+  AbstractNone();
 
   /// \brief Destructor of AbstractNone.
   ~AbstractNone() override = default;
   MS_DECLARE_PARENT(AbstractNone, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<TypeNone>(); }
+  TypePtr BuildType() const override;
 
   /// \brief Overwrite the operator '==' to compare other AbstractNone.
   ///
@@ -1405,7 +1286,7 @@ class MS_CORE_API AbstractNone final : public AbstractBase {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractNone>(); }
+  AbstractBasePtr Clone() const override;
 
   std::string ToString() const override;
 
@@ -1423,13 +1304,13 @@ using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 class MS_CORE_API AbstractNull final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractNull.
-  AbstractNull() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
+  AbstractNull();
 
   /// \brief Destructor of AbstractNull.
   ~AbstractNull() override = default;
   MS_DECLARE_PARENT(AbstractNull, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<TypeNull>(); }
+  TypePtr BuildType() const override;
 
   /// \brief Overwrite the operator '==' to compare other AbstractNull.
   ///
@@ -1438,7 +1319,7 @@ class MS_CORE_API AbstractNull final : public AbstractBase {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractNull>(); }
+  AbstractBasePtr Clone() const override;
 
   std::string ToString() const override;
 };
@@ -1451,13 +1332,13 @@ using AbstractNullPtr = std::shared_ptr<AbstractNull>;
 class MS_CORE_API AbstractTimeOut final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractTimeOut.
-  AbstractTimeOut() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
+  AbstractTimeOut();
 
   /// \brief Destructor of AbstractTimeOut.
   ~AbstractTimeOut() override = default;
   MS_DECLARE_PARENT(AbstractTimeOut, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<TypeNull>(); }
+  TypePtr BuildType() const override;
 
   /// \brief Overwrite the operator '==' to compare other AbstractTimeOut.
   ///
@@ -1466,7 +1347,7 @@ class MS_CORE_API AbstractTimeOut final : public AbstractBase {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractTimeOut>(); }
+  AbstractBasePtr Clone() const override;
 
   std::string ToString() const override;
 };
@@ -1476,13 +1357,13 @@ using AbstractTimeOutPtr = std::shared_ptr<AbstractTimeOut>;
 class MS_CORE_API AbstractEllipsis final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractEllipsis.
-  AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<TypeEllipsis>()); }
+  AbstractEllipsis();
 
   /// \brief Destructor of AbstractEllipsis.
   ~AbstractEllipsis() override = default;
   MS_DECLARE_PARENT(AbstractEllipsis, AbstractBase)
 
-  TypePtr BuildType() const override { return std::make_shared<TypeEllipsis>(); }
+  TypePtr BuildType() const override;
 
   /// \brief Overwrite the operator '==' to compare other AbstractEllipsis.
   ///
@@ -1491,7 +1372,7 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
   /// \return A boolean, which indicates whether the other abstract is same.
   bool operator==(const AbstractBase &other) const override;
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractEllipsis>(); }
+  AbstractBasePtr Clone() const override;
 
   std::string ToString() const override;
 };
@@ -1524,19 +1405,19 @@ class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
   /// \brief Use parent's AbstractTensor::Clone() to clone an abstract.
   ///
   /// \return A pointer to the cloned abstract.
-  AbstractBasePtr CloneAsTensor() const { return AbstractTensor::Clone(); }
+  AbstractBasePtr CloneAsTensor() const;
 
   std::string ToString() const override;
 
   /// \brief Get the abstract tensor, which is referenced.
   ///
   /// \return A pointer to the abstract tensor.
-  inline AbstractTensorPtr ref() { return shared_from_base<AbstractTensor>(); }
+  AbstractTensorPtr ref();
 
   /// \brief Get the ref key value, ref key is string actually.
   ///
   /// \return A point to the RefKey.
-  inline ValuePtr ref_key_value() const { return ref_key_value_; }
+  ValuePtr ref_key_value() const;
 
   AbstractBasePtr Broaden() const override;
 
@@ -1582,12 +1463,10 @@ struct AbstractBasePtrListEqual {
 class MS_CORE_API AbstractSparseTensor : public AbstractTuple {
  public:
   explicit AbstractSparseTensor(AbstractBasePtrList &&elements,
-                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(std::move(elements), tuple_nodes) {}
+                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   explicit AbstractSparseTensor(const AbstractBasePtrList &elements,
-                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(elements, tuple_nodes) {}
+                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   ~AbstractSparseTensor() override = default;
   MS_DECLARE_PARENT(AbstractSparseTensor, AbstractTuple)
@@ -1597,7 +1476,7 @@ class MS_CORE_API AbstractSparseTensor : public AbstractTuple {
   /// \brief If any element is a tuple, get every element shape in it.
   BaseShapePtrList ElementsShapeTupleRecursive() const;
   TypePtr BuildType() const override;
-  BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShapeTupleRecursive()); }
+  BaseShapePtr BuildShape() const override;
 
   /// \brief Return the TypeId of a Tensor element in SparseTensor.
   ///
@@ -1622,15 +1501,13 @@ class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
   ///
   /// \param[in] element The abstract which is wrapped to a RowTensor's abstract value.
   /// \param[in] shape A dimension of the abstract.
-  explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractUndetermined(element, shape) {}
+  explicit AbstractRowTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>());
 
   /// \brief Constructor of AbstractRowTensor.
   ///
   /// \param[in] element_type The type of RowTensor.
   /// \param[in] shape A dimension of RowTensor.
-  AbstractRowTensor(const TypePtr &element_type, const ShapeVector &shape)
-      : AbstractUndetermined(element_type, shape) {}
+  AbstractRowTensor(const TypePtr &element_type, const ShapeVector &shape);
 
   /// \brief Destructor of AbstractRowTensor.
   ~AbstractRowTensor() override = default;
@@ -1639,32 +1516,32 @@ class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
   /// \brief Get the indices of RowTensor.
   ///
   /// \return A pointer to the abstract tensor.
-  const AbstractTensorPtr indices() const { return indices_; }
+  const AbstractTensorPtr indices() const;
 
   /// \brief Set the indices for abstract.
   ///
   /// \param[in] indices The indices.
-  void set_indices(const AbstractTensorPtr &indices) { indices_ = indices; }
+  void set_indices(const AbstractTensorPtr &indices);
 
   /// \brief Get the values.
   ///
   /// \return A pointer to the abstract tensor.
-  const AbstractTensorPtr values() const { return values_; }
+  const AbstractTensorPtr values() const;
 
   /// \brief Set the values.
   ///
   /// \param[in] values The values of tensor.
-  void set_values(const AbstractTensorPtr &values) { values_ = values; }
+  void set_values(const AbstractTensorPtr &values);
 
   /// \brief Get the dense shape.
   ///
   /// \return A pointer to the tuple of abstracts.
-  const AbstractTuplePtr dense_shape() const { return dense_shape_; }
+  const AbstractTuplePtr dense_shape() const;
 
   /// \brief Set the dense shape.
   ///
   /// \param[in] dense_shape The dense shape of RowTensor.
-  void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
+  void set_dense_shape(const AbstractTuplePtr &dense_shape);
 
   TypePtr BuildType() const override;
 
@@ -1691,12 +1568,10 @@ using AbstractRowTensorPtr = std::shared_ptr<AbstractRowTensor>;
 class MS_CORE_API AbstractCOOTensor : public AbstractSparseTensor {
  public:
   explicit AbstractCOOTensor(AbstractBasePtrList &&elements,
-                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSparseTensor(std::move(elements), tuple_nodes) {}
+                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   explicit AbstractCOOTensor(const AbstractBasePtrList &elements,
-                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSparseTensor(elements, tuple_nodes) {}
+                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   ~AbstractCOOTensor() override = default;
   MS_DECLARE_PARENT(AbstractCOOTensor, AbstractSparseTensor)
@@ -1719,12 +1594,10 @@ using AbstractCOOTensorPtr = std::shared_ptr<AbstractCOOTensor>;
 class MS_CORE_API AbstractCSRTensor : public AbstractSparseTensor {
  public:
   explicit AbstractCSRTensor(AbstractBasePtrList &&elements,
-                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSparseTensor(std::move(elements), tuple_nodes) {}
+                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   explicit AbstractCSRTensor(const AbstractBasePtrList &elements,
-                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractSparseTensor(elements, tuple_nodes) {}
+                             const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr);
 
   ~AbstractCSRTensor() override = default;
   MS_DECLARE_PARENT(AbstractCSRTensor, AbstractSparseTensor)
@@ -1750,28 +1623,24 @@ class MS_CORE_API AbstractMonad : public AbstractBase {
   ~AbstractMonad() override = default;
   MS_DECLARE_PARENT(AbstractMonad, AbstractBase)
 
-  std::size_t hash() const override { return hash_combine({tid()}); }
-  TypePtr BuildType() const override { return GetTypeTrack(); }
-  AbstractBasePtr Broaden() const override { return AbstractBase::Broaden(); }
+  std::size_t hash() const override;
+  TypePtr BuildType() const override;
+  AbstractBasePtr Broaden() const override;
   AbstractBasePtr Join(const AbstractBasePtr &other) override = 0;
-  std::string ToString() const override {
-    std::ostringstream buffer;
-    buffer << type_name() << "(" << GetValueTrack()->ToString() << ")";
-    return buffer.str();
-  }
+  std::string ToString() const override;
 
  protected:
-  AbstractMonad(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+  AbstractMonad(const ValuePtr &value, const TypePtr &type);
 };
 using AbstractMonadPtr = std::shared_ptr<AbstractMonad>;
 
 class MS_CORE_API AbstractUMonad final : public AbstractMonad {
  public:
-  explicit AbstractUMonad(const ValuePtr &value = kUMonad) : AbstractMonad(value, kUMonadType) {}
+  explicit AbstractUMonad(const ValuePtr &value = kUMonad);
   ~AbstractUMonad() override = default;
   MS_DECLARE_PARENT(AbstractUMonad, AbstractMonad)
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractUMonad>(GetValueTrack()); }
+  AbstractBasePtr Clone() const override;
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
   bool operator==(const AbstractBase &other) const override;
 };
@@ -1779,11 +1648,11 @@ using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
 
 class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
  public:
-  explicit AbstractIOMonad(const ValuePtr &value = kIOMonad) : AbstractMonad(value, kIOMonadType) {}
+  explicit AbstractIOMonad(const ValuePtr &value = kIOMonad);
   ~AbstractIOMonad() override = default;
   MS_DECLARE_PARENT(AbstractIOMonad, AbstractMonad)
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractIOMonad>(GetValueTrack()); }
+  AbstractBasePtr Clone() const override;
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
   bool operator==(const AbstractBase &other) const override;
 };
@@ -1804,15 +1673,15 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
 
   AbstractMapTensor &operator=(const AbstractMapTensor &other);
 
-  MapTensorTypePtr map_tensor_type() const { return dyn_cast<MapTensorType>(GetTypeTrack()); }
-  ShapePtr shape() const { return dyn_cast<Shape>(GetShapeTrack()); }
-  const ShapePtr &value_shape() const { return value_shape_; }
-  const ValuePtr &ref_key_value() const { return ref_key_value_; }
-  const ValuePtr &default_value() const { return default_value_; }
-  const ValuePtr &permit_filter_value() const { return permit_filter_value_; }
-  const ValuePtr &evict_filter_value() const { return evict_filter_value_; }
-  TypePtr BuildType() const override { return GetTypeTrack(); }
-  BaseShapePtr BuildShape() const override { return GetShapeTrack(); };
+  MapTensorTypePtr map_tensor_type() const;
+  ShapePtr shape() const;
+  const ShapePtr &value_shape() const;
+  const ValuePtr &ref_key_value() const;
+  const ValuePtr &default_value() const;
+  const ValuePtr &permit_filter_value() const;
+  const ValuePtr &evict_filter_value() const;
+  TypePtr BuildType() const override;
+  BaseShapePtr BuildShape() const override;
 
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Join(const AbstractBasePtr &other) override;

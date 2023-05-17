@@ -31,6 +31,82 @@
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
+AnfNode::AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
+    : func_graph_(FuncGraphWeakPtr(func_graph)),
+      abstract_(nullptr),
+      debug_info_(std::move(debug_info)),
+      fullname_with_scope_(""),
+      scope_(ScopeManager::GetInstance().GetCurrentScope()) {}
+
+AnfNode::AnfNode(const FuncGraphPtr &func_graph) : AnfNode(func_graph, std::make_shared<NodeDebugInfo>()) {}
+
+void AnfNode::accept(AnfIrVisitor *) {}
+
+FuncGraphPtr AnfNode::func_graph() const { return func_graph_.lock(); }
+
+void AnfNode::set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
+
+ScopePtr AnfNode::scope() { return scope_; }
+
+void AnfNode::set_scope(const ScopePtr &scope) { scope_ = scope; }
+
+const KernelInfoDevice *AnfNode::kernel_info() const { return kernel_info_ptr().get(); }
+
+KernelInfoDevice *AnfNode::kernel_info() { return kernel_info_ptr().get(); }
+
+KernelInfoDevicePtr AnfNode::kernel_info_ptr() const { return user_data<KernelInfoDevice>(kKernelInfoKey); }
+
+void AnfNode::set_kernel_info(const KernelInfoDevicePtr &kernel_info) { set_user_data(kKernelInfoKey, kernel_info); }
+
+NodeDebugInfoPtr AnfNode::debug_info() {
+  MS_EXCEPTION_IF_NULL(debug_info_);
+  if (debug_info_->get_node() == nullptr) {
+    debug_info_->set_node(shared_from_base<AnfNode>());
+  }
+  return debug_info_;
+}
+
+void AnfNode::set_debug_info(const NodeDebugInfoPtr &debug_info) {
+  MS_EXCEPTION_IF_NULL(debug_info);
+  debug_info_ = debug_info;
+  if (debug_info_->get_node() == nullptr) {
+    debug_info_->set_node(shared_from_base<AnfNode>());
+  }
+}
+
+std::size_t AnfNode::hash() const { return PointerHash<AnfNode>{}(this); }
+
+std::string AnfNode::fullname_with_scope() { return ""; }
+
+std::string AnfNode::UniqueName() { return fullname_with_scope() + "_" + UniqueId(); }
+
+std::string AnfNode::DebugString(int recursive_level) const { return ToString(); }
+
+std::string AnfNode::DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
+
+void AnfNode::dump() const { std::cout << DebugString() << std::endl; }
+
+std::string AnfNode::UniqueId() { return std::to_string(debug_info()->unique_id()); }
+
+std::string AnfNode::UniqueIdThroughCopy() { return std::to_string(debug_info()->unique_id_through_copy()); }
+
+bool AnfNode::operator==(const AnfNode &other) const { return &other == this; }
+
+std::ostream &operator<<(std::ostream &os, const AnfNode &node) {
+  os << node.ToString();
+  return os;
+}
+
+bool AnfNode::interpret() const { return interpret_flags_[kInterpret]; }
+
+void AnfNode::set_interpret(const bool &interpret) { interpret_flags_[kInterpret] = interpret; }
+
+bool AnfNode::interpret_internal_type() { return interpret_flags_[kInterpretInternalType]; }
+
+void AnfNode::set_interpret_internal_type(const bool &interpret_internal_type) {
+  interpret_flags_[kInterpretInternalType] = interpret_internal_type;
+}
+
 const AbstractBasePtr &AnfNode::abstract() const {
   // cppcheck-suppress unreadVariable
   auto lock = AnfUtils::GetAbstractLock(this);
@@ -61,6 +137,17 @@ CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, N
       inputs_(std::move(inputs)),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
       primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
+
+CNode::CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
+    : AnfNode(nullptr), inputs_(inputs) {
+  primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
+  primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
+  set_user_data(kFuncGraphVarKey, func_graph_as_var);
+}
+
+const size_t CNode::size() const { return inputs_.size(); }
+
+const std::vector<AnfNodePtr> &CNode::inputs() const { return inputs_; }
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
@@ -171,6 +258,167 @@ void CNode::set_primal_debug_infos(const NodeDebugInfoSet &debug_infos) {
 
 void CNode::AddPrimalDebugInfo(const NodeDebugInfoPtr &debug_info) { (void)primal_debug_infos_.emplace(debug_info); }
 
+void CNode::set_forward(const ValueNodePtr &forward, const std::string &id) {
+  set_user_data(kOutputValueKey, std::make_shared<OutputValue>(forward, id));
+}
+
+const CNode::OutputValue &CNode::forward() const {
+  static const CNode::OutputValue empty_value;
+  auto ptr = user_data<CNode::OutputValue>(kOutputValueKey);
+  if (ptr == nullptr) {
+    return empty_value;
+  }
+  return *ptr;
+}
+
+bool CNode::stop_gradient() const { return flags_[kStopGradient]; }
+
+void CNode::set_stop_gradient(bool stop_gradient) { flags_[kStopGradient] = stop_gradient; }
+
+void CNode::set_fullname_with_scope(const std::string full_name) { fullname_with_scope_ = full_name; }
+
+std::string CNode::DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
+
+void CNode::set_in_forward_flag(bool flag) { flags_[kInForwardFlag] = flag; }
+
+bool CNode::in_forward_flag() const { return flags_[kInForwardFlag]; }
+
+void CNode::set_load_flag(bool is_load) { flags_[kIsLoad] = is_load; }
+
+bool CNode::get_load_flag() const { return flags_[kIsLoad]; }
+
+VarPtr CNode::func_graph_as_var() const { return user_data<Var>(kFuncGraphVarKey); }
+
+const mindspore::HashMap<std::string, ValuePtr> &CNode::attrs() const { return attrs_; }
+
+void CNode::set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  attrs_.insert(attrs.cbegin(), attrs.cend());
+}
+
+void CNode::AddAttr(const std::string &name, const ValuePtr &attr) { attrs_[name] = attr; }
+
+void CNode::EraseAttr(const std::string &name) { (void)attrs_.erase(name); }
+
+ValuePtr CNode::GetAttr(const std::string &name) const {
+  auto iter = attrs_.find(name);
+  return iter == attrs_.cend() ? nullptr : iter->second;
+}
+
+bool CNode::HasAttr(const std::string &name) const { return attrs_.find(name) != attrs_.cend(); }
+
+ssize_t CNode::input_tensor_num() const { return input_tensor_num_; }
+
+const mindspore::HashMap<std::string, ValuePtr> &CNode::primal_attrs() const { return primal_attrs_; }
+
+void CNode::set_primal_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  primal_attrs_.insert(attrs.cbegin(), attrs.cend());
+}
+
+void CNode::AddPrimalAttr(const std::string &name, const ValuePtr &attr) { primal_attrs_[name] = attr; }
+
+void CNode::ErasePrimalAttr(const std::string &name) { (void)primal_attrs_.erase(name); }
+
+ValuePtr CNode::GetPrimalAttr(const std::string &name) const {
+  auto iter = primal_attrs_.find(name);
+  return iter == primal_attrs_.cend() ? nullptr : iter->second;
+}
+
+bool CNode::HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != primal_attrs_.end(); }
+
+void CNode::CloneCNodeInfo(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  set_abstract(node->abstract());
+  set_forward(node->forward().first, node->forward().second);
+  set_attrs(node->attrs());
+  set_primal_attrs(node->primal_attrs());
+  set_load_flag(node->get_load_flag());
+  CloneUserData(node);
+  set_kernel_info(node->kernel_info_ptr());
+  set_primal_debug_infos(node->primal_debug_infos());
+  set_fused_debug_infos(node->fused_debug_infos());
+}
+
+void CNode::set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
+
+bool CNode::IsEffectHandled() const { return flags_[kEffectHandled]; }
+
+void CNode::SetEffectHandled(bool handled) { flags_[kEffectHandled] = handled; }
+
+NodeDebugInfoSet CNode::fused_debug_infos() const { return fused_debug_infos_; }
+
+void CNode::set_fused_debug_infos(const NodeDebugInfoSet &fused_debug_infos) { fused_debug_infos_ = fused_debug_infos; }
+
+bool CNode::has_side_effect_node() const { return has_side_effect_node_; }
+
+void CNode::set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
+
+Parameter::Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) {}
+
+Parameter::Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
+    : ANode(func_graph, std::move(debug_info)) {}
+
+std::string Parameter::name() const { return name_; }
+
+void Parameter::set_name(const std::string &name) { name_ = name; }
+
+std::string Parameter::fullname_with_scope() { return name(); }
+
+bool Parameter::has_default() const { return has_default_; }
+
+void Parameter::set_default_param(const ValuePtr &param) {
+  default_param_ = param;
+  has_default_ = true;
+}
+
+const ValuePtr &Parameter::default_param() const { return default_param_; }
+
+void Parameter::IncreaseUsedGraphCount() { used_graph_count_++; }
+
+void Parameter::DecreaseUsedGraphCount() { used_graph_count_--; }
+
+int Parameter::used_graph_count() const { return used_graph_count_; }
+
+bool Parameter::is_top_graph_param() const { return is_top_graph_param_; }
+
+void Parameter::set_is_top_graph_param(bool flag) { is_top_graph_param_ = flag; }
+
+bool Parameter::operator==(const AnfNode &other) const {
+  if (!other.isa<Parameter>()) {
+    return false;
+  }
+  auto p = static_cast<const Parameter &>(other);
+  if (name_.length() > 0 && p.name_.length() > 0) {
+    return p.name_ == name_;
+  }
+  return shared_from_this() == other.shared_from_this();
+}
+
+void Parameter::SetNotUsedByRealKernelInGraph(uint32_t graph_id) { (void)not_used_in_graphs_.insert(graph_id); }
+
+bool Parameter::IsUsedByRealKernelInGraph(uint32_t graph_id) const {
+  return not_used_in_graphs_.find(graph_id) == not_used_in_graphs_.end();
+}
+
+void Parameter::set_has_dynamic_shape(bool flag) { has_dynamic_shape_ = flag; }
+
+bool Parameter::has_dynamic_shape() const { return has_dynamic_shape_; }
+
+void Parameter::set_dynamic_len(bool flag) { is_dynamic_len_ = flag; }
+
+bool Parameter::dynamic_len() const { return is_dynamic_len_; }
+
+void Parameter::set_fracz_group(int64_t fracz_group) { format_attrs_.fracz_group = fracz_group; }
+
+int64_t Parameter::fracz_group() const { return format_attrs_.fracz_group; }
+
+void Parameter::set_input_size(int64_t input_size) { format_attrs_.input_size = input_size; }
+
+int64_t Parameter::input_size() const { return format_attrs_.input_size; }
+
+void Parameter::set_hidden_size(int64_t hidden_size) { format_attrs_.hidden_size = hidden_size; }
+
+int64_t Parameter::hidden_size() const { return format_attrs_.hidden_size; }
+
 std::string Parameter::DebugString(int recursive_level) const {
   std::ostringstream buffer;
   if (recursive_level > 0) {
@@ -191,6 +439,59 @@ ParamInfoPtr Parameter::param_info() const {
     return nullptr;
   }
   return tensor->param_info();
+}
+
+Value::Value(const TypePtr t) : type_(t) {}
+
+Value::Value(const Value &other) : Base(other) { this->type_ = other.type_; }
+
+TypePtr Value::type() const { return type_; }
+
+abstract::AbstractBasePtr Value::ToAbstract() {
+  MS_LOG(INTERNAL_EXCEPTION) << "ToAbstract error : The class " << type_name() << "has no implement ToAbstract yet.";
+}
+
+Value &Value::operator=(const Value &other) {
+  if (&other == this) {
+    return *this;
+  }
+  this->type_ = other.type_;
+  return *this;
+}
+
+ValueNode::ValueNode(const ValuePtr &value) : value_(value) {}
+
+ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
+    : ANode(nullptr, std::move(debug_info)), value_(value) {}
+
+void ValueNode::set_func_graph(const FuncGraphPtr &) {
+  MS_INTERNAL_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
+}
+
+void ValueNode::set_value(const ValuePtr &value) { value_ = value; }
+
+const ValuePtr &ValueNode::value() const { return value_; }
+
+void ValueNode::set_has_new_value(bool flag) { has_new_value_ = flag; }
+
+bool ValueNode::has_new_value() const { return has_new_value_; }
+
+size_t ValueNode::used_graph_count() const { return used_graph_count_; }
+
+void ValueNode::set_fracz_group(int64_t group) { format_attr_.fracz_group = group; }
+
+int64_t ValueNode::fracz_group() const { return format_attr_.fracz_group; }
+
+void ValueNode::set_used_graph_count(size_t used_graph_count) { used_graph_count_ = used_graph_count; }
+
+std::string ValueNode::DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
+
+bool ValueNode::operator==(const AnfNode &other) const {
+  if (!other.isa<ValueNode>()) {
+    return false;
+  }
+  auto v = static_cast<const ValueNode &>(other);
+  return *v.value() == *value();
 }
 
 std::string ValueNode::ToString() const {
