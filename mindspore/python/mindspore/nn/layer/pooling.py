@@ -1778,7 +1778,7 @@ class FractionalMaxPool3d(Cell):
 
     Inputs:
         - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
-          Tensor of data type : float16, float32, float64, int32, int64.
+          Tensor of data type : float16, float32, float64.
           Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
@@ -1794,9 +1794,10 @@ class FractionalMaxPool3d(Cell):
     Raises:
         TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `imput_x` is not float16, float32, float64, int32, int64.
+        TypeError: If data type of `imput_x` is not float16, float32, float64.
         TypeError: If dtype of `_random_samples` is not float16, float32, float64.
         TypeError: If dtype of `argmax` is not int32, int64.
+        TypeError: if _random_samples to have the different dtypes as input.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
         ValueError: If numbers in `output_size` or `kernel_size` is not positive.
