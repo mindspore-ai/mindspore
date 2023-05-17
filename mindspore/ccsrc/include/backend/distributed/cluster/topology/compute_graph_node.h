@@ -35,7 +35,7 @@ namespace topology {
 class BACKEND_EXPORT ComputeGraphNode : public NodeBase {
  public:
   ComputeGraphNode(const std::string &node_id, const std::string &role)
-      : NodeBase(node_id, role), authenticated_(false), enable_hb_(false) {}
+      : NodeBase(node_id, role), client_ip_(""), authenticated_(false), enable_hb_(false) {}
   ~ComputeGraphNode() override;
 
   bool Initialize() override;
@@ -69,6 +69,9 @@ class BACKEND_EXPORT ComputeGraphNode : public NodeBase {
 
   void set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) override;
 
+  // Return client ip of this cgn which is used for cluster building.
+  const std::string &client_ip() const;
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();
@@ -96,6 +99,9 @@ class BACKEND_EXPORT ComputeGraphNode : public NodeBase {
 
   // The TCP client used to send heartbeat to meta server.
   std::unique_ptr<rpc::TCPClient> hb_client_;
+
+  // Tcp client ip address of this cgn.
+  std::string client_ip_;
 
   // Incidate whether this node is authenticated by meta server node.
   std::atomic<bool> authenticated_;
