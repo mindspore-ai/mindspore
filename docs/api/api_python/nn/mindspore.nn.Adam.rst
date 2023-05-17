@@ -92,6 +92,7 @@ mindspore.nn.Adam
         Tensor[bool]，值为True。
 
     异常：
+        - **KeyError** - 如果 `kwargs` 接收到非 ``'use_lazy'`` or ``'use_offload'`` 的关键字。
         - **TypeError** - `learning_rate` 不是int、float、Tensor、iterable或LearningRateSchedule。
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
         - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
