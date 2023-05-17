@@ -167,7 +167,7 @@ class AclRunner {
   }
 
   size_t GetNumRealInputs() {
-    for (int i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
+    for (size_t i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
       if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
         return i + 1;
       }
@@ -192,7 +192,7 @@ class AclRunner {
   }
 
   size_t GetNumRealOutputs() {
-    for (int i = acl_param_.output_desc.size() - 1; i >= 0; --i) {
+    for (size_t i = acl_param_.output_desc.size() - 1; i >= 0; --i) {
       if (acl_param_.output_desc[i] != nullptr && acl_param_.output_buffer[i] != nullptr) {
         return i + 1;
       }
@@ -203,7 +203,7 @@ class AclRunner {
   template <typename data_type>
   void AddAttr(const std::string &attrName, data_type value) {
     InitAttr();
-    MS_LOG(INFO) << "set acl attr:" << attrName << " value:" << value;
+    MS_LOG(DEBUG) << "set acl attr:" << attrName << " value:" << value;
     AclAttrMaker::SetAttr(attrName, value, acl_param_.attr);
   }
 

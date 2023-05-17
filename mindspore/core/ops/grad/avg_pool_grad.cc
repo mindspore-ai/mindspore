@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr auto kXFromTensor = "x_from_tensor";
 abstract::ShapePtr AvgPoolGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   // input_args: x, y, dout, return x.shape
@@ -43,12 +44,14 @@ abstract::ShapePtr AvgPoolGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(x_shape);
   auto value = x->BuildValue();
   MS_EXCEPTION_IF_NULL(value);
-  if (x->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
-    // The first input is Tensor(convert from a tuple), the value of Tuple is the real "x_origin" shape.
-    auto check_shape = x_shape->cast<abstract::ShapePtr>()->shape();
-    auto x_origin = CheckAndConvertUtils::CheckTensorIntValue("x_origin", value, prim_name);
-    if (check_shape != x_origin) {
-      return std::make_shared<abstract::Shape>(x_origin);
+  if (primitive->HasAttr(kXFromTensor) && GetValue<bool>(primitive->GetAttr(kXFromTensor))) {
+    if (x->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
+      // The first input is Tensor(convert from a tuple), the value of Tuple is the real "x_origin" shape.
+      auto check_shape = x_shape->cast<abstract::ShapePtr>()->shape();
+      auto x_origin = CheckAndConvertUtils::CheckTensorIntValue("x_origin", value, prim_name);
+      if (check_shape != x_origin) {
+        return std::make_shared<abstract::Shape>(x_origin);
+      }
     }
   }
   auto shape_element = x_shape->cast<abstract::ShapePtr>();

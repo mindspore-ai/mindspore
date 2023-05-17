@@ -196,7 +196,7 @@ void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const 
                         std::string(kSplitLine)};
     auto replaced = std::regex_replace(str, title_re, "\n");
     if (!replaced.empty() && replaced[0] == '\n') {
-      replaced.erase(0, 1);
+      (void)replaced.erase(0, 1);
     }
     std::ostringstream replaced_msg;
     replaced_msg << replaced;

@@ -744,6 +744,8 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     auto tensor = std::make_shared<tensor::Tensor>(type_id, kInt64);
     tensor->set_user_data(kTensorValueIsType, value);
     return tensor;
+  } else if (value->isa<Scalar>()) {
+    return ScalarToTensor(value->cast<ScalarPtr>());
   }
   return nullptr;
 }
@@ -813,7 +815,6 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
   MS_EXCEPTION_IF_NULL(context);
   std::set<int64_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
-  //  MS_LOG(DEBUG) << "const_input_attr_index " << const_input_attr_index;
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);

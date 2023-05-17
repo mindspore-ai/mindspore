@@ -18,32 +18,6 @@
 
 namespace mindspore {
 namespace transform {
-AclAdapterManager &AclAdapterManager::GetInstance() {
-  static AclAdapterManager instance;
-  return instance;
-}
-
-AclAdapterInfo &AclAdapterManager::Register(const std::string &op_type) {
-  if (op_cache_.count(op_type) != 0) {
-    return op_cache_.at(op_type);
-  }
-
-  (void)op_cache_.emplace(op_type, AclAdapterInfo(op_type));
-  return op_cache_.at(op_type);
-}
-
-bool AclAdapterManager::CheckAclAdapter(const std::string &op_type) {
-  if (op_cache_.count(op_type) != 0) {
-    return true;
-  }
-  return false;
-}
-
-const AclAdapterInfo &AclAdapterManager::GetOpInfo(const std::string &op_type) const {
-  if (op_cache_.count(op_type) == 0) {
-    MS_LOG(EXCEPTION) << "Current node " << op_type << " hasn't acl adapter";
-  }
-  return op_cache_.at(op_type);
-}
+REGISTER_ACL_OP(ReluGrad).Input(0, {}, {}).Input(1, {}, {"NC1HWC0"}).Input(2, {}, {});
 }  // namespace transform
 }  // namespace mindspore
