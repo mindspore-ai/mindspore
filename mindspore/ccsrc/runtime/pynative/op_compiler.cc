@@ -245,9 +245,8 @@ void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_
 }
 
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
-                                      device::DeviceContext *device_context) {
+                                      const std::string &device_name, const uint32_t &device_id) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(device_context);
   const auto &graph_info = op_run_info->base_op_run_info.graph_info;
   const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
@@ -264,6 +263,10 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   *single_op_cache_hit = false;
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
   py::gil_scoped_acquire acquire_gil;
   KernelGraphPtr graph = GenerateKernelGraph(op_run_info, device_context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -287,14 +290,23 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 
   auto output_nodes = graph->outputs();
   std::vector<KernelWithIndex> outputs_with_index;
+  std::vector<size_t> outputs_tensor_num;
+  std::vector<std::string> outputs_padding_type;
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    (void)outputs_with_index.emplace_back(common::AnfAlgo::VisitKernel(node, 0));
+    const auto &output_with_index = common::AnfAlgo::VisitKernel(node, 0);
+    (void)outputs_with_index.emplace_back(output_with_index);
+    (void)outputs_tensor_num.emplace_back(AnfAlgo::GetOutputTensorNum(output_with_index.first));
+    const auto &padding_type = (device_context->GetDeviceType() == device::DeviceType::kAscend
+                                  ? AnfAlgo::GetOutputReshapeType(output_with_index.first, output_with_index.second)
+                                  : "");
+    (void)outputs_padding_type.emplace_back(padding_type);
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
   auto op_compiler_info =
-    std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, device_context, false);
+    std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, outputs_tensor_num,
+                                     outputs_padding_type, device_context, false);
 
   graph->set_graph_info(graph_info);
   ConvertGraphToExecuteInfo(op_compiler_info);

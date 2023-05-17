@@ -95,11 +95,11 @@ class ForwardExecutor {
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
   std::string GetCurrentCellObjId() const;
+  std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
 
  private:
   void ReInit();
   GradExecutorPtr grad() const;
-  std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);

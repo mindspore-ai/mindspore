@@ -31,19 +31,6 @@ namespace mindspore {
 namespace pynative {
 namespace PyNativeAlgo {
 namespace {
-void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
-  py::gil_scoped_acquire acquire_gil;
-  // Clone a new prim
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  auto prim_py = op_run_info->op_prim->cast<PrimitivePyPtr>();
-  MS_EXCEPTION_IF_NULL(prim_py);
-  auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
-  auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));
-  op_run_info->op_prim = new_prim;
-  MS_EXCEPTION_IF_NULL(new_adapter);
-  new_adapter->set_attached_primitive(new_prim);
-}
-
 std::string GetObjIdFromPython(const py::handle &obj) {
   py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
   if (py::isinstance<py::none>(out)) {
@@ -79,6 +66,13 @@ std::string GetFnInfoByPyObj(const py::object &obj) {
     fn_info += "_" + py::str(warpped_obj.attr("__code__").attr("co_firstlineno")).cast<std::string>();
   }
   return fn_info;
+}
+
+void AddDynInputsSizesAttr(const FrontendOpRunInfoPtr &op_run_info) {
+  if (op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
+    return;
+  }
+  op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(op_run_info->base_op_run_info.dyn_input_sizes));
 }
 }  // namespace
 
@@ -414,6 +408,35 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+void Common::GetConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  if (op_run_info->base_op_run_info.op_name == prim::kPrimCustom->name()) {
+    // Custom op needs to set reg dynamically
+    mindspore::HashSet<size_t> attr_indexes;
+    const PrimitivePtr &op_prim = op_run_info->op_prim;
+    MS_EXCEPTION_IF_NULL(op_prim);
+    opt::GetCustomOpAttrIndex(op_prim, &op_run_info->input_to_attr);
+    return;
+  }
+
+  // Ascend const input to attr move to AscendVmOpAdapter
+  if (op_run_info->base_op_run_info.device_target == kAscendDevice) {
+    return;
+  }
+
+  auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
+    op_run_info->base_op_run_info.op_name, op_run_info->base_op_run_info.device_target,
+    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process);
+  if (reg_info == nullptr) {
+    return;
+  } else {
+    for (auto &iter : reg_info->input_attr_map()) {
+      (void)op_run_info->input_to_attr.insert(iter.first);
+    }
+  }
+  return;
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();
@@ -576,10 +599,13 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
 }
 
 bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                               size_t input_index, const mindspore::HashSet<size_t> &input_attrs) {
+                                               size_t input_index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
+  if (op_run_info->input_to_attr.empty()) {
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(v);
-  if (input_attrs.find(input_index) == input_attrs.end()) {
+  if (op_run_info->input_to_attr.find(input_index) == op_run_info->input_to_attr.end()) {
     return false;
   }
   const auto &input_names_value = op_run_info->op_prim->GetAttr(kAttrInputNames);
@@ -618,31 +644,21 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
     (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
   }
-  if (op_run_info->op_prim->HasAttr(kAttrDynInputSizes)) {
+  if (!op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
     int64_t elem_size = SizeToLong(value_seq->size());
-    auto dyn_v = GetValue<const std::vector<int64_t>>(op_run_info->op_prim->GetAttr(kAttrDynInputSizes));
-    if (dyn_v.size() != op_run_info->input_size) {
-      for (size_t i = dyn_v.size(); i < index; ++i) {
-        (void)dyn_v.emplace_back(-1);
+    if (op_run_info->base_op_run_info.dyn_input_sizes.size() != op_run_info->input_size) {
+      for (size_t i = op_run_info->base_op_run_info.dyn_input_sizes.size(); i < index; ++i) {
+        (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(-1);
       }
-      (void)dyn_v.emplace_back(elem_size);
-      (void)op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+      (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(elem_size);
     } else {
-      if (dyn_v[index] != elem_size) {
-        dyn_v[index] = elem_size;
-        op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
-      }
+      op_run_info->base_op_run_info.dyn_input_sizes[index] = elem_size;
     }
   } else {
-    std::vector<int64_t> dyn_v;
     for (size_t i = 0; i < index; ++i) {
-      (void)dyn_v.emplace_back(-1);
+      (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(-1);
     }
-    (void)dyn_v.emplace_back(SizeToLong(value_seq->size()));
-    // Like addn, prim define in python, but number of inputs change, so the value of kAttrDynInputSizes
-    // changed too.
-    ClonePrim(op_run_info);
-    op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+    (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(SizeToLong(value_seq->size()));
   }
 }
 
@@ -769,57 +785,6 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
   (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
 }
 
-bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
-                                              mindspore::HashSet<size_t> *input_to_attr_ptr) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(input_to_attr_ptr);
-  if (op_run_info->base_op_run_info.op_name == prim::kPrimCustom->name()) {
-    // Custom op needs to set reg dynamically
-    mindspore::HashSet<size_t> attr_indexes;
-    const PrimitivePtr &op_prim = op_run_info->op_prim;
-    MS_EXCEPTION_IF_NULL(op_prim);
-    opt::GetCustomOpAttrIndex(op_prim, input_to_attr_ptr);
-    return !input_to_attr_ptr->empty();
-  }
-
-  // Ascend const input to attr move to AscendVmOpAdapter
-  if (device_target == kAscendDevice) {
-    return false;
-  }
-
-  auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
-    op_run_info->base_op_run_info.op_name, device_target,
-    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process);
-  if (reg_info == nullptr) {
-    return false;
-  } else {
-    for (auto &iter : reg_info->input_attr_map()) {
-      (void)input_to_attr_ptr->insert(iter.first);
-    }
-  }
-  return !input_to_attr_ptr->empty();
-}
-
-void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target) {
-  if (!op_run_info->base_op_run_info.use_dynamic_shape_process) {
-    return;
-  }
-
-  auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
-    const auto &tensor_masks = op_run_info->base_op_run_info.input_mask;
-    std::vector<int64_t> new_masks;
-    (void)std::transform(
-      tensor_masks.begin(), tensor_masks.end(), std::back_inserter(new_masks),
-      [](int64_t tensor_mask) { return tensor_mask == kValueNodeTensorMask ? kParameterDataTensorMask : tensor_mask; });
-    op_run_info->base_op_run_info.input_mask = new_masks;
-  };
-
-  // value to parameter(onehot)
-  if (device_target != kAscendDevice) {
-    replace_tensor_mask(op_run_info);
-  }
-}
-
 void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   if (!common::AnfAlgo::IsReduceOp(op_run_info->base_op_run_info.op_name)) {
     return;
@@ -843,15 +808,25 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
+  if (!op_run_info->base_op_run_info.use_dynamic_shape_process) {
+    return;
+  }
+
+  auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
+    std::replace_if(
+      op_run_info->base_op_run_info.input_mask.begin(), op_run_info->base_op_run_info.input_mask.end(),
+      [](auto mask) { return mask == kValueNodeTensorMask; }, kParameterDataTensorMask);
+  };
+
+  // value to parameter(onehot)
+  if (op_run_info->base_op_run_info.device_target != kAscendDevice) {
+    replace_tensor_mask(op_run_info);
+  }
+}
+
 void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  mindspore::HashSet<size_t> input_to_attr = {};
-  bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, device_target, &input_to_attr);
-  MS_LOG(DEBUG) << "Need convert input to addr " << need_convert_input_to_attr;
-  if (need_convert_input_to_attr) {
-    // Prim may be changed attr
-    ClonePrim(op_run_info);
-  }
 
   (void)op_run_info->base_op_run_info.input_tensor.reserve(op_run_info->input_size);
   (void)op_run_info->base_op_run_info.input_mask.reserve(op_run_info->input_size);
@@ -860,21 +835,20 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->input_value[index];
     // convert const input to attr
-    if (need_convert_input_to_attr && RunOpConvertConstInputToAttr(op_run_info, input_object, index, input_to_attr)) {
+    if (RunOpConvertConstInputToAttr(op_run_info, input_object, index)) {
       continue;
     }
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
     ConvertValueToTensor(op_run_info, input_object, index);
     // -1 indicates input_object is not a dynInput
-    if (op_run_info->op_prim->HasAttr(kAttrDynInputSizes) && !input_object->isa<ValueSequence>()) {
-      auto dyn_v = GetValue<const std::vector<int64_t>>(op_run_info->op_prim->GetAttr(kAttrDynInputSizes));
-      (void)dyn_v.emplace_back(-1);
-      op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+    if (!op_run_info->base_op_run_info.dyn_input_sizes.empty() && !input_object->isa<ValueSequence>()) {
+      (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(-1);
     }
   }
   op_run_info->op_prim->EndRecordAddAttr();
-  ReplaceValueNodeWithParameter(op_run_info, device_target);
+  ReplaceValueNodeWithParameter(op_run_info);
   ReplaceReduceAxis(op_run_info);
+  AddDynInputsSizesAttr(op_run_info);
 }
 }  // namespace PyNativeAlgo
 }  // namespace pynative

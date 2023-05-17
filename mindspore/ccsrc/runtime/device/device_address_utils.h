@@ -50,8 +50,8 @@ class DeviceAddressUtils {
 device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
 device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,
                                                 size_t output_index);
-size_t GetTensorDeviceSize(const AnfNodePtr &node, const ShapeVector &shape, std::string format, TypeId dtype,
-                           size_t output_index);
+size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node, const ShapeVector &shape,
+                           std::string format, TypeId dtype, size_t output_index);
 }  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_COMMON_UTILS_H_

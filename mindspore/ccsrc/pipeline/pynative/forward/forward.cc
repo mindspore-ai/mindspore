@@ -103,6 +103,37 @@ void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
   }
   MS_LOG(DEBUG) << "Update StubNode abstract " << abs->ToString();
 }
+
+void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
+  // Clone a new prim
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  auto prim_py = op_run_info->op_prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
+  auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));
+  op_run_info->op_prim = new_prim;
+  MS_EXCEPTION_IF_NULL(new_adapter);
+  new_adapter->set_attached_primitive(new_prim);
+}
+
+bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
+  for (const auto &value : op_run_info->input_value) {
+    if (!value->isa<ValueSequence>()) {
+      continue;
+    }
+    auto value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+
+    const auto &tuple_inputs = value_seq->value();
+    if (tuple_inputs.empty()) {
+      continue;
+    }
+    if (tuple_inputs[0]->isa<tensor::Tensor>()) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
@@ -245,6 +276,15 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
+  op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_prim);
+  PyNativeAlgo::Common::GetConstInputToAttr(op_run_info);
+  bool is_dynamic_inputs = IsDynamicInputs(op_run_info);
+  if (!op_run_info->input_to_attr.empty() || is_dynamic_inputs) {
+    MS_LOG(DEBUG) << "Op_prim need clone:" << op_run_info->base_op_run_info.op_name
+                  << ", is_dynamic_inputs:" << is_dynamic_inputs
+                  << ", input_to_attr is not empty:" << (!op_run_info->input_to_attr.empty());
+    ClonePrim(op_run_info);
+  }
   op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }
@@ -500,10 +540,8 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(ms_context);
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
-  const auto &cur_target = GetCurrentDeviceTarget(op_run_info->op_prim);
-  op_run_info->base_op_run_info.device_target = cur_target;
-  CheckIfNeedSyncForHeterogeneous(cur_target);
-  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, cur_target);
+  CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
+  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target);
   // get graph info for checking it whether existing in the cache
   op_run_info->base_op_run_info.graph_info =
     pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
@@ -515,7 +553,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
 #endif
 
   VectorRef outputs;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(cur_target);
+  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {

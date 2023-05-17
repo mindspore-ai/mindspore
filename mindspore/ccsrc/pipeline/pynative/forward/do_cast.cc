@@ -89,21 +89,6 @@ ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
-  if (cast_prim_ == nullptr) {
-    py::gil_scoped_acquire gil;
-    const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
-    auto prim_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
-    MS_EXCEPTION_IF_NULL(prim_adapter);
-    auto primitive = prim_adapter->attached_primitive();
-    if (primitive == nullptr) {
-      primitive = std::make_shared<PrimitivePy>(cast_prim);
-      prim_adapter->set_attached_primitive(primitive);
-    }
-    if (!primitive->HasPyObj()) {
-      MS_LOG(EXCEPTION) << "Pyobj is empty";
-    }
-    cast_prim_ = primitive;
-  }
   // Mixed precision conversion tensors which has cast dtype
   SetTensorMixPrecisionCast(op_run_info);
   // Implicit transform
@@ -111,8 +96,8 @@ void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 void CastOperation::ClearRes() {
-  cast_prim_ = nullptr;
   implicit_cast_map_.clear();
+  type_prim_cache_.clear();
 }
 
 bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
@@ -258,6 +243,28 @@ void CastOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
   }
 }
 
+PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
+  const auto &iter = type_prim_cache_.find(type_id);
+  if (iter != type_prim_cache_.end()) {
+    return iter->second;
+  }
+
+  py::gil_scoped_acquire gil;
+  const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+  auto prim_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
+  MS_EXCEPTION_IF_NULL(prim_adapter);
+  auto primitive = prim_adapter->attached_primitive();
+  if (primitive == nullptr) {
+    primitive = std::make_shared<PrimitivePy>(cast_prim);
+    prim_adapter->set_attached_primitive(primitive);
+  }
+  if (!primitive->HasPyObj()) {
+    MS_LOG(EXCEPTION) << "Pyobj is empty";
+  }
+  type_prim_cache_[type_id] = primitive;
+  return primitive;
+}
+
 ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
                                    const std::string &op_name, size_t index) const {
   // Step 1: Cast scalar value to another scalar value with destination data type.
@@ -273,8 +280,8 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->grad_flag = op_run_info->grad_flag;
-  MS_EXCEPTION_IF_NULL(cast_prim_);
-  cast_run_info->op_prim = cast_prim_;
+  cast_run_info->op_prim = GetPrimByTypeId(type_id);
+  MS_EXCEPTION_IF_NULL(cast_run_info->op_prim);
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
   cast_run_info->base_op_run_info.next_op_name = op_name;
@@ -282,6 +289,9 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.lazy_build = op_run_info->base_op_run_info.lazy_build;
   cast_run_info->base_op_run_info.use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
+  cast_run_info->base_op_run_info.device_target =
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_run_info->op_prim);
+  PyNativeAlgo::Common::GetConstInputToAttr(cast_run_info);
   (void)cast_run_info->input_value.emplace_back(v);
   (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;

@@ -53,6 +53,7 @@ struct BaseOpRunInfo {
   std::vector<int64_t> input_mask;
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
+  std::vector<int64_t> dyn_input_sizes;
 };
 
 struct AsyncStatus {
@@ -80,6 +81,7 @@ struct FrontendOpRunInfo {
   stub::StubNodePtr stub_output;
   std::vector<Signature> signatures;
   AsyncStatus async_status;
+  mindspore::HashSet<size_t> input_to_attr;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 
