@@ -17,6 +17,7 @@
 #include "src/extendrt/kernel/default/lite_kernel_mod.h"
 #include <string>
 #include "src/extendrt/utils/tensor_utils.h"
+#include "src/extendrt/kernel/default/cnode_infer_manager.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -58,4 +59,6 @@ int LiteKernelMod::Run() {
   }
   return ret ? RET_OK : RET_ERROR;
 }
+
+int LiteKernelMod::InferShape() { return infer::CNodeInferShape(cnode_, this->out_tensors_); }
 }  // namespace mindspore::kernel

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/extendrt/graph_compiler/cnode_infer_manager.h"
+#include "src/extendrt/kernel/default/cnode_infer_manager.h"
 #include <algorithm>
 #include "abstract/abstract_value.h"
 #include "include/backend/anf_runtime_algorithm.h"

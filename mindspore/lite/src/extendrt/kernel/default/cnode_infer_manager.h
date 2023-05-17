@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_CNODE_INFER_MANAGER_H_
-#define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_CNODE_INFER_MANAGER_H_
+#ifndef MINDSPORE_LITE_EXTENDRT_KERNEL_DEFAULT_CNODE_INFER_MANAGER_H_
+#define MINDSPORE_LITE_EXTENDRT_KERNEL_DEFAULT_CNODE_INFER_MANAGER_H_
 #include <vector>
 #include "mindspore/core/ir/anf.h"
 #include "src/litert/inner_context.h"
@@ -25,4 +25,4 @@ namespace infer {
 int CNodeInferShape(const CNodePtr &cnode, const std::vector<lite::Tensor *> &outputs);
 }  // namespace infer
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_CNODE_INFER_MANAGER_H_
+#endif  // MINDSPORE_LITE_EXTENDRT_KERNEL_DEFAULT_CNODE_INFER_MANAGER_H_

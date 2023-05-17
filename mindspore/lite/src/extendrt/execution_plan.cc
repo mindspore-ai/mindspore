@@ -24,14 +24,8 @@
 
 namespace mindspore::infer {
 ExecutionPlan::~ExecutionPlan() {
-  if (input_isolate_map_ != nullptr) {
-    delete input_isolate_map_;
-    input_isolate_map_ = nullptr;
-  }
-  if (output_isolate_map_) {
-    delete output_isolate_map_;
-    output_isolate_map_ = nullptr;
-  }
+  FreeInputIsolateMap();
+  FreeOutputIsolateMap();
 
   for (auto tensor : inputs_) {
     if (tensor != nullptr) {

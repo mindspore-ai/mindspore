@@ -40,7 +40,9 @@ class SingleGraphScheduler {
   int SelectKernel(const CompileResultPtr &node_list);
   bool HandleWeightForKernels();
   Status OptimizeTranspose(std::vector<kernel::KernelExec *> *kernels);
-  bool InferShape(const CompileResultPtr &node_list);
+  int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter);
+  int InferShapeByOps(CompileNode *node);
+  int FallBackInferShape(const CompileResultPtr &node_list);
 
  private:
   lite::InnerContext *context_;

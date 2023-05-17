@@ -43,6 +43,7 @@ struct KernelSpec {
   KernelAttr attr;
   Format format;
   BaseOperatorPtr primitive;
+  CNodePtr cnode;
   std::string backend;
 };
 

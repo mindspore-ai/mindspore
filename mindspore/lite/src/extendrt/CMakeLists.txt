@@ -30,6 +30,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
 
     set(MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/cnode_infer_manager.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
 
@@ -75,7 +76,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/primitive_type.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/cnode_infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/anfnode_tensor_adapter.cc
