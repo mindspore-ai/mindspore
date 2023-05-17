@@ -34,6 +34,111 @@
 
 namespace mindspore {
 namespace fallback {
+namespace {
+// Get the type from python type string, defined in Python module 'mindspore.common.dtype'.
+TypePtr GetTypeFromString(const std::string &dtype) {
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto get_dtype_python_function = "get_dtype";
+  auto type = python_adapter::CallPyModFn(mod, get_dtype_python_function, py::str(dtype));
+  MS_LOG(DEBUG) << "type: " << type;
+  if (py::isinstance<py::none>(type)) {
+    return nullptr;
+  }
+  auto type_ptr = py::cast<TypePtr>(type);
+  if (type_ptr == nullptr) {
+    return nullptr;
+  }
+  return type_ptr->Clone();
+}
+
+std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &comment) {
+  std::stringstream err_buf;
+  err_buf << "Wrong comment format for JIT type annotation: '" << comment
+          << "'.\ne.g. '# @jit.typing: () -> tensor_type[int32]' or:"
+          << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor_type[{dtype_var}]\n\t...\n---\n\n"
+          << trace::GetDebugInfo(node->debug_info());
+  return err_buf.str();
+}
+
+std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
+  std::stringstream script_buffer;
+  script_buffer << kPyExecPrefix << std::to_string(index);
+  std::vector<size_t> convert_pos;
+  for (size_t i = 0; i < target.size(); ++i) {
+    auto c = target[i];
+    if (!std::isalnum(c)) {
+      convert_pos.push_back(i);
+    }
+  }
+  size_t start = 0;
+  for (auto end : convert_pos) {
+    std::string sub_non_convert = target.substr(start, end - start);
+    if (sub_non_convert.size() != 0) {
+      script_buffer << kUnderLine << sub_non_convert;
+    }
+    char sub_convert = target[end];
+    std::stringstream hex_s;
+    hex_s << kUnderLine << kHexPrefix << std::hex << static_cast<int>(sub_convert);
+    script_buffer << hex_s.str();
+    start = end + 1;
+  }
+  if (target.substr(start).size() != 0) {
+    script_buffer << kUnderLine << target.substr(start);
+  }
+  script_buffer << kPyExecSuffix;
+  auto unicode_str = script_buffer.str();
+  MS_LOG(DEBUG) << "Get Unicode str: " << unicode_str;
+  return script_buffer.str();
+}
+
+std::string ConvertUnicodeStrToRealStr(const std::string &target) {
+  constexpr size_t non_script_size = 3;
+  size_t sub_target_len = target.size() - std::strlen(kPyExecPrefix) - non_script_size;
+  auto sub_target = target.substr(std::strlen(kPyExecPrefix) + 2, sub_target_len);
+  std::stringstream script_buffer;
+  sub_target = sub_target + "_";
+  auto pos = sub_target.find("_");
+  constexpr size_t base_16 = 16;
+  while (pos != sub_target.npos) {
+    auto cur_str = sub_target.substr(0, pos);
+    if (cur_str.size() == 0) {
+      break;
+    }
+    if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
+      script_buffer << char(std::stoi(cur_str, nullptr, base_16));
+    } else {
+      script_buffer << cur_str;
+    }
+    sub_target = sub_target.substr(pos + 1);
+    pos = sub_target.find("_");
+  }
+  auto real_str = script_buffer.str();
+  return real_str;
+}
+
+std::string ConvertToRealStr(const std::string &target) {
+  if (target.find(kPyExecPrefix) == string::npos) {
+    return target;
+  }
+  std::string real_str = "";
+  size_t pos = 0;
+  size_t start_pos, end_pos;
+  while ((start_pos = target.find(kPyExecPrefix, pos)) != std::string::npos &&
+         (end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != std::string::npos) {
+    if (start_pos > pos) {
+      real_str += target.substr(pos, start_pos - pos);
+    }
+    auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
+    pos = end_pos + std::strlen(kPyExecSuffix);
+    real_str += ConvertUnicodeStrToRealStr(substr);
+  }
+  if (pos < target.size()) {
+    real_str += target.substr(pos);
+  }
+  return real_str;
+}
+}  // namespace
+
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
                               const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info) {
   const auto interpreted_cnode = fg->NewCNode({NewValueNode(prim::kPrimPyExecute), script, keys, values});
@@ -74,11 +179,7 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
 
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node) {
-  auto value_node_key = key;
-  (void)value_node_key.erase(
-    std::remove_if(value_node_key.begin(), value_node_key.end(), [](char c) { return !std::isalnum(c); }),
-    value_node_key.end());
-
+  auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
   // Set the value node into dict firstly.
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto set_local_variable = "set_local_variable";
@@ -111,33 +212,6 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   }
   return ConvertPyObjectToPyExecute(fg, interpreted_value->name(), interpreted_value->obj(), node);
 }
-
-namespace {
-// Get the type from python type string, defined in Python module 'mindspore.common.dtype'.
-TypePtr GetTypeFromString(const std::string &dtype) {
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  constexpr auto get_dtype_python_function = "get_dtype";
-  auto type = python_adapter::CallPyModFn(mod, get_dtype_python_function, py::str(dtype));
-  MS_LOG(DEBUG) << "type: " << type;
-  if (py::isinstance<py::none>(type)) {
-    return nullptr;
-  }
-  auto type_ptr = py::cast<TypePtr>(type);
-  if (type_ptr == nullptr) {
-    return nullptr;
-  }
-  return type_ptr->Clone();
-}
-
-std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &comment) {
-  std::stringstream err_buf;
-  err_buf << "Wrong comment format for JIT type annotation: '" << comment
-          << "'.\ne.g. '# @jit.typing: () -> tensor_type[int32]' or:"
-          << "\n---\n\tdtype_var = ms.int32\n\t# @jit.typing: () -> tensor_type[{dtype_var}]\n\t...\n---\n\n"
-          << trace::GetDebugInfo(node->debug_info());
-  return err_buf.str();
-}
-}  // namespace
 
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVariableTypeFunc &format_type_func) {
   const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
@@ -247,86 +321,6 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
   }
   return nullptr;
 }
-
-namespace {
-std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
-  std::stringstream script_buffer;
-  script_buffer << kPyExecPrefix << std::to_string(index);
-  std::vector<size_t> convert_pos;
-  for (size_t i = 0; i < target.size(); ++i) {
-    auto c = target[i];
-    if (!std::isalnum(c)) {
-      convert_pos.push_back(i);
-    }
-  }
-  size_t start = 0;
-  for (auto end : convert_pos) {
-    std::string sub_non_convert = target.substr(start, end - start);
-    if (sub_non_convert.size() != 0) {
-      script_buffer << kUnderLine << sub_non_convert;
-    }
-    char sub_convert = target[end];
-    std::stringstream hex_s;
-    hex_s << kUnderLine << kHexPrefix << std::hex << static_cast<int>(sub_convert);
-    script_buffer << hex_s.str();
-    start = end + 1;
-  }
-  if (target.substr(start).size() != 0) {
-    script_buffer << kUnderLine << target.substr(start);
-  }
-  script_buffer << kPyExecSuffix;
-  auto unicode_str = script_buffer.str();
-  MS_LOG(DEBUG) << "Get Unicode str: " << unicode_str;
-  return script_buffer.str();
-}
-
-std::string ConvertUnicodeStrToRealStr(const std::string &target) {
-  constexpr size_t non_script_size = 3;
-  size_t sub_target_len = target.size() - std::strlen(kPyExecPrefix) - non_script_size;
-  auto sub_target = target.substr(std::strlen(kPyExecPrefix) + 2, sub_target_len);
-  std::stringstream script_buffer;
-  sub_target = sub_target + "_";
-  auto pos = sub_target.find("_");
-  constexpr size_t base_16 = 16;
-  while (pos != sub_target.npos) {
-    auto cur_str = sub_target.substr(0, pos);
-    if (cur_str.size() == 0) {
-      break;
-    }
-    if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
-      script_buffer << char(std::stoi(cur_str, nullptr, base_16));
-    } else {
-      script_buffer << cur_str;
-    }
-    sub_target = sub_target.substr(pos + 1);
-    pos = sub_target.find("_");
-  }
-  auto real_str = script_buffer.str();
-  return real_str;
-}
-
-std::string ConvertToRealStr(const std::string &target) {
-  if (target.find(kPyExecPrefix) == string::npos) {
-    return target;
-  }
-  std::string real_str = "";
-  size_t pos = 0;
-  size_t start_pos, end_pos;
-  while ((start_pos = target.find(kPyExecPrefix, pos)) != std::string::npos &&
-         (end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != std::string::npos) {
-    if (start_pos > pos) {
-      real_str += target.substr(pos, start_pos - pos);
-    }
-    auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
-    pos = end_pos + std::strlen(kPyExecSuffix);
-    real_str += ConvertUnicodeStrToRealStr(substr);
-  }
-  if (pos < target.size()) {
-    real_str += target.substr(pos);
-  }
-  return real_str;
-}
-}  // namespace
 
 std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &script) {
   // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
@@ -452,8 +446,7 @@ std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const 
 }  // namespace fallback
 
 namespace raiseutils {
-std::string MakeRaiseKey(const int index) { return "__internal_error_value" + std::to_string(index) + "__"; }
-
+namespace {
 bool CheckIsStr(const AbstractBasePtr &abs) {
   auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
   auto scalar_type = scalar->BuildType();
@@ -464,45 +457,12 @@ bool CheckIsStr(const AbstractBasePtr &abs) {
   return false;
 }
 
-bool CheckNeedSymbol(const AbstractBasePtr &abs) {
+std::string GetScalarStringValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
-  bool need_symbol = false;
-  if (abs->isa<abstract::AbstractScalar>()) {
-    need_symbol = CheckIsStr(abs);
-  } else if (abs->isa<abstract::AbstractSequence>()) {
-    auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
-    const auto &elements = abs_list->elements();
-    for (auto &element : elements) {
-      MS_EXCEPTION_IF_NULL(element);
-      if (element->isa<abstract::AbstractScalar>()) {
-        need_symbol = CheckIsStr(element);
-        if (need_symbol) {
-          return need_symbol;
-        }
-      }
-    }
-  }
-  return need_symbol;
-}
-
-std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input,
-                               const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol, bool need_comma) {
-  std::string exception_str;
-  MS_EXCEPTION_IF_NULL(arg);
-  if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
-    return GetTupleOrListString(arg, input, key_value, need_symbol, need_comma);
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
-             IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
-    exception_str = GetVariable(input, need_symbol, key_value, exception_str);
-  } else if (arg->isa<abstract::AbstractDictionary>()) {
-    MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
-  } else if (arg->isa<abstract::AbstractScalar>()) {
-    // Process raise ValueError
-    exception_str += GetScalarStringValue(arg);
-  } else {
-    MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
-  }
-  return exception_str;
+  auto scalar = abs->cast<abstract::AbstractScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar);
+  auto scalar_value = scalar->BuildValue();
+  return scalar_value->ToString();
 }
 
 std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, const std::shared_ptr<KeyValueInfo> &key_value,
@@ -517,26 +477,6 @@ std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, const s
   (void)key_value->keys.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
   (void)key_value->values.emplace_back(input);
   return exception_str;
-}
-
-bool CheckHasVariable(const AbstractBasePtr &arg) {
-  if (arg->isa<abstract::AbstractSequence>()) {
-    auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
-    MS_EXCEPTION_IF_NULL(arg_tuple);
-    const auto &arg_tuple_elements = arg_tuple->elements();
-    if (arg_tuple_elements.size() == 0) {
-      MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
-    }
-    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
-      auto &element = arg_tuple_elements[index];
-      if (CheckHasVariable(element)) {
-        return true;
-      }
-    }
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
-    return true;
-  }
-  return false;
 }
 
 std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input,
@@ -591,6 +531,70 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
   }
   return exception_str;
 }
+}  // namespace
+
+std::string MakeRaiseKey(const int index) { return "__internal_error_value" + std::to_string(index) + "__"; }
+
+bool CheckNeedSymbol(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  bool need_symbol = false;
+  if (abs->isa<abstract::AbstractScalar>()) {
+    need_symbol = CheckIsStr(abs);
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
+    const auto &elements = abs_list->elements();
+    for (auto &element : elements) {
+      MS_EXCEPTION_IF_NULL(element);
+      if (element->isa<abstract::AbstractScalar>()) {
+        need_symbol = CheckIsStr(element);
+        if (need_symbol) {
+          return need_symbol;
+        }
+      }
+    }
+  }
+  return need_symbol;
+}
+
+std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input,
+                               const std::shared_ptr<KeyValueInfo> &key_value, bool need_symbol, bool need_comma) {
+  std::string exception_str;
+  MS_EXCEPTION_IF_NULL(arg);
+  if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
+    return GetTupleOrListString(arg, input, key_value, need_symbol, need_comma);
+  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
+             IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
+    exception_str = GetVariable(input, need_symbol, key_value, exception_str);
+  } else if (arg->isa<abstract::AbstractDictionary>()) {
+    MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
+  } else if (arg->isa<abstract::AbstractScalar>()) {
+    // Process raise ValueError
+    exception_str += GetScalarStringValue(arg);
+  } else {
+    MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
+  }
+  return exception_str;
+}
+
+bool CheckHasVariable(const AbstractBasePtr &arg) {
+  if (arg->isa<abstract::AbstractSequence>()) {
+    auto arg_tuple = arg->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(arg_tuple);
+    const auto &arg_tuple_elements = arg_tuple->elements();
+    if (arg_tuple_elements.size() == 0) {
+      MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
+    }
+    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+      auto &element = arg_tuple_elements[index];
+      if (CheckHasVariable(element)) {
+        return true;
+      }
+    }
+  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
+    return true;
+  }
+  return false;
+}
 
 std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node,
                              const std::shared_ptr<KeyValueInfo> &key_value, bool has_variable) {
@@ -619,14 +623,6 @@ std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node,
     }
   }
   MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
-}
-
-std::string GetScalarStringValue(const AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  auto scalar = abs->cast<abstract::AbstractScalarPtr>();
-  MS_EXCEPTION_IF_NULL(scalar);
-  auto scalar_value = scalar->BuildValue();
-  return scalar_value->ToString();
 }
 
 bool HasVariableCondition(FuncGraphPtr cur_graph, FuncGraphPtr prev_graph) {

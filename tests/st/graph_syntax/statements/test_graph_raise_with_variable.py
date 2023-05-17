@@ -889,7 +889,7 @@ def test_isolated_raise():
     net = CheckNet()
     with pytest.raises(RuntimeError) as err:
         net(data)
-    assert "Using raise with variable under a constant" in str(err.value)
+    assert "Should not raise with variable under a constant condition" in str(err.value)
 
 
 @pytest.mark.level0
@@ -1075,4 +1075,4 @@ def test_raise_with_variable_and_constant_condition():
         x = Tensor(11)
         res = net(x)
         print("res:", res)
-    assert "Using raise with variable under a constant condition." in str(raise_info_9.value)
+    assert "Should not raise with variable under a constant condition" in str(raise_info_9.value)
