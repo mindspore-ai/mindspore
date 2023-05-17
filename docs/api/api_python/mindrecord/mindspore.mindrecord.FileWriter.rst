@@ -8,8 +8,8 @@
 
     参数：
         - **file_name** (str) - 转换生成的MindRecord文件路径。
-        - **shard_num** (int，可选) - 生成MindRecord的文件个数。取值范围为[1, 1000]。默认值：1。
-        - **overwrite** (bool，可选) - 当指定目录存在同名文件时是否覆盖写。默认值：False。
+        - **shard_num** (int，可选) - 生成MindRecord的文件个数。取值范围为[1, 1000]。默认值： ``1`` 。
+        - **overwrite** (bool，可选) - 当指定目录存在同名文件时是否覆盖写。默认值： ``False`` 。
 
     异常：
         - **ParamValueError** - `file_name` 或 `shard_num` 无效。
@@ -44,7 +44,7 @@
 
         参数：
             - **content** (dict) - schema内容的字典。
-            - **desc** (str，可选) - schema的描述。默认值：None。
+            - **desc** (str，可选) - schema的描述。默认值： ``None`` 。
 
         返回：
             int，schema ID。
@@ -136,7 +136,7 @@
 
         参数：
             - **raw_data** (list[dict]) - 用户自定义数据的列表。
-            - **parallel_writer** (bool，可选) - 如果为True，则并行写入用户自定义数据。默认值：False。
+            - **parallel_writer** (bool，可选) - 如果为True，则并行写入用户自定义数据。默认值： ``False`` 。
 
         返回：
             MSRStatus，SUCCESS或FAILED。

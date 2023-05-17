@@ -78,7 +78,7 @@ class Cifar10ToMR:
         Execute transformation from cifar10 to MindRecord.
 
         Args:
-            fields (list[str], optional): A list of index fields. Default: None. For index field settings,
+            fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,
                 please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:
@@ -115,7 +115,7 @@ class Cifar10ToMR:
         Encapsulate the :func:`mindspore.mindrecord.Cifar10ToMR.run` function to exit normally.
 
         Args:
-            fields (list[str], optional): A list of index fields. Default: None. For index field settings,
+            fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,
                 please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:

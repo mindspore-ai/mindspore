@@ -30,7 +30,7 @@ class MindPage:
 
     Args:
         file_name (Union[str, list[str]]): One of MindRecord files or a file list.
-        num_consumer (int, optional): The number of reader workers which load data. Default: 4.
+        num_consumer (int, optional): The number of reader workers which load data. Default: ``4`` .
             It should not be smaller than 1 or larger than the number of processor cores.
 
     Raises:

@@ -6,11 +6,11 @@ mindspore.nn.probability.bijector.Bijector
     Bijector类。Bijector描述了一种随机变量的映射方法。可以通过一个已有的随机变量 :math:`X` 和一个映射函数 :math:`g(x)` 生成一个新的随机变量 :math:`Y = g(X)` 。
 
     参数：    
-        - **is_constant_jacobian** (bool) - Bijector是否具有常数导数。默认值：False。
-        - **is_injective** (bool) - Bijector是否为一对一映射。默认值：True。
-        - **name** (str) - Bijector名称。默认值：None。
-        - **dtype** (mindspore.dtype) - Bijector可以操作的分布的数据类型。默认值：None。
-        - **param** (dict) - 用于初始化Bijector的参数。默认值：None。
+        - **is_constant_jacobian** (bool) - Bijector是否具有常数导数。默认值： ``False`` 。
+        - **is_injective** (bool) - Bijector是否为一对一映射。默认值： ``True`` 。
+        - **name** (str) - Bijector名称。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - Bijector可以操作的分布的数据类型。默认值： ``None`` 。
+        - **param** (dict) - 用于初始化Bijector的参数。默认值： ``None`` 。
 
     .. note::
         Bijector的 `dtype` 为None时，输入值必须是float类型，除此之外没有其他强制要求。

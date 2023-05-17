@@ -8,7 +8,7 @@ mindspore.nn.probability.bijector.Invert
 
     参数：
         - **bijector** (Bijector) - 基础Bijector（Base Bijector）。
-        - **name** (str) - Bijector名称。默认值：""。当name设置为""时，实际上是'Invert' + Bijector.name。
+        - **name** (str) - Bijector名称。默认值： ``""`` 。当name设置为""时，实际上是'Invert' + Bijector.name。
 
     .. py:method:: bijector
         :property:

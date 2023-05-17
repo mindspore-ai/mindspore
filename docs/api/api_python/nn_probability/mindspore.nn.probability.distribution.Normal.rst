@@ -12,11 +12,11 @@ mindspore.nn.probability.distribution.Normal
     其中 :math:`\mu, \sigma` 为分别为正态分布的期望与标准差。
 
     参数：
-        - **mean** (int, float, list, numpy.ndarray, Tensor) - 正态分布的平均值。默认值：None。
-        - **sd** (int, float, list, numpy.ndarray, Tensor) - 正态分布的标准差。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
-        - **name** (str) - 分布的名称。默认值：'Normal'。
+        - **mean** (int, float, list, numpy.ndarray, Tensor) - 正态分布的平均值。默认值： ``None`` 。
+        - **sd** (int, float, list, numpy.ndarray, Tensor) - 正态分布的标准差。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值： ``mstype.float32`` 。
+        - **name** (str) - 分布的名称。默认值： ``'Normal'`` 。
 
     .. note:: 
         - `sd` 必须大于零。
@@ -48,8 +48,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -62,8 +62,8 @@ mindspore.nn.probability.distribution.Normal
             - **dist** (str) - 分布的类型。
             - **mean_b** (Tensor) - 对比分布的期望。
             - **sd_b** (Tensor) - 对比分布的标准差。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，交叉熵的值。
@@ -73,8 +73,8 @@ mindspore.nn.probability.distribution.Normal
         计算熵。
 
         参数：
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，熵的值。
@@ -87,8 +87,8 @@ mindspore.nn.probability.distribution.Normal
             - **dist** (str) - 分布的类型。
             - **mean_b** (Tensor) - 对比分布的期望。
             - **sd_b** (Tensor) - 对比分布的标准差。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，KL散度。
@@ -99,8 +99,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -111,8 +111,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -123,8 +123,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -134,8 +134,8 @@ mindspore.nn.probability.distribution.Normal
         计算众数。
 
         参数：
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -146,8 +146,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -158,8 +158,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -170,8 +170,8 @@ mindspore.nn.probability.distribution.Normal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -181,8 +181,8 @@ mindspore.nn.probability.distribution.Normal
         计算方差。
 
         参数：
-            - **mean** (Tensor) - 分布的期望。默认值：None。
-            - **sd** (Tensor) - 分布的标准差。默认值：None。
+            - **mean** (Tensor) - 分布的期望。默认值： ``None`` 。
+            - **sd** (Tensor) - 分布的标准差。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

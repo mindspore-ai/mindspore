@@ -10,9 +10,9 @@ mindspore.nn.probability.bijector.GumbelCDF
         Y = g(x) = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
     参数：
-        - **loc** (float, list, numpy.ndarray, Tensor) - 位移因子，即上述公式中的loc。默认值：0.0。
-        - **scale** (float, list, numpy.ndarray, Tensor) - 比例因子，即上述公式中的scale。默认值：1.0。
-        - **name** (str) - Bijector名称。默认值：'GumbelCDF'。
+        - **loc** (float, list, numpy.ndarray, Tensor) - 位移因子，即上述公式中的loc。默认值： ``0.0`` 。
+        - **scale** (float, list, numpy.ndarray, Tensor) - 比例因子，即上述公式中的scale。默认值： ``1.0`` 。
+        - **name** (str) - Bijector名称。默认值： ``'GumbelCDF'`` 。
 
     .. note::
         - `scale` 中元素必须大于零。

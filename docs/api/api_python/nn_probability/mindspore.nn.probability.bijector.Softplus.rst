@@ -12,8 +12,8 @@ mindspore.nn.probability.bijector.Softplus
     其中k是锐度因子。
 
     参数：
-        - **sharpness** (float, list, numpy.ndarray, Tensor) - 锐度因子，上述公式中的k。默认值：1.0。
-        - **name** (str) - Bijector名称。默认值：'Softplus'。
+        - **sharpness** (float, list, numpy.ndarray, Tensor) - 锐度因子，上述公式中的k。默认值： ``1.0`` 。
+        - **name** (str) - Bijector名称。默认值： ``'Softplus'`` 。
 
     .. note::
         `sharpness` 中元素的数据类型必须为float。

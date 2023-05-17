@@ -48,7 +48,7 @@ class ImageNetToMR:
         image_dir (str): Image directory contains n01440764, n01443537, n01484850 and n15075141 directory.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
             no file with the same name exists in the directory.
-        partition_number (int, optional): The partition size. Default: 1.
+        partition_number (int, optional): The partition size. Default: ``1`` .
 
     Raises:
         ValueError: If `map_file` , `image_dir` or `destination` is invalid.

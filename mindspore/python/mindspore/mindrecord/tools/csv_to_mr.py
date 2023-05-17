@@ -42,8 +42,8 @@ class CsvToMR:
         source (str): The file path of csv.
         destination (str): The MindRecord file path to transform into, ensure that the directory is created in advance
             and no file with the same name exists in the directory.
-        columns_list(list[str], optional): A list of columns to be read. Default: None.
-        partition_number (int, optional): The partition size, Default: 1.
+        columns_list(list[str], optional): A list of columns to be read. Default: ``None`` .
+        partition_number (int, optional): The partition size, Default: ``1`` .
 
     Raises:
         ValueError: If `source` , `destination` , `partition_number` is invalid.

@@ -9,10 +9,10 @@ mindspore.nn.probability.distribution.Geometric
     离散随机分布，取值范围为正自然数集，概率质量函数为 :math:`P(X = i) = p(1-p)^{i-1}, i = 1, 2, ...`。
 
     参数：
-        - **probs** (float, list, numpy.ndarray, Tensor) - 成功的概率。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.int32.
-        - **name** (str) - 分布的名称。默认值：'Geometric'。
+        - **probs** (float, list, numpy.ndarray, Tensor) - 成功的概率。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值： ``mstype.int32`` 。
+        - **name** (str) - 分布的名称。默认值： ``'Geometric'`` 。
 
     .. note:: 
         `probs` 必须是合适的概率（0<p<1）。`dist_spec_args` 是 `probs`。
@@ -35,7 +35,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -47,7 +47,7 @@ mindspore.nn.probability.distribution.Geometric
         参数：
             - **dist** (str) - 分布的类型。
             - **probs_b** (Tensor) - 对比分布的伯努利实验成功的概率。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，交叉熵的值。
@@ -57,7 +57,7 @@ mindspore.nn.probability.distribution.Geometric
         计算熵。
 
         参数：
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，熵的值。
@@ -69,7 +69,7 @@ mindspore.nn.probability.distribution.Geometric
         参数：
             - **dist** (str) - 分布的类型。
             - **probs_b** (Tensor) - 对比分布的伯努利实验成功的概率。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，KL散度。
@@ -80,7 +80,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -91,7 +91,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -102,7 +102,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -112,7 +112,7 @@ mindspore.nn.probability.distribution.Geometric
         计算期望。
 
         参数：
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的期望。
@@ -122,7 +122,7 @@ mindspore.nn.probability.distribution.Geometric
         计算众数。
 
         参数：
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -133,7 +133,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -144,7 +144,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -154,7 +154,7 @@ mindspore.nn.probability.distribution.Geometric
         计算标准差。
 
         参数：        
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的标准差。
@@ -165,7 +165,7 @@ mindspore.nn.probability.distribution.Geometric
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -175,7 +175,7 @@ mindspore.nn.probability.distribution.Geometric
         计算方差。
 
         参数：
-            - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+            - **probs** (Tensor) - 伯努利实验成功的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

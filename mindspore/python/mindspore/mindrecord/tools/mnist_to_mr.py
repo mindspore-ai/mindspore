@@ -43,7 +43,7 @@ class MnistToMR:
                       and train-labels-idx1-ubyte.gz.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
             no file with the same name exists in the directory.
-        partition_number (int, optional): The partition size. Default: 1.
+        partition_number (int, optional): The partition size. Default: ``1`` .
 
     Raises:
         ValueError: If `source` , `destination` , `partition_number` is invalid.

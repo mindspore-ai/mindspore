@@ -46,8 +46,8 @@ class FileWriter:
     Args:
         file_name (str): File name of MindRecord file.
         shard_num (int, optional): The Number of MindRecord files.
-            It should be between [1, 1000]. Default: 1.
-        overwrite (bool, optional): Whether to overwrite if the file already exists. Default: False.
+            It should be between [1, 1000]. Default: ``1`` .
+        overwrite (bool, optional): Whether to overwrite if the file already exists. Default: ``False`` .
 
     Raises:
         ParamValueError: If `file_name` or `shard_num` or `overwrite` is invalid.
@@ -177,7 +177,7 @@ class FileWriter:
 
         Args:
             content (dict): Dictionary of schema content.
-            desc (str, optional): String of schema description, Default: None.
+            desc (str, optional): String of schema description, Default: ``None`` .
 
         Returns:
             int, schema id.
@@ -257,7 +257,7 @@ class FileWriter:
 
         Args:
            raw_data (list[dict]): List of raw data.
-           parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: False.
+           parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
