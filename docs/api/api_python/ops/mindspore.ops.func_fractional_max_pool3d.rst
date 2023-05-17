@@ -24,14 +24,14 @@ mindspore.ops.fractional_max_pool3d
     异常：
         - **TypeError** - `input` 不是四维或五维Tensor。
         - **TypeError** - `random_samples` 不是三维Tensor。
-        - **TypeError** - `input` 数据类型不是float16、float32、double、int32、int64。
-        - **TypeError** - `random_samples` 数据类型不是float16、float32、double。
+        - **TypeError** - `input` 数据类型不是float16、float32、double。
+        - **TypeError** - `_random_samples` 数据类型不是float16、float32、double。
         - **TypeError** - `argmax` 数据类型不是int32、int64。
-        - **TypeError** - `random_samples` 和 `input` 数据类型不相同。
+        - **TypeError** - `_random_samples` 和 `input` 数据类型不相同。
         - **ValueError** - `output_shape` 不是长度为3的tuple。
         - **ValueError** - `kernal_size` 不是长度为3的tuple。
         - **ValueError** - `output_shape` 和 `kernel_size` 不是正数。
         - **ValueError** - `output_size` 和 `output_ratio` 同时为 `None` 。
-        - **ValueError** - `input` 和 `random_samples` 的第一维度大小不相等。
-        - **ValueError** - `input` 和 `random_samples` 第二维度大小不相等。
-        - **ValueError** - `random_samples` 第三维度大小不是3。
+        - **ValueError** - `input` 和 `_random_samples` 的第一维度大小不相等。
+        - **ValueError** - `input` 和 `_random_samples` 第二维度大小不相等。
+        - **ValueError** - `_random_samples` 第三维度大小不是3。
