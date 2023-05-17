@@ -406,7 +406,8 @@ class FrameworkParser:
                              subgraph=subgraph,
                              op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})),
                              graph_id=task_desc['modelId'])
-            graph_ids.add(task_desc['modelId'])
+            if not task_desc['opType'].startswith("InitDataSetQueue") and not task_desc['opType'].startswith("GetNext"):
+                graph_ids.add(task_desc['modelId'])
             all_op_data.append(op_data)
         ProfilerInfo.set_graph_ids(list(graph_ids))
         return all_op_data
@@ -661,7 +662,7 @@ class GpuFrameWorkParser:
         with open(gpu_framework_file[0], 'r') as f_obj:
             framework_info = f_obj.readlines()
         for line_info in framework_info:
-            if line_info.startswith("InitDataSetQueue"):
+            if line_info.startswith("InitDataSetQueue") or line_info.startswith("GetNext"):
                 continue
             line_info = line_info.strip(' ').strip('\n').split(';')
             if len(line_info) > 2 and line_info[2].isdigit():
