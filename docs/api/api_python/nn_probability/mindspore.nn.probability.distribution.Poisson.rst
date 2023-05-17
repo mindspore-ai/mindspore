@@ -12,10 +12,10 @@ mindspore.nn.probability.distribution.Poisson
     其中 :math:`\lambda` 为率参数(rate)。
 
     参数：
-        - **rate** (list, numpy.ndarray, Tensor) - 泊松分布的率参数。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
-        - **name** (str) - 分布的名称。默认值：'Poisson'。
+        - **rate** (list, numpy.ndarray, Tensor) - 泊松分布的率参数。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值： ``mstype.float32`` 。
+        - **name** (str) - 分布的名称。默认值： ``'Poisson'`` 。
 
     .. note:: 
         `rate` 必须大于0。 `dist_spec_args` 是 `rate`。
@@ -37,7 +37,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -48,7 +48,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -59,7 +59,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -70,7 +70,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -80,7 +80,7 @@ mindspore.nn.probability.distribution.Poisson
         计算期望。
 
         参数：
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的期望。
@@ -90,7 +90,7 @@ mindspore.nn.probability.distribution.Poisson
         计算众数。
 
         参数：
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -101,7 +101,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -112,7 +112,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -122,7 +122,7 @@ mindspore.nn.probability.distribution.Poisson
         计算标准差。
 
         参数：        
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的标准差。
@@ -133,7 +133,7 @@ mindspore.nn.probability.distribution.Poisson
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -143,7 +143,7 @@ mindspore.nn.probability.distribution.Poisson
         计算方差。
 
         参数：
-            - **rate** (Tensor) - 率参数(rate)。默认值：None。
+            - **rate** (Tensor) - 率参数(rate)。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

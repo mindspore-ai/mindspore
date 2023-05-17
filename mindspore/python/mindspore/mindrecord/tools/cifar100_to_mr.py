@@ -79,7 +79,7 @@ class Cifar100ToMR:
 
         Args:
             fields (list[str], optional):
-                A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
+                A list of index field, e.g.["fine_label", "coarse_label"]. Default: ``None`` . For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:
@@ -120,7 +120,7 @@ class Cifar100ToMR:
 
         Args:
             fields (list[str], optional):
-                A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
+                A list of index field, e.g.["fine_label", "coarse_label"]. Default: ``None`` . For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
 
         Returns:

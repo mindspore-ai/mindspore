@@ -37,10 +37,10 @@ class FileReader:
 
     Args:
         file_name (str, list[str]): One of MindRecord file path or file path list.
-        num_consumer (int, optional): Number of reader workers which load data. Default: 4.
+        num_consumer (int, optional): Number of reader workers which load data. Default: ``4`` .
             It should not be smaller than 1 or larger than the number of processor cores.
-        columns (list[str], optional): A list of fields where corresponding data would be read. Default: None.
-        operator (int, optional): Reserved parameter for operators. Default: None.
+        columns (list[str], optional): A list of fields where corresponding data would be read. Default: ``None`` .
+        operator (int, optional): Reserved parameter for operators. Default: ``None`` .
 
     Raises:
         ParamValueError: If `file_name` , `num_consumer` or `columns` is invalid.

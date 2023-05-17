@@ -12,11 +12,11 @@ mindspore.nn.probability.distribution.Beta
     其中 :math:`B` 为 Beta 函数。
 
     参数：
-        - **concentration1** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的alpha。默认值：None。
-        - **concentration0** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的beta。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-        - **dtype** (mindspore.dtype) - 采样结果的数据类型。默认值：mstype.float32。
-        - **name** (str) - 分布的名称。默认值：'Beta'。
+        - **concentration1** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的alpha。默认值： ``None`` 。
+        - **concentration0** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的beta。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 采样结果的数据类型。默认值： ``mstype.float32`` 。
+        - **name** (str) - 分布的名称。默认值： ``'Beta'`` 。
 
     .. note::
         - `concentration1` 和 `concentration0` 中元素必须大于零。
@@ -49,8 +49,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -63,8 +63,8 @@ mindspore.nn.probability.distribution.Beta
             - **dist** (str) - 分布的类型。
             - **concentration1_b** (Tensor) - 对比 Beta 分布的 alpha。
             - **concentration0_b** (Tensor) - 对比 Beta 分布的 beta。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，交叉熵的值。
@@ -74,8 +74,8 @@ mindspore.nn.probability.distribution.Beta
         计算熵。
 
         参数：
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，熵的值。
@@ -88,8 +88,8 @@ mindspore.nn.probability.distribution.Beta
             - **dist** (str) - 分布的类型。
             - **concentration1_b** (Tensor) - 对比 Beta 分布的 alpha。
             - **concentration0_b** (Tensor) - 对比 Beta 分布的 beta。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，KL散度。
@@ -100,8 +100,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -112,8 +112,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -124,8 +124,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -135,8 +135,8 @@ mindspore.nn.probability.distribution.Beta
         计算期望。
 
         参数：
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的期望。
@@ -146,8 +146,8 @@ mindspore.nn.probability.distribution.Beta
         计算众数。
 
         参数：
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -158,8 +158,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -170,8 +170,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -181,8 +181,8 @@ mindspore.nn.probability.distribution.Beta
         计算标准差。
 
         参数：        
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的标准差。
@@ -193,8 +193,8 @@ mindspore.nn.probability.distribution.Beta
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -204,8 +204,8 @@ mindspore.nn.probability.distribution.Beta
         计算方差。
 
         参数：
-            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
-            - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
+            - **concentration1** (Tensor) - Beta 分布的 alpha。默认值： ``None`` 。
+            - **concentration0** (Tensor) - Beta 分布的 beta。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

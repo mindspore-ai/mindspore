@@ -9,9 +9,9 @@
 
     参数：
         - **file_name** (str, list[str]) - MindRecord格式的数据集文件路径或文件路径组成的列表。
-        - **num_consumer** (int，可选) - 加载数据的并发数。默认值：4。不应小于1或大于处理器的核数。
-        - **columns** (list[str]，可选) - MindRecord中待读取数据列的列表。默认值：None，读取所有的数据列。
-        - **operator** (int，可选) - 保留参数。默认值：None。
+        - **num_consumer** (int，可选) - 加载数据的并发数。默认值： ``4`` 。不应小于1或大于处理器的核数。
+        - **columns** (list[str]，可选) - MindRecord中待读取数据列的列表。默认值： ``None`` ，读取所有的数据列。
+        - **operator** (int，可选) - 保留参数。默认值： ``None`` 。
 
     异常：
         - **ParamValueError** - `file_name` 、`num_consumer` 或 `columns` 无效。

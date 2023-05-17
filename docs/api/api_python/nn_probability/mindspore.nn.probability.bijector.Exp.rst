@@ -10,7 +10,7 @@ mindspore.nn.probability.bijector.Exp
         Y = \exp(x).
 
     参数：
-        - **name** (str) - Bijector名称。默认值：'Exp'。
+        - **name** (str) - Bijector名称。默认值： ``'Exp'`` 。
 
 
     .. py:method:: forward(value)

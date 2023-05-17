@@ -7,10 +7,10 @@ mindspore.nn.probability.distribution.Categorical
     离散随机分布，取值范围为 :math:`\{1, 2, ..., k\}` ，概率质量函数为 :math:`P(X = i) = p_i, i = 1, ..., k`。
 
     参数：
-        - **probs** (Tensor, list, numpy.ndarray) - 事件概率。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.int32.
-        - **name** (str) - 分布的名称。默认值：Categorical。
+        - **probs** (Tensor, list, numpy.ndarray) - 事件概率。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``None`` 。
+        - **dtype** (mindspore.dtype) - 事件样例的类型。默认值： ``mstype.int32`` 。
+        - **name** (str) - 分布的名称。默认值： ``Categorical`` 。
 
     .. note:: 
         `probs` 的秩必须至少为1，值是合适的概率，并且总和为1。
@@ -32,7 +32,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -44,7 +44,7 @@ mindspore.nn.probability.distribution.Categorical
         参数：
             - **dist** (str) - 分布的类型。
             - **probs_b** (Tensor) - 对比分布的事件发生的概率。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，交叉熵的值。
@@ -54,7 +54,7 @@ mindspore.nn.probability.distribution.Categorical
         计算熵。
 
         参数：
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，熵的值。
@@ -66,7 +66,7 @@ mindspore.nn.probability.distribution.Categorical
         参数：
             - **dist** (str) - 分布的类型。
             - **probs_b** (Tensor) - 对比分布的事件发生的概率。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，KL散度。
@@ -77,7 +77,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -88,7 +88,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -99,7 +99,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -109,7 +109,7 @@ mindspore.nn.probability.distribution.Categorical
         计算期望。
 
         参数：
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的期望。
@@ -119,7 +119,7 @@ mindspore.nn.probability.distribution.Categorical
         计算众数。
 
         参数：
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -130,7 +130,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -141,7 +141,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -151,7 +151,7 @@ mindspore.nn.probability.distribution.Categorical
         计算标准差。
 
         参数：        
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的标准差。
@@ -162,7 +162,7 @@ mindspore.nn.probability.distribution.Categorical
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -172,7 +172,7 @@ mindspore.nn.probability.distribution.Categorical
         计算方差。
 
         参数：
-            - **probs** (Tensor) - 事件发生的概率。默认值：None。
+            - **probs** (Tensor) - 事件发生的概率。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

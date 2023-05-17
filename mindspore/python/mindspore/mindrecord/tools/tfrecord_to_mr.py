@@ -78,7 +78,7 @@ class TFRecordToMR:
         feature_dict (dict[str, FixedLenFeature]): Dictionary that states the feature type, and
             `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ is supported.
         bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be images bytes.
-            Default: None, means that there is no byte dtype field such as image.
+            Default: ``None`` , means that there is no byte dtype field such as image.
 
     Raises:
         ValueError: If parameter is invalid.
