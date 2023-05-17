@@ -13,7 +13,7 @@
     输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果它们具有不同的数据类型，则优先级低的数据类型将转换为优先级相对最高的数据类型。当需要转换Parameter的数据类型时，会抛出RuntimeError异常。
 
     参数：
-        - **use_locking** (bool) - 表示是否使用锁来保护。默认值：False。
+        - **use_locking** (bool) - 表示是否使用锁来保护。默认值： ``False`` 。
 
     输入：
         - **input_x** (Parameter) - ScatterSub的输入，数据类型为Parameter。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。

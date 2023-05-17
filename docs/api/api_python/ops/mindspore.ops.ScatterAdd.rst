@@ -16,7 +16,7 @@ mindspore.ops.ScatterAdd
         这是一个运行即更新的算子。因此， `input_x` 在运算完成后即更新。
 
     参数：
-        - **use_locking** (bool) - 是否启用锁保护。如果为True，则 `input_x` 将受到锁的保护。否则计算结果是未定义的。默认值：False。
+        - **use_locking** (bool) - 是否启用锁保护。如果为 ``True`` ，则 `input_x` 将受到锁的保护。否则计算结果是未定义的。默认值： ``False`` 。
 
     输入：
         - **input_x** (Parameter) - ScatterAdd的输入，数据类型为Parameter。

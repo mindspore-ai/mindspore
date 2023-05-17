@@ -7409,7 +7409,7 @@ class ExtractVolumePatches(Primitive):
         strides (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
             How far the centers of two consecutive patches are in input. Must be: :math:`[1, 1, s_d, s_h, s_w]` or
             :math:`[s_d, s_h, s_w]`. If :math:`s_d = s_h = s_w`, you can enter an integer.
-        padding (str): A string from: "SAME", "VALID". The type of padding algorithm to use.
+        padding (str): A string from: ``"SAME"`` , ``"VALID"`` . The type of padding algorithm to use.
 
     Inputs:
         - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
@@ -7426,7 +7426,7 @@ class ExtractVolumePatches(Primitive):
         TypeError: If padding is not str.
         ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
         ValueError: If the length of strides is neither 3 nor 5 and strides is not an integer.
-        ValueError: If padding is neither "VALID" nor "SAME".
+        ValueError: If padding is neither ````"VALID" nor ``"SAME"`` .
         ValueError: If elements of kernel_size or strides are not positive integer.
         ValueError: If input_x is not a tensor in dimension 5.
         ValueError: If input_x's shape has zero.
@@ -8640,8 +8640,8 @@ class TopK(Primitive):
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
     Args:
-        sorted (bool, optional): If True, the obtained elements will be sorted by the values in descending order.
-            If False, the obtained elements will not be sorted. Default: ``True`` .
+        sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending order.
+            If ``False`` , the obtained elements will not be sorted. Default: ``True`` .
 
     Inputs:
         - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32 on CPU,

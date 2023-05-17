@@ -2697,8 +2697,8 @@ class BiasAdd(Primitive):
 
     Args:
         data_format (str, optional): The format of input and output data.
-            It should be ``'NHWC'`` , ``'NCHW'`` or ``'NCDHW'`` .
-            Default is ``'NCHW'`` .
+            It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
+            Default is ``"NCHW"`` .
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.

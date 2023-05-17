@@ -13,7 +13,7 @@ mindspore.ops.ScatterNdMul
     更多参考详见 :func:`mindspore.ops.scatter_nd_mul` 。
 
     参数：
-        - **use_locking** (bool，可选) - 是否启用锁保护。默认值：False。
+        - **use_locking** (bool，可选) - 是否启用锁保护。默认值： ``False`` 。
 
     输入：
         - **input_x** (Parameter) - 输入参数，数据类型是Parameter。

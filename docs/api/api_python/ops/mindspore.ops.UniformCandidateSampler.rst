@@ -14,7 +14,7 @@
         - **num_sampled** (int) - 随机采样的类数。sampled_candidates的shape将为 `num_sampled` 。如果 `unique` 为 ``True`` ，则 `num_sampled` 必须小于或等于 `range_max` 。
         - **unique** (bool) - 表示一个batch中的所有采样类是否唯一。
         - **range_max** (int) - 可能的类数，该值必须是非负的。
-        - **seed** (int，可选) - 随机种子，该值必须是非负的。如果 `seed` 的值为 ``0`` ，则 `seed` 的值将被随机生成的值替换。默认值：``0`` 。
+        - **seed** (int，可选) - 随机种子，该值必须是非负的。如果 `seed` 的值为 ``0`` ，则 `seed` 的值将被随机生成的值替换。默认值： ``0`` 。
         - **remove_accidental_hits** (bool，可选) - 表示是否移除accidental hit。默认值： ``False`` 。
 
     输入：
