@@ -236,9 +236,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/ps/ps_context.cc
         )
     add_library(_mindspore_cpu_kernel_mod_depend_obj OBJECT ${KERNEL_MOD_DEPEND_SRC})
+    add_dependencies(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
     target_link_libraries(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
             mindspore-lite-proto mindspore::dnnl)
+    add_dependencies(mindspore-extendrt_python _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
     target_link_libraries(mindspore-extendrt_python _mindspore_cpu_kernel_mod_depend_obj
+            mindspore-lite-proto mindspore::dnnl)
+    add_dependencies(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
             mindspore-lite-proto mindspore::dnnl)
     target_link_libraries(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
             mindspore-lite-proto mindspore::dnnl)
