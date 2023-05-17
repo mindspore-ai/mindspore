@@ -69,6 +69,8 @@ CNodePtr CreateReshape(const FuncGraphPtr &graph, const AnfNodePtr &input_node, 
                        const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input_node);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
 
   auto reshape_primitive = std::make_shared<Primitive>(kReshapeOpName);
   std::vector<std::string> input_names = {"x", "shape"};
@@ -76,7 +78,7 @@ CNodePtr CreateReshape(const FuncGraphPtr &graph, const AnfNodePtr &input_node, 
   reshape_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   reshape_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
 
-  auto shape_node = NewValueNode(shape);
+  auto shape_node = CreateTensorInput(kernel_graph, NewValueNode(shape));
   std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(reshape_primitive), input_node, shape_node};
   auto reshape_node = pass.NewCNode(reshape_inputs, graph);
   MS_EXCEPTION_IF_NULL(reshape_node);
@@ -133,12 +135,8 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   if (is_convert_const_to_attr) {
     one_hot_inputs = {NewValueNode(one_hot_primitive), reshape_node, value_on_node, value_off_node};
   } else {
-    auto depth_node = NewValueNode(depth);
+    auto depth_node = CreateTensorInput(kernel_graph, NewValueNode(depth));
     MS_EXCEPTION_IF_NULL(depth_node);
-    auto depth_abstract = std::make_shared<abstract::AbstractScalar>();
-    MS_EXCEPTION_IF_NULL(depth_abstract);
-    depth_abstract->set_type(kInt64);
-    depth_node->set_abstract(depth_abstract);
     one_hot_inputs = {NewValueNode(one_hot_primitive), reshape_node, depth_node, value_on_node, value_off_node};
   }
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
@@ -194,10 +192,14 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   return range;
 }
 
-ValueNodePtr GetAxisNode(const AnfNodePtr &node) {
+AnfNodePtr GetAxisNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
   auto range = GetAxis(node);
-  auto axis_node = CreateValueNode(MakeValue(range), kNumberTypeInt64);
+  auto axis_node = CreateTensorInput(kernel_graph, CreateValueNode(MakeValue(range), kNumberTypeInt64));
   MS_EXCEPTION_IF_NULL(axis_node);
   return axis_node;
 }
@@ -208,7 +210,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(softmax_output_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-  auto axis_node = GetAxisNode(softmax_output_node);
+  auto axis_node = GetAxisNode(graph, softmax_output_node);
   MS_EXCEPTION_IF_NULL(axis_node);
 
   auto reduce_primitive = std::make_shared<Primitive>(kReduceMeanOpName);
@@ -218,10 +220,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   reduce_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
   reduce_primitive->set_attr(kAttrKeepDims, MakeValue(false));
 
-  auto kernel_graph = graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> inputs;
-  kernel_graph->AddValueNodeToGraph(axis_node);
   inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node};
   auto reduce_node = pass.NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_node);

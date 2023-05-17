@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
+AnfNodePtr ConvertTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   if (!input_node->isa<ValueNode>()) {
     return nullptr;
@@ -64,7 +64,7 @@ const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_gr
   }
   // input is scalar, and link to graph return
   if (node->isa<ValueNode>() && node == func_graph->output()) {
-    return CreateTensorInput(func_graph->cast<KernelGraphPtr>(), node);
+    return ConvertTensorInput(func_graph->cast<KernelGraphPtr>(), node);
   }
   if (!node->isa<CNode>()) {
     return nullptr;
@@ -76,7 +76,7 @@ const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_gr
     if (!AnfAlgo::IsScalarConvertToTensor(cnode->inputs()[i], cnode)) {
       continue;
     }
-    auto new_input = CreateTensorInput(func_graph->cast<KernelGraphPtr>(), cnode->inputs()[i]);
+    auto new_input = ConvertTensorInput(func_graph->cast<KernelGraphPtr>(), cnode->inputs()[i]);
     if (new_input != nullptr) {
       cnode->set_input(i, new_input);
       input_changed = true;
