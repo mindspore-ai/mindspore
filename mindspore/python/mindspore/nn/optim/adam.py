@@ -697,6 +697,7 @@ class Adam(Optimizer):
         Tensor[bool], the value is True.
 
     Raises:
+        KeyError: If kwargs got keys other than 'use_lazy' or 'use_offload'.
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
@@ -741,6 +742,10 @@ class Adam(Optimizer):
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False, **kwargs):
         super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        valid_keys = {'use_lazy', 'use_offload'}
+        if set(kwargs.keys()) - valid_keys:
+            raise KeyError(f"For 'Adam', invalid keys are passed as kwargs, supported keys are 'use_lazy' and"
+                           f"'use_offload', but got {kwargs.keys()}.")
         use_lazy = kwargs.get('use_lazy', False)
         use_offload = kwargs.get('use_offload', False)
         _check_param_value(beta1, beta2, eps, self.cls_name)
