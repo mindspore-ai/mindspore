@@ -51,9 +51,35 @@ echo "Run testcases of import mindspore and mindspore_lite..."
 echo "-----------------------------------------------------------------------------------------"
 cp ${models_path}/mobilenetv2.mindir ${basepath}
 
-pytest -vra ${basepath}/python/import_ms_and_mslite/test_api_import_ms_and_mslite.py
-pytest -vra ${basepath}/python/import_ms_and_mslite/test_api_import_mslite_and_ms.py
-pytest -vra ${basepath}/python/import_ms_and_mslite/test_only_import_ms_and_mslite.py
-pytest -vra ${basepath}/python/import_ms_and_mslite/test_only_import_mslite_and_ms.py
+#pytest -vra ${basepath}/python/import_ms_and_mslite/test_api_import_ms_and_mslite.py
+#RET=$?
+#if [ ${RET} -ne 0 ]; then
+#  echo "run test_api_import_ms_and_mslite failed."
+#  exit ${RET}
+#fi
+#echo "test_api_import_ms_and_mslite success"
 
+pytest -vra ${basepath}/python/import_ms_and_mslite/test_api_import_mslite_and_ms.py
+RET=$?
+if [ ${RET} -ne 0 ]; then
+  echo "run test_api_import_mslite_and_ms failed."
+  exit ${RET}
+fi
+echo "test_api_import_mslite_and_ms success"
+
+#pytest -vra ${basepath}/python/import_ms_and_mslite/test_only_import_ms_and_mslite.py
+#RET=$?
+#if [ ${RET} -ne 0 ]; then
+#  echo "run test_only_import_ms_and_mslite failed."
+#  exit ${RET}
+#fi
+echo "test_only_import_ms_and_mslite success"
+
+pytest -vra ${basepath}/python/import_ms_and_mslite/test_only_import_mslite_and_ms.py
+RET=$?
+if [ ${RET} -ne 0 ]; then
+  echo "run test_only_import_mslite_and_ms failed."
+  exit ${RET}
+fi
 rm -rf ${basepath}/mobilenetv2.mindir
+echo "test_only_import_mslite_and_ms success"
