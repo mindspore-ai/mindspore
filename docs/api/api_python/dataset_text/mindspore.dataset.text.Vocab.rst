@@ -16,11 +16,11 @@
 
         参数：
             - **dataset** (Dataset) - 表示要从中构建vocab的数据集。
-            - **columns** (list[str]，可选) - 表示要从中获取单词的列名。它可以是列名的列表。默认值：None。
-            - **freq_range** (tuple，可选) - 表示整数元组（min_frequency，max_frequency）。频率范围内的单词将被保留。0 <= min_frequency <= max_frequency <= total_words。min_frequency=0等同于min_frequency=1。max_frequency > total_words等同于max_frequency = total_words。min_frequency和max_frequency可以为None，分别对应于0和total_words。默认值：None。
-            - **top_k** (int，可选) - `top_k` 大于0。要在vocab中 `top_k` 建立的单词数量表示取用最频繁的单词。 `top_k` 在 `freq_range` 之后取用。如果没有足够的 `top_k` ，所有单词都将被取用。默认值：None。
-            - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
-            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
+            - **columns** (list[str]，可选) - 表示要从中获取单词的列名。它可以是列名的列表。默认值： ``None`` 。
+            - **freq_range** (tuple，可选) - 表示整数元组（min_frequency，max_frequency）。频率范围内的单词将被保留。0 <= min_frequency <= max_frequency <= total_words。min_frequency=0等同于min_frequency=1。max_frequency > total_words等同于max_frequency = total_words。min_frequency和max_frequency可以为None，分别对应于0和total_words。默认值： ``None`` 。
+            - **top_k** (int，可选) - `top_k` 大于0。要在vocab中 `top_k` 建立的单词数量表示取用最频繁的单词。 `top_k` 在 `freq_range` 之后取用。如果没有足够的 `top_k` ，所有单词都将被取用。默认值： ``None`` 。
+            - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值： ``None`` ，表示不添加特殊分词（token）。
+            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为 ``True`` 则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值： ``True`` 。
 
         返回：
             Vocab，从数据集构建的Vocab对象。
@@ -41,10 +41,10 @@
 
         参数：
             - **file_path** (str) - 表示包含vocab文件路径的一个列表。
-            - **delimiter** (str，可选) - 表示用来分隔文件中每一行的分隔符。第一个元素被视为单词。默认值：""。
-            - **vocab_size** (int，可选) - 表示要从 `file_path` 读取的字数。默认值：None，表示读取所有的字。
-            - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
-            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
+            - **delimiter** (str，可选) - 表示用来分隔文件中每一行的分隔符。第一个元素被视为单词。默认值： ``""`` 。
+            - **vocab_size** (int，可选) - 表示要从 `file_path` 读取的字数。默认值： ``None`` ，表示读取所有的字。
+            - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值： ``None`` ，表示不添加特殊分词（token）。
+            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为 ``True`` 则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值： ``True`` 。
 
         返回：
             Vocab，从文件构建的Vocab对象。
@@ -55,8 +55,8 @@
 
         参数：
             - **word_list** (list) - 输入单词列表，每个单词需要为字符串类型。
-            - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
-            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
+            - **special_tokens** (list，可选) - 特殊分词列表，如常用的 ``"<pad>"`` 、 ``"<unk>"`` 等。默认值： ``None`` ，表示不添加特殊分词（token）。
+            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为 ``True`` 则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值： ``True`` 。
 
         返回：
             Vocab，从单词列表构建的Vocab对象。

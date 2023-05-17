@@ -5541,9 +5541,10 @@ class KLDivLoss(Primitive):
         reduction (str): Specifies the reduction to be applied to the output.
             Default: ``'mean'`` .
 
-            - On Ascend, the value of `reduction` must be one of 'batchmean', 'none' or 'sum'.
-            - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
-            - On CPU, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
+            - On Ascend, the value of `reduction` must be one of ``'batchmean'``, ``'none'`` or ``'sum'``.
+            - On GPU, the value of `reduction` must be one of ``'mean'``, ``'none'`` or ``'sum'``.
+            - On CPU, the value of `reduction` must be one of ``'mean'``, ``'batchmean'``, ``'none'`
+              or ``'sum'``.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
@@ -8422,7 +8423,8 @@ class Conv3DTranspose(Primitive):
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: ``1`` .
         group (int): Splits input into groups. Default: ``1`` . Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: ``0`` .
-        data_format (str): The optional value for data format. Currently only 'NCDHW' is supported.
+        data_format (str): The optional value for data format. Currently only ``'NCDHW'`` is supported.
+            Default: ``'NCDHW'``.
 
     Inputs:
         - **dout** (Tensor) - The gradients with respect to the output of the convolution.

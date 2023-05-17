@@ -15,11 +15,11 @@ mindspore.nn.MultiLabelSoftMarginLoss
 
     其中 :math:`x{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`y{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
     :math:`y{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
-    如果 `weight` 不为None，将会和每个分类的loss相乘。
+    如果 `weight` 不为 ``None`` ，将会和每个分类的loss相乘。
 
     参数：
-        - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值：None。
-        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。默认值："mean"。
+        - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值： ``None`` 。
+        - **reduction** (str) - 指定应用于输出结果的计算方式。取值为 ``'mean'`` ， ``'sum'`` 或 ``'none'`` 。默认值： ``'mean'`` 。
 
     输入：
         - **x** (Tensor) - shape为(N, C)的Tensor，N为batch size，C为类别个数。

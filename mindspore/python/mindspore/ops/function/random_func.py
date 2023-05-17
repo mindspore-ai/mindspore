@@ -417,15 +417,15 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
 
     Args:
         shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D `Tensor` whose
-          dtype is mindspore.dtype.int32 or mindspore.dtype.int64.
+            dtype is mstype.int32 or mstype.int64.
         rate (Tensor): The :math:`μ` parameter the distribution is constructed with.
-          It represents the mean of the distribution
-          and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
-          mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
+            It represents the mean of the distribution
+            and also the variance of the distribution. It should be a `Tensor` whose dtype is mstype.int64,
+            mstype.int32, mstype.float64, mstype.float32 or mstype.float16.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate pseudo-random
-          numbers and must be non-negative. Default: ``None`` , which will be treated as 0.
-        dtype (mindspore.dtype): The data type of output: mindspore.dtype.int64, mindspore.dtype.int32,
-          mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16. Default: mindspore.dtype.float32.
+            numbers and must be non-negative. Default: ``None`` , which will be treated as 0.
+        dtype (mindspore.dtype): The data type of output: ``mstype.int64``, ``mstype.int32``,
+            ``mstype.float64``, ``mstype.float32`` or ``mstype.float16``. Default: ``mstype.float32``.
 
     Returns:
         A Tensor whose shape is `mindspore.concat(['shape', mindspore.shape('rate')], axis=0)` and data type is equal to
@@ -433,14 +433,14 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
 
     Raises:
         TypeError: If `shape` is not a Tensor.
-        TypeError: If datatype of `shape` is not mindspore.dtype.int64 nor mindspore.dtype.int32.
+        TypeError: If datatype of `shape` is not mstype.int64 nor mstype.int32.
         ValueError: If shape of `shape` is not 1-D.
         TypeError: If `rate` is not a Tensor nor a scalar.
-        TypeError: If datatype of `rate` is not in [mindspore.dtype.int64, mindspore.dtype.int32,
-          mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16].
+        TypeError: If datatype of `rate` is not in [mstype.int64, mstype.int32,
+            mstype.float64, mstype.float32 or mstype.float16].
         TypeError: If `seed` is not a non-negtive int.
-        TypeError: If `dtype` is not in [mindspore.dtype.int64, mindspore.dtype.int32, mindspore.dtype.float64,
-          mindspore.dtype.float32 nor mindspore.dtype.float16].
+        TypeError: If `dtype` is not in [mstype.int64, mstype.int32, mstype.float64,
+            mstype.float32 nor mstype.float16].
         ValueError: If any element of input `shape` tensor is not positive.
 
     Supported Platforms:

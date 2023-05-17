@@ -11,7 +11,7 @@ mindspore.ops.Multinomial
     参数：
         - **seed** (int) - 随机数种子，必须是非负数。默认值： ``0`` 。
         - **seed2** (int) - 二号随机数种子，必须是非负数。默认值： ``0`` 。
-        - **dtype** (dtype) - 输出数据类型，必须是int32或者int64，默认类型：int32。
+        - **dtype** (dtype) - 输出数据类型，必须是int32或者int64，默认： ``mstype.int32`` 。
 
     输入：
         - **x** (Tensor) - 包含累加概率和的输入Tensor，必须是一维或二维。

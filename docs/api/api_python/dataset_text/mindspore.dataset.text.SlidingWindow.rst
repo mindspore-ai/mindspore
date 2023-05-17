@@ -7,7 +7,7 @@ mindspore.dataset.text.SlidingWindow
 
     参数：
         - **width** (int) - 窗口的宽度，它必须是整数并且大于零。
-        - **axis** (int, 可选) - 计算滑动窗口的轴。默认值：0。
+        - **axis** (int, 可选) - 计算滑动窗口的轴。默认值： ``0`` 。
 
     异常：
         - **TypeError** - 参数 `width` 的类型不为int。

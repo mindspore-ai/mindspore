@@ -7,7 +7,7 @@
 
     参数：
         - **array** (numpy.ndarray) - 表示 `bytes` 类型的数组，代表字符串。
-        - **encoding** (str) - 表示用于解码的字符集。默认值：'utf8'。
+        - **encoding** (str) - 表示用于解码的字符集。默认值： ``'utf8'`` 。
 
     返回：
         numpy.ndarray，表示 `str` 的NumPy数组。

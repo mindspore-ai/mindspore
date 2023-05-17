@@ -2104,8 +2104,8 @@ class Argmin(Primitive):
 
     Args:
         axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
-        output_type (:class:`mindspore.dtype`): An optional data type of ``mindspore.dtype.int32`` and
-            ``mindspore.dtype.int64`` . Default: ``mindspore.dtype.int32`` .
+        output_type (:class:`mindspore.dtype`): An optional data type of ``mstype.int32`` and
+            ``mstype.int64`` . Default: ``mstype.int32`` .
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.

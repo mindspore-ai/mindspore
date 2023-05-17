@@ -14,7 +14,7 @@ mindspore.dataset.TedliumDataset
         - **usage** (str, 可选) - 指定数据集的子集。
           对于 `release` 为 ``'release1'`` 或 ``'release2'``，`usage` 可以是 ``'train'`` 、 ``'test'`` 、 ``'dev'`` 或 ``'all'`` 。
           对于 `release` 为 ``'release3'`` ， `usage` 只能是 ``'all'`` 。默认值： ``None`` ，读取全部样本。
-        - **extensions** (str, 可选) - 指定SPH文件的扩展名。默认值： ``'.sph'`` 。
+        - **extensions** (str, 可选) - 指定SPH文件的扩展名。默认值： ``None`` ，默认指定为 ``'.sph'`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` 。下表中会展示不同参数配置的预期行为。

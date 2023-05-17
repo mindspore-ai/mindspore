@@ -1288,7 +1288,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
-        decode (bool, optional): Decode the images after reading. Default: ``False``.
+        decode (bool, optional): Decode the images after reading. Default: ``None``, set to ``False``.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -3642,7 +3642,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be ``'train-standard'``, ``'train-challenge'``
             or ``'val'``. Default: ``None`` , will be set to ``'train-standard'``.
-        small (bool, optional): Use 256 * 256 images (True) or high resolution images (False). Default: ``False``.
+        small (bool, optional): Use 256 * 256 images (True) or high resolution images (False). Default: ``True``.
         decode (bool, optional): Decode the images after reading. Default: ``False``.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.

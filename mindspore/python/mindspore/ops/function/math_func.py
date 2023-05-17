@@ -7319,7 +7319,10 @@ def logcumsumexp(input, axis):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
         >>> output = ops.logcumsumexp(x, 0)
         >>> print(output)
         [1.        2.3132617 3.407606 ]

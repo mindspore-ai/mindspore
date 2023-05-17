@@ -3502,18 +3502,18 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation mode. Default: Inter.BILINEAR.
-            It can be any of [Inter.BILINEAR, Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC,
-            Inter.ANTIALIAS].
+        interpolation (Inter, optional): Image interpolation mode. Default: ``Inter.LINEAR``.
+            It can be ``Inter.BILINEAR``, ``Inter.LINEAR``, ``Inter.NEAREST``, ``Inter.BICUBIC``, ``Inter.AREA``,
+            ``Inter.PILCUBIC``, ``Inter.ANTIALIAS``.
 
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.LINEAR, bilinear interpolation, here is the same as Inter.BILINEAR.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
-            - Inter.AREA, pixel area interpolation.
-            - Inter.PILCUBIC, bicubic interpolation like implemented in Pillow, only valid when the input is
+            - ``Inter.BILINEAR``, bilinear interpolation.
+            - ``Inter.LINEAR``, bilinear interpolation, here is the same as Inter.BILINEAR.
+            - ``Inter.NEAREST``, nearest-neighbor interpolation.
+            - ``Inter.BICUBIC``, bicubic interpolation.
+            - ``Inter.AREA``, pixel area interpolation.
+            - ``Inter.PILCUBIC``, bicubic interpolation like implemented in Pillow, only valid when the input is
               a 3-channel image in the numpy.ndarray format.
-            - Inter.ANTIALIAS, antialias interpolation.
+            - ``Inter.ANTIALIAS``, antialias interpolation.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -4031,7 +4031,7 @@ class ToTensor(ImageTensorOperation):
 
     Args:
         output_type (Union[mindspore.dtype, numpy.dtype], optional): The desired dtype of the output image.
-            Default: `numpy.float32` .
+            Default: `np.float32` .
 
     Raises:
         TypeError: If the input image is not of type `PIL.Image.Image` or :class:`numpy.ndarray` .

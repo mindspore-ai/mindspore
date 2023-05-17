@@ -7,7 +7,7 @@ mindspore.dataset.PKSampler
 
     参数：
         - **num_val** (int) - 每个类要采样的元素数量。
-        - **num_class** (int, 可选) - 要采样的类数量。默认值：为 ``None`` ，采样所有类。当前不支持指定该参数。
+        - **num_class** (int, 可选) - 要采样的类数量。默认值为 ``None`` ，采样所有类。当前不支持指定该参数。
         - **shuffle** (bool, 可选) - 是否混洗采样得到的样本。默认值： ``False`` ，不混洗样本。
         - **class_column** (str, 可选) - 指定label所属数据列的名称，将基于此列作为数据标签进行采样。默认值： ``'label'`` 。
         - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值： ``None`` ，获取采样到的所有样本。

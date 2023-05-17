@@ -8,8 +8,8 @@ mindspore.dataset.text.UnicodeScriptTokenizer
     .. note:: Windows平台尚不支持 `UnicodeScriptTokenizer` 。
 
     参数：
-        - **keep_whitespace** (bool, 可选) - 是否输出空白标记(token)。默认值：False。
-        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量。默认值：False。
+        - **keep_whitespace** (bool, 可选) - 是否输出空白标记(token)。默认值： ``False`` 。
+        - **with_offsets** (bool, 可选) - 是否输出标记(token)的偏移量。默认值： ``False`` 。
 
     异常：
         - **TypeError** - 参数 `keep_whitespace` 的类型不为bool。
