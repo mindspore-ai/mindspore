@@ -41,8 +41,8 @@ def run_simple_net():
     y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
     net = NetWithWeights()
     output = net(x, y)
-    print("{", output, "}")
-    print("{", output.asnumpy().shape, "}")
+    print("AAA", output, "BBB")
+    print("AAA", output.asnumpy().shape, "BBB")
 
 
 if __name__ == "__main__":

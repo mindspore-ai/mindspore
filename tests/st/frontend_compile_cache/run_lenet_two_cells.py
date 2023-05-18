@@ -63,8 +63,8 @@ def train(net, data, label):
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     res = train_network(data, label)
-    print("{", res, "}")
-    print("{", res.asnumpy().shape, "}")
+    print("AAA", res, "BBB")
+    print("AAA", res.asnumpy().shape, "BBB")
 
 
 if __name__ == "__main__":
