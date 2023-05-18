@@ -178,35 +178,40 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             if input_data is not None:
                 Tensor_.__init__(self, input_data)
         else:
-            # If input data is numpy number, convert it to np array
-            if isinstance(input_data, np_types):
-                input_data = np.array(input_data)
-
-            if isinstance(shape, numbers.Number):
-                shape = (shape,)
-
-            _check_tensor_input(input_data, dtype, shape, init)
-
-            # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
-            if (isinstance(shape, (list, tuple)) and None in shape) or init is not None:
-                shape = _check_tensor_dynamic_shape(dtype, shape, init)
-                Tensor_.__init__(self, dtype, shape)
+            if input_data is None and shape is None and init is None and dtype is not None:
+                validator.check_type_name('dtype', dtype, mstype.number_type +
+                                          (mstype.bool_, mstype.string), "Tensor")
+                Tensor_.__init__(self, dtype, [-2])
             else:
-                _check_input_data_type(input_data)
-                if dtype is not None:
-                    validator.check_type_name('dtype', dtype, mstype.number_type +
-                                              (mstype.bool_, mstype.string), "Tensor")
-                else:
-                    dtype = self._set_default_dtype(input_data, dtype)
+                # If input data is numpy number, convert it to np array
+                if isinstance(input_data, np_types):
+                    input_data = np.array(input_data)
 
-                if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
-                    input_data = np.ascontiguousarray(input_data)
+                if isinstance(shape, numbers.Number):
+                    shape = (shape,)
 
-                if dtype is not None:
-                    Tensor_.__init__(self, input_data, dtype)
+                _check_tensor_input(input_data, dtype, shape, init)
+
+                # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
+                if (isinstance(shape, (list, tuple)) and None in shape) or init is not None:
+                    shape = _check_tensor_dynamic_shape(dtype, shape, init)
+                    Tensor_.__init__(self, dtype, shape)
                 else:
-                    Tensor_.__init__(self, input_data)
-                validator.check_value_type('const_arg', const_arg, bool, 'Tensor')
+                    _check_input_data_type(input_data)
+                    if dtype is not None:
+                        validator.check_type_name('dtype', dtype, mstype.number_type +
+                                                  (mstype.bool_, mstype.string), "Tensor")
+                    else:
+                        dtype = self._set_default_dtype(input_data, dtype)
+
+                    if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
+                        input_data = np.ascontiguousarray(input_data)
+
+                    if dtype is not None:
+                        Tensor_.__init__(self, input_data, dtype)
+                    else:
+                        Tensor_.__init__(self, input_data)
+                    validator.check_value_type('const_arg', const_arg, bool, 'Tensor')
 
         self.const_arg = const_arg
         self.virtual_flag = False
