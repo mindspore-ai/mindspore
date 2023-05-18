@@ -2709,20 +2709,20 @@ def dense(input, weight, bias=None):
         output = input * weight^{T} + bias
 
     Args:
-        input (Union[Tensor, Parameter]): Input Tensor of shape :math:`(*, in\_channels)`,
+        input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
             where :math:`*` means any number of additional dimensions.
-        weight (Union[Tensor, Parameter]): The weight applied to the input.
+        weight (Tensor): The weight applied to the input.
             The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
-        bias (Union[Tensor, Parameter], optional): Additive biases to the output.
+        bias (Tensor, optional): Additive biases to the output.
             The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
 
     Returns:
         Output whose shape is determined by the shape of the input and the weight.
 
     Raises:
-        TypeError: If `input` is not Tensor or Parameter.
-        TypeError: If `weight` is not Tensor or Parameter.
-        TypeError: If `bias` is not Tensor or Parameter.
+        TypeError: If `input` is not Tensor.
+        TypeError: If `weight` is not Tensor.
+        TypeError: If `bias` is not Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -2744,6 +2744,95 @@ def dense(input, weight, bias=None):
     if bias is not None:
         input = input + bias
     return input
+
+
+@_primexpr
+def check_dense_inputs_same_shape(input1_shape, input2_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if input1_shape[:-1] != input2_shape[:-1]:
+        raise ValueError(f"{msg_prefix} dimensions except the last of 'input1' must be same as 'input2', but got "
+                         f"{input1_shape} of 'input1' and {input2_shape} of 'input2'")
+
+
+def bidense(input1, input2, weight, bias=None):
+    r"""
+    Applies bilinear dense connected layer for `input1` and `input2`. The bilinear dense function is defined as:
+
+    .. math::
+        output = input1^{T} weight input2 + bias
+
+    Args:
+        input1 (Tensor): Input Tensor of shape :math:`(*, in1\_channels)`,
+            where :math:`*` means any number of additional dimensions. All but the last dimension
+            should be the same with `input2`.
+        input2 (Tensor): Input Tensor of shape :math:`(*, in2\_channels)`,
+            where :math:`*` means any number of additional dimensions. All but the last dimension
+            should be the same with `input1`.
+        weight (Tensor): The weight applied to the input1 and input2.
+            The shape is :math:`(out\_channels, in1\_channels, in2\_channels)`.
+        bias (Tensor, optional): Additive biases to the output.
+            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None`` , the `bias` is 0.
+
+    Returns:
+        Tensor, shape :math:`(*, out\_channels)`, where :math:`*` means any number of additional dimensions.
+        All but the last dimension should be the same with the input Tensors.
+
+    Raises:
+        TypeError: If `input1` is not Tensor.
+        TypeError: If `input2` is not Tensor.
+        TypeError: If `weight` is not Tensor.
+        TypeError: If `bias` is not Tensor.
+        ValueError: If dimensions except the last of 'input1' are different from 'input2' .
+
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``  ``CPU``
+
+    Examples:
+        >>> input1 = mindspore.Tensor([[-1.1283, 1.2603],
+        >>>                            [0.0214, 0.7801],
+        >>>                            [-1.2086, 1.2849]], mindspore.float32)
+        >>> input2 = mindspore.Tensor([[-0.4631, 0.3238, 0.4201],
+        >>>                            [0.6215, -1.0910, -0.5757],
+        >>>                            [-0.7788, -0.0706, -0.7942]], mindspore.float32)
+        >>> weight = mindspore.Tensor([[[-0.3132, 0.9271, 1.1010],
+        >>>                             [0.6555, -1.2162, -0.2987]],
+        >>>                            [[1.0458, 0.5886, 0.2523],
+        >>>                             [-1.3486, -0.8103, -0.2080]],
+        >>>                            [[1.1685, 0.5569, -0.3987],
+        >>>                             [-0.4265, -2.6295, 0.8535]],
+        >>>                            [[0.6948, -1.1288, -0.6978],
+        >>>                             [0.3511, 0.0609, -0.1122]]], mindspore.float32)
+        >>> output = ops.bidense(input1, input2, weight)
+        >>> print(output)
+        [[-2.0612743 0.5581219 0.22383511 0.8667302]
+         [1.4476739 0.12626505 1.6552988 0.21297503]
+         [0.6003161 2.912046 0.5590313 -0.35449564]]
+    """
+    _check_is_tensor("input1", input1, "bidense")
+    _check_is_tensor("input2", input2, "bidense")
+    _check_is_tensor("weight", weight, "bidense")
+    _check_is_tensor("bias", bias, "bidense")
+    input1_shape = input1.shape
+    input2_shape = input2.shape
+    check_dense_inputs_same_shape(input1_shape, input2_shape, "bidense")
+
+    if len(input1_shape) != 2:
+        input1 = input1.reshape((-1, input1_shape[-1]))
+        input2 = input2.reshape((-1, input2_shape[-1]))
+    batch_size = input1.shape[0]
+    matmul_ = P.MatMul()
+    output = matmul_(input1, weight.transpose(1, 2, 0).view(input1_shape[-1], -1))
+    output = output.view(batch_size, input2_shape[-1], weight.shape[0])
+    output = output.transpose(2, 0, 1) * input2
+    output = output.sum(2).swapaxes(0, 1)
+    if bias is not None:
+        bias_add_ = P.BiasAdd()
+        output = bias_add_(output, bias)
+    if len(input1_shape) != 2:
+        output_shape = input1_shape[:-1] + (-1,)
+        output = output.reshape(output_shape)
+    return output
 
 
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
@@ -6726,6 +6815,7 @@ __all__ = [
     'avg_pool3d',
     'batch_norm',
     'bias_add',
+    'bidense',
     'binary_cross_entropy',
     'binary_cross_entropy_with_logits',
     'cosine_embedding_loss',
