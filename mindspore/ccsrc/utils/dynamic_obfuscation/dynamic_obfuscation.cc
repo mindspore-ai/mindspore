@@ -749,12 +749,6 @@ FuncGraphPtr DynamicObfuscator::BuildFakeGraph(const std::vector<mindspore::CNod
         break;
       }
       case ObfCase::OneInputWithWeightNode: {
-        mindspore::ParameterPtr weight_param = fg_fake->add_parameter();
-        if (weight_param == nullptr) {
-          MS_LOG(ERROR) << "Build OneInputWithWeightNode failed: weights is nullptr.";
-          return nullptr;
-        }
-        weight_param->set_name("OneInputWithWeightNode_fake");
         mindspore::AnfNodePtr ori_vnode = node->cast<mindspore::CNodePtr>()->inputs()[2];
         TypeId type_id = get_node_dtype(ori_vnode);
         ShapeVector shape = get_node_shape(ori_vnode);
@@ -828,11 +822,17 @@ mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(const FuncGraphPtr fg, F
     return nullptr;
   }
   subgraph_inputs.push_back(nodes[0]->inputs()[1]);
+  size_t func_params_num = fg_sub->parameters().size();
+  size_t pushed_inputs = 1;
   for (unsigned i = 0; i < nodes.size(); i++) {
+    if (pushed_inputs >= func_params_num) {
+      break;
+    }
     std::string obf_type = ObfuscateOpType(nodes[i]);
     if ((obf_type == kConv2DOpName || obf_type == kMatMulOpName) &&
         nodes[i]->inputs().size() >= kNodeWithWeightInputsNum) {
       subgraph_inputs.push_back(nodes[i]->inputs()[kWeightIndex]);
+      pushed_inputs += 1;
     }
   }
   mindspore::CNodePtr switch_partial_c = fg->NewCNode(subgraph_inputs);
