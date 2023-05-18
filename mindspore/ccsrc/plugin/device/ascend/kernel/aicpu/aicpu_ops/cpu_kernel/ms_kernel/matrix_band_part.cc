@@ -94,6 +94,8 @@ uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
     BAND_COMPUTE_CASE(DT_INT64, int64_t, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_UINT8, uint8_t, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_UINT16, uint16_t, x, lower, upper, y, m, n, ctx)
+    BAND_COMPUTE_CASE(DT_UINT32, uint32_t, x, lower, upper, y, m, n, ctx)
+    BAND_COMPUTE_CASE(DT_UINT64, uint64_t, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_FLOAT16, Eigen::half, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_FLOAT, float, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_DOUBLE, double, x, lower, upper, y, m, n, ctx)
