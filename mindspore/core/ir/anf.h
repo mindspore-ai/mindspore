@@ -1057,7 +1057,7 @@ MS_CORE_API ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node);
 MS_CORE_API bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
 
 // Check whether the given node is a ValueNode belonging to a primitive set.
-bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set);
+MS_CORE_API bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 
 /// \brief Used to check whether the given node is a CNode belonging to a primitive set.
 ///
