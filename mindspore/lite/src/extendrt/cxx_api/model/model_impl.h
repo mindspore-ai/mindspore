@@ -30,6 +30,7 @@
 #include "ir/func_graph.h"
 #include "extendrt/infer_session.h"
 #include "src/common/config_infos.h"
+#include "mindapi/ir/common.h"
 
 #ifndef _WIN32
 #include <dlfcn.h>

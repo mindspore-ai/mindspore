@@ -24,8 +24,8 @@
 #include <map>
 #include "mindspore/core/base/base.h"
 #include "include/api/status.h"
-#include "include/backend/kernel_graph.h"
 #include "src/common/helper/infer_helpers.h"
+#include "src/extendrt/session/lite_graph_executor.h"
 namespace mindspore {
 struct ModelBufPair {
   void *buf = nullptr;
@@ -45,10 +45,6 @@ class FuncGraphReuseManager {
                          std::shared_ptr<mindspore::infer::helper::InferHelpers> helper,
                          std::map<std::string, std::map<std::string, std::string>> config_info);
 
-  KernelGraphPtr GetKernelGraph(std::map<std::string, std::map<std::string, std::string>> config_info);
-  Status StoreKernelGraph(std::map<std::string, std::map<std::string, std::string>> config_info,
-                          KernelGraphPtr kernel_graph);
-
   Status GetInOut(std::map<std::string, std::map<std::string, std::string>> config_info,
                   std::vector<tensor::TensorPtr> *in_tensor, std::vector<tensor::TensorPtr> *out_tensor,
                   std::vector<std::string> *in_name, std::vector<std::string> *out_name);
@@ -66,7 +62,6 @@ class FuncGraphReuseManager {
   // the cached funcgraph is cleared when the model impl is destructed
   std::unordered_map<std::string, FuncGraphPtr> all_func_graphs_;
   std::unordered_map<std::string, ModelBufPair> all_fb_model_buf_;
-  std::unordered_map<std::string, KernelGraphPtr> all_kernel_graph_;
   std::unordered_map<std::string, std::shared_ptr<mindspore::infer::helper::InferHelpers>> all_infer_helpers_;
   std::unordered_map<std::string, std::vector<tensor::TensorPtr>> all_in_tensors_;
   std::unordered_map<std::string, std::vector<tensor::TensorPtr>> all_out_tensors_;
