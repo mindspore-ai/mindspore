@@ -46,7 +46,7 @@ int stack_release(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
   if (stack->buffers_ != NULL) {
-    self->env_->free(self->env_->thread_pool_, stack->buffers_);
+    self->env_->free(self->env_->allocator_, stack->buffers_);
     stack->buffers_ = NULL;
   }
   return NNACL_OK;
