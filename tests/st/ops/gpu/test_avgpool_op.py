@@ -45,10 +45,10 @@ class AvgPoolGrad(nn.Cell):
     def __init__(self, forward):
         super(AvgPoolGrad, self).__init__()
         self.forward = forward
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True)
 
-    def construct(self, x, sens):
-        return self.grad(self.forward)(x, sens)
+    def construct(self, x):
+        return self.grad(self.forward)(x)
 
 
 @pytest.mark.level1
@@ -352,10 +352,8 @@ class DynamicShapeAvgPool3DGrad(nn.Cell):
         self.gather = P.Gather()
         self.axis = axis
 
-    def construct(self, x_shape, sens, indices):
-        unique_indices, _ = self.unique(indices)
-        sens = self.gather(sens, unique_indices, self.axis)
-        return self.net(x_shape, sens)
+    def construct(self, x_shape):
+        return self.net(x_shape)
 
 
 @pytest.mark.level1
@@ -370,36 +368,27 @@ def test_avgpool3d_grad_dynamic_shape():
     x_shape = (1, 3, 2, 3, 4)
     x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
     avgpool = AvgPool(dim=3, kernel_size=2, strides=1, pad_mode='VALID')
-    expect_output = np.array([[[[[8.5, 9.5, 10.5],
-                                 [12.5, 13.5, 14.5]]],
-                               [[[32.5, 33.5, 34.5],
-                                 [36.5, 37.5, 38.5]]],
-                               [[[56.5, 57.5, 58.5],
-                                 [60.5, 61.5, 62.5]]]]]).astype(np.float32)
-
     avgpool_grad = AvgPoolGrad(avgpool)
     net = DynamicShapeAvgPool3DGrad(avgpool_grad)
-    sens = Tensor(expect_output) + 1
-    indices = Tensor(np.array([0]).astype(np.int32))
-    actual_grad = net(x, sens, indices)
-    expect_grad = np.array([[[[[1.1875, 2.5, 2.75, 1.4375],
-                               [2.875, 6., 6.5, 3.375],
-                               [1.6875, 3.5, 3.75, 1.9375]],
-                              [[1.1875, 2.5, 2.75, 1.4375],
-                               [2.875, 6., 6.5, 3.375],
-                               [1.6875, 3.5, 3.75, 1.9375]]],
-                             [[[4.1875, 8.5, 8.75, 4.4375],
-                               [8.875, 18., 18.5, 9.375],
-                               [4.6875, 9.5, 9.75, 4.9375]],
-                              [[4.1875, 8.5, 8.75, 4.4375],
-                               [8.875, 18., 18.5, 9.375],
-                               [4.6875, 9.5, 9.75, 4.9375]]],
-                             [[[7.1875, 14.5, 14.75, 7.4375],
-                               [14.875, 30., 30.5, 15.375],
-                               [7.6875, 15.5, 15.75, 7.9375]],
-                              [[7.1875, 14.5, 14.75, 7.4375],
-                               [14.875, 30., 30.5, 15.375],
-                               [7.6875, 15.5, 15.75, 7.9375]]]]]).astype(np.float32)
+    actual_grad = net(x)
+    expect_grad = np.array([[[[[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]],
+                              [[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]]],
+                             [[[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]],
+                              [[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]]],
+                             [[[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]],
+                              [[0.125, 0.25, 0.25, 0.125],
+                               [0.25, 0.5, 0.5, 0.25],
+                               [0.125, 0.25, 0.25, 0.125]]]]]).astype(np.float32)
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
