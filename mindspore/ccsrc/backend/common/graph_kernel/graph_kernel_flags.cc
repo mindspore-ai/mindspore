@@ -196,11 +196,11 @@ void GraphKernelFlags::SaveJitConfig(const std::map<std::string, std::string> &j
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  const auto &jit_config = GetJitConfig();
   std::string flags = common::GetEnv("MS_DEV_GRAPH_KERNEL_FLAGS");
   if (flags != "") {
     return std::make_pair(flags, false);
   }
+  const auto &jit_config = GetJitConfig();
   if (jit_config.find("graph_kernel_flags") != jit_config.end()) {
     flags = jit_config.at("graph_kernel_flags");
   }

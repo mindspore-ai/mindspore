@@ -165,12 +165,7 @@ lite::STATUS GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shar
     }
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       MS_LOG(INFO) << "Run graphkernel optimization begin.";
-      auto p = param;
-      if (p == nullptr) {
-        p = std::make_shared<ConverterPara>();
-        p->device = "Ascend";
-      }
-      graphkernel::GraphKernelOptimizer(p).Run(func_graph);
+      graphkernel::GraphKernelOptimizer(param).Run(func_graph);
       MS_LOG(INFO) << "Run graphkernel optimization end.";
     }
     return lite::RET_OK;

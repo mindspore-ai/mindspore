@@ -57,11 +57,6 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
     md "mindspore"
 )
 
-IF "%ENABLE_AKG%" == "1" (
-    echo "enable akg"
-    SET ENABLE_GITEE=ON
-)
-
 cd %BUILD_PATH%/mindspore
 IF "%1%" == "lite" (
     echo "======Start building MindSpore Lite %VERSION_STR%======"
