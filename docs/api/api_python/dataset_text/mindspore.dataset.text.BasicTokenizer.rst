@@ -18,7 +18,7 @@
           - ``NormalizeForm.NFD``：以标准等价方式分解。
           - ``NormalizeForm.NFKD``：以兼容等价方式分解。
 
-        - **preserve_unused_token** (bool，可选) - 是否保留特殊词汇。若为True，将不会对特殊词汇进行分词，如 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' 等。默认值：True。
+        - **preserve_unused_token** (bool，可选) - 是否保留特殊词汇。若为 ``True`` ，将不会对特殊词汇进行分词，如 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' 等。默认值： ``True`` 。
         - **with_offsets** (bool，可选) - 是否输出词汇在字符串中的偏移量。默认值： ``False`` 。
 
     异常：

@@ -61,7 +61,7 @@
         初始化参数的数据。
 
         参数：
-            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]：默认值：None。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下layout不是None。
+            - **layout** (Union[None, tuple]) - 参数的layout信息。layout[dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]：默认值： ``None`` 。仅在 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 模式下 `layout` 不是 ``None`` 。
 
               - **dev_mat** (list(int)) - 该参数的设备矩阵。
               - **tensor_map** (list(int)) - 该参数的张量映射。
@@ -70,7 +70,7 @@
               - **uniform_split** (bool) - 该参数是否进行均匀切分。
               - **opt_shard_group** (str) - 该参数进行优化器切分时的group。
 
-            - **set_sliced** (bool) - 参数初始化时被设定为分片，则为True。默认值：False。
+            - **set_sliced** (bool) - 参数初始化时被设定为分片，则为 ``True`` 。默认值： ``False`` 。
 
         返回：
             初始化数据后的 `Parameter` 。如果当前 `Parameter` 已初始化，则更新 `Parameter` 数据。
@@ -133,7 +133,7 @@
 
         参数：
             - **data** (Union[Tensor, int, float]) - 新数据。
-            - **slice_shape** (bool) - 如果 `slice_shape` 设为True，则不检查 `data` 和当前参数shape的一致性。默认值：False。
+            - **slice_shape** (bool) - 如果 `slice_shape` 设为True，则不检查 `data` 和当前参数shape的一致性。默认值： ``False`` 。
 
         返回：
             完成数据设置的新参数。
@@ -147,7 +147,7 @@
             只支持在图模式下调用。
 
         参数：
-            - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
+            - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值： ``False`` 。
 
     .. py:method:: sliced
         :property:

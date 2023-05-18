@@ -7,7 +7,7 @@ mindspore.ops.all
 
     参数：
         - **input** (Tensor) - 输入Tensor，shape是 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **axis** (Union[int, tuple(int), list(int)], 可选) - 要减少的维度。假设 `input` 的秩为r，取值范围[-r,r)。默认值：None，缩小所有维度。
+        - **axis** (Union[int, tuple(int), list(int)], 可选) - 要减少的维度。假设 `input` 的秩为r，取值范围[-r,r)。默认值： ``None`` ，缩小所有维度。
         - **keep_dims** (bool, 可选) - 如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
     返回：

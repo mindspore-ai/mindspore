@@ -11,12 +11,12 @@ mindspore.dataset.vision.PadToSize
         - **offset** (Union[int, Sequence[int, int]], 可选) - 顶部和左侧要填充的长度。
           如果输入整型，使用此值填充图像上侧和左侧。
           如果提供了序列[int, int]，则应按[top, left]的顺序排列，填充图像上侧和左侧。
-          默认值：None，表示对称填充，保持原始图像处于中心位置。
-        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为Border.CONSTANT时有效。
+          默认值： ``None`` ，表示对称填充，保持原始图像处于中心位置。
+        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为 ``Border.CONSTANT`` 时有效。
           如果是3元素元组，则分别用于填充R、G、B通道。
           如果是整数，则用于所有 RGB 通道。
-          `fill_value` 值必须在 [0, 255] 范围内。默认值：0。
-        - **padding_mode** (:class:`~.vision.Border`, 可选) - 边界填充方式。可以是 [Border.CONSTANT、Border.EDGE、Border.REFLECT、Border.SYMMETRIC] 中的任何一个。默认值：Border.CONSTANT。
+          `fill_value` 值必须在 [0, 255] 范围内。默认值： ``0`` 。
+        - **padding_mode** (:class:`~.vision.Border`, 可选) - 边界填充方式。可以是 ``Border.CONSTANT`` 、 ``Border.EDGE`` 、 ``Border.REFLECT`` 、 ``Border.SYMMETRIC`` 。默认值： ``Border.CONSTANT`` 。
 
           - **Border.CONSTANT** - 使用常量值进行填充。
           - **Border.EDGE** - 使用各边的边界像素值进行填充。

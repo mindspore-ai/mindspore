@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomHorizontalFlipWithBBox
     对输入图像按给定的概率进行水平随机翻转并相应地调整边界框。
 
     参数：
-        - **prob**  (float, 可选) - 图像被翻转的概率，取值范围：[0.0, 1.0]。默认值：0.5。
+        - **prob**  (float, 可选) - 图像被翻转的概率，取值范围：[0.0, 1.0]。默认值： ``0.5`` 。
 
     异常：
         - **TypeError** - 如果 `prob` 不是float类型。

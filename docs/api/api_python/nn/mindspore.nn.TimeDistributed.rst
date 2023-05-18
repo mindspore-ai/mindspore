@@ -10,7 +10,7 @@ mindspore.nn.TimeDistributed
     参数：
         - **layer** (Union[Cell, Primitive]) - 需被封装的Cell或Primitive。
         - **time_axis** (int) - 指定各个时间切片上的轴。
-        - **reshape_with_axis** (int) - 将使用 `time_axis` 调整该轴。默认值：None。
+        - **reshape_with_axis** (int) - 将使用 `time_axis` 调整该轴。默认值： ``None`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, T, *)` 的Tensor。其中 :math:`*` 表示任意数量的附加维度。

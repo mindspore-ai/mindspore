@@ -8,7 +8,7 @@ mindspore.dataset.vision.write_jpeg
     参数：
         - **filename** (str) - 要写入的文件的路径。
         - **image** (Union[numpy.ndarray, mindspore.Tensor]) - 要写入的图像数据。
-        - **quality** (int, 可选) - 生成的JPEG文件的质量，取值范围为[1, 100]。默认值: 75。
+        - **quality** (int, 可选) - 生成的JPEG文件的质量，取值范围为[1, 100]。默认值:  ``75`` 。
 
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。

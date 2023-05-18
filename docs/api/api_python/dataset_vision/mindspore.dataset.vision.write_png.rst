@@ -8,7 +8,7 @@ mindspore.dataset.vision.write_png
     参数：
         - **filename** (str) - 要写入的文件的路径。
         - **image** (Union[numpy.ndarray, mindspore.Tensor]) - 要写入的图像数据。
-        - **compression_level** (int, 可选) - 生成PNG文件的压缩级别，取值范围为[0, 9]。默认值: 6。
+        - **compression_level** (int, 可选) - 生成PNG文件的压缩级别，取值范围为[0, 9]。默认值： ``6``。
 
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。

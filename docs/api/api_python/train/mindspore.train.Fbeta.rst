@@ -23,7 +23,7 @@ mindspore.train.Fbeta
         计算fbeta结果。
 
         参数：
-            - **average** (bool) - 是否计算fbeta平均值。默认值：False。
+            - **average** (bool) - 是否计算fbeta平均值。默认值： ``False`` 。
 
         返回：
             numpy.ndarray或numpy.float64，计算的Fbeta score结果。

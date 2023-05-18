@@ -5,7 +5,7 @@ mindspore.dataset.vision.Border
 
     边界填充方式枚举类。
 
-    可选枚举值为：Border.CONSTANT、Border.EDGE、Border.REFLECT、Border.SYMMETRIC。
+    可选枚举值为： ``Border.CONSTANT`` 、 ``Border.EDGE`` 、 ``Border.REFLECT`` 、 ``Border.SYMMETRIC`` 。
 
     - **Border.CONSTANT** - 使用常量值进行填充。
     - **Border.EDGE** - 使用各边的边界像素值进行填充。

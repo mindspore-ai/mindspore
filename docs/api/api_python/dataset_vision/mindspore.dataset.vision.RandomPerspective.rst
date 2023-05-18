@@ -6,9 +6,9 @@ mindspore.dataset.vision.RandomPerspective
     按照指定的概率对输入PIL图像进行透视变换。
 
     参数：
-        - **distortion_scale** (float，可选) - 失真程度，取值范围为[0.0, 1.0]。默认值：0.5。
-        - **prob** (float，可选) - 执行透视变换的概率，取值范围：[0.0, 1.0]。默认值：0.5。
-        - **interpolation** (:class:`~.vision.Inter`，可选) - 插值方式，取值可为 Inter.BILINEAR、Inter.NEAREST 或 Inter.BICUBIC。默认值：Inter.BICUBIC。
+        - **distortion_scale** (float，可选) - 失真程度，取值范围为[0.0, 1.0]。默认值： ``0.5`` 。
+        - **prob** (float，可选) - 执行透视变换的概率，取值范围：[0.0, 1.0]。默认值： ``0.5`` 。
+        - **interpolation** (:class:`~.vision.Inter`，可选) - 插值方式，取值可为 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 或 ``Inter.BICUBIC`` 。默认值： ``Inter.BICUBIC`` 。
 
           - **Inter.BILINEAR**：双线性插值。
           - **Inter.NEAREST**：最近邻插值。

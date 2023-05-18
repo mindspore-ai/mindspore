@@ -12,8 +12,8 @@ mindspore.transform_checkpoints
         - **src_checkpoints_dir** (str) - 源Checkpoint文件所在的目录。
         - **dst_checkpoints_dir** (str) - 目标Checkpoint文件存储的目录。
         - **ckpt_prefix** (str) - 目标Checkpoint前缀名。
-        - **src_strategy_file** (str) - 源切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
-        - **dst_strategy_file** (str) - 目标切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
+        - **src_strategy_file** (str) - 源切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为 ``None`` 时，表示切分策略为不切分。默认值： ``None`` 。
+        - **dst_strategy_file** (str) - 目标切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为 ``None`` 时，表示切分策略为不切分。默认值： ``None`` 。
 
     异常：
         - **ValueError** - `src_strategy_file` 或者 `dst_strategy_file` 不是正确的切分策略proto文件。

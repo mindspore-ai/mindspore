@@ -12,20 +12,20 @@ mindspore.dataset.vision.Affine
         - **shear** (Union[float, Sequence[float, float]]) - 裁切度数，取值需为-180到180之间。
           若输入单个数值，表示平行于X轴的裁切角度，不进行Y轴上的裁切；
           若输入序列[float, float]，分别表示平行于X轴和Y轴的裁切角度。
-        - **resample** (:class:`~.vision.Inter`, 可选) - 图像插值方式。默认值：Inter.NEAREST。它可以是 [Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA] 中的任何一个。
+        - **resample** (:class:`~.vision.Inter`, 可选) - 图像插值方式。默认值：``Inter.NEAREST``。它可以是 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 、 ``Inter.BICUBIC`` 或 ``Inter.AREA`` 。
 
           - **Inter.BILINEAR**: 双线性插值。
           - **Inter.NEAREST**: 最近邻插值。
           - **Inter.BICUBIC**: 双三次插值。
           - **Inter.AREA**: 像素区域插值。
 
-        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 用于填充输出图像中变换之外的区域。元组中必须有三个值，取值范围是[0, 255]。默认值：0。
+        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 用于填充输出图像中变换之外的区域。元组中必须有三个值，取值范围是[0, 255]。默认值： ``0`` 。
 
     异常：
         - **TypeError** - 如果 `degrees` 不是float类型。
         - **TypeError** - 如果 `translate` 不是Sequence[float, float]类型。
         - **TypeError** - 如果 `scale` 不是float类型。
-        - **ValueError** - 如果 `scale` 非正。
+        - **ValueError** - 如果 `scale` 非正数。
         - **TypeError** - 如果 `shear` 不是float或Sequence[float, float]类型。
         - **TypeError** - 如果 `resample` 不是 :class:`mindspore.dataset.vision.Inter` 的类型。
         - **TypeError** - 如果 `fill_value` 不是int或tuple[int, int, int]类型。

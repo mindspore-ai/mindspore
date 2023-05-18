@@ -11,11 +11,11 @@ mindspore.dataset.vision.Pad
           如果 `padding` 是一个包含2个值的元组或列表，第一个值会用于填充图像的左侧和右侧，第二个值会用于填充图像的上侧和下侧。
           如果 `padding` 是一个包含4个值的元组或列表，则分别填充图像的左侧、上侧、右侧和下侧。
           填充值必须为非负值。
-        - **fill_value** (Union[int, tuple[int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为Border.CONSTANT时有效。
+        - **fill_value** (Union[int, tuple[int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为 ``Border.CONSTANT`` 时有效。
           如果是3元素元组，则分别用于填充R、G、B通道。
           如果是整数，则用于所有 RGB 通道。
-          `fill_value` 值必须在 [0, 255] 范围内。默认值：0。
-        - **padding_mode** (:class:`~.vision.Border`, 可选) - 边界填充方式。可以是 [Border.CONSTANT、Border.EDGE、Border.REFLECT、Border.SYMMETRIC] 中的任何一个。默认值：Border.CONSTANT。
+          `fill_value` 值必须在 [0, 255] 范围内。默认值： ``0`` 。
+        - **padding_mode** (:class:`~.vision.Border`, 可选) - 边界填充方式。可以是 ``Border.CONSTANT`` 、 ``Border.EDG`` 、 ``Border.REFLECT`` 、 ``Border.SYMMETRIC`` 。默认值： ``Border.CONSTANT`` 。
 
           - **Border.CONSTANT** - 使用常量值进行填充。
           - **Border.EDGE** - 使用各边的边界像素值进行填充。

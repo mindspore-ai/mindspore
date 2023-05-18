@@ -928,9 +928,9 @@ class RandomAffine(py_transforms.PyTensorOperation):
             or Inter.BICUBIC. If the input PIL Image is in mode of "1" or "P", Inter.NEAREST will be
             used directly. Default: Inter.NEAREST.
 
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel value for areas outside the transform image.
             If int is provided, it will be used for all RGB channels.
@@ -1439,9 +1439,9 @@ class RandomPerspective(py_transforms.PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR,
             Inter.NEAREST or Inter.BICUBIC. Default: Inter.BICUBIC.
 
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
     Raises:
         TypeError: If `distortion_scale` is not of type float.
@@ -1505,10 +1505,10 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. It can be Inter.NEAREST,
             Inter.ANTIALIAS, Inter.BILINEAR or Inter.BICUBIC. Default: Inter.BILINEAR.
 
-            - Inter.NEAREST, nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
             - Inter.ANTIALIAS, antialias interpolation.
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area, beyond which it will fall back to use center crop instead. Default: 10.
@@ -1574,11 +1574,11 @@ class RandomRotation(py_transforms.PyTensorOperation):
             Inter.BILINEAR or Inter.BICUBIC. If the input PIL Image is in mode of "1" or "P",
             Inter.NEAREST will be used directly. Default: Inter.NEAREST.
 
-            - Inter.NEAREST, nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
 
-            - Inter.BILINEAR, bilinear interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
 
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
         expand (bool, optional): If True, it will expand the image to make it large enough to hold the entire
             rotated image. If False, keep the image the same size as the input. Please note that the expansion
@@ -1739,10 +1739,10 @@ class Resize(py_transforms.PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. It can be Inter.NEAREST,
             Inter.ANTIALIAS, Inter.BILINEAR or Inter.BICUBIC. Default: Inter.BILINEAR.
 
-            - Inter.NEAREST, nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
             - Inter.ANTIALIAS, antialias interpolation.
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int, int].

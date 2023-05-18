@@ -4,10 +4,10 @@ mindspore.dataset.vision.AutoAugmentPolicy
 .. py:class:: mindspore.dataset.vision.AutoAugmentPolicy
 
     不同数据集的自动增强策略。
-    可能的枚举值包括：AutoAugmentPolicy.IMAGENET、AutoAugmentPolicy.CIFAR10、AutoAugmentPolicy.SVHN。
+    可能的枚举值包括： ``AutoAugmentPolicy.IMAGENET`` 、 ``AutoAugmentPolicy.CIFAR10`` 、 ``AutoAugmentPolicy.SVHN`` 。
     每个策略包含25对增强操作。使用AutoAugment时，每个图像都会使用这些操作对中的一个随机转换。每对有2个不同的操作。下面显示了所有这些增强操作，包括操作名称及其概率和随机参数。
 
-    - AutoAugmentPolicy.IMAGENET：ImageNet的数据集自动增强策略。
+    - ``AutoAugmentPolicy.IMAGENET``：ImageNet的数据集自动增强策略。
 
       .. code-block::
 
@@ -26,7 +26,7 @@ mindspore.dataset.vision.AutoAugmentPolicy
            (("Invert", 0.6, None), ("Equalize", 1.0, None)),   (("Color", 0.6, 4), ("Contrast", 1.0, 8)),
            (("Equalize", 0.8, None), ("Equalize", 0.6, None))]
 
-    - AutoAugmentPolicy.CIFAR10：Cifar10的数据集自动增强策略。
+    - ``AutoAugmentPolicy.CIFAR10``：Cifar10的数据集自动增强策略。
 
       .. code-block::
 
@@ -47,7 +47,7 @@ mindspore.dataset.vision.AutoAugmentPolicy
            (("Equalize", 0.3, None), ("AutoContrast", 0.4, None)),
            (("Equalize", 0.2, None), ("AutoContrast", 0.6, None))]
 
-    - AutoAugmentPolicy.SVHN：SVHN的数据集自动增强策略。
+    - ``AutoAugmentPolicy.SVHN``：SVHN的数据集自动增强策略。
 
       .. code-block::
 

@@ -320,7 +320,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     参数：
         - **network** (Cell) - 待训练的网络模型。
-        - **fn_flag** (bool) - 是否将网络中最后一个全连接层替换为全归一化层。默认值：False。
+        - **fn_flag** (bool) - 是否将网络中最后一个全连接层替换为全归一化层。默认值： ``False`` 。
 
 .. py:class:: mindspore.boost.GradientFreeze(param_groups, freeze_type, freeze_p, total_steps)
 

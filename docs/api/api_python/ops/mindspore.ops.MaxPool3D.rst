@@ -21,7 +21,7 @@ mindspore.ops.MaxPool3D
           - ``"VALID"``：在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
           - ``"PAD"``：对输入进行填充。在输入的深度、高度和宽度方向上填充 `pad` 大小的0。如果设置此模式， `pad_list` 必须大于或等于0。
 
-        - **pad_list** (Union(int, tuple[int])) - 池化填充方式。默认值：0。如果 `pad` 是一个整数，则头尾部、顶部，底部，左边和右边的填充都是相同的，等于 `pad` 。如果 `pad` 是六个整数的tuple，则头尾部、顶部、底部、左边和右边的填充分别等于填充pad[0]、pad[1]、pad[2]、pad[3]、pad[4]和pad[5]。  
+        - **pad_list** (Union(int, tuple[int])) - 池化填充方式。默认值： ``0`` 。如果 `pad` 是一个整数，则头尾部、顶部，底部，左边和右边的填充都是相同的，等于 `pad` 。如果 `pad` 是六个整数的tuple，则头尾部、顶部、底部、左边和右边的填充分别等于填充pad[0]、pad[1]、pad[2]、pad[3]、pad[4]和pad[5]。  
         - **ceil_mode** (Union[bool, None]) - 是否使用ceil函数计算输出高度和宽度。默认值： ``None`` 。
         - **data_format** (str) - 输入和输出的数据格式。目前仅支持 ``'NCDHW'`` 。默认值： ``'NCDHW'`` 。
 

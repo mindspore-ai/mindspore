@@ -10,18 +10,18 @@ mindspore.dataset.vision.RandAugment
     只支持3通道RGB图像。
 
     参数：
-        - **num_ops** (int, 可选) - 顺序执行的数据增强变换个数。默认值：2。
-        - **magnitude** (int, 可选) - 所有变换的幅值，需小于 `num_magnitude_bins` 。默认值：9。
-        - **num_magnitude_bins** (int, 可选) - 不同变换幅值的个数，需不小于2 。默认值：31。
-        - **interpolation** (:class:`~.vision.Inter`, 可选) - 图像插值方式。默认值：Inter.NEAREST。
-          可为 Inter.NEAREST、Inter.BILINEAR、Inter.BICUBIC、Inter.AREA。
+        - **num_ops** (int, 可选) - 顺序执行的数据增强变换个数。默认值： ``2`` 。
+        - **magnitude** (int, 可选) - 所有变换的幅值，需小于 `num_magnitude_bins` 。默认值： ``9`` 。
+        - **num_magnitude_bins** (int, 可选) - 不同变换幅值的个数，需不小于2 。默认值： ``31`` 。
+        - **interpolation** (:class:`~.vision.Inter`, 可选) - 图像插值方式。默认值： ``Inter.NEAREST`` 。
+          可为 ``Inter.NEAREST`` 、 ``Inter.BILINEAR`` 、 ``Inter.BICUBIC`` 、 ``Inter.AREA`` 。
 
           - **Inter.NEAREST** - 最近邻插值。
           - **Inter.BILINEAR** - 双线性插值。
           - **Inter.BICUBIC** - 双三次插值。
           - **Inter.AREA** - 像素区域插值。
 
-        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 变换后超出原图外区域的像素填充值，取值需在 [0, 255] 范围内。默认值：0。
+        - **fill_value** (Union[int, tuple[int, int, int]], 可选) - 变换后超出原图外区域的像素填充值，取值需在 [0, 255] 范围内。默认值： ``0`` 。
           如果输入int，将用于填充所有 RGB 通道。
           如果输入tuple[int, int, int]，则分别用于填充R、G、B通道。
 

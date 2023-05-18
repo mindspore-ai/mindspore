@@ -7,7 +7,7 @@ mindspore.dataset.vision.encode_png
 
     参数：
         - **image** (Union[numpy.ndarray, mindspore.Tensor]) - 编码的图像。
-        - **compression_level** (int, 可选) - 编码压缩因子，取值范围为[0, 9]。默认值: 6。
+        - **compression_level** (int, 可选) - 编码压缩因子，取值范围为[0, 9]。默认值： ``6`` 。
 
     返回：
         - numpy.ndarray, 一维uint8类型数据。

@@ -8,8 +8,8 @@ mindspore.dataset.vision.NormalizePad
     参数：
         - **mean** (sequence) - 图像每个通道的均值组成的列表或元组。平均值必须在 (0.0, 255.0] 范围内。
         - **std** (sequence) - 图像每个通道的标准差组成的列表或元组。标准差值必须在 (0.0, 255.0] 范围内。
-        - **dtype** (str, 可选) - 输出图像的数据类型。默认值："float32"。
-        - **is_hwc** (bool, 可选) - 表示输入图像是否为HWC格式，True为HWC格式，False为CHW格式。默认值：True。
+        - **dtype** (str, 可选) - 输出图像的数据类型。默认值： ``"float32"`` 。
+        - **is_hwc** (bool, 可选) - 表示输入图像是否为HWC格式， ``True`` 为HWC格式， ``False`` 为CHW格式。默认值： ``True`` 。
 
     异常：
         - **TypeError** - 如果 `mean` 不是sequence类型。

@@ -36,7 +36,7 @@
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note::
-        - 如果配置 `python_multiprocessing=True（默认值：True）` 和 `num_parallel_workers>1（默认值：1）` 表示启动了多进程方式进行数据load加速，
+        - 如果配置 `python_multiprocessing=True（默认值： ``True`` ）` 和 `num_parallel_workers>1（默认值：1）` 表示启动了多进程方式进行数据load加速，
           此时随着数据集迭代，子进程的内存占用会逐渐增加，主要是因为自定义数据集的子进程以 Copy-On-Write 的方式获取主进程中的成员变量。
           举例：如果自定义数据集 `__init__` 函数中包含大量成员变量数据（例如：在数据集构建时加载了一个非常大的文件名列表）并且使用了多进程方式，
           那这可能会导致产生OOM的问题（总内存的预估使用量是：(子进程数量 + 1) * 父进程的内存大小）。最简单的解决方法是成员变量用非引用数据类型
