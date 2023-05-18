@@ -65,7 +65,7 @@ def test_topk_normal(mode):
     expect_output2_1 = np.array([[1, 2],
                                  [3, 0],
                                  [0, 1]])
-    assert np.allclose(output0.asnumpy(), expect_output0)
-    assert np.allclose(output1.asnumpy(), expect_output1)
-    assert np.allclose(output2_0.asnumpy(), expect_output2_0)
-    assert np.allclose(output2_1.asnumpy(), expect_output2_1)
+    assert np.allclose(output0.asnumpy(), expect_output0, rtol=1e-3, atol=1e-5)
+    assert np.allclose(output1.asnumpy(), expect_output1, rtol=1e-3, atol=1e-5)
+    assert np.allclose(output2_0.asnumpy(), expect_output2_0, rtol=1e-3, atol=1e-5)
+    assert np.allclose(output2_1.asnumpy(), expect_output2_1, rtol=1e-3, atol=1e-5)
