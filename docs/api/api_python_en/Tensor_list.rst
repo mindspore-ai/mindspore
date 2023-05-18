@@ -112,6 +112,7 @@
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
     mindspore.Tensor.erfinv
+    mindspore.Tensor.eigvals
     mindspore.Tensor.exp
     mindspore.Tensor.expand
     mindspore.Tensor.expand_as

@@ -433,6 +433,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"equal", std::string("equal")},                                    // equal()
        {"expm1", std::string("expm1")},                                    // expm1()
        {"eig", std::string("eig")},                                        // eig()
+       {"eigvals", std::string("eigvals")},                                // eigvals()
        {"geqrf", std::string("geqrf")},                                    // geqrf()
        {"histc", std::string("histc")},                                    // histc()
        {"dim", prim::kPrimRank},                                           // P.Rank()

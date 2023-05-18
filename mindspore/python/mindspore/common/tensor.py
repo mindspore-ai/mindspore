@@ -3500,6 +3500,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("xlogy")()(self, y)
 
+    def eigvals(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.eigvals`.
+        """
+        return tensor_operator_registry.get("eigvals")()(self)
+
     def erf(self):
         r"""
         For details, please refer to :func:`mindspore.ops.erf`.

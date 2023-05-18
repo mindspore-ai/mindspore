@@ -29,7 +29,7 @@ from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
 
-__all__ = ['eig', 'geqrf', 'svd', 'pinv', 'qr']
+__all__ = ['eig', 'eigvals', 'geqrf', 'svd', 'pinv', 'qr']
 
 
 def eig(A):
@@ -67,6 +67,41 @@ def eig(A):
          [0.+0.j 1.+0.j]]
     """
     return _get_cache_prim(P.Eig)(compute_v=True)(A)
+
+
+def eigvals(A):
+    """
+    Computes the eigenvalues of a square matrix(batch square matrices).
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        A (Tensor): Square matrices of shape :math:`(*, N, N)`,
+            with float32, float64, complex64 or complex128 data type.
+
+    Returns:
+        Tensor, with shape :math:`(*, N)`. Returns the eigenvalues of
+        the corresponding matrix, which may not have an order.
+
+    Raises:
+        TypeError: If dtype of `A` is not one of: float64, float32, complex64 or complex128.
+        TypeError: If `A` is not a Tensor.
+        ValueError: If `A` is not a square(batch squares).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
+        >>> u = ops.eigvals(input_x)
+        >>> print(u)
+        [1.+0.j 2.+0.j]
+    """
+    u, _ = _get_cache_prim(P.Eig)(compute_v=False)(A)
+    return u
 
 
 def geqrf(input):

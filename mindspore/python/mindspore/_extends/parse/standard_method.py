@@ -3846,6 +3846,14 @@ def xlogy(x, y):
     return F.xlogy(x, y)
 
 
+def eigvals(x):
+    r"""
+    Computes the eigenvalues of a square matrix(batch square matrices).
+    Refer to :func:`mindspore.ops.eigvals` for more detail.
+    """
+    return F.eigvals(x)
+
+
 def erf(x):
     r"""
     Computes the Gauss error function of `x` element-wise.
