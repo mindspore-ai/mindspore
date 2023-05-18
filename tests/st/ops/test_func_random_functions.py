@@ -81,7 +81,7 @@ def test_rand_functions(mode, dtype):
         assert out1.dtype == ms.float32
         assert out2.dtype == ms.float32
         assert out3.dtype == ms.float16
-        assert out4.dtype == ms.float16
+        assert out4.dtype == ms.float32
     else:
         assert out1.dtype == dtype
         assert out2.dtype == dtype
