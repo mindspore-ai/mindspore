@@ -38,7 +38,6 @@
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
 #include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
 #include "tools/graph_kernel/converter/callback_impl.h"
-#include "tools/graph_kernel/converter/split_umonad.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -61,9 +60,6 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // put an empty pass here to dump the ir before GraphKernel
   pm->Add(std::make_shared<EmptyPass>(), OptLevel_1);
-
-  // Assign(p, a, U) --> Depend(Assign(p, a), U)
-  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_ascend);
 
   // Recognize the formats for all CNodes
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
