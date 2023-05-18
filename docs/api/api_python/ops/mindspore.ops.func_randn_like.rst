@@ -10,7 +10,7 @@ mindspore.ops.randn_like
         - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值： ``None`` ，值将取 ``0`` 。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`，可选) - 需求的输出Tensor的dtype，必须是float类型。如果是 ``None`` ，`input` 的dtype会被使用。默认值： ``None`` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 需求的输出Tensor的dtype，必须是float类型。如果是 ``None`` ，则使用 ``mindspore.float32`` 。默认值： ``None`` 。
 
     返回：
         Tensor，shape和dtype由输入决定其元素为服从标准正态分布的数字。

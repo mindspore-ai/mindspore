@@ -1052,7 +1052,7 @@ def randn_like(input, seed=None, *, dtype=None):
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'randn_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
-        dtype = input.dtype
+        dtype = mstype.float32
     if dtype not in mstype.float_type:
         raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
