@@ -11054,6 +11054,9 @@ def fft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-na
     r"""
     Calculates the one dimensional discrete Fourier transform of `input`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): The input tensor.
         n (int, optional): Signal length.
@@ -11131,6 +11134,9 @@ def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-o
     r"""
     Calculates the two dimensional discrete Fourier transform of `input`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): The input tensor.
         s (Tuple[int], optional): Signal size in the transformed dimensions.
@@ -11173,7 +11179,10 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
     r"""
     Calculates the N dimensional discrete Fourier transform of `input`.
 
-   Args:
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
         input (Tensor): The input tensor.
         s (Tuple[int], optional): Signal size in the transformed dimensions.
             If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before
@@ -11221,6 +11230,9 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
 def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-name
     r"""
     Calculates the inverse of `fft()`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The input tensor.
@@ -11300,6 +11312,9 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
     r"""
     Calculates the inverse of `fft2()`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): The input tensor.
         s (Tuple[int], optional): Signal size in the transformed dimensions.
@@ -11341,6 +11356,9 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
 def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer-name
     r"""
     Calculates the inverse of `fftn()`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The input tensor.
