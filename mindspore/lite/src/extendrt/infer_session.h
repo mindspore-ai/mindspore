@@ -28,7 +28,6 @@
 #include "backend/graph_compiler/graph_partition.h"
 #include "extendrt/session/type.h"
 #include "common/mutable_tensor_impl.h"
-#include "extendrt/utils/kernel_graph_utils.h"
 #include "src/common/config_infos.h"
 
 namespace mindspore {

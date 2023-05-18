@@ -24,7 +24,6 @@
 
 #include "extendrt/infer_session.h"
 #include "runtime/hardware/device_context.h"
-#include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
 namespace mindspore {

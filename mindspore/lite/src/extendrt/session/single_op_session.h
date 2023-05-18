@@ -21,7 +21,6 @@
 #include <vector>
 #include <tuple>
 #include "src/extendrt/infer_session.h"
-#include "extendrt/utils/kernel_graph_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {

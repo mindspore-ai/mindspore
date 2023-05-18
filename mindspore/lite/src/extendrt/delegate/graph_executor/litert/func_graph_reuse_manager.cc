@@ -102,40 +102,6 @@ Status FuncGraphReuseManager::StoreFbModelBuf(void *model_buf, size_t data_size,
   return kLiteError;
 }
 
-KernelGraphPtr FuncGraphReuseManager::GetKernelGraph(
-  std::map<std::string, std::map<std::string, std::string>> config_info) {
-  std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(mindspore::lite::kInnerModelParallelRunnerSection);
-  if (id != config_info.end()) {
-    if (id->second.find(lite::kInnerRunnerIDKey) != id->second.end()) {
-      auto runner_id = id->second[lite::kInnerRunnerIDKey];
-      if (all_kernel_graph_.find(runner_id) != all_kernel_graph_.end()) {
-        auto kernel_graph = all_kernel_graph_[runner_id];
-        return kernel_graph;
-      }
-    } else {
-      MS_LOG(ERROR) << "config info not find runner id.";
-      return nullptr;
-    }
-  }
-  MS_LOG(INFO) << "can not find model buf in all store function graphs";
-  return nullptr;
-}
-
-Status FuncGraphReuseManager::StoreKernelGraph(std::map<std::string, std::map<std::string, std::string>> config_info,
-                                               KernelGraphPtr kernel_graph) {
-  std::unique_lock<std::mutex> l(mtx_manager_);
-  auto id = config_info.find(lite::kInnerModelParallelRunnerSection);
-  if (id != config_info.end()) {
-    if (id->second.find(lite::kInnerRunnerIDKey) != id->second.end()) {
-      auto runner_id = id->second[lite::kInnerRunnerIDKey];
-      all_kernel_graph_[runner_id] = kernel_graph;
-      return kSuccess;
-    }
-  }
-  return kSuccess;
-}
-
 Status FuncGraphReuseManager::GetInOut(std::map<std::string, std::map<std::string, std::string>> config_info,
                                        std::vector<tensor::TensorPtr> *in_tensor,
                                        std::vector<tensor::TensorPtr> *out_tensor, std::vector<std::string> *in_name,
@@ -196,10 +162,6 @@ void FuncGraphReuseManager::ReleaseSharedFuncGraph(
     MS_LOG(INFO) << "release shared function graph of runner id: " << runner_id;
     all_func_graphs_.erase(runner_id);
   }
-  if (all_kernel_graph_.find(runner_id) != all_kernel_graph_.end()) {
-    MS_LOG(INFO) << "release shared kernel graph of runner id: " << runner_id;
-    all_kernel_graph_.erase(runner_id);
-  }
   if (all_infer_helpers_.find(runner_id) != all_infer_helpers_.end()) {
     MS_LOG(INFO) << "release shared infer helpers of runner id: " << runner_id;
     all_infer_helpers_.erase(runner_id);
@@ -228,7 +190,6 @@ FuncGraphReuseManager::~FuncGraphReuseManager() {
   std::unique_lock<std::mutex> l(mtx_manager_);
   MS_LOG(INFO) << "~FuncGraphReuseManager() begin.";
   all_func_graphs_.clear();
-  all_kernel_graph_.clear();
   all_infer_helpers_.clear();
   all_in_tensors_.clear();
   all_out_tensors_.clear();

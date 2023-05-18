@@ -23,7 +23,6 @@
 #include <string>
 
 #include "include/backend/device_address.h"
-#include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "ir/tensor.h"
 
@@ -36,14 +35,6 @@ class RuntimeUtils {
 
   static kernel::AddressPtr GetAddressFromDevice(device::DeviceAddressPtr address_ptr);
 
-  static std::vector<AnfNodePtr> GetGraphDataInputs(const KernelGraphPtr &kernel_graph);
-  static void CopyInputTensorsToKernelGraph(const std::vector<tensor::Tensor> &inputs, KernelGraphPtr kernel_graph);
-  static void CopyOutputTensorsFromKernelGraph(std::vector<tensor::Tensor> *outputs, KernelGraphPtr kernel_graph);
-
-  static void AssignKernelGraphAddress(KernelGraphPtr kernel_graph);
-  static void AssignValueNodeAddress(KernelGraphPtr kernel_graph);
-  static void AssignInputNodeAddress(KernelGraphPtr kernel_graph);
-  static void AssignKernelOutputAddress(KernelGraphPtr kernel_graph);
   static device::DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                       TypeId type_id);
   static void UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,

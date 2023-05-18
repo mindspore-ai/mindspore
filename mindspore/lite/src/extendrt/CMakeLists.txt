@@ -53,7 +53,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
+        # ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/serialization.cc
