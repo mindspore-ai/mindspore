@@ -15,7 +15,6 @@
  */
 
 #include "tools/graph_kernel/runtime/akg_kernel.h"
-#include <dlfcn.h>
 #include <algorithm>
 #include <utility>
 #include <numeric>
@@ -26,12 +25,14 @@
 #include "src/common/tensor_util.h"
 #include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
+#include "src/common/dynamic_library_loader.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-constexpr auto kAkgKernelSo = "akgkernels.so";
+constexpr auto kNumberTwo = 2;
 namespace {
 int TmpAkgParallelLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
   /*
@@ -83,11 +84,7 @@ void AkgKernel::ExtractKernelAttr() {
   }
 }
 
-AkgKernel::~AkgKernel() {
-  if (handle_ != nullptr) {
-    (void)dlclose(handle_);
-  }
-}
+AkgKernel::~AkgKernel() { CloseAkgLib(); }
 
 int TmpDoTask(void *obj, int task_id, float lhs_scale, float rhs_scale) {
   return static_cast<AkgKernel *>(obj)->DoTask(task_id, lhs_scale, rhs_scale);
@@ -105,17 +102,54 @@ void AkgKernel::AkgParallelLaunchFunc(AkgParallelLambda flambda, void *cdata, in
   cached_akg_lambda_ = nullptr;
   cached_runtimeargs_ = nullptr;
 }
+class AkgLibraryLoader : public lite::DynamicLibraryLoader {
+ public:
+  static AkgLibraryLoader *GetInstance() {
+    static AkgLibraryLoader inst;
+    return &inst;
+  }
+};
+
+int AkgKernel::LoadAkgLib(void *data, size_t file_size) {
+  static std::once_flag flag;
+  static int ret;
+  std::call_once(flag, [&]() -> void {
+    if (lite::WriteToBin(kAkgKernelSo, data, file_size)) {
+      MS_LOG(ERROR) << "write data to " << kAkgKernelSo << " failed.";
+      ret = lite::RET_ERROR;
+    }
+    ret = AkgLibraryLoader::GetInstance()->Open(kAkgKernelSo);
+  });
+  return ret;
+}
+
+void AkgKernel::CloseAkgLib() {
+  static std::once_flag flag;
+  std::call_once(flag, [&]() -> void {
+    if (AkgLibraryLoader::GetInstance()->Close() != lite::RET_OK) {
+      MS_LOG(ERROR) << "Close " << kAkgKernelSo << " handle failed.";
+    }
+  });
+}
 
 int AkgKernel::Prepare() {
-  if (handle_ != nullptr || kernel_func_ != nullptr) {
+  if (kernel_func_ != nullptr) {
     return RET_OK;
   }
-  handle_ = dlopen(kAkgKernelSo, RTLD_LAZY | RTLD_LOCAL);
-  if (handle_ == nullptr) {
+  if (in_tensors_.size() < kNumberTwo) {
+    MS_LOG(ERROR) << "The number of input tensor in AkgKernel must greater than 2, but now got " << in_tensors_.size();
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  auto akg_lib_tensor = in_tensors_.at(in_tensors_.size() - 1);
+  auto akg_lib_ptr = akg_lib_tensor->data();
+  auto akg_lib_size = akg_lib_tensor->Size();
+  if (LoadAkgLib(akg_lib_ptr, akg_lib_size) != RET_OK) {
     MS_LOG(ERROR) << "Load [" << kAkgKernelSo << "] failed. kernel: [" << kernel_name_ << "]";
     return RET_ERROR;
   }
-  kernel_func_ = dlsym(handle_, kernel_name_.c_str());
+  kernel_func_ = AkgLibraryLoader::GetInstance()->GetFunc(kernel_name_.c_str());
+  // the last input tensor is akgkernels.so, so we need to remove it.
+  in_tensors_.pop_back();
   if (kernel_func_ == nullptr) {
     MS_LOG(ERROR) << "Undefined symbol [" << kernel_name_ << "] in [" << kAkgKernelSo << "]";
     return RET_ERROR;

@@ -28,6 +28,7 @@ SET ENABLE_GITEE=OFF
 SET ENABLE_MSVC=OFF
 set BUILD_TYPE=Release
 set VERSION_STR=''
+set ENABLE_AKG=OFF
 for /f "tokens=1" %%a in (version.txt) do (set VERSION_STR=%%a)
 
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
@@ -54,6 +55,11 @@ IF NOT EXIST "%BUILD_PATH%" (
 cd %BUILD_PATH%
 IF NOT EXIST "%BUILD_PATH%/mindspore" (
     md "mindspore"
+)
+
+IF "%ENABLE_AKG%" == "1" (
+    echo "enable akg"
+    SET ENABLE_GITEE=ON
 )
 
 cd %BUILD_PATH%/mindspore

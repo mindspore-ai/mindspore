@@ -22,6 +22,7 @@
 #include "utils/anf_utils.h"
 #include "kernel/akg/graph_kernel_json_generator.h"
 
+constexpr auto kAkgKernelSo = "akgkernels.so";
 namespace mindspore::graphkernel {
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
                           std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names);
@@ -30,5 +31,6 @@ std::string GetCNodeInputShapeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputShapeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputTypeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputFormatStr(const CNodePtr &cnode);
+ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_UTILS_H_

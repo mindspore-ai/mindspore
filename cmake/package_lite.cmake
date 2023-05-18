@@ -992,6 +992,22 @@ else()
         endif()
     endif()
     if(MSLITE_ENABLE_TOOLS)
+        if(MSLITE_ENABLE_GRAPH_KERNEL AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+            set(AKG_PATH ${BUILD_DIR}/akg)
+            file(REMOVE_RECURSE ${AKG_PATH}/build/akg/lib)
+            install(DIRECTORY  ${AKG_PATH}/build/akg
+                    DESTINATION ${BUILD_DIR}/package/mindspore_lite
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${AKG_PATH}/${AKG_PKG_PATH}
+                    DESTINATION ${RUNTIME_PKG_NAME}/tools/akg
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${AKG_PATH}/${AKG_PKG_PATH}.sha256
+                    DESTINATION ${RUNTIME_PKG_NAME}/tools/akg
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${AKG_PATH}/build/libakg.so
+                    DESTINATION ${BUILD_DIR}/package/mindspore_lite/lib
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         if(NOT MSLITE_COMPILE_TWICE)
             install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
                     COMPONENT ${RUNTIME_COMPONENT_NAME})

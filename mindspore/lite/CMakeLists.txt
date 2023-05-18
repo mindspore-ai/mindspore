@@ -47,7 +47,7 @@ option(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE "enable distribute thread dynamic
 option(MSLITE_ENABLE_BFC_MEMORY "enable distribute BFC memory" off)
 option(MSLITE_ENABLE_PARALLEL_INFERENCE "enable parallel inference interface" off)
 option(MSLITE_ENABLE_SHARING_MODEL_WEIGHT "enable sharing model weight" off)
-option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" off)
+option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" on)
 option(MSLITE_ENABLE_CONVERT_PYTORCH_MODEL "enable to convert pytorch model" off)
 option(MSLITE_ENABLE_KERNEL_EXECUTOR "enable kernel executor" off)
 option(MSLITE_ENABLE_GITEE_MIRROR "enable download third_party from gitee mirror" off)

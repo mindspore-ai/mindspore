@@ -134,7 +134,7 @@ nlohmann::json GenTuneInfo(const AnfNodePtr &conv_node, const std::map<AnfNodePt
 void TuneProcess(const std::string &json_file_name, const std::string &res_file_name, const std::string &akg_path) {
   std::ostringstream py_cmd;
   const auto &flags = GraphKernelFlags::GetInstance();
-  py_cmd << kAddAkgPath;
+  py_cmd << kAddMSLiteAkg;
   py_cmd << "import auto_tune\n";
   py_cmd << "auto_tune.tune_layout(\'" << json_file_name << "\', \'" << res_file_name << "\', "
          << flags.cpu_refer_thread_num << ")\n";

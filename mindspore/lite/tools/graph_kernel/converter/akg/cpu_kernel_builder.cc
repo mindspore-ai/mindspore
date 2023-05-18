@@ -43,11 +43,12 @@ namespace mindspore::graphkernel {
 bool CompileSingleJson(const std::string &json_name) {
   std::string attrs = "None";
   std::ostringstream py_cmd;
-  py_cmd << kAddAkgPath;
+  py_cmd << kAddMSLiteAkg;
   py_cmd << "from akg.ms import compilewithjsonname\n";
   py_cmd << "if not compilewithjsonname(\'" << json_name << "\', " << attrs << "):\n";
   py_cmd << "    raise RuntimeError(\'Compile fail for json: " << json_name << "\')";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
+  MS_LOG(INFO) << "GraphKernel CPU backend CompileSingleJson content: \n" << cmd.c_str();
   auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;
@@ -223,11 +224,22 @@ bool CpuKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
         objs << dir_path << "/" << iter.second << ".o ";
       }
     }
-    auto cmd = "g++ -fPIC -shared -o akgkernels.so " + objs.str();
-    if (std::system(cmd.c_str()) == 0) {
+    std::ostringstream cmd_str;
+    cmd_str << "g++ -fPIC -shared -o " << kAkgKernelSo << " " << objs.str();
+    if (std::system(cmd_str.str().c_str()) == 0) {
       return true;
     }
   }
   return false;
+}
+
+bool CpuKernelBuilder::GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) {
+  auto param_node = CreateAkgKernelParameter(func_graph, kAkgKernelSo);
+  if (param_node != nullptr) {
+    *param_ptr = param_node;
+  } else {
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore::graphkernel

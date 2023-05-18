@@ -14,7 +14,10 @@
 
 """Compile akg info"""
 import sys
-from akg.ms import compilewithjson
+try:
+    from mindspore_lite.akg.ms import compilewithjson
+except ImportError:
+    from akg.ms import compilewithjson
 
 
 def run_compiler(info_path):

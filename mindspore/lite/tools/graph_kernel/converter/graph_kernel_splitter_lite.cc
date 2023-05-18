@@ -45,7 +45,7 @@ bool GraphKernelSplitterWithTuning::StartTuning(const std::string &dir_path) con
   attrs << "}";
   std::ostringstream py_cmd;
   std::string tune_interface = "poly_graph_split_with_json_dir";
-  py_cmd << kAddAkgPath;
+  py_cmd << kAddMSLiteAkg;
   py_cmd << "from akg.ms import " << tune_interface << "\n";
   py_cmd << "if not " << tune_interface << "(\'" << dir_path << "\', " << attrs.str() << "):\n";
   py_cmd << "    raise RuntimeError(\'Tune fail. info path: " << dir_path << "\')";

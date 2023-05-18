@@ -123,6 +123,7 @@ struct AscendQuantString {
 struct DynamicQuantString {
   std::string quant_strategy;
 };
+using GraphKernelString = std::vector<std::string>;
 
 class ConfigFileParser {
  public:
@@ -143,6 +144,7 @@ class ConfigFileParser {
   TransformQuantString GetTransformQuantString() const { return this->transform_quant_string_; }
   AscendQuantString GetAscendQuantString() const { return this->ascend_quant_string_; }
   DynamicQuantString GetDynamicQuantString() const { return this->dynamic_quant_string_; }
+  GraphKernelString GetGraphKernelString() const { return this->graph_kernel_string_; }
 
  private:
   int ParseDataPreProcessString(const std::map<std::string, std::map<std::string, std::string>> &maps);
@@ -159,6 +161,7 @@ class ConfigFileParser {
   int ParseTransformQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseAscendQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseDynamicQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  int ParseGraphKernelString(const std::map<std::string, std::map<std::string, std::string>> &maps);
 
  private:
   DataPreProcessString data_pre_process_string_;
@@ -173,6 +176,7 @@ class ConfigFileParser {
   TransformQuantString transform_quant_string_;
   AscendQuantString ascend_quant_string_;
   DynamicQuantString dynamic_quant_string_;
+  GraphKernelString graph_kernel_string_;
 };
 
 }  // namespace lite

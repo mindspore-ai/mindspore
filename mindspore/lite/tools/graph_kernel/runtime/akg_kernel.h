@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include "src/litert/lite_kernel.h"
 #include "nnacl/custom_parameter.h"
+#include "src/common/dynamic_library_loader.h"
 
 namespace mindspore::kernel {
 using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
@@ -49,7 +50,6 @@ class AkgKernel : public LiteKernel {
   void ExtractKernelAttr();
 
   void *params_{nullptr};
-  void *handle_{nullptr};
   void *kernel_func_{nullptr};
   std::string kernel_name_;
   int nthread_{0};
@@ -60,6 +60,10 @@ class AkgKernel : public LiteKernel {
   void *cached_runtimeargs_ = nullptr;
   std::vector<size_t> dynamic_input_index_;
   std::vector<std::vector<int>> origin_inputs_shape_;
+
+ private:
+  int LoadAkgLib(void *data, size_t file_size);
+  void CloseAkgLib();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_

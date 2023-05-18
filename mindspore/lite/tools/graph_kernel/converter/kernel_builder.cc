@@ -54,6 +54,9 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
   }
   auto manager = Manage(func_graph, true);
   MS_EXCEPTION_IF_NULL(manager);
+  ParameterPtr akg_node = nullptr;
+  RETURN_IF_FALSE_WITH_LOG(builder->GenerateAkgKernelNodes(func_graph, &akg_node),
+                           "Graph kernel generate akg kernel failed.");
   for (auto &node : node_list) {
     auto cnode = node->cast<CNodePtr>();
     auto custom_cnode = builder->CreateCustomOp(func_graph, cnode);
@@ -61,6 +64,9 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(EXCEPTION) << "Create custom op fail for " << cnode->fullname_with_scope();
     }
     manager->Replace(node, custom_cnode);
+    if (akg_node != nullptr) {
+      manager->AddEdge(custom_cnode, akg_node);
+    }
   }
   return true;
 }
