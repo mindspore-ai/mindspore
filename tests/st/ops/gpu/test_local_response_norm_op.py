@@ -38,13 +38,13 @@ class MSLRNOpNet(nn.Cell):
 class MSGradNet(nn.Cell):
     def __init__(self, network):
         super(MSGradNet, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True, get_by_list=True)
+        self.grad = C.GradOperation(get_all=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())
 
-    def construct(self, x, dy):
+    def construct(self, x):
         grad_op = self.grad(self.network, self.params)
-        output = grad_op(x, dy)
+        output = grad_op(x)
         return output
 
 
@@ -116,13 +116,11 @@ def test_lrn_grad_dynamic_shape():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_dyn = Tensor(shape=[1, 32, 64, None], dtype=mindspore.float32)
-    dy_dyn = Tensor(shape=[1, 32, 64, None], dtype=mindspore.float32)
     net = MSLRNOpNet()
     grad_net = MSGradNet(net)
     grad_net.set_train(True)
-    grad_net.set_inputs(x_dyn, dy_dyn)
+    grad_net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 64, 64)
-    dy = np.random.randn(1, 32, 64, 64)
-    output = grad_net(Tensor(x, mindspore.float32), Tensor(dy, mindspore.float32))
+    output = grad_net(Tensor(x, mindspore.float32))
     expect_shape = (1, 32, 64, 64)
     assert output[0][0].asnumpy().shape == expect_shape
