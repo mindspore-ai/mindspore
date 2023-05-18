@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_RAGGED_RANGE_PARAMETER_H_
-#define MINDSPORE_NNACL_RAGGED_RANGE_PARAMETER_H_
+#ifndef NNACL_RAGGED_RANGE_PARAMETER_H_
+#define NNACL_RAGGED_RANGE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -29,4 +29,4 @@ typedef struct RaggedRangeParameter {
   bool deltas_is_scalar;
 } RaggedRangeParameter;
 
-#endif  // MINDSPORE_NNACL_RAGGED_RANGE_PARAMETER_H_
+#endif  // NNACL_RAGGED_RANGE_PARAMETER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_UNSTACK_PARAMETER_H_
-#define MINDSPORE_NNACL_UNSTACK_PARAMETER_H_
+#ifndef NNACL_UNSTACK_PARAMETER_H_
+#define NNACL_UNSTACK_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -31,4 +31,4 @@ typedef struct UnstackParameter {
   int after_dims_;
 } UnstackParameter;
 
-#endif  // MINDSPORE_NNACL_UNSTACK_PARAMETER_H_
+#endif  // NNACL_UNSTACK_PARAMETER_H_

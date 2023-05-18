@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_PACK_H_
-#define MINDSPORE_NNACL_PACK_H_
+#ifndef NNACL_PACK_H_
+#define NNACL_PACK_H_
 
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/int8/pack_int8.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_NNACL_PACK_H_
+#endif  // NNACL_PACK_H_

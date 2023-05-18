@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_TILE_PARAMETER_H_
-#define MINDSPORE_NNACL_TILE_PARAMETER_H_
+#ifndef NNACL_TILE_PARAMETER_H_
+#define NNACL_TILE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -32,4 +32,4 @@ typedef struct TileParameter {
   int out_strides_[MAX_SHAPE_SIZE];
 } TileParameter;
 
-#endif  // MINDSPORE_NNACL_TILE_PARAMETER_H_
+#endif  // NNACL_TILE_PARAMETER_H_

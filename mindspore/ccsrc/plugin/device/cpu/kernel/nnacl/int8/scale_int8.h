@@ -18,7 +18,7 @@
 #define NNACL_SCALE_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "nnacl/nnacl_common.h"
 
 #ifdef __cplusplus

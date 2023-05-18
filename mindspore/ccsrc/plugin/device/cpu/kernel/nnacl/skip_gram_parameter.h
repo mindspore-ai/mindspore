@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SKIP_GRAM_PARAMETER_H_
-#define MINDSPORE_NNACL_SKIP_GRAM_PARAMETER_H_
+#ifndef NNACL_SKIP_GRAM_PARAMETER_H_
+#define NNACL_SKIP_GRAM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -27,4 +27,4 @@ typedef struct SkipGramParameter {
   int ngram_size;
 } SkipGramParameter;
 
-#endif  // MINDSPORE_NNACL_SKIP_GRAM_PARAMETER_H_
+#endif  // NNACL_SKIP_GRAM_PARAMETER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_TENSORLIST_C_UTILS_H_
-#define MINDSPORE_NNACL_TENSORLIST_C_UTILS_H_
+#ifndef NNACL_TENSORLIST_C_UTILS_H_
+#define NNACL_TENSORLIST_C_UTILS_H_
 
 #include <stddef.h>
 #include "nnacl/errorcode.h"
@@ -36,4 +36,4 @@ bool InferFlagTensorList(TensorC *tensor_list);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_TENSORLIST_C_UTILS_H_
+#endif  // NNACL_TENSORLIST_C_UTILS_H_

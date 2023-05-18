@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_POWER_PARAMETER_H_
-#define MINDSPORE_NNACL_POWER_PARAMETER_H_
+#ifndef NNACL_POWER_PARAMETER_H_
+#define NNACL_POWER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -38,4 +38,4 @@ typedef struct PowerParameter {
   bool broadcast_;
 } PowerParameter;
 
-#endif  // MINDSPORE_NNACL_POWER_PARAMETER_H_
+#endif  // NNACL_POWER_PARAMETER_H_

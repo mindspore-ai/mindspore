@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_TRANSPOSE_PARAMETER_H_
-#define MINDSPORE_NNACL_TRANSPOSE_PARAMETER_H_
+#ifndef NNACL_TRANSPOSE_PARAMETER_H_
+#define NNACL_TRANSPOSE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -41,4 +41,4 @@ typedef struct TransposeParameter {
   int data_num_;
 } TransposeParameter;
 
-#endif  // MINDSPORE_NNACL_TRANSPOSE_PARAMETER_H_
+#endif  // NNACL_TRANSPOSE_PARAMETER_H_

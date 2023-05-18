@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_DETECTION_POST_PROCESS_PARAMETER_H_
-#define MINDSPORE_NNACL_DETECTION_POST_PROCESS_PARAMETER_H_
+#ifndef NNACL_DETECTION_POST_PROCESS_PARAMETER_H_
+#define NNACL_DETECTION_POST_PROCESS_PARAMETER_H_
 #include "nnacl/op_base.h"
 
 typedef struct DetectionPostProcessParameter {
@@ -45,4 +45,4 @@ typedef struct DetectionPostProcessParameter {
   void *selected_;
 } DetectionPostProcessParameter;
 
-#endif  // MINDSPORE_NNACL_DETECTION_POST_PROCESS_PARAMETER_H_
+#endif  // NNACL_DETECTION_POST_PROCESS_PARAMETER_H_

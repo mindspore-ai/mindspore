@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_BATCH_TO_SPACE_H_
-#define MINDSPORE_NNACL_BATCH_TO_SPACE_H_
+#ifndef NNACL_BATCH_TO_SPACE_H_
+#define NNACL_BATCH_TO_SPACE_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -28,4 +28,4 @@ typedef struct BatchToSpaceParameter {
   bool no_crop_;
 } BatchToSpaceParameter;
 
-#endif  // MINDSPORE_NNACL_FP32_BATCH_TO_SPACE_H_
+#endif  // NNACL_FP32_BATCH_TO_SPACE_H_

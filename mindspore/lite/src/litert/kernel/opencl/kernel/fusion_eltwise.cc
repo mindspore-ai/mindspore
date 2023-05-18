@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "nnacl/arithmetic_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "src/litert/infer_manager.h"
 
 using mindspore::lite::RET_ERROR;

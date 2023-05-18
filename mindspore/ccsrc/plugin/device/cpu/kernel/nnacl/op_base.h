@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
+#ifndef NNACL_OP_BASE_H_
+#define NNACL_OP_BASE_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -727,4 +727,4 @@ typedef enum CalFixedMultiplierMode {
   Method_DoublePrecision
 } CalFixedMultiplierMode;
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_OP_BASE_H_
+#endif  // NNACL_OP_BASE_H_

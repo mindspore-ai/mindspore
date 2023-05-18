@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_ALL_GATHER_PARAMETER_H_
-#define MINDSPORE_NNACL_ALL_GATHER_PARAMETER_H_
+#ifndef NNACL_ALL_GATHER_PARAMETER_H_
+#define NNACL_ALL_GATHER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -27,4 +27,4 @@ typedef struct AllGatherParameter {
   // other parameter
   int rank_size_;
 } AllGatherParameter;
-#endif  // MINDSPORE_NNACL_ALL_GATHER_PARAMETER_H_
+#endif  // NNACL_ALL_GATHER_PARAMETER_H_

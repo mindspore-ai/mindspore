@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FLATTEN_PARAMETER_H_
-#define MINDSPORE_NNACL_FLATTEN_PARAMETER_H_
+#ifndef NNACL_FLATTEN_PARAMETER_H_
+#define NNACL_FLATTEN_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -25,4 +25,4 @@ typedef struct FlattenParameter {
   int axis_;
 } FlattenParameter;
 
-#endif  // MINDSPORE_NNACL_FLATTEN_PARAMETER_H_
+#endif  // NNACL_FLATTEN_PARAMETER_H_

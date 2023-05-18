@@ -93,7 +93,7 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "wrapper/fp32/scale_fp32_wrapper.h",
-            "nnacl/scale.h",
+            "nnacl/scale_parameter.h",
             "nnacl/fp32/scale_fp32.h",
           },
           {

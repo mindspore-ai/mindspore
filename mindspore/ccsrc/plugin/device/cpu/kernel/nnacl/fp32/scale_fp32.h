@@ -18,7 +18,7 @@
 #define MINDSPORE_NNACL_SCALE_FP32_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

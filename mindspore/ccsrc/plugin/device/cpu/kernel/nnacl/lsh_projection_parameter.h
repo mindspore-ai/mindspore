@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_LSH_PROJECTION_PARAMETER_H_
-#define MINDSPORE_NNACL_LSH_PROJECTION_PARAMETER_H_
+#ifndef NNACL_LSH_PROJECTION_PARAMETER_H_
+#define NNACL_LSH_PROJECTION_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -32,4 +32,4 @@ typedef struct LshProjectionParameter {
   int64_t thread_stride_;
 } LshProjectionParameter;
 
-#endif  // MINDSPORE_NNACL_LSH_PROJECTION_PARAMETER_H_
+#endif  // NNACL_LSH_PROJECTION_PARAMETER_H_

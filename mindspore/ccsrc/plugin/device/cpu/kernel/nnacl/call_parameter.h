@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_CALL_PARAMETER_H_
-#define MINDSPORE_NNACL_CALL_PARAMETER_H_
+#ifndef NNACL_CALL_PARAMETER_H_
+#define NNACL_CALL_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -25,4 +25,4 @@ typedef struct CallParameter {
   bool is_tail_call;
 } CallParameter;
 
-#endif  // MINDSPORE_NNACL_CALL_PARAMETER_H_
+#endif  // NNACL_CALL_PARAMETER_H_

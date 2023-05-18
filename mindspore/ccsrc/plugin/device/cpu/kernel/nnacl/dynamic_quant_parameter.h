@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_
-#define MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_
+#ifndef NNACL_DYNAMIC_QUANT_PARAMETER_H_
+#define NNACL_DYNAMIC_QUANT_PARAMETER_H_
 #include "nnacl/op_base.h"
 
 typedef struct DynamicQuantParameter {
@@ -27,4 +27,4 @@ typedef struct DynamicQuantParameter {
   bool transpose_;
 } DynamicQuantParameter;
 
-#endif  // MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_
+#endif  // NNACL_DYNAMIC_QUANT_PARAMETER_H_

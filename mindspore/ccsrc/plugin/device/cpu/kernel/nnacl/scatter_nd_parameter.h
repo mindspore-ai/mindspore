@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SCATTER_ND_PARAMETER_H_
-#define MINDSPORE_NNACL_SCATTER_ND_PARAMETER_H_
+#ifndef NNACL_SCATTER_ND_PARAMETER_H_
+#define NNACL_SCATTER_ND_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -26,4 +26,4 @@ typedef struct ScatterNDParameter {
   int data_type_len;
 } ScatterNDParameter;
 
-#endif  // MINDSPORE_NNACL_SCATTER_ND_PARAMETER_H_
+#endif  // NNACL_SCATTER_ND_PARAMETER_H_

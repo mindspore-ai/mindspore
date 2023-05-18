@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_@OP_NAME_UPPER@_SIMD_H_
-#define MINDSPORE_NNACL_@OP_NAME_UPPER@_SIMD_H_
+#ifndef NNACL_@OP_NAME_UPPER@_SIMD_H_
+#define NNACL_@OP_NAME_UPPER@_SIMD_H_
 
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #ifdef ENABLE_AVX512

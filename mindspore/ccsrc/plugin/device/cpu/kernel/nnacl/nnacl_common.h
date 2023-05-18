@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_NNACL_COMMON_H_
-#define MINDSPORE_NNACL_NNACL_COMMON_H_
+#ifndef NNACL_NNACL_COMMON_H_
+#define NNACL_NNACL_COMMON_H_
 
 #include <stdint.h>
 #include "nnacl/op_base.h"
@@ -105,4 +105,4 @@ uint16_t Float32ToShort(float src_value);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_NNACL_COMMON_H_
+#endif  // NNACL_NNACL_COMMON_H_

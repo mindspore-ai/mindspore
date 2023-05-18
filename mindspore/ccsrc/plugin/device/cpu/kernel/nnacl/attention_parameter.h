@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_ATTENTION_PARAMETER_H_
-#define MINDSPORE_NNACL_ATTENTION_PARAMETER_H_
+#ifndef NNACL_ATTENTION_PARAMETER_H_
+#define NNACL_ATTENTION_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -44,4 +44,4 @@ typedef struct RelativePositionAttentionParameter {
   int bias_tile_;  // tile for bias pack
 } RelativePositionAttentionParameter;
 
-#endif  // MINDSPORE_NNACL_ATTENTION_PARAMETER_H_
+#endif  // NNACL_ATTENTION_PARAMETER_H_

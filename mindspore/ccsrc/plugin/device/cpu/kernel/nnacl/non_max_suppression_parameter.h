@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_
-#define MINDSPORE_NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_
+#ifndef NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_
+#define NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -25,4 +25,4 @@ typedef struct NMSParameter {
   int center_point_box_;
 } NMSParameter;
 
-#endif  // MINDSPORE_NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_
+#endif  // NNACL_NON_MAX_SUPPRESSION_PARAMETER_H_

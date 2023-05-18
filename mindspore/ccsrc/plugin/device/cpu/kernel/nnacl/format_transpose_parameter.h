@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FORMAT_TRANSPOSE_PARAMETER_H_
-#define MINDSPORE_NNACL_FORMAT_TRANSPOSE_PARAMETER_H_
+#ifndef NNACL_FORMAT_TRANSPOSE_PARAMETER_H_
+#define NNACL_FORMAT_TRANSPOSE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/infer/common_infer.h"
@@ -26,4 +26,4 @@ typedef struct FormatTransposeParameter {
   FormatC dst_format_;
 } FormatTransposeParameter;
 
-#endif  // MINDSPORE_NNACL_FORMAT_TRANSPOSE_PARAMETER_H_
+#endif  // NNACL_FORMAT_TRANSPOSE_PARAMETER_H_

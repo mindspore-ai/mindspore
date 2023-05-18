@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHER_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHER_PARAMETER_H_
+#ifndef NNACL_GATHER_PARAMETER_H_
+#define NNACL_GATHER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -25,4 +25,4 @@ typedef struct GatherParameter {
   int axis_;
 } GatherParameter;
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHER_PARAMETER_H_
+#endif  // NNACL_GATHER_PARAMETER_H_
