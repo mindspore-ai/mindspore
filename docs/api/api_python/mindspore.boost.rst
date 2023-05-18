@@ -225,7 +225,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
         - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
-        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值为1.0。
+        - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值： ``1.0`` 。
 
     输入：
         - **\*inputs** (Tuple(Tensor)) - 网络的所有输入组成的元组，其shape为 :math:`(N, \ldots)`。
@@ -320,7 +320,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     参数：
         - **network** (Cell) - 待训练的网络模型。
-        - **fn_flag** (bool) - 是否将网络中最后一个全连接层替换为全归一化层。默认值：False。
+        - **fn_flag** (bool) - 是否将网络中最后一个全连接层替换为全归一化层。默认值： ``False`` 。
 
 .. py:class:: mindspore.boost.GradientFreeze(param_groups, freeze_type, freeze_p, total_steps)
 

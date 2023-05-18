@@ -91,7 +91,7 @@ class LessBN(Cell):
 
     Args:
         network (Cell): Network to be modified.
-        fn_flag (bool): Replace FC with FN. default: False.
+        fn_flag (bool): Replace FC with FN. Default: ``False`` .
 
     Examples:
         >>> network = boost.LessBN(network)

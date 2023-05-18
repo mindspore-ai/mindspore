@@ -92,7 +92,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
             `fun` must support differentiation if jac is None.
         x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
             the number of independent variables.
-        args (Tuple): extra arguments passed to the objective function. Default: ().
+        args (Tuple): extra arguments passed to the objective function. Default: ``()`` .
         method (str): solver type. Should be one of `"BFGS"` and `"LBFGS"`, `"LAGRANGE"`.
         jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
             if it is None, the gradient will be estimated with gradient of ``func``.
@@ -100,14 +100,14 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
             :math:`jac(x, *args) -> array\_like, shape (n,)`
             where x is an array with shape :math:`(n,)` and args is a tuple with the fixed parameters.
         tol (float, optional): tolerance for termination. For detailed control, use solver-specific
-            options. Default: None.
+            options. Default: ``None`` .
         constraints(Callable, optional): representing the inequality constrains, each function in constrains indicates
             the function < 0 as an inequality constrain.
         options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
-            generic options, Default: None.
+            generic options. Default: ``None`` .
 
             - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
-              Default: 20.
+              Default: ``20`` .
             - maxiter (int): Maximum number of iterations to perform. Depending on the
               method each iteration may use several function evaluations.
 

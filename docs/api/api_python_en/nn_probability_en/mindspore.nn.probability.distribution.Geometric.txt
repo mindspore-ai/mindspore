@@ -12,7 +12,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the cumulatuve distribution function for the given input.
@@ -24,7 +24,7 @@
     Parameters
         - **dist** (str) - the type of the other distribution.
         - **probs_b** (Tensor) - the probability of success of the other distribution.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the cross entropy.
@@ -34,7 +34,7 @@
     Compute the value of the entropy.
 
     Parameters
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the entropy.
@@ -46,7 +46,7 @@
     Parameters
         - **dist** (str) - the type of the other distribution.
         - **probs_b** (Tensor) - the probability of success of the other distribution.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the K-L loss.
@@ -57,7 +57,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the log value of the cumulatuve distribution function.
@@ -68,7 +68,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the log value of the probability.
@@ -79,7 +79,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the K-L loss.
@@ -89,7 +89,7 @@
     Compute the mean value of the distribution.
 
     Parameters
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the mean of the distribution.
@@ -99,7 +99,7 @@
     Compute the mode value of the distribution.
 
     Parameters
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the mode of the distribution.
@@ -110,7 +110,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the probability.
@@ -121,7 +121,7 @@
 
     Parameters
         - **shape** (tuple) - the shape of the sample.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the sample following the distribution.
@@ -131,7 +131,7 @@
     The standard deviation.
 
     Parameters
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the standard deviation of the distribution.
@@ -142,7 +142,7 @@
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the value of the survival function.
@@ -152,7 +152,7 @@
     Compute the variance of the distribution.
 
     Parameters
-        - **probs** (Tensor) - the probability of success. Default value: None.
+        - **probs** (Tensor) - the probability of success. Default: ``None`` .
 
     Returns
         Tensor, the variance of the distribution.
