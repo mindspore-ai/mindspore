@@ -18,6 +18,7 @@ mindspore.scipy.linalg
 
     mindspore.scipy.linalg.block_diag
     mindspore.scipy.linalg.cho_factor
+    mindspore.scipy.linalg.cho_solve
     mindspore.scipy.linalg.cholesky
     mindspore.scipy.linalg.eigh
     mindspore.scipy.linalg.inv
