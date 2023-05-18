@@ -124,6 +124,9 @@ class GPUEnvChecker(EnvChecker):
         """Get cuda runtime version by libcudart.so."""
         for path in self.cuda_lib_path:
             real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
+            # /usr/lib/x86_64-linux-gnu is a default dir for cuda10.1 on ubuntu.
+            if real_path == []:
+                real_path = glob.glob(path + "/x86_64-linux-gnu/libcudart.so.*.*.*")
             if real_path == []:
                 continue
             ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
