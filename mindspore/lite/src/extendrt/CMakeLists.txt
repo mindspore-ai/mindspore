@@ -165,6 +165,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         )
 
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
+    add_dependencies(mindspore-kernel-graph mindspore-lite-proto)
     add_library(mindspore-extendrt_mid OBJECT ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
 
     add_library(mindspore-extendrt SHARED $<TARGET_OBJECTS:mindspore-extendrt_mid>)
