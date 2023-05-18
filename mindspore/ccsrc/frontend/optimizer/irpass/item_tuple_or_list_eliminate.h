@@ -203,26 +203,26 @@ class TupleListGetitemConstEliminator : public AnfVisitor {
     AnfVisitor::Match(prim::kPrimListGetItem, {IsVNode, IsVNode})(node);
 
     if (is_match_) {
-      auto out = NewValueNode((*tuple_)[id_]);
+      auto out = NewValueNode((*seq_)[id_]);
       out->set_has_new_value(has_new_value_);
-      out->set_abstract((*tuple_)[id_]->ToAbstract());
+      out->set_abstract((*seq_)[id_]->ToAbstract());
       return out;
     }
     return nullptr;
   }
 
   void Visit(const ValueNodePtr &vnode) override {
-    if (IsValueNode<ValueTuple>(vnode)) {
-      tuple_ = GetValueNode<ValueTuplePtr>(vnode);
+    if (IsValueNode<ValueSequence>(vnode)) {
+      seq_ = GetValueNode<ValueSequencePtr>(vnode);
       has_new_value_ = vnode->has_new_value();
     }
-    if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
+    if (seq_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
-        idx = idx + SizeToLong(tuple_->size());
+        idx = idx + SizeToLong(seq_->size());
       }
       id_ = LongToSize(idx);
-      if (id_ < tuple_->size()) {
+      if (id_ < seq_->size()) {
         is_match_ = true;
       }
     }
@@ -230,14 +230,14 @@ class TupleListGetitemConstEliminator : public AnfVisitor {
 
   void Reset() {
     id_ = 0;
-    tuple_ = nullptr;
+    seq_ = nullptr;
     is_match_ = false;
   }
 
  private:
   bool is_match_{false};
   size_t id_{0};
-  ValueTuplePtr tuple_{nullptr};
+  ValueSequencePtr seq_{nullptr};
   bool has_new_value_{false};
 };
 

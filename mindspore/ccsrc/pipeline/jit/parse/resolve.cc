@@ -310,6 +310,35 @@ void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
   }
 }
 
+bool ContainsParameterConstants(const ValuePtr &value) {
+  auto value_seq = dyn_cast<ValueSequence>(value);
+  if (value_seq != nullptr) {
+    return std::any_of(value_seq->value().begin(), value_seq->value().end(),
+                       [](const auto &v) { return ContainsParameterConstants(v); });
+  }
+  auto value_dict = dyn_cast<ValueDictionary>(value);
+  if (value_dict != nullptr) {
+    return std::any_of(value_dict->value().begin(), value_dict->value().end(),
+                       [](const auto &v) { return ContainsParameterConstants(v.second); });
+  }
+  auto abs = value->ToAbstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  return abs->isa<abstract::AbstractRefTensor>();
+}
+
+bool LoadedFromMindir(const AnfNodePtr &origin_node, const py::object &obj, const ValuePtr &convert_result) {
+  if (common::GetEnv("MS_DEV_EXPORT_BPROP_MINDIR") == "1" && IsPrimitiveCNode(origin_node, prim::kPrimResolve)) {
+    auto name_space = GetValueNode<NameSpacePtr>(origin_node->cast<CNodePtr>()->input(1));
+    MS_EXCEPTION_IF_NULL(name_space);
+    auto obj_type = data_converter::GetObjType(obj);
+    if (obj_type == RESOLVE_TYPE_FUNCTION && convert_result->isa<FuncGraph>() &&
+        name_space->module() != RESOLVE_NAMESPACE_NAME_COMMON_OPS) {
+      return true;
+    }
+  }
+  return false;
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -322,15 +351,15 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     MS_LOG(ERROR) << "Convert data failed";
     return nullptr;
   }
+  if (ContainsParameterConstants(convert_result)) {
+    MS_LOG(WARNING)
+      << "The Parameter in obj '" << py::str(obj)
+      << "' with nested structure is resolved to a constant because we only support single Parameter or tuple/list "
+         "Parameters. Or do you want to use Tensor instead?";
+  }
   // For the bprop which is loaded from mindir file, the sub function should be resolved after loading.
-  if (common::GetEnv("MS_DEV_EXPORT_BPROP_MINDIR") == "1" && IsPrimitiveCNode(origin_node, prim::kPrimResolve)) {
-    auto name_space = GetValueNode<NameSpacePtr>(origin_node->cast<CNodePtr>()->input(1));
-    MS_EXCEPTION_IF_NULL(name_space);
-    auto obj_type = data_converter::GetObjType(obj);
-    if (obj_type == RESOLVE_TYPE_FUNCTION && convert_result->isa<FuncGraph>() &&
-        name_space->module() != RESOLVE_NAMESPACE_NAME_COMMON_OPS) {
-      return origin_node;
-    }
+  if (LoadedFromMindir(origin_node, obj, convert_result)) {
+    return origin_node;
   }
 
   bool interpret_without_internal =

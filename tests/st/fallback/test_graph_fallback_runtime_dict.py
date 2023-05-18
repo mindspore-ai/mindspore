@@ -17,7 +17,8 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore.common.initializer import TruncatedNormal
-from mindspore import ops
+from mindspore import ops, Parameter, Tensor
+import mindspore.common.dtype as mstype
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -33,6 +34,7 @@ def test_dict_return_1():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_1():
         x = {'a': 'a', 'b': 'b'}
@@ -55,6 +57,7 @@ def test_return_empty_dict_pyexecute():
     Description: Return empty dict.
     Expectation: No error.
     """
+
     @ms.jit
     def dict_func():
         return {}
@@ -74,6 +77,7 @@ def test_dict_return_2():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_2():
         x = {'a': 1, 'b': 2}
@@ -97,6 +101,7 @@ def test_dict_get_2():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_2():
         x = {'a': 1, 'b': 2}
@@ -120,6 +125,7 @@ def test_dict_get_3():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_3():
         x = {'a': 1, 'b': 2}
@@ -143,6 +149,7 @@ def test_multiple_return_contains_dict():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_2():
         x = {'a': 1, 'b': 2}
@@ -169,6 +176,7 @@ def test_multiple_return_contains_dict_2():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_2(a):
         x = {'a': a, 'b': 2}
@@ -193,6 +201,7 @@ def test_multiple_return_contains_dict_3():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net_3():
         return None, {"a": 1}
@@ -215,6 +224,7 @@ def test_multiple_return_contains_dict_2_grad():
     Description: Support grad for dict return.
     Expectation: Get expected gradient.
     """
+
     @ms.jit
     def dict_net_2(a):
         x = {'a': a, 'b': 2}
@@ -252,6 +262,7 @@ def test_net_dict_1():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
             super(DictLeNetNet, self).__init__()
@@ -302,6 +313,7 @@ def test_net_dict_1_grad():
     Description: Support grad for dict return.
     Expectation: Get expected gradient.
     """
+
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
             super(DictLeNetNet, self).__init__()
@@ -350,6 +362,7 @@ def test_net_dict_2():
     Description: Support dict return.
     Expectation: No exception.
     """
+
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
             super(DictLeNetNet, self).__init__()
@@ -400,6 +413,7 @@ def test_net_dict_2_grad():
     Description: Support grad for dict return.
     Expectation: Get expected gradients.
     """
+
     class LeNet(ms.nn.Cell):
         def __init__(self, num_class=10):
             super(LeNet, self).__init__()
@@ -474,12 +488,13 @@ def test_net_dict_2_grad():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_multiple_return_nested_dict1():
+def test_return_nested_dict1():
     """
     Feature: Return nested output of dict.
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net1():
         return {'a': None, 'b': {'a': 1}}
@@ -499,12 +514,13 @@ def test_multiple_return_nested_dict1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_multiple_return_nested_dict2():
+def test_return_nested_dict2():
     """
     Feature: Return nested output of dict.
     Description: Support dict return.
     Expectation: No exception.
     """
+
     @ms.jit
     def dict_net1():
         return {'a': None, 'b': [1, 2, None]}
@@ -524,7 +540,7 @@ def test_multiple_return_nested_dict2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_multiple_return_nested_dict3():
+def test_return_nested_dict3():
     """
     Feature: Return nested output of dict.
     Description: Support dict return.
@@ -543,3 +559,225 @@ def test_multiple_return_nested_dict3():
     assert out == {'a': None, 'b': (1, 2, None)}
     out = dict_net2()
     assert out == {'a': None, 'b': (1, 2, {'a': 1})}
+
+
+@pytest.mark.skip('Not support list to PyExecute yet.')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_inputs():
+    """
+    Feature: Return nested output of dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, y):
+        return {'a': [x, y], 'b': (1, 2, {'a': 1})}
+
+    x = Tensor([1], dtype=mstype.int64)
+    y = Tensor([2], dtype=mstype.int64)
+    out = dict_net(x, y)
+    assert out == {'a': [x, y], 'b': (1, 2, {'a': 1})}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_nested_dict_with_parameter():
+    """
+    Feature: Support dict.
+    Description: Support nested list and dict with parameter.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+
+        def construct(self):
+            z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
+            out1 = z[0]['params']
+            out2 = z[1]['a']
+            return out1, out2
+
+    net = Net()
+    out1, out2 = net()
+    assert out1 == [net.x, net.y]
+    assert out2 == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter1():
+    """
+    Feature: Return nested output of dict with parameter.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+
+        def construct(self):
+            z = ({'params': (self.x, self.y), 'a': 1, 'b': False}, {'params': self.x, 'a': 2})
+            return z
+
+    net = Net()
+    out = net()
+    assert out == ({'params': (net.x, net.y), 'a': 1, 'b': False}, {'params': net.x, 'a': 2})
+
+
+@pytest.mark.skip('Not support list to PyExecute yet.')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter2():
+    """
+    Feature: Return nested output of dict with parameter.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+
+        def construct(self):
+            z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
+            return z
+
+    net = Net()
+    out = net()
+    assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_nested_dict_with_parameter_constant1():
+    """
+    Feature: Support dict.
+    Description: Support nested list and dict with parameter constant.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
+
+        def construct(self):
+            out1 = self.z[0]['params']
+            out2 = self.z[1]['a']
+            return out1, out2
+
+    net = Net()
+    out1, out2 = net()
+    assert out1 == [net.x, net.y]
+    assert out2 == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_nested_dict_with_parameter_constant2():
+    """
+    Feature: Support dict.
+    Description: Support nested list and dict with parameter constant.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = {'params': [self.x, self.y], 'a': 1, 'b': {'params': self.x, 'a': 2}}
+
+        def construct(self):
+            out1 = self.z['params']
+            out2 = self.z['b']['params']
+            return out1, out2
+
+    net = Net()
+    out1, out2 = net()
+    assert out1 == [net.x, net.y]
+    assert out2 == net.x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter_constant1():
+    """
+    Feature: Return nested output of dict with parameter constant.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
+
+        def construct(self):
+            return self.z
+
+    net = Net()
+    out = net()
+    assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_nested_dict_with_parameter_constant2():
+    """
+    Feature: Return nested output of dict with parameter constant.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
+            self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
+            self.z = {'params': [self.x, self.y], 'a': 1, 'b': {'params': self.x, 'a': 2}}
+
+        def construct(self):
+            return self.z
+
+    net = Net()
+    out = net()
+    assert out == {'params': [net.x, net.y], 'a': 1, 'b': {'params': net.x, 'a': 2}}
