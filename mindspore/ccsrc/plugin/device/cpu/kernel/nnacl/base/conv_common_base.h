@@ -19,6 +19,9 @@
 
 #include "nnacl/conv_parameter.h"
 
+bool CheckAvxUseSW1x1Conv(const ConvParameter *conv_param);
+bool CheckAvxUseSWConv(const ConvParameter *conv_param);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
