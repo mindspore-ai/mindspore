@@ -54,26 +54,20 @@ bool GetGatherDimValue(const AbstractBasePtr dim_ptr, int64_t *dim_v) {
   MS_EXCEPTION_IF_NULL(dim_ptr);
   auto dim_value_ptr = dim_ptr->BuildValue();
   MS_EXCEPTION_IF_NULL(dim_value_ptr);
-  auto dim_type_ptr = dim_ptr->BuildType();
-  MS_EXCEPTION_IF_NULL(dim_type_ptr);
   if (dim_value_ptr->isa<tensor::Tensor>()) {
     auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(dim_tensor);
     size_t data_size = dim_tensor->DataSize();
     MS_EXCEPTION_IF_CHECK_FAIL(data_size == 1, "dim value is not equal to one!");
-    auto dim_type_id = dim_type_ptr->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(dim_type_id);
-    auto element = dim_type_id->element();
-    MS_EXCEPTION_IF_NULL(element);
     if (dim_tensor->data_c() == nullptr) {
       return false;
     }
-    if (element->type_id() == kNumberTypeInt64) {
+    if (dim_tensor->data_type_c() == kNumberTypeInt64) {
       auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data64);
       *dim_v = static_cast<int64_t>(*dim_data64);
       return true;
-    } else if (element->type_id() == kNumberTypeInt32) {
+    } else if (dim_tensor->data_type_c() == kNumberTypeInt32) {
       auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data32);
       *dim_v = static_cast<int64_t>(*dim_data32);
