@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
-import functools
 import pytest
 import numpy as np
 
@@ -273,22 +272,3 @@ def test_probability_cauchy():
 
     net = CauchyProb(loc, scale)
     net(Tensor(value), Tensor(loc_a), Tensor(scale_a))
-
-
-def test_third_party_module_functools():
-    """
-    Feature: JIT Fallback
-    Description: functools is a python built-in module and does not perform JIT Fallback.
-    Expectation: No exception.
-    """
-    class ModuleNet(nn.Cell):
-        def construct(self, x, y):
-            func = functools.partial(add_func, x)
-            out = func(y)
-            return out
-
-    x = Tensor([1, 2, 3], mstype.int32)
-    y = Tensor([4, 5, 6], mstype.int32)
-    net = ModuleNet()
-    out = net(x, y)
-    print(out)

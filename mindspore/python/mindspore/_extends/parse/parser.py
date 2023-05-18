@@ -24,7 +24,6 @@ import re
 import hashlib
 import inspect
 import types
-import importlib
 from textwrap import dedent
 import numpy
 
@@ -45,12 +44,7 @@ from mindspore._checkparam import is_stub_tensor
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE
-from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
 from ...common.api import _convert_python_data
-
-# Define return value
-RET_SUCCESS = 0
-RET_FAILURE = 0xFF
 
 # Define resolve type
 RESOLVE_TYPE_NONE = 0                   # Resolve None.
@@ -95,6 +89,11 @@ SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # Unsupported external type
 SYNTAX_HYBRID_TYPE = 3                 # Hybrid type
 SYNTAX_UNSUPPORTED_NAMESPACE = 4       # Unsupported namespace
 
+# Module source location
+MODULE_FROM_MINDSPORE = 0
+MODULE_FROM_THIRDPARTY = 1
+MODULE_FROM_USER_WORKSPACE = 2
+
 
 # Process expr statement white list
 # Add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
@@ -121,10 +120,6 @@ _hybrid_type = (
 _fallback_unsupported_python_builtin_type = (
     compile, eval, exec, input, open, delattr, setattr, super, staticmethod, classmethod, __import__,
     memoryview, property,
-)
-
-_unsupported_convert_data_type = (
-    mutable,
 )
 
 _global_params = {}
@@ -192,34 +187,9 @@ def get_bprop_method_of_class(obj, parse_method=None):
     return method
 
 
-def get_env_support_modules():
-    """Get support modules from environment variable."""
-    support_modules = os.getenv('MS_DEV_SUPPORT_MODULES')
-    if support_modules is None:
-        return []
-    env_support_modules = []
-    modules = support_modules.split(',')
-    for module in modules:
-        try:
-            module_spec = importlib.util.find_spec(module)
-        except (ModuleNotFoundError, ValueError):
-            module = module[0:module.rfind('.')]
-            module_spec = importlib.util.find_spec(module)
-        finally:
-            pass
-        if module_spec is None:
-            raise ModuleNotFoundError(f"Cannot find module: {module}. " \
-                f"Please check if {module} is installed, or if MS_DEV_SUPPORT_MODULES is set correctly.")
-        # Add the outermost module.
-        env_support_modules.append(module.split('.')[0])
-    logger.debug(f"Get support modules from env: {env_support_modules}")
-    return env_support_modules
-
-
 # The fallback feature is enabled in default.
 # Not support change the flag during the process is alive.
 support_fallback_ = os.getenv('MS_DEV_ENABLE_FALLBACK')
-support_modules_ = get_env_support_modules()
 
 
 def resolve_symbol(namespace, symbol):
@@ -778,30 +748,6 @@ def _in_sys_path(file_path):
     return False
 
 
-def is_third_party_module(value):
-    """To check if value is a third-party module."""
-    # Check if value is a module or package, check if module file is under the sys path.
-    if not inspect.ismodule(value) or not hasattr(value, '__file__') or not _in_sys_path(value.__file__):
-        return False
-
-    # Get module leftmost name.
-    if not hasattr(value, '__name__'):
-        return False
-    module_name = value.__name__
-    module_leftmost_name = module_name.split('.')[0]
-    # Ignore mindspore package.
-    if module_leftmost_name == "mindspore":
-        return False
-    # Check if module is in whitelist.
-    if module_leftmost_name in support_modules_:
-        logger.debug(f"Found support modules from env: {module_name}")
-        return True
-    if module_leftmost_name in jit_fallback_third_party_modules_whitelist:
-        logger.debug(f"Found third-party module: {module_name}")
-        return True
-    return False
-
-
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):
@@ -891,6 +837,96 @@ def get_dtype(name: str):
     return getattr(mstype, name)
 
 
+def get_user_workspace_root_dir(module_path):
+    """Get the path of the top level package of the current working directory."""
+    module_abspath = os.path.abspath(module_path)
+    upper_path = os.path.abspath(os.path.dirname(module_abspath))
+    if module_abspath == upper_path:
+        return module_abspath
+    # Check whether __init__.py exists in the upper directory.
+    init_path = os.path.join(upper_path, '__init__.py')
+    # If the path does not exist or is accessed without permission, os.path.isfile returns false.
+    if os.path.isfile(init_path):
+        module_abspath = get_user_workspace_root_dir(upper_path)
+    return module_abspath
+
+
+user_workspace_dir_ = get_user_workspace_root_dir(os.getcwd())
+
+
+def get_jit_dir():
+    """Get jit dir from environment variable."""
+    jit_dir = []
+    env_path = os.getenv('MS_DEV_JIT_DIR')
+    if env_path is not None:
+        path_list = env_path.split(',')
+        for path in path_list:
+            jit_dir.append(os.path.abspath(path))
+    return jit_dir
+
+
+def get_jit_ignore_dir():
+    """Get jit ignore dir from environment variable."""
+    jit_ignore_dir = []
+    env_path = os.getenv('MS_DEV_JIT_IGNORE_DIR')
+    if env_path is not None:
+        path_list = env_path.split(',')
+        for path in path_list:
+            ignore_path = os.path.abspath(path)
+            if user_workspace_dir_.startswith(ignore_path):
+                logger.warning(f"When MS_DEV_JIT_IGNORE_DIR is set, the user workspace directory " \
+                               f"'{user_workspace_dir_}' will not be included.")
+            jit_ignore_dir.append(ignore_path)
+    return jit_ignore_dir
+
+
+jit_dir_ = get_jit_dir()
+jit_ignore_dir_ = get_jit_ignore_dir()
+
+
+def _in_user_workspace(module):
+    """To check if module is under user workspace path."""
+    # A modules without __file__ attribute is considered to be in user workspace.
+    if not hasattr(module, '__file__'):
+        return True
+    # Check if module path is not under jit_ignore_dir_ but under jit_dir_.
+    module_path = os.path.abspath(module.__file__)
+    if module_path.startswith(user_workspace_dir_):
+        return True
+    for path in jit_ignore_dir_:
+        if module_path.startswith(path):
+            return False
+    for path in jit_dir_:
+        if module_path.startswith(path):
+            return True
+    # If a module is not under sys.path, it means that the module has not been imported.
+    # It cannot be a third-party library, so it is considered to be in user workspace.
+    if not _in_sys_path(module_path):
+        return True
+    return False
+
+
+def get_module_source_location(module):
+    """Get the source location of the module."""
+    module_leftmost_name = module.__name__.split('.')[0]
+    if module_leftmost_name in ["mindspore", "msadapter"]:
+        return MODULE_FROM_MINDSPORE
+    if _in_user_workspace(module):
+        return MODULE_FROM_USER_WORKSPACE
+    return MODULE_FROM_THIRDPARTY
+
+
+def is_from_third_party_library(value):
+    """Check if value is from a third-party library."""
+    if inspect.ismodule(value):
+        module = value
+    elif inspect.isfunction(value) or inspect.ismethod(value):
+        module = inspect.getmodule(value)
+    else:
+        return False
+    return get_module_source_location(module) == MODULE_FROM_THIRDPARTY
+
+
 class Parser:
     """
     Parser python code to ast tree.
@@ -942,7 +978,6 @@ class Parser:
                 return True
         return False
 
-
     @staticmethod
     def is_hybrid_type(value):
         """To check if hybrid type, such as print"""
@@ -953,15 +988,29 @@ class Parser:
         return False
 
     @staticmethod
-    def is_unsupported_convert_data_type(value):
-        """Check whether the value don't support to be converted in C++."""
-        return value in _unsupported_convert_data_type
-
-    def get_convert_object_for_unsupported_type(self, value):
+    def get_convert_object_for_mutable(value):
         """Get the convert object for value which don't support to be converted in C++."""
-        if not self.is_unsupported_convert_data_type(value):
-            return value
-        return _convert_map().get(value)
+        # The value may not be supported to do ConvertData such as api 'mutable',
+        # and we get its converted object from python.
+        if inspect.isfunction(value) and value in (mutable,):
+            return _convert_map().get(value)
+        return value
+
+    def get_syntax_support_type(self, value):
+        """Get syntax support type."""
+        if is_from_third_party_library(value):
+            logger.debug(f"value: '{value}' is from third party library.")
+            return SYNTAX_UNSUPPORTED_NAMESPACE
+        if inspect.isclass(value) or isinstance(value, _builtin_function_or_method_type):
+            if self.is_unsupported_internal_type(value):
+                return SYNTAX_UNSUPPORTED_INTERNAL_TYPE
+            if self.is_unsupported_namespace(value):
+                return SYNTAX_UNSUPPORTED_NAMESPACE
+            if self.is_unsupported_python_builtin_type(value):
+                return SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
+            if self.is_hybrid_type(value):
+                return SYNTAX_HYBRID_TYPE
+        return SYNTAX_SUPPORTED
 
     def parse(self):
         """Parse the function or method."""
@@ -1015,14 +1064,20 @@ class Parser:
         logger.error("Fn type is invalid")
         return None, None
 
-    def is_constant_value(self, var, attr):
+    def is_jit_supported_attribute(self, var, attr):
         """Check whether the value is a constant."""
         if var in self.global_namespace:
             module = self.global_namespace[var]
             if hasattr(module, attr):
                 value = getattr(module, attr)
                 # Check if value is constant.
-                return isinstance(value, (int, float, bool))
+                if isinstance(value, (int, float, bool)):
+                    return True
+                # Check if value in convert_map.
+                if isinstance(value, (tuple, list, dict)) or getattr(value, "__hash__") is None:
+                    return False
+                if inspect.ismodule(module) and value in _convert_map():
+                    return True
         return False
 
     def get_namespace_symbol(self, var: str):
@@ -1036,16 +1091,9 @@ class Parser:
             value_str = value.__name__ if hasattr(value, '__name__') else str(value)
             logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
             # To check if allowed to support.
-            if self.is_unsupported_internal_type(value):
-                support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_INTERNAL_TYPE
-            elif self.is_unsupported_python_builtin_type(value):
-                support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
-            elif self.is_unsupported_namespace(value) or is_third_party_module(value):
-                support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_NAMESPACE
-            elif self.is_hybrid_type(value):
-                support_info = self.global_namespace, var, value, SYNTAX_HYBRID_TYPE
-            else:
-                support_info = self.global_namespace, var, value, SYNTAX_SUPPORTED
+            value = self.get_convert_object_for_mutable(value)
+            support_type = self.get_syntax_support_type(value)
+            support_info = self.global_namespace, var, value, support_type
             return support_info
 
         logger.debug(f"The name '{var}' is an undefined symbol.")

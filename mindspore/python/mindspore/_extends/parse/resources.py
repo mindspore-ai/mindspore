@@ -18,7 +18,6 @@
 from __future__ import absolute_import
 
 import ast
-import math
 
 from mindspore import RowTensor, SparseTensor, COOTensor, CSRTensor
 from mindspore.experimental import MapParameter
@@ -159,9 +158,6 @@ convert_object_map = {
     T.make_slice:   F.make_slice,
     T.range:        F.make_range,
     T.mutable:      Primitive('mutable'),
-
-    # lib function
-    math.log:       F.scalar_log,
 
     # user defined
     RowTensorInner: F.make_row_tensor_inner,

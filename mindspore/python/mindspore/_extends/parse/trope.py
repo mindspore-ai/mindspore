@@ -37,11 +37,6 @@ from functools import (  # noqa
     partial
 )
 
-# support numpy symbol
-from numpy import (  # noqa
-    exp, log, sin, cos, tan
-)
-
 from ...common import mutable
 
 __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 'gt', 'le', 'ge', 'pos', 'neg',
@@ -49,7 +44,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'hasattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
            'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs', 'round', 'mutable',
-           'exp', 'log', 'sin', 'cos', 'tan', 'max', 'min', 'sum', 'list', 'tuple']
+           'max', 'min', 'sum', 'list', 'tuple']
 
 
 def MakeTuple(*elts):  # pragma: no cover

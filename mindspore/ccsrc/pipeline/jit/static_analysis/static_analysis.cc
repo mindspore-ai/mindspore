@@ -214,19 +214,6 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
     MS_LOG(DEBUG) << GetInferThread() << " wait for normal async result";
   }
 }
-void CheckInterpretedObject(const AbstractBasePtr &abs) {
-  static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
-  static const auto use_fallback = (support_fallback != "0");
-  if (!use_fallback) {
-    return;
-  }
-  auto value = abs->BuildValue();
-  if (value->isa<parse::InterpretedObject>()) {
-    MS_LOG(ERROR) << "Do not support " << value->ToString() << ". "
-                  << "\nIf you are using third-party modules, you can try setting: "
-                  << "'export MS_DEV_SUPPORT_MODULES=module1,module2,...'.";
-  }
-}
 
 EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -656,11 +643,16 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     if (val->isa<parse::ClassType>()) {
       return ConvertClassToFunc(cnode, possible_func, conf);
     }
+    if (val->isa<parse::InterpretedObject>()) {
+      MS_LOG(ERROR) << "Do not support " << val << " as a function.\n"
+                    << "If it is a function from a module outside the project root directory and it needs to be run as "
+                    << "a static computation graph, try adding the '@jit' decorator or setting the path "
+                    << "where the module is located: 'export MS_DEV_JIT_DIR=module1_path,module2_path,...'";
+    }
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
   if (func == nullptr) {
-    CheckInterpretedObject(possible_func);
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
     MS_EXCEPTION(ValueError) << "The object is not callable. Please check code.";

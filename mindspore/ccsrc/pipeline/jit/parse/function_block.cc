@@ -345,11 +345,8 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
     }
   }
 
-  // The value may not be supported to do ConvertData such as api `mutable`,
-  // and we get its converted object from python.
-  py::object py_obj = ast->CallParserObjMethod(PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE, info[value_index]);
-
   auto symbol_name = info[symbol_index].cast<std::string>();
+  py::object py_obj = info[value_index];
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";

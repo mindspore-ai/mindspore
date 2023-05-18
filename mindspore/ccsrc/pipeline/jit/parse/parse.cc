@@ -1560,10 +1560,10 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   if (use_fallback) {
     // Check whether it is constant, constant does not need interpret.
     auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
-    py::bool_ is_const_value =
-      ast()->CallParserObjMethod(PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE, value_str, common::SafeCStr(attr_str));
-    auto is_constant = py::cast<bool>(is_const_value);
-    if (!is_constant) {
+    py::bool_ is_jit_supported_attr =
+      ast()->CallParserObjMethod(PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE, value_str, common::SafeCStr(attr_str));
+    auto is_supported = py::cast<bool>(is_jit_supported_attr);
+    if (!is_supported) {
       UpdateInterpretForUserNode(attr_cnode, value_node);
     }
   }

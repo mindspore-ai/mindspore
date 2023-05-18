@@ -321,7 +321,7 @@ def test_fallback_tuple_with_mindspore_function():
     assert foo()
 
 
-def test_fallback_math_method():
+def test_fallback_math_floor():
     """
     Feature: JIT Fallback
     Description: Test math.floor()
@@ -332,3 +332,16 @@ def test_fallback_math_method():
         return math.floor(1.5)
 
     assert foo() == 1
+
+
+def test_fallback_math_log():
+    """
+    Feature: JIT Fallback
+    Description: Test math.log()
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        return math.log(1)
+
+    assert foo() == 0

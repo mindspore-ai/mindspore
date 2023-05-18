@@ -99,13 +99,12 @@ const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
-const char PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE[] = "is_constant_value";
+const char PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE[] = "is_jit_supported_attribute";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 const char PYTHON_PARSE_GET_TYPE[] = "get_type";
 const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
-const char PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE[] = "get_convert_object_for_unsupported_type";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
@@ -113,6 +112,7 @@ const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 const char PYTHON_MOD_GET_MODULE_AND_NAME_INFO[] = "get_obj_module_and_name_info";
 const char PYTHON_MOD_IS_JIT_FORBIDDEN_MODULE[] = "is_jit_forbidden_module";
 const char PYTHON_MOD_IS_INVALID_METHOD[] = "is_invalid_or_jit_forbidden_method";
+const char PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY[] = "is_from_third_party_library";
 
 // Define the common name.
 const char NAMED_PRIMITIVE_LEN[] = "len";

@@ -27,7 +27,8 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      is_class_type, check_obj_bool, python_isinstance, ms_isinstance, convert_to_ms_csrtensor,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
                      get_obj_from_sequence, get_type, is_class_member_recursive, merge_global_params, get_global_params,
-                     get_adapter_tensor_attr, get_local_variable, set_local_variable, get_obj_defined_from_obj_type)
+                     get_adapter_tensor_attr, get_local_variable, set_local_variable, get_obj_defined_from_obj_type,
+                     is_from_third_party_library)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
@@ -40,4 +41,4 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'convert_to_ms_csrtensor', 'convert_to_ms_cootensor', 'convert_class_to_function',
            'convert_cell_list_to_sequence', 'is_cell_list', 'get_obj_from_sequence', 'get_type',
            'is_class_member_recursive', 'get_adapter_tensor_attr', 'get_local_variable', 'set_local_variable',
-           'get_obj_defined_from_obj_type']
+           'get_obj_defined_from_obj_type', 'is_from_third_party_library']
