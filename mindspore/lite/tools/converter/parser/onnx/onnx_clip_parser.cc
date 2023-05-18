@@ -26,6 +26,58 @@ constexpr int kClipInputIndex1 = 1;
 constexpr int kClipInputIndex2 = 2;
 }  // namespace
 
+STATUS ParseAttr(const google::protobuf::internal::RepeatedPtrIterator<const onnx::TensorProto> node_iter,
+                 float *value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "parameter is null.";
+    return RET_ERROR;
+  }
+
+  size_t element_size;
+  switch (node_iter->data_type()) {
+    case onnx::TensorProto_DataType_FLOAT:
+      if (node_iter->float_data_size() > 0) {
+        *value = node_iter->float_data(0);
+      } else {
+        element_size = node_iter->raw_data().size() / sizeof(float);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return RET_ERROR;
+        }
+        *value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
+      }
+      break;
+    case onnx::TensorProto_DataType_INT32:
+      if (node_iter->int32_data_size() > 0) {
+        *value = static_cast<float>(node_iter->int32_data(0));
+      } else {
+        element_size = node_iter->raw_data().size() / sizeof(int32_t);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return RET_ERROR;
+        }
+        *value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
+      }
+      break;
+    case onnx::TensorProto_DataType_INT64:
+      if (node_iter->int64_data_size() > 0) {
+        *value = static_cast<float>(node_iter->int64_data(0));
+      } else {
+        element_size = node_iter->raw_data().size() / sizeof(int64_t);
+        if (element_size != 1) {
+          MS_LOG(ERROR) << "element size is incorrect.";
+          return RET_ERROR;
+        }
+        *value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
+      }
+      break;
+    default:
+      MS_LOG(ERROR) << "do not support data_type: " << node_iter->data_type();
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Clip>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -48,47 +100,9 @@ PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const on
       return prim->GetPrim();
     }
     float value = 0.0;
-    size_t element_size;
-    switch (node_iter->data_type()) {
-      case onnx::TensorProto_DataType_FLOAT:
-        if (node_iter->float_data_size() > 0) {
-          value = node_iter->float_data(0);
-        } else {
-          element_size = node_iter->raw_data().size() / sizeof(float);
-          if (element_size != 1) {
-            MS_LOG(ERROR) << "element size is incorrect.";
-            return nullptr;
-          }
-          value = *reinterpret_cast<const float *>(node_iter->raw_data().data());
-        }
-        break;
-      case onnx::TensorProto_DataType_INT32:
-        if (node_iter->int32_data_size() > 0) {
-          value = static_cast<float>(node_iter->int32_data(0));
-        } else {
-          element_size = node_iter->raw_data().size() / sizeof(int32_t);
-          if (element_size != 1) {
-            MS_LOG(ERROR) << "element size is incorrect.";
-            return nullptr;
-          }
-          value = static_cast<float>(*reinterpret_cast<const int32_t *>(node_iter->raw_data().data()));
-        }
-        break;
-      case onnx::TensorProto_DataType_INT64:
-        if (node_iter->int64_data_size() > 0) {
-          value = static_cast<float>(node_iter->int64_data(0));
-        } else {
-          element_size = node_iter->raw_data().size() / sizeof(int64_t);
-          if (element_size != 1) {
-            MS_LOG(ERROR) << "element size is incorrect.";
-            return nullptr;
-          }
-          value = static_cast<float>(*reinterpret_cast<const int64_t *>(node_iter->raw_data().data()));
-        }
-        break;
-      default:
-        MS_LOG(ERROR) << "do not support data_type: " << node_iter->data_type();
-        return nullptr;
+    if (ParseAttr(node_iter, &value) != RET_OK) {
+      MS_LOG(ERROR) << "parse attr failed.";
+      return nullptr;
     }
     if (i == kClipInputIndex1) {
       prim->set_min(value);
