@@ -24,10 +24,12 @@
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
 #include "include/transform/graph_ir/types.h"
+#include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
 namespace transform {
 typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32 } AclPrecisionMode;
+using AclFormatSelector = std::function<std::string(TypeId, const std::vector<ShapeVector> &shape)>;
 
 struct AclSpecialInfo {
   std::vector<std::string> ori_format{};
@@ -47,6 +49,11 @@ class AclAdapterInfo {
     info.dev_format = dev_format;
     info.reshape_type = reshape_type;
     (void)input_info_.emplace(index, info);
+    return *this;
+  }
+
+  AclAdapterInfo &OutputSelector(const AclFormatSelector &selector) {
+    output_selector_ = selector;
     return *this;
   }
 
@@ -82,6 +89,7 @@ class AclAdapterInfo {
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
+  const AclFormatSelector &output_selector() const { return output_selector_; }
 
  private:
   std::string op_type_;
@@ -91,6 +99,7 @@ class AclAdapterInfo {
   AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::vector<ge::DataType> extra_supported_datatype_{};
+  AclFormatSelector output_selector_{nullptr};
 };
 
 class AclAdapterManager {
