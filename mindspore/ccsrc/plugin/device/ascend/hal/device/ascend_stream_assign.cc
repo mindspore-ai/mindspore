@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <utility>
 #include <unordered_set>
+#include <sstream>
 
 #include "ir/manager.h"
 #include "utils/ms_context.h"
@@ -51,6 +52,10 @@ constexpr uint32_t kMaxCommonNodeNumPerStream = 350;
 constexpr uint32_t kTaskNumPerHcomNode = 300;
 constexpr uint32_t kTaskNumPerWorldHcomNode = 350;
 constexpr uint32_t kTaskNumPerSameServerHcomNode = 125;
+std::unordered_map<std::string, std::unordered_map<size_t, uint32_t>> kTaskNumPerSameServerContinuesHcomNodeMap = {
+  {prim::kPrimAllGather->name(), {{kSizeTwo, 19}, {kSizeFour, 21}, {kSizeEight, 55}}},
+  {prim::kPrimReduceScatter->name(), {{kSizeTwo, 20}, {kSizeFour, 38}, {kSizeEight, 62}}},
+  {prim::kPrimAllReduce->name(), {{kSizeTwo, 29}, {kSizeFour, 49}, {kSizeEight, 107}}}};
 constexpr uint32_t kTaskNumPerHcomSendRecvNode = 15;
 constexpr uint32_t kTaskNumPerCommonNode = 3;
 
@@ -67,6 +72,24 @@ bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
   auto max_iter = max_element(rank_ids.begin(), rank_ids.end());
   uint32_t max = (max_iter != rank_ids.end()) ? *max_iter : 0;
   return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
+}
+
+bool IsContinuousGroup(const std::vector<uint32_t> &rank_ids) {
+  if (rank_ids.empty()) {
+    return true;
+  }
+  auto group_size = rank_ids.size();
+  auto rank_ids_cpy = rank_ids;
+  std::sort(rank_ids_cpy.begin(), rank_ids_cpy.end());
+  if (rank_ids_cpy[0] % group_size != 0) {
+    return false;
+  }
+  for (size_t i = 1; i < group_size; ++i) {
+    if (rank_ids_cpy[i - 1] + 1 != rank_ids_cpy[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 string DoGetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) {
@@ -219,6 +242,31 @@ uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
   }
 
   if (IsSameServer(rank_ids)) {
+    auto prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto is_enable_task_opt = common::GetEnv("MS_ENABLE_TASK_OPT") == "1";
+    if (is_enable_task_opt) {
+      auto prim_name = prim->name();
+      auto group_size = rank_ids.size();
+      if (IsContinuousGroup(rank_ids) &&
+          kTaskNumPerSameServerContinuesHcomNodeMap.find(prim_name) !=
+            kTaskNumPerSameServerContinuesHcomNodeMap.end() &&
+          kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].find(group_size) !=
+            kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].end()) {
+        auto redundancy_str = common::GetEnv("MS_REDUNDANCY_TASK_NUM");
+        size_t redundancy = 0;
+        if (!redundancy_str.empty()) {
+          std::stringstream stream;
+          stream << redundancy_str;
+          stream >> redundancy;
+          MS_LOG(INFO) << "[Task debug info]Apply redundancy task num: " << redundancy;
+        }
+        size_t task_num = kTaskNumPerSameServerContinuesHcomNodeMap[prim_name][group_size] + redundancy;
+        MS_LOG(INFO) << "[Task debug info]Reserve " << task_num << " task for " << cnode->fullname_with_scope()
+                     << ", comm group is " << rank_ids;
+        return task_num;
+      }
+    }
     return kTaskNumPerSameServerHcomNode;
   } else if (rank_ids.size() == static_cast<size_t>(device_num) && device_num >= kDeviceNumThreshold) {
     return kTaskNumPerWorldHcomNode;
