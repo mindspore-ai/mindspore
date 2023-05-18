@@ -22,7 +22,7 @@
 #include "nnacl/lstm_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
-class LstmFP32Coder final : public OperatorCoder {
+class LstmFP32Coder : public OperatorCoder {
  public:
   LstmFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                 const LiteGraph::Node *node, size_t node_index, Target target)
@@ -33,23 +33,23 @@ class LstmFP32Coder final : public OperatorCoder {
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int InitParam();
-  int ReSize(CoderContext *const context);
-  int MallocRunBuffer(CoderContext *const context);
-  int InitInputWeightBias(CoderContext *const context);
-  int InitStateWeightBias(CoderContext *const context);
+  virtual int MallocRunBuffer(CoderContext *const context);
+  virtual int InitInputWeightBias(CoderContext *const context);
+  virtual int InitStateWeightBias(CoderContext *const context);
 
-  float *weight_i_ptr_{nullptr};
-  float *weight_h_ptr_{nullptr};
-  float *input_bias_{nullptr};
-  float *state_bias_{nullptr};
+  void *weight_i_ptr_{nullptr};
+  void *weight_h_ptr_{nullptr};
+  void *input_bias_{nullptr};
+  void *state_bias_{nullptr};
   float *buffer_[7] = {nullptr};
-  int row_tile_{0};
-  int col_tile_{0};
+  int row_tile_{C12NUM};
+  int col_tile_{C8NUM};
   int weight_batch_{0};
   bool is_vec_{false};
   LstmParameter *lstm_param_{nullptr};
+  TypeId data_type_{kNumberTypeFloat32};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_LSTM_FP32_CODER_H_
