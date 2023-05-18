@@ -90,9 +90,9 @@ bool BincountCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
                                   const std::vector<AddressPtr> &outputs) {
   const size_t array_num = SizeOf(input_arr_sizes_);
   const size_t weights_num = SizeOf(input_weights_sizes_);
-  if (array_num != weights_num) {
-    MS_LOG(EXCEPTION) << "For Bincount, the size of input_weights " << Vector2Str(input_arr_sizes_)
-                      << " need be the same with input_arr " << Vector2Str(input_weights_sizes_);
+  if (weights_num != 0 && array_num != weights_num) {
+    MS_LOG(EXCEPTION) << "For Bincount, the size of input_weights " << Vector2Str(input_weights_sizes_)
+                      << " need be the same with input_arr " << Vector2Str(input_arr_sizes_);
   }
   MS_EXCEPTION_IF_NULL(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(inputs[1]->addr);
