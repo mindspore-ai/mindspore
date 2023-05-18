@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import mindspore.context as context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
+from mindspore import nn
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.nn.cell import Cell
 from mindspore.common import Tensor
@@ -514,7 +515,7 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.grad_reducer = F.identity
+        self.grad_reducer = nn.Identity()
         self.degree = 1
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
