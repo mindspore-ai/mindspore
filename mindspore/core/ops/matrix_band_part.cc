@@ -38,16 +38,8 @@ TypePtr MatrixBandPartInferType(const PrimitivePtr &prim, const std::vector<Abst
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_type = input_args[kInputIndex0]->BuildType();
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   std::set<TypePtr> valid_types{};
-  if (is_gpu || is_cpu) {
-    valid_types = common_valid_types_with_complex_and_bool;
-  } else {
-    valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
-  }
+  valid_types = common_valid_types_with_complex_and_bool;
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("lower", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
                                              prim_name);
