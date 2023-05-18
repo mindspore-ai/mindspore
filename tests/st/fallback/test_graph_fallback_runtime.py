@@ -498,6 +498,31 @@ def test_np_save():
     assert np.all(x_load == x.asnumpy())
 
 
+def _save_tensor(data):
+    np.save("data_from_args.npy", data.asnumpy())
+
+
+class NpSaveWithArgsNet(nn.Cell):
+    def construct(self, *args):
+        x = args[0]
+        _save_tensor(x)
+        return x
+
+
+def test_np_save_with_args():
+    """
+    Feature: Fallback runtime.
+    Description: Test numpy.save() and isolated side effect for top args.
+    Expectation: No error.
+    """
+    x = ms.Tensor(np.array([-0.5962, 0.4985, 0.2349, -0.4396, 0.4525]), ms.float32)
+    net = NpSaveWithArgsNet()
+    output = net(x)
+    print(f'output: {output}')
+    x_load = np.load("data_from_args.npy")
+    assert np.all(x_load == x.asnumpy())
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

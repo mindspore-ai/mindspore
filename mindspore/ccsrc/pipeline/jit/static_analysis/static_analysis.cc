@@ -691,8 +691,9 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   if (check_side_effect()) {
     func->Visit([&contains_side_effect](const AbstractFuncAtomPtr &possible_func) {
       const auto &real_func_atom = GetRealFuncAtom(possible_func);
-      if (CheckFuncSideEffect(real_func_atom)) {
-        contains_side_effect = CheckFuncSideEffect(real_func_atom);
+      bool func_has_side_effect = CheckFuncSideEffect(real_func_atom);
+      if (func_has_side_effect) {
+        contains_side_effect = true;
       }
     });
     if (contains_side_effect) {

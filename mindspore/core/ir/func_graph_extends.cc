@@ -236,7 +236,7 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
   }
 }
 
-FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_abs_list) {
+FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   std::vector<size_t> pos_arg_indexes;
   size_t arguments_count = args_abs_list.size();
@@ -253,10 +253,12 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_abs_list) 
   }
 
   if (!NeedGenerate(kwarg_list)) {
+    MS_LOG(DEBUG) << "No need generate, " << ToString();
     return shared_from_base<FuncGraph>();
   }
   auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
+    MS_LOG(DEBUG) << "Found in cache, " << iter->second->ToString() << ", for " << ToString();
     return iter->second;
   }
   FuncGraphPtr specialized_graph = BasicClone(shared_from_base<FuncGraph>());
@@ -289,7 +291,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_abs_list) 
   for (auto &node_pair : repl_nodes) {
     MS_EXCEPTION_IF_NULL(node_pair.first);
     MS_EXCEPTION_IF_NULL(node_pair.second);
-    MS_LOG(DEBUG) << "GenerateGraph replace:" << node_pair.first->DebugString() << "-"
+    MS_LOG(DEBUG) << "GenerateFuncGraph replace:" << node_pair.first->DebugString() << "-"
                   << node_pair.second->DebugString();
     (void)tr.Replace(node_pair.first, node_pair.second);
   }
@@ -301,6 +303,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_abs_list) 
   specialized_graph->ClearDefaultValues();
   specialized_graph->set_is_generate(true);
   func_graph_cache_[args_abs_list] = specialized_graph;
+  MS_LOG(DEBUG) << "Generated, " << specialized_graph->ToString() << ", for " << ToString();
   return specialized_graph;
 }
 
