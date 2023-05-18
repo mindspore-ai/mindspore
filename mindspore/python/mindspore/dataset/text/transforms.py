@@ -1040,7 +1040,7 @@ if platform.system().lower() != 'windows':
 
         Args:
             normalize_form (NormalizeForm, optional): Valid values can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``,
-                ``NormalizeForm.NFKC``,`` NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
+                ``NormalizeForm.NFKC``, ``NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
                 normalized forms. Default: ``NormalizeForm.NFKC``.
                 See http://unicode.org/reports/tr15/ for details.
 

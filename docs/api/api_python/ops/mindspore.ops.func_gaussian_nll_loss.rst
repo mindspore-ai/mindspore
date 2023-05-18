@@ -26,9 +26,7 @@ mindspore.ops.gaussian_nll_loss
         Tensor或Tensor scalar，根据 :math:`reduction` 计算的loss。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `target` 不是Tensor。
-        - **TypeError** - `var` 不是Tensor。
+        - **TypeError** - `x`， `target` 或者 `var` 不是Tensor。
         - **TypeError** - `full` 不是bool。
         - **TypeError** - `eps` 不是float。
         - **ValueError** - `eps` 不是在(0, inf)区间的float。
