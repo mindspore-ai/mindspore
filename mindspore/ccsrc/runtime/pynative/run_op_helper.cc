@@ -688,7 +688,7 @@ void SetOutputDeviceAddressFlag(const pynative::OpCompilerInfoPtr &op_compiler_i
 
 void ClearAllocOutputDeviceAddress(const std::vector<device::DeviceAddressPtr> &device_address_list,
                                    const std::vector<device::DeviceAddressPtr> &alloc_output_device_address) {
-  MS_LOG(INFO) << "Clear Alloc-OutputDeviceAddress Start";
+  MS_LOG(DEBUG) << "Clear Alloc-OutputDeviceAddress Start";
   for (auto alloc_output_address : alloc_output_device_address) {
     auto skip_clear = false;
     for (auto device_address : device_address_list) {
@@ -701,12 +701,12 @@ void ClearAllocOutputDeviceAddress(const std::vector<device::DeviceAddressPtr> &
       alloc_output_address->ClearDeviceMemory();
     }
   }
-  MS_LOG(INFO) << "Clear Alloc-OutputDeviceAddress End";
+  MS_LOG(DEBUG) << "Clear Alloc-OutputDeviceAddress End";
 }
 
 void ReleaseCacheInfo(const pynative::OpCompilerInfoPtr &op_compiler_info,
                       const std::vector<device::DeviceAddressPtr> &ref_node) {
-  MS_LOG(INFO) << "Release CacheInfo Start";
+  MS_LOG(DEBUG) << "Release CacheInfo Start";
   for (auto execute_kernel : op_compiler_info->execute_kernel_list_) {
     auto kernel = execute_kernel.kernel_;
     for (auto input_address : execute_kernel.inputs_device_address_) {
@@ -726,7 +726,7 @@ void ReleaseCacheInfo(const pynative::OpCompilerInfoPtr &op_compiler_info,
       output_address->set_ptr(nullptr);
     }
   }
-  MS_LOG(INFO) << "Release CacheInfo End";
+  MS_LOG(DEBUG) << "Release CacheInfo End";
 }
 
 void SyncCacheInfoToOutput(const pynative::OpCompilerInfoPtr &op_compiler_info,
