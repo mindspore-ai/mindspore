@@ -88,7 +88,7 @@ def squeeze(a, axis=None):
     Args:
         a (Tensor): Input tensor array.
         axis (Union[None, int, list(int), tuple(list)]): The axis(axes) to squeeze,
-            default is None.
+            default: ``None`` .
 
     Returns:
         Tensor, with all or a subset of the dimensions of length :math:`1` removed.
@@ -118,7 +118,7 @@ def transpose(a, axes=None):
     Args:
         a (Tensor): a tensor to be transposed
         axes (Union[None, tuple, list]): the axes order, if `axes` is `None`, transpose
-            the entire tensor. Default is `None`.
+            the entire tensor. Default: ``None`` .
 
     Returns:
         Tensor, the transposed tensor array.
@@ -149,7 +149,7 @@ def rollaxis(x, axis, start=0):
     Args:
         x (Tensor): A Tensor to be transposed.
         axis (int): The axis to be rolled.
-        start (int): Default: 0.
+        start (int): Default: ``0`` .
             If :math:`start <= axis`, the axis is rolled back until it lies in this position (`start`).
             If :math:`start > axis`: the axis is rolled until it lies before this position (`start`).
             If :math:`start < 0`, the start will be normalized as a non-negative number (more details
@@ -381,7 +381,7 @@ def concatenate(arrays, axis=0):
         arrays (Union[Tensor, tuple(Tensor), list(Tensor)]): a tensor or a list
             of tensors to be concatenated.
         axis (Union[None, int], optional): The axis along which the tensors will be joined,
-            if `axis` is :class:`None`, tensors are flattened before use. Default is 0.
+            if `axis` is :class:`None`, tensors are flattened before use. Default: ``0`` .
 
     Returns:
         A tensor concatenated from a tensor or a list of tensors.
@@ -673,9 +673,9 @@ def where(condition, x=None, y=None):
 
     Args:
         condition (Tensor): where True, yield `x`, otherwise yield `y`.
-        x (Tensor): Values from which to choose. Defaults to None.
+        x (Tensor): Values from which to choose. Default: ``None`` .
         y (Tensor): Values from which to choose. `x`, `y` and `condition` need
-            to be broadcastable to some shape. Defaults to None.
+            to be broadcastable to some shape. Default: ``None`` .
 
     Returns:
         Tensor or scalar, with elements from `x` where `condition` is True, and
@@ -898,7 +898,7 @@ def stack(arrays, axis=0):
     Args:
         arrays (sequence of Tensor): Each array must have the same shape.
         axis (int, optional): The axis in the result array along which the
-            input arrays are stacked. Default: 0.
+            input arrays are stacked. Default: ``0`` .
 
     Returns:
         Tensor, The stacked array has one more dimension than the input
@@ -970,7 +970,7 @@ def unique(x, return_inverse=False):
     Args:
         x (Tensor): The input tensor to be processed.
         return_inverse (bool): If `True`, also return the indices of the unique tensor.
-            Default: `False`.
+            Default: ``False`` .
 
     Returns:
         Tensor or tuple of Tensors.
@@ -1060,7 +1060,7 @@ def roll(a, shift, axis=None):
             for all given axes.
         axis (Union[int, tuple(int)], optional): Axis or axes along which elements
             are shifted. By default, the array is flattened before shifting, after
-            which the original shape is restored. Default: None.
+            which the original shape is restored. Default: ``None`` .
 
     Returns:
         Tensor, with the same shape as a.
@@ -1356,7 +1356,7 @@ def array_split(x, indices_or_sections, axis=0):
             three sub-tensors :math:`x[:2]`, :math:`x[2:3]`and :math:`x[3:]`.
             If an index exceeds the dimension of the array along axis,
             an empty sub-array is returned correspondingly.
-        axis (int): The axis along which to split. Default: 0.
+        axis (int): The axis along which to split. Default: ``0`` .
 
     Returns:
         A list of sub-tensors.
@@ -1401,7 +1401,7 @@ def split(x, indices_or_sections, axis=0):
             three sub-tensors :math:`x[:2]`, :math:`x[2:3]`and :math:`x[3:]`.
             If an index exceeds the dimension of the array along axis,
             an empty sub-array is returned correspondingly.
-        axis (int): The axis along which to split. Default: 0.
+        axis (int): The axis along which to split. Default: ``0`` .
 
     Returns:
         A tuple of sub-tensors.
@@ -1861,9 +1861,9 @@ def take(a, indices, axis=None, mode='clip'):
         a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
         indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
         axis (int, optional): The axis over which to select values. By default,
-            the flattened input array is used. Defaults to None.
+            the flattened input array is used. Default: ``None`` .
         mode ('raise', 'wrap', 'clip', optional): Specifies how out-of-bounds
-            indices will behave. Defaults to "clip".
+            indices will behave. Default: ``'clip'`` .
 
             'raise' – raise an error;
 
@@ -1909,7 +1909,7 @@ def repeat(a, repeats, axis=None):
         repeats (int or sequence of ints): The number of repetitions for each element.
             `repeats` is broadcasted to fit the shape of the given axis.
         axis (int, optional): The axis along which to repeat values. By default,
-            use the flattened input array, and return a flat output array. Defaults to None.
+            use the flattened input array, and return a flat output array. Default: ``None`` .
 
     Returns:
         Tensor, output array which has the same shape as `a`, except along the given
@@ -1952,9 +1952,9 @@ def rot90(a, k=1, axes=(0, 1)):
 
     Args:
         a (Tensor): Input tensor of two or more dimensions.
-        k (int): Number of times the tensor is rotated by 90 degrees. Default: 1.
+        k (int): Number of times the tensor is rotated by 90 degrees. Default: ``1`` .
         axes (Union[tuple(int), list(int)]): The tensor is rotated in the plane
-            defined by the axes. Default: `(0, 1)`.
+            defined by the axes. Default: ``(0, 1)`` .
             Axes must be different and with the shape of `(2,)`.
 
     Returns:
@@ -2032,7 +2032,7 @@ def select(condlist, choicelist, default=0):
             from which the output elements are taken. It has to be of the same length as
             `condlist`.
         default (scalar, optional): The element inserted in output when all conditions
-            evaluate to `False`. Defaults to 0.
+            evaluate to `False`. Default: ``0`` .
 
     Returns:
         Tensor, the output at position `m` is the `m-th` element of the array in
@@ -2422,7 +2422,7 @@ def unravel_index(indices, shape, order='C'):
             are indices into the flattened version of an array of dimensions shape.
         shape (tuple of integers): The shape of the array to use for unraveling indices.
         order (Union['C', 'F'], optional): Determines whether the indices should be viewed as
-            indexing in row-major (C-style) or column-major (Fortran-style) order. Defaults to "C".
+            indexing in row-major (C-style) or column-major (Fortran-style) order. Default: ``'C'`` .
 
     Returns:
         Tensor, each array in the tuple has the same shape as the indices array.

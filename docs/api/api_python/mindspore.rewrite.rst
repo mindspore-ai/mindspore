@@ -228,7 +228,7 @@ ReWrite完整示例请参考
         参数：
             - **arg_idx** (int) - 要设置的参数索引。
             - **src_node** (Node) - 输入的节点。
-            - **out_idx** (int，optional) - 指定输入节点的哪个输出作为当前节点输入，则取第一个输出。默认值：None。
+            - **out_idx** (int，optional) - 指定输入节点的哪个输出作为当前节点输入，则取第一个输出。默认值： ``None`` 。
 
         异常：
             - **RuntimeError** - 如果 `src_node` 不属于当前的SymbolTree。

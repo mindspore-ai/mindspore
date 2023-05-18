@@ -316,12 +316,12 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
             The function can be None if you want to use automatic credits.
         xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
-        gfk (Tensor): initial value of value_and_gradient as position. Default: None.
-        old_fval (Tensor): The same as `gfk`. Default: None.
-        old_old_fval (Tensor): unused argument, only for scipy API compliance. Default: None.
-        c1 (float): Wolfe criteria constant, see ref. Default: 1e-4.
-        c2 (float): The same as `c1`. Default: 0.9.
-        maxiter (int): maximum number of iterations to search. Default: 20.
+        gfk (Tensor): initial value of value_and_gradient as position. Default: ``None`` .
+        old_fval (Tensor): The same as `gfk`. Default: ``None`` .
+        old_old_fval (Tensor): unused argument, only for scipy API compliance. Default: ``None`` .
+        c1 (float): Wolfe criteria constant, see ref. Default: ``1e-4`` .
+        c2 (float): The same as `c1`. Default: ``0.9`` .
+        maxiter (int): maximum number of iterations to search. Default: ``20`` .
 
     Returns:
         LineSearchResults, results of line search results.

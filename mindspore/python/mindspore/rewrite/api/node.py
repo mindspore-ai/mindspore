@@ -168,7 +168,8 @@ class Node:
         Args:
             arg_idx (int): Indicate which input being modified.
             src_node (Node): A `Node` as new input. Can be a node or name of node.
-            out_idx (int, optional): Indicate which output of `src_node` as new input of current node. Default is None
+            out_idx (int, optional): Indicate which output of `src_node` as new input of current node.
+                Default: ``None`` ,
                 which means use first output of `src_node` as new input.
 
         Raises:
