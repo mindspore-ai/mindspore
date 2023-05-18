@@ -47,14 +47,14 @@ class AutoAugmentPolicy(str, Enum):
     """
     AutoAugment policy for different datasets.
 
-    Possible enumeration values are: AutoAugmentPolicy.IMAGENET, AutoAugmentPolicy.CIFAR10,
+    Possible enumeration values are: ``AutoAugmentPolicy.IMAGENET``, ``AutoAugmentPolicy.CIFAR10``,
     AutoAugmentPolicy.SVHN.
 
     Each policy contains 25 pairs of augmentation operations. When using AutoAugment, each image is randomly
     transformed with one of these operation pairs. Each pair has 2 different operations. The following shows
     all of these augmentation operations, including operation names with their probabilities and random params.
 
-    - AutoAugmentPolicy.IMAGENET: dataset auto augment policy for ImageNet.
+    - ``AutoAugmentPolicy.IMAGENET``: dataset auto augment policy for ImageNet.
 
       .. code-block::
 
@@ -73,7 +73,7 @@ class AutoAugmentPolicy(str, Enum):
            (("Invert", 0.6, None), ("Equalize", 1.0, None)),   (("Color", 0.6, 4), ("Contrast", 1.0, 8)),
            (("Equalize", 0.8, None), ("Equalize", 0.6, None))]
 
-    - AutoAugmentPolicy.CIFAR10: dataset auto augment policy for Cifar10.
+    - ``AutoAugmentPolicy.CIFAR10``: dataset auto augment policy for Cifar10.
 
       .. code-block::
 
@@ -94,7 +94,7 @@ class AutoAugmentPolicy(str, Enum):
            (("Equalize", 0.3, None), ("AutoContrast", 0.4, None)),
            (("Equalize", 0.2, None), ("AutoContrast", 0.6, None))]
 
-    - AutoAugmentPolicy.SVHN: dataset auto augment policy for SVHN.
+    - ``AutoAugmentPolicy.SVHN``: dataset auto augment policy for SVHN.
 
       .. code-block::
 
@@ -133,13 +133,13 @@ class Border(str, Enum):
     """
     Padding Mode, Border Type.
 
-    Possible enumeration values are: Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC.
+    Possible enumeration values are: ``Border.CONSTANT``, ``Border.EDGE``, ``Border.REFLECT``, ``Border.SYMMETRIC``.
 
-    - Border.CONSTANT: means it fills the border with constant values.
-    - Border.EDGE: means it pads with the last value on the edge.
-    - Border.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+    - ``Border.CONSTANT`` : means it fills the border with constant values.
+    - ``Border.EDGE`` : means it pads with the last value on the edge.
+    - ``Border.REFLECT`` : means it reflects the values on the edge omitting the last value of edge.
       For example, padding [1,2,3,4] with 2 elements on both sides will result in [3,2,1,2,3,4,3,2].
-    - Border.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+    - ``Border.SYMMETRIC`` : means it reflects the values on the edge repeating the last value of edge.
       For example, padding [1,2,3,4] with 2 elements on both sides will result in [2,1,1,2,3,4,4,3].
 
     Note:
@@ -256,10 +256,10 @@ class ImageBatchFormat(IntEnum):
     """
     Data Format of images after batch operation.
 
-    Possible enumeration values are: ImageBatchFormat.NHWC, ImageBatchFormat.NCHW.
+    Possible enumeration values are: ``ImageBatchFormat.NHWC``, ``ImageBatchFormat.NCHW``.
 
-    - ImageBatchFormat.NHWC: in orders like, batch N, height H, width W, channels C to store the data.
-    - ImageBatchFormat.NCHW: in orders like, batch N, channels C, height H, width W to store the data.
+    - ``ImageBatchFormat.NHWC``: in orders like, batch N, height H, width W, channels C to store the data.
+    - ``ImageBatchFormat.NCHW``: in orders like, batch N, channels C, height H, width W to store the data.
     """
     NHWC = 0
     NCHW = 1
@@ -279,11 +279,11 @@ class ImageReadMode(IntEnum):
     """
     The read mode used for the image file.
 
-    Possible enumeration values are: ImageReadMode.UNCHANGED, ImageReadMode.GRAYSCALE, ImageReadMode.COLOR.
+    Possible enumeration values are: ``ImageReadMode.UNCHANGED``, ``ImageReadMode.GRAYSCALE``, ``ImageReadMode.COLOR``.
 
-    - ImageReadMode.UNCHANGED: remain the output in the original format.
-    - ImageReadMode.GRAYSCALE: convert the output into one channel grayscale data.
-    - ImageReadMode.COLOR: convert the output into three channels RGB color data.
+    - ``ImageReadMode.UNCHANGED``: remain the output in the original format.
+    - ``ImageReadMode.GRAYSCALE``: convert the output into one channel grayscale data.
+    - ``ImageReadMode.COLOR``: convert the output into three channels RGB color data.
     """
     UNCHANGED = 0
     GRAYSCALE = 1
@@ -304,17 +304,17 @@ class Inter(IntEnum):
     """
     Interpolation Modes.
 
-    Possible enumeration values are: Inter.NEAREST, Inter.ANTIALIAS, Inter.LINEAR, Inter.BILINEAR, Inter.CUBIC,
-    Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC.
+    Possible enumeration values are: ``Inter.NEAREST``, ``Inter.ANTIALIAS``, ``Inter.LINEAR``, ``Inter.BILINEAR``,
+    ``Inter.CUBIC``, ``Inter.BICUBIC``, ``Inter.AREA``, ``Inter.PILCUBIC``.
 
     - ``Inter.NEAREST`` : means interpolation method is nearest-neighbor interpolation.
-    - Inter.ANTIALIAS: means the interpolation method is antialias interpolation.
-    - Inter.LINEAR: means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
+    - ``Inter.ANTIALIAS`` : means the interpolation method is antialias interpolation.
+    - ``Inter.LINEAR`` : means interpolation method is bilinear interpolation, here is the same as ``Inter.BILINEAR``.
     - ``Inter.BILINEA`` : means interpolation method is bilinear interpolation.
-    - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
+    - ``Inter.CUBIC`` : means the interpolation method is bicubic interpolation, here is the same as ``Inter.BICUBIC``.
     - ``Inter.BICUBIC`` : means the interpolation method is bicubic interpolation.
-    - Inter.AREA: means interpolation method is pixel area interpolation.
-    - Inter.PILCUBIC: means interpolation method is bicubic interpolation like implemented in pillow, input
+    - ``Inter.AREA`` : means interpolation method is pixel area interpolation.
+    - ``Inter.PILCUBIC`` : means interpolation method is bicubic interpolation like implemented in pillow, input
       should be in 3 channels format.
     """
     NEAREST = 0
@@ -354,10 +354,10 @@ class SliceMode(IntEnum):
     """
     Mode to Slice Tensor into multiple parts.
 
-    Possible enumeration values are: SliceMode.PAD, SliceMode.DROP.
+    Possible enumeration values are: ``SliceMode.PAD``, ``SliceMode.DROP``.
 
-    - SliceMode.PAD: pad some pixels before slice the Tensor if needed.
-    - SliceMode.DROP: drop remainder pixels before slice the Tensor if needed.
+    - ``SliceMode.PAD``: pad some pixels before slice the Tensor if needed.
+    - ``SliceMode.DROP``: drop remainder pixels before slice the Tensor if needed.
     """
     PAD = 0
     DROP = 1
@@ -379,7 +379,7 @@ def encode_jpeg(image, quality=75):
 
     Args:
         image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
-        quality (int, optional): Quality of the resulting JPEG data, in range of [1, 100]. Default: 75.
+        quality (int, optional): Quality of the resulting JPEG data, in range of [1, 100]. Default: ``75``.
 
     Returns:
         numpy.ndarray, one dimension uint8 data.
@@ -416,7 +416,8 @@ def encode_png(image, compression_level=6):
 
     Args:
         image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
-        compression_level (int, optional): The compression_level for encoding, in range of [0, 9]. Default: 6.
+        compression_level (int, optional): The `compression_level` for encoding, in range of [0, 9].
+            Default: ``6``.
 
     Returns:
         numpy.ndarray, one dimension uint8 data.
@@ -552,8 +553,9 @@ def read_image(filename, mode=ImageReadMode.UNCHANGED):
 
     Args:
         filename(str): The path to the image file to be read.
-        mode(ImageReadMode, optional): The mode used for decoding the image. It can be any of
-            [ImageReadMode.UNCHANGED, ImageReadMode.GRAYSCALE, IMageReadMode.COLOR]. Default: ImageReadMode.UNCHANGED.
+        mode(ImageReadMode, optional): The mode used for decoding the image. It can be
+            ``ImageReadMode.UNCHANGED``, ``ImageReadMode.GRAYSCALE``, ``IMageReadMode.COLOR``.
+            Default: ``ImageReadMode.UNCHANGED``.
 
             - ImageReadMode.UNCHANGED, remain the output in the original format.
 
@@ -624,7 +626,7 @@ def write_jpeg(filename, image, quality=75):
     Args:
         filename (str): The path to the file to be written.
         image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
-        quality (int, optional): Quality of the resulting JPEG file, in range of [1, 100]. Default: 75.
+        quality (int, optional): Quality of the resulting JPEG file, in range of [1, 100]. Default: ``75``.
 
     Raises:
         TypeError: If `filename` is not of type str.
@@ -663,7 +665,8 @@ def write_png(filename, image, compression_level=6):
     Args:
         filename (str): The path to the file to be written.
         image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
-        compression_level (int, optional): Compression level for the resulting PNG file, in range of [0, 9]. Default: 6.
+        compression_level (int, optional): Compression level for the resulting PNG file, in range of [0, 9].
+            Default: ``6``.
 
     Raises:
         TypeError: If `filename` is not of type str.

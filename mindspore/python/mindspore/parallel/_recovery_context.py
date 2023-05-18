@@ -65,7 +65,8 @@ def _set_recovery_context(**kwargs):
 
     Args:
         ckpt_path (string): Set the recovery path used to save checkpoint. Default: ''.
-        need_reset (bool): Set whether should call reset minddata and load ckpt for disaster recovery. Default: False.
+        need_reset (bool): Set whether should call reset minddata and load ckpt for disaster recovery.
+            Default: ``False``.
 
     Raises:
         ValueError: If input key is not the attribute in recovery context.

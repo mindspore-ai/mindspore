@@ -51,7 +51,8 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
         mean (list): List of mean values for each channel, w.r.t channel order.
         std (list): List of standard deviations for each channel, w.r.t. channel order.
         pad_channel (bool): Whether to pad a extra channel with value zero.
-        dtype (str): Output datatype of normalize, only worked when pad_channel is True. Default: "float32".
+        dtype (str): Output datatype of normalize, only worked when `pad_channel` is ``True``.
+            Default: ``"float32"``.
 
     Returns:
         img (numpy.ndarray), Normalized image.
@@ -138,7 +139,7 @@ def to_tensor(img, output_type):
 
     Args:
         img (Union[PIL.Image.Image, numpy.ndarray]): Image to be converted.
-        output_type: The datatype of the NumPy output. e.g. np.float32
+        output_type: The datatype of the NumPy output. e.g. ``np.float32``.
 
     Returns:
         img (numpy.ndarray), Converted image.
@@ -295,7 +296,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of (height, width), this will be the desired output size.
-        interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
+        interpolation (interpolation mode): Image interpolation mode. Default: ``Inter.BILINEAR = 2``.
 
     Returns:
         PIL.Image.Image, resized image.
@@ -358,8 +359,8 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
             If size is a sequence of length 2, it should be (height, width).
         scale (tuple): Range (min, max) of respective size of the original size to be cropped.
         ratio (tuple): Range (min, max) of aspect ratio to be cropped.
-        interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
-        max_attempts (int): The maximum number of attempts to propose a valid crop_area. Default: 10.
+        interpolation (interpolation mode): Image interpolation mode. Default: ``Inter.BILINEAR = 2``.
+        max_attempts (int): The maximum number of attempts to propose a valid crop_area. Default: ``10``.
             If exceeded, fall back to use center_crop instead.
 
     Returns:
@@ -432,20 +433,21 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-            Default: None.
+            Default: ``None``.
         pad_if_needed (bool): Pad the image if either side is smaller than
-            the given output size. Default: False.
+            the given output size. Default: ``False``.
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
-            the padding_mode is 'constant'. If it is a 3-tuple, it is used to
+            the `padding_mode` is ``'constant'``. If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (str): The method of padding. Can be any of ['constant', 'edge', 'reflect', 'symmetric'].
+        padding_mode (str): The method of padding. Can be ``'constant'``, ``'edge'``,
+            ``'reflect'``, ``'symmetric'``.
 
-              - 'constant', means it fills the border with constant values
-              - 'edge', means it pads with the last value on the edge
-              - 'reflect', means it reflects the values on the edge omitting the last
-                value of edge
-              - 'symmetric', means it reflects the values on the edge repeating the last
-                value of edge
+            - ``'constant'``, means it fills the border with constant values
+            - ``'edge'``, means it pads with the last value on the edge
+            - ``'reflect'``, means it reflects the values on the edge omitting the last
+              value of edge
+            - ``'symmetric'``, means it reflects the values on the edge repeating the last
+              value of edge
 
     Returns:
         PIL.Image.Image, cropped image.
@@ -496,7 +498,7 @@ def adjust_brightness(img, brightness_factor):
     Args:
         img (PIL.Image.Image): Image to be adjusted.
         brightness_factor (float): A non negative number indicated the factor by which
-            the brightness is adjusted. 0 gives a black image, 1 gives the original.
+            the brightness is adjusted. ``0`` gives a black image, ``1`` gives the original.
 
     Returns:
         PIL.Image.Image, brightness adjusted image.
@@ -516,7 +518,7 @@ def adjust_contrast(img, contrast_factor):
     Args:
         img (PIL.Image.Image): PIL Image to be adjusted.
         contrast_factor (float): A non negative number indicated the factor by which
-            the contrast is adjusted. 0 gives a solid gray image, 1 gives the original.
+            the contrast is adjusted. ``0`` gives a solid gray image, ``1`` gives the original.
 
     Returns:
         PIL.Image.Image, contrast adjusted image.
@@ -536,7 +538,7 @@ def adjust_saturation(img, saturation_factor):
     Args:
         img (PIL.Image.Image): PIL Image to be adjusted.
         saturation_factor (float):  A non negative number indicated the factor by which
-            the saturation is adjusted. 0 will give a black and white image, 1 will
+            the saturation is adjusted. ``0`` will give a black and white image, ``1`` will
             give the original.
 
     Returns:
@@ -559,7 +561,7 @@ def adjust_hue(img, hue_factor):
         hue_factor (float):  Amount to shift the Hue channel. Value should be in
             [-0.5, 0.5]. 0.5 and -0.5 give complete reversal of hue channel. This
             is because Hue wraps around when rotated 360 degrees.
-            0 means no shift that gives the original image while both -0.5 and 0.5
+            ``0`` means no shift that gives the original image while both -0.5 and 0.5
             will give an image with complementary colors .
 
     Returns:
@@ -617,10 +619,10 @@ def rotate(img, angle, resample, expand, center, fill_value):
         img (PIL.Image.Image): Image to be rotated.
         angle (int or float): Rotation angle in degrees, counter-clockwise.
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
-        expand (bool, optional):  Optional expansion flag. If set to True, expand the output
+            If omitted, or if the image has mode "1" or "P", it is set to be ``Inter.NEAREST``.
+        expand (bool, optional):  Optional expansion flag. If set to ``True``, expand the output
             image to make it large enough to hold the entire rotated image.
-            If set to False or omitted, make the output image the same size as the input.
+            If set to ``False`` or omitted, make the output image the same size as the input.
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple).
             Origin is the top left corner.
@@ -759,10 +761,10 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
+            If omitted, or if the image has mode "1" or "P", it is set to be ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
-            If set to False or omitted, make the output image the same size as the input.
+            If set to ``False`` or omitted, make the output image the same size as the input.
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple).
             Origin is the top left corner.
@@ -836,14 +838,15 @@ def ten_crop(img, size, use_vertical_flip=False):
     """
     Generate 10 cropped images (first 5 from FiveCrop, second 5 from their flipped version).
 
-    The default is horizontal flipping, use_vertical_flip=False.
+    The default is horizontal flipping, `use_vertical_flip` is ``False``.
 
     Args:
         img (PIL.Image.Image): PIL Image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to True.
+        use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to ``True``.
+            Default: ``False``.
 
     Returns:
         tuple[PIL.Image.Image], a tuple of 10 PIL Image
@@ -912,17 +915,17 @@ def pad(img, padding, fill_value, padding_mode):
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-            Default: None.
+            Default: ``None``.
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
-            the padding_mode is "constant". If it is a 3-tuple, it is used to
+            the `padding_mode` is ``"constant"``. If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (str): The method of padding. Can be any of ['constant', 'edge', 'reflect', 'symmetric'].
+        padding_mode (str): The method of padding. Can be ``'constant'``, ``'edge'``, ``'reflect'``, ``'symmetric'``.
 
-              - 'constant', means it fills the border with constant values
-              - 'edge', means it pads with the last value on the edge
-              - 'reflect', means it reflects the values on the edge omitting the last
+              - ``'constant'``, means it fills the border with constant values
+              - ``'edge'``, means it pads with the last value on the edge
+              - ``'reflect'``, means it reflects the values on the edge omitting the last
                 value of edge
-              - 'symmetric', means it reflects the values on the edge repeating the last
+              - ``'symmetric'``, means it reflects the values on the edge repeating the last
                 value of edge
 
     Returns:
@@ -1013,7 +1016,7 @@ def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
         img (PIL.Image.Image): PIL Image to be applied perspective transformation.
         start_points (list): List of [top_left, top_right, bottom_right, bottom_left] of the original image.
         end_points: List of [top_left, top_right, bottom_right, bottom_left] of the transformed image.
-        interpolation (interpolation mode): Image interpolation mode, Default is Inter.BICUBIC = 3.
+        interpolation (interpolation mode): Image interpolation mode, Default: ``Inter.BICUBIC = 3``.
 
     Returns:
         PIL.Image.Image, image after being perspectively transformed.
@@ -1102,7 +1105,7 @@ def erase(np_img, i, j, height, width, erase_value, inplace=False):
         height (int): Height of the erased region.
         width (int): Width of the erased region.
         erase_value: Erase value return from helper function get_erase_params().
-        inplace (bool, optional): Apply this transform inplace. Default: False.
+        inplace (bool, optional): Apply this transform inplace. Default: ``False``.
 
     Returns:
         np_img (numpy.ndarray), Erased NumPy image array.
@@ -1164,7 +1167,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
         resample (Inter): Resampling filter.
         fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
             in the output image. Used only in Pillow versions > 5.0.0.
-            If None, no filling is performed.
+            If ``None``, no filling is performed.
 
     Returns:
         PIL.Image.Image, randomly affine transformed image.
@@ -1311,10 +1314,10 @@ def rgb_to_bgr(np_rgb_img, is_hwc):
 
     Args:
         np_rgb_img (numpy.ndarray): NumPy RGB image array of shape (H, W, C) or (C, H, W) to be converted.
-        is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
+        is_hwc (Bool): If ``True``, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
 
     Returns:
-        np_bgr_img (numpy.ndarray), NumPy BGR image with same type of np_rgb_img.
+        np_bgr_img (numpy.ndarray), NumPy BGR image with same type of `np_rgb_img`.
     """
     if is_hwc:
         np_bgr_img = np_rgb_img[:, :, ::-1]
@@ -1374,10 +1377,10 @@ def rgb_to_hsv(np_rgb_img, is_hwc):
 
     Args:
         np_rgb_img (numpy.ndarray): NumPy RGB image array of shape (H, W, C) or (C, H, W) to be converted.
-        is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
+        is_hwc (Bool): If ``True``, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
 
     Returns:
-        np_hsv_img (numpy.ndarray), NumPy HSV image with same type of np_rgb_img.
+        np_hsv_img (numpy.ndarray), NumPy HSV image with same type of `np_rgb_img`.
     """
     if is_hwc:
         r, g, b = np_rgb_img[:, :, 0], np_rgb_img[:, :, 1], np_rgb_img[:, :, 2]
@@ -1400,8 +1403,8 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
     Args:
         np_rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
-        is_hwc (Bool): If True, the shape of np_rgb_imgs is (H, W, C) or (N, H, W, C);
-                       If False, the shape of np_rgb_imgs is (C, H, W) or (N, C, H, W).
+        is_hwc (Bool): If ``True``, the shape of `np_rgb_imgs` is (H, W, C) or (N, H, W, C);
+                       If ``False``, the shape of `np_rgb_imgs` is (C, H, W) or (N, C, H, W).
 
     Returns:
         np_hsv_imgs (numpy.ndarray), NumPy HSV images with same type of np_rgb_imgs.
@@ -1444,10 +1447,10 @@ def hsv_to_rgb(np_hsv_img, is_hwc):
 
     Args:
         np_hsv_img (numpy.ndarray): NumPy HSV image array of shape (H, W, C) or (C, H, W) to be converted.
-        is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
+        is_hwc (Bool): If ``True``, the shape of `np_hsv_img` is (H, W, C), otherwise must be (C, H, W).
 
     Returns:
-        np_rgb_img (numpy.ndarray), NumPy HSV image with same shape of np_hsv_img.
+        np_rgb_img (numpy.ndarray), NumPy HSV image with same shape of `np_hsv_img`.
     """
     if is_hwc:
         h, s, v = np_hsv_img[:, :, 0], np_hsv_img[:, :, 1], np_hsv_img[:, :, 2]
@@ -1471,11 +1474,11 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     Args:
         np_hsv_imgs (numpy.ndarray): NumPy HSV images array of shape (H, W, C) or (N, H, W, C),
                                       or (C, H, W) or (N, C, H, W) to be converted.
-        is_hwc (Bool): If True, the shape of np_hsv_imgs is (H, W, C) or (N, H, W, C);
-                       If False, the shape of np_hsv_imgs is (C, H, W) or (N, C, H, W).
+        is_hwc (Bool): If ``True``, the shape of `np_hsv_imgs` is (H, W, C) or (N, H, W, C);
+                       If ``False``, the shape of `np_hsv_imgs` is (C, H, W) or (N, C, H, W).
 
     Returns:
-        np_rgb_imgs (numpy.ndarray), NumPy RGB images with same type of np_hsv_imgs.
+        np_rgb_imgs (numpy.ndarray), NumPy RGB images with same type of `np_hsv_imgs`.
     """
     if not is_numpy(np_hsv_imgs):
         raise TypeError("img should be NumPy image. Got {}.".format(type(np_hsv_imgs)))
@@ -1516,7 +1519,7 @@ def random_color(img, degrees):
     Args:
         img (PIL.Image.Image): Image to be color adjusted.
         degrees (sequence): Range of random color adjustment degrees.
-            It should be in (min, max) format. Default: (0.1,1.9).
+            It should be in (min, max) format. Default: ``(0.1,1.9)``.
 
     Returns:
         PIL.Image.Image, color adjusted image.
@@ -1536,7 +1539,7 @@ def random_sharpness(img, degrees):
     Args:
         img (PIL.Image.Image): Image to be sharpness adjusted.
         degrees (sequence): Range of random sharpness adjustment degrees.
-            It should be in (min, max) format. Default: (0.1,1.9).
+            It should be in (min, max) format. Default: ``(0.1,1.9)``.
 
     Returns:
         PIL.Image.Image, sharpness adjusted image.
@@ -1581,8 +1584,8 @@ def auto_contrast(img, cutoff, ignore):
 
     Args:
         img (PIL.Image): Image to be augmented with AutoContrast.
-        cutoff (float, optional): Percent of pixels to cut off from the histogram. Default: 0.0.
-        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore. Default: None.
+        cutoff (float, optional): Percent of pixels to cut off from the histogram. Default: ``0.0``.
+        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore. Default: ``None``.
 
     Returns:
         PIL.Image, augmented image.

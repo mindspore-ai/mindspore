@@ -110,7 +110,7 @@ def prod(input, axis=None, keep_dims=False):
     Args:
         input (Tensor): Input Tensor.
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
-            when axis is None or empty tuple, reduce all dimensions. Default: None.
+            when axis is None or empty tuple, reduce all dimensions. Default: ``None``.
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
     Returns:
@@ -822,7 +822,7 @@ def argmax(x, axis=None, keepdims=False):
     Args:
         axis (Union[int, None], optional): The dimension to reduce.
           If `axis` is None, the indices of the maximum value within the
-          flattened input will be returned. Default: None.
+          flattened input will be returned. Default: ``None``.
         keepdims (bool, optional): Whether the output tensor retains the
           specified dimension. Ignored if `axis` is None. Default: False.
 
@@ -1902,7 +1902,7 @@ def ptp(x, axis=None, keepdims=False):
     Args:
         x (Tensor): Input tensor.
         axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
-            The default is to compute the variance of the flattened array. Default: None.
+            The default is to compute the variance of the flattened array. Default: ``None``.
         keepdims (bool): Default is False.
 
     Returns:
@@ -2061,7 +2061,7 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
 
     Args:
         input (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
-        axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
+        axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: ``None``.
             If None, sum all of the elements of the input array.
             If axis is negative it counts from the last to the first axis.
             If axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple

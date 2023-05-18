@@ -285,7 +285,7 @@ class ParameterProcess:
 
         Args:
             parameters (list): The network's parameter list.
-            split_point (list): The gradient split point of this network. default: None.
+            split_point (list): The gradient split point of this network. Default: ``None``.
         """
         if not isinstance(parameters, (list, tuple)) or not parameters:
             return parameters
@@ -308,7 +308,7 @@ def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_n
 
     Args:
         weight_load_dir (str): The weight(ckpt) file directory to be load.
-        pca_mat_path (str): the path to load pca mat. Default: None.
+        pca_mat_path (str): the path to load pca mat. Default: ``None``.
         n_component (int): pca component.
         device_number (int): device number.
         network (Cell): The network.

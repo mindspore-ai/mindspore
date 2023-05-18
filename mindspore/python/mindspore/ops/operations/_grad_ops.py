@@ -1660,10 +1660,11 @@ class DynamicGRUV2Grad(Primitive):
         keep_prob (float): A float identifying the keep prob in the op. Default: 1.0.
         cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
         num_proj (int): An integer identifying the num proj in the op. Default: 0.
-        time_major (bool): A bool identifying the time major in the op. Default: True.
+        time_major (bool): A bool identifying the time major in the op. Default: ``True``.
         gate_order (str): An string identifying the gate order in weight and bias. Default: 'rzh.
             'zrh' is another option.
-        reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication. Default: True.
+        reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication.
+            Default: ``True``.
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
@@ -1887,7 +1888,7 @@ class ResizeNearestNeighborGrad(Primitive):
 
     Args:
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
-            and output tensors are aligned. Default: False.
+            and output tensors are aligned. Default: ``False``.
     """
 
     @prim_attr_register
@@ -1925,8 +1926,8 @@ class ResizeNearestNeighborV2Grad(Primitive):
 
     Args:
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
-            and output tensors are aligned. Default: False.
-        half_pixel_centers (bool): Default: False.
+            and output tensors are aligned. Default: ``False``.
+        half_pixel_centers (bool): Default: ``False``.
         data_format: An optional `string` that describes the format of the input `x` Defaults to `NHWC`.
     """
 
@@ -2950,7 +2951,7 @@ class MultiMarginLossGrad(Primitive):
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
           value of target should be non-negative, less than C.
         - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
-          support float32, float16 or float64. Default: None.
+          support float32, float16 or float64. Default: ``None``.
 
     Outputs:
         The shape of output :math:`(N, C)`. Data type only support float32 or float16, float64.
@@ -3338,7 +3339,7 @@ class DeformableOffsetsGrad(Primitive):
         data_format (str): An optional string from:"NCHW", "NHWC".Specify the data format of the input x. Default:
             "NCHW".
         deformable_groups (int): Specify the C-axis grouping number of input x. Default: 1.
-        modulated (bool): Specify version of DeformableOffsetsGrad, true means v2, false means v1. Default: true.
+        modulated (bool): Specify version of DeformableOffsetsGrad, true means v2, false means v1. Default: ``True``.
 
     Inputs:
         - **grad** (Tensor) - The input grad tensor. With float16 or float32 data type.
@@ -3573,8 +3574,8 @@ class ResizeBicubicGrad(Primitive):
 
     Args:
         align_corners (bool):If true, the centers of the 4 corner pixels of the input
-    and output tensors are aligned, preserving the values at the corner pixels.Default: False.
-        half_pixel_centers (bool): An optional bool. Default: False.
+    and output tensors are aligned, preserving the values at the corner pixels.Default: ``False``.
+        half_pixel_centers (bool): An optional bool. Default: ``False``.
 
     Inputs:
         - **grads** (Tensor) - A Tensor of type float. 4-D with shape
@@ -3734,7 +3735,7 @@ class AffineGridGrad(Primitive):
 
     Args:
         align_corners (bool): if True, consider -1 and 1 to refer to the centers
-            of the corner pixels rather than the image corners. Default: False.
+            of the corner pixels rather than the image corners. Default: ``False``.
 
     Inputs:
         - **y_grad** (Tensor) - Data type must be float16 or float32.

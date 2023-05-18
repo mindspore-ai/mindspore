@@ -53,7 +53,7 @@ class _AlgoParameterConfig:
     def set_fully_use_devices(self, not_fully):
         """
         Set the flag of whether only generating strategies that fully use all available devices.
-        Default: True
+        Default: ``True``
 
         Args:
             not_fully (bool): The flag.
@@ -141,7 +141,7 @@ class _AlgoParameterConfig:
     def set_dp_algo_enable_approxi(self, enable_flag):
         """
         Set the flag of whether to enable the approximation in the DP algorithms.
-        Default: False.
+        Default: ``False``.
 
         Args:
             enable_flag (bool): The flag.

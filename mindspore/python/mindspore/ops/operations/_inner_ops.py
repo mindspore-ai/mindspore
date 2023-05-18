@@ -145,7 +145,7 @@ class Quant(PrimitiveWithInfer):
     Args:
         scale (float) : Specifies the scaling ratio.
         offset (float): Specifies the offset.
-        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: False.
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
         round_mode (str): Specifies the way to round. Must be one of ["Round", "Floor", "Ceil", "Trunc"].
           Default: "Round".
 
@@ -255,8 +255,8 @@ class Dequant(PrimitiveWithInfer):
         This operation only support Ascend 310 inference environment.
 
     Args:
-        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: False.
-        relu_flag (bool): Specifies whether to perform ReLU. Default: False.
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
+        relu_flag (bool): Specifies whether to perform ReLU. Default: ``False``.
 
     Inputs:
         - **input_x** (Tensor) : Input tensor. Must be mindspore.int32.
@@ -620,7 +620,7 @@ class ConvertToDynamic(PrimitiveWithCheck):
 
     Args:
         is_dynamic_rank (bool): If true, convert to dynamic rank.
-                                If false, convert to dynamic shape. Default: False.
+                                If false, convert to dynamic shape. Default: ``False``.
 
     Inputs:
         - **input** (Tensor) - The tensor used for testing.
@@ -1539,7 +1539,7 @@ class DynamicResizeNearestNeighbor(Primitive):
 
     Args:
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
-                              and output tensors are aligned. Default: False.
+                              and output tensors are aligned. Default: ``False``.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
@@ -1993,7 +1993,7 @@ class ClipByNorm(PrimitiveWithInfer):
 
     Args:
         axis (Union[None, int, tuple(int), list(int)]): Compute the `L_2`-norm along the specific dimension.
-                                                       Default: None, all dimensions to calculate.
+                                                       Default: ``None``, all dimensions to calculate.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape N-D. The type must be float16 or float32.

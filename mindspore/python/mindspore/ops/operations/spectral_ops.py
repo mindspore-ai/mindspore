@@ -30,7 +30,7 @@ class BartlettWindow(Primitive):
 
     Args:
         periodic (bool, optional): If True, returns a window to be used as periodic function.
-          If False, return a symmetric window. Default: True.
+          If False, return a symmetric window. Default: ``True``.
         dtype (mindspore.dtype, optional): The desired datatype of returned tensor.
             Only float16, float32 and float64 are allowed. Default: mstype.float32.
 

@@ -1194,7 +1194,7 @@ class Cell(Cell_):
 
         Args:
             prefix (str): The prefix string. Default: ''.
-            recurse (bool): Whether contains the parameters of subcells. Default: True.
+            recurse (bool): Whether contains the parameters of subcells. Default: ``True``.
         """
 
         Validator.check_str_by_regular(prefix)

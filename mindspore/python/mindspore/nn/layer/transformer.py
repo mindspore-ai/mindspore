@@ -472,7 +472,7 @@ class TransformerEncoder(Cell):
     Args:
         encoder_layer (Cell): An instance of the TransformerEncoderLayer() class.
         num_layers (int): The number of encoder-layers in the encoder.
-        norm (Cell, optional): The layer normalization module. Default: None.
+        norm (Cell, optional): The layer normalization module. Default: ``None``.
 
     Inputs:
         - **src** (Tensor): The sequence to the encoder.

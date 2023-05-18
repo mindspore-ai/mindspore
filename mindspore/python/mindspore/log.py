@@ -100,7 +100,7 @@ class _DataFormatter(logging.Formatter):
 
         Args:
             sub_module (str): The submodule name.
-            fmt (str): Specified format pattern. Default: None.
+            fmt (str): Specified format pattern. Default: ``None``.
         """
         super(_DataFormatter, self).__init__(fmt=fmt, **kwargs)
         self.sub_module = sub_module.upper()
@@ -435,7 +435,7 @@ def _find_caller(stack_info=False, stacklevel=1):
     file name, function name and line number.
 
     Args:
-        stack_info (bool): If the value is true, print stack information to the log. Default: False.
+        stack_info (bool): If the value is true, print stack information to the log. Default: ``False``.
 
     Returns:
         tuple, the tuple of the frame data.

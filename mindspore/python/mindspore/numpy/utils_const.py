@@ -467,7 +467,7 @@ def _list_comprehensions(obj, item=None, return_tuple=False, make_none=False):
     Args:
         obj (Union[int, list, tuple]):
             If integer, it will be the length of the returned tuple/list.
-        item: The value to be filled. Default: None.
+        item: The value to be filled. Default: ``None``.
             If None, the values in the new list/tuple are the same as obj
             or range(obj) when obj is integer.
         return_tuple(bool): If true, returns tuple, else returns list.

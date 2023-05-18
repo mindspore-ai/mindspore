@@ -2443,7 +2443,7 @@ class KLDivLoss(LossBase):
         - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
         Otherwise, it is a scalar.
 
     Raises:

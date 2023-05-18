@@ -727,9 +727,9 @@ def _core(fn=None, **flags):
     set flag to a graph.
 
     Args:
-        fn (Function): Function to add flag. Default: None.
+        fn (Function): Function to add flag. Default: ``None``.
         flags (dict): The following flags can be set core, which indicates that this is a core function or
-                      other flag. Default: None.
+                      other flag. Default: ``None``.
 
     Returns:
         Function, the function with core flag.
@@ -761,8 +761,8 @@ def _add_flags(fn=None, **flags):
         Only supports bool value.
 
     Args:
-        fn (Function): Function or cell to add flag. Default: None.
-        flags (dict): Flags use kwargs. Default: None.
+        fn (Function): Function or cell to add flag. Default: ``None``.
+        flags (dict): Flags use kwargs. Default: ``None``.
 
     Returns:
         Function, the function with added flags.
@@ -1365,7 +1365,7 @@ class _CellGraphExecutor:
             obj (Function/Cell): The function or cell instance need compile.
             phase (str): The name of compile phase. Default: 'predict'.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
-            jit_config_dict (dict): Jit config for compile. Default: None.
+            jit_config_dict (dict): Jit config for compile. Default: ``None``.
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
 

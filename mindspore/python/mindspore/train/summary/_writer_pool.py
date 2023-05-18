@@ -69,7 +69,7 @@ class WriterPool(ctx.Process):
         max_file_size (Optional[int]): The maximum size of each file that can be written to disk in bytes.
         raise_exception (bool, optional): Sets whether to throw an exception when an RuntimeError exception occurs
             in recording data. Default: False, this means that error logs are printed and no exception is thrown.
-        export_options (Union[None, dict]): Perform custom operations on the export data. Default: None.
+        export_options (Union[None, dict]): Perform custom operations on the export data. Default: ``None``.
         filedict (dict): The mapping from plugin to filename.
     """
 

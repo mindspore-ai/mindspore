@@ -862,7 +862,7 @@ def vjp(fn, *inputs, has_aux=False):
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
         has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
             will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+            Default: ``False``.
 
     Returns:
         Forward outputs and function to calculate vjp.
@@ -1304,7 +1304,7 @@ def custom_vjp(fn=None):
     Support vjp to custom bprop for function.
 
     Args:
-        fn (function): The `fn` that need to define custom bprop. Default: None.
+        fn (function): The `fn` that need to define custom bprop. Default: ``None``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

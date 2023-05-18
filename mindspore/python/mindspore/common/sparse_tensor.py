@@ -574,17 +574,17 @@ class CSRTensor(CSRTensor_):
 
     Args:
         indptr (Tensor): 1-D Tensor of shape :math:`(M)`, which equals to `shape[0] + 1`, which indicates the
-            start and end point for `values` in each row. Default: None. If provided,
+            start and end point for `values` in each row. Default: ``None``. If provided,
             must be int16, int32 or int64.
         indices (Tensor): 1-D Tensor of shape :math:`(N)`, which has the same length as `values`. `indices`
-            indicates the which column `values` should be placed. Default: None. If provided,
+            indicates the which column `values` should be placed. Default: ``None``. If provided,
             must be int16, int32 or int64.
         values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
-            `values`  stores the data for CSRTensor. Default: None.
+            `values`  stores the data for CSRTensor. Default: ``None``.
         shape (tuple(int)): A tuple indicates the shape of the CSRTensor, and `shape[0]` must equal to `M - 1`,
-            which all equal to number of rows of the CSRTensor. Default: None.
+            which all equal to number of rows of the CSRTensor. Default: ``None``.
         csr_tensor (CSRTensor): A CSRTensor object.  Values' feature dimension should match with
-            CSRTensor's feature dimension (values.shape[1:] == csr_tensor.shape[2:]). Default: None.
+            CSRTensor's feature dimension (values.shape[1:] == csr_tensor.shape[2:]). Default: ``None``.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.

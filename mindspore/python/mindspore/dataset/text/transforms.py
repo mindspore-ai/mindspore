@@ -99,7 +99,7 @@ class AddToken(TextTensorOperation):
         token (str): The token to be added.
         begin (bool, optional): Choose the position where the token is inserted. If True,
             the token will be inserted at the beginning of the sequence. Otherwise, it will
-            be inserted at the end of the sequence. Default: True.
+            be inserted at the end of the sequence. Default: ``True``.
 
     Raises:
         TypeError: If `token` is not of type string.
@@ -814,8 +814,8 @@ if platform.system().lower() != 'windows':
         Args:
             lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
                 text to lower case and strip accented characters. If False, will only perform normalization on the
-                text, with mode specified by `normalization_form` . Default: False.
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
+                text, with mode specified by `normalization_form` . Default: ``False``.
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: ``False``.
             normalization_form (NormalizeForm, optional):
                 `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
                 is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
@@ -828,8 +828,8 @@ if platform.system().lower() != 'windows':
                 - NormalizeForm.NFKD, Compatibility Decomposition.
 
             preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
-                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
-            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
+                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: ``True``.
+            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
 
         Raises:
             TypeError: If `lower_case` is not of type bool.
@@ -1040,7 +1040,7 @@ if platform.system().lower() != 'windows':
 
         Args:
             normalize_form (NormalizeForm, optional): Valid values can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``,
-                ``NormalizeForm.NFKC``,`` NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
+                ``NormalizeForm.NFKC``, ``NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
                 normalized forms. Default: ``NormalizeForm.NFKC``.
                 See http://unicode.org/reports/tr15/ for details.
 

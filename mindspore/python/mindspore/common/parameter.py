@@ -348,7 +348,7 @@ class Parameter(Tensor_):
 
         Args:
             init_in_server (bool): Whether trainable parameter updated by parameter server is
-                initialized on server. Default: False.
+                initialized on server. Default: ``False``.
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -687,7 +687,7 @@ class Parameter(Tensor_):
         Args:
             data (Union[Tensor, int, float]): New data.
             slice_shape (bool): If slice the parameter is set to true, the shape is not checked for consistency.
-                                Default: False.
+                                Default: ``False``.
 
         Returns:
             Parameter, the parameter after set data.
@@ -746,7 +746,8 @@ class Parameter(Tensor_):
 
         Args:
             layout (Union[None, tuple]): The parameter's layout info.
-                layout [dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group]. Default: None.
+                layout [dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group].
+                Default: ``None``.
                 It's not None only in 'SEMI_AUTO_PARALLEL' or 'AUTO_PARALLEL' mode.
 
                 - dev_mat (list(int)): The parameter's device matrix.
@@ -757,7 +758,7 @@ class Parameter(Tensor_):
                 - opt_shard_group (str): The group of the parameter while running optimizer parallel.
 
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
-                Default: False.
+                Default: ``False``.
 
         Returns:
             Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,

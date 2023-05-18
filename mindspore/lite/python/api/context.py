@@ -721,7 +721,7 @@ class _Parallel:
     _Parallel Class defines the context and configuration of `ModelParallelRunner` class.
 
     Args:
-        context (Context, optional): Define the context used to store options during execution. Default: None.
+        context (Context, optional): Define the context used to store options during execution. Default: ``None``.
 
     Raises:
         TypeError: `context` is neither a Context nor None.

@@ -7426,7 +7426,7 @@ class ExtractVolumePatches(Primitive):
         TypeError: If padding is not str.
         ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
         ValueError: If the length of strides is neither 3 nor 5 and strides is not an integer.
-        ValueError: If padding is neither ````"VALID" nor ``"SAME"`` .
+        ValueError: If padding is neither ``"VALID"`` nor ``"SAME"`` .
         ValueError: If elements of kernel_size or strides are not positive integer.
         ValueError: If input_x is not a tensor in dimension 5.
         ValueError: If input_x's shape has zero.

@@ -219,7 +219,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
     Args:
         file_name (str): File name.
         proto_format (str): Proto format {MINDIR, CKPT, CKPT_STRATEGY}.  Default: MINDIR.
-        display_data (bool): Whether display data. Default: False.
+        display_data (bool): Whether display data. Default: ``False``.
 
     Returns:
         Object, proto object.

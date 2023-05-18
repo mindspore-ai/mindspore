@@ -782,7 +782,7 @@ def set_offload_context(offload_config):
             offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk.
             offload_ddr_size (str):  The ddr size for offload. The format is "xxGB".
             offload_disk_size (str): The disk size for offload. The format is "xxGB"
-            enable_aio (bool): The flag of whether enabling aio. Default: True.
+            enable_aio (bool): The flag of whether enabling aio. Default: ``True``.
             aio_block_size (str): The size of aio block. The format is "xxGB"
             aio_queue_depth (int): The depth of aio queue.
             enable_pinned_mem (bool): The flag of whether enabling pinned memory.

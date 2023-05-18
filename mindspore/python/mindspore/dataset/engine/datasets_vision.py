@@ -2536,7 +2536,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
-        decode (bool, optional): Decode the images after reading. Default: False.
+        decode (bool, optional): Decode the images after reading. Default: ``False``.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided

@@ -366,14 +366,14 @@ class _Linear(Cell):
             is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``True``.
         activation (str): activate function applied to the output of the fully connected layer,
-            eg. 'ReLU'. Default: None.
+            eg. 'ReLU'. Default: ``None``.
         expert_num (int): The number of experts used in this Linear. Here, for the case expert_num > 1, BatchMatMul is
             used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
         outer_batch (int): The replication number of experts. The replication is effective only when MoE is applied.
             Default: 1.
-        expert_group_size (int): The number of tokens in each data parallel group. Default: None.
+        expert_group_size (int): The number of tokens in each data parallel group. Default: ``None``.
         compute_dtype (dtype.Number): The computation type. Default: mstype.float16
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal

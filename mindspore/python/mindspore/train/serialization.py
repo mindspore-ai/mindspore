@@ -2016,7 +2016,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         sliced_parameters (list[Parameter]): Parameter slices in order of rank id.
         strategy (Optional[dict]): Parameter slice strategy, whose key is parameter name and
             value is slice strategy of this parameter. If strategy is None, just merge
-            parameter slices in 0 axis order. Default: None.
+            parameter slices in 0 axis order. Default: ``None``.
 
     Returns:
         Parameter, the merged parameter which has the whole data.

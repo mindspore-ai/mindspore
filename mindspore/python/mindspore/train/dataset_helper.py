@@ -281,7 +281,7 @@ class DatasetHelper:
                            :class:`mindspore.dataset`, such as :class:`mindspore.dataset.ImageFolderDataset`.
         dataset_sink_mode (bool): If the value is True, GetNext is employed to fetch the data at device through the
                                   dataset pipeline, otherwise fetch the data at host by iterating through the dataset.
-                                  Default: True.
+                                  Default: ``True``.
         sink_size (int): Control the amount of data in each sink.
                           If sink_size=-1, sink the complete dataset for each epoch.
                           If sink_size>0, sink sink_size data for each epoch.

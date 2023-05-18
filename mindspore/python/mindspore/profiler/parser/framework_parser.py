@@ -248,7 +248,7 @@ class FrameworkParser:
         Args:
             op_name (str): The operator name or operator name prefix.
             is_prefix (bool): `True` if the op_name is prefix, else `False`.
-                Default: True.
+                Default: ``True``.
 
         Returns:
             bool, `True` if the operator name does exist in framework file, else
