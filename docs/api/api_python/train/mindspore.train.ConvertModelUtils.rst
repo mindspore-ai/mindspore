@@ -13,7 +13,7 @@ mindspore.train.ConvertModelUtils
         参数：
             - **model** (Object) - 用于训练的高级API。 
             - **network** (Cell) - 训练网络。
-            - **loss_fn** (Cell) - 目标函数。默认值：None。
+            - **loss_fn** (Cell) - 目标函数。默认值： ``None`` 。
             - **optimizer** (Cell) - 用于更新权重的优化器。默认值： ``None`` 。
             - **metrics** (Union[dict, set]) - 在训练期间由模型评估的词典或一组度量。例如：{'accuracy', 'recall'}。默认值： ``None`` 。
             - **amp_level** (str) - 混合精度训练的级别。支持["O0", "O2", "O3", "auto"]。默认值： ``"O0"`` 。

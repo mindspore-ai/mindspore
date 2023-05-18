@@ -307,12 +307,12 @@ class Inter(IntEnum):
     Possible enumeration values are: Inter.NEAREST, Inter.ANTIALIAS, Inter.LINEAR, Inter.BILINEAR, Inter.CUBIC,
     Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC.
 
-    - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+    - ``Inter.NEAREST`` : means interpolation method is nearest-neighbor interpolation.
     - Inter.ANTIALIAS: means the interpolation method is antialias interpolation.
     - Inter.LINEAR: means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
-    - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+    - ``Inter.BILINEA`` : means interpolation method is bilinear interpolation.
     - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
-    - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+    - ``Inter.BICUBIC`` : means the interpolation method is bicubic interpolation.
     - Inter.AREA: means interpolation method is pixel area interpolation.
     - Inter.PILCUBIC: means interpolation method is bicubic interpolation like implemented in pillow, input
       should be in 3 channels format.

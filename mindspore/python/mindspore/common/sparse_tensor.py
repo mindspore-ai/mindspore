@@ -101,11 +101,11 @@ class RowTensor(RowTensorInner):
         This is an experimental API that is subjected to change or deletion.
 
     Args:
-        indices (Tensor): A 1-D integer Tensor of shape :math:`(D0)` . Default: None.
-        values (Tensor): A Tensor of any dtype of shape :math:`(D0, D1, ..., Dn)` . Default: None.
+        indices (Tensor): A 1-D integer Tensor of shape :math:`(D0)` . Default: ``None``.
+        values (Tensor): A Tensor of any dtype of shape :math:`(D0, D1, ..., Dn)` . Default: ``None``.
         shape (tuple(int)): An integer tuple which contains the shape
-            of the corresponding dense tensor. Default: None.
-        row_tensor (RowTensor): A RowTensor object. Default: None.
+            of the corresponding dense tensor. Default: ``None``.
+        row_tensor (RowTensor): A RowTensor object. Default: ``None``.
 
     Returns:
         RowTensor, composed of `indices`, `values`, and `shape`.

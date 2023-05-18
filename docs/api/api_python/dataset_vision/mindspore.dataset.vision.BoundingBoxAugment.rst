@@ -7,7 +7,7 @@ mindspore.dataset.vision.BoundingBoxAugment
 
     参数：
         - **transform** (TensorOperation) - 对图像的随机标注边界框区域应用的变换处理。
-        - **ratio** (float, 可选) - 要应用变换的边界框的比例。范围：[0.0, 1.0]。默认值：0.3。
+        - **ratio** (float, 可选) - 要应用变换的边界框的比例。范围：[0.0, 1.0]。默认值： ``0.3`` 。
 
     异常：
         - **TypeError** - 如果 `transform` 不是 `mindspore.dataset.vision` 模块中的图像变换处理。

@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomInvert
     以给定的概率随机反转图像的颜色。
 
     参数：
-        - **prob** (float, 可选) - 图像被反转颜色的概率，取值范围：[0.0, 1.0]。默认值：0.5。
+        - **prob** (float, 可选) - 图像被反转颜色的概率，取值范围：[0.0, 1.0]。默认值： ``0.5`` 。
 
     异常：
         - **TypeError** - 如果 `prob` 的类型不为float。

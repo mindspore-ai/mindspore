@@ -6,8 +6,8 @@ mindspore.dataset.vision.AdjustSaturation
     调整输入图像的饱和度。
 
     参数：
-        - **saturation_factor** (float) - 饱和度调节因子，需为非负数。输入0值将得到全黑图像，1值将得到原始图像，
-          2值将调整图像饱和度为原来的2倍。
+        - **saturation_factor** (float) - 饱和度调节因子，需为非负数。输入 ``0`` 值将得到全黑图像， ``1`` 值将得到原始图像，
+          ``2`` 值将调整图像饱和度为原来的2倍。
 
     异常：
         - **TypeError** - 如果 `saturation_factor` 不是float类型。

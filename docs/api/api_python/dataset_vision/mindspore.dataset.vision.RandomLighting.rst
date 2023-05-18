@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomLighting
     将AlexNet PCA的噪声添加到图像中。Alexnet PCA噪声的特征值和特征向量是由ImageNet数据集计算得出。
 
     参数：
-        - **alpha** (float, 可选) - 图像的强度，必须是非负的。默认值：0.05。
+        - **alpha** (float, 可选) - 图像的强度，必须是非负的。默认值： ``0.05`` 。
 
     异常：
         - **TypeError** - 如果 `alpha` 的类型不为float。

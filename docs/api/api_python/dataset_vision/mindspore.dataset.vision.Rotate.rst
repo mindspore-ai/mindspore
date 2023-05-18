@@ -7,15 +7,15 @@ mindspore.dataset.vision.Rotate
 
     参数：
         - **degrees** (Union[int, float]) - 旋转角度。
-        - **resample** (:class:`~.vision.Inter`, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] 中的任何一个。默认值：Inter.NEAREST。
+        - **resample** (:class:`~.vision.Inter`, 可选) - 插值方式。它可以是 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 、 ``Inter.BICUBIC`` 。默认值： ``Inter.NEAREST`` 。
 
-          - Inter.BILINEAR，双线性插值。
-          - Inter.NEAREST，最近邻插值。
-          - Inter.BICUBIC，双三次插值。
+          - ``Inter.BILINEA`` ，双线性插值。
+          - ``Inter.NEAREST`` ，最近邻插值。
+          - ``Inter.BICUBIC`` ，双三次插值。
 
-        - **expand** (bool, 可选) - 若为True，将扩展图像尺寸大小使其足以容纳整个旋转图像；若为False，则保持图像尺寸大小不变。请注意，扩展时将假设图像为中心旋转且未进行平移。默认值：False。
-        - **center** (tuple, 可选) - 可选的旋转中心，以图像左上角为原点，旋转中心的位置按照 (宽度, 高度) 格式指定。默认值：None，表示中心旋转。
-        - **fill_value** (Union[int, tuple[int]], 可选) - 旋转图像之外区域的像素填充值。若输入3元素元组，将分别用于填充R、G、B通道；若输入整型，将以该值填充RGB通道。 `fill_value` 值必须在 [0, 255] 范围内。默认值：0。
+        - **expand** (bool, 可选) - 若为 ``True`` ，将扩展图像尺寸大小使其足以容纳整个旋转图像；若为 ``False`` ，则保持图像尺寸大小不变。请注意，扩展时将假设图像为中心旋转且未进行平移。默认值： ``False`` 。
+        - **center** (tuple, 可选) - 可选的旋转中心，以图像左上角为原点，旋转中心的位置按照 (宽度, 高度) 格式指定。默认值： ``None`` ，表示中心旋转。
+        - **fill_value** (Union[int, tuple[int]], 可选) - 旋转图像之外区域的像素填充值。若输入3元素元组，将分别用于填充R、G、B通道；若输入整型，将以该值填充RGB通道。 `fill_value` 值必须在 [0, 255] 范围内。默认值： ``0`` 。
 
     异常：
         - **TypeError** - 当 `degrees` 的类型不为int或float。

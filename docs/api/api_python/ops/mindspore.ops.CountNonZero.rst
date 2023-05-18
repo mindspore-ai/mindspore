@@ -8,7 +8,7 @@ mindspore.ops.CountNonZero
     更多详情请查看： :func:`mindspore.ops.count_nonzero` 。
 
     参数：
-        - **dims** (Union[int, tuple(int), list(int)]，可选) - 要沿其计算非零值数量的维度。默认值：None，计算所有非零元素的个数。
+        - **dims** (Union[int, tuple(int), list(int)]，可选) - 要沿其计算非零值数量的维度。默认值： ``None`` ，计算所有非零元素的个数。
 
     输入：
         - **x** (Tensor) - 要计算非零元素个数的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。

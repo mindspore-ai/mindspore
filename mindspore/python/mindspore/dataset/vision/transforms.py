@@ -375,11 +375,11 @@ class Affine(ImageTensorOperation):
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
-            - Inter.BILINEAR, means resample method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
 
-            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means resample method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
             - Inter.AREA, means resample method is pixel area interpolation.
 
@@ -454,11 +454,11 @@ class AutoAugment(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation mode for Resize operation. Default: Inter.NEAREST.
             It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
 
-            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` : means interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+            - ``Inter.BILINEA`` : means interpolation method is bilinear interpolation.
 
-            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+            - ``Inter.BICUBIC`` : means the interpolation method is bicubic interpolation.
 
             - Inter.AREA: means the interpolation method is pixel area interpolation.
 
@@ -1710,10 +1710,10 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR, Inter.LINEAR,
             Inter.NEAREST, Inter.AREA, Inter.PILCUBIC, Inter.CUBIC or Inter.BICUBIC. Default: Inter.BILINEAR.
 
-            - Inter.BILINEAR, bilinear interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
             - Inter.LINEAR, linear interpolation, the same as Inter.BILINEAR.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
             - Inter.CUBIC, cubic interpolation, the same as Inter.BICUBIC.
             - Inter.PILCUBIC, cubic interpolation based on the implementation of Pillow,
               only numpy.ndarray input is supported.
@@ -1814,9 +1814,9 @@ class RandAugment(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation method. Default: Inter.NEAREST.
             It can be Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC or Inter.AREA.
 
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
             - Inter.AREA, pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
@@ -1931,11 +1931,11 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
-            - Inter.BILINEAR, means resample method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
 
-            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means resample method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
             - Inter.AREA, means resample method is pixel area interpolation.
 
@@ -2334,11 +2334,11 @@ class RandomCropDecodeResize(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation mode for resize operation. Default: Inter.BILINEAR.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
             - Inter.AREA, means interpolation method is pixel area interpolation.
 
@@ -2812,9 +2812,9 @@ class RandomPerspective(PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR,
             Inter.NEAREST or Inter.BICUBIC. Default: Inter.BICUBIC.
 
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
 
     Raises:
         TypeError: If `distortion_scale` is not of type float.
@@ -2924,11 +2924,11 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         interpolation (Inter, optional): Method of interpolation. Default: Inter.BILINEAR.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
             - Inter.AREA, means interpolation method is pixel area interpolation.
 
@@ -3017,11 +3017,11 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation mode. Default: Inter.BILINEAR.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area. Default: 10. If exceeded, fall back to use center crop instead.
@@ -3165,11 +3165,11 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
-            - Inter.BILINEAR, means resample method is bilinear interpolation.
+            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
 
-            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means resample method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
             - Inter.AREA, means the interpolation method is pixel area interpolation.
 
@@ -3584,8 +3584,8 @@ class ResizedCrop(ImageTensorOperation):
             It can be Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA or Inter.PILCUBIC.
 
             - Inter.LINEAR, bilinear interpolation.
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
             - Inter.AREA, pixel area interpolation.
             - Inter.PILCUBIC, cubic interpolation based on the implementation of Pillow
 
@@ -3646,9 +3646,9 @@ class ResizeWithBBox(ImageTensorOperation):
 
             - Inter.LINEAR, means interpolation method is bilinear interpolation.
 
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
+            - ``Inter.NEAREST`` , means interpolation method is nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+            - ``Inter.BICUBIC`` , means interpolation method is bicubic interpolation.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -3738,9 +3738,9 @@ class Rotate(ImageTensorOperation):
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means resample method is bilinear interpolation.
-            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
-            - Inter.BICUBIC, means resample method is bicubic interpolation.
+            - ``Inter.BILINEA`` , means resample method is bilinear interpolation.
+            - ``Inter.NEAREST`` , means resample method is nearest-neighbor interpolation.
+            - ``Inter.BICUBIC`` , means resample method is bicubic interpolation.
 
         expand (bool, optional):  Optional expansion flag. Default: False. If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -4115,9 +4115,9 @@ class TrivialAugmentWide(ImageTensorOperation):
         interpolation (Inter, optional): Image interpolation method. Default: Inter.NEAREST.
             It can be Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC or Inter.AREA.
 
-            - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.BILINEAR, bilinear interpolation.
-            - Inter.BICUBIC, bicubic interpolation.
+            - ``Inter.NEAREST`` , nearest-neighbor interpolation.
+            - ``Inter.BILINEA`` , bilinear interpolation.
+            - ``Inter.BICUBIC`` , bicubic interpolation.
             - Inter.AREA, pixel area interpolation.
 
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the

@@ -7,8 +7,8 @@ mindspore.rank_list_for_transform
 
     参数：
         - **rank_id** (int) - 待转换得到的Checkpoint的rank号。
-        - **src_strategy_file** (str) - 源切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
-        - **dst_strategy_file** (str) - 目标切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为None时，表示切分策略为不切分。默认值：None。
+        - **src_strategy_file** (str) - 源切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为 ``None`` 时，表示切分策略为不切分。默认值： ``None`` 。
+        - **dst_strategy_file** (str) - 目标切分策略proto文件名，由mindspore.set_auto_parallel_context(strategy_ckpt_save_file)接口存储下来的文件。当其为 ``None`` 时，表示切分策略为不切分。默认值： ``None`` 。
 
     返回：
         转换得到rank_id的分布式Checkpoint所需要的卡号列表。
