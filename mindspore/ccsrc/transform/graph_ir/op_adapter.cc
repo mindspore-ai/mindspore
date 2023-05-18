@@ -200,11 +200,11 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
   auto op_type = GetCustomOpType(prim);
   auto op = std::make_shared<::ge::CustomOperator>(node->fullname_with_scope() + op_type, op_type);
   if (GenerateCustomOpInputMap(op, prim) != SUCCESS) {
-    MS_LOG(WARNING) << "Custom op node has no input_names, op[" << prim->name() << "].";
+    MS_LOG(DEBUG) << "Custom op node has no input_names, op[" << prim->name() << "].";
   }
 
   if (GenerateCustomOpOutputMap(op, prim) != SUCCESS) {
-    MS_LOG(WARNING) << "Custom op node has no output_names, op[" << prim->name() << "].";
+    MS_LOG(DEBUG) << "Custom op node has no output_names, op[" << prim->name() << "].";
   }
 
   if (IsAkgOp(anf)) {
@@ -475,7 +475,7 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     } else if (!dyn_output_map_.empty()) {
       dyn_output_map_.begin()->second.update_dyn_output_desc(op, 0, *desc);
     } else {
-      MS_LOG(INFO) << "This op does not have output map";
+      MS_LOG(DEBUG) << "This op does not have output map";
       return FAILED;
     }
   }
@@ -523,7 +523,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   }
 
   if (output_size == 0) {
-    MS_LOG(INFO) << "This op does not have output map";
+    MS_LOG(DEBUG) << "This op does not have output map";
     return FAILED;
   }
 
@@ -661,7 +661,7 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Op name is " << op->GetName() << " anf is " << node->DebugString();
+  MS_LOG(DEBUG) << "Op name is " << op->GetName() << " anf is " << node->DebugString();
 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(shp);
   auto no_shape_ptr = dyn_cast<abstract::NoShape>(shp);
@@ -676,7 +676,7 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
       return;
     }
   } else {
-    MS_LOG(WARNING) << "Update output desc failed, unknown output shape type";
+    MS_LOG(DEBUG) << "Update output desc failed, unknown output shape type";
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
@@ -692,8 +692,8 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const std::string &attr_key, c
   auto it = attr_map_.find(attr_key);
   if (it != attr_map_.end()) {
     // switch case for each avalilable attribute type
-    MS_LOG(INFO) << "Op: " << op->GetName() << ", set attr: " << attr_key << "(" << it->second.name
-                 << "), value: " << attr_value->ToString();
+    MS_LOG(DEBUG) << "Op: " << op->GetName() << ", set attr: " << attr_key << "(" << it->second.name
+                  << "), value: " << attr_value->ToString();
     adpt_->AddAttrToDrawGraph(attr_key + std::string("=") + attr_value->ToString());
     it->second.set_attr(op, attr_value);
     return 0;
@@ -836,8 +836,8 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
       continue;
     }
     auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(INFO) << "Get input attr: input_" << it.first << "(" << it.second.name
-                 << "), value: " << const_value->ToString();
+    MS_LOG(DEBUG) << "Get input attr: input_" << it.first << "(" << it.second.name
+                  << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
     }
@@ -860,7 +860,7 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(op);
   for (auto &it : attr_map_) {
     if (attr_input_map_.count(it.first) != 0) {
-      MS_LOG(WARNING) << "Attr: " << it.first << " will convert to input, please del it from ATTR_MAP.";
+      MS_LOG(DEBUG) << "Attr: " << it.first << " will convert to input, please del it from ATTR_MAP.";
       continue;
     }
     auto value = prim->GetAttr(it.first);
@@ -947,7 +947,7 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
 
     auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(INFO) << "Set attr: input_" << it.first << "(" << it.second.name << "), value: " << const_value->ToString();
+    MS_LOG(DEBUG) << "Set attr: input_" << it.first << "(" << it.second.name << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
     }
