@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 class TileGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TileGpuKernelMod() { ResetResource(); }
+  TileGpuKernelMod() = default;
   ~TileGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -47,29 +47,13 @@ class TileGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
-  void ResetResource() noexcept {
-    input_size_ = 1;
-    output_size_ = 1;
-    shape_size_ = 1;
-    is_null_input_ = false;
-    input_shape_.clear();
-    output_shape_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  size_t input_size_;
-  size_t output_size_;
-  size_t shape_size_;
-  ShapeVector input_shape_;
-  ShapeVector output_shape_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> output_shape_;
   bool is_null_input_;
-  std::vector<int64_t> multiples;
   using TileLaunchFunc =
     std::function<bool(TileGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
