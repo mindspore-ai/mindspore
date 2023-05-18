@@ -380,6 +380,12 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
   bool *precision_reduce) {
   MS_EXCEPTION_IF_NULL(precision_reduce);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_kernel_info_list;
+  // no need to raise or reduce precision for cast
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (node_name == kCastOpName) {
+    return filtered_kernel_info_list;
+  }
+
   const std::map<TypeId, TypeId> raise_map = {{kNumberTypeFloat16, kNumberTypeFloat32},
                                               {kNumberTypeInt8, kNumberTypeInt32},
                                               {kNumberTypeUInt8, kNumberTypeInt32}};
