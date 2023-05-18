@@ -15,10 +15,31 @@
  */
 
 #include "transform/acl_ir/acl_adapter_info.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(MatMulV2).set_precision_mode(FORCE_FP32);
+std::string CheckNdSupported(TypeId data_type, const std::vector<ShapeVector> &shapes) {
+  constexpr size_t special_mm_size = 2;
+  if (shapes.size() != special_mm_size || shapes[0].size() != special_mm_size || shapes[1].size() != special_mm_size) {
+    return kOpFormat_DEFAULT;
+  }
+  if (data_type != kNumberTypeFloat16) {
+    return kOpFormat_DEFAULT;
+  }
+  auto is_align = [&]() {
+    return (!(static_cast<uint64_t>(shapes[0][0]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[0][1]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[1][0]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[1][1]) & 0x0000000F));
+  };
+  if (is_align()) {
+    return kOpFormat_DEFAULT;
+  }
+  return kOpFormat_FRAC_NZ;
+}
+
+REGISTER_ACL_OP(MatMulV2).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
 
 REGISTER_ACL_OP(BatchMatMul).set_precision_mode(FORCE_FP32);
 }  // namespace transform

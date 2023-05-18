@@ -239,7 +239,25 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
   }
 }
 
-void GetOutputBuildInfo(const size_t output_num, std::vector<std::string> *output_formats) {
+void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const AclAdapterInfo &acl_info,
+                        std::vector<std::string> *output_formats) {
+  if (acl_info.output_selector() != nullptr) {
+    auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
+    std::vector<ShapeVector> input_shapes;
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(node); ++i) {
+      (void)input_shapes.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(node, i));
+    }
+    auto func = acl_info.output_selector();
+    for (size_t i = 0; i < output_num; ++i) {
+      const auto &format = func(data_type, input_shapes);
+      if (format != kOpFormat_DEFAULT) {
+        common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
+      }
+      output_formats->at(i) = format;
+    }
+    return;
+  }
+
   for (size_t i = 0; i < output_num; ++i) {
     output_formats->at(i) = kOpFormat_DEFAULT;
   }
@@ -285,7 +303,7 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
 
   auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
-  GetOutputBuildInfo(output_num, output_formats);
+  GetOutputBuildInfo(node, output_num, acl_info, output_formats);
 }
 
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
