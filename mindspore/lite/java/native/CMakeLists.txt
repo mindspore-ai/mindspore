@@ -108,6 +108,7 @@ include_directories(${LITE_DIR}) ## lite include
 include_directories(${TOP_DIR}) ## api include
 include_directories(${TOP_DIR}/mindspore/core/) ## core include
 include_directories(${LITE_DIR}/build) ## flatbuffers
+include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI}/)
@@ -130,6 +131,10 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/ms_context.cpp
         ${NEW_NATIVE_DIR}/ms_tensor.cpp
         ${NEW_NATIVE_DIR}/version.cpp
+        )
+
+set(CCSRC
+        ${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_common.c
         )
 
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)

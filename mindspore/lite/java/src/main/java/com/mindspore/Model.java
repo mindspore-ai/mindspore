@@ -38,12 +38,24 @@ public class Model {
     }
 
     private long modelPtr = POINTER_DEFAULT_VALUE;
+    private boolean isModelSharePtr = false;
 
     /**
      * Construct function.
      */
     public Model() {
+        this.isModelSharePtr = false;
         this.modelPtr = this.createModel();
+    }
+
+    /**
+     * Construct function.
+     *
+     * @param modelPtr model shared pointer.
+     */
+    public Model(long modelPtr) {
+        this.isModelSharePtr = true;
+        this.modelPtr = modelPtr;
     }
 
     /**
@@ -135,6 +147,31 @@ public class Model {
             return false;
         }
         return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), null, "", "");
+    }
+
+    /**
+     * Build model.
+     *
+     * @param modelPath      model path.
+     * @param incModelPath   incremental model path.
+     * @param modelType      model type.
+     * @param context        model build context.
+     * @param configFile     model config file.
+     * @return build status.
+     */
+    public static List<Model> build(String modelPath, String incModelPath, int modelType, MSContext context,
+                                    String configFile) {
+        if (context == null || modelPath == null || incModelPath == null) {
+            return null;
+        }
+
+        List<Long> modelAddrs = buildWithInc(modelPath, incModelPath, modelType, context.getMSContextPtr(), configFile);
+        List<Model> models = new ArrayList<>(modelAddrs.size());
+        for (Long modelAddr : modelAddrs) {
+            Model msModel = new Model(modelAddr);
+            models.add(msModel);
+        }
+        return models;
     }
 
     /**
@@ -382,12 +419,12 @@ public class Model {
      * Free model
      */
     public void free() {
-        this.free(modelPtr);
+        this.free(modelPtr, isModelSharePtr);
     }
 
     private native long createModel();
 
-    private native void free(long modelPtr);
+    private native void free(long modelPtr, boolean isShared);
 
     private native boolean buildByGraph(long modelPtr, long graphPtr, long contextPtr, long cfgPtr);
 
@@ -396,6 +433,9 @@ public class Model {
 
     private native boolean buildByBuffer(long modelPtr, MappedByteBuffer buffer, int modelType, long contextPtr,
                                       char[] dec_key, String dec_mod, String cropto_lib_path);
+
+    private static native List<Long> buildWithInc(String modelPath, String incModelPath, int modelType, long contextPtr,
+                                                  String cfgPath);
 
     private native List<Long> getInputs(long modelPtr);
 
