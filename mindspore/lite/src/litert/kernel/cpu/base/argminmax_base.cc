@@ -101,6 +101,9 @@ int ArgMinMaxCPUKernel::Run() {
     ArgMinMaxFp16(reinterpret_cast<float16_t *>(input_data), reinterpret_cast<void *>(output_data),
                   reinterpret_cast<float16_t *>(output_value), shape.data(), arg_param_);
 #endif
+  } else if (input->data_type() == kNumberTypeInt32) {
+    ArgMinMaxInt32(reinterpret_cast<int32_t *>(input_data), reinterpret_cast<void *>(output_data),
+                   reinterpret_cast<int32_t *>(output_value), shape.data(), arg_param_);
   } else {
     MS_LOG(ERROR) << "unsupported data type!";
     ms_context_->allocator->Free(arg_param_->arg_elements_);
@@ -114,6 +117,8 @@ int ArgMinMaxCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
