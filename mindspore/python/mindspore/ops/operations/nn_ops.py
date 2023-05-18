@@ -5543,7 +5543,7 @@ class KLDivLoss(Primitive):
 
             - On Ascend, the value of `reduction` must be one of ``'batchmean'``, ``'none'`` or ``'sum'``.
             - On GPU, the value of `reduction` must be one of ``'mean'``, ``'none'`` or ``'sum'``.
-            - On CPU, the value of `reduction` must be one of ``'mean'``, ``'batchmean'``, ``'none'`
+            - On CPU, the value of `reduction` must be one of ``'mean'``, ``'batchmean'``, ``'none'``
               or ``'sum'``.
 
     Inputs:

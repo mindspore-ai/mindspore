@@ -7326,7 +7326,7 @@ def logcumsumexp(input, axis):
         TypeError: If `input` is not a Tensor.
         TypeError: If dtype of `input` is not in [float16, float32, float64].
         TypeError: If dtype of `axis` is not int.
-        RuntimeError: If `axis` is out of range [-rank(input), rank(input)).
+        ValueError: If `axis` is out of range [-rank(input), rank(input)).
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

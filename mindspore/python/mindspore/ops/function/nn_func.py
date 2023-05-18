@@ -2384,7 +2384,8 @@ def soft_margin_loss(input, target, reduction='mean'):
     Args:
         input (Tensor): Predict data. Data type must be float16 or float32.
         target (Tensor): Ground truth data, with the same type and shape as `logits`.
-        reduction (str): Implements the reduction method to the output with ``'none'`` , ``'mean'`` , or ``'sum'`` ,
+        reduction (str, optional): Implements the reduction method to the output with ``'none'`` , ``'mean'`` ,
+            or ``'sum'`` ,
             respectively indicate that no calculation is specified, that the mean is used, and that is calculated
             using summation. Default: ``'mean'`` .
 
