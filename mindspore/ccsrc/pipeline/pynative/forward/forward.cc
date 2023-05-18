@@ -206,11 +206,11 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
     GetOutput(op_run_info);
   }
 
-  if (!op_run_info->grad_flag || op_run_info->output_get_by_infer_value) {
+  if (!op_run_info->requires_grad || op_run_info->output_get_by_infer_value) {
     if (op_run_info->stub_output != nullptr) {
       op_run_info->stub_output->SetValue(op_run_info->out_value);
     }
-    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->grad_flag
+    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->requires_grad
                   << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
   }
@@ -244,8 +244,8 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
   }
-  if (!op_run_info->grad_flag || op_run_info->output_get_by_infer_value) {
-    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->grad_flag
+  if (!op_run_info->requires_grad || op_run_info->output_get_by_infer_value) {
+    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->requires_grad
                   << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
   }
@@ -265,8 +265,8 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
-  op_run_info->grad_flag = grad()->grad_flag();
-  if (op_run_info->grad_flag) {
+  op_run_info->requires_grad = grad()->RequiresGrad();
+  if (op_run_info->requires_grad) {
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
   } else {
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
@@ -377,7 +377,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   MS_LOG(DEBUG) << "RunOpInVM start";
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->run_in_vm = true;
-  if (op_run_info->grad_flag) {
+  if (op_run_info->requires_grad) {
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       op_run_info->input_value_grad_type[i] =
         PyNativeAlgo::Common::SetValueGradInfo(op_run_info->input_value[i], nullptr, TensorGradType::kConstant);
@@ -409,7 +409,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     } else {
       result_v = std::make_shared<ValueTuple>(result);
     }
-    if (op_run_info->grad_flag) {
+    if (op_run_info->requires_grad) {
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
     }
     MS_LOG(DEBUG) << "RunOpInVM end";
@@ -432,7 +432,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (!result_v->isa<ValueSequence>()) {
     result_v = std::make_shared<ValueTuple>(std::vector{result_v});
   }
-  if (op_run_info->grad_flag) {
+  if (op_run_info->requires_grad) {
     (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
   }
   MS_LOG(DEBUG) << "RunOpInVM end";
@@ -481,7 +481,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) {
   }
   PrintPyObjInfo(obj, kBegin, is_cell);
   infer_operation()->set_only_single_op_run(false);
-  if (!grad()->grad_flag()) {
+  if (!grad()->RequiresGrad()) {
     const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
     if (grad()->is_cell_has_dynamic_inputs(obj_id)) {
       MS_LOG(DEBUG) << "obj id:" << obj_id << " set forward use dynamic shape process true";
@@ -499,7 +499,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
   if (is_cell) {
     PopForwardCell();
   }
-  if (!grad()->grad_flag()) {
+  if (!grad()->RequiresGrad()) {
     PrintPyObjInfo(obj, kEnd, is_cell);
   }
 
@@ -511,7 +511,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
     }
     // Finish lazy task
     ExecuteLazyTask();
-    if (!grad()->grad_flag()) {
+    if (!grad()->RequiresGrad()) {
       ClearNodeAbsMap();
     }
     if (grad()->forward_use_dynamic_shape_process()) {
@@ -564,7 +564,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target,
-                                            op_run_info->grad_flag ? grad()->top_cell() : nullptr);
+                                            op_run_info->requires_grad ? grad()->top_cell() : nullptr);
   // get graph info for checking it whether existing in the cache
   op_run_info->base_op_run_info.graph_info =
     pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
@@ -589,7 +589,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   if (op_run_info->base_op_run_info.has_dynamic_output) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
-  const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->grad_flag);
+  const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;

@@ -208,6 +208,10 @@ bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); 
 
 void PyNativeExecutor::set_grad_flag(bool flag) const { grad_executor()->set_grad_flag(flag); }
 
+bool PyNativeExecutor::enable_grad() const { return grad_executor()->enable_grad(); }
+
+void PyNativeExecutor::set_enable_grad(bool enable_grad) const { grad_executor()->set_enable_grad(enable_grad); }
+
 py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
                                              const py::object &weights, const py::object &grad_hash_id,
                                              const py::args &args) const {
@@ -217,7 +221,7 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
   forward_executor()->ProcessBeforeNewGraph(obj);
 
-  if (!grad_flag()) {
+  if (!grad_executor()->RequiresGrad()) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
@@ -229,7 +233,7 @@ void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, co
   bool is_cell = py::isinstance<Cell>(obj);
   forward_executor()->ProcessBeforeEndGraph(obj, is_cell);
 
-  if (!grad_flag()) {
+  if (!grad_executor()->RequiresGrad()) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
@@ -287,9 +291,12 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
     .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
+    .def("enable_grad", &PyNativeExecutor::enable_grad, "pynative enable grad, used for with no_grad")
     .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
     .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
          "Executor set grad flag.")
+    .def("set_enable_grad", &PyNativeExecutor::set_enable_grad, py::arg("enable_grad") = py::bool_(true),
+         "pynative set enable grad")
     .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
          "set python executable path.")

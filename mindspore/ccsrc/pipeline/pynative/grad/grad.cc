@@ -847,7 +847,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   MS_LOG(DEBUG) << "Do grad for custom bprop";
   MS_EXCEPTION_IF_NULL(input_args_info->custom_bprop_prim);
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
-  op_run_info->grad_flag = true;
+  op_run_info->requires_grad = true;
   op_run_info->base_op_run_info.op_name = input_args_info->custom_bprop_prim->name();
   op_run_info->op_prim = input_args_info->custom_bprop_prim;
   op_run_info->input_value = input_args_info->input_arg_value_vec;
@@ -1720,7 +1720,7 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
   if (top_cell_->cell_id().find(cell_id) != std::string::npos) {
     top_cell_->set_hook_changed(true);
   }
-  if (grad_flag_) {
+  if (RequiresGrad()) {
     top_cell_->set_sub_cell_hook_changed(cell_id);
   }
 }

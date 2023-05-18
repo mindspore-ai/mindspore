@@ -361,6 +361,8 @@ class GradOperation(GradOperation_):
                 def after_grad(*args, **kwargs):
                     return grad_(fn)(*args, **kwargs)
         elif self.pynative_:
+            if not _pynative_executor.enable_grad():
+                raise RuntimeError("In no_grad context, you can not calculate gradient")
             @_wrap_func
             def after_grad(*args, **kwargs):
                 self._pynative_forward_run(fn, grad_, weights, args, kwargs)
@@ -370,6 +372,8 @@ class GradOperation(GradOperation_):
                 return out
         else:
             grad_.pynative_ = True
+            if not _pynative_executor.enable_grad():
+                raise RuntimeError("In no_grad context, you can not calculate gradient")
             # after_grad of this branch can't use @jit, just directly call grad_
             if self.get_by_list:
                 def after_grad(*args, **kwargs):
@@ -578,6 +582,8 @@ class _Grad(GradOperation_):
                     def after_grad(*args):
                         return grad_(fn)(*args)
         elif self.pynative_:
+            if not _pynative_executor.enable_grad():
+                raise RuntimeError("In no_grad context, you can not calculate gradient")
             @_wrap_func
             def after_grad(*args, **kwargs):
                 res = self._pynative_forward_run(fn, grad_, weights, args, kwargs)
@@ -592,6 +598,8 @@ class _Grad(GradOperation_):
                     return out, res[1:]
                 return out
         else:
+            if not _pynative_executor.enable_grad():
+                raise RuntimeError("In no_grad context, you can not calculate gradient")
             grad_.pynative_ = True
             fn_ = fn
             if self.has_aux:

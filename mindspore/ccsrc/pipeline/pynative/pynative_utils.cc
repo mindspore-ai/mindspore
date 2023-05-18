@@ -574,7 +574,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
 
 void PyParser::PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) {
   // Do some prepare for grad
-  if (!op_run_info->grad_flag) {
+  if (!op_run_info->requires_grad) {
     return;
   }
   // kIndex1 is for add output
@@ -624,12 +624,12 @@ ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   return converted_ret;
 }
 
-ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool grad_flag) {
+ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad) {
   MS_EXCEPTION_IF_NULL(value);
   ValuePtr ret;
   if (utils::isa<tensor::TensorPtr>(value)) {
     auto t = utils::cast<tensor::TensorPtr>(value);
-    if (grad_flag) {
+    if (requires_grad) {
       t->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
       t->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
     }
@@ -638,7 +638,7 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool grad_flag) {
     ret = utils::cast<ValuePtr>(value);
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
-    ret = VectorRefToValue(vec_ref, grad_flag);
+    ret = VectorRefToValue(vec_ref, requires_grad);
   } else if (utils::isa<int>(value)) {
     ret = MakeValue(utils::cast<int>(value));
   } else if (utils::isa<float>(value)) {
@@ -653,12 +653,12 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool grad_flag) {
   return ret;
 }
 
-ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool grad_flag) {
+ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_grad) {
   MS_EXCEPTION_IF_NULL(vec_ref);
   size_t value_size = vec_ref.size();
   std::vector<ValuePtr> v_list(value_size);
   for (size_t i = 0; i < value_size; ++i) {
-    v_list[i] = BaseRefToValue(vec_ref[i], grad_flag);
+    v_list[i] = BaseRefToValue(vec_ref[i], requires_grad);
   }
   return std::make_shared<ValueTuple>(v_list);
 }
@@ -730,7 +730,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
   ValuePtrList fake_tensor_list;
-  if (op_run_info->grad_flag) {
+  if (op_run_info->requires_grad) {
     op_run_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
   }
   for (const auto &v : value_seq->value()) {
@@ -743,7 +743,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     if (tensor->is_parameter()) {
       tensor_mask = kParameterWeightTensorMask;
     }
-    if (op_run_info->grad_flag) {
+    if (op_run_info->requires_grad) {
       auto grad_type = Common::SetTensorGradInfo(tensor, top_cell);
       if (PyNativeAlgo::Common::IsParam(grad_type)) {
         op_run_info->input_value_grad_type[index] = TensorGradType::kParameter;
@@ -755,7 +755,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
     (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
   }
-  if (op_run_info->grad_flag && op_run_info->input_unused_in_bprop[index]) {
+  if (op_run_info->requires_grad && op_run_info->input_unused_in_bprop[index]) {
     op_run_info->input_value[index] = std::make_shared<ValueTuple>(fake_tensor_list);
   }
   if (!op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
@@ -805,7 +805,7 @@ void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, cons
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(map_tensor);
   const auto it = op_run_info->base_op_run_info.input_mask.end();
   (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterWeightTensorMask);
-  if (op_run_info->grad_flag) {
+  if (op_run_info->requires_grad) {
     op_run_info->input_value_grad_type[index] =
       Common::SetTensorGradInfo(op_run_info->base_op_run_info.input_tensor.back(), top_cell);
   }
@@ -830,7 +830,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterDataTensorMask);
   op_run_info->op_prim->set_attr("is_csr", MakeValue(true));
   op_run_info->op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
-  if (op_run_info->grad_flag) {
+  if (op_run_info->requires_grad) {
     op_run_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
     for (int i = 0; i < input_num; ++i) {
       auto iter = op_run_info->base_op_run_info.input_tensor.rbegin() + i;
@@ -876,7 +876,7 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     if (tensor_ptr->is_parameter()) {
       tensor_mask = kParameterWeightTensorMask;
     }
-    if (op_run_info->grad_flag) {
+    if (op_run_info->requires_grad) {
       op_run_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
       if (op_run_info->input_unused_in_bprop[index]) {
         op_run_info->input_value[index] = Common::CreateFakeTensorWithoutDeviceAddress(tensor_ptr);
