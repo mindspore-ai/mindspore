@@ -150,7 +150,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   size_t GetSize() const { return size_; }
   void SetSize(size_t size) { size_ = size; }
 
-  std::string format() const { return format_; }
+  const std::string &format() const { return format_; }
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
