@@ -38,10 +38,6 @@ constexpr size_t kMultiply2 = 2;
 constexpr size_t kTopkIndexK = 1;
 constexpr auto kTopKDOpName = "TopKD";
 constexpr auto kAttrSorted = "sorted";
-constexpr auto r_assist_const = "assist_const";
-constexpr auto r_new_value = "new_value";
-constexpr auto r_topk = "r_topk";
-constexpr auto m_topk = "m_topk";
 constexpr auto x1 = "x1";
 constexpr auto x2 = "x2";
 
@@ -180,13 +176,8 @@ bool CheckFusion(const CNodePtr &node) {
   }
   return true;
 }
-struct State {
-  int k_num;
-};
-using StatePtr = std::shared_ptr<State>;
-}  // namespace
 
-bool TopKSplit::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
+bool CheckMatchedDAG(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::IsDynamicShape(node)) {
@@ -212,16 +203,22 @@ bool TopKSplit::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, c
   return true;
 }
 
+struct State {
+  int k_num;
+};
+using StatePtr = std::shared_ptr<State>;
+}  // namespace
+
 class BuildAssistConst {
  public:
   explicit BuildAssistConst(StatePtr s_) : s(std::move(s_)) {}
-  AnfNodePtr operator()(const PatternMap &m) {
+  AnfNodePtr operator()(const AnfNodePtr &m_topk) {
     fe::PlatformInfo platform_info;
     fe::OptionalInfo optional_info;
     if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info) != 0) {
       MS_LOG(EXCEPTION) << "Get platform info failed in BuildAssistConst.";
     }
-    auto cnode = m.Get(m_topk)->cast<CNodePtr>();
+    auto cnode = m_topk->cast<CNodePtr>();
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
     auto input_k = cnode->input(kTopkIndexK + 1);
     ValuePtr value = GetValueNode(input_k);
@@ -243,32 +240,32 @@ class BuildAssistConst {
 class BuildNewValue {
  public:
   explicit BuildNewValue(StatePtr s_) : s(std::move(s_)) {}
-  AnfNodePtr operator()(const PatternMap &) { return std::make_shared<ValueNode>(MakeValue(s->k_num)); }
+  AnfNodePtr operator()() { return std::make_shared<ValueNode>(MakeValue(s->k_num)); }
 
  private:
   StatePtr s;
 };
 
-AnfNodePtr BuildTopk(const PatternMap &m, const AnfNodePtr &default_node) {
-  auto g = default_node->func_graph();
-  auto kernel_graph = g->cast<KernelGraphPtr>();
-  auto cnode = m.Get(m_topk)->cast<CNodePtr>();
+AnfNodePtr BuildTopk(const FuncGraphPtr &graph, const AnfNodePtr &m_topk, const AnfNodePtr &r_assist_const,
+                     const AnfNodePtr &r_new_value) {
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  auto cnode = m_topk->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKDOpName))};
   (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
-  CNodePtr new_cnode = NewCNode(new_inputs, g);
+  CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
   common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   CheckCNodeInputSize(new_cnode, kTopkInputTensorNum);
 
-  new_cnode->set_input(kTopkIndexK + 1, m.Get(r_new_value));
+  new_cnode->set_input(kTopkIndexK + 1, r_new_value);
   mindspore::HashSet<size_t> attr_index{kTopkIndexK};
   new_cnode = ConstInputToAttr(new_cnode, attr_index);
-  new_cnode->add_input(m.Get(r_assist_const));
+  new_cnode->add_input(r_assist_const);
 
   if (!CheckAICoreSupportedSpec(new_cnode, CreateKernelBuildInfo())) {
     MS_LOG(INFO) << "Split topk failed, check to aicpu.";
@@ -276,23 +273,30 @@ AnfNodePtr BuildTopk(const PatternMap &m, const AnfNodePtr &default_node) {
   }
   if (kernel_graph != nullptr) {
     MS_LOG(INFO) << "Split topk success. use tbe aicore.";
-    kernel_graph->AddValueNodeToGraph(m.Get(r_assist_const)->cast<ValueNodePtr>());
+    kernel_graph->AddValueNodeToGraph(r_assist_const->cast<ValueNodePtr>());
   }
 
   return new_cnode;
 }
 
-void TopKSplit::DefineSrcPattern(SrcPattern *src_pattern) {
-  (void)(*src_pattern).AddVar(x1).AddVar(x2).AddCNode(m_topk, {std::make_shared<Primitive>(kTopKOpName), x1, x2});
+const BaseRef TopKSplit::DefinePattern() const {
+  VarPtr X1 = std::make_shared<Var>();
+  VarPtr X2 = std::make_shared<Var>();
+  auto prim = std::make_shared<Primitive>(kTopKOpName);
+  return VectorRef({prim, X1, X2});
 }
 
-void TopKSplit::DefineDstPattern(DstPattern *dst_pattern) {
+const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
+  if (!CheckMatchedDAG(func_graph, node)) {
+    return nullptr;
+  }
   StatePtr s = std::make_shared<State>();
-  (void)(*dst_pattern)
-    .AddValueNode(r_assist_const, BuildAssistConst(s))
-    .AddValueNode(r_new_value, BuildNewValue(s))
-    .AddCNode(r_topk, {std::make_shared<Primitive>(kTopKDOpName), x1, r_assist_const}, BuildTopk);
+  auto build_assist_const = BuildAssistConst(s);
+  auto build_new_value = BuildNewValue(s);
+  auto r_assist_const = build_assist_const(node);
+  auto r_new_value = build_new_value();
+  return BuildTopk(func_graph, node, r_assist_const, r_new_value);
 }
 
-MS_PASS_FACTORY_REG(PatternToPatternPass, topk_split_fission, TopKSplit, kIRFusionFissionPass);
+MS_PASS_FACTORY_REG(PatternProcessPass, topk_split_fission, TopKSplit, kIRFusionFissionPass);
 }  // namespace mindspore::opt
