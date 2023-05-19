@@ -17,6 +17,7 @@
 #define AICPU_OPS_AICPU_COMMON_ATOMIC_OP_H_
 
 #include <cstdint>
+#include <complex>
 #include "common/kernel_log.h"
 
 namespace aicpu {
@@ -59,6 +60,13 @@ void AtomicAdd(T *const address, const T val) {
     default:
       AICPU_LOGE("Unsupported aicpu atomic add format!");
   }
+}
+template <>
+inline void AtomicAdd(std::complex<double> *const address, const std::complex<double> val) {
+  auto double_addr = reinterpret_cast<double *>(address);
+  AtomicAdd<double>(double_addr, std::real(val));
+  AtomicAdd<double>(double_addr + 1, std::imag(val));
+  return;
 }
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_ATOMIC_OP_H_
