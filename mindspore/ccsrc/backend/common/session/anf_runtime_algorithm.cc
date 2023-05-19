@@ -1791,7 +1791,8 @@ std::vector<TypeId> AnfRuntimeAlgorithm::GetAllInputObjectType(const AnfNodePtr 
 
 std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputObjectType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::GetOutputElementNum(node) == 0 && !node->abstract()->isa<abstract::AbstractSequence>()) {
+  if (AnfAlgo::GetOutputElementNum(node) == 0 && node->abstract() != nullptr &&
+      !node->abstract()->isa<abstract::AbstractSequence>()) {
     return {};
   }
   return {AnfAlgo::GetAbstractObjectType(node->abstract())};
