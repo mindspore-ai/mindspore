@@ -32,7 +32,7 @@ int GatherDInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   const TensorC *index = inputs[2];
   TensorC *output = outputs[0];
   output->data_type_ = input->data_type_;
-  if (parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
+  if (parameter->quant_type_ == Quant_QuantWeight) {
     output->data_type_ = kNumberTypeFloat32;
   }
   output->format_ = input->format_;

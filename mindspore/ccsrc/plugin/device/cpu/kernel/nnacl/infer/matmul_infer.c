@@ -136,7 +136,7 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   TensorC *input = input1->data_ == NULL ? input1 : input0;  // transfer the input which comes from the other node.
   SetDataTypeFormat(output, input);
-  if (input->data_type_ == kNumberTypeInt8 && parameter->quant_type_ == QuantType_QUANT_DYNAMIC) {
+  if (input->data_type_ == kNumberTypeInt8 && parameter->quant_type_ == Quant_QuantDynamic) {
     output->data_type_ = kNumberTypeFloat32;
   }
   if (!InferFlag(inputs, inputs_size)) {

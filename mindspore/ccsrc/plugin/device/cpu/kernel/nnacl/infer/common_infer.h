@@ -24,6 +24,8 @@
 #include "nnacl/tensor_c_utils.h"
 #include "nnacl/tensorlist_c_utils.h"
 
+bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,18 +38,6 @@ enum NNACLLshProjectionType {
   LshProjectionType_DENSE = 2,
   LshProjectionType_MIN = LshProjectionType_UNKNOWN,
   LshProjectionType_MAX = LshProjectionType_DENSE
-};
-
-enum NNACLQuantType {
-  QuantType_QUANT_NONE = 0,
-  QuantType_AwareTraining = 1,
-  QuantType_WeightQuant = 2,
-  QuantType_PostTraining = 3,
-  QuantType_QUANT_WEIGHT = 4,
-  QuantType_QUANT_ALL = 5,
-  QuantType_QUANT_DYNAMIC = 6,
-  QuantType_MIN = QuantType_QUANT_NONE,
-  QuantType_MAX = QuantType_QUANT_DYNAMIC
 };
 
 typedef struct VectorC {

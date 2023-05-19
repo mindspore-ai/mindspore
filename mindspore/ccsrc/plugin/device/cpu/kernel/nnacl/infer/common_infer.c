@@ -20,6 +20,26 @@
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/op_base.h"
 
+bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size) {
+  for (int i = 0; i < in_size; i++) {
+    TensorC *t = in[i];
+    for (int j = 0; j < t->shape_size_; j++) {
+      if (t->shape_[j] == -1) {
+        return false;
+      }
+    }
+  }
+  for (int i = 0; i < out_size; i++) {
+    TensorC *t = out[i];
+    for (int j = 0; j < t->shape_size_; j++) {
+      if (t->shape_[j] == -1) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size) {
   size_t i = 0;
   for (; i < src_shape_size && i < MAX_SHAPE_SIZE; i++) {

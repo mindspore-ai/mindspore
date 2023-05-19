@@ -24,7 +24,28 @@
 #include "nnacl/kernel/convolution_base.h"
 
 typedef struct GroupConvolutionStruct {
-  ConvolutionBaseStruct conv_;
+  ConvolutionBaseStruct conv_base_;
+  KernelBase **group_convs_;
+  TypeIdC data_type_;
+  int input_shape_[DIMENSION_4D];
+  int output_shape_[DIMENSION_4D];
+  int filter_shape_[DIMENSION_4D];
+  int bias_shape_[DIMENSION_1D];
+
+  void *origin_input_data_;
+  void *origin_output_data_;
+
+  float *sub_in_src_;
+  float *sub_in_dst_;
+  float *sub_out_src_;
+  float *sub_out_dst_;
+
+  int in_plane_;
+  int sub_in_channel_;
+  int ori_in_channel_;
+  int out_plane_;
+  int sub_out_channel_;
+  int ori_out_channel_;
 } GroupConvolutionStruct;
 
 KernelBase *CreateGroupConvolution(ConvParameter *conv_param);
