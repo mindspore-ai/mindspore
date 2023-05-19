@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,6 +342,9 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
   MS_LOG(DEBUG) << "var_name: " << var_name;
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto use_fallback = (parser_.support_fallback() != "0");
   // The prefix of var_name is "self.".
   if (var_name.compare(0, strlen("self"), "self") == 0) {
     auto start = var_name.find_first_of('.') + 1;
@@ -350,14 +353,15 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
       return nullptr;
     }
     auto bits_str = var_name.substr(start);
-    return MakeResolveClassMember(bits_str);
+    auto resolve_node = MakeResolveClassMember(bits_str);
+    if (use_fallback) {
+      UpdateLocalPyParam(var_name, resolve_node);
+    }
+    return resolve_node;
   }
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
 
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
   if (!use_fallback) {
     py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, var_name);
     return HandleNamespaceInfo(namespace_info);

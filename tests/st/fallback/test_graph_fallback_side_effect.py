@@ -20,7 +20,6 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 
-
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
@@ -64,7 +63,6 @@ def test_fallback_side_effect_assign():
     assert output[1].asnumpy() == 30
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -74,17 +72,19 @@ def test_fallback_side_effect_dict():
     Description: Test execution order in Fallback runtime.
     Expectation: No error.
     """
+
     class Net(ms.nn.Cell):
         def __init__(self):
             super().__init__()
             self.para = Parameter(Tensor(2, dtype=ms.float64), name='para')
+            self.para2 = Parameter(Tensor(4, dtype=ms.float64), name='para2')
 
         def construct(self, x):
             out = x * self.para
             print("out:", out)
             x = {'a': Tensor(1, dtype=ms.float64), 'b': Tensor(2, dtype=ms.float64)}
             y = x.get('a') + out
-            z = dict(a=y+self.para)
+            z = dict(a=y + self.para - self.para2)
             self.para = 2 * y
             return z, self.para + 2
 
@@ -92,7 +92,7 @@ def test_fallback_side_effect_dict():
     x = np.array(10, np.float64)
     out = net(ms.Tensor(x))
     print("out:", out)
-    assert out[0] == {'a': 23}
+    assert out[0] == {'a': 19}
     assert out[1] == 44
 
 
@@ -106,6 +106,7 @@ def test_fallback_side_effect_dict_2():
     Description: Test execution order in Fallback runtime.
     Expectation: No error.
     """
+
     class Net(ms.nn.Cell):
         def __init__(self):
             super().__init__()
@@ -138,6 +139,7 @@ def test_fallback_side_effect_nested_net():
     Description: Test execution order in Fallback runtime.
     Expectation: No error.
     """
+
     class Inner:
         def __init__(self):
             self.number = ms.Tensor(2, dtype=ms.float64)
@@ -179,6 +181,7 @@ def test_fallback_control_flow():
     Description: Test execution order in Fallback runtime.
     Expectation: No error.
     """
+
     class Net(ms.nn.Cell):
         def __init__(self):
             super().__init__()
