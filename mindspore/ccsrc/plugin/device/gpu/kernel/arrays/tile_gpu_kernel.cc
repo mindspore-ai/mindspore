@@ -52,7 +52,6 @@ bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  workspace_size_list_.clear();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -71,18 +70,14 @@ int TileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 1, but got "
                       << output_shape_.size();
   }
-  input_size_ = SizeOf(input_shape_);
   if (output_shape_.size() > TILE_MAX_DIMENSION) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "
                       << TILE_MAX_DIMENSION << ", but got " << output_shape_.size();
   }
-  shape_size_ = output_shape_.size();
-  output_size_ = SizeOf(output_shape_);
+  std::vector<int64_t> multiples;
   TryGetIntValue(inputs, kIndex1, kernel_name_, &multiples);
-  int64_t filling_value = static_cast<int64_t>(multiples.size()) - static_cast<int64_t>(input_shape_.size());
+  size_t filling_value = multiples.size() - input_shape_.size();
   (void)input_shape_.insert(input_shape_.begin(), filling_value, kIndex1);
-  workspace_size_list_.push_back(input_shape_.size() * sizeof(size_t));
-  workspace_size_list_.push_back(output_shape_.size() * sizeof(size_t));
   return KRET_OK;
 }
 
@@ -93,19 +88,9 @@ bool TileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     return true;
   }
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  size_t *input_shape_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
-  size_t *output_shape_ptr = GetDeviceAddress<size_t>(workspace, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(input_shape_ptr, &input_shape_[kIndex0], input_shape_.size() * sizeof(size_t),
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemcpyAsync input_shape_ failed")
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output_shape_ptr, &output_shape_[kIndex0], output_shape_.size() * sizeof(size_t),
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemcpyAsync output_shape_ failed")
-  CalTile(output_size_, input_size_, shape_size_, input_shape_ptr, output_shape_ptr, input, output,
-          reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalTile(input_shape_, output_shape_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -435,31 +435,7 @@ class EinsumHelper {
     for (auto &axis : operate_info) {
       dout_shape[axis] = 1;
     }
-    Tile(dout, d_input, dout_shape, dinp_shape, stream_ptr);
-  }
-
-  void Tile(T *input_ptr, T *output_ptr, const std::vector<size_t> &inp_shape, const std::vector<size_t> &out_shape,
-            void *stream_ptr) {
-    size_t *input_shape_ptr = reinterpret_cast<size_t *>(workspace_ptr_[shape_ptr_idx_start_]);
-    size_t *output_shape_ptr = reinterpret_cast<size_t *>(workspace_ptr_[shape_ptr_idx_start_ + 1]);
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-      cudaMemcpyAsync(input_shape_ptr, &inp_shape[0], inp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "For " + node_name_ + ", cudaMemcpyAsync input_shape failed.");
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-      cudaMemcpyAsync(output_shape_ptr, &out_shape[0], out_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "For " + node_name_ + ", cudaMemcpyAsync output_shape failed.");
-    size_t inp_size = 1;
-    size_t out_size = 1;
-    for (auto &v : inp_shape) {
-      inp_size *= v;
-    }
-    for (auto &v : out_shape) {
-      out_size *= v;
-    }
-    CalTile(out_size, inp_size, inp_shape.size(), input_shape_ptr, output_shape_ptr, input_ptr, output_ptr,
-            reinterpret_cast<cudaStream_t>(stream_ptr));
+    (void)CalTile(dout_shape, dinp_shape, dout, d_input, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   void MulGrad(T *dout, T *mid_res, T *drht, T *dlft, const std::vector<size_t> &dlft_shape,
@@ -843,7 +819,7 @@ class EinsumHelper {
     res_trans_axis.insert(res_trans_axis.end(), lo.begin(), lo.end());
     res_trans_axis.insert(res_trans_axis.end(), sum_dims->begin(), sum_dims->end());
     res_trans_axis.insert(res_trans_axis.end(), ro.begin(), ro.end());
-    // tranpose
+    // transpose
     res_out_shape = (*res_inp_shape);
     for (size_t idx_axis = 0; idx_axis < res_trans_axis.size(); ++idx_axis) {
       res_out_shape[idx_axis] = (*res_inp_shape)[res_trans_axis[idx_axis]];
@@ -855,7 +831,7 @@ class EinsumHelper {
     sig_trans_axis.insert(sig_trans_axis.end(), sum_dims->begin(), sum_dims->end());
     sig_trans_axis.insert(sig_trans_axis.end(), ro.begin(), ro.end());
     sig_trans_axis.insert(sig_trans_axis.end(), lo.begin(), lo.end());
-    // tranpose
+    // transpose
     sig_out_shape = sig_inp_shape;
     for (size_t idx_axis = 0; idx_axis < sig_trans_axis.size(); ++idx_axis) {
       sig_out_shape[idx_axis] = sig_inp_shape[sig_trans_axis[idx_axis]];
@@ -956,7 +932,7 @@ class EinsumHelper {
         }
         op_info.emplace_back(static_cast<size_t>(val));
       }
-      // tranpose
+      // transpose
       sig_out_shape = sig_inp_shape;
       for (size_t idx_axis = 0; idx_axis < trans_axis.size(); ++idx_axis) {
         sig_out_shape[idx_axis] = sig_inp_shape[trans_axis[idx_axis]];

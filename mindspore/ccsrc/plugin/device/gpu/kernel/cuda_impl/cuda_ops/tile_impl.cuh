@@ -16,12 +16,12 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TILE_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TILE_IMPL_CUH_
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-#define TILE_MAX_DIMENSION 100
+#define TILE_MAX_DIMENSION 9
 
 template <typename T>
-CUDA_LIB_EXPORT void CalTile(const size_t output_size, const size_t input_size, const size_t shape_size,
-                             const size_t *input_shape, const size_t *output_shape, const T *input, T *output,
-                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTile(const std::vector<size_t> inp_shape, const std::vector<size_t> out_shape,
+                                    const T *input, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TILE_IMPL_CUH_
