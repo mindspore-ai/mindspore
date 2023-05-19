@@ -190,8 +190,9 @@ MIND_API_OPERATOR_IMPL(SparseApplyRMSProp, BaseOperator);
 AbstractBasePtr SparseApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(SparseApplyRMSPropInferShape(primitive, input_args),
-                                SparseApplyRMSPropInferType(primitive, input_args));
+  auto infer_type = SparseApplyRMSPropInferType(primitive, input_args);
+  auto infer_shape = SparseApplyRMSPropInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
 // AG means auto generated
