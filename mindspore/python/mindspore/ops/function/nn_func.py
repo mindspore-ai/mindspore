@@ -4309,13 +4309,14 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     if reduction not in ('none', 'mean', 'sum'):
         raise ValueError(f"For 'gaussian_nll_loss', 'reduction' must be one of 'none', 'mean', or 'sum',\
         but got {reduction}.")
-    if x.shape[:-1] == var.shape:
-        var = var.unsqueeze(dim=-1)
-    # Heterosclerotic case
-    elif x.shape[:-1] == var.shape[:-1] and var.shape[-1] == 1:
-        pass
-    else:
-        raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
+    if not x.shape == var.shape:
+        if x.shape[:-1] == var.shape:
+            var = var.unsqueeze(dim=-1)
+        # Heterosclerotic case
+        elif x.shape[:-1] == var.shape[:-1] and var.shape[-1] == 1:
+            pass
+        else:
+            raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
     max_op = P.Maximum()
     log_op = P.Log()
     square_op = P.Square()
