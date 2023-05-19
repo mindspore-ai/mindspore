@@ -49,9 +49,8 @@ class SwitchSimplify : public OptimizerCaller {
         // {prim::kPrimSwitch, InterpretObject: 'False', X, Y}
         auto interpreted_obj = value_ptr->cast<parse::InterpretedObjectPtr>();
         py::object obj = interpreted_obj->obj();
-        constexpr char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
         constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
-        py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+        py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
         cond_value = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
       } else {
         MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value or a bool scalar value,"

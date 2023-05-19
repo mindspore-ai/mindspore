@@ -62,6 +62,10 @@ using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
                                         const FormatedVariableTypeFunc &format_type_func = FormatedVariableTypeFunc());
 
+bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
+
+std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
+
 template <typename T>
 bool HasRealType(const std::shared_ptr<T> &owner) {
   return owner->has_user_data("__py_execute_real_type__");

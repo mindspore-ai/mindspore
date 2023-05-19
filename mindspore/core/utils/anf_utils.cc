@@ -142,11 +142,24 @@ bool AnfUtils::IsNodeOutputShapeDynamic(const AnfNodePtr &node) {
 bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
 #ifndef ENABLE_SECURITY
-  static const PrimitiveSet virtual_prims = {
-    prim::kPrimImageSummary,     prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
-    prim::kPrimMakeTuple,        prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimReturn,
-    prim::kPrimPartial,          prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimLoad,
-    prim::kPrimDynamicLossScale, prim::kPrimMakeList};
+  static const PrimitiveSet virtual_prims = {prim::kPrimImageSummary,
+                                             prim::kPrimScalarSummary,
+                                             prim::kPrimTensorSummary,
+                                             prim::kPrimHistogramSummary,
+                                             prim::kPrimMakeTuple,
+                                             prim::kPrimStateSetItem,
+                                             prim::kPrimTupleGetItem,
+                                             prim::kPrimReturn,
+                                             prim::kPrimPartial,
+                                             prim::kPrimDepend,
+                                             prim::kPrimUpdateState,
+                                             prim::kPrimLoad,
+                                             prim::kPrimDynamicLossScale,
+                                             prim::kPrimMakeList,
+                                             prim::kPrimListGetItem,
+                                             prim::kPrimIs_,
+                                             prim::kPrimIsNot,
+                                             prim::kPrimIsInstance};
 #else
   static const PrimitiveSet virtual_prims = {
     prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,

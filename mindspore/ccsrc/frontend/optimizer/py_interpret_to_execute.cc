@@ -35,8 +35,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 py::object CallPythonPushGlobalParams(const py::object &dict) {
-  constexpr auto python_mod_parse = "mindspore._extends.parse";  // The same as PYTHON_MOD_PARSE_MODULE[]
-  py::module mod = python_adapter::GetPyModule(python_mod_parse);
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto python_merge_dict = "merge_global_params";
   return python_adapter::CallPyModFn(mod, python_merge_dict, dict);
 }

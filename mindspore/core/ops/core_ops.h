@@ -512,6 +512,7 @@ constexpr auto kListGreaterEqual = "list_greater_equal";
 
 constexpr auto kCond = "Cond";
 constexpr auto kPackFunc = "PackFunc";
+constexpr auto kIsInstance = "isinstance";
 
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
@@ -1769,7 +1770,7 @@ GVAR_DEF(PrimitivePtr, kPrimFSEDecode, std::make_shared<Primitive>("FSEDecode"))
 GVAR_DEF(PrimitivePtr, kPrimTypeOf, std::make_shared<Primitive>("typeof"));
 GVAR_DEF(PrimitivePtr, kPrimTopTypeOf, std::make_shared<Primitive>("TopTypeof"));
 GVAR_DEF(PrimitivePtr, kPrimHasType, std::make_shared<Primitive>("hastype"));
-GVAR_DEF(PrimitivePtr, kPrimIsInstance, std::make_shared<Primitive>("isinstance"));
+GVAR_DEF(PrimitivePtr, kPrimIsInstance, std::make_shared<Primitive>(kIsInstance));
 
 GVAR_DEF(PrimitivePtr, kPrimResolve, std::make_shared<Primitive>("resolve"));
 GVAR_DEF(PrimitivePtr, kPrimEmbed, std::make_shared<Primitive>("embed"));

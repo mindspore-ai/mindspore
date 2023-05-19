@@ -15,13 +15,13 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, context
+from mindspore import Tensor, context, Parameter
 import mindspore.nn as nn
+import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support type yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -33,6 +33,7 @@ def test_fallback_isinstance():
     Description: Test isinstance() in fallback runtime
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def construct(self, x, y):
             x_is_tensor = isinstance(x, Tensor)
@@ -48,7 +49,6 @@ def test_fallback_isinstance():
     assert not out[1]
 
 
-@pytest.mark.skip(reason="No support type yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -60,6 +60,7 @@ def test_fallback_isinstance_numpy():
     Description: Test isinstance() in fallback runtime
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def construct(self, x):
             return isinstance(x.asnumpy(), np.ndarray)
@@ -70,7 +71,6 @@ def test_fallback_isinstance_numpy():
     assert out
 
 
-@pytest.mark.skip(reason="No support type yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -82,13 +82,62 @@ def test_fallback_isinstance_numpy_type():
     Description: Test isinstance() in fallback runtime
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def construct(self, x):
             y = np.array([-1, 2, 4])
-            y_type = type(y)
-            return isinstance(x.asnumpy(), y_type)
+            return isinstance(x.asnumpy(), type(y))
 
     x = Tensor(np.array([-1, 2, 4]))
     net = Net()
     out = net(x)
     assert out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_parameter():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.para = Parameter(Tensor(2, dtype=ms.float64), name='para')
+
+        def construct(self, x):
+            return isinstance(self.para, type(x)), isinstance(self.para, (list, type(x)))
+
+    x = Tensor([-1, 2, 4])
+    net = Net()
+    out = net(x)
+    assert out[0], out[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            if isinstance(x.asnumpy(), (int, float, complex, bool)):
+                return x
+            return x + 1
+
+    x = Tensor([-1])
+    print("type:", type(x.asnumpy()))
+    net = Net()
+    out = net(x)
+    assert out == 0

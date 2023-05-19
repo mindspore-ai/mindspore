@@ -67,8 +67,7 @@ struct PyExecuteUserDataCatcherRegister {
 }  // namespace abstract
 
 static py::object CallPythonGetGlobalParams() {
-  constexpr auto python_mod_parse = "mindspore._extends.parse";  // The same as PYTHON_MOD_PARSE_MODULE[]
-  py::module mod = python_adapter::GetPyModule(python_mod_parse);
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto python_get_dict = "get_global_params";
   return python_adapter::CallPyModFn(mod, python_get_dict);
 }

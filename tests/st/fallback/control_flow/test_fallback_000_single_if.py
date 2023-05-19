@@ -16,6 +16,7 @@
 import numpy as np
 from mindspore import Tensor, jit, context
 from mindspore import dtype as mstype
+from mindspore.nn import Cell
 from tests.st.fallback.cases_register import case_register
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -97,3 +98,54 @@ def test_single_if_builtin_function_abs_min():
         return x * 2
     res = control_flow_if()
     assert res == -22
+
+
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
+def test_single_if_no_else_type():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    class FalseNet(Cell):
+        def __init__(self):
+            super(FalseNet, self).__init__()
+            self.cond = False
+
+        def construct(self):
+            x = np.array(1)
+            if self.cond:
+                return type(2).mro()
+            return type(x).mro()
+
+    test_net = FalseNet()
+    res = test_net()
+    assert str(res) == "[<class 'numpy.ndarray'>, <class 'object'>]"
+
+
+@case_register.level0
+@case_register.target_gpu
+@case_register.target_ascend
+def test_single_if_no_else_type_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    class TrueNet(Cell):
+        def __init__(self):
+            super(TrueNet, self).__init__()
+            self.cond = True
+
+        def construct(self):
+            x = np.array(2)
+            y = 2
+            if self.cond:
+                return type(y).mro()
+            return type(x).mro()
+
+    test_net = TrueNet()
+    res = test_net()
+    assert str(res) == "[<class 'int'>, <class 'object'>]"

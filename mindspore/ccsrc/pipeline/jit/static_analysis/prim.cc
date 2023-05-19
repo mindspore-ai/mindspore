@@ -69,9 +69,8 @@ std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) 
     auto interpreted_obj = value->cast_ptr<parse::InterpretedObject>();
     MS_EXCEPTION_IF_NULL(interpreted_obj);
     py::object obj = interpreted_obj->obj();
-    constexpr char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
     constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
-    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     bool res = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
     // eval("np.array(1) >= 1")                            ---> obj: array([ True])
     // eval("(np.array([1, 2]) > np.array([1, 0])).any()") ---> obj: True
@@ -125,6 +124,17 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   auto &func = do_signature->function();
   auto do_signature_func = dyn_cast_ptr<Primitive>(func);
   if (do_signature_func != nullptr) {
+    if (do_signature_func->name() == prim::kIsInstance) {
+      // Handle for DDE.
+      for (size_t i = 0; i < args_abs_list.size(); ++i) {
+        MS_EXCEPTION_IF_NULL(args_abs_list[i]);
+        if (args_abs_list[i]->isa<abstract::AbstractSequence>()) {
+          MS_LOG(DEBUG) << "Primitive \'IsInstance\' is consuming tuple/list arguments[" << i
+                        << "]: " << args_abs_list[i]->ToString();
+          SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
+        }
+      }
+    }
     if (prims_to_skip_undetermined_infer.find(do_signature_func->name()) == prims_to_skip_undetermined_infer.end()) {
       auto res_abstract = EvalUndeterminedArgs(args_abs_list);
       if (res_abstract != nullptr) {
@@ -2099,9 +2109,9 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     }
   }
 
-  auto current_interpret_node = out_conf->node();
-  MS_EXCEPTION_IF_NULL(current_interpret_node);
-  MS_LOG(DEBUG) << "The current interpret node: " << current_interpret_node->DebugString();
+  auto current_pyexecute_node = out_conf->node();
+  MS_EXCEPTION_IF_NULL(current_pyexecute_node);
+  MS_LOG(DEBUG) << "The current pyexecute node: " << current_pyexecute_node->DebugString();
   // Get the type parameter.
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   ValuePtr value_track = args_abs_list[0]->GetValueTrack();
@@ -2119,32 +2129,32 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   AbstractBasePtr res = nullptr;
   // Support Tensor annotation type. Add list and tuple here later.
   TypePtr dtype = nullptr;
-  TypePtr type = GetAnnotationType(current_interpret_node, args_abs_list);
+  TypePtr type = GetAnnotationType(current_pyexecute_node, args_abs_list);
   if (type != nullptr && type->isa<TensorType>()) {
     dtype = type->cast<TensorTypePtr>()->element();
   }
   if (dtype != nullptr) {
     res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
-  } else if (fallback::HasRealType(current_interpret_node) && fallback::HasRealShape(current_interpret_node)) {
-    const auto &preset_type = fallback::GetRealType<AnfNode, Type>(current_interpret_node);
+  } else if (fallback::HasRealType(current_pyexecute_node) && fallback::HasRealShape(current_pyexecute_node)) {
+    const auto &preset_type = fallback::GetRealType<AnfNode, Type>(current_pyexecute_node);
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
-    const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(current_interpret_node);
+    const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(current_pyexecute_node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     res = std::make_shared<AbstractTensor>(preset_type, shape);
   } else {
     res = std::make_shared<AbstractAny>();
     // Set input type for caller.
-    if (fallback::HasRealType(current_interpret_node)) {
-      const auto &real_type = fallback::GetRealType<AnfNode, Type>(current_interpret_node);
+    if (fallback::HasRealType(current_pyexecute_node)) {
+      const auto &real_type = fallback::GetRealType<AnfNode, Type>(current_pyexecute_node);
       fallback::SetRealType<AbstractBase, Type>(res, real_type);
     }
-    if (fallback::HasRealShape(current_interpret_node)) {
-      const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(current_interpret_node);
+    if (fallback::HasRealShape(current_pyexecute_node)) {
+      const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(current_pyexecute_node);
       fallback::SetRealShape<AbstractBase, BaseShape>(res, real_type);
     }
   }
 
-  auto prim = GetCNodePrimitive(current_interpret_node);
+  auto prim = GetCNodePrimitive(current_pyexecute_node);
   if (prim->HasAttr("is_raise_prim")) {
     res->set_user_data("__raise_flag__", MakeValue(true));
   }
