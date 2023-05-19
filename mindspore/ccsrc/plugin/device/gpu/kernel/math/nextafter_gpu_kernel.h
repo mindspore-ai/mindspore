@@ -72,6 +72,7 @@ class NextAfterGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
+  void UpdateSize(const std::vector<KernelTensorPtr> &inputs);
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
@@ -83,7 +84,6 @@ class NextAfterGpuKernelMod : public NativeGpuKernelMod {
   size_t unit_size_{1};
   size_t input_elements_;
   NextAfterFunc kernel_func_{};
-  std::optional<bool> is_input_dynamic_shape_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   BaseOperatorPtr kernel_ptr_{nullptr};

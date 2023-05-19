@@ -43,26 +43,7 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
     return false;
   }
-  std::vector<size_t> input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  is_null_input_ = (input_elements_ == 0);
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-  InitSizeLists();
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape = input->GetShapeVector();
-      if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
+  UpdateSize(inputs);
   return true;
 }
 
@@ -76,14 +57,17 @@ int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
-      return KRET_RESIZE_FAILED;
-    }
-  }
+  UpdateSize(inputs);
   return KRET_OK;
+}
+
+void NextAfterGpuKernelMod::UpdateSize(const std::vector<KernelTensorPtr> &inputs) {
+  std::vector<size_t> unsigned_input_shape = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                                                 inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_elements_ =
+    std::accumulate(unsigned_input_shape.begin(), unsigned_input_shape.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_elements_ == 0);
+  InitSizeLists();
 }
 
 template <typename T>
