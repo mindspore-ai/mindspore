@@ -15,6 +15,7 @@
 """conv"""
 from __future__ import absolute_import
 
+import math
 import numpy as np
 
 from mindspore import log as logger
@@ -22,7 +23,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
+from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as Validator
 from mindspore._checkparam import twice, _check_3d_int_or_tuple
@@ -59,7 +60,6 @@ class _Conv(Cell):
         self.stride = stride
         self.pad_mode = pad_mode
         self.weight_init = weight_init
-        self.bias_init = bias_init
         self.data_format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.data_format == "NHWC":
             raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
@@ -98,10 +98,19 @@ class _Conv(Cell):
                 [out_channels, in_channels // group, *kernel_size]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
+        self.bias_init = bias_init
         if Validator.check_bool(has_bias, "has_bias", self.cls_name):
+            if bias_init is None:
+                fan_in, _ = _calculate_fan_in_and_fan_out(shape)
+                if fan_in != 0:
+                    bound = 1 / math.sqrt(fan_in)
+                    bias_init = Uniform(bound)
+                else:
+                    bias_init = 'zeros'
+                self.bias_init = bias_init
             self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
-            if self.bias_init != 'zeros':
+            if self.bias_init is not None:
                 logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
             self.bias = None
 
@@ -277,8 +286,8 @@ class Conv2d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros',
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None,
                  data_format='NCHW'):
         """Initialize Conv2d."""
         kernel_size = twice(kernel_size)
@@ -434,8 +443,8 @@ class Conv1d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros'):
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None):
         """Initialize Conv1d."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)
@@ -655,8 +664,8 @@ class Conv3d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros',
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3d."""
         if not in_channels % group == 0 and out_channels % group == 0:
@@ -866,8 +875,8 @@ class Conv3dTranspose(_Conv):
                  group=1,
                  output_padding=0,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros',
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3dTranspose."""
         kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
@@ -1066,8 +1075,8 @@ class Conv2dTranspose(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros'):
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None):
         """Initialize Conv2dTranspose."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
@@ -1250,8 +1259,8 @@ class Conv1dTranspose(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros'):
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None):
         """Initialize Conv1dTranspose."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)

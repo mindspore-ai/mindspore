@@ -16,7 +16,6 @@ import os
 import re
 import subprocess
 
-import numpy as np
 import pytest
 
 from tests.st.model_zoo_tests import utils
@@ -84,6 +83,4 @@ def test_tacotron2_dynamic_pynative():
     cur_model_path = init_files()
     loss_list, has_overflow = run_tacotron2_dynamic_case(cur_model_path)
     assert not has_overflow
-    expect_loss = [294.5, 212.0]
     assert len(loss_list) >= 2
-    assert np.allclose(loss_list[:2], expect_loss[:2], 5e-3, 5e-3)

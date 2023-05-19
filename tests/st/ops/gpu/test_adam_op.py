@@ -38,7 +38,7 @@ class NetAdam(nn.Cell):
         self.batch_size = 1
         self.reshape = P.Reshape()
         weight = Tensor(np.ones([10, 16]).astype(np.float32) * 0.01)
-        self.fc1 = Dense(16, 10, weight_init=weight)
+        self.fc1 = Dense(16, 10, weight_init=weight, bias_init="zeros")
 
     def construct(self, input_x):
         output = self.reshape(input_x, (self.batch_size, -1))

@@ -492,9 +492,11 @@ class FeedForward(nn.Cell):
         self.conv1 = nn.Dense(in_channels,
                               hidden_size,
                               activation=hidden_act,
+                              has_bias=False,
                               weight_init=weight_variable([hidden_size, in_channels])).to_float(compute_type)
         self.conv2 = nn.Dense(hidden_size,
                               out_channels,
+                              has_bias=False,
                               weight_init=weight_variable([out_channels, hidden_size])).to_float(compute_type)
 
         self.preprocess = LayerPreprocess(in_channels=in_channels)

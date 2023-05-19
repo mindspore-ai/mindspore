@@ -24,7 +24,7 @@ from mindspore import context, log as logger
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
-from mindspore.common.initializer import initializer
+from mindspore.common.initializer import initializer, HeUniform, Uniform
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
@@ -545,8 +545,8 @@ class Dense(Cell):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 weight_init='normal',
-                 bias_init='zeros',
+                 weight_init=HeUniform(math.sqrt(5)),
+                 bias_init=None,
                  has_bias=True,
                  activation=None):
         """Initialize Dense."""
@@ -577,6 +577,9 @@ class Dense(Cell):
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' must "
                                      f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
+            if bias_init is None:
+                bound = 1 / math.sqrt(in_channels)
+                bias_init = Uniform(scale=bound)
             self.bias = Parameter(initializer(
                 bias_init, [out_channels]), name="bias")
             self.bias_add = P.BiasAdd()
