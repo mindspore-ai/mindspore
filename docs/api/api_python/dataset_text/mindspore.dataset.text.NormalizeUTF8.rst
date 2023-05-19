@@ -5,7 +5,8 @@ mindspore.dataset.text.NormalizeUTF8
 
     对UTF-8编码的字符串进行规范化处理。
 
-    .. note:: Windows平台尚不支持 `NormalizeUTF8` 。
+    .. note::
+        Windows平台尚不支持 `NormalizeUTF8` 。
 
     参数：
         - **normalize_form** (:class:`~.text.NormalizeForm`, 可选) - 指定不同的规范化形式，可以取值为

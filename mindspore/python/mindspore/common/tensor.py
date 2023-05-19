@@ -685,7 +685,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             Tensor.item returns a Tensor scalar instead of a Python scalar.
 
         Args:
-            index (Union[None, int, tuple(int)]): The index in Tensor. Default: None.
+            index (Union[None, int, tuple(int)]): The index in Tensor. Default: ``None``.
 
         Returns:
             A Tensor scalar, dtype is the same with the original Tensor.
@@ -1972,7 +1972,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Args:
             axis (int): The dimension to reduce. Default: 0.
             keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-                            the output will reduce dimension if false. Default: False.
+                            the output will reduce dimension if false. Default: ``False``.
 
         Returns:
             tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
@@ -2341,7 +2341,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Args:
             fill_value (float): The value to fill with the diagonal of `self`.
             wrap (bool, optional): Controls whether the diagonal elements continue onto the
-                remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: False.
+                remaining rows in case of a tall matrix(a matrix has more rows than columns). Default: ``False``.
 
         Returns:
             - **y** (Tensor) - Tensor, has the same shape and data type as `self`.
@@ -2461,10 +2461,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Args:
             slice_index (int): Slice index of a parameter's slices.
                 It is used when initialize a slice of a parameter, it guarantees that devices
-                using the same slice can generate the same tensor. Default: None.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
+                using the same slice can generate the same tensor. Default: ``None``.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+                Default: ``None``.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
-                to get one shard of a parameter's slice. Default: None.
+                to get one shard of a parameter's slice. Default: ``None``.
 
         Returns:
             Initialized Tensor.
@@ -3175,7 +3176,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             repeats (Union[int, tuple, list]): The number of repetitions for each element.
                 `repeats` is broadcasted to fit the shape of the given axis.
             axis (int, optional): The axis along which to repeat values. By default,
-                use the flattened input tensor, and return a flat output tensor. Default: None.
+                use the flattened input tensor, and return a flat output tensor. Default: ``None``.
 
         Returns:
             Tensor, has the same shape as input tensor except along the given axis.
@@ -4156,7 +4157,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Keyword Args:
             dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned tensor has
-                thesame dtype as `self`. Default: None.
+                thesame dtype as `self`. Default: ``None``.
 
         Returns:
             Tensor, the shape and dtype is defined above and filled with zeros.
@@ -4190,7 +4191,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Keyword Args:
             dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned
-                tensor has the same dtype as `self`. Default: None.
+                tensor has the same dtype as `self`. Default: ``None``.
 
         Returns:
             Tensor, the shape and dtype is defined above and filled with ones.
@@ -4407,7 +4408,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             values (Tensor): 1-D Tensor of the same type as "self Tensor". if size == 1 will be broadcast
             accumulate (bool): If `accumulate` is True, the elements in values are added to "self Tensor",
                 else the elements in `values` replace the corresponding element in the "self Tensor".
-                Default: False.
+                Default: ``False``.
 
         Returns:
             Tensor, with the same type and shape as the "self Tensor".

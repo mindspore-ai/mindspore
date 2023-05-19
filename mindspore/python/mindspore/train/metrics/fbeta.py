@@ -120,7 +120,7 @@ class Fbeta(Metric):
         Computes the fbeta.
 
         Args:
-            average (bool): Whether to calculate the average fbeta. Default: False.
+            average (bool): Whether to calculate the average fbeta. Default: ``False``.
 
         Returns:
             numpy.ndarray or numpy.float64, the computed result.

@@ -251,7 +251,7 @@ class _ClipByGlobalNorm(Cell):
 
     Args:
         clip_norm (Union(float, int)): The clipping ratio. Default: 1.0
-        use_norm (Union(float, None)): The global norm. Default: None
+        use_norm (Union(float, None)): The global norm. Default: ``None``
 
     Inputs:
         - **x** (Union(tuple[Tensor], list[Tensor])) - Input data to clip.

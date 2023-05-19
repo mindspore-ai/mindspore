@@ -261,8 +261,8 @@ class CusMatMulCube(PrimitiveWithInfer):
     The rank of input tensors must be `2`.
 
     Args:
-        transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
-        transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
+        transpose_a (bool): If true, `a` is transposed before multiplication. Default: ``False``.
+        transpose_b (bool): If true, `b` is transposed before multiplication. Default: ``False``.
 
     Inputs:
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If

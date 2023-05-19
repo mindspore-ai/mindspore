@@ -46,7 +46,7 @@ class MapParameter(Parameter):
         default_value (Union[numbers.Number, str]): The default value number or initializer name. Default: 'normal'.
         permit_filter_value (numbers.Number): The permit filter value number. Default: 1.
         evict_filter_value (numbers.Number): The evict filter value number. Default: MAX_SIZE.
-        name (str): Name of the map parameter. Default: None.
+        name (str): Name of the map parameter. Default: ``None``.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
 
 

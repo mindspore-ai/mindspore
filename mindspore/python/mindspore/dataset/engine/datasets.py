@@ -318,7 +318,7 @@ class Dataset:
 
     Args:
         num_parallel_workers (int, optional): Number of workers to process the dataset in parallel.
-            Default: None.
+            Default: ``None``.
     """
 
     def __init__(self, children=None, num_parallel_workers=None, cache=None):
@@ -563,7 +563,8 @@ class Dataset:
             **kwargs:
 
                 - per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], \
-                  (List[numpy.ndarray], ..., List[numpy.ndarray])], optional): Per batch map callable. Default: None.
+                  (List[numpy.ndarray], ..., List[numpy.ndarray])], optional): Per batch map callable.
+                  Default: ``None``.
                   A callable which takes (List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo) as input parameters.
                   Each list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists
                   should match with the number of entries in input_columns. The last parameter of the callable should
@@ -649,7 +650,7 @@ class Dataset:
                 batch, and 0 will be used as the padding value. Any None dimensions will
                 be padded to the longest in the current batch, unless if
                 pad_to_bucket_boundary is True. If no padding is wanted, set `pad_info`
-                to ``None``. Default: None.
+                to ``None``. Default: ``None``.
 
         Returns:
             PaddedBatchDataset, dataset batched.
@@ -1120,7 +1121,7 @@ class Dataset:
                 - The sum of split sizes > K, the difference of sigma(round(fi * K)) - K will be removed from the first
                   large enough split such that it will have at least 1 row after removing the difference.
 
-            randomize (bool, optional): Determines whether or not to split the data randomly. Default: True.
+            randomize (bool, optional): Determines whether or not to split the data randomly. Default: ``True``.
                 If True, the data will be randomly split. Otherwise, each split will be created with
                 consecutive rows from the dataset.
 
@@ -2398,10 +2399,10 @@ class BatchDataset(UnionBaseDataset):
         batch_size (Union[int, function]): The number of rows each batch is created with. An
             int or callable which takes exactly 1 parameter, BatchInfo.
         drop_remainder (bool, optional): Determines whether or not to drop the last
-            possibly incomplete batch. Default: False. If True, and if there are less
+            possibly incomplete batch. Default: ``False``. If True, and if there are less
             than batch_size rows available to make the last batch, then those rows will
             be dropped and not propagated to the child node.
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: ``None``.
         per_batch_map (callable, optional): Per batch map callable. A callable which takes
             (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch of
             Tensors on a given column. The number of lists should match with number of entries in input_columns. The
@@ -2411,7 +2412,7 @@ class BatchDataset(UnionBaseDataset):
         output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
             the last operation. This parameter is mandatory if len(input_columns) !=
             len(output_columns). The size of this list must match the number of output
-            columns of the last operation. Default: None, output columns will have the same
+            columns of the last operation. Default: ``None``, output columns will have the same
             name as the input columns, i.e., the columns will be replaced.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True. Default: 16.
@@ -2543,7 +2544,7 @@ class BlockReleasePair:
 
     Args:
         init_release_rows (int): Number of lines to allow through the pipeline.
-        callback (function): The callback function that will be called when release is called. Default: None.
+        callback (function): The callback function that will be called when release is called. Default: ``None``.
     """
 
     def __init__(self, init_release_rows, callback=None):
@@ -2615,10 +2616,10 @@ class PaddedBatchDataset(UnionBaseDataset):
         batch_size (Union[int, function]): The number of rows each batch is created with. An
             int or callable which takes exactly 1 parameter, BatchInfo.
         drop_remainder (bool, optional): Determines whether or not to drop the last
-            possibly incomplete batch. Default: False. If True, and if there are less
+            possibly incomplete batch. Default: ``False``. If True, and if there are less
             than batch_size rows available to make the last batch, then those rows will
             be dropped and not propagated to the child node.
-        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: None.
+        num_parallel_workers (int, optional): Number of workers to process the dataset in parallel. Default: ``None``.
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
             will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
     """
@@ -2688,7 +2689,7 @@ class SyncWaitDataset(UnionBaseDataset):
         input_dataset (Dataset): Input dataset to apply flow control.
         num_batch (int): Number of batches without blocking at the start of each epoch.
         condition_name (str): Condition name that is used to toggle sending next row.
-        callback (function): Callback function that will be invoked when sync_update is called. Default: None.
+        callback (function): Callback function that will be invoked when sync_update is called. Default: ``None``.
 
     Raises:
         RuntimeError: If condition name already exists.
@@ -3347,24 +3348,24 @@ class MapDataset(UnionBaseDataset):
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
         operations (Union[list[TensorOperation], list[functions]]): A function mapping a nested structure of tensors
-            to another nested structure of tensor. Default: None.
+            to another nested structure of tensor. Default: ``None``.
         input_columns (Union[str, list[str]]): List of names of the input columns.
-            Default: None, the operations will be applied on the first columns in the dataset.
+            Default: ``None``, the operations will be applied on the first columns in the dataset.
             The size of the list should match the number of inputs of the first operation.
         output_columns (Union[str, list[str]], optional): List of names of the output columns.
             The size of the list should match the number of outputs of the last operation.
-            Default: None, output columns will be the input columns, i.e., the columns will
+            Default: ``None``, output columns will be the input columns, i.e., the columns will
             be replaced.
         num_parallel_workers (int, optional): Number of workers to process the dataset
-            in parallel. Default: None.
+            in parallel. Default: ``None``.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
-            option could be beneficial if the Python operation is computational heavy. Default: False.
+            option could be beneficial if the Python operation is computational heavy. Default: ``False``.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            Default: None, which means no cache is used.
-        callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called. Default: None.
+            Default: ``None``, which means no cache is used.
+        callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called. Default: ``None``.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes. This is only used if python_multiprocessing is set to True. Default: 16.
-        offload (bool, optional): Flag to indicate whether offload is used. Default: None.
+        offload (bool, optional): Flag to indicate whether offload is used. Default: ``None``.
     """
 
     def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None,
@@ -3620,9 +3621,9 @@ class FilterDataset(UnionBaseDataset):
         input_dataset (Dataset): Input Dataset to be mapped.
         predicate (callable): Python callable which returns a boolean value. If False then filter the element.
         input_columns (Union[str, list[str]], optional): List of names of the input columns.
-            Default: None, the predicate will be applied to all columns in the dataset.
+            Default: ``None``, the predicate will be applied to all columns in the dataset.
         num_parallel_workers (int, optional): Number of workers to process the dataset
-            in parallel. Default: None.
+            in parallel. Default: ``None``.
     """
 
     def __init__(self, input_dataset, predicate, input_columns=None, num_parallel_workers=None):
@@ -3934,9 +3935,9 @@ class TransferDataset(Dataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be transferred.
-        send_epoch_end (bool, optional): Whether to send end of sequence to device or not. Default: True.
+        send_epoch_end (bool, optional): Whether to send end of sequence to device or not. Default: ``True``.
         create_data_info_queue (bool, optional): Whether to create queue which stores
-            types and shapes of data or not. Default: False.
+            types and shapes of data or not. Default: ``False``.
 
     Raises:
         TypeError: If device_type is empty.

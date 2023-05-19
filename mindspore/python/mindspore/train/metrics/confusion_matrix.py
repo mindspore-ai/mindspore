@@ -33,7 +33,7 @@ class ConfusionMatrix(Metric):
         num_classes (int): Number of classes in the dataset.
         normalize (str): Normalization mode for confusion matrix. Default: ``"no_norm"`` . Choose from:
 
-            - **"no_norm"** (None) - No Normalization is used. Default: None.
+            - **"no_norm"** (None) - No Normalization is used. Default: ``None``.
             - **"target"** (str) - Normalization based on target value.
             - **"prediction"** (str) - Normalization based on predicted value.
             - **"all"** (str) - Normalization over the whole matrix.
@@ -277,14 +277,14 @@ class _ConfusionMatrix:
 
     Args:
         skip_channel (bool): Whether to skip the measurement calculation on the first channel of the predicted
-                             output. Default: True.
+                             output. Default: ``True``.
         metric_name (str): The names of indicators are in the following range. Of course, you can also set the industry
                            common aliases for these indicators.
         calculation_method (bool): If true, the measurement for each sample will be calculated first. If not, the
                                    confusion matrix for each image (the output of function '_get_confusion_matrix')
                                    will be returned. In this way, users should achieve the confusion matrixes for all
                                    images during an epochand then use '_compute_confusion_matrix_metric' to calculate
-                                   the metric. Default: False.
+                                   the metric. Default: ``False``.
         decrease (Union[DecreaseMetric, str]): ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel",
                                                 "sum_channel"]
                                                Define the mode to reduce the calculation result of one batch of data.
@@ -356,7 +356,7 @@ def _get_confusion_matrix(y_pred, y, skip_channel=True):
         y (ndarray): ground truth to compute the metric. It must be one-hot format and first dim is batch.
                     The values should be binarized.
         skip_channel (bool): whether to skip metric computation on the first channel of the predicted output.
-                            Default: True.
+                            Default: ``True``.
 
     Raises:
         ValueError: when `y_pred` and `y` have different shapes.

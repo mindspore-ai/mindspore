@@ -2209,7 +2209,7 @@ def size(a, axis=None):
 
     Args:
         a (Union[int, float, bool, list, tuple, Tensor]): Input data.
-        axis (int): Axis along which the elements are counted. Default: None.
+        axis (int): Axis along which the elements are counted. Default: ``None``.
             If None, give the total number of elements.
 
     Returns:

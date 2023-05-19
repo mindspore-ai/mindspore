@@ -40,7 +40,7 @@ mindspore.ops.KLDivLoss
         - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
 
     输出：
-        Tensor或标量。如果 `reduction` 为"none" ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
+        Tensor或标量。如果 `reduction` 为 ``"none"`` ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
 
     异常：
         - **TypeError** - `reduction` 不是str。

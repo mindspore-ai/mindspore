@@ -256,7 +256,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
             and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
             equal to `padding[0]` and `padding[1]` correspondingly. Default: ``0`` .
-        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
+        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
 
     Returns:
@@ -400,7 +400,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
             paddings of top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of `4` integers,
             the padding of top, bottom, left and right equal to `padding[0]`, `padding[1]`, `padding[2]` and
             `padding[3]` correspondingly. Default: ``0`` .
-        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: False.
+        ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
             `kernel_size` will be used. Default: ``0`` .
@@ -1208,7 +1208,7 @@ def dropout(input, p=0.5, training=True, seed=None):
         input (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: ``0.5`` .
-        training (bool): Apply dropout if is True. Default: True.
+        training (bool): Apply dropout if is True. Default: ``True``.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
             Default: ``None`` , which will be treated as ``0`` .
 
@@ -1518,12 +1518,12 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
             is an int number that represents height and width, or a tuple
             of two int numbers that represent height and width respectively.
             The value must be a positive integer.
-            Default: None.
+            Default: ``None``.
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type: float16, float32, double, and value is between (0, 1).
-            Default: None.
-        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
+            Default: ``None``.
+        return_indices (bool, optional): Whether to return the indices of max value. Default: ``False``.
         _random_samples (Tensor, optional): The random step of fractional_max_pool2d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between [0, 1).
             Supported shape :math:`(N, C, 2)` or :math:`(1, C, 2)`.

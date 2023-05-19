@@ -806,7 +806,7 @@ class BatchAssign(PrimitiveWithInfer):
     Assign the parameters of the source to overwrite the target.
 
     Args:
-        lock (bool): Lock when the operator is Write, else shared the mutex. Default: True.
+        lock (bool): Lock when the operator is Write, else shared the mutex. Default: ``True``.
 
     Inputs:
         - **dst_model** (tuple) - A parameters tuple of the dst model.

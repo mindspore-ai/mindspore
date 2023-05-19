@@ -51,13 +51,13 @@ class MoEConfig:
                 router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
             num_experts_chosen (int): The number of experts is chosen by each token and it should not be larger
                 than expert_num. Default: 1.
-            expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
-                effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
+            expert_group_size (int): The number of tokens in each data parallel group. Default: ``None``.
+                This parameter is effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
             group_wise_a2a (bool): Whether to enable group-wise alltoall communication, which can reduce communication
-                time by converting part of inter communication into intra communication. Default: False. This parameter
-                is effective only when model parallel > 1 and data_parallel equal to expert parallel.
+                time by converting part of inter communication into intra communication. Default: ``False``.
+                This parameter is effective only when model parallel > 1 and data_parallel equal to expert parallel.
             comp_comm_parallel (bool): Whether to enable ffn compute and communication parallel, which can reduce pure
-                communicattion time by splitting and overlapping compute and communication. Default: False.
+                communicattion time by splitting and overlapping compute and communication. Default: ``False``.
             comp_comm_parallel_degree (int): The split number of compute and communication. The larger the numbers,
                 the more overlap there will be but will consume more memory. Default: 2. This parameter is effective
                 only when comp_comm_parallel enable.

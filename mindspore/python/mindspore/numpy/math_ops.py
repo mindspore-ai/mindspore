@@ -983,7 +983,7 @@ def ptp(x, axis=None, keepdims=False):
     Args:
         x (Tensor): Input tensor.
         axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
-            The default is to compute the variance of the flattened array. Default: None.
+            The default is to compute the variance of the flattened array. Default: ``None``.
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
             dimensions with size one. With this option, the result will broadcast correctly against the input tensor.
             If the default value is passed, then keepdims will not be passed through to the ptp method of

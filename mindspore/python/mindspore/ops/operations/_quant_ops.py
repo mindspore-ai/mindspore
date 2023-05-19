@@ -140,7 +140,7 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
     Updates min and max per layer.
 
     Args:
-        ema (bool): Uses EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: ``False``.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
 
     Inputs:
@@ -193,7 +193,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
      Updates min and max per channel.
 
     Args:
-        ema (bool): Uses EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: ``False``.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
@@ -260,8 +260,8 @@ class FakeLearnedScaleQuantPerLayer(PrimitiveWithInfer):
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware function. After delay step in training time begin simulate the aware
             quantize function. Default: 0.
-        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
-        training (bool): Training the network or not. Default: True.
+        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: ``False``.
+        training (bool): Training the network or not. Default: ``True``.
 
     Inputs:
         - **input_x** (Tensor) : Input tensor that needs to be quantified.
@@ -409,8 +409,8 @@ class FakeLearnedScaleQuantPerChannel(PrimitiveWithInfer):
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware function. After delay step in training time begin simulate the aware
             quantize function. Default: 0.
-        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
-        training (bool): Training the network or not. Default: True.
+        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: ``False``.
+        training (bool): Training the network or not. Default: ``True``.
         channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
     Inputs:
@@ -576,7 +576,7 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
         num_bits (int): Quantization bitwidth; between 2 and 16. Default: 8.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
             if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
-            range is [1, 2^num_bits-1]. Default: False.
+            range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
         - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
@@ -634,7 +634,7 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
             if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
-            range is [1, 2^num_bits-1]. Default: False.
+            range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
         - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
@@ -699,7 +699,7 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
         num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
             if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
-            range is [1, 2^num_bits-1]. Default: False.
+            range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
         - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
@@ -750,7 +750,7 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         num_bits (int): Quantization bitwidth; between 2 and 16, inclusive. Default: 8.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not.
             if True, the quantization range is [0, 2^num_bits-1]. Otherwise, the quantization
-            range is [1, 2^num_bits-1]. Default: False.
+            range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
         - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
@@ -829,14 +829,14 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
 
     Args:
         num_bits (int) : Number bits for quantization aware. Default: 8.
-        ema (bool): Uses EMA algorithm update value min and max. Default: False.
+        ema (bool): Uses EMA algorithm update value min and max. Default: ``False``.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware function. After delay step in training time begin simulate the aware
             quantize function. Default: 0.
-        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
-        training (bool): Training the network or not. Default: True.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: ``False``.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: ``False``.
+        training (bool): Training the network or not. Default: ``True``.
 
     Inputs:
         - **x** (Tensor) : float32 Tensor representing the shape of the output tensor.
@@ -949,14 +949,14 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
 
     Args:
         num_bits (int) : Number bits to quantilization. Default: 8.
-        ema (bool): Uses EMA algorithm update tensor min and tensor max. Default: False.
+        ema (bool): Uses EMA algorithm update tensor min and tensor max. Default: ``False``.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay  parameter. Before delay step in training time not
             update the weight data to simulate quantize operation. After delay step in training time
             begin simulate the quantize operation. Default: 0.
-        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
-        training (bool): Training the network or not. Default: True.
+        symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: ``False``.
+        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: ``False``.
+        training (bool): Training the network or not. Default: ``True``.
         channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
 
     Inputs:
@@ -1087,7 +1087,7 @@ class BatchNormFold(PrimitiveWithInfer):
         momentum (float): Momentum value must be [0, 1]. Default: 0.9.
         epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
             float32 else 1e-3. Default: 1e-5.
-        is_training (bool): In training mode set True, else set False. Default: True.
+        is_training (bool): In training mode set True, else set False. Default: ``True``.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
             norm to frozen mean and std. Default: 0.
 
@@ -1806,7 +1806,7 @@ class IFMR(Primitive):
         max_percentile (float): Max init percentile. Default: 0.999999.
         search_range Union[list(float), tuple(float)]: Range of searching. Default: [0.7, 1.3].
         search_step (float): Step size of searching. Default: 0.01.
-        with_offset (bool): Whether using offset. Default: True.
+        with_offset (bool): Whether using offset. Default: ``True``.
 
     Inputs:
         - **data** (Tensor) - A Tensor of feature map. With float16 or float32 data type.

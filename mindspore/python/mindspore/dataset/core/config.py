@@ -869,7 +869,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         debug_mode_flag (bool): Whether dataset pipeline debug mode is enabled, which forces the pipeline
             to run synchronously and sequentially.
         debug_hook_list (list[DebugHook]): a list of debug hook objects to be inserted before and after each
-            transform operation in map operation. Default: None, which means to use `[PrintMetaDataHook]`,
+            transform operation in map operation. Default: ``None``, which means to use `[PrintMetaDataHook]`,
             which prints shape/size/type of each input/output data of each transformation.
 
     Raises:

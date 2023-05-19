@@ -85,17 +85,17 @@ class ModelThor(Model):
         network (Cell): A training or testing network.
         loss_fn (Cell): Objective function, if loss_fn is None, the
                              network should contain the logic of loss and grads calculation, and the logic
-                             of parallel if needed. Default: None.
-        optimizer (Cell): Optimizer for updating the weights. Default: None.
+                             of parallel if needed. Default: ``None``.
+        optimizer (Cell): Optimizer for updating the weights. Default: ``None``.
         metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
-                        training and testing. eg: {'accuracy', 'recall'}. Default: None.
+                        training and testing. eg: {'accuracy', 'recall'}. Default: ``None``.
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
-                             `eval_network`. Default: None.
+                             `eval_network`. Default: ``None``.
         eval_indexes (list): When defining the `eval_network`, if `eval_indexes` is None, all outputs of the
                              `eval_network` would be passed to metrics, otherwise `eval_indexes` must contain three
                              elements, including the positions of loss value, predicted value and label. The loss
                              value would be passed to the `Loss` metric, the predicted value and label would be passed
-                             to other metric. Default: None.
+                             to other metric. Default: ``None``.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
             precision training. Supports [O0, O2, O3]. Default: "O0".
 
@@ -109,7 +109,7 @@ class ModelThor(Model):
             scale the loss by LossScaleManager. It is a key argument.
             e.g. Use `loss_scale_manager=None` to set the value.
         keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If it is set to true, the level setting before
-            will be overwritten. Default: True.
+            will be overwritten. Default: ``True``.
     """
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
@@ -199,8 +199,8 @@ class ModelThor(Model):
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            list_callback (Callback): Executor of callback list. Default: None.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            list_callback (Callback): Executor of callback list. Default: ``None``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
             sink_size (int): Control the amount of data in each sink. Default: -1.
             initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
                                  Default: 0.

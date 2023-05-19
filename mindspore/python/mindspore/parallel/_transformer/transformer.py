@@ -70,7 +70,7 @@ class EmbeddingOpParallelConfig(_Config):
             vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If True, the embedding lookup
                 will be a data parallel style training and model_parallel value will be ignored.  If false, the
                 embedding table will be sharded into n parts at the 0-th dimension row slice of the embedding table,
-                where the n is the model parallel way determined by this parameter. Default: True
+                where the n is the model parallel way determined by this parameter. Default: ``True``
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -120,13 +120,13 @@ class TransformerRecomputeConfig(_Config):
         TransformerRecomputeConfig for the setting recompute attributes for encoder/decoder layers.
 
         Args:
-            recompute (bool): Enable recomputation of the transformer block or not. Default: False.
+            recompute (bool): Enable recomputation of the transformer block or not. Default: ``False``.
             parallel_optimizer_comm_recompute (bool): Specifies whether the communication operator allgathers
                 introduced by optimizer shard are recomputed in auto parallel or semi auto parallel mode.
-                Default: False.
+                Default: ``False``.
             mp_comm_recompute (bool): Specifies whether the model parallel communication operators
-                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: True.
-            recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: False.
+                in the cell are recomputed in auto parallel or semi auto parallel mode. Default: ``True``.
+            recompute_slice_activation (bool): Slice the cell output which would remains in memory. Default: ``False``.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -214,7 +214,7 @@ class TransformerOpParallelConfig(_Config):
             gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
             recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
                 the transformer block. Default: An instance of TransformerRecomputeConfig with default values.
-            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
+            vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: ``True``.
 
         Supported Platforms:
             ``Ascend`` ``GPU``
@@ -359,8 +359,8 @@ class FeedForward(Cell):
                 the `activation_shard` function. Please see examples. Default: gelu.
             expert_num (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
-            expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
-                effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
+            expert_group_size (int): The number of tokens in each data parallel group. Default: ``None``.
+                This parameter is effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
             param_init_type (dtype.Number): The parameter initialization type. Should be mstype.float32 or
                 mstype.float16. Default: mstype.float32.
             parallel_config (OpParallelConfig, MoEParallelConfig): The config of parallel setting, see
@@ -2292,7 +2292,7 @@ class TransformerEncoder(Cell):
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts
                 from zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net.
                 The default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
-                Default: None.
+                Default: ``None``.
             offset(int): The initial layer index for the `encoder`. Used for setting the fusion id and stage id, to not
                 overlap with the encoder layer. Default 0.
             use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
@@ -2301,7 +2301,7 @@ class TransformerEncoder(Cell):
                 In the first step, set the is_first_iteration to be True by
                 `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
                 is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
-                pass the single step's input tensor, and loop it. Default: False.
+                pass the single step's input tensor, and loop it. Default: ``False``.
             moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig
                 with default values. Please see `MoEConfig`.
             parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,
@@ -2548,7 +2548,7 @@ class TransformerDecoder(Cell):
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts
                 from zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net.
                 The default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
-                Default: None.
+                Default: ``None``.
             use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
             offset(int): The initial layer index for the `decoder`. Used for setting the fusion id and stage id, to not
                 overlap with the encoder layer. Default 0.

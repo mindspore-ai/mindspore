@@ -230,8 +230,8 @@ class LogNormal(msd.TransformedDistribution):
             dist (str): The type of the distributions. Should be "LogNormal" in this case.
             loc_b (Tensor): The loc of distribution b.
             scale_b (Tensor): The scale of distribution b.
-            loc_a (Tensor): The loc of distribution a. Default: None.
-            scale_a (Tensor): The scale of distribution a. Default: None.
+            loc_a (Tensor): The loc of distribution a. Default: ``None``.
+            scale_a (Tensor): The scale of distribution a. Default: ``None``.
         """
         check_distribution_name(dist, 'LogNormal')
         return self._entropy(loc_a, scale_a) + self._kl_loss(dist, loc_b, scale_b, loc_a, scale_a)
@@ -244,8 +244,8 @@ class LogNormal(msd.TransformedDistribution):
             dist (str): The type of the distributions. Should be "LogNormal" in this case.
             loc_b (Tensor): The loc of distribution b.
             scale_b (Tensor): The scale of distribution b.
-            loc_a (Tensor): The loc of distribution a. Default: None.
-            scale_a (Tensor): The scale of distribution a. Default: None.
+            loc_a (Tensor): The loc of distribution a. Default: ``None``.
+            scale_a (Tensor): The scale of distribution a. Default: ``None``.
 
         .. math::
             KL(a||b) = 0.5 * (\fract{MEAN(a)}{STD(b)} - \fract{MEAN(b)}{STD(b)}) ^ 2 +

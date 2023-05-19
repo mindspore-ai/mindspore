@@ -4333,9 +4333,9 @@ def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
         input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
             With float32 or float16 data type.
         nan (float): The replace value of 'NaN'. Default value is 0.0.
-        posinf (float): the value to replace positive infinity values with. Default: None,
+        posinf (float): the value to replace positive infinity values with. Default: ``None``,
             replacing positive infinity with the maximum value supported by the data type of `input`.
-        neginf (float): the value to replace negative infinity values with. Default: None,
+        neginf (float): the value to replace negative infinity values with. Default: ``None``,
             replacing negative infinity with the minimum value supported by the data type of `input`.
 
     Returns:
@@ -4611,7 +4611,8 @@ def nanmedian(x, axis=-1, keepdims=False):
     Args:
         x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         axis (int, optional): The dimension need to reduce. Default: -1.
-        keepdims (bool, optional): Whether the output tensor needs to retain `axis` dimension or not. Default: False.
+        keepdims (bool, optional): Whether the output tensor needs to retain `axis` dimension or not.
+            Default: ``False``.
 
     Returns:
         Tensor, has the same dtype as `x`. If `keepdims` is true,
@@ -8335,24 +8336,24 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         x (Tensor): Time sequences of stft, must be either a 1-D time tensor or a 2-D tensor.
         n_fft (int): The size of Fourier transform.
         hop_length (int, optional): The distance between neighboring sliding window
-            frames. Default: None(treated as equal to :math:`floor(n_fft / 4)`).
+            frames. Default: ``None``(treated as equal to :math:`floor(n_fft / 4)`).
         win_length (int, optional): the size of window frame and STFT filter.
-            Default: None(treated as equal to `n_fft`).
+            Default: ``None``(treated as equal to `n_fft`).
         window (Tensor, optional): the optional window function, 1-D tensor of size `win_length`.
-            Default: None(treated as window of all :math:`1` s). If `win_length` < `n_fft`,
+            Default: ``None``(treated as window of all :math:`1` s). If `win_length` < `n_fft`,
             `window` will be padded on both sides with ones to length `n_fft` before it takes effect.
-        center (bool, optional): whether to pad `x` on both sides. Default: True.
+        center (bool, optional): whether to pad `x` on both sides. Default: ``True``.
         pad_mode (str, optional): controls the padding method used when
             `center` is True. Default: 'REFLECT'.
         normalized (bool, optional): controls whether to return the normalized STFT results
-             Default: False.
+             Default: ``False``.
         onesided (bool, optional): controls whether to return half of results to
             avoid redundancy for real inputs.
-            Default: None. True for real `x` and `window`, False otherwise.
+            Default: ``None``. True for real `x` and `window`, False otherwise.
         return_complex (bool, optional): whether to return a complex tensor, or
             a real tensor with an extra last dimension for the real and
             imaginary components.
-            Default: None. True for complex `x` or `window`, False otherwise.
+            Default: ``None``. True for complex `x` or `window`, False otherwise.
 
     Returns:
         - **output** (Tensor) - A tensor containing the STFT result.
@@ -8752,8 +8753,8 @@ def quantile(input, q, axis=None, keepdims=False):
         q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
             Supported dtypes: float32, float64.
         axis (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
-            input tensor being flattened before computation. Default: None.
-        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
+            input tensor being flattened before computation. Default: ``None``.
+        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: ``False``.
 
     Returns:
         Tensor, has the same dtype as the `input`.
@@ -8809,8 +8810,8 @@ def nanquantile(input, q, axis=None, keepdims=False):
         q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
             Supported dtypes: float32, float64.
         axis (int, optional): The dimension to reduce. By default, `axis` is None resulting in the
-            input tensor being flattened before computation. Default: None.
-        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
+            input tensor being flattened before computation. Default: ``None``.
+        keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: ``False``.
 
     Returns:
         Tensor, has the same dtype as the `input`.
@@ -9056,7 +9057,7 @@ def roll(input, shifts, dims=None):
             positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
             in the opposite direction.
         dims (Union[list(int), tuple(int), int], optional): Specifies the dimension indexes of shape to be rolled.
-            Default: None. If dims is None, the Tensor will be flattened before rolling and then restored to the
+            Default: ``None``. If dims is None, the Tensor will be flattened before rolling and then restored to the
             original shape.
 
     Returns:
@@ -9794,7 +9795,7 @@ def cholesky_inverse(input_x, upper=False):
     Args:
         input_x (Tensor): The input tensor with a rank of 2. Supported dtypes: float32, float64.
         upper (bool): If `upper` is `True`, return an upper triangular matrix. If `upper` is `False`, return
-            a lower-triangular matrix. Default: False.
+            a lower-triangular matrix. Default: ``False``.
 
     Returns:
         Tensor, has the same shape and dtype as `input_x`.
@@ -9916,7 +9917,7 @@ def cross(input, other, dim=None):
         other (Tensor):  The other Tensor, `other` must have the same shape and type as input `input`, and
             the size of their `dim` dimension should be `3`.
         dim (int, optional): dimension to apply cross product in. if `dim` is None, it is set to be the first dimension
-            found with the size `3`. Default: None.
+            found with the size `3`. Default: ``None``.
 
     Returns:
         Tensor, has the same shape and type as input `input`.
@@ -10625,11 +10626,11 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
     Args:
         input (Tensor): The input Tensor.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Supposed the rank of `input` is r,
-            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
-        keepdims (bool, optional): Whether the output Tensor keeps dimensions or not. Default: False.
+            axis must be in the range [-rank(input), rank(input)). Default: ``None``, all dimensions are reduced.
+        keepdims (bool, optional): Whether the output Tensor keeps dimensions or not. Default: ``False``.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The dtype of output Tensor. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The dtype of output Tensor. Default: ``None``.
 
     Returns:
         Tensor, the sum of input `input` in the given dimension dim, treating NaNs as zero.
@@ -10785,13 +10786,13 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
         dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
             If None, sum all the elements of the input tensor.
             If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: None.
+            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None``.
         keepdim (bool): Whether the output tensor has dim retained or not.
             If True, keep these reduced dimensions and the length is 1.
-            If False, don't keep these dimensions. Default: False.
+            If False, don't keep these dimensions. Default: ``False``.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None``.
 
     Returns:
        A Tensor, sum of elements over a given dim in `input`.
@@ -11207,13 +11208,13 @@ def fft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-na
         input (Tensor): The input tensor.
         n (int, optional): Signal length.
             If given, the input will either be zero-padded or trimmed to this length before computing the FFT.
-            Default: None.
+            Default: ``None``.
         dim (int, optional): The dimension along which to take the one dimensional FFT.
             Default: -1.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"`` (normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"`` (normalize by :math: `1/\sqrt{n}`).
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `fft()` function.
@@ -11291,7 +11292,7 @@ def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-o
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `fft2()` function.
@@ -11333,7 +11334,7 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `fftn()` function.
@@ -11375,13 +11376,13 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
         input (Tensor): The input tensor.
         n (int, optional): Signal length.
             If given, the input will either be zero-padded or trimmed to this length before computing the IFFT.
-            Default: None.
+            Default: ``None``.
         dim (int, optional): The dimension along which to take the one dimensional IFFT.
             Default: -1.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"``(normalize by :math: `1/\sqrt{n}`).
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `ifft()` function.
@@ -11460,7 +11461,7 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `ifft2()` function.
@@ -11502,7 +11503,7 @@ def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-oute
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
             ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
-            Default: None that means ``"backward"``.
+            Default: ``None`` that means ``"backward"``.
 
     Returns:
         Tensor, The result of `ifftn()` function.

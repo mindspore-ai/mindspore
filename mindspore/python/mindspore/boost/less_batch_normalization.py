@@ -45,7 +45,7 @@ class CommonHeadLastFN(Cell):
             is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: ``True``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

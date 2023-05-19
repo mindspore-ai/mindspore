@@ -462,7 +462,7 @@ class Model:
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
-                                     initialized. Default: None.
+                                     initialized. Default: ``None``.
             sink_size (int): Control the amount of data in each sink. Default: -1.
         """
         if sink_size == -1:
@@ -489,9 +489,9 @@ class Model:
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
-                                     initialized. Default: None.
+                                     initialized. Default: ``None``.
             valid_dataset (Dataset): A evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
-                                     will be initialized, and `metrics` in `Model` can not be None. Default: None.
+                                     will be initialized, and `metrics` in `Model` can not be None. Default: ``None``.
             sink_size (int): Control the amount of data in each sink. Default: -1.
             epoch (int): Total number of iterations on the data. Default: 1.
         """
@@ -566,9 +566,9 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) will
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            callbacks (list): List of callback objects which should be executed while training. Default: None.
+            callbacks (list): List of callback objects which should be executed while training. Default: ``None``.
             dataset_sink_mode (bool): Determine whether the data should be passed through the dataset channel.
-                                      Default: True.
+                                      Default: ``True``.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink. Default: -1.
@@ -634,8 +634,8 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            list_callback (Callback): Executor of callback list. Default: None.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            list_callback (Callback): Executor of callback list. Default: ``None``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
             sink_size (int): Control the amount of data in each sink. Default: -1.
             initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
@@ -876,8 +876,8 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            list_callback (Callback): Executor of callback list. Default: None.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            list_callback (Callback): Executor of callback list. Default: ``None``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
             initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
@@ -987,10 +987,10 @@ class Model:
                                      passed to the `network`.
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
                                                             which should be executed while training.
-                                                            Default: None.
+                                                            Default: ``None``.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink. Default: False.
+                                      dataset not sink. Default: ``False``.
             sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
                              is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
@@ -1266,12 +1266,12 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process
-                                     will be performed on the end of training process. Default: None.
+                                     will be performed on the end of training process. Default: ``None``.
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object, which should be
-                                     executed while evaluation. Default: None.
+                                     executed while evaluation. Default: ``None``.
             valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
-                                     Default: True.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+                                     Default: ``True``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
         """
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
@@ -1300,8 +1300,8 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            list_callback (Callback): Executor of callback list. Default: None.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            list_callback (Callback): Executor of callback list. Default: ``None``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
 
         Returns:
             Dict, which returns the loss value and metrics values for the model in the test mode.
@@ -1347,8 +1347,8 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            list_callback (Callback): Executor of callback list. Default: None.
-            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            list_callback (Callback): Executor of callback list. Default: ``None``.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: ``None``.
 
         Returns:
             Dict, which returns the loss value and metrics values for the model in the test mode.

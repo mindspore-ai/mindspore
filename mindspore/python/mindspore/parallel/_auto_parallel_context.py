@@ -370,7 +370,7 @@ class _AutoParallelContext:
         """
         Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True, the strategy-configured operators
         will propagate the strategies to other operators with minimum redistribution cost; otherwise, the algorithm
-        will search the desired strategies. Default: False.
+        will search the desired strategies. Default: ``False``.
         This attribute is replaced by context.set_auto_parallel_context(search_mode="sharding_propagation").
 
         Args:
@@ -824,7 +824,7 @@ class _AutoParallelContext:
     def set_enable_alltoall(self, enable_a2a):
         """
         Set the value of enabling AllToAll. If False, AllGather and Split are used to circumvent AllToAll.
-        Default: False.
+        Default: ``False``.
 
         Args:
             enable_a2a (bool): Enable/disable AllToAll.
@@ -1121,11 +1121,11 @@ def _set_auto_parallel_context(**kwargs):
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
-        gradients_mean (bool): Whether to perform mean operator after all-reduce of mirror. Default: False.
+        gradients_mean (bool): Whether to perform mean operator after all-reduce of mirror. Default: ``False``.
         loss_repeated_mean (bool): Whether to perform mean operator in backward in the case of repeated
-                        calculations. Default: True.
+                        calculations. Default: ``True``.
         gradient_fp32_sync (bool): Gradients allreduce by fp32 even though gradients is fp16 if this flag is True.
-                        Default: True.
+                        Default: ``True``.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
@@ -1151,13 +1151,13 @@ def _set_auto_parallel_context(**kwargs):
                      for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
-                       broadcast. Default: False.
+                       broadcast. Default: ``False``.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         group_ckpt_save_file (str): The path to save parallel group checkpoint. Default: ''
-        full_batch (bool): Whether to load the whole batch on each device. Default: False.
+        full_batch (bool): Whether to load the whole batch on each device. Default: ``False``.
         dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
-        enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
+        enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: ``False``.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
                         the devices are distributed alone the pipeline. The total devices will be divided into
@@ -1175,13 +1175,13 @@ def _set_auto_parallel_context(**kwargs):
                                     It should be larger than one and less than or equal with the data parallel size.
                                     Default: -1, which means fully use parallel optimizer in data parallel dimension.
         optimizer_weight_shard_aggregated_save (bool): Whether to integrated save weight shard when enable parallel
-                                                       optimizer. Default: False.
+                                                       optimizer. Default: ``False``.
         sharding_propagation (bool): Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True,
                                     the strategy-configured operators will propagate the strategies to other
                                     operators with minimum redistribution cost; otherwise, the algorithm will
-                                    search the desired strategies. Default: False.
+                                    search the desired strategies. Default: ``False``.
         enable_alltoall (bool): Set the value of enabling AllToAll. If False, AllGather and Split are used to
-                                circumvent AllToAll. Default: False.
+                                circumvent AllToAll. Default: ``False``.
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                     communication fusion config has two keys: "mode" and "config".
                     It supports following communication fusion types and configurations:

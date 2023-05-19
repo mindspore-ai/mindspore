@@ -37,7 +37,7 @@ class LiteInfer(BaseModel):
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
              In second situation, you should adjust batch size of dataset script manually which will impact on
              the batch size of 'net' input. Only supports parse "image" column from dataset currently.
-        context (Context, optional): Define the context used to transfer options during execution. Default: None.
+        context (Context, optional): Define the context used to transfer options during execution. Default: ``None``.
                 None means the Context with cpu target.
 
     Raises:
