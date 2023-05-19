@@ -153,7 +153,7 @@ std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NN
                                           context->weight_size_name(), b_pack_ptr_size_);
     *w_buf = *w_buf + b_pack_ptr_size_;
   }
-  NNaclFp32Serializer &pack_code = params_->a_const_ ? *init_code : *code;
+  NNaclFp32Serializer &pack_code = params_->b_const_ ? *init_code : *code;
   if (target_ != kARM64) {
     if (vec_matmul_) {
       if (b_batch_ == 1) {

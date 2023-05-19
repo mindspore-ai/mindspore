@@ -175,9 +175,9 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
       return RET_NULL_PTR;
     }
     code.CodeArray("position", position, dims_ * thread_num_);
-    code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, "output_shape", "dim_size", "position",
-                      "trans_param.perm_", "trans_param.strides_", "trans_param.out_strides_", "trans_param.num_axes_",
-                      kDefaultTaskId, thread_num_);
+    code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, "output_shape", "trans_param.perm_",
+                      "trans_param.strides_", "trans_param.out_strides_", "trans_param.num_axes_", kDefaultTaskId,
+                      thread_num_);
     free(dim_size);
     free(position);
   } else {

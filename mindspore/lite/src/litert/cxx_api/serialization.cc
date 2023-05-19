@@ -228,7 +228,7 @@ Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, Mode
     return kLiteError;
   }
   if (model_type != kMindIR && model_type != kMindIR_Lite) {
-    MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
+    MS_LOG(ERROR) << "Model type is not kMindIR or kMindIR_Lite";
     return kLiteParamInvalid;
   }
   if (model.impl_->session_ == nullptr) {
