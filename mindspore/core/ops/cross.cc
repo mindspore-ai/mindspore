@@ -111,6 +111,7 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
 
   int64_t default_dim = -65530;
   CheckAndUpdateDim(primitive, x1_shape, default_dim, &dim);
+  primitive->set_attr("dim", MakeValue(dim));
 
   int64_t dim_size = 3;
   if (x1_shape[LongToSize(dim)] != dim_size && x2_shape[LongToSize(dim)] != dim_size && dim != default_dim) {
