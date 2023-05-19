@@ -61,7 +61,7 @@ ValuePtr PynativeDFunctor::NewValue(const TypePtr &type_elem, const BaseShapePtr
       return std::make_shared<tensor::Tensor>(type_elem->type_id(), NoShape);
     }
   }
-  MS_LOG(EXCEPTION) << "Unknown shape: " << shape_elem->ToString() << ", type: " << type_elem->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Unknown shape: " << shape_elem->ToString() << ", type: " << type_elem->ToString();
 }
 
 ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
@@ -109,7 +109,7 @@ ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
     auto tensor_value = std::make_shared<tensor::Tensor>(cnode_type->type_id(), NoShape);
     return gen_output_value_node(tensor_value);
   }
-  MS_LOG(EXCEPTION) << "Unknown shape: " << cnode_shape->ToString() << ", type: " << cnode_type->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Unknown shape: " << cnode_shape->ToString() << ", type: " << cnode_type->ToString();
 }
 
 void PynativeDFunctor::GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_node,
@@ -136,8 +136,8 @@ void PynativeDFunctor::GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNo
   MS_EXCEPTION_IF_NULL(make_tuple_node);
   constexpr size_t input_size = 3;
   if (make_tuple_node->size() != input_size) {
-    MS_LOG(EXCEPTION) << "The inputs size of make tuple node " << make_tuple_node->DebugString() << " is not equal to "
-                      << input_size;
+    MS_LOG(INTERNAL_EXCEPTION) << "The inputs size of make tuple node " << make_tuple_node->DebugString()
+                               << " is not equal to " << input_size;
   }
 
   // Get forward CNode.

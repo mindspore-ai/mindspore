@@ -33,10 +33,9 @@ namespace opt {
 namespace irpass {
 static inline void CheckSwitchCallValid(const CNodePtr &switch_call) {
   if (switch_call->inputs().size() > 1) {
-    // means call switch(arg1, ...) has args.
-    MS_LOG(EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."
-                         "The call_switch_cnode is:"
-                      << switch_call->DebugString();
+    // Means call switch(arg1, ...) has args.
+    MS_LOG(INTERNAL_EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should "
+                               << "not has args. The call_switch_cnode is:" << switch_call->DebugString();
   }
 }
 
@@ -52,8 +51,8 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
     const auto &fg_caller_and_index = it.first;
     auto caller_cnode = fg_caller_and_index->first;
     auto index = fg_caller_and_index->second;
-    // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.Because
-    // in this situation ValueNode<FuncGraph> is a input of Return or of MakeTuple.
+    // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.
+    // Because in this situation ValueNode<FuncGraph> is a input of Return or of MakeTuple.
     MS_LOG(DEBUG) << "index:" << index;
     // Process has partial func_graph with Primitive
     // %1 = Partial(func_graph, arg1, arg2, ...)
@@ -62,9 +61,9 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
       for (auto &user : iter->second) {
         auto &user_node = user.first;
         auto user_cnode = user_node->cast<CNodePtr>();
-        // check user of partial (switch), the numbers of args should be 0.
+        // Check user of partial (switch), the numbers of args should be 0.
         if (IsPrimitiveCNode(user_cnode, prim::kPrimSwitch)) {
-          // call switch()
+          // Call switch()
           auto call_switchs = node_users[user_cnode];
           for (auto call_switch_iter : call_switchs) {
             CheckSwitchCallValid(call_switch_iter.first->cast<CNodePtr>());
@@ -180,7 +179,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
                                           [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
         if (is_kw_only_arg) {
           if (fg->kwonlyargs_count() <= 0) {
-            MS_LOG(EXCEPTION) << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
+            MS_LOG(INTERNAL_EXCEPTION) << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
           }
           fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
           (void)unused_parameter_indexes.erase(i);
@@ -265,7 +264,7 @@ static inline void AdjustGetItemCall(const CNodePtr &caller,
     auto &index_node = getitem_cnode->input(getitem_index_pos);
     auto index_value = GetValueNode<Int64ImmPtr>(index_node);
     if (index_value == nullptr || index_value->value() < 0) {
-      MS_LOG(EXCEPTION) << "The index_value is incorrect, " << index_node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The index_value is incorrect, " << index_node->DebugString();
     }
     size_t index_value_imm = LongToSize(index_value->value());
     const auto &index_pos = only_return_parameter_indexes.find(index_value_imm + 1);

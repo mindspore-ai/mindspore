@@ -242,7 +242,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     if (resource_ != nullptr) {
       return resource_->manager();
     }
-    MS_LOG(EXCEPTION) << "No ResourceBase exists.";
+    MS_LOG(INTERNAL_EXCEPTION) << "No ResourceBase exists.";
   }
 
   const std::string name() const { return name_; }

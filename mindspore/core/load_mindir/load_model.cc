@@ -202,14 +202,14 @@ std::string ParseCNodeName(const string &name) {
       auto value = static_cast<valuetype>(attr_proto.ints(index));                                        \
       return MakeValue<valuetype>(value);                                                                 \
     }                                                                                                     \
-    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse MindIR attr failed.";                                            \
   }                                                                                                       \
   ValuePtr ParseAttrInSingleScalar_##type##_##valuetype(const mind_ir::AttributeProto &attr_proto) {      \
     if (attr_proto.has_i()) {                                                                             \
       auto value = static_cast<valuetype>(attr_proto.i());                                                \
       return MakeValue<valuetype>(value);                                                                 \
     }                                                                                                     \
-    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse MindIR attr failed.";                                            \
   }
 
 #define PARSE_MINDIR_ATTR_IN_SCALAR_FORM(type, valuetype)                                                 \
@@ -218,7 +218,7 @@ std::string ParseCNodeName(const string &name) {
       auto value = static_cast<valuetype>(attr_proto.type##s(index));                                     \
       return MakeValue<valuetype>(value);                                                                 \
     }                                                                                                     \
-    MS_LOG(EXCEPTION) << "Parse MindIR attr failed.";                                                     \
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse MindIR attr failed.";                                            \
   }
 
 PARSE_MINDIR_ATTR_IN_INT_FORM(int8_t, int8_t)
@@ -734,7 +734,8 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
   const mind_ir::AttributeProto &attr_proto) {
   // default value
   if (attr_proto.values_size() != 1) {
-    MS_LOG(EXCEPTION) << "AttrProto for AbstractMapTensor should has 1 value, but got " << attr_proto.values_size();
+    MS_LOG(INTERNAL_EXCEPTION) << "AttrProto for AbstractMapTensor should has 1 value, but got "
+                               << attr_proto.values_size();
   }
   const auto &default_value_proto = attr_proto.values(0);
   auto default_value = ObtainCNodeAttrInSingleScalarForm(default_value_proto);
@@ -742,7 +743,8 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
 
   constexpr int kAbstractMapTensorAttrProtoTensorsSize = 2;
   if (attr_proto.tensors_size() != kAbstractMapTensorAttrProtoTensorsSize) {
-    MS_LOG(EXCEPTION) << "AttrProto for AbstractMapTensor should has 2 tensors, but got " << attr_proto.tensors_size();
+    MS_LOG(INTERNAL_EXCEPTION) << "AttrProto for AbstractMapTensor should has 2 tensors, but got "
+                               << attr_proto.tensors_size();
   }
   // key tensor
   const auto &key_tensor_proto = attr_proto.tensors(0);
@@ -754,8 +756,8 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
   MS_EXCEPTION_IF_NULL(value_tensor_abs);
   auto value_build_shape_ptr = value_tensor_abs->BuildShape();
   if (!value_build_shape_ptr->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "value_shape of AbstractMapTensor should be a Shape, but got "
-                      << value_build_shape_ptr->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "value_shape of AbstractMapTensor should be a Shape, but got "
+                               << value_build_shape_ptr->ToString();
   }
   auto value_shape_ptr = value_build_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(value_shape_ptr);
@@ -1387,14 +1389,14 @@ ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeP
   for (int i = 0; i < attr_proto.values_size(); ++i) {
     const mind_ir::AttributeProto &key_value_proto = attr_proto.values(i);
     if (!key_value_proto.has_name()) {
-      MS_LOG(EXCEPTION) << "Dict type AttributeProto should has name as key of dictionary";
+      MS_LOG(INTERNAL_EXCEPTION) << "Dict type AttributeProto should has name as key of dictionary";
     }
     auto key = std::make_shared<abstract::AbstractScalar>(key_value_proto.name())->BuildValue();
     MS_EXCEPTION_IF_NULL(key);
     auto &values = key_value_proto.values();
     if (values.size() != 1) {
-      MS_LOG(EXCEPTION) << "Dict type AttributeProto should has exactly one value, but got " << values.size()
-                        << " value(s).";
+      MS_LOG(INTERNAL_EXCEPTION) << "Dict type AttributeProto should has exactly one value, but got " << values.size()
+                                 << " value(s).";
     }
     auto &value = values[0];
     switch (value.type()) {
@@ -1508,7 +1510,7 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
   } else if (type == mind_ir::AttributeProto_AttributeType_LIST) {
     value_sequence = std::make_shared<ValueList>(vec);
   } else {
-    MS_LOG(EXCEPTION) << "The attribute type should be tuple or list, but it is " << type;
+    MS_LOG(INTERNAL_EXCEPTION) << "The attribute type should be tuple or list, but it is " << type;
   }
 
   return value_sequence;
@@ -1799,7 +1801,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   if (anfnode_build_map_.count(node_name) > 0) {
-    MS_LOG(EXCEPTION) << "Duplicate CNode name: " << node_name;
+    MS_LOG(INTERNAL_EXCEPTION) << "Duplicate CNode name: " << node_name;
   }
   const std::string &fullname_with_scope = node_proto.domain();
   string debug_info_name = ParseCNodeName(node_name);

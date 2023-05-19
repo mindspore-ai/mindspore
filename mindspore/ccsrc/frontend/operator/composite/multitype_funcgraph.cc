@@ -42,7 +42,7 @@ void MultitypeFuncGraph::Register(const TypePtrList &types, specialize_fn s_fn) 
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ".";
   auto result = fn_cache_.emplace(types, s_fn);
   if (!result.second) {
-    MS_LOG(EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
   }
 }
 
@@ -50,7 +50,7 @@ void MultitypeFuncGraph::Register(const TypePtrList &types, const py::function &
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ", " << py::str(py_fn.cast<py::object>())
                 << ").";
   if (fn_cache_.find(types) != fn_cache_.end()) {
-    MS_LOG(EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot register as (" << ::mindspore::ToString(types) << ", already registered.";
   }
   fn_cache_py_[types] = py_fn;
 }
@@ -64,12 +64,12 @@ void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &
       auto type_name = type_in.cast<std::string>();
       type_ptr = StringToType(type_name);
       if (type_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << type_name << " convert from string error ";
+        MS_LOG(INTERNAL_EXCEPTION) << type_name << " convert from string error ";
       }
     } else if (py::isinstance<Type>(type_in)) {
       type_ptr = type_in.cast<TypePtr>();
     } else {
-      MS_LOG(EXCEPTION) << "Register must be string or `mindspore.dtype.Type`";
+      MS_LOG(INTERNAL_EXCEPTION) << "Register must be string or `mindspore.dtype.Type`";
     }
     types.push_back(type_ptr);
   }
@@ -230,7 +230,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   if (!py_fn.is_none() && !has_any) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
     }
     MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString() << ".";
     if (has_extra_u_monad) {

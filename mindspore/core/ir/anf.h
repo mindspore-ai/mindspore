@@ -859,7 +859,7 @@ class MS_CORE_API Value : public Base {
   ///
   /// \return Abstract value of Value.
   virtual abstract::AbstractBasePtr ToAbstract() {
-    MS_LOG(EXCEPTION) << "ToAbstract error : The class " << type_name() << "has no implement ToAbstract yet.";
+    MS_LOG(INTERNAL_EXCEPTION) << "ToAbstract error : The class " << type_name() << "has no implement ToAbstract yet.";
   }
 
   /// \brief Check whether the input is the current Value object.
@@ -905,7 +905,7 @@ class MS_CORE_API ValueNode final : public ANode {
   MS_DECLARE_PARENT(ValueNode, ANode);
 
   void set_func_graph(const FuncGraphPtr &) override {
-    MS_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
+    MS_INTERNAL_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
   }
 
   void accept(AnfIrVisitor *v) override;
@@ -1002,7 +1002,8 @@ static S GetValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   auto imm = value->cast_ptr<typename U::element_type>();
   if (imm == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast failed, original value: " << value->ToString() << ", type: " << value->type_name();
+    MS_LOG(INTERNAL_EXCEPTION) << "Cast failed, original value: " << value->ToString()
+                               << ", type: " << value->type_name();
   }
   return imm->value();
 }
@@ -1014,7 +1015,8 @@ static S GetValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   S v = value->cast<S>();
   if (v == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast failed, original value: " << value->ToString() << ", type: " << value->type_name();
+    MS_LOG(INTERNAL_EXCEPTION) << "Cast failed, original value: " << value->ToString()
+                               << ", type: " << value->type_name();
   }
   return v;
 }

@@ -67,7 +67,7 @@ static constexpr size_t kMaxSeqRecursiveDepth = 6;
 void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
   if (cnode->size() != expect_size) {
     std::string op_name = GetCNodeFuncName(cnode);
-    MS_LOG(EXCEPTION) << op_name << " should have " << expect_size << " inputs, but got " << cnode->size();
+    MS_LOG(INTERNAL_EXCEPTION) << op_name << " should have " << expect_size << " inputs, but got " << cnode->size();
   }
 }
 
@@ -546,8 +546,8 @@ class BeforeOptARewriter : public BaseRewriter {
   static void CheckValueSequenceNesting(const ValuePtr &value, size_t depth) {
     MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
-                        << " levels.";
+      MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                                 << " levels.";
     }
 
     if (value->isa<ValueSequence>()) {
@@ -582,8 +582,8 @@ class BeforeOptARewriter : public BaseRewriter {
   // AbstractDictionary --> AbstractSequence.
   static AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
-                        << " levels.";
+      MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                                 << " levels.";
     }
     auto abs_seq = abs->cast<AbstractSequencePtr>();
     if (abs_seq != nullptr) {
@@ -1029,7 +1029,8 @@ class AfterOptARewriter : public BaseRewriter {
     MS_LOG(DEBUG) << " make_slice node: " << cnode->DebugString();
     constexpr size_t slice_size = 4;
     if (cnode->size() != slice_size) {
-      MS_LOG(EXCEPTION) << "The size of input to make_slice should be " << slice_size << ", but got " << cnode->size();
+      MS_LOG(INTERNAL_EXCEPTION) << "The size of input to make_slice should be " << slice_size << ", but got "
+                                 << cnode->size();
     }
     constexpr size_t start_index = 1;
     constexpr size_t stop_index = 2;
@@ -1401,8 +1402,8 @@ class AfterOptARewriter : public BaseRewriter {
   // AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
-                        << " levels.";
+      MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                                 << " levels.";
     }
     // Convert RowTensor in AbstractSequence to AbstractTuple.
     auto abs_seq = abs->cast<AbstractSequencePtr>();
@@ -1554,7 +1555,7 @@ class ExportRewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(need_convert);
     MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+      MS_LOG(INTERNAL_EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
 
     if (value->isa<ValueSequence>()) {
@@ -1587,7 +1588,8 @@ class ExportRewriter : public BaseRewriter {
   // AbstractList --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+      MS_LOG(INTERNAL_EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                                 << " levels.";
     }
     // AbstractList --> AbstractTuple.
     auto abs_seq = abs->cast<AbstractSequencePtr>();

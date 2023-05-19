@@ -86,8 +86,8 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimPyExecute));
 
     if (!IsValueNode<parse::Script>(cnode->input(input_index_one))) {
-      MS_LOG(EXCEPTION) << "The first input should be a Script, but got "
-                        << cnode->input(input_index_one)->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The first input should be a Script, but got "
+                                 << cnode->input(input_index_one)->DebugString();
     }
     const auto &script = GetValueNode<std::shared_ptr<parse::Script>>(cnode->input(input_index_one));
     const auto &script_str = script->script();
@@ -95,8 +95,8 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     new_cnode->set_input(input_index_one, script_strimm_node);
 
     if (!IsValueNode<ValueDictionary>(cnode->input(input_index_two))) {
-      MS_LOG(EXCEPTION) << "The second input should be a dictionary, but got "
-                        << cnode->input(input_index_two)->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The second input should be a dictionary, but got "
+                                 << cnode->input(input_index_two)->DebugString();
     }
     const auto &global_dict = GetValueNode<ValueDictionaryPtr>(cnode->input(input_index_two));
     auto value_dict = global_dict->cast<ValueDictionaryPtr>();
@@ -106,8 +106,8 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     (void)CallPythonPushGlobalParams(py_global_dict);
 
     if (!IsPrimitiveCNode(cnode->input(input_index_three), prim::kPrimMakeDict)) {
-      MS_LOG(EXCEPTION) << "The 3rd input should be a dictionary, but got "
-                        << cnode->input(input_index_three)->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The 3rd input should be a dictionary, but got "
+                                 << cnode->input(input_index_three)->DebugString();
     }
     const auto &local_dict_cnode = dyn_cast<CNode>(cnode->input(input_index_three));
     MS_EXCEPTION_IF_NULL(local_dict_cnode);
@@ -115,8 +115,8 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     const auto &local_dict_values = local_dict_cnode->input(input_index_two);
     if ((!IsValueNode<ValueTuple>(local_dict_keys) && !IsPrimitiveCNode(local_dict_keys, prim::kPrimMakeTuple)) ||
         (!IsValueNode<ValueTuple>(local_dict_values) && !IsPrimitiveCNode(local_dict_values, prim::kPrimMakeTuple))) {
-      MS_LOG(EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
-                        << local_dict_cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The dictionary's keys and values should be a tuple, but got "
+                                 << local_dict_cnode->DebugString();
     }
 
     // Handle values and convert InterpretedObject element.

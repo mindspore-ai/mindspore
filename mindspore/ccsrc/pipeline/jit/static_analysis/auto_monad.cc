@@ -234,7 +234,7 @@ class SccFinder {
     MS_EXCEPTION_IF_NULL(graph);
     auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
     if (!ok) {
-      MS_LOG(EXCEPTION) << "Already visited: " << graph->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Already visited: " << graph->ToString();
     }
     auto &state = *(inserted->second);
     // Push visited graph to stack.
@@ -262,7 +262,7 @@ class SccFinder {
         stack_.pop();
         auto found = visited_.find(g);
         if (found == visited_.end()) {
-          MS_LOG(EXCEPTION) << "Unexpected graph: " << g->ToString();
+          MS_LOG(INTERNAL_EXCEPTION) << "Unexpected graph: " << g->ToString();
         }
         found->second->in_stack = false;
         // Add graph to SCC, and create the map from graph to SCC.
@@ -274,7 +274,7 @@ class SccFinder {
       }
       // SCC should not be empty.
       if (scc->empty()) {
-        MS_LOG(EXCEPTION) << "Invalid SCC for: " << graph->ToString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid SCC for: " << graph->ToString();
       }
     }
     return state;
@@ -401,7 +401,7 @@ class SideEffectFinder {
     constexpr size_t false_index = 3;
     // Check size.
     if (cnode->size() != switch_cnode_size) {
-      MS_LOG(EXCEPTION) << "Invalid switch: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString();
     }
     // Add both branches, in some case, only one branch is set.
     std::vector<FuncGraphPtr> branches;
@@ -414,7 +414,7 @@ class SideEffectFinder {
       (void)branches.emplace_back(false_branch);
     }
     if (branches.empty()) {
-      MS_LOG(EXCEPTION) << "Invalid switch: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString();
     }
     return branches;
   }
@@ -483,7 +483,7 @@ class SideEffectFinder {
         FixSwitchBranch(caller, branch);
         // The number of parameter should matched after fix.
         if (caller_input_size != branch->parameters().size() + 1) {
-          MS_LOG(EXCEPTION) << "Fix switch branch parameters failed! " << caller->DebugString();
+          MS_LOG(INTERNAL_EXCEPTION) << "Fix switch branch parameters failed! " << caller->DebugString();
         }
       }
     }
@@ -520,7 +520,7 @@ class SideEffectFinder {
     constexpr size_t func_tuple_index = 2;
     constexpr int recursive_level = 2;
     if (cnode->size() <= func_tuple_index) {
-      MS_LOG(EXCEPTION) << "Invalid switch_layer: " << cnode->DebugString(recursive_level);
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch_layer: " << cnode->DebugString(recursive_level);
     }
     auto func_tuple = cnode->inputs().at(func_tuple_index);
     return GetGraphsFromTuple(func_tuple);
@@ -572,7 +572,7 @@ class SideEffectFinder {
     if (func_graph != nullptr) {
       return GetGraphsFromTuple(func_graph->output());
     }
-    MS_LOG(EXCEPTION) << "Invalid input for switch_layer: func_graph is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid input for switch_layer: func_graph is nullptr.";
   }
 
   // Get graphs from a tuple of funcs make node for switch_layer.
@@ -581,7 +581,7 @@ class SideEffectFinder {
     auto &inputs = make_tuple->inputs();
     constexpr int recursive_level = 2;
     if (inputs.size() <= 1) {
-      MS_LOG(EXCEPTION) << "Invalid make_tuple for switch_layer: " << make_tuple->DebugString(recursive_level);
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple for switch_layer: " << make_tuple->DebugString(recursive_level);
     }
     std::vector<FuncGraphPtr> graphs;
     graphs.reserve(inputs.size() - 1);
@@ -603,13 +603,13 @@ class SideEffectFinder {
     constexpr size_t index_input = 2;
     constexpr size_t cnode_size = 3;
     if (cnode->size() != cnode_size) {
-      MS_LOG(EXCEPTION) << "Invalid tuple_getitem: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid tuple_getitem: " << cnode->DebugString();
     }
     // Get item index.
     auto &index_node = cnode->inputs().at(index_input);
     auto index_value = GetValueNode<Int64ImmPtr>(index_node);
     if (index_value == nullptr) {
-      MS_LOG(EXCEPTION) << "Tuple_getitem with non-const index " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Tuple_getitem with non-const index " << cnode->DebugString();
     }
     int64_t index = index_value->value();
 
@@ -631,7 +631,7 @@ class SideEffectFinder {
       return TraceTupleCNodeEffectInfo(tuple_cnode, tuple_indexes);
     }
     // Should not reach here.
-    MS_LOG(EXCEPTION) << "Side effects untraceable: tuple_cnode is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: tuple_cnode is nullptr.";
   }
 
   EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, const std::stack<int64_t> &tuple_indexes) {
@@ -653,7 +653,7 @@ class SideEffectFinder {
     // Trace MakeTuple.
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
       if (tuple_indexes->empty()) {
-        MS_LOG(EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(recursive_level);
+        MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(recursive_level);
       }
       // Pop out tuple index.
       auto top_index = tuple_indexes->top();
@@ -662,7 +662,7 @@ class SideEffectFinder {
       // Support tuple index is negative
       if (top_index < 0) {
         if (SizeToLong(cnode->size()) + top_index < 0) {
-          MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
+          MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
         }
         input_index = static_cast<size_t>(cnode->size() + top_index);
       } else {
@@ -670,7 +670,7 @@ class SideEffectFinder {
         input_index = static_cast<size_t>(top_index) + 1;
       }
       if (input_index >= cnode->size()) {
-        MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
       }
       if (tuple_indexes->empty()) {
         // Trace non-tuple.
@@ -977,7 +977,7 @@ class SideEffectFinder {
       }
       ++parameter_index;
     }
-    MS_LOG(EXCEPTION) << "Parameter not found: " << (para ? para->DebugString() : "<null>");
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter not found: " << (para ? para->DebugString() : "<null>");
   }
 
   // Trace effect info from function parameter.
@@ -1030,11 +1030,11 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(cnode);
     constexpr size_t min_call_node_size = 2;
     if (cnode->size() < min_call_node_size) {
-      MS_LOG(EXCEPTION) << "Invalid call node: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
     auto func_graph = GetValueNode<FuncGraphPtr>(cnode->inputs().at(1));
     if (func_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "Invalid call node: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
     return GetEffectInfo(func_graph);
   }
@@ -1128,7 +1128,7 @@ class SideEffectFinder {
   SccPtr GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(EXCEPTION) << "SCC not found for " << (func_graph ? func_graph->ToString() : "FG(null)");
+      MS_LOG(INTERNAL_EXCEPTION) << "SCC not found for " << (func_graph ? func_graph->ToString() : "FG(null)");
     }
     return found->second;
   }
@@ -1186,7 +1186,7 @@ class SideEffectFinder {
       auto cnode_effect = GetEffectInfo(cnode);
       // Side effect should be detected now, except free variable nodes that not belong to current SCC.
       if (cnode_effect.state != EffectInfo::kDetected && scc->find(cnode->func_graph()) != scc->end()) {
-        MS_LOG(EXCEPTION) << "Side effect is undectable: " << cnode->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Side effect is undectable: " << cnode->DebugString();
       }
     }
     // graph which need PipelineSplit doesn't have effect.
@@ -1343,7 +1343,7 @@ class AutoMonadConverter {
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
       // Effect info should have been set by SideEffectFinder.
-      MS_LOG(EXCEPTION) << "Side effects not detected: " << cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Side effects not detected: " << cnode->DebugString();
     }
     return effect_info;
   }

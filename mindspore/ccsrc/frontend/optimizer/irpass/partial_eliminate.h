@@ -66,7 +66,8 @@ class PartialEliminater : public AnfVisitor {
     // {X, Ys, Xs} if Xs has monad
     if (!IsValueNode<FuncGraph>(X_)) {
       constexpr auto recursive_level = 2;
-      MS_LOG(EXCEPTION) << "not support yet as X_ is not a funcgraph. node: " << node->DebugString(recursive_level);
+      MS_LOG(INTERNAL_EXCEPTION) << "Not support yet as X_ is not a funcgraph. node: "
+                                 << node->DebugString(recursive_level);
     }
     auto fg = GetValueNode<FuncGraphPtr>(X_);
     MS_EXCEPTION_IF_NULL(fg);
@@ -135,7 +136,7 @@ class ChoicePartialEliminater : public AnfVisitor {
     auto &inputs = node->cast<CNodePtr>()->inputs();
     // {prim::kPrimPartial, G}
     if (inputs.size() < kPartialMinInputSize) {
-      MS_LOG(EXCEPTION) << "Node should be Partial CNode, but: " << node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Node should be Partial CNode, but: " << node->DebugString();
     }
     if (IsValueNode<FuncGraph>(inputs[1])) {
       fg_list_.push_back(inputs[1]);
@@ -266,11 +267,11 @@ class ChoicePartialEliminater : public AnfVisitor {
       }
       size_t arg_index = it->second;
       if (arg_index >= fg->parameters().size()) {
-        MS_LOG(EXCEPTION) << "Index:" << arg_index << " out of range:" << fg->parameters().size();
+        MS_LOG(INTERNAL_EXCEPTION) << "Index:" << arg_index << " out of range:" << fg->parameters().size();
       }
       return fg->parameters()[arg_index];
     }
-    MS_LOG(EXCEPTION) << "Can't find parameter of arg:" << arg->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can't find parameter of arg:" << arg->DebugString();
   }
 
   static std::vector<AnfNodePtr> GetFuncGraphNewParameters(

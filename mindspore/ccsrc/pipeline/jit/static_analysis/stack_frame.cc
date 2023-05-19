@@ -53,7 +53,7 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
       fg_evaluator->set_parent_context(parent_context);
     }
   } else {  // Not call FuncGraph or MetaFuncGraph.
-    MS_LOG(EXCEPTION) << "Should be FuncGraphAbstractClosure or MetaFuncGraphAbstractClosure.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should be FuncGraphAbstractClosure or MetaFuncGraphAbstractClosure.";
   }
   return parent_context;
 }
@@ -67,7 +67,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   auto evaluator = engine->GetEvaluatorFor(graph_func);
   auto fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator);
   if (fg_evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
   }
   fg_evaluator->set_bound_node(current_cnode);
 
@@ -153,7 +153,7 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
   // be idempotent as those arguments may be broadened in the second call, so just do the jump when necessary.
   auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator());
   if (fg_evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
   }
   if (!fg_evaluator->always_eval_flag()) {
     MS_LOG(DEBUG) << "Check if CNode had been evaluated, cnode: " << cnode->DebugString();
@@ -192,7 +192,7 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   EvalResultPtr node_eval_result = nullptr;
   auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator());
   if (fg_evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
   }
   if (fg_evaluator->always_eval_flag()) {
     MS_LOG(DEBUG) << "Always eval node";
@@ -258,7 +258,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   evaluator->evaluator_cache_mgr()->SetValue(last_stack_frame->args_abs_list(), result);
   auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator);
   if (fg_evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
   }
   fg_evaluator->PopAlwaysEvalFlag();
 

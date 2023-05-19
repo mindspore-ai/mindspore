@@ -239,21 +239,23 @@ AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const
     MS_EXCEPTION_IF_NULL(abs_seq);
     const auto &elements = abs_seq->elements();
     if (offset >= index.size()) {
-      MS_LOG(EXCEPTION) << "Offset " << offset << " is greater than or equal to vector size: " << index.size();
+      MS_LOG(INTERNAL_EXCEPTION) << "Offset " << offset << " is greater than or equal to vector size: " << index.size();
     }
     if (index[offset] >= elements.size()) {
-      MS_LOG(EXCEPTION) << "At offset" << offset << ", elements size of AsyncAbstract result: " << abs->ToString()
-                        << " is less than or equal to index: " << index[offset];
+      MS_LOG(INTERNAL_EXCEPTION) << "At offset" << offset
+                                 << ", elements size of AsyncAbstract result: " << abs->ToString()
+                                 << " is less than or equal to index: " << index[offset];
     }
     auto resolved = GetAbstractFuncRecursively(elements[index[offset]], index, offset + 1);
     if (!resolved->isa<AbstractFuncAtom>()) {
-      MS_LOG(EXCEPTION) << "AsyncAbstract result cannot be resolved to AbstractFuncAtom, but: " << resolved->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "AsyncAbstract result cannot be resolved to AbstractFuncAtom, but: "
+                                 << resolved->ToString();
     }
     MS_LOG(DEBUG) << "Return abstract: " << resolved->ToString();
     return resolved;
   }
-  MS_LOG(EXCEPTION) << "AsyncAbstract cannot resolved to AbstractFuncAtom or AbstractSeqeunce, but: "
-                    << abs->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "AsyncAbstract cannot resolved to AbstractFuncAtom or AbstractSeqeunce, but: "
+                             << abs->ToString();
 }
 }  // namespace
 bool NeedWaitForBranches(const AbstractBasePtr &abstract) {

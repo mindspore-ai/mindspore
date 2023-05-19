@@ -238,7 +238,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   if (old_return != nullptr) {
     auto iter = repl_node_.find(old_return);
     if (iter == repl_node_.end()) {
-      MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Can't find replicate node for return.";
     }
     MS_EXCEPTION_IF_NULL(iter->second);
     auto return_node = iter->second->cast<CNodePtr>();
@@ -261,8 +261,8 @@ void Cloner::InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNode
   MS_EXCEPTION_IF_NULL(func_graph);
   auto &old_params = func_graph->parameters();
   if (old_params.size() != params.size()) {
-    MS_EXCEPTION(TypeError) << "Origin params size[" << old_params.size() << "], inline params size[" << params.size()
-                            << "]";
+    MS_INTERNAL_EXCEPTION(TypeError) << "Origin params size[" << old_params.size() << "], inline params size["
+                                     << params.size() << "]";
   }
   for (size_t i = 0; i < old_params.size(); ++i) {
     repl_node_[old_params[i]] = params[i];
@@ -397,8 +397,8 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     if (old_params.find(old_param) != old_params.end()) {
       new_param = repl_map_node_[func_graph][old_param];
       if (new_param == nullptr) {
-        MS_LOG(EXCEPTION) << "map_node, func_graph: " << func_graph->ToString()
-                          << ", old_param: " << old_param->DebugString() << " cannot found";
+        MS_LOG(INTERNAL_EXCEPTION) << "map_node, func_graph: " << func_graph->ToString()
+                                   << ", old_param: " << old_param->DebugString() << " cannot found";
       }
       input_params->push_back(new_param);
       continue;
@@ -431,7 +431,7 @@ void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inpu
                      [&local_u_monad, &local_io_monad](const auto &input) -> bool {
                        if (HasAbstractUMonad(input)) {
                          if (local_u_monad != nullptr) {
-                           MS_LOG(EXCEPTION)
+                           MS_LOG(INTERNAL_EXCEPTION)
                              << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
                              << ", second: " << input->ToString();
                          }
@@ -440,7 +440,7 @@ void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inpu
                        }
                        if (HasAbstractIOMonad(input)) {
                          if (local_io_monad != nullptr) {
-                           MS_LOG(EXCEPTION)
+                           MS_LOG(INTERNAL_EXCEPTION)
                              << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
                              << ", second: " << input->ToString();
                          }
@@ -510,12 +510,12 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
     }
   }
   if (input_u_monad != nullptr && param_u_monad != nullptr && input_u_monad != param_u_monad) {
-    MS_LOG(EXCEPTION) << "Cannot have multiple U Monad in one call, first: " << input_u_monad->ToString()
-                      << ", second: " << param_u_monad->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple U Monad in one call, first: " << input_u_monad->ToString()
+                               << ", second: " << param_u_monad->ToString();
   }
   if (input_io_monad != nullptr && param_io_monad != nullptr && input_io_monad != param_io_monad) {
-    MS_LOG(EXCEPTION) << "Cannot have multiple IO Monad in one call, first: " << input_io_monad->ToString()
-                      << ", second: " << param_io_monad->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple IO Monad in one call, first: " << input_io_monad->ToString()
+                               << ", second: " << param_io_monad->ToString();
   }
   (void)inputs.insert(inputs.end(), add_params.begin(), add_params.end());
   auto &u_monad = (input_u_monad != nullptr ? input_u_monad : param_u_monad);
@@ -803,12 +803,12 @@ AnfNodePtr Cloner::CloneDisconnected(const AnfNodePtr &root) {
   auto fg_iter = repl_func_graph_.find(root->func_graph());
   if (fg_iter == repl_func_graph_.end()) {
     MS_EXCEPTION_IF_NULL(root->func_graph());
-    MS_LOG(EXCEPTION) << "Cannot find func graph " << root->func_graph()->ToString() << " in cloner.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot find func graph " << root->func_graph()->ToString() << " in cloner.";
   }
   CloneNode(root, fg_iter->second);
   auto iter = repl_node_.find(root);
   if (iter == repl_node_.end()) {
-    MS_LOG(EXCEPTION) << "Failed in clone for node " << root->DebugString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed in clone for node " << root->DebugString() << ".";
   }
   return iter->second;
 }

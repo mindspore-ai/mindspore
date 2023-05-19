@@ -295,8 +295,8 @@ void FuncGraph::DropValueNode(const AnfNodePtr &node) {
     } else {
       value_nodes_[node]--;
       if (value_nodes_[node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of ValueNode '" << node
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << "Count of ValueNode '" << node
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
   }
@@ -336,8 +336,8 @@ bool FuncGraph::DropFreeVariable(const AnfNodePtr &node) {
     } else {
       free_variables_[node]--;
       if (free_variables_[node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of free variable '" << node
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << "Count of free variable '" << node
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
   }
@@ -406,8 +406,8 @@ bool FuncGraph::DropFuncGraphUsed(const FuncGraphPtr &fg) {
     } else {
       func_graphs_used_[fg]--;
       if (func_graphs_used_[fg] < 0) {
-        MS_LOG(EXCEPTION) << "Count of FuncGraph '" << fg
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << "Count of FuncGraph '" << fg
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
   }
@@ -455,8 +455,8 @@ void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
     } else {
       func_graph_cnodes_index_[pair]--;
       if (func_graph_cnodes_index_[pair] < 0) {
-        MS_LOG(EXCEPTION) << "Count of CNode/Index '" << pair->first << "/" << pair->second
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << "Count of CNode/Index '" << pair->first << "/" << pair->second
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
   }
@@ -491,8 +491,8 @@ void FuncGraph::DropMetaFgPrimValueNode(const AnfNodePtr &value_node) {
     } else {
       meta_fg_prim_value_nodes_[value_node]--;
       if (meta_fg_prim_value_nodes_[value_node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of MetaFgPrim ValueNode '" << value_node->DebugString()
-                          << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << "Count of MetaFgPrim ValueNode '" << value_node->DebugString()
+                                   << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
   }
@@ -501,8 +501,8 @@ void FuncGraph::DropMetaFgPrimValueNode(const AnfNodePtr &value_node) {
 FuncGraphPtr FuncGraph::parent() {
   // report the bug early.
   if (manager_.lock() == nullptr) {
-    MS_LOG(EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
-                      << " NodeInfo: " << trace::GetDebugInfo(debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
+                               << " NodeInfo: " << trace::GetDebugInfo(debug_info());
   }
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
@@ -549,7 +549,7 @@ AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
   }
   auto default_value = itr->second;
   if (default_value == nullptr) {
-    MS_LOG(EXCEPTION) << "Graph parameter " << name << " not exist";
+    MS_LOG(INTERNAL_EXCEPTION) << "Graph parameter " << name << " not exist";
   }
   if (IsValueNode<Null>(default_value)) {
     return nullptr;
@@ -593,10 +593,10 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
   min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
-    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
-                      << " which less than the sum of following: fv_param_count: " << fv_param_count_
-                      << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
-                      << ", kw_only_args_count_: " << kw_only_args_count_;
+    MS_LOG(INTERNAL_EXCEPTION) << "Length of parameters is " << parameters_.size()
+                               << " which less than the sum of following: fv_param_count: " << fv_param_count_
+                               << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
+                               << ", kw_only_args_count_: " << kw_only_args_count_;
   }
   return parameters_[parameters_.size() - min_param_num];
 }
@@ -616,8 +616,8 @@ std::string FuncGraph::GetVariableArgName() {
 AnfNodePtr FuncGraph::GetVariableKwargParameter() {
   if (has_kwarg_) {
     if (parameters_.size() < fv_param_count_ + 1) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is " << fv_param_count_
-                        << ", parameters is less than 1 + fv_param_count";
+      MS_LOG(INTERNAL_EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is "
+                                 << fv_param_count_ << ", parameters is less than 1 + fv_param_count";
     }
     return parameters_[(parameters_.size() - fv_param_count_) - 1];
   }
@@ -650,10 +650,10 @@ AnfNodePtrList FuncGraph::GetKwOnlyArgsParameters() {
   min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
-    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
-                      << " which less than the sum of following: fv_param_count: " << fv_param_count_
-                      << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
-                      << ", kw_only_args_count: " << kw_only_args_count_;
+    MS_LOG(INTERNAL_EXCEPTION) << "Length of parameters is " << parameters_.size()
+                               << " which less than the sum of following: fv_param_count: " << fv_param_count_
+                               << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
+                               << ", kw_only_args_count: " << kw_only_args_count_;
   }
   size_t kw_only_args_start_offset = parameters_.size() - min_param_num;
   std::copy(parameters_.cbegin() + kw_only_args_start_offset, parameters_.cend() - fv_param_count_ - varargs_kwargs_num,

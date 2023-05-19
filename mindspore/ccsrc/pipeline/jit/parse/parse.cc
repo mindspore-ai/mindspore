@@ -269,7 +269,7 @@ std::pair<CNodePtr, AnfNodePtr> GetRealOutputNodes(const FuncGraphPtr &call_grap
   MS_EXCEPTION_IF_NULL(call_graph);
   auto graph_output = call_graph->output();
   if (graph_output == nullptr) {
-    MS_LOG(EXCEPTION) << "graph_output is null, call_graph: " << call_graph->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "graph_output is null, call_graph: " << call_graph->ToString();
   }
   auto graph_output_cnode = dyn_cast<CNode>(graph_output);
   MS_EXCEPTION_IF_NULL(graph_output_cnode);
@@ -489,8 +489,8 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   } else {
     auto lambda_node = python_adapter::GetPyObjAttr(node, "value");
     if (py::isinstance<py::none>(lambda_node) || ast_->GetNodeType(lambda_node)->node_name() != lambda_name) {
-      MS_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
-                              << ast_->GetNodeType(lambda_node)->node_name() << ".";
+      MS_INTERNAL_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
+                                       << ast_->GetNodeType(lambda_node)->node_name() << ".";
     }
     fn_block = ParseLambdaFunction(lambda_node);
   }
@@ -572,7 +572,7 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
 
     namelist_for_default_value.push_back(arg_name);
     if (i >= defaults.size()) {
-      MS_LOG(EXCEPTION) << "Index: " << i << " out of range: " << defaults.size();
+      MS_LOG(INTERNAL_EXCEPTION) << "Index: " << i << " out of range: " << defaults.size();
     }
     if (py::isinstance<py::none>(defaults[i])) {
       default_values.push_back(NewValueNode(kNull));
@@ -793,7 +793,7 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   AstMainType node_main_type = node_type->main_type();
   if (node_main_type != AST_MAIN_TYPE_EXPR) {
     errcode_ = PARSE_NODE_TYPE_NO_MATCH;
-    MS_LOG(EXCEPTION) << "Node type is error : " << node_main_type;
+    MS_LOG(INTERNAL_EXCEPTION) << "Node type is error : " << node_main_type;
   }
   // Call the process function
   const std::string &node_type_name = node_type->node_name();
@@ -831,14 +831,14 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
   //
   // Check the expand info result
   if (expand_info.empty()) {
-    MS_LOG(EXCEPTION) << "Empty expand_info.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Empty expand_info.";
   }
   auto is_expand = py::cast<bool>(expand_info[0]);
   if (is_expand) {
     // Process the expr statement
     constexpr size_t expect_size = 2;
     if (expand_info.size() < expect_size) {
-      MS_LOG(EXCEPTION) << "expand_info size:" << expand_info.size() << " less than " << expect_size << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "expand_info size:" << expand_info.size() << " less than " << expect_size << ".";
     }
     py::object value_object = expand_info[1];
     // Make a Expr CNode.
@@ -896,7 +896,7 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
   py::list res = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
   constexpr size_t list_size = 6;
   if (res.size() < list_size) {
-    MS_LOG(EXCEPTION) << "List size should not be less than 5.";
+    MS_LOG(INTERNAL_EXCEPTION) << "List size should not be less than 5.";
   }
   constexpr size_t file_name_index = 0;
   constexpr size_t line_index = 1;
@@ -955,7 +955,7 @@ AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const Anf
       MS_EXCEPTION_IF_NULL(cnode);
       // The first input of cnode is MakeTuple.
       if (cnode->size() != elts.size() + 1) {
-        MS_LOG(EXCEPTION) << "The size of make_tuple's inputs must be equal to " << (elts.size() + 1) << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "The size of make_tuple's inputs must be equal to " << (elts.size() + 1) << ".";
       }
       for (size_t i = 0; i < elts.size(); i++) {
         auto input = cnode->input(i + 1);
@@ -999,12 +999,12 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Create left and right ANF node
   AnfNodePtr left_node = ParseExprNode(block, left);
   if (left_node == nullptr) {
-    MS_LOG(EXCEPTION) << "DoBinOp process left node failed: " << errcode();
+    MS_LOG(INTERNAL_EXCEPTION) << "DoBinOp process left node failed: " << errcode();
   }
   left_node = HandleInterpret(block, left_node, left);
   AnfNodePtr right_node = ParseExprNode(block, right);
   if (right_node == nullptr) {
-    MS_LOG(EXCEPTION) << "DoBinOp process right node failed:" << errcode();
+    MS_LOG(INTERNAL_EXCEPTION) << "DoBinOp process right node failed:" << errcode();
   }
   right_node = HandleInterpret(block, right_node, right);
   // Resolve the op
@@ -1035,7 +1035,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
         // left_node created by ParseJoinedStr
         auto inputs = left_node->cast<CNodePtr>()->inputs();
         if (inputs.size() <= 1) {
-          MS_LOG(EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
+          MS_LOG(INTERNAL_EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
         }
         auto str_node = inputs[1];
         if (IsValueNode<StringImm>(str_node)) {
@@ -1539,7 +1539,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // If not self.xx, process the obj, eg: obj.xx
   AnfNodePtr value_node = ParseExprNode(block, value_body);
   if (value_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Parse attribute failed";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse attribute failed";
   }
   // Process xxx.Tensor() and xxx is mindspore.
   if (use_fallback && attr_str == "Tensor") {
@@ -1588,7 +1588,7 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   py::object left = python_adapter::GetPyObjAttr(node, "left");
   py::list comparators = python_adapter::GetPyObjAttr(node, "comparators");
   if (comparators.empty()) {
-    MS_LOG(EXCEPTION) << "Comparators can't be empty.";
+    MS_EXCEPTION(ValueError) << "Comparators can't be empty.";
   }
   AnfNodePtr left_node = ParseExprNode(block, left);
   left_node = HandleInterpret(block, left_node, left);
@@ -1615,7 +1615,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
   // If there is only one bool op now
   MS_EXCEPTION_IF_NULL(block);
   if (value_list.empty()) {
-    MS_LOG(EXCEPTION) << "value list is empty.";
+    MS_LOG(INTERNAL_EXCEPTION) << "value list is empty.";
   }
   if (value_list.size() == 1) {
     AnfNodePtr first_node = ParseExprNode(block, value_list[0]);
@@ -1680,7 +1680,7 @@ AnfNodePtr Parser::ParseBoolOp(const FunctionBlockPtr &block, const py::object &
   py::object op_node = python_adapter::GetPyObjAttr(node, "op");
   AstSubType op_type = ast_->GetOpType(op_node);
   if (op_type == AST_SUB_TYPE_UNKNOWN) {
-    MS_LOG(EXCEPTION) << "ProcessBoolOp, got unknown op type";
+    MS_LOG(INTERNAL_EXCEPTION) << "ProcessBoolOp, got unknown op type";
   }
   py::list op_values = python_adapter::GetPyObjAttr(node, "values");
   return ProcessBoolOpValueList(block, op_values, op_type);
@@ -1941,7 +1941,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   }
 
   if (target_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not get target node ";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not get target node ";
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
@@ -2226,8 +2226,8 @@ AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block,
   auto iter_cnode_inputs = iter_cnode->inputs();
   auto iter_script_input = iter_cnode_inputs[script_index];
   if (!IsValueNode<Script>(iter_script_input)) {
-    MS_LOG(EXCEPTION) << "The second input to iter node: " << interpret_iter_node->DebugString()
-                      << " should be a script value node but got: " << iter_script_input->DebugString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "The second input to iter node: " << interpret_iter_node->DebugString()
+                               << " should be a script value node but got: " << iter_script_input->DebugString() << ".";
   }
   auto script = iter_script_input->cast<ValueNodePtr>();
   auto script_val = script->value()->cast<ScriptPtr>();
@@ -2695,7 +2695,8 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   auto generator_node_name = generator_node_type->node_name();
   constexpr auto comprehension_name = "comprehension";
   if (generator_node_name != comprehension_name) {
-    MS_LOG(EXCEPTION) << "Generator node name should be " << comprehension_name << ", but got " << generator_node_name;
+    MS_LOG(INTERNAL_EXCEPTION) << "Generator node name should be " << comprehension_name << ", but got "
+                               << generator_node_name;
   }
 
   // Parse ListComp's `iter` and add `elt` in it.
@@ -2869,7 +2870,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
     target_id_str = GetLocation(target_obj)->expr_src();
   } else if (node_type_name == "Name") {
     if (!py::hasattr(target_obj, "id")) {
-      MS_LOG(EXCEPTION) << "Wrong ast, target: " << target;
+      MS_LOG(INTERNAL_EXCEPTION) << "Wrong ast, target: " << target;
     }
     const py::object id_obj = python_adapter::GetPyObjAttr(target_obj, "id");
     target_id_str = id_obj.cast<std::string>();
@@ -3044,7 +3045,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   ValuePtr globals_converted_value = nullptr;
   py::dict global_dict = block->global_py_params();
   if (!ConvertData(global_dict, &globals_converted_value)) {
-    MS_LOG(EXCEPTION) << "Convert data failed";
+    MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
   }
   auto global_dict_node = NewValueNode(globals_converted_value);
   // Prepare local parameters. Select the needed local parameters for script.
@@ -3155,7 +3156,7 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
 FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::object &node) {
   if (loops_.empty()) {
     // Report error if loop context not set for the 'break' statement.
-    MS_LOG(EXCEPTION) << "Unexpected 'break'.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected 'break'.";
   }
   // Get current loop.
   Loop &loop = loops_.top();
@@ -3176,7 +3177,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
 FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::object &node) {
   if (loops_.empty()) {
     // Report error if loop context not set for the 'continue' statement.
-    MS_LOG(EXCEPTION) << "Unexpected 'continue'.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected 'continue'.";
   }
   // Jump to the header of the loop with iterator called.
   Loop &loop = loops_.top();
@@ -3289,7 +3290,7 @@ FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::obje
   MS_LOG(DEBUG) << "Process ast With";
   py::list items_objs = python_adapter::GetPyObjAttr(node, "items");
   if (items_objs.empty()) {
-    MS_LOG(EXCEPTION) << "Unexpected 'with'.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected 'with'.";
   }
   std::stack<AnfNodePtr> context_expr_nodes;
   std::stack<AnfNodePtr> entered_nodes;
@@ -3616,7 +3617,7 @@ bool ParseFunctionAst::InitParseAstInfo(const std::string &python_mod_get_parse_
   py::tuple ast_info = python_adapter::CallPyObjMethod(parser_, "parse");
   const size_t ast_info_size = 2;
   if (ast_info.size() != ast_info_size) {
-    MS_EXCEPTION(NameError) << "ast info size is not equal to 2.";
+    MS_INTERNAL_EXCEPTION(NameError) << "ast info size is not equal to 2.";
   }
   ast_tokens_ = ast_info[0];
   ast_tree_ = ast_info[1];
@@ -3656,7 +3657,7 @@ AstNodeTypePtr ParseFunctionAst::GetNodeType(const py::object &node) {
   py::list list_value = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_NODE_TYPE, node);
   const size_t list_value_size = 2;
   if (list_value.size() < list_value_size) {
-    MS_LOG(EXCEPTION) << "The node of python method must has 2 values.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node of python method must has 2 values.";
   }
   auto node_name = py::cast<std::string>(list_value[0]);
   auto type = AstMainType(py::cast<int32_t>(list_value[1]));

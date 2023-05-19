@@ -54,7 +54,7 @@ std::vector<parallel::Group> InferRepeatedRankList(const CNodePtr &cnode) {
   OperatorInfoPtr operator_info = cnode->user_data<parallel::OperatorInfo>();
   std::vector<parallel::TensorInfo> output_info = operator_info->outputs_tensor_info();
   if (output_info.size() != 1) {
-    MS_LOG(EXCEPTION) << "The output_info size is wrong, node is" << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The output_info size is wrong, node is" << cnode->DebugString();
   }
   auto tensor_layout = output_info[0].tensor_layout();
   auto tensor_map = tensor_layout.origin_tensor_map();
@@ -129,7 +129,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
   }
   auto group = groups[0];
   if (group.GetDevNum() == 0) {
-    MS_LOG(EXCEPTION) << "The dev num of group should not be 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The dev num of group should not be 0.";
   }
   if (out_shape_element[0] % SizeToLong(group.GetDevNum()) != 0) {
     MS_LOG(WARNING) << "The output_shape first dim:" << out_shape_element[0]

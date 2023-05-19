@@ -194,7 +194,7 @@ std::vector<DebugInfoPtr> CopyDebugInfoLink(const DebugInfoPtr &start, const Deb
     }
 
     if (cur_debug_info->trace_info() == nullptr) {
-      MS_LOG(EXCEPTION) << "Reach nullptr but not found end.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Reach nullptr but not found end.";
     }
     cur_debug_info = cur_debug_info->trace_info()->debug_info();
   }

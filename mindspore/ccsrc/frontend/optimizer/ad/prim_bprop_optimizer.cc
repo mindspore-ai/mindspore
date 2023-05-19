@@ -23,9 +23,9 @@ namespace ad {
 void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out) {
   // args_value_using_info_ contains out
   if (args_value_using_info_.size() != op_args.size() + 1) {
-    MS_LOG(EXCEPTION) << "param size :" << args_value_using_info_.size()
-                      << " of bp_graph:" << opt_func_graph_->ToString()
-                      << " not match input arguments num:" << op_args.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter size :" << args_value_using_info_.size()
+                               << " of bp_graph:" << opt_func_graph_->ToString()
+                               << " not match input arguments num:" << op_args.size();
   }
 
   ValuePtrList new_args(op_args);
@@ -36,8 +36,9 @@ void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, 
 void PrimBpropOptGraphLevel2Info::TryFreeOneValue(const ValuePtrList &op_args,
                                                   const std::vector<ParamUsingInfo> &param_info_vec) {
   if (param_info_vec.size() != op_args.size()) {
-    MS_LOG(EXCEPTION) << "param size :" << param_info_vec.size() << " of bp_graph:" << opt_func_graph_->ToString()
-                      << " not match input arguments num:" << op_args.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter size :" << param_info_vec.size()
+                               << " of bp_graph:" << opt_func_graph_->ToString()
+                               << " not match input arguments num:" << op_args.size();
   }
 
   for (size_t i = 0; i < op_args.size(); ++i) {
@@ -112,22 +113,22 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
   const size_t tuple_get_item_size = 3;
   const size_t index = 2;
   if (cnode->size() != tuple_get_item_size) {
-    MS_LOG(EXCEPTION) << "TupleGetItem Node:" << user_node->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
-                      << "input size is:" << cnode->size();
+    MS_LOG(INTERNAL_EXCEPTION) << "TupleGetItem Node:" << user_node->ToString()
+                               << " of bp_graph:" << opt_func_graph_->ToString() << "input size is:" << cnode->size();
   }
   auto idx_node = cnode->input(index);
   if (!idx_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
-                      << " unexpected used by node:" << user_node->ToString()
-                      << " TupleGetItem idx node:" << idx_node->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
+                               << " unexpected used by node:" << user_node->ToString()
+                               << " TupleGetItem idx node:" << idx_node->ToString();
   }
 
   auto vnode = idx_node->cast<ValueNodePtr>();
   auto value_ptr = vnode->value();
   if (value_ptr == nullptr || !value_ptr->isa<Int64Imm>()) {
-    MS_LOG(EXCEPTION) << "tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
-                      << " unexpected used by node:" << user_node->ToString()
-                      << " TupleGetItem idx node:" << idx_node->ToString() << " idx Value :" << value_ptr;
+    MS_LOG(INTERNAL_EXCEPTION) << "Tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
+                               << " unexpected used by node:" << user_node->ToString()
+                               << " TupleGetItem idx node:" << idx_node->ToString() << " idx Value :" << value_ptr;
   }
 
   auto idx = LongToSize(value_ptr->cast<Int64ImmPtr>()->value());
@@ -181,13 +182,14 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   MS_EXCEPTION_IF_NULL(out);
   auto &inputs = c_node->inputs();
   if (inputs.size() < 1 || inputs.size() - 1 != op_args.size()) {
-    MS_LOG(EXCEPTION) << "The parameters num " << inputs.size() - 1 << " not match arguments num " << op_args.size()
-                      << ", CNode:" << c_node->ToString() << " grap:" << bprop_fg->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The parameters num " << (inputs.size() - 1) << " not match arguments num "
+                               << op_args.size() << ", CNode:" << c_node->ToString()
+                               << " grad:" << bprop_fg->ToString();
   }
 
   if (!IsValueNode<Primitive>(inputs[0])) {
-    MS_LOG(EXCEPTION) << "CNode:" << c_node->ToString()
-                      << " not a primitive node, input_0 is:" << inputs[0]->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "CNode:" << c_node->ToString()
+                               << " not a primitive node, input_0 is:" << inputs[0]->ToString();
   }
 
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(inputs[0]);
@@ -293,7 +295,8 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
   MS_EXCEPTION_IF_NULL(bprop_fg);
   auto &params = bprop_fg->parameters();
   if (abs_list_input.size() != params.size()) {
-    MS_LOG(EXCEPTION) << "Param num:" << params.size() << " not match inputs num " << abs_list_input.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter num:" << params.size() << " not match inputs num "
+                               << abs_list_input.size();
   }
 
   for (size_t i = 0; i < abs_list_input.size(); i++) {

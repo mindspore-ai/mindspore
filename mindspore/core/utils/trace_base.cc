@@ -39,9 +39,9 @@ std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, boo
         ++i;
       }
       auto loc = debug_info->location();
-      MS_LOG(EXCEPTION) << "Find loop debug info: " << debug_info.get()
-                        << ", loc:" << (loc == nullptr ? "null" : loc->ToString()) << ".\n"
-                        << "Please set 'export MS_DEV_ENABLE_FIX_CODE_LINE=0' to avoid this problem.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Find loop debug info: " << debug_info.get()
+                                 << ", loc:" << (loc == nullptr ? "null" : loc->ToString()) << ".\n"
+                                 << "Please set 'export MS_DEV_ENABLE_FIX_CODE_LINE=0' to avoid this problem.";
     }
     auto loc = debug_info->location();
     MS_LOG(DEBUG) << "Visited Insert debug info: " << debug_info.get()

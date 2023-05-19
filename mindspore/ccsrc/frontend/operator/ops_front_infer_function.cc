@@ -85,7 +85,7 @@ void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector
       grad_y_reduce_idy->push_back(reduce_idx);
       curr = State::Y_ONE;
     } else {
-      MS_LOG(EXCEPTION) << "not compatible shape input for BroadcastGradientArgs.";
+      MS_LOG(EXCEPTION) << "Not compatible shape input for BroadcastGradientArgs.";
     }
     if (curr == State::SAME && x_i == 1) {
       grad_x_reduce_idx->push_back(reduce_idx);
@@ -188,7 +188,7 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
   auto mode_v = abs_type->GetValueTrack();
   MS_EXCEPTION_IF_NULL(mode_v);
   if (!mode_v->isa<Type>()) {
-    MS_LOG(EXCEPTION) << "Get the type from AbstractType value failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Get the type from AbstractType value failed.";
   }
 
   auto tmpMode = mode_v->cast<TypePtr>();
@@ -308,8 +308,9 @@ py::object GetMsClassPyObj(const abstract::PartialAbstractClosurePtr &ms_class_a
   MS_EXCEPTION_IF_NULL(ms_class_abs);
   const auto &ms_class_args = ms_class_abs->args();
   if (ms_class_args.size() != 1) {
-    MS_LOG(EXCEPTION) << "When the first input to IsInstance is PartialAbstractClosure, its args size should be 1 but "
-                      << "got: " << ms_class_args.size() << ".";
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "When the first input to IsInstance is PartialAbstractClosure, its args size should be 1 but "
+      << "got: " << ms_class_args.size() << ".";
   }
   auto first_arg = ms_class_args[0];
   auto class_value = first_arg->BuildValue();
@@ -385,8 +386,8 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
     auto wrapper_obj = x_fg->python_obj();
     if (wrapper_obj != nullptr) {
       if (!wrapper_obj->isa<parse::PyObjectWrapper>()) {
-        MS_LOG(EXCEPTION) << "The wrapper_obj of FuncGraphAbstractClosure must be PyObjectWrapper but got: "
-                          << wrapper_obj->ToString() << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "The wrapper_obj of FuncGraphAbstractClosure must be PyObjectWrapper but got: "
+                                   << wrapper_obj->ToString() << ".";
       }
       auto x_py_obj = wrapper_obj->cast<parse::PyObjectWrapperPtr>()->obj();
       result = CheckIsInstanceForFunc(x_py_obj, cmp, mod);
@@ -585,8 +586,8 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
 
   auto x_shp_value = shape_x->BuildValue();
   if (x_shp_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_abs_list[1]->ToString()
-                      << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
+                               << args_abs_list[1]->ToString() << ".";
   }
 
   // Axis can be scalar, tuple or list
@@ -605,8 +606,8 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
 
   auto axis_value = axis->BuildValue();
   if (axis_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_abs_list[1]->ToString()
-                      << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
+                               << args_abs_list[1]->ToString() << ".";
   }
   auto axis_value_ptr = axis_value->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
@@ -629,20 +630,21 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
   auto div_shp_value = div_shp->BuildValue();
   MS_EXCEPTION_IF_NULL(div_shp_value);
   if (div_shp_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
-                      << args_abs_list[0]->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
+                               << args_abs_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_x_value);
   if (shape_x_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
-                      << args_abs_list[1]->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
+                               << args_abs_list[1]->ToString() << ".";
   }
 
   if (div_shp->size() != shape_x->size()) {
-    MS_LOG(EXCEPTION) << "The size of inputs of 'tuple_div' operator must be the same, but the size of divisor tuple is"
-                      << " " << div_shp->size() << ", the size of dividend tuple is " << shape_x->size() << ".";
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "The size of inputs of 'tuple_div' operator must be the same, but the size of divisor tuple is"
+      << " " << div_shp->size() << ", the size of dividend tuple is " << shape_x->size() << ".";
   }
   auto shape_x_tuple_value = shape_x_value->cast<ValueTuplePtr>();
   auto div_shape_tuple_value = div_shp_value->cast<ValueTuplePtr>();
@@ -716,7 +718,7 @@ AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const Primitive
   auto slice_str = GetValue<std::string>(slice_attr);
   auto iter = result_map.find(slice_str);
   if (iter == result_map.end()) {
-    MS_EXCEPTION(AttributeError) << "The 'slice' object has no attribute:" << slice_str << ".";
+    MS_INTERNAL_EXCEPTION(AttributeError) << "The 'slice' object has no attribute:" << slice_str << ".";
   }
   return iter->second;
 }

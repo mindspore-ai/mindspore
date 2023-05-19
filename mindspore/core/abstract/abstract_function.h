@@ -72,7 +72,7 @@ class MS_CORE_API AbstractFuncUnion final : public AbstractFunction {
 
   std::string ToString(bool verbose) const override;
 
-  AbstractFunctionPtr GetUnique() override { MS_LOG(EXCEPTION) << "Cannot get unique from AbstractFuncUnion"; }
+  AbstractFunctionPtr GetUnique() override { MS_LOG(INTERNAL_EXCEPTION) << "Cannot get unique from AbstractFuncUnion"; }
 
   /// \brief Check whether the input AbstractFunction is in AbstractFuncUnion.
   ///
@@ -89,7 +89,7 @@ class MS_CORE_API AbstractFuncUnion final : public AbstractFunction {
 
   std::size_t hash() const override;
 
-  AbstractFunctionPtr Copy() const override { MS_LOG(EXCEPTION) << "Cannot Copy from AbstractFuncUnion"; }
+  AbstractFunctionPtr Copy() const override { MS_LOG(INTERNAL_EXCEPTION) << "Cannot Copy from AbstractFuncUnion"; }
 
  private:
   AbstractFuncAtomPtrList func_list_;

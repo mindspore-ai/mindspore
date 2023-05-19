@@ -165,7 +165,7 @@ abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::
     return keys;
   }
 
-  MS_LOG(EXCEPTION) << key_type->ToString() << " object is not iterable";
+  MS_LOG(INTERNAL_EXCEPTION) << key_type->ToString() << " object is not iterable";
 }
 }  // namespace prim
 }  // namespace mindspore

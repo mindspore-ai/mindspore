@@ -587,7 +587,7 @@ bool ParseAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   TraceManager::OpenRecordDebugInfoFlag();
   if (!resource->source_input()) {
-    MS_LOG(EXCEPTION) << "Parse error";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse error";
   }
 
   py::object input = resource->source_input();
@@ -601,12 +601,12 @@ bool ParseAction(const ResourcePtr &resource) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(input, &converted_ret, true);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
+    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
   }
 
   FuncGraphPtr top_graph = converted_ret->cast<FuncGraphPtr>();
   if (top_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
   }
   if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
     (void)std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
@@ -615,11 +615,8 @@ bool ParseAction(const ResourcePtr &resource) {
   parse::Parser::UpdateTopFuncGraph(top_graph);
 
   resource->set_func_graph(top_graph);
-
   FuncGraphManagerPtr manager = resource->manager();
-  if (manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Manager is nullptr.";
-  }
+  MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(top_graph);
   return true;
 }
@@ -641,7 +638,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     cloner.Run();
     auto cloned_fg_iter = cloner.cloned_func_graphs().find(fg);
     if (cloned_fg_iter == cloner.cloned_func_graphs().end()) {
-      MS_LOG(EXCEPTION) << "Clone func graph failed! " << fg->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Clone func graph failed! " << fg->ToString();
     }
     auto base_graph = cloned_fg_iter->second;
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
@@ -724,7 +721,7 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
   cloner.Run();
   auto cloned_fg_iter = cloner.cloned_func_graphs().find(fg);
   if (cloned_fg_iter == cloner.cloned_func_graphs().end()) {
-    MS_LOG(EXCEPTION) << "Clone func graph failed! " << fg->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Clone func graph failed! " << fg->ToString();
   }
   auto reusing_graph = cloned_fg_iter->second;
 
@@ -805,11 +802,11 @@ bool GraphReusingAction(const ResourcePtr &resource) {
 bool SymbolResolveAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "SymbolResolve error, manager is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "SymbolResolve error, manager is null";
   }
   auto func_graph = resource->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "SymbolResolve error, graph is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "SymbolResolve error, graph is null";
   }
   bool ret = parse::ResolveFuncGraph(func_graph, resource);
   // Remove unused nodes in cnode order list,
@@ -828,11 +825,11 @@ bool SymbolResolveAction(const ResourcePtr &resource) {
 bool AutoMonadAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "Auto-Monad failed, manager is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Auto-Monad failed, manager is null";
   }
   auto func_graph = resource->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Auto-Monad failed, graph is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Auto-Monad failed, graph is null";
   }
   (void)pipeline::AutoMonad(func_graph);
   return true;
@@ -841,11 +838,11 @@ bool AutoMonadAction(const ResourcePtr &resource) {
 bool OrderEnforceAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "Order-Enforce error, manager is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Order-Enforce error, manager is null";
   }
   auto func_graph = resource->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Order-Enforce error, graph is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Order-Enforce error, graph is null";
   }
   pipeline::OrderEnforce(func_graph);
   return true;
@@ -854,10 +851,10 @@ bool OrderEnforceAction(const ResourcePtr &resource) {
 bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "MetaUnpackPrepareAction error, manager is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, manager is null.";
   }
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "MetaUnpackPrepareAction error, graph is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, graph is null.";
   }
   return MetaUnpackPreparePass(resource);
 }
@@ -905,7 +902,7 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
 bool AbstractSpecializeAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "AbstractSpecialize error";
+    MS_LOG(INTERNAL_EXCEPTION) << "AbstractSpecialize error";
   }
   SetMindIRLoadFlag(resource);
   // Abstract analyze
@@ -947,7 +944,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
       auto result = pass.second(resource);
       if (!result) {
-        MS_LOG(EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
+        MS_LOG(INTERNAL_EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
       }
 #ifdef ENABLE_DUMP_IR
       auto context = MsContext::GetInstance();
@@ -1082,10 +1079,10 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
 bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "PynativeElimOpt error, manager is null.";
   }
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "PynativeElimOpt error, graph is null.";
   }
   return EliminateSpecialOpOptPass(resource);
 }
@@ -1093,10 +1090,10 @@ bool EliminateSpecialOpNode(const ResourcePtr &resource) {
 bool ConvertListToTupleForExport(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "PynativeElimOpt error, manager is null.";
   }
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "PynativeElimOpt error, graph is null.";
   }
   return ConvertListToTupleForExportPass(resource);
 }
@@ -1204,7 +1201,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       auto make_tuple = cnode->input(kSwitchLayerBranchesIndex);
       if (!IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple)) {
-        MS_LOG(EXCEPTION) << "SwitchLayer input2 should be make_tuple, but got: " << make_tuple->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "SwitchLayer input2 should be make_tuple, but got: " << make_tuple->DebugString();
       }
       const auto &make_tuple_inputs = make_tuple->cast<CNodePtr>()->inputs();
       if (std::any_of(make_tuple_inputs.begin() + 1, make_tuple_inputs.end(), [](const AnfNodePtr &input) {
@@ -1427,7 +1424,8 @@ void SetRunMode(const ResourcePtr &resource) {
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseHostCollective()) {
-    MS_LOG(EXCEPTION) << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or MS";
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or MS";
   }
 }
 
@@ -1435,7 +1433,7 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "TaskEmit args error";
+    MS_LOG(INTERNAL_EXCEPTION) << "TaskEmit args error";
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1482,7 +1480,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
     return true;
   }
   if (!resource->HasResult(kOutput)) {
-    MS_LOG(EXCEPTION) << "Execute args error";
+    MS_LOG(INTERNAL_EXCEPTION) << "Execute args error";
   }
   std::string backend = MsContext::GetInstance()->backend_policy();
   // The graph running of mindRT.
@@ -1582,7 +1580,7 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Remove value node duplications error.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Remove value node duplications error.";
   }
   auto manager = resource->manager();
   // Remove duplicated value nodes, due to replace operation, can't use reference.
@@ -1609,16 +1607,16 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   resource->set_is_load(true);
   auto cell = py::cast<CellPtr>(resource->source_input());
   if (cell == nullptr) {
-    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The graph loaded from mindir is null.";
   }
   const std::string mindir_graph = "graph_load_from_mindir";
   auto obj = cell->GetAttr(mindir_graph);
   if (obj == nullptr) {
-    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null. The cell has not attribute: " << mindir_graph;
+    MS_LOG(INTERNAL_EXCEPTION) << "The graph loaded from mindir is null. The cell has not attribute: " << mindir_graph;
   }
   auto fg = GetValue<FuncGraphPtr>(obj);
   if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The graph loaded from mindir is null.";
   }
   resource->set_func_graph(fg);
   FuncGraphManagerPtr mng = fg->manager();

@@ -383,12 +383,12 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
                   << ", current_node: " << current_sequence_node->DebugString();
 
     if (candidate_flags->size() != current_flags->size()) {
-      MS_LOG(EXCEPTION) << "Flag not same size";
+      MS_LOG(INTERNAL_EXCEPTION) << "Flag not same size";
     }
     for (size_t j = 0; j < candidate_flags->size(); ++j) {
       if ((*candidate_flags)[j] != (*current_flags)[j]) {
-        MS_LOG(EXCEPTION) << "Not equal elements_use_flags[" << j << "], this_flag: " << (*candidate_flags)[j]
-                          << ", other_flag: " << (*current_flags)[j];
+        MS_LOG(INTERNAL_EXCEPTION) << "Not equal elements_use_flags[" << j << "], this_flag: " << (*candidate_flags)[j]
+                                   << ", other_flag: " << (*current_flags)[j];
       }
     }
   }
@@ -560,8 +560,8 @@ void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &l
   lhs_sequence->InsertSequenceNodes(sequence_nodes);
   rhs_sequence->InsertSequenceNodes(sequence_nodes);
   if (lhs_sequence->elements().size() != rhs_sequence->elements().size()) {
-    MS_LOG(EXCEPTION) << "The elements size should be equal, " << lhs_sequence->ToString() << ", "
-                      << rhs_sequence->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The elements size should be equal, " << lhs_sequence->ToString() << ", "
+                               << rhs_sequence->ToString();
   }
   for (size_t i = 0; i < lhs_sequence->elements().size(); ++i) {
     auto lhs_inner_sequence = dyn_cast<AbstractSequence>(lhs_sequence->elements()[i]);
@@ -578,7 +578,7 @@ void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &l
 
 void AbstractSequence::InsertSequenceNodes(const AnfNodeWeakPtrList &sequence_nodes) {
   if (dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Can not insert sequence nodes for dynamic length sequence " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not insert sequence nodes for dynamic length sequence " << ToString();
   }
   if (sequence_nodes_ == nullptr) {
     MS_LOG(DEBUG) << "The sequence_nodes is null.";
@@ -592,7 +592,7 @@ void AbstractSequence::InsertSequenceNodes(const AnfNodeWeakPtrList &sequence_no
 
 void AbstractSequence::InsertSequenceNode(const AnfNodePtr &sequence_node) {
   if (dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Can not insert sequence node for dynamic length sequence " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not insert sequence node for dynamic length sequence " << ToString();
   }
   if (sequence_nodes_ == nullptr) {
     MS_LOG(DEBUG) << "The sequence_nodes is null.";
@@ -611,7 +611,7 @@ void AbstractSequence::InsertSequenceNode(const AnfNodePtr &sequence_node) {
 
 void AbstractSequence::UpdateSequenceNode(const AnfNodePtr &old_sequence_node, const AnfNodePtr &new_sequence_node) {
   if (dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Can not update sequence node for dynamic length sequence " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not update sequence node for dynamic length sequence " << ToString();
   }
   if (sequence_nodes_ == nullptr) {
     MS_LOG(DEBUG) << "The sequence_nodes is null.";
@@ -625,7 +625,7 @@ void AbstractSequence::UpdateSequenceNode(const AnfNodePtr &old_sequence_node, c
     CheckSequenceNodesValid(*sequence_nodes_);
     return;
   }
-  MS_LOG(EXCEPTION) << "Not found old node \'" << old_sequence_node->DebugString() << "\' in sequence nodes.";
+  MS_LOG(INTERNAL_EXCEPTION) << "Not found old node \'" << old_sequence_node->DebugString() << "\' in sequence nodes.";
 }
 
 bool AbstractSequence::PurifyElements() {
@@ -662,7 +662,7 @@ bool AbstractSequence::PurifyElements() {
   // Purify the elements.
   auto &elements_use_flags = *elements_use_flags_ptr;
   if (elements_use_flags.size() < elements_.size()) {
-    MS_LOG(EXCEPTION) << "Elements size should not be greater to elements use flags size. " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Elements size should not be greater to elements use flags size. " << ToString();
   }
   for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
@@ -860,7 +860,7 @@ std::size_t AbstractSequence::size() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return 0;
     }
-    MS_LOG(EXCEPTION) << "Can not get size for dynamic length sequence " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not get size for dynamic length sequence " << ToString();
   }
   return elements_.size();
 }
@@ -870,7 +870,7 @@ bool AbstractSequence::empty() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return true;
     }
-    MS_LOG(EXCEPTION) << "Can not call function empty() for dynamic length sequence " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not call function empty() for dynamic length sequence " << ToString();
   }
   return elements_.empty();
 }
@@ -973,7 +973,7 @@ void AbstractTuple::set_shape(const BaseShapePtr &shape) {
   auto tuple_shape = dyn_cast_ptr<TupleShape>(shape);
   MS_EXCEPTION_IF_NULL(tuple_shape);
   if (tuple_shape->shape().size() != elements_.size()) {
-    MS_LOG(EXCEPTION) << "Size mismatch: " << tuple_shape->shape().size() << " vs " << elements_.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Size mismatch: " << tuple_shape->shape().size() << " vs " << elements_.size();
   }
 
   for (size_t i = 0; i < elements_.size(); ++i) {
@@ -1240,7 +1240,7 @@ std::size_t AbstractSlice::hash() const {
 ShapePtr AbstractUndetermined::shape() const {
   auto shp = dyn_cast<Shape>(GetShapeTrack());
   if (shp == nullptr) {
-    MS_LOG(EXCEPTION) << "Tensor should have a shape.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Tensor should have a shape.";
   }
   return shp;
 }
@@ -1248,7 +1248,7 @@ ShapePtr AbstractUndetermined::shape() const {
 void AbstractUndetermined::set_shape(const BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->isa<NoShape>()) {
-    MS_LOG(EXCEPTION) << "AbstractUndetermined can't set shape as NoShape.";
+    MS_LOG(INTERNAL_EXCEPTION) << "AbstractUndetermined can't set shape as NoShape.";
   }
   AbstractBase::set_shape(shape);
 }
@@ -1566,7 +1566,7 @@ AbstractRefTensor::AbstractRefTensor(const AbstractTensorPtr &ref_value, const V
   set_is_adapter(ref_value->is_adapter());
   MS_EXCEPTION_IF_NULL(ref_key_value);
   if (ref_key_value != kValueAny && !ref_key_value->isa<RefKey>()) {
-    MS_LOG(EXCEPTION) << "ref_key_value must be kValueAny or RefKey, but got:" << ref_key_value->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "ref_key_value must be kValueAny or RefKey, but got:" << ref_key_value->ToString();
   }
 }
 
@@ -1608,8 +1608,8 @@ AbstractBasePtr AbstractRefTensor::Join(const AbstractBasePtr &other) {
   // Abstract ref join other abstract are same to AbstractTensor::Join.
   auto joined_tensor = AbstractTensor::Join(other);
   if (!joined_tensor->isa<AbstractTensor>()) {
-    MS_LOG(EXCEPTION) << "Expect an AbstractTensor, but got:" << joined_tensor->ToString()
-                      << ", other:" << other->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Expect an AbstractTensor, but got:" << joined_tensor->ToString()
+                               << ", other:" << other->ToString();
   }
   return joined_tensor;
 }
@@ -1836,7 +1836,7 @@ TypePtr AbstractSparseTensor::BuildType() const { return std::make_shared<Sparse
 const AbstractTuplePtr AbstractSparseTensor::shape() const {
   auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(size() - 1);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get shape nullptr in AbstractSparseTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get shape nullptr in AbstractSparseTensor: " << ToString();
   }
   return res;
 }
@@ -1959,7 +1959,7 @@ std::string AbstractCOOTensor::ToString() const {
 const AbstractTensorPtr AbstractCOOTensor::indices() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get indices nullptr in AbstractCOOTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get indices nullptr in AbstractCOOTensor: " << ToString();
   }
   return res;
 }
@@ -1967,7 +1967,7 @@ const AbstractTensorPtr AbstractCOOTensor::indices() const {
 const AbstractTensorPtr AbstractCOOTensor::values() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get values nullptr in AbstractCOOTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get values nullptr in AbstractCOOTensor: " << ToString();
   }
   return res;
 }
@@ -2012,7 +2012,7 @@ std::string AbstractCSRTensor::ToString() const {
 const AbstractTensorPtr AbstractCSRTensor::indptr() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndptrIdx);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get indptr nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get indptr nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }
@@ -2020,7 +2020,7 @@ const AbstractTensorPtr AbstractCSRTensor::indptr() const {
 const AbstractTensorPtr AbstractCSRTensor::indices() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get indices nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get indices nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }
@@ -2028,7 +2028,7 @@ const AbstractTensorPtr AbstractCSRTensor::indices() const {
 const AbstractTensorPtr AbstractCSRTensor::values() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Get values nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get values nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }

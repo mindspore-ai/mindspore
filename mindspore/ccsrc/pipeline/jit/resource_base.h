@@ -43,7 +43,7 @@ class ResourceBase {
   Any GetResult(const std::string &key) const {
     auto iter = results_.find(key);
     if (iter == results_.end()) {
-      MS_LOG(EXCEPTION) << "this key is not in resource list:" << key;
+      MS_LOG(INTERNAL_EXCEPTION) << "this key is not in resource list:" << key;
     }
     return iter->second;
   }

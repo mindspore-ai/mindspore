@@ -99,7 +99,7 @@ constexpr bool kLittleEndian = true;
 inline uint32 DecodeFixed32(const char *ptr) {
   uint32 result;
   if (EOK != memcpy_s(&result, sizeof(result), ptr, sizeof(result))) {
-    MS_LOG(EXCEPTION) << "Call DecodeFixed32 memcpy value failure.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Call DecodeFixed32 memcpy value failure.";
   }
   return result;
 }
@@ -108,15 +108,16 @@ inline uint32 LE_LOAD32(const uint8_t *p) { return DecodeFixed32(reinterpret_cas
 // Encode the data to buffer
 inline void EncodeFixed32(char *buf, uint32 value) {
   if (EOK != memcpy_s(buf, sizeof(value), &value, sizeof(value))) {
-    MS_LOG(EXCEPTION) << "Call EncodeFixed32 memcpy value failure.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Call EncodeFixed32 memcpy value failure.";
   }
 }
 inline void EncodeFixed64(char *buf, const unsigned int array_len, int64 value) {
   if (sizeof(value) > array_len) {
-    MS_LOG(EXCEPTION) << "Buffer overflow, real size is " << array_len << ", but required " << sizeof(value) << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Buffer overflow, real size is " << array_len << ", but required " << sizeof(value)
+                               << ".";
   }
   if (EOK != memcpy_s(buf, sizeof(value), &value, sizeof(value))) {
-    MS_LOG(EXCEPTION) << "Call EncodeFixed64 memcpy value failure.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Call EncodeFixed64 memcpy value failure.";
   }
 }
 }  // namespace system

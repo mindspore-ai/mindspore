@@ -25,7 +25,7 @@ std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) const {
   }
   std::string act_name = action_name();
   if (debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "Traced debug info is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Traced debug info is null";
   }
   if (debug_info() == info) {
     return act_name;

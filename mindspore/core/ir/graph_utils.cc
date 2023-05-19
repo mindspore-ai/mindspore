@@ -43,7 +43,8 @@ static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const An
 }
 
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
-  constexpr size_t kVecReserve = 64;
+  constexpr auto kVecReserve = 64;
+  constexpr auto kRecursiveLevel = 2;
   std::vector<AnfNodePtr> res;
   if (root == nullptr) {
     return res;
@@ -84,10 +85,11 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
         // To dump all nodes in a circle.
         MS_LOG(ERROR) << "Graph cycle exists. Circle is: ";
         auto circle_len = DumpSortingCircleList(todo, next, seen);
-        MS_LOG(EXCEPTION) << "Graph cycle exists, size: " << circle_len << ", strike node: " << next->DebugString(2);
+        MS_LOG(INTERNAL_EXCEPTION) << "Graph cycle exists, size: " << circle_len
+                                   << ", strike node: " << next->DebugString(kRecursiveLevel);
       }
     } else if (incl > EXCLUDE) {  // Not NOFOLLOW or EXCLUDE
-      MS_LOG(EXCEPTION) << "The result of include(node) must be one of: \"follow\", \"nofollow\", \"exclude\"";
+      MS_LOG(INTERNAL_EXCEPTION) << "The result of include(node) must be one of: \"follow\", \"nofollow\", \"exclude\"";
     }
   }
   return res;

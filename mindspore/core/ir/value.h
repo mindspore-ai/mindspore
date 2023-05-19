@@ -438,7 +438,7 @@ class MS_CORE_API RefKey final : public StringImm {
   MS_DECLARE_PARENT(RefKey, StringImm)
 
   abstract::AbstractBasePtr ToAbstract() override {
-    MS_LOG(EXCEPTION) << "RefKey can't be converted to abstract, ref_key: " << ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "RefKey can't be converted to abstract, ref_key: " << ToString();
   }
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;
@@ -498,7 +498,7 @@ class MS_CORE_API ValueProblem final : public Value {
   ///
   /// \return The abstract of the ValueProblem object.
   abstract::AbstractBasePtr ToAbstract() override {
-    MS_LOG(EXCEPTION) << "ValueProblem(" << ToString() << ") can't be converted to abstract.";
+    MS_LOG(INTERNAL_EXCEPTION) << "ValueProblem(" << ToString() << ") can't be converted to abstract.";
   }
   /// \brief Check whether the value belongs to DeadNode.
   ///
@@ -608,12 +608,10 @@ MS_CORE_API extern const ValuePtr kIOMonad;
 
 template <>
 inline const char *GetValue(const ValuePtr &value) {
-  if (value == nullptr) {
-    MS_LOG(EXCEPTION) << "Value is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(value);
   auto imm = value->cast<StringImmPtr>();
   if (imm == nullptr) {
-    MS_LOG(EXCEPTION) << "GetValue:" << value->ToString() << ", Type:" << value->type_name();
+    MS_LOG(INTERNAL_EXCEPTION) << "GetValue:" << value->ToString() << ", Type:" << value->type_name();
   }
   return common::SafeCStr(imm->value());
 }
@@ -621,13 +619,11 @@ inline const char *GetValue(const ValuePtr &value) {
 template <typename T, typename S = typename std::decay<T>::type,
           typename U = typename std::enable_if<is_vector<S>::value, typename S::value_type>::type>
 std::vector<U> GetValue(const ValuePtr &value) {
-  if (value == nullptr) {
-    MS_LOG(EXCEPTION) << "Value is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(value);
 
   if (!value->isa<ValueSequence>()) {
-    MS_LOG(EXCEPTION) << "Error GetValue for value: " << value->ToString() << ", type: vector<" << typeid(U).name()
-                      << ">";
+    MS_LOG(INTERNAL_EXCEPTION) << "Error GetValue for value: " << value->ToString() << ", type: vector<"
+                               << typeid(U).name() << ">";
   }
   std::vector<U> rets;
   const std::vector<ValuePtr> &vals = value->cast<ValueSequencePtr>()->value();

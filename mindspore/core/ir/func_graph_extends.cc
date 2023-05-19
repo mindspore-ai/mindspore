@@ -229,7 +229,7 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
     }
     auto default_value = specialized_graph->GetDefaultValueByName(param_name);
     if (default_value == nullptr) {
-      MS_LOG(EXCEPTION) << "Miss argument input for parameter:" << param_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Miss argument input for parameter:" << param_name;
     }
     MS_EXCEPTION_IF_NULL(repl_nodes);
     (void)repl_nodes->emplace(param_node, default_value);
@@ -241,7 +241,7 @@ FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
   std::vector<size_t> pos_arg_indexes;
   size_t arguments_count = args_abs_list.size();
   if (fv_param_count_ > arguments_count) {
-    MS_LOG(EXCEPTION) << "The number of parameters in funcgraph cannot exceed the number of arguments.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The number of parameters in funcgraph cannot exceed the number of arguments.";
   }
   for (size_t i = 0; i < arguments_count - fv_param_count_; i++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[i]);

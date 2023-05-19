@@ -194,7 +194,7 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inpu
     auto each_inputs_abstract_elements = each_input_abstract_tuple->elements();
     auto each_inputs_abstract_elements_size = each_inputs_abstract_elements.size();
     if (each_inputs_abstract_elements_size == 0) {
-      MS_LOG(EXCEPTION) << "each_inputs_abstract_elements_size is empty";
+      MS_LOG(INTERNAL_EXCEPTION) << "Each_inputs_abstract_elements_size is empty";
     }
     auto each_inputs_abstract_elements_begin = each_inputs_abstract_elements[0];
     if (each_inputs_abstract_elements_begin->isa<abstract::AbstractTuple>()) {
@@ -216,7 +216,7 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inpu
     } else {
       // current each input: (z, z_axis).
       if (each_inputs_abstract_elements_size != kEachInputsSize) {
-        MS_LOG(EXCEPTION) << "each input with no tuple should have only two elements.";
+        MS_LOG(EXCEPTION) << "Each input with no tuple should have only two elements.";
       }
       auto val_cnode =
         fg_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), each_input_cnode, NewValueNode(static_cast<int64_t>(0))});
