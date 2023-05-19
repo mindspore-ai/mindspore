@@ -1162,6 +1162,7 @@ class SymbolTree(Observer, Observable):
     def _remove_unused_field(self):
         """remove unused field in __init__ function"""
         multi_targets = []
+        self._deleted_field = {}
         for index, body in enumerate(self._init_func_ast.body):
             if not isinstance(body, ast.Assign):
                 continue
