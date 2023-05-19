@@ -101,14 +101,14 @@ if [[ X"$OPENMPI" == "Xon" ]]; then
     echo "installing openmpi"
     origin_wd=$PWD
     cd /tmp
-    curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
-    tar xzf openmpi-4.0.3.tar.gz
-    cd openmpi-4.0.3
-    ./configure --prefix=/usr/local/openmpi-4.0.3
+    curl -O https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.4.tar.gz
+    tar xzf openmpi-4.1.4.tar.gz
+    cd openmpi-4.1.4
+    ./configure --prefix=/usr/local/openmpi-4.1.4
     make
     sudo make install
-    add_env PATH /usr/local/openmpi-4.0.3/bin
-    add_env LD_LIBRARY_PATH /usr/local/openmpi-4.0.3/lib
+    add_env PATH /usr/local/openmpi-4.1.4/bin
+    add_env LD_LIBRARY_PATH /usr/local/openmpi-4.1.4/lib
     cd $origin_wd
 fi
 

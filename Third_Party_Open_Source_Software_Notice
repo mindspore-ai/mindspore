@@ -1178,7 +1178,7 @@ FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-Software: NCCL 2.7.6-1
+Software: NCCL 2.16.5-1
 Copyright (c) 2016-2019, NVIDIA CORPORATION. All rights reserved.
 Copyright (c) 2015-2019, NVIDIA CORPORATION. All rights reserved.
 Copyright (c) 2017-2019, NVIDIA CORPORATION. All rights reserved.
@@ -1222,7 +1222,7 @@ Copyright (c) 2015-2019, NVIDIA CORPORATION. All rights reserved.
  The U.S. Department of Energy funded the development of this software
  under subcontract 7078610 with Lawrence Berkeley National Laboratory.
 
-Software: OpenMPI 4.0.3
+Software: OpenMPI 4.1.4
 Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 Copyright (c) 2015      Los Alamos National Security, LLC. All rights
