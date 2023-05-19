@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ bool CompactTensorLiveness::Run(const FuncGraphPtr &func_graph) {
     if (auto cnode = node->cast<CNodePtr>(); cnode != nullptr) {
       bool any_cnode_input = std::any_of(cnode->inputs().cbegin(), cnode->inputs().cend(),
                                          [](const AnfNodePtr &n) { return n->isa<CNode>() || n->isa<Parameter>(); });
-      if (any_cnode_input || common::AnfAlgo::IsGraphKernel(cnode) || mng->node_users()[cnode].size() != 1) {
+      if (any_cnode_input || !AnfUtils::IsRealKernel(cnode) || common::AnfAlgo::IsGraphKernel(cnode) ||
+          mng->node_users()[cnode].size() != 1) {
         continue;
       }
       (void)target_nodes.insert(node);
