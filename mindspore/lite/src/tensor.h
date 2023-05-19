@@ -166,6 +166,8 @@ class Tensor {
 
   void *device_data() const { return device_data_; }
 
+  bool is_device() const { return device_data_ != nullptr; }
+
   Category category() const { return static_cast<Category>(tensor_c_.category_); }
 
   void set_category(Category category) { tensor_c_.category_ = category; }

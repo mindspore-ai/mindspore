@@ -1,5 +1,6 @@
 add_compile_definitions(USE_ANDROID_LOG)
 
+set(LITE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 include_directories(${CORE_DIR})
 

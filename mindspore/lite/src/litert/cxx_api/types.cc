@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,12 @@
 #include "include/api/dual_abi_helper.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "src/common/log_adapter.h"
+#ifdef ENABLE_CLOUD_INFERENCE
+#include <fstream>
+#include "utils/file_utils.h"
+#include "ir/dtype.h"
+#include "utils/convert_utils_base.h"
+#endif
 
 namespace mindspore {
 class Buffer::Impl {
@@ -166,14 +172,109 @@ MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType
 
 MSTensor MSTensor::CreateDeviceTensor(const std::vector<char> &name, enum DataType type,
                                       const std::vector<int64_t> &shape, void *data, size_t data_len) noexcept {
+#ifdef ENABLE_CLOUD_INFERENCE
+  auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, nullptr, 0);
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    return MSTensor(nullptr);
+  }
+  if (data_len < impl->DataSize()) {
+    MS_LOG(ERROR) << "The size " << data_len << " of data cannot be less that the memory size required by the shape "
+                  << shape << " and data type " << TypeIdToString(static_cast<enum TypeId>(type));
+    return MSTensor(nullptr);
+  }
+  impl->SetDeviceData(data);
+  return MSTensor(impl);
+#else
   MS_LOG(ERROR) << "Unsupported Feature.";
   return MSTensor(nullptr);
+#endif
 }
 
 MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum DataType type,
                                          const std::vector<int64_t> &shape) noexcept {
+#ifdef ENABLE_CLOUD_INFERENCE
+  try {
+    std::string file_str = CharToString(file);
+
+    auto realpath = mindspore::FileUtils::GetRealPath(file_str.c_str());
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << file_str;
+      return nullptr;
+    }
+
+    // Read image file
+    auto file_path = realpath.value();
+    if (file_path.empty()) {
+      MS_LOG(ERROR) << "Can not find any input file.";
+      return nullptr;
+    }
+
+    std::ifstream ifs(file_path, std::ios::in | std::ios::binary);
+    if (!ifs.good()) {
+      MS_LOG(ERROR) << "File: " + file_path + " does not exist.";
+      return nullptr;
+    }
+    if (!ifs.is_open()) {
+      MS_LOG(ERROR) << "File: " + file_path + " open failed.";
+      return nullptr;
+    }
+
+    auto &io_seekg1 = ifs.seekg(0, std::ios::end);
+    if (!io_seekg1.good() || io_seekg1.fail() || io_seekg1.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to seekg file: " + file_path;
+      return nullptr;
+    }
+
+    size_t size = static_cast<size_t>(ifs.tellg());
+    std::vector<int64_t> tensor_shape;
+    tensor_shape = shape.empty() ? std::vector<int64_t>{static_cast<int64_t>(size)} : shape;
+    MSTensor *ret = new (std::nothrow) MSTensor(file_path, type, tensor_shape, nullptr, size);
+    if (ret == nullptr) {
+      ifs.close();
+      MS_LOG(ERROR) << "Malloc memory failed.";
+      return nullptr;
+    }
+    auto &io_seekg2 = ifs.seekg(0, std::ios::beg);
+    if (!io_seekg2.good() || io_seekg2.fail() || io_seekg2.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to seekg file: " + file_path;
+      return nullptr;
+    }
+
+    std::map<enum DataType, size_t> TypeByte = {
+      {DataType::kTypeUnknown, 0},       {DataType::kObjectTypeString, 0},  {DataType::kNumberTypeBool, 1},
+      {DataType::kNumberTypeInt8, 1},    {DataType::kNumberTypeInt16, 2},   {DataType::kNumberTypeInt32, 4},
+      {DataType::kNumberTypeInt64, 8},   {DataType::kNumberTypeUInt8, 1},   {DataType::kNumberTypeUInt16, 2},
+      {DataType::kNumberTypeUInt32, 4},  {DataType::kNumberTypeUInt64, 8},  {DataType::kNumberTypeFloat16, 2},
+      {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
+    };
+
+    if (LongToSize(ret->ElementNum()) * TypeByte[type] != size) {
+      ifs.close();
+      MS_LOG(ERROR) << "Tensor data size: " << LongToSize(ret->ElementNum()) * TypeByte[type]
+                    << " not match input data length: " << size;
+      return nullptr;
+    }
+
+    auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), static_cast<std::streamsize>(size));
+    if (!io_read.good() || io_read.fail() || io_read.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to read file: " + file_path;
+      return nullptr;
+    }
+    ifs.close();
+
+    return ret;
+  } catch (...) {
+    MS_LOG(ERROR) << "Unknown error occurred.";
+    return nullptr;
+  }
+#else
   MS_LOG(ERROR) << "Unsupported Feature.";
   return nullptr;
+#endif
 }
 
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
@@ -342,8 +443,11 @@ size_t MSTensor::DataSize() const {
 }
 
 bool MSTensor::IsDevice() const {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return false;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return false;
+  }
+  return impl_->IsDevice();
 }
 
 void MSTensor::DestroyTensorPtr(MSTensor *tensor) noexcept {
