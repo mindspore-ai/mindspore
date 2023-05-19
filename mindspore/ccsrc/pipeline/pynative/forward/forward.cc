@@ -293,11 +293,6 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   } else {
     op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->forward_use_dynamic_shape_process();
   }
-  // The input and output of some operators are always static shape
-  static const std::unordered_set<std::string> static_shape_op_names = {prim::kPrimNPUClearFloatStatusV2->name()};
-  if (static_shape_op_names.count(op_run_info->base_op_run_info.op_name) > 0) {
-    op_run_info->base_op_run_info.use_dynamic_shape_process = false;
-  }
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
