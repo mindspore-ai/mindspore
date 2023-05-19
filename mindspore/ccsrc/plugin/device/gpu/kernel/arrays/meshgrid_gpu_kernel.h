@@ -62,13 +62,12 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
     std::function<bool(MeshgridGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MeshgridFunc>> func_list_;
-  static std::vector<std::pair<KernelAttr, MeshgridFunc>> complex_list_;
   MeshgridFunc kernel_func_;
 
   void *cuda_stream_{nullptr};
   size_t data_size_;
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shapes_;
+  std::vector<int64_t> output_shape_;
   size_t input_size_;
   size_t input_count_;
   size_t output_size_;
