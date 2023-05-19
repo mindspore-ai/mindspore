@@ -84,7 +84,7 @@ def run_read_tensors(is_sync):
             compare_expect_actual_result(tensor_info, tensor_data, 0, test_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -93,7 +93,7 @@ def test_sync_read_tensors():
     run_read_tensors(True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

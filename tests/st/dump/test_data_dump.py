@@ -482,6 +482,7 @@ def run_saved_data_dump_test(scenario, saved_data):
             assert not os.path.isfile(stat_path)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -494,6 +495,7 @@ def test_gpu_e2e_statistic_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_saved_data_dump_test('test_gpu_e2e_dump', 'statistic')
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -508,7 +510,8 @@ def test_gpu_e2e_tensor_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_saved_data_dump_test('test_gpu_e2e_dump', 'tensor')
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -521,7 +524,8 @@ def test_gpu_e2e_full_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_saved_data_dump_test('test_gpu_e2e_dump', 'full')
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -608,7 +612,7 @@ def test_ascend_tensor_dump():
     run_saved_data_dump_test('test_async_dump', 'tensor')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -623,7 +627,7 @@ def test_ascend_full_dump():
     run_saved_data_dump_test('test_async_dump', 'full')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -714,7 +718,7 @@ def run_constant_e2e_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -728,7 +732,7 @@ def test_constant_gpu_e2e_dump():
     run_constant_e2e_dump()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
