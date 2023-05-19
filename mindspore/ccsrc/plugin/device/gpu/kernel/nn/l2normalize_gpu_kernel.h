@@ -23,9 +23,8 @@
 #include <memory>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/l2normalize_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "mindspore/core/ops/l2_normalize.h"
 
@@ -89,15 +88,12 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     }
     GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
-    std::vector<int64_t> simplified_in0_shape;
-    std::vector<int64_t> simplified_in1_shape;
-    std::vector<int64_t> simplified_out_shape;
-    SimplifyBinaryBroadcastShape(lhs_shape_, rhs_shape_, output_shape_, &simplified_in0_shape, &simplified_in1_shape,
-                                 &simplified_out_shape);
-    bool is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kRealDiv, T, T, T>(
-      is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, input_addr, reduce_workspace_addr,
-      output_addr, GET_CTX_DEVICE_ID, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto lhs_shape_size = Convert2SizeTClipNeg(lhs_shape_);
+    auto rhs_shape_size = Convert2SizeTClipNeg(rhs_shape_);
+    auto output_shape_size = Convert2SizeTClipNeg(output_shape_);
+    BroadcastArith(lhs_shape_size, rhs_shape_size, output_shape_size, BinaryOpType::kRealDiv, input_addr,
+                   reduce_workspace_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+
     return true;
   }
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -126,7 +122,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     }
 
     ShapeVector outputC_shape = output_shape;
-    if (static_cast<size_t>(axis_) >= output_shape.size()) {
+    if ((size_t)axis_ >= output_shape.size()) {
       MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernelMod', axis_ must be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
     }

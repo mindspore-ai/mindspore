@@ -16,8 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/sort_key_value_inplace.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sort_fixed_size.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 
 constexpr int MAX_DIMS = 8;
@@ -121,16 +120,32 @@ bool InitIndexBySlice(const TensorLayoutHelper &t, int64_t axis, K *data, cudaSt
     cudaMemcpyAsync(slice_data_device, slice_data_host, slice_size * sizeof(K), cudaMemcpyHostToDevice, cuda_stream),
     "Memcpy slice data from host to device failed.");
   free(slice_data_host);
-  std::vector<int64_t> in_size(MAX_DIMS, 1);
-  std::vector<int64_t> out_size(MAX_DIMS, 1);
+
+  int in_size[MAX_DIMS];
+  int out_size[MAX_DIMS];
+  for (int i = 0; i < MAX_DIMS; i++) {
+    in_size[i] = 1;
+  }
   in_size[MAX_DIMS - t.dim_size_ + axis] = t.sizes_[axis];
   for (int i = t.dim_size_ - 1; i >= 0; i--) {
     out_size[i + MAX_DIMS - t.dim_size_] = t.sizes_[i];
   }
-  std::vector<int64_t> simplified_inp_shape;
-  std::vector<int64_t> simplified_out_shape;
-  SimplifyBroadcastToShape(in_size, out_size, &simplified_inp_shape, &simplified_out_shape);
-  BroadcastTo<K>(simplified_inp_shape, simplified_out_shape, slice_data_device, data, GET_CTX_DEVICE_ID, cuda_stream);
+  for (int i = MAX_DIMS - t.dim_size_ - 1; i >= 0; i--) {
+    out_size[i] = 1;
+  }
+
+  constexpr size_t kIndex0 = 0;
+  constexpr size_t kIndex1 = 1;
+  constexpr size_t kIndex2 = 2;
+  constexpr size_t kIndex3 = 3;
+  constexpr size_t kIndex4 = 4;
+  constexpr size_t kIndex5 = 5;
+  constexpr size_t kIndex6 = 6;
+  constexpr size_t kIndex7 = 7;
+  BroadcastTo<K>(in_size[kIndex0], in_size[kIndex1], in_size[kIndex2], in_size[kIndex3], in_size[kIndex4],
+                 in_size[kIndex5], in_size[kIndex6], in_size[kIndex7], out_size[kIndex0], out_size[kIndex1],
+                 out_size[kIndex2], out_size[kIndex3], out_size[kIndex4], out_size[kIndex5], out_size[kIndex6],
+                 out_size[kIndex7], slice_data_device, data, cuda_stream);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(slice_data_device), "Free slice data failed.");
   return true;
 }

@@ -16,9 +16,9 @@
 #include "plugin/device/gpu/kernel/arrays/meshgrid_gpu_kernel.h"
 #include <algorithm>
 #include "mindspore/core/ops/meshgrid.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/math/broadcast_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -76,7 +76,8 @@ int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   output_count_ = static_cast<size_t>(output_size_list_.size());
 
   // inferred shape swaps output shape for us if needed
-  output_shape_ = outputs[kIndex0]->GetShapeVector();
+  auto shape_signed = outputs[kIndex0]->GetShapeVector();
+  output_shape_ = Convert2SizeTClipNeg(shape_signed);
   is_null_input_ = CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output");
   if (is_null_input_) {
     workspace_size_list_.push_back(output_size_ * data_size_);
@@ -90,7 +91,16 @@ int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return KRET_RESIZE_FAILED;
   }
 
-  output_size_ = SizeOf(output_shape_);
+  for (size_t i = 0; i < output_shape_.size(); i++) {
+    output_size_ *= output_shape_[i];
+  }
+
+  // need to pad output shape with ones for broadcast kernel
+  int need_broadcast_size = MAX_DIMS - output_shape_.size();
+  for (int i = 0; i < need_broadcast_size; i++) {
+    output_shape_.push_back(1);
+  }
+
   workspace_size_list_.push_back(output_size_ * data_size_);
   return KRET_OK;
 }
@@ -104,29 +114,65 @@ bool MeshgridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *ones_device = GetDeviceAddress<T>(workspace, 0);
   CalOnesLike(static_cast<T *>(nullptr), ones_device, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
 
-  std::vector<int64_t> simplified_in0_shape;
-  std::vector<int64_t> simplified_in1_shape;
-  std::vector<int64_t> simplified_out_shape;
+  std::vector<size_t> broadcasted_ones_shape(MAX_DIMS, 1);
+  for (size_t i = 0; i < output_shape_.size(); i++) {
+    broadcasted_ones_shape[i] = output_shape_[i];
+  }
+
   for (size_t i = 0; i < outputs.size(); i++) {
     T *input_device = GetDeviceAddress<T>(inputs, i);
     T *output_device = GetDeviceAddress<T>(outputs, i);
-    std::vector<int64_t> broadcasted_input_shape(input_shapes_.size(), 1);
+    std::vector<size_t> broadcasted_input_shape(MAX_DIMS, 1);
     broadcasted_input_shape[i] = input_shapes_[i];
+
     if (swap_indexing_ && i <= 1) {
       std::swap(broadcasted_input_shape[0], broadcasted_input_shape[1]);
     }
-    SimplifyBinaryBroadcastShape(broadcasted_input_shape, output_shape_, output_shape_, &simplified_in0_shape,
-                                 &simplified_in1_shape, &simplified_out_shape);
-    bool is_broadcast = IsBinaryBroadcast(simplified_in0_shape, simplified_in1_shape);
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(
-      is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, input_device, ones_device,
-      output_device, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    BroadcastArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BinaryOpType::kMul, input_device,
+                   ones_device, output_device, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  }
+  return true;
+}
+
+template <typename T, typename S, typename G>
+bool MeshgridGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspace,
+                                               const std::vector<AddressPtr> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
+  S *ones_device = GetDeviceAddress<S>(workspace, 0);
+  CalOnesLike(static_cast<S *>(nullptr), ones_device, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+
+  std::vector<size_t> broadcasted_ones_shape(MAX_DIMS, 1);
+  for (size_t i = 0; i < output_shape_.size(); i++) {
+    broadcasted_ones_shape[i] = output_shape_[i];
+  }
+
+  for (size_t i = 0; i < outputs.size(); i++) {
+    T *input_device = GetDeviceAddress<T>(inputs, i);
+    G *output_device = GetDeviceAddress<G>(outputs, i);
+    std::vector<size_t> broadcasted_input_shape(MAX_DIMS, 1);
+    broadcasted_input_shape[i] = input_shapes_[i];
+
+    if (swap_indexing_ && i <= 1) {
+      std::swap(broadcasted_input_shape[0], broadcasted_input_shape[1]);
+    }
+    BroadcastComplexArith(broadcasted_input_shape, broadcasted_ones_shape, output_shape_, BinaryOpType::kMul,
+                          input_device, ones_device, output_device, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
 }
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
+
+std::vector<std::pair<KernelAttr, MeshgridGpuKernelMod::MeshgridFunc>> MeshgridGpuKernelMod::complex_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &MeshgridGpuKernelMod::LaunchComplexKernel<Complex<float>, Complex<float>, Complex<float>>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &MeshgridGpuKernelMod::LaunchComplexKernel<Complex<double>, Complex<double>, Complex<double>>},
+};
 
 std::vector<std::pair<KernelAttr, MeshgridGpuKernelMod::MeshgridFunc>> MeshgridGpuKernelMod::func_list_ = {
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
@@ -153,14 +199,12 @@ std::vector<std::pair<KernelAttr, MeshgridGpuKernelMod::MeshgridFunc>> MeshgridG
    &MeshgridGpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &MeshgridGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &MeshgridGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &MeshgridGpuKernelMod::LaunchKernel<Complex<double>>},
 };
 
 std::vector<KernelAttr> MeshgridGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
+  (void)std::transform(complex_list_.begin(), complex_list_.end(), std::back_inserter(func_list_),
+                       [](const std::pair<KernelAttr, MeshgridFunc> &item) { return item; });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, MeshgridFunc> &item) { return item.first; });
   return support_list;

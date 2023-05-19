@@ -20,7 +20,7 @@
 #include "mindspore/core/ops/grad/pool_grad.h"
 #include "mindspore/core/ops/grad/avg_pool_3d_grad.h"
 #include "mindspore/core/ops/grad/max_pool_3d_grad.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
 
 namespace mindspore {
@@ -159,10 +159,8 @@ bool PoolingGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
       CalRealKernelSize(input_shape_, kernel_size_, edge_kernel_, work_addr, device_id_,
                         reinterpret_cast<cudaStream_t>(cuda_stream_));
     }
-    std::vector<int64_t> shape = {static_cast<int64_t>(output_num)};
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(false, shape, shape, shape, dy_work_addr, work_addr,
-                                                               dy_work_addr, device_id_,
-                                                               reinterpret_cast<cudaStream_t>(cuda_stream_));
+    ElewiseArith(output_num, BinaryOpType::kMul, dy_work_addr, work_addr, dy_work_addr,
+                 reinterpret_cast<cudaStream_t>(cuda_stream_));
     if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnPoolingBackward(cudnn_handle_, pooling_descriptor_, &alpha, y_descriptor_, y, dy_descriptor_, dy_work_addr,

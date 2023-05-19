@@ -23,8 +23,7 @@
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/l2normalize_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 namespace mindspore {
@@ -173,9 +172,9 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
   float epsilon_{0.0};
   int axis_origin_{0};
   int axis_{0};
-  std::vector<int64_t> lhs_shape_{};
-  std::vector<int64_t> rhs_shape_{};
-  std::vector<int64_t> output_shape_{};
+  std::vector<size_t> lhs_shape_{};
+  std::vector<size_t> rhs_shape_{};
+  std::vector<size_t> output_shape_{};
 
   L2NormalizeGradGpuLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, L2NormalizeGradGpuLaunchFunc>> func_list_;
