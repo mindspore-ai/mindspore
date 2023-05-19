@@ -47,6 +47,22 @@ constexpr auto kDumpMode = "dump_mode";
 constexpr auto kProfiling = "profiler";
 constexpr auto kDataFlowGraphType = "data_flow";
 constexpr auto kCustomInputSize = 2;
+constexpr auto kGraphKernelParam = "graph_kernel_param";
+
+std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) {
+  if (maps.find(kGraphKernelParam) == maps.end()) {
+    return nullptr;
+  }
+  auto param = std::make_shared<ConverterPara>();
+  const auto &gk_map = maps.at(kGraphKernelParam);
+  std::stringstream oss;
+  for (const auto &item : gk_map) {
+    oss << "--" << item.first << "=" << item.second << " ";
+  }
+  param->device = "Ascend";
+  param->graphKernelParam.graph_kernel_flags = oss.str();
+  return param;
+}
 
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
@@ -264,7 +280,8 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
     return false;
   }
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  if (GraphKernelOptimize(anf_graph, nullptr) != lite::RET_OK) {
+  auto param = ParseGraphKernelConfigs(config_infos_);
+  if (GraphKernelOptimize(anf_graph, param) != lite::RET_OK) {
     MS_LOG(ERROR) << "Run graphkernel optimization failed.";
     return false;
   }

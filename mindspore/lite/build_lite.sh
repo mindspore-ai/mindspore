@@ -803,7 +803,7 @@ update_submodule()
   cd "${BASEPATH}/graphengine"
   git submodule update --init 910/metadef
   cd "${BASEPATH}"
-  if [[ ("X$MSLITE_ENABLE_GRAPH_KERNEL" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") ) ]]; then
+  if [[ ("X$ENABLE_AKG" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") ) ]]; then
     if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
       git submodule update --init akg
     else
