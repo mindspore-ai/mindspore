@@ -63,6 +63,7 @@ int AssignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (ret != 0) {
     return ret;
   }
+  batch_size_ = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
   std::vector<int64_t> input_x_shape = inputs[kIndex0]->GetShapeVector();
