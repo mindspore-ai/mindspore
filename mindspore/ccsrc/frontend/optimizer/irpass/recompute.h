@@ -45,7 +45,7 @@ bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller) {
   const auto &node_users = manager->node_users();
   auto iter = node_users.find(k_fg_caller);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "The node " << k_fg_caller->DebugString() << " should have users.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node " << k_fg_caller->DebugString() << " should have users.";
   }
 
   return std::any_of(iter->second.begin(), iter->second.end(), [](const std::pair<AnfNodePtr, int> &node_and_idx) {
@@ -165,7 +165,8 @@ class RemoveNotRecomputeNode : public AnfVisitor {
       auto para = k_fg_->add_parameter();
       auto cnode_k_fg_output = cnode_k_fg->output();
       if (!IsPrimitiveCNode(cnode_k_fg_output, prim::kPrimMakeTuple)) {
-        MS_LOG(EXCEPTION) << "The output of k graph should be make_tuple, but got " << cnode_k_fg_output->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "The output of k graph should be make_tuple, but got "
+                                   << cnode_k_fg_output->DebugString();
       }
       (void)manager->Replace(cnode_k_fg_output->cast<CNodePtr>()->input(1), para);
     }
@@ -331,12 +332,12 @@ class AddRecomputeDepend : public AnfVisitor {
       return nullptr;
     }
     if (iter->second.size() != 1) {
-      MS_LOG(EXCEPTION) << "The number of bprop caller should be 1, but got " << iter->second.size()
-                        << ", bprop_getter: " << bprop_getter->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The number of bprop caller should be 1, but got " << iter->second.size()
+                                 << ", bprop_getter: " << bprop_getter->DebugString();
     }
     auto user_node_idx = iter->second.begin();
     if (user_node_idx->second != 0) {
-      MS_LOG(EXCEPTION) << "The bprop_getter should be used in input 0, but got " << user_node_idx->second;
+      MS_LOG(INTERNAL_EXCEPTION) << "The bprop_getter should be used in input 0, but got " << user_node_idx->second;
     }
     return user_node_idx->first;
   }

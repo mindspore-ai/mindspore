@@ -68,7 +68,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::Abstr
   oss << "graph:" << graph->ToString() << " with args[";
   auto params = graph->parameters();
   if (params.size() < args_abs_list.size()) {
-    MS_EXCEPTION(TypeError) << "The size of parameters less than args_abs_list's size.";
+    MS_INTERNAL_EXCEPTION(TypeError) << "The size of parameters less than args_abs_list's size.";
   }
   for (size_t i = 0; i < args_abs_list.size(); i++) {
     auto parameter = params[i];
@@ -96,7 +96,7 @@ void DumpInferStack(std::ostringstream &oss) {
   for (const auto &item : infer_vec) {
     auto context = item.first;
     if (context == nullptr) {
-      MS_LOG(EXCEPTION) << "DumpInferStack failed, got null graph context";
+      MS_LOG(INTERNAL_EXCEPTION) << "DumpInferStack failed, got null graph context";
     }
     auto graph = context->func_graph();
     if (graph == nullptr) {  // Top context.
@@ -430,7 +430,7 @@ thread_local TraceCNodeEvalStack cnode_debug_stack{};
 
 void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node) {
   if (context == nullptr) {
-    MS_LOG(EXCEPTION) << "GraphInferEnter got null context";
+    MS_LOG(INTERNAL_EXCEPTION) << "GraphInferEnter got null context";
   }
   (void)graph_infer_stack.push_back(std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>(context, node));
 }
@@ -441,11 +441,11 @@ void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
     return;
   }
   if (context == nullptr) {
-    MS_LOG(EXCEPTION) << "The context is null, or call stack is empty.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The context is null, or call stack is empty.";
   }
   if (context != graph_infer_stack.back().first) {
-    MS_LOG(EXCEPTION) << "Different context: " << context->func_graph()->ToString() << ", "
-                      << graph_infer_stack.back().first->func_graph()->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Different context: " << context->func_graph()->ToString() << ", "
+                               << graph_infer_stack.back().first->func_graph()->ToString();
   }
   graph_infer_stack.pop_back();
 }

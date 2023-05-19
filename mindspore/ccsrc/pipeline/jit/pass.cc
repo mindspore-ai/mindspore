@@ -116,7 +116,7 @@ bool RewriterBeforeOptAPass(const ResourcePtr &resource) {
 bool TransformTopGraphPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Transform top graph error.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Transform top graph error.";
   }
   FuncGraphPtr func_graph = resource->func_graph();
   if (opt::FuncGraphHasTupleInput(func_graph)) {
@@ -756,7 +756,7 @@ bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
 bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Remove value node duplications error.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Remove value node duplications error.";
   }
   auto manager = resource->manager();
   HashCache hash_cache;

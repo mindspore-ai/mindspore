@@ -31,21 +31,21 @@ const size_t kMBToByte = 1024 << 10;
 
 inline int SizeToInt(size_t u) {
   if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
   }
   return static_cast<int>(u);
 }
 
 inline uint32_t SizeToUint(size_t u) {
   if (u > static_cast<size_t>((std::numeric_limits<uint32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of uint32_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of uint32_t.";
   }
   return static_cast<uint32_t>(u);
 }
 
 inline int64_t SizeToLong(size_t u) {
   if (u > static_cast<size_t>((std::numeric_limits<int64_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int64_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int64_t.";
   }
   return static_cast<int64_t>(u);
 }
@@ -54,7 +54,7 @@ inline uint64_t SizeToUlong(size_t u) { return static_cast<uint64_t>(u); }
 
 inline size_t IntToSize(int u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int value(" << u << ") is less than 0.";
   }
   return static_cast<size_t>(u);
 }
@@ -63,7 +63,7 @@ inline size_t LongToSizeClipNeg(int64_t u) { return u < 0 ? 0 : static_cast<size
 
 inline size_t LongToSize(int64_t u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
   }
   return static_cast<size_t>(u);
 }
@@ -77,21 +77,21 @@ inline std::vector<size_t> LongVecToSizeVec(const std::vector<int64_t> &vec) {
 
 inline uint32_t LongToUint(int64_t u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
   }
   if (u > static_cast<int64_t>((std::numeric_limits<uint32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") exceeds the maximum value of uint32_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int64_t value(" << u << ") exceeds the maximum value of uint32_t.";
   }
   return static_cast<uint32_t>(u);
 }
 
 inline size_t FloatToSize(float u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The float value(" << u << ") is less than 0.";
   }
 
   if (u > static_cast<float>((std::numeric_limits<size_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of size_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of size_t.";
   }
   return static_cast<size_t>(u);
 }
@@ -99,21 +99,21 @@ inline float IntToFloat(int32_t v) { return static_cast<float>(v); }
 
 inline int FloatToInt(float u) {
   if (u > static_cast<float>((std::numeric_limits<int>::max)())) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of int.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of int.";
   }
   return static_cast<int>(u);
 }
 
 inline int FloatToLong(float u) {
   if (u > static_cast<float>((std::numeric_limits<int64_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of int64_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of int64_t.";
   }
   return static_cast<int64_t>(u);
 }
 
 inline int64_t DoubleToLong(double u) {
   if (u > static_cast<double>((std::numeric_limits<int64_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The double value(" << u << ") exceeds the maximum value of int64_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The double value(" << u << ") exceeds the maximum value of int64_t.";
   }
   return static_cast<int64_t>(u);
 }
@@ -128,28 +128,28 @@ inline double FloatToDouble(float v) { return static_cast<double>(v); }
 
 inline uint32_t IntToUint(int32_t u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int32_t value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int32_t value(" << u << ") is less than 0.";
   }
   return static_cast<uint32_t>(u);
 }
 
 inline int32_t UintToInt(uint32_t u) {
   if (u > static_cast<uint32_t>((std::numeric_limits<int32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The uint32_t value(" << u << ") exceeds the maximum value of int32_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The uint32_t value(" << u << ") exceeds the maximum value of int32_t.";
   }
   return static_cast<int32_t>(u);
 }
 
 inline uint64_t LongToUlong(int64_t u) {
   if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
   }
   return static_cast<uint64_t>(u);
 }
 
 inline int32_t LongToInt(int64_t u) {
   if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
   }
   return static_cast<int32_t>(u);
 }
@@ -158,14 +158,14 @@ inline int64_t IntToLong(int32_t v) { return static_cast<int64_t>(v); }
 
 inline int64_t UlongToLong(uint64_t u) {
   if (u > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The uint64_t value(" << u << ") exceeds the maximum value of int64_t.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The uint64_t value(" << u << ") exceeds the maximum value of int64_t.";
   }
   return static_cast<int64_t>(u);
 }
 
 inline unsigned int UlongToUint(uint64_t u) {
   if (u > static_cast<uint64_t>((std::numeric_limits<unsigned int>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of unsigned int.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of unsigned int.";
   }
   return static_cast<unsigned int>(u);
 }

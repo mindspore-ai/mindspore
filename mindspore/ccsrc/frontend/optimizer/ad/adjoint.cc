@@ -50,8 +50,8 @@ void Adjoint::UpdateK(const AnfNodePtr &new_k) {
     MS_LOG(DEBUG) << "Update k user " << user.first->ToString() << " " << user.second << " input with new_k"
                   << new_k->ToString();
     if (user.first->input(user.second) != k_) {
-      MS_LOG(EXCEPTION) << "Update k user " << user.first->ToString() << " " << user.second << " input with new_k "
-                        << new_k->ToString() << ", user relation is set wrongly";
+      MS_LOG(INTERNAL_EXCEPTION) << "Update k user " << user.first->ToString() << " " << user.second
+                                 << " input with new_k " << new_k->ToString() << ", user relation is set wrongly";
     }
     user.first->set_input(user.second, new_k);
   }
@@ -83,8 +83,8 @@ void Adjoint::CallDoutHole() {
       MS_LOG(DEBUG) << "Update dout user " << user.first->ToString() << " " << user.second << " input with dout "
                     << dout_->ToString();
       if (user.first->input(user.second) != dout_hole_) {
-        MS_LOG(EXCEPTION) << "Update dout user " << user.first->ToString() << " " << user.second << " input with dout "
-                          << dout_->ToString() << ", user relation is set wrongly";
+        MS_LOG(INTERNAL_EXCEPTION) << "Update dout user " << user.first->ToString() << " " << user.second
+                                   << " input with dout " << dout_->ToString() << ", user relation is set wrongly";
       }
       user.first->set_input(user.second, dout_);
     }

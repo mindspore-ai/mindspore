@@ -73,8 +73,8 @@ FuncGraphPtr GetCloneBpropGraph(const MetaFuncGraphPtr &meta_func_graph, const F
                                 const AnfNodePtr &bound_node, const ScopePtr &scope) {
   auto bound_cnode = dyn_cast_ptr<CNode>(bound_node);
   if (bound_cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "For BpropMetaFuncGraph '" << meta_func_graph->ToString()
-                      << "', the evaluator should have the bound cnode.";
+    MS_LOG(INTERNAL_EXCEPTION) << "For BpropMetaFuncGraph '" << meta_func_graph->ToString()
+                               << "', the evaluator should have the bound cnode.";
   }
   PrimalAttrGuard primal_attr_guard(bound_cnode->primal_attrs());
   const auto &primal_debug_infos = bound_cnode->primal_debug_infos();
@@ -609,7 +609,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_EXCEPTION_IF_NULL(eval_result);
     if (eval_result->abstract() == nullptr) {
       EvalFailLogging(shared_from_base<Evaluator>(), args_abs_list, out_conf);
-      MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] set cache. result: " << eval_result->abstract()->ToString();
@@ -670,7 +670,7 @@ EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const Confi
                                            const AnfNodeConfigPtr &out_conf) {
   if (args_conf_list.empty() && identifier_ != "MakeTupleEvaluator" && identifier_ != "MakeListEvaluator" &&
       identifier_ != "RaiseEvaluator" && identifier_ != "ConstexprEvaluator") {
-    MS_LOG(EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
+    MS_LOG(INTERNAL_EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
   }
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
   EvalResultPtr res = EvalPrim(engine, args_abs_list, args_conf_list[0], out_conf);
@@ -1048,8 +1048,8 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
 EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_abs_list,
                                      const AnfNodeConfigPtr &out_conf) {
   if (args_abs_list.size() != args_abs_list_.size()) {
-    MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_abs_list_.size()
-                      << ", arguments no: " << args_abs_list.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Arguments mismatch, parameters no: " << args_abs_list_.size()
+                               << ", arguments no: " << args_abs_list.size();
   }
   const auto args_abs_list_size = args_abs_list.size() - 1;
   bool sense_param_flag = false;

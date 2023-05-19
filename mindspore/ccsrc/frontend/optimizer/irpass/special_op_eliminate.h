@@ -423,7 +423,7 @@ class PynativeEliminater : public OptimizerCaller {
       out = std::make_shared<ValueTuple>(value_list);
     }
     if (out == nullptr) {
-      MS_LOG(EXCEPTION) << "FillZero failed:" << value->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "FillZero failed:" << value->ToString();
     }
     MS_LOG(DEBUG) << "Result: " << out->ToString();
     return out;
@@ -583,7 +583,7 @@ class AllReduceConstElim : public OptimizerCaller {
         uint32_t num_of_devices;
         // Get number of devices
         if (!CommManager::GetInstance().GetRankSize(group, &num_of_devices)) {
-          MS_LOG(EXCEPTION) << "Failed to get num of devices for group [" + group + "]";
+          MS_LOG(INTERNAL_EXCEPTION) << "Failed to get num of devices for group [" + group + "]";
         }
         // Multiply constant by number of devices then return
         std::vector<AnfNodePtr> mul_inputs;

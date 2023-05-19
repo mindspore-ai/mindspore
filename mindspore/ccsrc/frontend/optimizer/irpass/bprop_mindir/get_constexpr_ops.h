@@ -41,7 +41,7 @@ class GetConstexprOps : public AnfVisitor {
     auto class_name = GetValue<std::string>(prim->GetAttr("constexpr_name"));
     auto module = python_adapter::GetPyModule(package);
     if (!module || py::isinstance<py::none>(module)) {
-      MS_LOG(EXCEPTION) << "Can not get python module: " << package;
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not get python module: " << package;
     }
     auto attr = module.attr(class_name.c_str());
     auto prim_adapter = attr.cast<PrimitivePyAdapterPtr>();

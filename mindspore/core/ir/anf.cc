@@ -78,7 +78,7 @@ void CNode::add_input(const AnfNodePtr &input) {
 
 void CNode::set_input(size_t i, const AnfNodePtr &new_input) {
   if (i >= inputs_.size()) {
-    MS_LOG(EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
   }
   inputs_[i] = new_input;
   input_tensor_num_ = -1;
@@ -91,7 +91,7 @@ void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
 
 const AnfNodePtr &CNode::input(size_t i) const {
   if (i >= inputs_.size()) {
-    MS_LOG(EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
   }
   return inputs_.at(i);
 }

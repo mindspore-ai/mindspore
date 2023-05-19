@@ -215,7 +215,7 @@ void SetDumpFlag(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
 FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
                                const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
-    MS_LOG(EXCEPTION) << "Primitive node is not valid.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primitive node is not valid.";
   }
 
   auto prim = GetValueNode<PrimitivePtr>(value_node);
@@ -255,9 +255,9 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   }
   auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode, primal_attrs, primal_debug_infos);
   if (expanded_fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed convert " << prim->name()
-                      << " prim bprop function to J expanded func graph. NodeInfo: "
-                      << trace::GetDebugInfo(bprop_fg->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed convert " << prim->name()
+                               << " prim bprop function to J expanded func graph. NodeInfo: "
+                               << trace::GetDebugInfo(bprop_fg->debug_info());
   }
   if (lift_fv_before_grad && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
     // Inline fprop_switch before renormalize;
@@ -497,9 +497,9 @@ FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const Fu
   auto primal_fg = bprop_fg->transforms().find("primal")->second.func_graph();
   auto expanded_fg = BpropToK(primal_fg, bprop_fg, current_primal_fg, nullptr, {}, {});
   if (expanded_fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed convert " << primal_fg->ToString()
-                      << " Cell bprop function to K expanded func graph. NodeInfo: "
-                      << trace::GetDebugInfo(primal_fg->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed convert " << primal_fg->ToString()
+                               << " Cell bprop function to K expanded func graph. NodeInfo: "
+                               << trace::GetDebugInfo(primal_fg->debug_info());
   }
   return expanded_fg;
 }
@@ -514,7 +514,7 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {
-    MS_LOG(EXCEPTION) << "Fail to find cnode.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Fail to find cnode.";
   }
   auto cnode_first = cnode->first->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode_first);
@@ -557,7 +557,7 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {
-    MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
   auto cnode_first = cnode->first->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode_first);
@@ -572,8 +572,8 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     monad_params_size++;
   }
   if (inputs_num < monad_params_size) {
-    MS_LOG(EXCEPTION) << "Arguments number should be greater than or equal to " << monad_params_size
-                      << ", but the CNode is: " << cnode->first->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Arguments number should be greater than or equal to " << monad_params_size
+                               << ", but the CNode is: " << cnode->first->DebugString();
   }
   inputs_num -= monad_params_size;
 

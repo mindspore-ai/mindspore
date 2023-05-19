@@ -539,8 +539,8 @@ FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 
   auto abs0_tuple = dyn_cast_ptr<AbstractTuple>(args_abs_list[0]);
   if (abs0_tuple == nullptr) {
-    MS_LOG(EXCEPTION) << "The first input of make_dict should be a tuple, but got abstract: "
-                      << args_abs_list[0]->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The first input of make_dict should be a tuple, but got abstract: "
+                               << args_abs_list[0]->ToString();
   }
   // Add gradients of keys tuple and values tuple.
   std::vector<AnfNodePtr> keys_grads_inputs{NewValueNode(kPrimMakeTuple)};
@@ -569,7 +569,8 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   constexpr auto py_execute_grad_input_count = 3;
   constexpr auto op_name = "PyExecuteGradient";
   if (args_size < py_execute_grad_input_count) {
-    MS_LOG(EXCEPTION) << "The inputs size of " << op_name << " should not less than " << py_execute_grad_input_count;
+    MS_LOG(INTERNAL_EXCEPTION) << "The inputs size of " << op_name << " should not less than "
+                               << py_execute_grad_input_count;
   }
 
   std::ostringstream ss;
@@ -647,8 +648,8 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
     } else if (args_abs_list[i]->isa<abstract::AbstractIOMonad>()) {
       (void)grads.emplace_back(NewValueNode(kIOMonad));
     } else {
-      MS_LOG(EXCEPTION) << "The extra input of " << op_name << " should be UMonad or IOMonad, but got "
-                        << args_abs_list[i]->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The extra input of " << op_name << " should be UMonad or IOMonad, but got "
+                                 << args_abs_list[i]->ToString();
     }
   }
 
@@ -879,7 +880,7 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
     fg->set_output(empty_tuple);
     return fg;
   }
-  MS_LOG(EXCEPTION) << "'tail_type_' is not for GradOperation, but " << tail_type_;
+  MS_LOG(INTERNAL_EXCEPTION) << "'tail_type_' is not for GradOperation, but " << tail_type_;
 }
 
 FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
@@ -1040,7 +1041,8 @@ CNodePtr GradOperation::SetNodeByParameter(const CNodePtr &grad, const FuncGraph
       auto param_name = weight_key->value();
       fv_bprop = fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(param_name), grad});
     } else {
-      MS_LOG(EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got " << weight_value_->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got "
+                                 << weight_value_->ToString();
     }
   } else {
     std::vector<AnfNodePtr> params;
@@ -1057,7 +1059,8 @@ CNodePtr GradOperation::SetNodeByParameter(const CNodePtr &grad, const FuncGraph
         fv_bprop = fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(param_name), grad_value});
         params.push_back(fv_bprop);
       } else {
-        MS_LOG(EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got " << weight_value_->ToString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Abstract of parameter should be AbstractRefTensor, but got "
+                                   << weight_value_->ToString();
       }
     }
     fv_bprop = fg->NewCNodeInOrder(params);

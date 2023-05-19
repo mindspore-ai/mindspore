@@ -92,7 +92,7 @@ TypePtr List::DeepCopy() const {
 
 const TypePtr List::operator[](std::size_t dim) const {
   if (dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Dynamic length list " << ToString() << " can not get element.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Dynamic length list " << ToString() << " can not get element.";
   }
   if (dim >= size()) {
     MS_LOG(EXCEPTION) << "Index " << dim << " is out range of the List size " << size() << ".";
@@ -148,14 +148,14 @@ std::string List::DumpContent(bool is_dumptext) const {
 
 TypePtr List::dynamic_element_type() const {
   if (!dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Constant list " << ToString() << " can not get the dynamic element type.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Constant list " << ToString() << " can not get the dynamic element type.";
   }
   return dynamic_element_type_;
 }
 
 void List::set_dynamic_element_type(const TypePtr &dynamic_element_type) {
   if (!dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Constant list " << ToString() << " can not set the dynamic element type.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Constant list " << ToString() << " can not set the dynamic element type.";
   }
   dynamic_element_type_ = dynamic_element_type;
 }
@@ -211,7 +211,7 @@ size_t Tuple::hash() const {
 
 const TypePtr Tuple::operator[](std::size_t dim) const {
   if (dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Dynamic length tuple " << ToString() << " can not get element.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Dynamic length tuple " << ToString() << " can not get element.";
   }
   if (dim >= size()) {
     MS_LOG(EXCEPTION) << "Index " << dim << " is out range of the Tuple size " << size() << ".";
@@ -235,14 +235,14 @@ std::string Tuple::DumpContent(bool is_dumptext) const {
 
 TypePtr Tuple::dynamic_element_type() const {
   if (!dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Constant tuple " << ToString() << " can not get the dynamic element type.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Constant tuple " << ToString() << " can not get the dynamic element type.";
   }
   return dynamic_element_type_;
 }
 
 void Tuple::set_dynamic_element_type(const TypePtr &dynamic_element_type) {
   if (!dynamic_len_) {
-    MS_LOG(EXCEPTION) << "Constant tuple " << ToString() << " can not set the dynamic element type.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Constant tuple " << ToString() << " can not set the dynamic element type.";
   }
   dynamic_element_type_ = dynamic_element_type;
 }

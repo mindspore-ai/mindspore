@@ -37,16 +37,17 @@ class GetSubFuncGraph : public AnfVisitor {
     }
     auto module = python_adapter::GetPyModule(name_space_);
     if (!module || py::isinstance<py::none>(module)) {
-      MS_LOG(EXCEPTION) << "Can not get python module: " << name_space_;
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not get python module: " << name_space_;
     }
     auto func_obj = module.attr(symbol_.c_str());
     ValuePtr convert_result = nullptr;
     bool converted = parse::ConvertData(func_obj, &convert_result);
     if (!converted) {
-      MS_LOG(EXCEPTION) << "Failed to convert data for " << py::str(func_obj);
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to convert data for " << py::str(func_obj);
     }
     if (!convert_result->isa<FuncGraph>()) {
-      MS_LOG(EXCEPTION) << "The result of convert should be a func_graph, but got " << convert_result->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The result of convert should be a func_graph, but got "
+                                 << convert_result->ToString();
     }
     return NewValueNode(convert_result);
   }

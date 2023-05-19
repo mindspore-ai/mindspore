@@ -167,16 +167,18 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
       }
     }
     if (raise_exception_) {
-      MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
-                        << " primitive type:" << prim->type_name() << " It will keep the previous value with danger.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
+                                 << " primitive type:" << prim->type_name()
+                                 << " It will keep the previous value with danger.";
     } else {
       MS_LOG(INFO) << "Get infer shape function failed, primitive name:" << prim->name()
                    << " primitive type:" << prim->type_name() << " It will keep the previous value with danger.";
     }
   } catch (const std::exception &ex) {
     if (raise_exception_) {
-      MS_LOG(EXCEPTION) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
-                        << " It will keep the previous value with danger.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Catch primitive:" << prim->ToString()
+                                 << " InferPrimitiveShape exception:" << ex.what()
+                                 << " It will keep the previous value with danger.";
     } else {
       MS_LOG(INFO) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
                    << " It will keep the previous value with danger.";
@@ -218,7 +220,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
 
 void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
   if (node->inputs().size() < 2) {
-    MS_LOG(EXCEPTION) << node->DebugString() << " input size < 2";
+    MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < 2";
   }
   auto result = infer_result_[node->inputs()[1]];
   auto funcName = node->func_graph()->ToString();
@@ -245,11 +247,11 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
   // Args has  been resolved
   if (args != nullptr) {
     if (args->size() < 2) {
-      MS_LOG(EXCEPTION) << node->DebugString() << " input size < 2";
+      MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < 2";
     }
     auto real_func = (*args)[0]->cast<abstract::AbstractFuncAtomPtr>();
     if (real_func == nullptr) {
-      MS_LOG(EXCEPTION) << (*args)[0]->ToString() << " is not a function abstract.";
+      MS_LOG(INTERNAL_EXCEPTION) << (*args)[0]->ToString() << " is not a function abstract.";
     }
     AbstractBasePtrList partial_args_list;
     (void)partial_args_list.insert(partial_args_list.end(), args->begin() + 1, args->end());
@@ -260,12 +262,12 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
   // Not Resolved.
   constexpr size_t kSizeTwo = 2;
   if (node->inputs().size() < kSizeTwo) {
-    MS_LOG(EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
+    MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
   }
   auto &func = infer_result_[node->inputs()[1]];
   auto real_func = func->cast<abstract::AbstractFuncAtomPtr>();
   if (real_func == nullptr) {
-    MS_LOG(EXCEPTION) << func->ToString() << " is not a function abstract.";
+    MS_LOG(INTERNAL_EXCEPTION) << func->ToString() << " is not a function abstract.";
   }
   AbstractBasePtrList partial_args_list;
   (void)std::transform(node->inputs().begin() + 2, node->inputs().end(), std::back_inserter(partial_args_list),
@@ -367,8 +369,8 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
     // args has been resolved in partial.
     if (args != nullptr) {
       if (func_inputs.size() != args->size()) {
-        MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                          << " CNode:" << node->DebugString() << " input size:" << args->size();
+        MS_LOG(INTERNAL_EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
+                                   << " CNode:" << node->DebugString() << " input size:" << args->size();
       }
       for (size_t i = 0; i < func_inputs.size(); ++i) {
         infer_result_[func_inputs[i]] =
@@ -380,8 +382,8 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
     // args is not resolved.
     auto &cnode_inputs = node->inputs();
     if (func_inputs.size() != cnode_inputs.size() - 1) {
-      MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                        << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size();
+      MS_LOG(INTERNAL_EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
+                                 << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size();
     }
     for (size_t i = 0; i < func_inputs.size(); ++i) {
       infer_result_[func_inputs[i]] = infer_result_[cnode_inputs[i + 1]];
@@ -404,9 +406,9 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   // args has been resolved in partial.
   if (args != nullptr) {
     if (func_inputs.size() != args->size()) {
-      MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                        << " CNode:" << node->DebugString() << " input size:" << args->size()
-                        << " may have unsupported parameters.";
+      MS_LOG(INTERNAL_EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
+                                 << " CNode:" << node->DebugString() << " input size:" << args->size()
+                                 << " may have unsupported parameters.";
     }
     for (size_t i = 0; i < func_inputs.size(); ++i) {
       SaveNodeInferResult(func_inputs[i], (*args)[i]);
@@ -416,9 +418,9 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   // args is not resolved.
   auto &cnode_inputs = node->inputs();
   if (func_inputs.size() != cnode_inputs.size() - 1) {
-    MS_LOG(EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
-                      << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size()
-                      << " may have unsupported parameters.";
+    MS_LOG(INTERNAL_EXCEPTION) << func->func_graph()->ToString() << " input size:" << func_inputs.size()
+                               << " CNode:" << node->DebugString() << " input size:" << cnode_inputs.size()
+                               << " may have unsupported parameters.";
   }
 
   for (size_t i = 0; i < func_inputs.size(); ++i) {
@@ -461,7 +463,7 @@ AbstractBasePtr MindIREngine::GetCNodeOperatorAbstract(const AnfNodePtr &node) {
   if (it != infer_result_.end()) {
     return it->second;
   }
-  MS_LOG(EXCEPTION) << "Can't get the abstract of Node:" << op->DebugString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Can't get the abstract of Node:" << op->DebugString();
 }
 
 // If args is nullPtr, it is called by InferCNode, else it is called recursively by EvalPartialAbastract.
@@ -481,7 +483,7 @@ void MindIREngine::EvalAbstractFunction(const abstract::AbstractFuncAtomPtr &fun
     auto partialPrim = func->cast<abstract::PartialAbstractClosurePtr>();
     EvalPartialAbastract(partialPrim, node, args);
   } else {
-    MS_LOG(EXCEPTION) << "MindIR can't process the abstractFunc: " << func->DumpText();
+    MS_LOG(INTERNAL_EXCEPTION) << "MindIR can't process the abstractFunc: " << func->DumpText();
   }
 }
 
@@ -518,7 +520,7 @@ void MindIREngine::InferCNode(const AnfNodePtr &node) {
   auto type = possible_func->BuildType();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() == kObjectTypeUndeterminedType) {
-    MS_LOG(EXCEPTION) << "EvalCNode eval Undetermined";
+    MS_LOG(INTERNAL_EXCEPTION) << "EvalCNode eval Undetermined";
   }
   abstract::AbstractFunctionPtr func = dyn_cast<abstract::AbstractFunction>(possible_func);
   if (func == nullptr) {

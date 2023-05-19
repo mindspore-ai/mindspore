@@ -46,7 +46,7 @@ class GetClassType : public AnfVisitor {
     }
     auto module = python_adapter::GetPyModule(package);
     if (!module || py::isinstance<py::none>(module)) {
-      MS_LOG(EXCEPTION) << "Can not get python module: " << package;
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not get python module: " << package;
     }
     auto attr = module.attr(class_name.c_str());
     return NewValueNode(std::make_shared<parse::ClassType>(attr, class_path));

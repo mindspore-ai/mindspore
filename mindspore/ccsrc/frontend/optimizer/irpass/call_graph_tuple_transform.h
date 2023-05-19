@@ -49,7 +49,7 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
     const auto &arg = args[i];
     auto abs = arg->abstract();
     if (abs == nullptr) {
-      MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
     // Dynamic length tuple input can not be flattened.
     if (!IsSequenceExpandable(arg->abstract())) {

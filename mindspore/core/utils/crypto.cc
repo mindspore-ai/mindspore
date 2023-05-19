@@ -340,34 +340,34 @@ bool BlockEncrypt(Byte *encrypt_data, size_t *encrypt_data_len, const std::vecto
   IntToByte(&int_buf, static_cast<int32_t>(*encrypt_data_len));
   ret = memcpy_s(encrypt_data, encrypt_data_buf_len, int_buf.data(), int_buf.size());
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
   }
   offset += int_buf.size();
 
   IntToByte(&int_buf, iv_len);
   ret = memcpy_s(encrypt_data + offset, encrypt_data_buf_len - offset, int_buf.data(), int_buf.size());
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
   }
   offset += int_buf.size();
 
   ret = memcpy_s(encrypt_data + offset, encrypt_data_buf_len - offset, iv_cpy.data(), iv_cpy.size());
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
   }
   offset += iv_cpy.size();
 
   IntToByte(&int_buf, cipher_len);
   ret = memcpy_s(encrypt_data + offset, encrypt_data_buf_len - offset, int_buf.data(), int_buf.size());
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
   }
   offset += int_buf.size();
 
   ret = memcpy_s(encrypt_data + offset, encrypt_data_buf_len - offset, cipher_data_buf.data(),
                  static_cast<size_t>(cipher_len));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
   }
 
   *encrypt_data_len += sizeof(int32_t);
@@ -457,7 +457,7 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     size_t capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
     errno_t ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, int_buf.data(), sizeof(int32_t));
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+      MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
     }
     *encrypt_len += sizeof(int32_t);
 
@@ -465,7 +465,7 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
       capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
       ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, tag, Byte16);
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+        MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
       }
       *encrypt_len += Byte16;
     }
@@ -473,7 +473,7 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);
     ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, block_enc_buf.data(), block_enc_buf_len);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+      MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
     }
     *encrypt_len += block_enc_buf_len;
     offset += cur_block_size;
@@ -539,7 +539,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
     errno_t ret = memcpy_s(decrypt_data.get() + *decrypt_len, capacity, decrypt_block_buf.data(),
                            static_cast<int32_t>(decrypt_block_len));
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+      MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s error, errorno " << ret;
     }
     *decrypt_len += static_cast<size_t>(decrypt_block_len);
   }
@@ -590,7 +590,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
       }
       auto ret = memcpy_s(tag, Byte16, model_data + offset, Byte16);
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "memcpy_s failed " << ret;
+        MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s failed " << ret;
       }
       offset += Byte16;
     }
@@ -620,7 +620,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
     errno_t ret = memcpy_s(decrypt_data.get() + *decrypt_len, capacity, decrypt_block_buf.data(),
                            static_cast<size_t>(decrypt_block_len));
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s failed " << ret;
+      MS_LOG(INTERNAL_EXCEPTION) << "memcpy_s failed " << ret;
     }
 
     *decrypt_len += static_cast<size_t>(decrypt_block_len);

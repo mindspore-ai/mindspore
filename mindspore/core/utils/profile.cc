@@ -49,8 +49,8 @@ void PrintTimeInfoMap(std::ostringstream &oss, const TimeInfoMap &dict, int inde
     }
     // indent by multiples of 4 spaces.
     if (iter.first.size() < TIME_INFO_PREFIX_NUM_LEN) {
-      MS_LOG(EXCEPTION) << "In TimeInfoMap, the " << count << "th string key is " << iter.first
-                        << ", but the length is less than " << TIME_INFO_PREFIX_NUM_LEN;
+      MS_LOG(INTERNAL_EXCEPTION) << "In TimeInfoMap, the " << count << "th string key is " << iter.first
+                                 << ", but the length is less than " << TIME_INFO_PREFIX_NUM_LEN;
     }
     auto name = iter.first.substr(TIME_INFO_PREFIX_NUM_LEN);
     oss << std::setw(indent * 4) << ""
@@ -431,7 +431,7 @@ void ProcessStatus::RecordEnd() {
     return;
   }
   if (stack_.empty()) {
-    MS_EXCEPTION(ValueError) << "ProcessStatus stack is empty";
+    MS_INTERNAL_EXCEPTION(ValueError) << "ProcessStatus stack is empty";
   }
   auto memory_info = stack_.back();
   memory_info.end_memory = GetMemoryCost(kVmRSS);

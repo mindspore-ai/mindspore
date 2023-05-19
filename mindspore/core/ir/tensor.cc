@@ -75,7 +75,7 @@ inline static void CopyTensorData(const TensorDataPtr &dest, const TensorDataPtr
   auto err = common::huge_memcpy(static_cast<uint8_t *>(dest->data()), dest_bytes,
                                  static_cast<const uint8_t *>(src->const_data()), src_bytes);
   if (err != EOK) {
-    MS_LOG(EXCEPTION) << "Copy tensor data failed! bytes: " << dest_bytes << "/" << src_bytes << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Copy tensor data failed! bytes: " << dest_bytes << "/" << src_bytes << ".";
   }
 }
 
@@ -647,7 +647,7 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
 
 TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
   if (data->nbytes() == 0) {
-    MS_LOG(EXCEPTION) << "Tensor data size is 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Tensor data size is 0.";
   }
   auto sub_data = MakeTensorData<TensorSubDataImpl>(owner->data_type(), owner, offset, data->size(), data->ndim());
   // If tensor data is initialized, copy it.
@@ -931,7 +931,7 @@ void Tensor::data_sync(bool need_wait) const {
   auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());
   auto address = device_sync_;
   if (size != 0 && !address->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
-    MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "SyncDeviceToHost failed.";
   }
   if (!data_->file_path().empty()) {
     device_sync_ = nullptr;
@@ -956,7 +956,7 @@ void Tensor::data_sync_directly(const DeviceSync *const device_sync, bool need_w
   (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), IntToSize);
   auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());
   if (size != 0 && !device_sync->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
-    MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "SyncDeviceToHost failed.";
   }
   sync_status_ = kNeedSyncHostToDevice;
 }

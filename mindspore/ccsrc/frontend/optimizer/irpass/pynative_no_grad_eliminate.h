@@ -64,7 +64,7 @@ class PynativeNoGradEliminater : public AnfVisitor {
 
         zeros_like_node->set_abstract(graph_inputs[i - 1]->abstract());
         if (!manager->Replace(node_inputs[i], zeros_like_node)) {
-          MS_LOG(EXCEPTION) << node_inputs[i]->DebugString() << ", replace node failed.";
+          MS_LOG(INTERNAL_EXCEPTION) << node_inputs[i]->DebugString() << ", replace node failed.";
         }
       }
     }

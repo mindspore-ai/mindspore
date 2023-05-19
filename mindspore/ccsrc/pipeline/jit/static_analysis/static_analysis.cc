@@ -51,7 +51,7 @@ void IncreaseFunctionCallDepth() { (void)(++function_call_depth); }
 
 void DecreaseFunctionCallDepth() {
   if (function_call_depth == 0) {
-    MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
   }
   function_call_depth--;
 }
@@ -64,7 +64,7 @@ void IncreaseStackFrameDepth() { (void)(++stack_frame_depth); }
 
 void DecreaseStackFrameDepth() {
   if (stack_frame_depth == 0) {
-    MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
   }
   stack_frame_depth--;
 }
@@ -157,11 +157,11 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
       new_abs = std::make_shared<AbstractList>(
         new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : nullptr));
     } else {
-      MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
     }
     return new_abs;
   }
-  MS_LOG(EXCEPTION) << "Orig abstract is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Orig abstract is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
 }
 
 void BuildPossibleSpecs(const AbstractBasePtr &first_result,
@@ -453,7 +453,7 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPt
   EvalResultPtr result = nullptr;
   result = Eval(conf);
   if (result == nullptr) {
-    MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
   }
   MS_LOG(DEBUG) << "Always Evaluate node for NodeConfig: " << conf->ToString()
                 << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
@@ -489,17 +489,17 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     eval_result = EvalCNode(cnode, conf);
     trace::TraceEvalCNodeLeave();
   } else {
-    MS_LOG(EXCEPTION) << "Illegal AnfNode for evaluating, node: " << node->DebugString()
-                      << "(type:" << node->type_name()
-                      << "), fg: " << (node->func_graph() != nullptr ? node->func_graph()->ToString() : "nullgraph")
-                      << " conf: " << conf->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal AnfNode for evaluating, node: " << node->DebugString()
+                               << "(type:" << node->type_name() << "), fg: "
+                               << (node->func_graph() != nullptr ? node->func_graph()->ToString() : "nullgraph")
+                               << " conf: " << conf->ToString();
   }
 
 #ifdef DEBUG
   compute_conf_stack_.pop_back();
   if (eval_result == nullptr) {
-    MS_LOG(EXCEPTION) << "Compute Config failed, node: " << node->DebugString()
-                      << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Compute Config failed, node: " << node->DebugString()
+                               << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 #endif
   MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
@@ -537,7 +537,7 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
   }
 
   // Check if the operator input is PyExecute CNode.
@@ -603,7 +603,7 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
   }
   auto &func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
@@ -615,7 +615,7 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   MS_EXCEPTION_IF_NULL(possible_func_eval_result);
   auto &possible_func = possible_func_eval_result->abstract();
   if (possible_func == nullptr) {
-    MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString();
   }
   return possible_func;
 }
@@ -971,7 +971,7 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
     return _GetEvaluatorFor(std::static_pointer_cast<PartialAbstractClosure>(func));
   }
 
-  MS_LOG(EXCEPTION) << "Cannot GetEvaluator from " << func->type_name();
+  MS_LOG(INTERNAL_EXCEPTION) << "Cannot GetEvaluator from " << func->type_name();
 }
 
 EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf,
@@ -990,8 +990,8 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
                     << ", as origin node should be in order list, origin_node: " << old_cnode->DebugString();
       old_cnode->func_graph()->EraseUnusedNodeInOrder(new_cnode);
     } else {
-      MS_LOG(EXCEPTION) << "Forward orig_node to different func_graph, old_node: " << old_cnode->DebugString()
-                        << ", new_node: " << new_cnode->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Forward orig_node to different func_graph, old_node: " << old_cnode->DebugString()
+                                 << ", new_node: " << new_cnode->DebugString();
     }
   }
   (void)forward_count_++;
@@ -1127,7 +1127,7 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
 
 EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_abs_list, const AnfNodePtr &node) {
   if (out_abs_list.empty()) {
-    MS_LOG(EXCEPTION) << "There is an endless loop for evaluator.";
+    MS_LOG(INTERNAL_EXCEPTION) << "There is an endless loop for evaluator.";
   }
 
   if (out_abs_list.size() == 1) {
@@ -1286,7 +1286,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   AbstractBasePtrList out_abs_list;
   const size_t evaluators_size = 2;
   if (evaluators.size() < evaluators_size) {
-    MS_LOG(EXCEPTION) << "Evaluators size is less than 2.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluators size is less than 2.";
   }
   multi_poss_[evaluators[0]] = evaluators[1];
   multi_poss_[evaluators[1]] = evaluators[0];

@@ -149,7 +149,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr 
       if (!check_integrity_) {
         break;
       }
-      MS_LOG(EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "'";
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "'";
     }
     auto param_map = exported[fg];
     if (param_map.find(param) != param_map.end()) {
@@ -158,8 +158,8 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr 
     fg = fg->parent();
   }
   if (throw_excp) {
-    MS_LOG(EXCEPTION) << "Can not find index for param '" << param->DumpText() << "' for func graph '"
-                      << func_graph->DumpText() << "'";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not find index for param '" << param->DumpText() << "' for func graph '"
+                               << func_graph->DumpText() << "'";
   }
   return -1;
 }
@@ -291,7 +291,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   } else if (Skip(meta_func_graph)) {
     // Do nothing.
   } else {
-    MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
   }
 
   return oss.str();
@@ -347,7 +347,7 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_gra
     if (idx < 0) {
       ParameterPtr p = dyn_cast<Parameter>(sym_node);
       if (p == nullptr) {
-        MS_LOG(EXCEPTION) << "Sym_inst's node could not cast to parameter";
+        MS_LOG(INTERNAL_EXCEPTION) << "Sym_inst's node could not cast to parameter";
       }
       MS_LOG(WARNING) << "Can not find SymbolicKeyInstance: " << p->name();
     }
@@ -402,7 +402,8 @@ std::string AnfExporter::GetOtherValueText(const ValuePtr &value) const {
   std::ostringstream oss;
 
   if (check_integrity_) {
-    MS_LOG(EXCEPTION) << "Need to process type: " << value->type_name() << ", dump text: " << value->DumpText();
+    MS_LOG(INTERNAL_EXCEPTION) << "Need to process type: " << value->type_name()
+                               << ", dump text: " << value->DumpText();
   }
   oss << value->type_name() << "[" << value->DumpText() << "]";
 
@@ -458,7 +459,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
   if (node->isa<CNode>()) {
     auto iter = apply_map.find(node);
     if (iter == apply_map.end()) {
-      MS_LOG(EXCEPTION) << "Can not find node '" << node->DumpText() << "' in apply_map";
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not find node '" << node->DumpText() << "' in apply_map";
     }
     oss << "%" << iter->second;
   } else if (node->isa<Parameter>()) {
@@ -476,7 +477,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
   } else if (node->isa<ValueNode>()) {
     oss << GetValueNodeText(func_graph, node->cast<ValueNodePtr>());
   } else {
-    MS_LOG(EXCEPTION) << "Unknown node '" << node->DumpText() << "'";
+    MS_LOG(INTERNAL_EXCEPTION) << "Unknown node '" << node->DumpText() << "'";
   }
 
   return oss.str();
@@ -491,7 +492,7 @@ void AnfExporter::OutputParameters(std::ostringstream &oss, const std::vector<An
     }
     auto parameter_ptr = param->cast<ParameterPtr>();
     if (parameter_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "param cannot cast to ParameterPtr";
+      MS_LOG(INTERNAL_EXCEPTION) << "param cannot cast to ParameterPtr";
     }
     if (first_flag) {
       first_flag = false;

@@ -81,7 +81,7 @@ class SpecializeTransform {
       auto const_tensor_ptr = std::make_shared<tensor::Tensor>(const_tensor);
       return NewValueNode(const_tensor_ptr);
     }
-    MS_LOG(EXCEPTION) << "Unexpected value:" << value->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected value:" << value->ToString();
   }
 };
 }  // namespace internal

@@ -172,7 +172,8 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
     return true;
   }
   if (cnode->size() == 0) {
-    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString()
+                               << trace::DumpSourceLines(node);
   }
 
   auto kernel_info = cnode->kernel_info();
@@ -237,15 +238,15 @@ std::string AnfUtils::GetCNodeName(const AnfNodePtr &node) {
     }
     return func_graph->ToString();
   }
-  MS_LOG(EXCEPTION) << "Unknown anf node type " << node->DebugString() << trace::DumpSourceLines(node);
+  MS_LOG(INTERNAL_EXCEPTION) << "Unknown anf node type " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
 size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "Only cnode has real input, but this anf is " << node->DebugString()
-                      << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has real input, but this anf is " << node->DebugString()
+                               << trace::DumpSourceLines(node);
   }
   {
     // cppcheck-suppress unreadVariable
@@ -258,7 +259,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
 
   size_t input_num = cnode->inputs().size();
   if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
   }
   // Exclude inputs[0].
   --input_num;
@@ -346,7 +347,8 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
 void AnfUtils::SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString()
+                               << trace::DumpSourceLines(node);
   }
   // single op cnode.
   auto primitive = GetCNodePrimitive(node);
@@ -401,7 +403,7 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
       return VisitKernel(node, 0);
     } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
       if (cnode->inputs().size() != kTupleGetItemInputSize) {
-        MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+        MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
       auto item_idx = AnfUtils::GetIntValue(input2);
@@ -414,7 +416,7 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
       return std::make_pair(anf_node, index);
     }
   } else {
-    MS_LOG(EXCEPTION) << "The input is invalid";
+    MS_LOG(INTERNAL_EXCEPTION) << "The input is invalid";
   }
 }
 
@@ -473,7 +475,7 @@ bool AnfUtils::IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(node1);
   MS_EXCEPTION_IF_NULL(node2);
   if (!IsCustomActorNode(node1) || !IsCustomActorNode(node2)) {
-    MS_LOG(EXCEPTION) << "Two node are not all Custom Actor Node!";
+    MS_LOG(INTERNAL_EXCEPTION) << "Two node are not all Custom Actor Node!";
   }
 
   auto actor_info1 = node1->user_data<CustomActorInfo>();
@@ -490,7 +492,7 @@ bool AnfUtils::IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &n
 std::string AnfUtils::GetCustomActorType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsCustomActorNode(node)) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+    MS_LOG(INTERNAL_EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
   }
 
   auto actor_info = node->user_data<CustomActorInfo>();
@@ -501,7 +503,7 @@ std::string AnfUtils::GetCustomActorType(const AnfNodePtr &node) {
 std::string AnfUtils::GetCustomActorName(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsCustomActorNode(node)) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+    MS_LOG(INTERNAL_EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
   }
 
   auto actor_info = node->user_data<CustomActorInfo>();
@@ -515,7 +517,7 @@ std::string AnfUtils::GetCustomActorName(const AnfNodePtr &node) {
 CNodePtr AnfUtils::GetCustomActorBaseNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsCustomActorNode(node)) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+    MS_LOG(INTERNAL_EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
   }
 
   auto actor_info = node->user_data<CustomActorInfo>();
@@ -526,7 +528,7 @@ CNodePtr AnfUtils::GetCustomActorBaseNode(const AnfNodePtr &node) {
 AnfUtils::CustomActorCallback AnfUtils::GetCustomFunc(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsCustomActorNode(node)) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+    MS_LOG(INTERNAL_EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
   }
 
   auto actor_info = node->user_data<CustomActorInfo>();

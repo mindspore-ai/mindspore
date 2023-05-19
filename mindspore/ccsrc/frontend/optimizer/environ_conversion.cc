@@ -80,7 +80,7 @@ abstract::AbstractBasePtr TransformAbstractRecursively(const abstract::AbstractB
     } else if (abs_seq->isa<abstract::AbstractList>()) {
       new_abs = std::make_shared<abstract::AbstractList>(new_elements);
     } else {
-      MS_LOG(EXCEPTION) << "abs_seq is not AbstractTuple or AbstractList, but: " << abs_seq->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "abs_seq is not AbstractTuple or AbstractList, but: " << abs_seq->ToString();
     }
     return new_abs;
   }
@@ -99,12 +99,12 @@ TypeId GetValueType(const CNodePtr &cnode) {
   // (EnvironSet/EnvironGet, environ, key, value/default)
   constexpr size_t environ_input_size = 4;
   if (cnode->size() != environ_input_size) {
-    MS_LOG(EXCEPTION) << "EnvrionSet/EnvironGet cnode should have 4 inputs, but: " << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "EnvrionSet/EnvironGet cnode should have 4 inputs, but: " << cnode->DebugString();
   }
   const auto &value_abstract = cnode->input(3)->abstract();
   if (value_abstract == nullptr) {
-    MS_LOG(EXCEPTION) << "4th input of EnvironSet/EnvironGet cnode should abstract, but not set, node: "
-                      << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The 4th input of EnvironSet/EnvironGet cnode should abstract, but not set, node: "
+                               << cnode->DebugString();
   }
   if (IsAbstractEnvType(value_abstract)) {
     return kObjectTypeEnvType;
@@ -202,7 +202,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     // Abstract of Environ & Value will be set by later TransformNodeAbstract function.
     // Key
     if (!IsValueNode<SymbolicKeyInstance>(cnode->input(kSymbolicKeyOffset))) {
-      MS_LOG(EXCEPTION) << "should be SymbolicKey, but: " << cnode->input(kSymbolicKeyOffset)->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "should be SymbolicKey, but: " << cnode->input(kSymbolicKeyOffset)->ToString();
     }
     const auto &transformed_key_node = GetTransformedKeyNode(cnode->input(kSymbolicKeyOffset), &symbolic_key_map);
     txn.SetEdge(node, kSymbolicKeyOffset, transformed_key_node);

@@ -68,9 +68,9 @@ class StackFrame final : public Base {
 
   AnfNodePtr &CurrentNode() {
     if (slot_index_ >= node_slots_.size()) {
-      MS_LOG(EXCEPTION) << "The stack frame of " << func_graph_->ToString()
-                        << " is invalid. Try to access frame sequence by index " << slot_index_
-                        << ", while the size is " << node_slots_.size() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "The stack frame of " << func_graph_->ToString()
+                                 << " is invalid. Try to access frame sequence by index " << slot_index_
+                                 << ", while the size is " << node_slots_.size() << ".";
     }
     return node_slots_[slot_index_];
   }

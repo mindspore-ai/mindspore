@@ -69,7 +69,7 @@ class DataConverter {
 
   virtual ValuePtr ConvertPyObject(const py::object &obj, bool use_sig, const TypePtr &dtype) {
     if (convert_func_ == nullptr) {
-      MS_LOG(EXCEPTION) << "convert func is null";
+      MS_LOG(INTERNAL_EXCEPTION) << "convert func is null";
     }
     return convert_func_(obj, use_sig, dtype);
   }
@@ -545,7 +545,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     return func_graph;
   }
   if (obj_type == RESOLVE_TYPE_CLASS_INSTANCE) {
-    MS_LOG(EXCEPTION) << "Fail to convert class instance: " << py::str(obj);
+    MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert class instance: " << py::str(obj);
   }
   // Start RESOLVE_TYPE_INVALID...
   // The fallback feature is enabled in default.
@@ -834,7 +834,7 @@ std::vector<std::string> GetObjKey(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::tuple obj_tuple = python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_KEY, obj);
   if (obj_tuple.size() != 2) {
-    MS_LOG(EXCEPTION) << "The function of \'get_obj_key()\' must return 2 elements";
+    MS_LOG(INTERNAL_EXCEPTION) << "The function of \'get_obj_key()\' must return 2 elements";
   }
   return {py::cast<std::string>(obj_tuple[0]), py::cast<std::string>(obj_tuple[1])};
 }

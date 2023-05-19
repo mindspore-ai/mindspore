@@ -105,8 +105,8 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
 
 AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list) {
   if (args_abs_list.empty()) {
-    MS_LOG(EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is " << args_abs_list.size()
-                      << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is "
+                               << args_abs_list.size() << ".";
   }
   AbstractBasePtr arg_spec_tmp = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(arg_spec_tmp);
@@ -160,7 +160,7 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     if (sequence_abs->isa<AbstractList>()) {
       return std::make_shared<AbstractList>(new_elements, sequence_abs->sequence_nodes());
     }
-    MS_EXCEPTION(TypeError) << "Unknown AbstractSequence type:" << abs->ToString();
+    MS_INTERNAL_EXCEPTION(TypeError) << "Unknown AbstractSequence type:" << abs->ToString();
   }
   if (abs->isa<AbstractScalar>()) {
     auto arg_type = abs->BuildType();
@@ -193,7 +193,7 @@ ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {
     }
   }
   if (shpx.size() != shpy.size()) {
-    MS_LOG(EXCEPTION) << "Failure: shpx.size() != shpy.size().";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failure: shpx.size() != shpy.size().";
   }
   ShapeVector shp;
   for (size_t i = 0; i < shpx.size(); i++) {
@@ -249,7 +249,7 @@ AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type) {
   } else if (type->isa<IOMonadType>()) {
     return kIOMonad->ToAbstract();
   }
-  MS_EXCEPTION(UnknownError) << "Unsupported to convert type " << type->ToString() << " to monad abstract";
+  MS_INTERNAL_EXCEPTION(UnknownError) << "Unsupported to convert type " << type->ToString() << " to monad abstract";
 }
 
 AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type) {
@@ -295,8 +295,8 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     // Return monad abstract if it is monad type.
     return MakeMonadAbstract(type->cast<MonadTypePtr>());
   } else {
-    MS_LOG(EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << " or type. "
-                      << type->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << " or type. "
+                               << type->ToString();
   }
 }
 

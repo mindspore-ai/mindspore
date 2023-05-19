@@ -126,7 +126,7 @@ std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
   } else if (Skip(meta_func_graph)) {
     // Do nothing.
   } else {
-    MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
   }
 
   return oss.str();
@@ -175,7 +175,7 @@ std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const Sym
     if (idx < 0) {
       ParameterPtr p = dyn_cast<Parameter>(sym_node);
       if (p == nullptr) {
-        MS_LOG(EXCEPTION) << "Sym_inst's node could not cast to parameter";
+        MS_LOG(INTERNAL_EXCEPTION) << "Sym_inst's node could not cast to parameter";
       }
       MS_LOG(WARNING) << "Can not find SymbolicKeyInstance: " << p->name();
     }
@@ -444,7 +444,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     }
     auto parameter_ptr = param->cast<ParameterPtr>();
     if (parameter_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "param cannot cast to ParameterPtr";
+      MS_LOG(INTERNAL_EXCEPTION) << "param cannot cast to ParameterPtr";
     }
     buffer << "%para" << para_num << "_" << parameter_ptr->name() << " : ";
     // Print parameters' type and shape
@@ -475,7 +475,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
   auto cnode = dyn_cast<CNode>(node);
   if (cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "Parameter \'node\' should be a CNode";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter \'node\' should be a CNode";
   }
   AnfNodePtr op = cnode->input(0);
   MS_EXCEPTION_IF_NULL(op);
@@ -814,7 +814,7 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   }
 
   if (node->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Input of apply node is empty";
+    MS_LOG(INTERNAL_EXCEPTION) << "Input of CNode is empty";
   }
 
   // Print operator

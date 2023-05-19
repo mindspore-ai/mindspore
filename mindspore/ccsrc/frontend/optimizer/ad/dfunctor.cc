@@ -85,8 +85,8 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(fv);
   if (lift_fv_before_grad) {
     MS_EXCEPTION_IF_NULL(fv->func_graph());
-    MS_LOG(EXCEPTION) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv:"
-                      << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv:"
+                               << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
   }
   auto fv_adjoint = anfnode_to_adjoin_.find(fv);
   if (fv_adjoint == anfnode_to_adjoin_.end()) {
@@ -98,8 +98,8 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
       (void)MapMorphism(fv);
       fv_adjoint = anfnode_to_adjoin_.find(fv);
       if (fv_adjoint == anfnode_to_adjoin_.end()) {
-        MS_LOG(EXCEPTION) << "Can not find adjoint in anfnode_to_adjoin_ fv " << fv->func_graph()->ToString() << " "
-                          << fv->ToString() << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "Can not find adjoint in anfnode_to_adjoin_ fv " << fv->func_graph()->ToString()
+                                   << " " << fv->ToString() << ".";
       }
     } else {
       fv_adjoint = anfnode_to_adjoin_indirect_fv_.find(fv);
@@ -216,8 +216,8 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     auto mng = primal_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
     if (!mng->Replace(node, make_tuple)) {
-      MS_LOG(EXCEPTION) << "Failed to replace old node: " << node->DebugString()
-                        << " with new node: " << make_tuple->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to replace old node: " << node->DebugString()
+                                 << " with new node: " << make_tuple->DebugString();
     }
     return make_tuple;
   }
@@ -306,8 +306,8 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
       auto func_graph = GetValueNode<FuncGraphPtr>(input);
       auto functor = func_graph_to_functor_.find(func_graph);
       if (functor == func_graph_to_functor_.end()) {
-        MS_LOG(EXCEPTION) << "BackPropagate failed functor for subgraph does not exist input[" << i << "] "
-                          << func_graph->ToString() << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "BackPropagate failed functor for subgraph does not exist input[" << i << "] "
+                                   << func_graph->ToString() << ".";
       }
       // Consider direct and indirect fvs.
       for (auto fv : func_graph->free_variables_nodes()) {
@@ -323,7 +323,8 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
     // Backprop sens wrt inputs.
     auto input_adjoint = anfnode_to_adjoin_.find(input);
     if (input_adjoint == anfnode_to_adjoin_.end()) {
-      MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString()
+                                 << ".";
     }
     input_adjoint->second->AccumulateDout(din);
   }
@@ -359,7 +360,8 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     MS_EXCEPTION_IF_NULL(node_adjoint);
     AnfNodePtr k = node_adjoint->k();
     if (k == nullptr) {
-      MS_LOG(EXCEPTION) << "MapMorphism adjoint node does not exist, input[" << i << "] " << node->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "MapMorphism adjoint node does not exist, input[" << i << "] " << node->ToString()
+                                 << ".";
     }
     if (i == 0) {
       auto k_fg = GetValueNode<FuncGraphPtr>(k);
@@ -450,8 +452,8 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
   const auto &free_variables_nodes = primal_graph_->free_variables_nodes();
   if (!is_top_ && free_variables_nodes.size() != 0) {
     if (lift_fv_before_grad) {
-      MS_LOG(EXCEPTION) << "direct fv size is: " << free_variables_nodes.size() << " in " << primal_graph_->ToString()
-                        << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "direct fv size is: " << free_variables_nodes.size() << " in "
+                                 << primal_graph_->ToString() << ".";
     }
   }
 
@@ -461,7 +463,7 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     }
     auto fv_adjoint = anfnode_to_adjoin_.find(fv);
     if (fv_adjoint == anfnode_to_adjoin_.end()) {
-      MS_LOG(EXCEPTION) << "AttachFvDoutToTape fv adjoint does not exist " << fv->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "AttachFvDoutToTape fv adjoint does not exist " << fv->ToString() << ".";
     }
     auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
     fv_adjoint->second->RegisterKUser(node, 1);
@@ -477,8 +479,8 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
 
 AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
   if (lift_fv_before_grad) {
-    MS_LOG(EXCEPTION) << "Lift free variable case: AttachIndirectFvDoutToTape backprop indirect fv "
-                      << grad_fv->ToString() << " " << primal_graph_->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Lift free variable case: AttachIndirectFvDoutToTape backprop indirect fv "
+                               << grad_fv->ToString() << " " << primal_graph_->ToString() << ".";
   }
   AnfNodePtr new_grad_fv = grad_fv;
   // Add indirect fv bprop.
@@ -569,8 +571,8 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
 
     auto fg = g_k_prims.KUserDefinedCellBprop(bprop_graph, primal);
     if (fg == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to expand user defined Cell bprop " << primal->ToString() << " in scope "
-                        << primal->output()->scope()->name() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to expand user defined Cell bprop " << primal->ToString() << " in scope "
+                                 << primal->output()->scope()->name() << ".";
     }
 
     // Cache the grad func
@@ -592,7 +594,7 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
 AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t index) {
   auto primal = primitive_user->input(index);
   if (!IsValueNode<Primitive>(primal)) {
-    MS_LOG(EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Primitive.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Primitive.";
   }
   ScopeGuard scope_guard(primal->scope());
   // Map Primitive to K
@@ -616,13 +618,13 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   if (k_meta != nullptr) {
     return NewValueNode(k_meta);
   }
-  MS_LOG(EXCEPTION) << "Fail to map Primitive of \"" << primal->ToString() << "\" to K.";
+  MS_LOG(INTERNAL_EXCEPTION) << "Fail to map Primitive of \"" << primal->ToString() << "\" to K.";
 }
 
 // Construct representation graph for ValueNode of FuncGraph.
 AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
   if (!IsValueNode<FuncGraph>(primal)) {
-    MS_LOG(EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of FuncGraph.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of FuncGraph.";
   }
   ScopeGuard scope_guard(primal->scope());
   // Map func graph to K
@@ -660,7 +662,7 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
 // Construct for ValueNode of Parameter.
 AnfNodePtr DFunctor::MapParameterToK(const AnfNodePtr &primal) {
   if (!primal->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Parameter.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primal graph \"" << primal->ToString() << "\" is not a ValueNode of Parameter.";
   }
   ScopeGuard scope_guard(primal->scope());
   // Map Parameter to K
@@ -691,7 +693,7 @@ void DFunctor::MapFvObject() {
       }
     }
     if (adjoint == nullptr) {
-      MS_LOG(EXCEPTION) << "MapFvObject failed for free variable " << node->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "MapFvObject failed for free variable " << node->ToString() << ".";
     }
     anfnode_to_adjoin_[node] = adjoint;
   }
@@ -767,8 +769,8 @@ void DFunctor::MapObject() {
 void DFunctor::UpdateAdjoint(const AdjointPtr &adjoint_definition) {
   auto primal = adjoint_definition->primal();
   if (anfnode_to_adjoin_definition_.find(primal) != anfnode_to_adjoin_definition_.end()) {
-    MS_LOG(EXCEPTION) << "UpdateAdjoint adjoint definition already exists " << primal_graph_->ToString() << " "
-                      << primal->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "UpdateAdjoint adjoint definition already exists " << primal_graph_->ToString() << " "
+                               << primal->ToString() << ".";
   }
   anfnode_to_adjoin_definition_[primal] = adjoint_definition;
   // Update k hole for primal.
@@ -856,9 +858,10 @@ bool DFunctor::AllReferencesStopped(const CNodePtr &node) {
 }
 
 CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int index) {
+  constexpr auto recursive_level = 2;
   auto it = node_user_map.find(cnode);
   if (it == node_user_map.end()) {
-    MS_LOG(EXCEPTION) << "J CNode not used {" << cnode->DebugString(2) << "/" << index << "}";
+    MS_LOG(INTERNAL_EXCEPTION) << "J CNode not used {" << cnode->DebugString(recursive_level) << "/" << index << "}";
   }
   auto &j_users = it->second;
   auto size = j_users.size();
@@ -884,9 +887,9 @@ CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int 
 #ifdef ENABLE_DUMP_IR
       DumpIR("J_User_Ex_" + cnode->func_graph()->ToString() + ".ir", cnode->func_graph());
 #endif
-      MS_LOG(EXCEPTION) << "Incorrect J CNode user size: " << size << ", of {" << cnode->DebugString(2) << "/" << index
-                        << "}\nUser Info:\n"
-                        << user_info.str();
+      MS_LOG(INTERNAL_EXCEPTION) << "Incorrect J CNode user size: " << size << ", of {"
+                                 << cnode->DebugString(recursive_level) << "/" << index << "}\nUser Info:\n"
+                                 << user_info.str();
     } else {
       return j_call_user;
     }
@@ -1055,8 +1058,8 @@ void DFunctor::EliminatePrimalGraph() {
     auto k_vnode = NewValueNode(k_graph_);
     primal_user->set_input(0, k_vnode);
     if (j_users.empty()) {
-      MS_LOG(EXCEPTION) << "The J nodes for primal graph " << primal_graph_->ToString()
-                        << " should be used by at least one other node.";
+      MS_LOG(INTERNAL_EXCEPTION) << "The J nodes for primal graph " << primal_graph_->ToString()
+                                 << " should be used by at least one other node.";
     }
     primal_user->set_abstract(j_users[0]->abstract());
     // Insert tuple_getitem after primal user cnode.

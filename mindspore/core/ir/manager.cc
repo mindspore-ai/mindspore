@@ -236,7 +236,7 @@ void FuncGraphManager::Init() {
 
 FuncGraphSet &FuncGraphManager::func_graph_parents_total(const FuncGraphPtr &fg) const {
   if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "The parameter 'fg' should not be null.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The parameter 'fg' should not be null.";
   }
   MS_LOG(DEBUG) << "Start func_graph_parents_total func graph " << fg->ToString();
   func_graph_parents_total_->Recompute(fg);
@@ -289,7 +289,7 @@ FuncGraphSet &FuncGraphManager::func_graphs_used_total(const FuncGraphPtr &fg) c
 const FuncGraphIndexPtr &FuncGraphManager::func_graph_index(const FuncGraphPtr &fg) const {
   auto iter = func_graphs_index_.find(fg);
   if (iter == func_graphs_index_.end()) {
-    MS_LOG(EXCEPTION) << "Func graph: " << fg->ToString() << " is not add FuncGraphIndexMap.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Func graph: " << fg->ToString() << " is not add FuncGraphIndexMap.";
   }
   return func_graphs_index_.at(fg);
 }
@@ -368,7 +368,8 @@ void FuncGraphManager::Clear() noexcept {
     if (graph->attached_mng_cnt() == 0) {
       graph->ClearAllManagerInfo();
     } else if (graph->attached_mng_cnt() < 0) {
-      MS_LOG(EXCEPTION) << "graph:" << graph->ToString() << " attached cnt not right:" << graph->attached_mng_cnt();
+      MS_LOG(INTERNAL_EXCEPTION) << "graph:" << graph->ToString()
+                                 << " attached cnt not right:" << graph->attached_mng_cnt();
     }
   }
 
@@ -861,12 +862,12 @@ bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr 
 
 void FuncGraphTransaction::SetEdge(const AnfNodePtr &src_node, int k, const AnfNodePtr &v) {
   if (k < 0) {
-    MS_LOG(EXCEPTION) << "Invalid value k = " << k;
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid value k = " << k;
   }
   MS_EXCEPTION_IF_NULL(src_node);
   auto cnode = src_node->cast<CNodePtr>();
   if (cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "src_node should be a cnode, but cast failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "src_node should be a cnode, but cast failed.";
   }
   (void)changes_.emplace_back(std::make_unique<change::SetEdge>(cnode, k, v));
 }
@@ -875,7 +876,7 @@ void FuncGraphTransaction::AddEdge(const AnfNodePtr &src_node, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(src_node);
   auto cnode = src_node->cast<CNodePtr>();
   if (cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "src_node should be a cnode, but cast failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "src_node should be a cnode, but cast failed.";
   }
   (void)changes_.emplace_back(std::make_unique<change::AddEdge>(cnode, v));
 }

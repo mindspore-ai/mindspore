@@ -106,7 +106,7 @@ class PrimEvaluator : public Evaluator {
   ~PrimEvaluator() override = default;
   MS_DECLARE_PARENT(PrimEvaluator, Evaluator);
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) final {
-    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 };
 
@@ -185,7 +185,7 @@ class TrackedEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                     const AnfNodeConfigPtr &out_conf) override;
@@ -220,7 +220,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
   void PopAlwaysEvalFlag() { always_eval_flags_.pop_back(); }
   bool always_eval_flag() const {
     if (always_eval_flags_.empty()) {
-      MS_LOG(EXCEPTION) << "Always_eval_flag should not be empty";
+      MS_LOG(INTERNAL_EXCEPTION) << "Always_eval_flag should not be empty";
     }
     return always_eval_flags_.back();
   }
@@ -322,7 +322,7 @@ class PartialAppEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should not be called, Run() method should be called";
   }
 
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -371,7 +371,7 @@ class JEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
@@ -402,7 +402,7 @@ class TaylorEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
@@ -434,7 +434,7 @@ class ShardEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should not be called, Run() method should be called";
   }
 
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
@@ -473,7 +473,7 @@ class VmapEvaluator : public Evaluator {
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+    MS_LOG(INTERNAL_EXCEPTION) << "Should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }

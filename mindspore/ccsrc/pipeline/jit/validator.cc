@@ -70,10 +70,10 @@ void ValidateOperation(const AnfNodePtr &node) {
     return;
   }
   if (prim->name() == "fake_bprop") {
-    MS_LOG(EXCEPTION) << "Illegal primitive: " << GetValue<std::string>(prim->GetAttr("info"));
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal primitive: " << GetValue<std::string>(prim->GetAttr("info"));
   }
 
-  MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name();
+  MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name() << ". Please check whether to use unsupported primitive";
 }
 
 bool CheckAbstractScalar(const AnfNodePtr &node) {
@@ -113,7 +113,8 @@ void ValidateAbstract(const AnfNodePtr &node) {
   }
   if (abstract->isa<AbstractJTagged>()) {
     // Validate a type.
-    MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal type in the graph: " << abstract->ToString()
+                               << ", node: " << node->DebugString();
   }
   if (CheckAbstractScalar(node)) {
     return;
@@ -134,7 +135,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
   }
 
   // Other types show exception
-  MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Illegal type in the graph: " << abstract->ToString();
 }
 
 void CheckValueTuple(const AnfNodePtr &node) {

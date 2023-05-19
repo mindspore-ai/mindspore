@@ -64,7 +64,7 @@ class MS_CORE_API Functor : public Value {
 
   /// \brief Get abstract of the Functor object. abstract of Functor is unavailable.
   abstract::AbstractBasePtr ToAbstract() override {
-    MS_LOG(EXCEPTION) << "Functor[" << name() << "] can't be converted to abstract.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Functor[" << name() << "] can't be converted to abstract.";
   }
 
   /// \brief Show the Functor object.

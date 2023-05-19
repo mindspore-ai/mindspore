@@ -103,11 +103,11 @@ TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const Ty
 TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &accepts,
                         const std::string &error_message_prefix) {
   if (scalar == nullptr) {
-    MS_LOG(EXCEPTION) << "Scalar nullptr";
+    MS_LOG(INTERNAL_EXCEPTION) << "Scalar nullptr";
   }
   auto type = scalar->BuildType();
   if (type == nullptr) {
-    MS_LOG(EXCEPTION) << "Scalar value nullptr";
+    MS_LOG(INTERNAL_EXCEPTION) << "Scalar value nullptr";
   }
 
   return CheckType(type, accepts, error_message_prefix);
@@ -198,7 +198,8 @@ void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBas
 void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if (shape[i] < 0) {
-      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer, but got " << shape[i];
+      MS_LOG(EXCEPTION) << "For '" << op << "', shape element [" << i << "] must be positive integer, but got "
+                        << shape[i];
     }
   }
 }

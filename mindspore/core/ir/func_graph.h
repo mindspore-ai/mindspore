@@ -220,7 +220,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   GraphDebugInfoPtr debug_info();
   void set_debug_info(const GraphDebugInfoPtr &info) {
     if (info == nullptr) {
-      MS_LOG(EXCEPTION) << "Graph set null debug info";
+      MS_LOG(INTERNAL_EXCEPTION) << "Graph set null debug info";
     }
     this->debug_info_ = info;
   }

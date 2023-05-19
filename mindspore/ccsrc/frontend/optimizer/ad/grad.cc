@@ -43,7 +43,7 @@ FuncGraphPtr PartialEliminateOptPass(const pipeline::ResourcePtr &resource, cons
 FuncGraphVector PartialEliminateMulti(const pipeline::ResourceBasePtr &resource, const FuncGraphVector &func_graphs) {
   auto new_res = std::dynamic_pointer_cast<pipeline::Resource>(resource);
   if (new_res == nullptr) {
-    MS_LOG(EXCEPTION) << "Parameter resources is not a pipeline::Resource";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter resources is not a pipeline::Resource";
   }
   FuncGraphVector opt_fgs;
   for (const auto &func_graph : func_graphs) {
@@ -77,7 +77,7 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
 #endif
   auto new_res = std::dynamic_pointer_cast<pipeline::Resource>(resource);
   if (new_res == nullptr) {
-    MS_LOG(EXCEPTION) << "Parameter resources is not a pipeline::Resource";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parameter resources is not a pipeline::Resource";
   }
   auto opt_fg = PartialEliminateOptPass(new_res, new_fg);
 #ifdef ENABLE_DUMP_IR

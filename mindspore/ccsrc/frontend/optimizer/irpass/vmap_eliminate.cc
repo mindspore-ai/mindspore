@@ -116,9 +116,9 @@ AnfNodePtr UpdateParam(const FuncGraphPtr &vmap_fg, const AnfNodePtr &u_monad_no
 void GetMonadOffset(const std::vector<AnfNodePtr> &inputs, size_t *u_monad_offset, size_t *io_monad_offset) {
   // Check the last two (if exists) is monad input.
   if (*u_monad_offset != 0 || *io_monad_offset != 0) {
-    MS_EXCEPTION(ValueError) << "The initial value of u_monad_offset and io_monad_offset should be 0, but we got "
-                             << "u_monad_offset: " << *u_monad_offset << " and io_monad_offset: " << *io_monad_offset
-                             << ".";
+    MS_INTERNAL_EXCEPTION(ValueError)
+      << "The initial value of u_monad_offset and io_monad_offset should be 0, but we got "
+      << "u_monad_offset: " << *u_monad_offset << " and io_monad_offset: " << *io_monad_offset << ".";
   }
   auto inputs_size = inputs.size();
   constexpr size_t max_monad_input_num = 2;
@@ -324,7 +324,7 @@ int GetAxisSize(const CNodePtr &cnode, size_t cell_size, size_t parameters_size,
                                << "but we get axis_size: " << axis_size << " and the cell size: " << cell_size << ".";
     }
   } else if (axis_size == kInvalidAxisSize) {
-    MS_LOG(EXCEPTION) << "Failed to get 'axis_size' within the scope of vmap.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed to get 'axis_size' within the scope of vmap.";
   }
   return axis_size;
 }
@@ -482,7 +482,7 @@ AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
   if (vmap_rule_node == nullptr) {
     vmap_rule_fg = parse::ParsePythonCode(vmap_rule_fn);
     if (vmap_rule_fg == nullptr) {
-      MS_LOG(EXCEPTION) << "Fail to parse vmap rule function for " << prim->name() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to parse vmap rule function for " << prim->name() << ".";
     }
     auto vmap_rule_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_PROPAGATE);
     if (vmap_rule_flag) {
@@ -499,7 +499,7 @@ AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
 AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::ResourceBasePtr &resource, int axis_size) {
   MS_EXCEPTION_IF_NULL(vnode);
   if (!IsValueNode<Primitive>(vnode)) {
-    MS_LOG(EXCEPTION) << "Primitive node is not valid.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primitive node is not valid.";
   }
   auto prim = GetValueNode<PrimitivePtr>(vnode);
   MS_LOG(DEBUG) << "Overloading Primitive node " << vnode->DebugString() << ".";
@@ -508,7 +508,7 @@ AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::Resource
   }
   AnfNodePtr prim_vmap_rule = GetVmapRule(prim, resource, axis_size);
   if (prim_vmap_rule == nullptr) {
-    MS_LOG(EXCEPTION) << "Primitive " << prim->name() << " transform to VmapRule failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Primitive " << prim->name() << " transform to VmapRule failed.";
   }
   return prim_vmap_rule;
 }
@@ -865,7 +865,7 @@ bool ExpandVmapPrim::CheckIfEmbedMetaFgPrim(const CNodePtr &node) const {
   }
   auto func_graph = GetValueNode<FuncGraphPtr>(value_node);
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Unexpected meta function graph node:" << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected meta function graph node:" << node->DebugString();
   }
   if (parallel::IsEmbedShardNode(func_graph)) {
     MS_LOG(EXCEPTION)
@@ -934,8 +934,8 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       auto vmap_app = user.first->cast<CNodePtr>();
       int user_index = user.second;
       if (vmap_app->size() < 1) {
-        MS_LOG(EXCEPTION) << "Something went wrong, CNode vmap_app's arguments is less than 1, CNode: "
-                          << vmap_app->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Something went wrong, CNode vmap_app's arguments is less than 1, CNode: "
+                                   << vmap_app->DebugString();
       }
       size_t parameters_size = vmap_app->size() - 1;
       std::vector<size_t> orig_fg_param_info;

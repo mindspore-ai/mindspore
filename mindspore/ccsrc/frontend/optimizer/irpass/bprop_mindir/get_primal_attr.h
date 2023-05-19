@@ -42,8 +42,8 @@ class GetPrimalAttr : public AnfVisitor {
     py::object attr_obj = py::getattr(prim_py->GetPyObj(), attr_.c_str());
     ValuePtr convert_result = nullptr;
     if (!parse::ConvertData(attr_obj, &convert_result)) {
-      MS_LOG(EXCEPTION) << "Get the attr '" << attr_ << "' of python obj '" << py::str(prim_py->GetPyObj())
-                        << "' failed.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Get the attr '" << attr_ << "' of python obj '" << py::str(prim_py->GetPyObj())
+                                 << "' failed.";
     }
     return NewValueNode(convert_result);
   }

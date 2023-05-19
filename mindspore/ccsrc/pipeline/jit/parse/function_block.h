@@ -139,7 +139,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // Update local parameters from previous block.
   void UpdateLocalPyParam(const std::map<std::string, AnfNodePtr> &keys, std::map<std::string, AnfNodePtr> values) {
     if (keys.size() != values.size()) {
-      MS_LOG(EXCEPTION) << "keys size should be equal to values size.";
+      MS_LOG(INTERNAL_EXCEPTION) << "keys size should be equal to values size.";
     }
     for (auto iter = keys.begin(); iter != keys.end(); ++iter) {
       const std::string &cur_key_name = iter->first;
@@ -158,7 +158,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
       }
     }
     if (local_py_params_keys_.size() != local_py_params_values_.size()) {
-      MS_LOG(EXCEPTION) << "local_py_params_keys_ size should be equal to local_py_params_values_ size.";
+      MS_LOG(INTERNAL_EXCEPTION)
+        << "The size of local_py_params_keys_ should be equal to local_py_params_values_ size.";
     }
   }
 

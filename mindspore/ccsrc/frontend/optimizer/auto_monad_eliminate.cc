@@ -430,7 +430,7 @@ bool AutoMonadEliminator::EliminateAutoMonadNode(const FuncGraphManagerPtr &mana
     auto &node_users = manager->node_users();
     auto iter = node_users.find(attach);
     if (iter == node_users.end()) {
-      MS_LOG(EXCEPTION) << "No user of node: " << attach->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "No user of node: " << attach->DebugString();
     }
     auto &users = iter->second;
     if (users.size() <= 1) {

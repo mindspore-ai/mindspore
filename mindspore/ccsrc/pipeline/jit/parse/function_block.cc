@@ -262,7 +262,7 @@ std::pair<AnfNodePtr, std::string> FunctionBlock::MakeResolveAstOp(const py::obj
   py::tuple namespace_var = ast->CallParseModFunction(PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL, op);
   constexpr size_t namespace_size = 3;
   if (namespace_var.size() != namespace_size) {
-    MS_LOG(EXCEPTION) << "Resolve ast op failed, get namespace tuple size=" << namespace_var.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Resolve ast op failed, get namespace tuple size=" << namespace_var.size();
   }
   constexpr size_t namespace_index = 0;
   constexpr size_t symbol_index = 1;
@@ -315,7 +315,7 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   constexpr size_t value_index = 2;
   constexpr size_t flag_index = 3;
   if (info.size() != closure_info_size && info.size() != global_info_size) {
-    MS_EXCEPTION(NameError) << "namespace info size should be 2 or 4, but got " << info.size();
+    MS_INTERNAL_EXCEPTION(NameError) << "The namespace info size should be 2 or 4, but got " << info.size();
   }
   // If namespace is None, the symbol is an undefined name.
   if (info[namespace_index].is_none()) {
@@ -400,7 +400,7 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
   py::tuple namespace_var = ast->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
   const size_t namespace_var_size = 2;
   if (namespace_var.size() < namespace_var_size) {
-    MS_EXCEPTION(NameError) << "namespace_var is less than 2";
+    MS_INTERNAL_EXCEPTION(NameError) << "namespace_var is less than 2";
   }
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_COMMON_OPS, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
@@ -579,8 +579,8 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
     return;
   }
   if (func_graph_->get_return() != nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
-                      << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! NodeInfo: "
+                               << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
   }
   std::vector<AnfNodePtr> input_nodes;
   input_nodes.emplace_back(NewValueNode(target_block->func_graph()));
@@ -599,8 +599,8 @@ CNodePtr FunctionBlock::ConditionalJump(const AnfNodePtr &cond_node, const AnfNo
   MS_EXCEPTION_IF_NULL(true_block_call);
   MS_EXCEPTION_IF_NULL(false_block_call);
   if (func_graph_->get_return() != nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
-                      << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! NodeInfo: "
+                               << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
   }
   CNodePtr switch_app =
     func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, true_block_call, false_block_call});
@@ -706,7 +706,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   if (return_node != nullptr) {
     const size_t return_input_size = 2;
     if (return_node->inputs().size() < return_input_size) {
-      MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
+      MS_LOG(INTERNAL_EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_output = return_node->input(1);
   } else {

@@ -94,7 +94,7 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   if (keys_length > 0) {
     auto ret = memcpy_s(key_tensor()->data_c(), key_tensor()->Size(), keys->data(), keys_length);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy for key tensor failed, errno[" << ret << "]";
+      MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for key tensor failed, errno[" << ret << "]";
     }
   }
 
@@ -109,7 +109,7 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   if (values_length > 0) {
     auto ret = memcpy_s(value_tensor()->data_c(), value_tensor()->Size(), values->data(), values_length);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy for value tensor failed, errno[" << ret << "]";
+      MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for value tensor failed, errno[" << ret << "]";
     }
   }
 
@@ -118,14 +118,14 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   auto statuses_num = statuses_length / abstract::TypeIdSize(kNumberTypeInt);
   // The status tensor shape is same as the shape of key tensor.
   if (statuses_num != keys_num) {
-    MS_LOG(EXCEPTION) << "Invalid export data: keys num: " << keys_num << ", statuses num: " << statuses_num;
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid export data: keys num: " << keys_num << ", statuses num: " << statuses_num;
   }
   ShapeVector status_tensor_shape{SizeToLong(statuses_num)};
   (void)status_tensor()->set_shape(status_tensor_shape);
   if (statuses_length > 0) {
     auto ret = memcpy_s(status_tensor()->data_c(), status_tensor()->Size(), statuses->data(), statuses_length);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy for status tensor failed, errno[" << ret << "]";
+      MS_LOG(INTERNAL_EXCEPTION) << "Memcpy for status tensor failed, errno[" << ret << "]";
     }
   }
 }

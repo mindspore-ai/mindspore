@@ -122,7 +122,7 @@ CNodePtr CreatePyExecuteCNode(const AnfNodePtr &orig_node, const AnfNodePtr &scr
                               const AnfNodePtr &values) {
   const FuncGraphPtr &fg = orig_node->func_graph();
   if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
   }
   const auto interpreted_cnode = CreatePyExecuteCNode(fg, script, keys, values, orig_node->debug_info());
   return interpreted_cnode;
@@ -141,7 +141,7 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
                                      const AnfNodePtr &values) {
   const FuncGraphPtr &fg = orig_node->func_graph();
   if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The func graph is null. orig_node: " << orig_node->DebugString();
   }
   const auto interpreted_cnode = CreatePyExecuteCNodeInOrder(fg, script, keys, values, orig_node->debug_info());
   return interpreted_cnode;
@@ -343,7 +343,7 @@ AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, co
   // Pack local parameters keys.
   auto input_str_list = GetPyExecuteInputFromUnicodeStr(script_str);
   if (input_str_list.empty()) {
-    MS_LOG(EXCEPTION) << "Not found PyExecute input. script: " << script_str;
+    MS_LOG(INTERNAL_EXCEPTION) << "Not found PyExecute input. script: " << script_str;
   }
   if (input_str_list.size() != node_inputs.size()) {
     if (script_str.find(kPyExecuteSlice) == string::npos) {
@@ -596,7 +596,7 @@ std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &inp
     // Process raise ValueError
     exception_str += GetScalarStringValue(arg);
   } else {
-    MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected abstract: " << arg->ToString();
   }
   return exception_str;
 }
@@ -607,7 +607,7 @@ bool CheckHasVariable(const AbstractBasePtr &arg) {
     MS_EXCEPTION_IF_NULL(arg_tuple);
     const auto &arg_tuple_elements = arg_tuple->elements();
     if (arg_tuple_elements.size() == 0) {
-      MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
+      MS_LOG(INTERNAL_EXCEPTION) << "The arg_tuple_elements can't be empty.";
     }
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
       auto &element = arg_tuple_elements[index];

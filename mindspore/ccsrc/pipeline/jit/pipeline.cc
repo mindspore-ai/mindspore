@@ -357,8 +357,8 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py
   for (std::size_t i = 0; i < args.size(); i++) {
     ValuePtr converted = nullptr;
     if (!parse::ConvertData(args[i], &converted)) {
-      MS_LOG(EXCEPTION) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
-                        << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
+      MS_LOG(INTERNAL_EXCEPTION) << "ConvertData for " << i << "th argument failed, the argument type is "
+                                 << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
     AbstractBasePtr abs = ArgsToAbstract(args[i], converted, enable_tuple_broaden);
     (void)args_abs.emplace_back(abs);
@@ -372,8 +372,8 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py
     bool success = parse::ConvertData(py::cast<py::object>(item.first), &key) &&
                    parse::ConvertData(py::cast<py::object>(item.second), &value);
     if (!success) {
-      MS_LOG(EXCEPTION) << "parse::ConvertData for argument (" << py::str(item.first) << ": " << py::str(item.second)
-                        << ") failed.";
+      MS_LOG(INTERNAL_EXCEPTION) << "ConvertData for argument (" << py::str(item.first) << ": " << py::str(item.second)
+                                 << ") failed.";
     }
     AbstractBasePtr value_abs = ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden);
     auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
@@ -473,7 +473,7 @@ FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
 void GraphExecutorPy::SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
   MS_EXCEPTION_IF_NULL(primal_func_graph);
   if (info_.find(phase) == info_.end()) {
-    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
     return;
   }
   info_[phase]->primal_func_graph = primal_func_graph;
@@ -489,10 +489,10 @@ FuncGraphPtr GraphExecutorPy::GetPrimalFuncGraph(const std::string &phase) {
 
 FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
   if (phase.empty()) {
-    MS_LOG(EXCEPTION) << "The input phase is empty.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The input phase is empty.";
   }
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor:" << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor:" << phase;
   }
 
   auto execute_info = info_[phase];
@@ -504,10 +504,10 @@ FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
 
 void GraphExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
   if (phase.empty()) {
-    MS_LOG(EXCEPTION) << "The input phase is empty.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The input phase is empty.";
   }
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor: " << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << phase;
   }
 
   auto execute_info = info_[phase];
@@ -566,7 +566,7 @@ py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std
     return proto_str;
   }
 
-  MS_LOG(EXCEPTION) << "Unknown ir type: " << ir_type;
+  MS_LOG(INTERNAL_EXCEPTION) << "Unknown ir type: " << ir_type;
 }
 
 py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, const bool &incremental,
@@ -589,7 +589,7 @@ py::bytes GraphExecutorPy::GetObfuscateFuncGraphProto(const std::string &phase, 
 
 py::bytes GraphExecutorPy::GetOptimizeGraphProto(const std::string &phase) {
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor: " << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << phase;
   }
   FuncGraphPtr fg_ptr = info_[phase]->resource->optimize_graph();
   if (fg_ptr == nullptr) {
@@ -610,7 +610,7 @@ py::dict GraphExecutorPy::GetParallelGraphInfo(const std::string &phase) {
   std::string parallel_phase = phase + kStepParallelGraph;
   auto graph = GetFuncGraph(parallel_phase);
   if (graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not access FuncGraph according to phase: " << parallel_phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not access FuncGraph according to phase: " << parallel_phase;
   }
 
   return mindspore::parallel::GetParallelCNodeInfoFromGraph(graph);
@@ -937,7 +937,8 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
     ValuePtr converted = nullptr;
     bool success = parse::ConvertData(args[i], &converted);
     if (!success) {
-      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i
+                                 << "]: " << py::str(args[i]);
     }
     (void)arguments->emplace_back(converted);
     auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_);
@@ -958,8 +959,8 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
     bool success = parse::ConvertData(py::cast<py::object>(item.first), &key) &&
                    parse::ConvertData(py::cast<py::object>(item.second), &value);
     if (!success) {
-      MS_LOG(EXCEPTION) << "Fail to convert the argument (" << py::str(item.first) << ": " << py::str(item.second)
-                        << ").";
+      MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert the argument (" << py::str(item.first) << ": "
+                                 << py::str(item.second) << ").";
     }
     AbstractBasePtr value_abs = ArgsToAbstract(py::cast<py::object>(item.second), value, enable_tuple_broaden_);
     auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
@@ -1215,7 +1216,7 @@ void Pipeline::Run() {
 #endif
       }
       if (!result) {
-        MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
+        MS_LOG(INTERNAL_EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
 
       FuncGraphPtr graph = resource_->func_graph();
@@ -1263,14 +1264,14 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(arg, &converted);
     if (!succ) {
-      MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
+      MS_LOG(INTERNAL_EXCEPTION) << "The " << i << "th arg convert failed.";
     }
     if (!arg_list_inited) {
       arg_list->push_back(converted);
       continue;
     }
     if (i >= arg_list->size()) {
-      MS_LOG(EXCEPTION) << "i:" << i << " output of range:" << arg_list->size();
+      MS_LOG(INTERNAL_EXCEPTION) << "i:" << i << " output of range:" << arg_list->size();
     }
     (*arg_list)[i] = converted;
   }
@@ -1397,7 +1398,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   TerminateDebugger();
 #endif
   if (!py::isinstance<py::str>(phase_obj)) {
-    MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";
+    MS_LOG(INTERNAL_EXCEPTION) << "Run failed, phase input is not a str";
   }
   auto phase = py::cast<std::string>(phase_obj);
   auto ms_context = MsContext::GetInstance();
@@ -1439,7 +1440,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
 #endif
   auto iter = info_.find(phase);
   if (iter == info_.end()) {
-    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
   }
   auto &execute_info = iter->second;
   MS_EXCEPTION_IF_NULL(execute_info);
@@ -1450,7 +1451,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   // Start to run phase.
   compile::VmEvalFuncPtr run = GetVmEvalFunc(phase);
   if (run == nullptr) {
-    MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase;
+    MS_LOG(INTERNAL_EXCEPTION) << "Can't find run graph func for " << phase;
   }
   // Set loopsink size for each phase.
   bool vm_loop_flag = info_[phase]->resource->vm_loop_flag();
@@ -1491,7 +1492,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
 void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string &phase) const {
   MS_LOG(INFO) << "Init params when ge backend, phase = " << phase;
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
+    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
   }
   DeviceContext *device_context = nullptr;
   try {
@@ -1508,7 +1509,7 @@ void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase) const {
   MS_LOG(INFO) << "Start build df graph, phase = " << phase;
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
+    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
   }
   DeviceContext *device_context = nullptr;
   try {
@@ -1575,7 +1576,7 @@ py::bytes GraphExecutorPy::GetRandomStatus(const std::string &phase) const {
 
 void GraphExecutorPy::PyExePath(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
-    MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
   auto py_exe_path_s = py::cast<std::string>(py_exe_path);
   auto ms_context = MsContext::GetInstance();
@@ -1584,7 +1585,7 @@ void GraphExecutorPy::PyExePath(const py::object &py_exe_path) const {
 
 void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) const {
   if (!py::isinstance<py::str>(kernel_build_server_dir)) {
-    MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
   }
   auto kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
   auto ms_context = MsContext::GetInstance();

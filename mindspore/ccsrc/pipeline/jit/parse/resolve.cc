@@ -133,7 +133,7 @@ namespace {
 std::string GetPyObjId(const py::object &obj) {
   py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
   if (py::isinstance<py::none>(out)) {
-    MS_LOG(EXCEPTION) << "Get pyobj failed";
+    MS_LOG(INTERNAL_EXCEPTION) << "Get pyobj failed";
   }
   return out.cast<std::string>();
 }
@@ -483,7 +483,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   AnfNodePtr resolved_node = nullptr;
   bool success = ResolveObjectToNode(node, obj, &resolved_node);
   if (!success) {
-    MS_LOG(EXCEPTION) << "Parse Resolve covert failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse Resolve covert failed.";
   }
   if (IsValueNode<FuncGraph>(resolved_node)) {
     auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
@@ -518,13 +518,13 @@ std::pair<NameSpacePtr, SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node)
     return {name_space, symbol};
   }
   constexpr auto recursive_level = 2;
-  MS_LOG(EXCEPTION) << "It's not prim::Resolve CNode, node: " << node->DebugString(recursive_level);
+  MS_LOG(INTERNAL_EXCEPTION) << "It's not prim::Resolve CNode, node: " << node->DebugString(recursive_level);
 }
 
 py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto &obj = name_space->namespace_obj();
@@ -538,7 +538,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
                          const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Manager is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Manager is nullptr.";
   }
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   auto obj = GetSymbolObject(name_space, symbol, node);
