@@ -99,7 +99,7 @@ class GradNetWrtX(nn.Cell):
         super(GradNetWrtX, self).__init__()
         self.net = net
         self.grad_op = ops.GradOperation(
-            get_all=True, get_by_list=True, sens_param=True)
+            get_all=True, get_by_list=True)
         self.params = ParameterTuple(net.trainable_params())
 
     def construct(self, *inputs):
@@ -165,8 +165,6 @@ def dynamic_concat_run(is_grad):
         data = []
         data.append(np.random.rand(16, i).astype(dtype))
         data.append(np.random.rand(16, i).astype(dtype))
-        if is_grad:
-            data.append(np.random.rand(16, i*2).astype(dtype))
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
@@ -238,14 +236,12 @@ def test_dynamic_bachnorm():
     for i in [2, 64]:
         data = []
         data.append(np.random.rand(i, c).astype(dtype))
-        data.append(np.random.rand(i, c).astype(dtype))
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
     t0 = Tensor(dtype=ms.float32, shape=[None, c])
-    t1 = Tensor(dtype=ms.float32, shape=[None, c])
     net = GradNetWrtX(BatchNormNet(c))
-    net.set_inputs(t0, t1)
+    net.set_inputs(t0)
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
@@ -413,15 +409,13 @@ def test_dynamic_add():
         data = []
         data.append(np.random.rand(i, 256).astype(dtype))
         data.append(np.random.rand(i, 256).astype(dtype))
-        data.append(np.random.rand(i, 256).astype(dtype))
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
     net = GradNetWrtX(AddNet())
     t0 = Tensor(dtype=ms.float32, shape=[None, 256])
     t1 = Tensor(dtype=ms.float32, shape=[None, 256])
-    t2 = Tensor(dtype=ms.float32, shape=[None, 256])
-    net.set_inputs(t0, t1, t2)
+    net.set_inputs(t0, t1)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -600,7 +594,7 @@ def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
     """
     dynamic_range = range(2, 64)
     data_type = np.float32
-    input_shape = [(4, 16, None, 8), (4, 16, None, 8), (4, 16, None, 8)]
+    input_shape = [(4, 16, None, 8), (4, 16, None, 8)]
     net = GradNetWrtX(SigmoidCrossEntropyWithLogits())
     comm_func(dynamic_range, input_shape, data_type, net)
 
@@ -616,7 +610,7 @@ def test_dynamic_sigmoid_grad():
     """
     dynamic_range = range(2, 64)
     data_type = np.float32
-    input_shape = [(4, 16, None, 8), (4, 16, None, 8)]
+    input_shape = [(4, 16, None, 8)]
     net = GradNetWrtX(Sigmoid())
     comm_func(dynamic_range, input_shape, data_type, net)
 

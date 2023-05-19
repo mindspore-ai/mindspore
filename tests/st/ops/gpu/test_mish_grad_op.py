@@ -49,13 +49,12 @@ class MishGradDynamicShapeNet(nn.Cell):
     def __init__(self, network):
         super(MishGradDynamicShapeNet, self).__init__()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_all=True)
         self.network = network
 
-    def construct(self, x, dy):
+    def construct(self, x):
         x = self.test_dynamic(x)
-        dy = self.test_dynamic(dy)
-        return self.grad(self.network)(x, dy)
+        return self.grad(self.network)(x)
 
 
 @pytest.mark.level1
@@ -183,21 +182,13 @@ def test_mish_grad_dynamic_shape(mode):
                            [0.3337, 1.4941, -0.2052]],
                           [[0.3131, -0.8541, -2.5530],
                            [0.6536, 0.8644, -0.7422]]]]).astype(np.float32))
-    dout = Tensor(np.array([[[[2.2698, -1.4544, 0.0458],
-                              [-0.1872, 1.5328, 1.4694]],
-                             [[0.1549, 0.3782, -0.8878],
-                              [-1.9808, -0.3479, 0.1563]]],
-                            [[[1.2303, 1.2024, -0.3873],
-                              [-0.3023, -1.0486, -1.4200]],
-                             [[-1.7063, 1.9508, -0.5097],
-                              [-0.4381, -1.2528, 0.7775]]]]).astype(np.float32))
-    output = MishGradDynamicShapeNet(MishNet())(x, dout)
-    expect_output = np.array([[[[2.4551494, -1.2175093, 0.04786031],
-                                [-0.1975334, 1.6502876, 0.098847]],
-                               [[0.16096734, 0.19009684, -0.4737671],
-                                [-1.6688104, -0.24026635, 0.17010784]]],
-                              [[[1.2171272, 0.8138411, -0.33282048],
-                                [-0.24231756, -1.1413976, -0.6648672]],
-                               [[-1.3482721, 0.22441003, 0.05531899],
-                                [-0.41695648, -1.2767013, 0.12779452]]]]).astype(np.float32)
+    output = MishGradDynamicShapeNet(MishNet())(x)
+    expect_output = np.array([[[[1.0816, 0.8371, 1.0449],
+                                [1.0551, 1.0766, 0.0672]],
+                               [[1.0391, 0.5026, 0.5336],
+                                [0.8424, 0.6906, 1.0883]]],
+                              [[[0.9892, 0.6768, 0.8593],
+                                [0.8015, 1.0884, 0.4682]],
+                               [[0.7901, 0.1150, -0.1085],
+                                [0.9517, 1.019, 0.1643]]]]).astype(np.float32)
     assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
