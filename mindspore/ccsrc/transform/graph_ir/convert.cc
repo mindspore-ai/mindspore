@@ -2549,7 +2549,7 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
 
 void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
+  MS_LOG(DEBUG) << "Convert TopK second input's type from int64 to int32.";
   auto value_ptr = node->input(2)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_ptr);
   if (value_ptr->isa<tensor::Tensor>()) {
@@ -3185,13 +3185,13 @@ std::map<std::string, ValuePtr> GeOpConvertor::GetAttrAndValue(const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(node);
   std::map<std::string, ValuePtr> attr_list;
   if (!node->isa<CNode>()) {
-    MS_LOG(INFO) << "Current node isn't a cnode! node info:" << node->DebugString();
+    MS_LOG(DEBUG) << "Current node isn't a cnode! node info:" << node->DebugString();
     return attr_list;
   }
 
   OpAdapterPtr adpt = FindAdapter(node, training);
   if (adpt == nullptr) {
-    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    MS_LOG(DEBUG) << "Current node can't find adpt! node info:" << node->DebugString();
     return attr_list;
   }
 
@@ -3203,7 +3203,7 @@ std::string GeOpConvertor::GetOpType(const AnfNodePtr &node, const bool training
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
   if (adpt == nullptr) {
-    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    MS_LOG(DEBUG) << "Current node can't find adpt! node info:" << node->DebugString();
     return "";
   }
   return adpt->getOpType();
@@ -3222,7 +3222,7 @@ mindspore::HashMap<std::string, std::string> GeOpConvertor::GetNeedAddInput(cons
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training);
   if (adpt == nullptr) {
-    MS_LOG(INFO) << "Current node can't find adpt! node info:" << node->DebugString();
+    MS_LOG(DEBUG) << "Current node can't find adpt! node info:" << node->DebugString();
     return {};
   }
 
@@ -3233,7 +3233,7 @@ bool GeOpConvertor::IsDynamicInput(const AnfNodePtr &node, const size_t idx) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adapterPtr = FindAdapter(node, true);
   if (adapterPtr == nullptr) {
-    MS_LOG(INFO) << "Can't find a adapter for op:" << node->DebugString();
+    MS_LOG(DEBUG) << "Can't find a adapter for op:" << node->DebugString();
     return false;
   }
   return adapterPtr->IsDynInputOp(idx);
