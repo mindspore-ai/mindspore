@@ -92,6 +92,20 @@ int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv) {
   return NNACL_OK;
 }
 
+int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv) {
+  // ===============check in channel================= //
+  TensorC *input_tensor = conv->base_.in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(input_tensor);
+  int resize_in_channel = GetChannel(input_tensor);
+  TensorC *filter_tensor = conv->base_.in_[SECOND_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(filter_tensor);
+  int filter_in_channel = GetChannel(filter_tensor);
+  if (filter_in_channel != resize_in_channel) {
+    return NNACL_CONVOLUTION_INPUT_CHANNEL_UNMATCH;
+  }
+  return NNACL_OK;
+}
+
 void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size) {
   void *data = NULL;
   ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;

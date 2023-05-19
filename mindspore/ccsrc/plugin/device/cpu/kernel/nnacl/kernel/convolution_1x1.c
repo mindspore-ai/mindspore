@@ -359,6 +359,7 @@ ConvolutionBaseStruct *CreateConvolution1x1(ConvParameter *conv_param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv1x1);
   memset(conv1x1, 0, sizeof(Convolution1x1Struct));
 
+  conv1x1->conv_.is_sharing_pack_ = false;
   conv1x1->conv_.malloc_weight_bias_ = Conv1x1MallocWeightBiasData;
   conv1x1->conv_.pack_weight_ = Conv1x1PackWeight;
 

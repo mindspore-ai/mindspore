@@ -22,8 +22,10 @@
 #include "nnacl/kernel/convolution_1x1.h"
 #include "nnacl/kernel/convolution_im2col.h"
 #include "nnacl/kernel/convolution_winograd.h"
+#ifdef ENABLE_AVX
 #include "nnacl/kernel/convolution_sw_1x1.h"
 #include "nnacl/kernel/convolution_sw_avx.h"
+#endif
 
 float *ConvolutionDelegateCopyData(const TensorC *tensor) {
   NNACL_CHECK_NULL_RETURN_NULL(tensor);

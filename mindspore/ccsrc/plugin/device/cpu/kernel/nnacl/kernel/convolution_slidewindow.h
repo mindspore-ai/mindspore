@@ -14,15 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_CONVOLLUTION_SW_AVX_H_
-#define NNACL_KERNEL_CONVOLLUTION_SW_AVX_H_
+#ifndef NNACL_KERNEL_CONVOLLUTION_SLIDEWINDOW_H_
+#define NNACL_KERNEL_CONVOLLUTION_SLIDEWINDOW_H_
 #ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/kernel/convolution_base.h"
+#include "nnacl/matmul_parameter.h"
 
-ConvolutionBaseStruct *CreateConvolutionSWAVX(ConvParameter *conv_param);
+typedef struct ConvolutionSWStruct {
+  ConvolutionBaseStruct conv_;
+  SlidingWindowParam sw_param_;
+  int oc_tile_;
+  int in_tile_;
+  int oc_res_;
+  int ic_res_;
+  float *output_data_;
+  float *input_data_;
+} ConvolutionSWStruct;
+
+int convolution_sw_prepare(KernelBase *self);
+int convolution_sw_compute(KernelBase *self);
+int convolution_sw_resize(KernelBase *self);
+int convolution_sw_release(KernelBase *self);
+void ConvSWPackWeight(ConvolutionBaseStruct *conv);
+int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv);
+
 #endif
-#endif  // NNACL_KERNEL_CONVOLLUTION_SW_AVX_H_
+#endif  // NNACL_KERNEL_CONVOLLUTION_SLIDEWINDOW_H_
