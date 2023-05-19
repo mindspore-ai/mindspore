@@ -898,7 +898,7 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     Args:
         shape (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
             tuple or Tensor containing positive integers are allowed. If it is a Tensor,
-            it must be a 1-D Tensor with int32 or int64 dtypes.
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
         dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is None,
             `mindspore.float32` will be used. Default: None.
 
@@ -974,7 +974,7 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     Args:
         size (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
             tuple or Tensor containing positive integers are allowed. If it is a Tensor,
-            it must be a 1-D Tensor with int32 or int64 dtypes.
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
             mindspore.float32 will be used. Default: None.
 
