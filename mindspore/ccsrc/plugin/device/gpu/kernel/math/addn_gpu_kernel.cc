@@ -58,12 +58,15 @@ bool AddNFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   }
   FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(outputs[0]->size / sizeof(T))};
   for (size_t i = 0; i < num_input_; i++) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape, input_addr,
-                                                               work_addr, work_addr, device_id_,
-                                                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+    if constexpr (std::is_same<T, Complex<float>>::value || std::is_same<T, Complex<double>>::value) {
+      ElewiseComplexArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
+                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    } else {
+      ElewiseArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr_));
+    }
   }
   if (work_addr != output_addr) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

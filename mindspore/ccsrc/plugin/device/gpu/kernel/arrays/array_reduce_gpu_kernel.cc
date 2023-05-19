@@ -17,8 +17,7 @@
 #include <memory>
 #include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "ops/reduce.h"
 #include "plugin/device/gpu/kernel/arrays/cast_gpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
@@ -411,10 +410,8 @@ void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, input_imag, &beta, outputC_descriptor_, output_imag),
     ss.str());
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(output_count)};
-  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kComplex, S, S, T>(false, ele_shape, ele_shape, ele_shape, output_real,
-                                                                 output_imag, output_addr, device_id_,
-                                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+  ElewiseComplexArith(output_count, BinaryOpType::kComplex, output_real, output_imag, output_addr,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_real);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_imag);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_real);

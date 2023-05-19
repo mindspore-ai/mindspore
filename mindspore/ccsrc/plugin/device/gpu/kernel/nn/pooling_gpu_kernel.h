@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {
@@ -102,10 +102,8 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
         CalRealKernelSize(output_shape_exclude_nc_, kernel_size_, edge_kernel_, work_addr, 0,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
       }
-      std::vector<int64_t> shape = {static_cast<int64_t>(output_num)};
-      BinaryOpWithBroadcastCudaFunc<BinaryOpType::kMul, T, T, T>(false, shape, shape, shape, output_addr, work_addr,
-                                                                 output_addr, device_id_,
-                                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+      ElewiseArith(output_num, BinaryOpType::kMul, output_addr, work_addr, output_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     return true;
   }

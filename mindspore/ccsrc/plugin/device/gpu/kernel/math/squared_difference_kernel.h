@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SEQUENCE_ADDN_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SEQUENCE_ADDN_GPU_KERNEL_H_
-#include <vector>
-#include <memory>
-#include <utility>
-#include <map>
-#include <string>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/math/broadcast_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
-#include "plugin/factory/ms_factory.h"
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_
 
+#include <cuda_runtime_api.h>
+#include <vector>
+#include <string>
+#include <map>
+#include <complex>
+#include <utility>
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
+#include "plugin/device/gpu/kernel/kernel_constants.h"
 namespace mindspore {
 namespace kernel {
-template <typename T>
-using Complex = mindspore::utils::Complex<T>;
-class SequenceAddNGpuKernelMod : public NativeGpuKernelMod,
-                                 public MatchKernelHelper<SequenceAddNGpuKernelMod, AddressPtr> {
+constexpr int MAX_DIMS = 7;
+
+class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod,
+                                        public MatchKernelHelper<SquaredDifferenceOpGpuKernelMod> {
  public:
-  SequenceAddNGpuKernelMod() = default;
-  ~SequenceAddNGpuKernelMod() override = default;
+  SquaredDifferenceOpGpuKernelMod() = default;
+  ~SquaredDifferenceOpGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -46,25 +46,30 @@ class SequenceAddNGpuKernelMod : public NativeGpuKernelMod,
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    MS_EXCEPTION_IF_NULL(kernel_func_);
-    stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+    stream_ptr_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  using FuncList = std::vector<std::pair<KernelAttr, KernelRunFunc>>;
-  const FuncList &GetFuncList() const override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+ private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  std::vector<int64_t> tuple_shape_;
-
- private:
-  cudaStream_t stream_ptr_{nullptr};
+  template <typename T>
+  bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs);
+  BinaryOpType op_type_{BinaryOpType::kSquaredDifference};
+  bool need_broadcast_;
+  size_t output_num_;
+  std::vector<size_t> lhs_shape_;
+  std::vector<size_t> rhs_shape_;
+  std::vector<size_t> output_shape_;
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_SEQUENCE_ADDN_GPU_KERNEL_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_

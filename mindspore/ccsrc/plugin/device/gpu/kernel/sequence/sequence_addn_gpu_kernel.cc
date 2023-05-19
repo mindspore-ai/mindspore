@@ -64,12 +64,15 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   size_t element_num = outputs[0]->size / sizeof(T);
   FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(element_num)};
   for (int64_t i = 0; i < tuple_shape_[0]; i++) {
     T *input_addr = element_num * i + input_0;
-    BinaryOpWithBroadcastCudaFunc<BinaryOpType::kAdd, T, T, T>(false, ele_shape, ele_shape, ele_shape, input_addr,
-                                                               work_addr, work_addr, device_id_,
-                                                               reinterpret_cast<cudaStream_t>(stream_ptr_));
+    if constexpr (std::is_same<T, Complex<float>>::value || std::is_same<T, Complex<double>>::value) {
+      ElewiseComplexArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
+                          reinterpret_cast<cudaStream_t>(stream_ptr_));
+    } else {
+      ElewiseArith(outputs[0]->size / sizeof(T), BinaryOpType::kAdd, input_addr, work_addr, work_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr_));
+    }
   }
 
   if (work_addr != output_addr) {
