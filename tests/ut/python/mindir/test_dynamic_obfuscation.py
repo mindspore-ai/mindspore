@@ -106,7 +106,6 @@ def test_obfuscate_model_customized_func_mode():
     Description: Test obfuscate a MindIR format model and then load it for prediction.
     Expectation: Success.
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     ori_mindir_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "ori_net.mindir")
     ori_graph = load(ori_mindir_path)
     ori_net = nn.GraphCell(ori_graph)
@@ -127,7 +126,6 @@ def test_obfuscate_model_customized_func_mode():
     obf_graph_2 = load("obf_net_2.mindir", obf_func=my_func)
     obf_net_2 = nn.GraphCell(obf_graph_2)
     right_func_result = obf_net_2(input_tensor).asnumpy()
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
     assert np.all(original_result == right_func_result)
 

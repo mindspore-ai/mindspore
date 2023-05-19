@@ -446,9 +446,6 @@ void MindIREngine::InferValueNode(const AnfNodePtr &node) {
     result = value->ToAbstract();
   }
 
-  if (result->isa<abstract::AbstractTensor>()) {
-    result = result->Broaden();
-  }
   SaveNodeInferResult(node, result);
 }
 
