@@ -649,6 +649,10 @@ int TrainExport::SaveToBuffer() {
 int TrainExport::SaveWeightsToFile(bool enable_fp16, const std::vector<std::string> &changeable_weights_name) {
   const auto &all_tensors = meta_graph_->allTensors;
   std::ofstream weights(file_name_, std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!weights.is_open()) {
+    MS_LOG(ERROR) << "Can not open weight file: " << file_name_;
+    return RET_ERROR;
+  }
   for (auto &tensor : all_tensors) {
     MS_CHECK_TRUE_MSG(tensor != nullptr, RET_NULL_PTR, "Exist tensor is a nullptr.");
     if (tensor->data.empty()) {

@@ -99,6 +99,9 @@ STATUS MicroParamParser::ParseKeepOriginalWeight(const std::string &keep_weight,
   bool is_keep_original_weight;
   if (ConvertBool(keep_weight, &is_keep_original_weight)) {
     micro_param->keep_original_weight = is_keep_original_weight;
+  } else {
+    MS_LOG(ERROR) << "Micro param invalid, keep_original_weight can only be set as true or false.";
+    return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
 }
@@ -143,7 +146,7 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
     return RET_INPUT_PARAM_INVALID;
   }
   if (ParseKeepOriginalWeight(micro_param_string.keep_original_weight, micro_param) != RET_OK) {
-    MS_LOG(ERROR) << "Parse keep original weight val: " << micro_param_string.keep_original_weight;
+    MS_LOG(ERROR) << "Parse keep_original_weight failed, the val: " << micro_param_string.keep_original_weight;
     return RET_INPUT_PARAM_INVALID;
   }
   if (!micro_param_string.changeable_weights_name.empty() && !micro_param->keep_original_weight) {
@@ -151,7 +154,7 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
     return RET_INPUT_PARAM_INVALID;
   }
   if (ParseChangeableWeightsName(micro_param_string.changeable_weights_name, micro_param) != RET_OK) {
-    MS_LOG(ERROR) << "Parse changeable_weights_name val: " << micro_param_string.changeable_weights_name;
+    MS_LOG(ERROR) << "Parse changeable_weights_name failed, the val: " << micro_param_string.changeable_weights_name;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

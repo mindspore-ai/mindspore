@@ -100,10 +100,13 @@ int TransposeFp16Coder::DoCode(CoderContext *const context) {
   code.CodeArray("output_shape", out_shape.data(), dims_, true);
   code.CodeStruct("trans_param", *param_);
   if (param_->num_axes_ > DIMENSION_6D) {
-    code.CodeFunction("TransposeDimsFp16", input_tensor_, output_tensor_, "output_shape", "&trans_param",
-                      kDefaultTaskId, kDefaultThreadNum);
+    code.CodeFunction("TransposeDimsFp16", input_tensor_, output_tensor_, "output_shape", "trans_param.perm_",
+                      "trans_param.strides_", "trans_param.out_strides_", "trans_param.num_axes_", kDefaultTaskId,
+                      kDefaultThreadNum);
   } else {
-    code.CodeFunction("DoTransposeFp16", input_tensor_, output_tensor_, "output_shape", "&trans_param");
+    code.CodeFunction("DoTransposeFp16", input_tensor_, output_tensor_, "output_shape", "trans_param.perm_",
+                      "trans_param.strides_", "trans_param.out_strides_", "trans_param.data_num_",
+                      "trans_param.num_axes_");
   }
   context->AppendCode(code.str());
   return RET_OK;
