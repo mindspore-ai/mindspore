@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations import nn_ops as ops
+
 
 class BiasAdd(nn.Cell):
     def __init__(self):
@@ -131,7 +133,12 @@ def test_dx():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dx_ND():
+def test_dx_nd():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
     x = np.array([[[0.1, 0.2, 0.3, 0.4],
                    [0.1, 0.2, 0.3, 0.4],
                    [0.1, 0.2, 0.3, 0.4]],
@@ -209,7 +216,12 @@ def test_dw():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dw_ND():
+def test_dw_nd():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
     x = np.array([[[0.1, 0.2, 0.3, 0.4],
                    [0.1, 0.2, 0.3, 0.4],
                    [0.1, 0.2, 0.3, 0.4]],
@@ -506,3 +518,189 @@ def test_bias_add_dynamic_two_inputs():
     diff_2 = result_2.asnumpy() - expect_2
     assert np.all(diff_2 < error_2)
     assert np.all(-diff_2 < error_2)
+
+
+class DenseOp(nn.Dense):
+    def __init__(self):
+        w = np.array([[0.1, 0.8, 0.1, 0.1],
+                      [1, 1, 1, 1]]).astype(np.float32)
+        b = np.array([0.3, 0.6]).astype(np.float32)
+        super(DenseOp, self).__init__(4, 2, weight_init=Tensor(w), bias_init=Tensor(b))
+        self.dense = ops.Dense()
+
+    def construct(self, x):
+        x = self.dense(x, self.weight, self.bias)
+        if self.activation_flag:
+            x = self.activation(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dx_op():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
+    x = np.array([[0.1, 0.2, 0.3, 0.4],
+                  [0.1, 0.2, 0.3, 0.4],
+                  [0.1, 0.2, 0.3, 0.4]]).astype(np.float32)
+    dy = np.array([[1, 1],
+                   [1, 1],
+                   [1, 1]]).astype(np.float32)
+    dx_expect = np.array([[1.1, 1.8, 1.1, 1.1],
+                          [1.1, 1.8, 1.1, 1.1],
+                          [1.1, 1.8, 1.1, 1.1]]).astype(np.float32)
+    error = np.ones(shape=[3, 4]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradData(DenseOp())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradData(DenseOp())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dx_nd_op():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
+    x = np.array([[[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]],
+                  [[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]]
+                  ]).astype(np.float32)
+    dy = np.array([[[1, 1],
+                    [1, 1],
+                    [1, 1]],
+                   [[1, 1],
+                    [1, 1],
+                    [1, 1]]]).astype(np.float32)
+    dx_expect = np.array([[[1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1]],
+                          [[1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1]]
+                          ]).astype(np.float32)
+    error = np.ones(shape=[2, 3, 4]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradData(DenseOp())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradData(DenseOp())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dw_op():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
+    x = np.array([[0.1, 0.2, 0.3, 0.4],
+                  [0.1, 0.2, 0.3, 0.4],
+                  [0.1, 0.2, 0.3, 0.4]]).astype(np.float32)
+    dy = np.array([[1, 1],
+                   [1, 1],
+                   [1, 1]]).astype(np.float32)
+    dw_expect = np.array([[0.3, 0.6, 0.9, 1.2],
+                          [0.3, 0.6, 0.9, 1.2]]).astype(np.float32)
+    dw_error = np.ones(shape=[2, 4]) * 1.0e-6
+    db_expect = np.array([3, 3]).astype(np.float32)
+    db_error = np.ones(shape=[2]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradWeight(DenseOp())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradWeight(DenseOp())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dw_nd_op():
+    """
+    Feature: Dense gpu kernel
+    Description: test the rightness of Dense gpu kernel
+    Expectation: the output is same as expected result
+    """
+    x = np.array([[[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]],
+                  [[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]]]).astype(np.float32)
+    dy = np.array([[[1, 1],
+                    [1, 1],
+                    [1, 1]],
+                   [[1, 1],
+                    [1, 1],
+                    [1, 1]]]).astype(np.float32)
+    dw_expect = 2 * np.array([[0.3, 0.6, 0.9, 1.2],
+                              [0.3, 0.6, 0.9, 1.2]]).astype(np.float32)
+    dw_error = np.ones(shape=[2, 4]) * 1.0e-6
+    db_expect = 2 * np.array([3, 3]).astype(np.float32)
+    db_error = np.ones(shape=[2]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradWeight(DenseOp())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradWeight(DenseOp())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)

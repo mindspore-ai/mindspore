@@ -293,6 +293,14 @@ REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
   return {dout, ib->Emit(kBiasAddGradOpName, {dout}, {{"format", MakeValue(format)}})};
 });
 
+REG_BPROP_BUILDER("Dense").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex4);
+  auto out_grad = ib->Emit(kDenseGradOpName, {x, w, dout}, {{"has_bias", ib->GetAttr("has_bias")}});
+  return {ib->TupleGetItem(out_grad, 0), ib->TupleGetItem(out_grad, 1), ib->TupleGetItem(out_grad, 2)};
+});
+
 REG_BPROP_BUILDER("ReLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
