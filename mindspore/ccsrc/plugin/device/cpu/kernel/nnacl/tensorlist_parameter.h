@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_TENSORLIST_PARAMETER_H_
-#define MINDSPORE_NNACL_TENSORLIST_PARAMETER_H_
+#ifndef NNACL_TENSORLIST_PARAMETER_H_
+#define NNACL_TENSORLIST_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -29,4 +29,4 @@ typedef struct TensorListParameter {
   int num_element_;
 } TensorListParameter;
 
-#endif  // MINDSPORE_NNACL_ARG_TENSORLIST_PARAMETER_H_
+#endif  // NNACL_ARG_TENSORLIST_PARAMETER_H_

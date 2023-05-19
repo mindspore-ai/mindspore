@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_GROUP_NORM_PARAMETER_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_GROUP_NORM_PARAMETER_H_
+#ifndef NNACL_GROUP_NORM_PARAMETER_H_
+#define NNACL_GROUP_NORM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
@@ -38,4 +38,4 @@ typedef struct GroupNormQuantArg {
   double out_scale_;
 } GroupNormQuantArg;
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_GROUP_NORM_PARAMETER_H_
+#endif  // NNACL_GROUP_NORM_PARAMETER_H_

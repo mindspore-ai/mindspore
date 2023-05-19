@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_AFFINE_PARAMETER_H_
-#define MINDSPORE_NNACL_AFFINE_PARAMETER_H_
+#ifndef NNACL_AFFINE_PARAMETER_H_
+#define NNACL_AFFINE_PARAMETER_H_
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
 typedef struct AffineParameter {
@@ -29,4 +29,4 @@ typedef struct AffineParameter {
   // parameters from matmul op
   MatMulParameter *matmul_parameter_;
 } AffineParameter;
-#endif  // MINDSPORE_NNACL_AFFINE_PARAMETER_H_
+#endif  // NNACL_AFFINE_PARAMETER_H_

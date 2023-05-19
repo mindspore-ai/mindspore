@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SCALE_H_
-#define MINDSPORE_NNACL_SCALE_H_
+#ifndef NNACL_SCALE_H_
+#define NNACL_SCALE_H_
 
 #include "nnacl/op_base.h"
 
@@ -43,4 +43,4 @@ typedef struct ScaleParameter {
   int output_activation_max_;
 } ScaleParameter;
 
-#endif  // MINDSPORE_NNACL_SCALE_H_
+#endif  // NNACL_SCALE_H_

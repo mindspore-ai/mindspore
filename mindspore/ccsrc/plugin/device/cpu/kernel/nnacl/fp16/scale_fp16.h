@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

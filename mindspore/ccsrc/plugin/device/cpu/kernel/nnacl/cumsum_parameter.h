@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_CUMSUM_PARAMETER_H_
-#define MINDSPORE_NNACL_CUMSUM_PARAMETER_H_
+#ifndef NNACL_CUMSUM_PARAMETER_H_
+#define NNACL_CUMSUM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -26,4 +26,4 @@ typedef struct CumSumParameter {
   int axis_;
 } CumsumParameter;
 
-#endif  // MINDSPORE_NNACL_CUMSUM_PARAMETER_H_
+#endif  // NNACL_CUMSUM_PARAMETER_H_

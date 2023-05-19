@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_STRIDED_SLICE_PARAMETER_H_
-#define MINDSPORE_NNACL_STRIDED_SLICE_PARAMETER_H_
+#ifndef NNACL_STRIDED_SLICE_PARAMETER_H_
+#define NNACL_STRIDED_SLICE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -40,4 +40,4 @@ typedef struct StridedSliceParameter {
   int shrinkAxisMask_;
 } StridedSliceParameter;
 
-#endif  // MINDSPORE_NNACL_STRIDED_SLICE_PARAMETER_H_
+#endif  // NNACL_STRIDED_SLICE_PARAMETER_H_

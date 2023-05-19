@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_ARITHMETIC_SELF_PARAMETER_H_
-#define MINDSPORE_NNACL_ARITHMETIC_SELF_PARAMETER_H_
+#ifndef NNACL_ARITHMETIC_SELF_PARAMETER_H_
+#define NNACL_ARITHMETIC_SELF_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -27,4 +27,4 @@ typedef struct ArithmeticSelfParameter {
   ArithSelfQuantArg quant_arg_;
 } ArithmeticSelfParameter;
 
-#endif  // MINDSPORE_NNACL_ARITHMETIC_SELF_PARAMETER_H_
+#endif  // NNACL_ARITHMETIC_SELF_PARAMETER_H_

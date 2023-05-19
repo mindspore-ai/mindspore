@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SPLIT_PARAMETER_H_
-#define MINDSPORE_NNACL_SPLIT_PARAMETER_H_
+#ifndef NNACL_SPLIT_PARAMETER_H_
+#define NNACL_SPLIT_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -60,4 +60,4 @@ typedef struct SplitWithOverlapParameter {
   int inner_stride_;
 } SplitWithOverlapParameter;
 
-#endif  // MINDSPORE_NNACL_SPLIT_PARAMETER_H_
+#endif  // NNACL_SPLIT_PARAMETER_H_

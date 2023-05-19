@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
+#ifndef LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
+#define LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
 #include "nnacl/op_base.h"
 
 typedef struct SpaceToDepthParameter {
@@ -24,4 +24,4 @@ typedef struct SpaceToDepthParameter {
   int32_t date_type_len;
 } SpaceToDepthParameter;
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
+#endif  // LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_

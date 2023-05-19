@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
-#define MINDSPORE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
+#ifndef NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
+#define NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -28,4 +28,4 @@ typedef struct ConstantOfShapeParameter {
   int element_size_;
 } ConstantOfShapeParameter;
 
-#endif  // MINDSPORE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
+#endif  // NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_

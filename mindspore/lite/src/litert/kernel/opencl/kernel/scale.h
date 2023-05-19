@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SCALE_H_
 
 #include <vector>
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "src/litert/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

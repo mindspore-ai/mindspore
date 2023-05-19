@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_TENSORC_UTILS_H_
-#define MINDSPORE_NNACL_TENSORC_UTILS_H_
+#ifndef NNACL_TENSORC_UTILS_H_
+#define NNACL_TENSORC_UTILS_H_
 
 #include <stddef.h>
 #include "nnacl/errorcode.h"
@@ -43,4 +43,4 @@ bool IsConst(const TensorC *tensor);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_TENSORC_UTILS_H_
+#endif  // NNACL_TENSORC_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_NNACL_UTILS_H_
-#define MINDSPORE_NNACL_NNACL_UTILS_H_
+#ifndef NNACL_NNACL_UTILS_H_
+#define NNACL_NNACL_UTILS_H_
 
 #include <stdint.h>
 #ifdef __cplusplus
@@ -36,4 +36,4 @@ uint32_t getHwCap(int hwcap_type);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_NNACL_UTILS_H_
+#endif  // NNACL_NNACL_UTILS_H_

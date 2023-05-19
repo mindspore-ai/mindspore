@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_ASSEMBLY_GLOBAL_H
-#define MINDSPORE_NNACL_ASSEMBLY_GLOBAL_H
+#ifndef NNACL_ASSEMBLY_GLOBAL_H
+#define NNACL_ASSEMBLY_GLOBAL_H
 
 // clang-format off
 .macro asm_function fname
@@ -47,4 +47,4 @@ _\fname:
 
 // clang-format on
 
-#endif  // MINDSPORE_NNACL_ASSEMBLY_GLOBAL_H
+#endif  // NNACL_ASSEMBLY_GLOBAL_H

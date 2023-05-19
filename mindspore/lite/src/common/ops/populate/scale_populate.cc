@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore {

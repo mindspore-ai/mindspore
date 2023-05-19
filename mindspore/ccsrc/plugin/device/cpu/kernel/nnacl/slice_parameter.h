@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SLICE_PARAMETER_H_
-#define MINDSPORE_NNACL_SLICE_PARAMETER_H_
+#ifndef NNACL_SLICE_PARAMETER_H_
+#define NNACL_SLICE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -43,4 +43,4 @@ typedef struct SliceParameter {
   int32_t param_length_;
 } SliceParameter;
 
-#endif  // MINDSPORE_NNACL_SLICE_PARAMETER_H_
+#endif  // NNACL_SLICE_PARAMETER_H_

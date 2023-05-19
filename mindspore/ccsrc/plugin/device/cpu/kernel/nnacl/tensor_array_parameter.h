@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_TENSOR_ARRAY_PARAMETER_H_
-#define MINDSPORE_NNACL_TENSOR_ARRAY_PARAMETER_H_
+#ifndef NNACL_TENSOR_ARRAY_PARAMETER_H_
+#define NNACL_TENSOR_ARRAY_PARAMETER_H_
 #include "nnacl/op_base.h"
 
 typedef struct TensorArrayParameter {
@@ -26,4 +26,4 @@ typedef struct TensorArrayParameter {
   int data_type_;
 } TensorArrayParameter;
 
-#endif  // MINDSPORE_NNACL_TENSOR_ARRAY_PARAMETER_H_
+#endif  // NNACL_TENSOR_ARRAY_PARAMETER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_PARTIAL_FUSION_H_
-#define MINDSPORE_NNACL_PARTIAL_FUSION_H_
+#ifndef NNACL_PARTIAL_FUSION_H_
+#define NNACL_PARTIAL_FUSION_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
@@ -26,4 +26,4 @@ typedef struct PartialParameter {
   int sub_graph_index_;
 } PartialParameter;
 
-#endif  // MINDSPORE_NNACL_ARTITHMETIC_H_
+#endif  // NNACL_ARTITHMETIC_H_

@@ -24,7 +24,7 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/transpose_parameter.h"

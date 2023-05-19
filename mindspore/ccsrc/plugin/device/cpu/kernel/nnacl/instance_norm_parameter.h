@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INSTANCE_NORM_PARAMETER_H_
-#define MINDSPORE_NNACL_INSTANCE_NORM_PARAMETER_H_
+#ifndef NNACL_INSTANCE_NORM_PARAMETER_H_
+#define NNACL_INSTANCE_NORM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -29,4 +29,4 @@ typedef struct InstanceNormParameter {
   int inner_size_;
 } InstanceNormParameter;
 
-#endif  // MINDSPORE_NNACL_INSTANCE_NORM_PARAMETER_H_
+#endif  // NNACL_INSTANCE_NORM_PARAMETER_H_

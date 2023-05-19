@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_GELU_PARAMETER_H_
-#define MINDSPORE_NNACL_GELU_PARAMETER_H_
+#ifndef NNACL_GELU_PARAMETER_H_
+#define NNACL_GELU_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -25,4 +25,4 @@ typedef struct GeLUParameter {
   bool approximate_;
 } GeLUParameter;
 
-#endif  // MINDSPORE_NNACL_GELU_PARAMETER_H_
+#endif  // NNACL_GELU_PARAMETER_H_

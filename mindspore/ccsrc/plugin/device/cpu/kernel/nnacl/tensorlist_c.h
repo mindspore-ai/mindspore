@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_TENSORLIST_C_H_
-#define MINDSPORE_NNACL_TENSORLIST_C_H_
+#ifndef NNACL_TENSORLIST_C_H_
+#define NNACL_TENSORLIST_C_H_
 
 #include "nnacl/tensor_c.h"
 
@@ -38,4 +38,4 @@ typedef struct TensorListC {
   int element_shape_[MAX_SHAPE_SIZE];
 } TensorListC;
 
-#endif  // MINDSPORE_NNACL_TENSORLIST_C_H_
+#endif  // NNACL_TENSORLIST_C_H_

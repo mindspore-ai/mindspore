@@ -17,7 +17,7 @@
 #include "nnacl/where_parameter.h"
 #include "nnacl/sparse_to_dense_parameter.h"
 #include "nnacl/transpose_parameter.h"
-#include "nnacl/triu_tril.h"
+#include "nnacl/triu_tril_parameter.h"
 #include "nnacl/fp32/unique_fp32.h"
 #include "nnacl/scatter_nd_parameter.h"
 #include "nnacl/op_base.h"

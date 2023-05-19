@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SQUEEZE_PARAMETER_H_
-#define MINDSPORE_NNACL_SQUEEZE_PARAMETER_H_
+#ifndef NNACL_SQUEEZE_PARAMETER_H_
+#define NNACL_SQUEEZE_PARAMETER_H_
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
 
@@ -43,4 +43,4 @@ typedef struct SqueezeParameter {
   SqueezeQuantArg quant_arg;
 } SqueezeParameter;
 
-#endif  // MINDSPORE_NNACL_SQUEEZE_PARAMETER_H_
+#endif  // NNACL_SQUEEZE_PARAMETER_H_

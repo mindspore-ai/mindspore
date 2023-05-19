@@ -32,7 +32,7 @@
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "nnacl/arithmetic_parameter.h"
 
 using mindspore::schema::ActivationType;

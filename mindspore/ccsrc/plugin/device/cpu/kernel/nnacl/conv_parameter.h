@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_CONV_PARAMETER_H_
-#define MINDSPORE_NNACL_CONV_PARAMETER_H_
+#ifndef NNACL_CONV_PARAMETER_H_
+#define NNACL_CONV_PARAMETER_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
 
@@ -139,4 +136,4 @@ typedef struct DeConvParam {
   int out_tile_w_;
 } DeConvParam;
 
-#endif  // MINDSPORE_NNACL_CONV_PARAMETER_H_
+#endif  // NNACL_CONV_PARAMETER_H_

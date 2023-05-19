@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "nnacl/scale.h"
+#include "nnacl/scale_parameter.h"
 #include "ops/fusion/scale_fusion.h"
 using mindspore::ops::kNameScaleFusion;
 using mindspore::schema::PrimitiveType_ScaleFusion;

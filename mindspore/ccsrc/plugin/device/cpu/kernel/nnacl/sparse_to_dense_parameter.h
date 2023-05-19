@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SPARSE_TO_DENSE_PARAMETER_H_
-#define MINDSPORE_NNACL_SPARSE_TO_DENSE_PARAMETER_H_
+#ifndef NNACL_SPARSE_TO_DENSE_PARAMETER_H_
+#define NNACL_SPARSE_TO_DENSE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -29,4 +29,4 @@ typedef struct SparseToDenseParameter {
   int output_stride[DIMENSION_4D];
 } SparseToDenseParameter;
 
-#endif  // MINDSPORE_NNACL_SPARSE_TO_DENSE_PARAMETER_H_
+#endif  // NNACL_SPARSE_TO_DENSE_PARAMETER_H_

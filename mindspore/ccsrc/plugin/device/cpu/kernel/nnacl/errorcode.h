@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_ERRORCODE_H_
-#define MINDSPORE_NNACL_ERRORCODE_H_
+#ifndef NNACL_ERRORCODE_H_
+#define NNACL_ERRORCODE_H_
 
 typedef enum ErrorCodeCommonEnum {
   NNACL_OK = 0,
@@ -116,4 +116,4 @@ typedef enum ErrorCodeInt8OpEnum {
   NNACL_ERRCODE_OP_INT8_END = 49999
 } ErrorCodeInt8OpEnums;
 
-#endif  // MINDSPORE_NNACL_ERRORCODE_H_
+#endif  // NNACL_ERRORCODE_H_

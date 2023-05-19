@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_MATMUL_H_
-#define MINDSPORE_NNACL_MATMUL_H_
+#ifndef NNACL_MATMUL_H_
+#define NNACL_MATMUL_H_
 
 #include "nnacl/op_base.h"
 
@@ -96,4 +96,4 @@ typedef struct MatmulDynamicQuantParameter {
   int32_t *filter_zp_;
 } MatmulDynamicQuantParameter;
 
-#endif  // MINDSPORE_NNACL_MATMUL_H_
+#endif  // NNACL_MATMUL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_UPSAMPLE_PARAMETER_H_
-#define MINDSPORE_NNACL_UPSAMPLE_PARAMETER_H_
+#ifndef NNACL_UPSAMPLE_PARAMETER_H_
+#define NNACL_UPSAMPLE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 typedef struct {
@@ -26,4 +26,4 @@ typedef struct {
   int method_;  // 0 for bilinear; 1 for nearest
 } UpsampleParameter;
 
-#endif  // MINDSPORE_NNACL_UPSAMPLE_PARAMETER_H_
+#endif  // NNACL_UPSAMPLE_PARAMETER_H_

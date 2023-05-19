@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_STACK_PARAMETER_H_
-#define MINDSPORE_NNACL_STACK_PARAMETER_H_
+#ifndef NNACL_STACK_PARAMETER_H_
+#define NNACL_STACK_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 typedef struct StackParameter {
@@ -24,4 +24,4 @@ typedef struct StackParameter {
   int32_t axis_;
 } StackParameter;
 
-#endif  // MINDSPORE_NNACL_STACK_PARAMETER_H_
+#endif  // NNACL_STACK_PARAMETER_H_

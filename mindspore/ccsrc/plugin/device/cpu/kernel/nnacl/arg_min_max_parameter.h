@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_ARG_MIN_MAX_PARAMETER_H_
-#define MINDSPORE_NNACL_ARG_MIN_MAX_PARAMETER_H_
+#ifndef NNACL_ARG_MIN_MAX_PARAMETER_H_
+#define NNACL_ARG_MIN_MAX_PARAMETER_H_
 
 #ifdef ENABLE_ARM64
 #include <arm_neon.h>
@@ -53,4 +53,4 @@ typedef struct ArgMinMaxParameter {
   ArgElement *arg_elements_;
 } ArgMinMaxParameter;
 
-#endif  // MINDSPORE_NNACL_ARG_MIN_MAX_PARAMETER_H_
+#endif  // NNACL_ARG_MIN_MAX_PARAMETER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_RESIZE_PARAMETER_H_
-#define MINDSPORE_NNACL_RESIZE_PARAMETER_H_
+#ifndef NNACL_RESIZE_PARAMETER_H_
+#define NNACL_RESIZE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 typedef struct ResizeParameter {
@@ -34,4 +34,4 @@ typedef struct CropAndResizeParameter {
   int method_;
   float extrapolation_value_;
 } CropAndResizeParameter;
-#endif  // MINDSPORE_NNACL_RESIZE_PARAMETER_H_
+#endif  // NNACL_RESIZE_PARAMETER_H_
