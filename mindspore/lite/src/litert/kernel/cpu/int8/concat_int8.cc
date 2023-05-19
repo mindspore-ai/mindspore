@@ -36,12 +36,18 @@ int ConcatInt8CPUKernel::Prepare() {
                   << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  concat_param_->input_shapes_ = nullptr;
+  input_shapes_ = nullptr;
   auto input_num = in_tensors_.size();
   MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int8_t *), input_num), RET_ERROR, "mul overflow");
   input_data_ = reinterpret_cast<int8_t **>(malloc(sizeof(int8_t *) * input_num));
   if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "Null pointer reference: inputs_array.";
+    MS_LOG(ERROR) << "malloc input_data_ failed.";
+    return RET_ERROR;
+  }
+
+  input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
+  if (input_shapes_ == nullptr) {
+    MS_LOG(ERROR) << "malloc input_shapes_ failed.";
     return RET_ERROR;
   }
 
@@ -79,24 +85,11 @@ int ConcatInt8CPUKernel::ReSize() {
                            : static_cast<int>(in_tensors_.front()->shape().size()) + concat_param_->axis_;
 
   auto input_num = in_tensors_.size();
-  concat_param_->input_num_ = static_cast<int>(input_num);
-  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int *), input_num), RET_ERROR, "mul overflow");
-  concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
-  if (concat_param_->input_shapes_ == nullptr) {
-    MS_LOG(ERROR) << "malloc concat_param_->input_shapes_ failed.";
-    return RET_ERROR;
-  }
+
   for (size_t i = 0; i < input_num; i++) {
-    auto in_shape = in_tensors_.at(i)->shape();
-    MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(in_shape.size(), sizeof(int)), RET_ERROR, "mul overflow");
-    concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
-    if (concat_param_->input_shapes_[i] == nullptr) {
-      MS_LOG(ERROR) << "malloc concat_param_->input_shapes_[" << i << "]"
-                    << " failed.";
-      return RET_ERROR;
-    }
-    memcpy(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), in_shape.data(), sizeof(int) * in_shape.size());
+    input_shapes_[i] = in_tensors().at(i)->ConvertToTensorC()->shape_;
   }
+  output_shapes_ = out_tensors().front()->ConvertToTensorC()->shape_;
 
   before_axis_size = 1;
   for (int i = 0; i < concat_param_->axis_; i++) {
@@ -107,30 +100,21 @@ int ConcatInt8CPUKernel::ReSize() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   auto out_shape = output_tensor->shape();
   size_t output_dim = out_shape.size();
-  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(output_dim, sizeof(int)), RET_ERROR, "mul overflow");
-  concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
-  if (concat_param_->output_shapes_ == nullptr) {
-    MS_LOG(ERROR) << "malloc concat_param_->output_shapes_ failed.";
-    return RET_ERROR;
-  }
-  memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor->shape().data(),
-         sizeof(int) * output_dim);
 
   for (size_t i = static_cast<size_t>(concat_param_->axis_ + 1); i < output_dim; i++) {
-    after_axis_size *= concat_param_->output_shapes_[i];
+    after_axis_size *= output_shapes_[i];
   }
-  concat_param_->after_axis_size = after_axis_size;
+  after_axis_size_ = after_axis_size;
   return RET_OK;
 }
 
 int ConcatInt8CPUKernel::Run() {
-  auto input_num = concat_param_->input_num_;
+  auto input_num = in_tensors().size();
   MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   count_unit_ =
     op_parameter_->thread_num_ > 1 ? UP_DIV(before_axis_size, op_parameter_->thread_num_) : before_axis_size;
-  concat_param_->count_unit_ = count_unit_;
 
-  for (int i = 0; i < input_num; i++) {
+  for (size_t i = 0; i < input_num; i++) {
     auto in_tensor = in_tensors_.at(i);
     input_data_[i] = static_cast<int8_t *>(in_tensor->MutableData());
     MS_CHECK_TRUE_RET(in_tensor->ElementsNum() == 0 || input_data_[i] != nullptr, RET_ERROR);
@@ -155,8 +139,7 @@ void ConcatInt8CPUKernel::DoExecute(int task_id) {
   }
 
   Int8Concat(input_data_, output_data_, concat_param_, concat_param_->axis_, real_dst_count, task_id,
-             concat_param_->input_num_, concat_param_->count_unit_, concat_param_->after_axis_size,
-             concat_param_->input_shapes_, concat_param_->output_shapes_);
+             in_tensors().size(), count_unit_, after_axis_size_, input_shapes_, output_shapes_);
   return;
 }
 

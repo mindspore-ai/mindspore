@@ -22,6 +22,7 @@
 #include "nnacl/int8/concat_int8.h"
 #include "include/errorcode.h"
 #include "src/litert/lite_kernel.h"
+#include "nnacl/kernel/concat.h"
 
 namespace mindspore::kernel {
 class ConcatInt8CPUKernel : public LiteKernel {
@@ -30,23 +31,16 @@ class ConcatInt8CPUKernel : public LiteKernel {
                       const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
+    concat_struct_.base_.param_ = parameter;
   }
   ~ConcatInt8CPUKernel() override {
     if (input_data_ != nullptr) {
       free(input_data_);
+      input_data_ = nullptr;
     }
-    int *output_shape = concat_param_->output_shapes_;
-    if (output_shape != nullptr) {
-      free(output_shape);
-    }
-    if (concat_param_->input_shapes_ != nullptr) {
-      for (std::size_t i = 0; i < in_tensors().size(); i++) {
-        int *input_shape = concat_param_->input_shapes_[i];
-        if (input_shape != nullptr) {
-          free(input_shape);
-        }
-      }
-      free(concat_param_->input_shapes_);
+    if (input_shapes_ != nullptr) {
+      free(input_shapes_);
+      input_shapes_ = nullptr;
     }
     if (concat_param_->quant_arg_.in_args_ != nullptr) {
       free(concat_param_->quant_arg_.in_args_);
@@ -60,10 +54,14 @@ class ConcatInt8CPUKernel : public LiteKernel {
 
  private:
   int64_t before_axis_size = 0;
+  int64_t after_axis_size_ = 0;
   int64_t count_unit_ = 0;
   int8_t **input_data_ = nullptr;  // freed in ~ConcatInt8CPUKernel
   int8_t *output_data_ = nullptr;
+  int **input_shapes_ = nullptr;
+  int *output_shapes_ = nullptr;
   ConcatParameter *concat_param_ = nullptr;
+  ConcatStruct concat_struct_;
 };
 
 int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

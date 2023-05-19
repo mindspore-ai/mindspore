@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_CONCAT_H_
-#define MINDSPORE_NNACL_KERNEL_CONCAT_H_
+#ifndef NNACL_KERNEL_CONCAT_H_
+#define NNACL_KERNEL_CONCAT_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -49,4 +49,4 @@ int concat_prepare(KernelBase *self);
 int concat_release(KernelBase *self);
 int concat_resize(KernelBase *self);
 
-#endif  // MINDSPORE_NNACL_KERNEL_CONCAT_H_
+#endif  // NNACL_KERNEL_CONCAT_H_
