@@ -510,64 +510,47 @@ void InferOp(const CNodePtr &cnode, void *args) {
   }
 }
 
-void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map,
-                const std::vector<device::DeviceAddressPtr> &device_address_list,
+void InferShape(std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map,
+                const pynative::ExecuteKernelInfo &execute_kernel,
                 const std::vector<tensor::TensorPtr> &input_tensors) {
-  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(execute_kernel.kernel_);
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
-  MS_LOG(DEBUG) << "InferShape start, node:" << cnode->fullname_with_scope();
-  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
+  MS_LOG(DEBUG) << "InferShape start, node:" << execute_kernel.kernel_->fullname_with_scope();
+  std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(execute_kernel.kernel_);
 
   depend_tensor_map->clear();
-  auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs.";
-  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto primitive = execute_kernel.primitive_;
+  auto input_size = execute_kernel.inputs_device_address_.size();
   for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
-    auto real_input = input_node_with_index.first;
-    auto real_input_index = input_node_with_index.second;
-
-    MS_EXCEPTION_IF_NULL(real_input);
+    auto input_address = execute_kernel.inputs_device_address_[i];
     if (depend_list.find(i) != depend_list.end()) {
-      auto depended_value = GetDependValueTensor(device_address_list, input_tensors, i);
+      auto depended_value = GetDependValueTensor(execute_kernel.inputs_device_address_, input_tensors, i);
       auto ret2 = depend_tensor_map->try_emplace(i, depended_value);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
       }
-
-      auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
-      (void)args_spec_list.emplace_back(updated_abs);
+      (void)args_spec_list.emplace_back(depended_value->ToAbstract());
     } else {
-      auto abs = real_input->abstract();
-      if (abs->isa<abstract::AbstractSequence>() && !AnfAlgo::IsRealSquenceOutput(real_input)) {
-        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-        MS_EXCEPTION_IF_NULL(abs_seq);
-        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_seq->elements().size()), "Index is out of range.");
-        auto abs_index = abs_seq->elements()[real_input_index];
-        (void)args_spec_list.emplace_back(abs_index);
-      } else {
-        (void)args_spec_list.emplace_back(abs);
-      }
+      auto abs =
+        std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_address->type_id()), input_address->host_shape());
+      (void)args_spec_list.emplace_back(abs);
     }
   }
 
-  opt::CppInferShape(primitive, args_spec_list, cnode);
+  CppInferShape(primitive, args_spec_list, execute_kernel.kernel_);
 }
 
-void InferOp(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
+void InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
              const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   kernel::KernelArgs kernel_args;
-  InferShape(cnode, &kernel_args.depend_tensor_map, device_address_list, input_tensors);
+  InferShape(&kernel_args.depend_tensor_map, execute_kernel, input_tensors);
 
   auto kernel_type = AnfAlgo::GetKernelType(cnode);
   if (auto kernel_mod_type = kernel_mod->GetKernelModType();
