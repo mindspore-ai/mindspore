@@ -24,6 +24,9 @@ masked_select_grad_op_info = AiCPURegOp("MaskedSelectGrad") \
     .output(0, "dx", "required") \
     .dtype_format(DataType.I32_Default, DataType.BOOL_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.F32_Default, DataType.BOOL_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.BOOL_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I8_Default, DataType.BOOL_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I64_Default, DataType.BOOL_Default, DataType.I64_Default, DataType.I64_Default) \
     .get_op_info()
 
 @op_info_register(masked_select_grad_op_info)
