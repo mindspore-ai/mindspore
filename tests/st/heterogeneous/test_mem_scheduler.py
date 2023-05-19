@@ -125,7 +125,7 @@ def test_lenet():
     os.environ['ENABLE_MEM_SCHEDULER'] = '0'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -154,7 +154,7 @@ def test_lenet_manual_offload():
     os.environ['ENABLE_MEM_SCHEDULER'] = '0'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
