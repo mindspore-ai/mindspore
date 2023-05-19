@@ -14,15 +14,17 @@ mindspore.set_auto_parallel_context
     =========================  =========================
              Common                  AUTO_PARALLEL
     =========================  =========================
-    device_num                 gradient_fp32_sync
-    global_rank                loss_repeated_mean
-    gradients_mean             auto_parallel_search_mode
-    parallel_mode              strategy_ckpt_load_file
-    all_reduce_fusion_config   strategy_ckpt_save_file
-    enable_parallel_optimizer  dataset_strategy
-    enable_alltoall            pipeline_stages
-    \                          grad_accumulation_step
-    \                          strategy_ckpt_config
+    device_num                   gradient_fp32_sync
+    global_rank                  loss_repeated_mean
+    gradients_mean               search_mode
+    parallel_mode                strategy_ckpt_load_file
+    all_reduce_fusion_config     strategy_ckpt_save_file
+    enable_parallel_optimizer    dataset_strategy
+    parallel_optimizer_config    pipeline_stages
+    enable_alltoall              grad_accumulation_step
+               \                 auto_parallel_search_mode
+               \                 comm_fusion
+               \                 strategy_ckpt_config
     =========================  =========================
 
     参数：

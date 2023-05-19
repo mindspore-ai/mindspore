@@ -540,9 +540,9 @@ def set_auto_parallel_context(**kwargs):
 
     Some configurations are parallel mode specific, see the below table for details:
 
-    ===========================  ===========================
-    Common                       AUTO_PARALLEL
-    ===========================  ===========================
+    =========================  =========================
+             Common                  AUTO_PARALLEL
+    =========================  =========================
     device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
     gradients_mean               search_mode
