@@ -38,7 +38,7 @@
 namespace mindspore::graphkernel {
 AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
-  std::vector<std::string> format = {kOpFormat_DEFAULT};
+  std::vector<std::string> format = GetFixedFormat(node);
   auto ori_format = node->cast<CNodePtr>()->GetAttr(kOutputsFormat);
   cnode->AddAttr(kOutputsFormat, MakeValue(format));
   auto ret = decorated_->Run(cnode);
@@ -52,6 +52,34 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   auto ret_cnode = ret->cast<CNodePtr>();
   ret_cnode->AddAttr(kOutputsFormat, ori_format);
   return ret_cnode;
+}
+
+std::vector<std::string> FixFormatDeco::GetFixedFormat(const AnfNodePtr &) const {
+  std::vector<std::string> format = {kOpFormat_DEFAULT};
+  return format;
+}
+
+std::vector<std::string> UseInputFormatDeco::GetFixedFormat(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<std::string> format;
+  for (size_t i = 1; i < cnode->size(); i++) {
+    if (cnode->input(i)->isa<CNode>()) {
+      auto kernel_with_index = AnfUtils::VisitKernel(cnode->input(i), 0);
+      auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
+      if (input_cnode != nullptr && input_cnode->HasAttr(kOutputsFormat)) {
+        auto input_format =
+          GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsFormat))[kernel_with_index.second];
+        format.push_back(input_format);
+        break;
+      }
+    }
+  }
+  if (format.empty()) {
+    format.push_back(kOpFormat_DEFAULT);
+  }
+  return format;
 }
 
 AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
@@ -150,6 +178,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {{kAllTarget, OpLevel_0, prim::kPrimSquare},
                                                     // ascend device
                                                     {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
+                                                    {kAscendDevice, OpLevel_0, prim::kPrimTile},
                                                     // cpu device
                                                     {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
                                                     {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
@@ -235,6 +264,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimMatMulFusion->name(), {MatmulPackB::Creator}},
     {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},
     {prim::kPrimMaxPoolFusion->name(), {PoolLayoutDeco::Creator}},
+    {prim::kPrimTile->name(), {InputToAttrDeco::Creator, UseInputFormatDeco::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {

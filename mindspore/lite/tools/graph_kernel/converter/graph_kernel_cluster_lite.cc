@@ -34,7 +34,6 @@ std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
     {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
     // ascend device
     {kAscendDevice, OpLevel_0, prim::kPrimMatMul},
-    {kAscendDevice, OpLevel_0, prim::kPrimAssign},
     {kAscendDevice, OpLevel_0, prim::kPrimFastGeLU},
     {kAscendDevice, OpLevel_0, prim::kPrimTranspose},
     {kAscendDevice, OpLevel_0, prim::kPrimReshape},
