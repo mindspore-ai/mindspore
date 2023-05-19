@@ -850,9 +850,9 @@ py::object CallPythonScript(const py::object &script, const py::tuple &args_kwar
 }
 
 // Get the ids of python script string.
-py::set GetPythonScriptIds(const py::object &script) {
+py::set GetPythonScriptIdAttrs(const py::object &script) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  return python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_SCRIPT_IDS, script);
+  return python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_SCRIPT_ID_ATTRS, script);
 }
 
 // Generate an appropriate name and set to graph debuginfo,
