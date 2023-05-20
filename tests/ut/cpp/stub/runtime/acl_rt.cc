@@ -133,3 +133,7 @@ ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) {
 ACL_FUNC_VISIBILITY aclError aclrtMemset(void *devPtr, size_t maxCount, int32_t value, size_t count) {
   return ACL_SUCCESS;
 }
+
+ACL_FUNC_VISIBILITY aclError aclrtDestroyStream(aclrtStream stream) {
+  return ACL_SUCCESS;
+}

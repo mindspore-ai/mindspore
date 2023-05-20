@@ -22,6 +22,7 @@
 #include "external/acl/error_codes/rt_error_codes.h"
 #include "runtime/event.h"
 #include "runtime/stream.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
@@ -146,9 +147,9 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
     MS_LOG(WARNING) << "Ascend stream hsa been destroyed for stream id " << stream_id;
     return true;
   }
-  const auto ret = rtStreamDestroy(streams_.at(stream_id));
+  const auto ret = aclrtDestroyStream(streams_.at(stream_id));
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
+    MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
   streams_[stream_id] = nullptr;
   return true;
@@ -157,9 +158,9 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
 bool AscendStreamMng::DestroyAllStreams() {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   for (const auto &stream : streams_) {
-    const auto ret = rtStreamDestroy(stream);
+    const auto ret = aclrtDestroyStream(stream);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
+      MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
   }
   streams_.clear();
