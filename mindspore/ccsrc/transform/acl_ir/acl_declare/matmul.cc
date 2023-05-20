@@ -41,6 +41,31 @@ std::string CheckNdSupported(TypeId data_type, const std::vector<ShapeVector> &s
 
 REGISTER_ACL_OP(MatMulV2).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
 
-REGISTER_ACL_OP(BatchMatMul).set_precision_mode(FORCE_FP32);
+std::string CheckBMMNdSupported(TypeId data_type, const std::vector<ShapeVector> &shapes) {
+  constexpr size_t special_bmm_size = 2;
+  if (shapes.size() != special_bmm_size) {
+    return kOpFormat_DEFAULT;
+  }
+  if (data_type != kNumberTypeFloat16) {
+    return kOpFormat_DEFAULT;
+  }
+  auto dim_0 = shapes[0].size();
+  auto dim_1 = shapes[1].size();
+  if (dim_0 < special_bmm_size || dim_1 < special_bmm_size) {
+    return kOpFormat_DEFAULT;
+  }
+  auto is_align = [&]() {
+    return (!(static_cast<uint64_t>(shapes[0][dim_0 - 1]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[0][dim_0 - 2]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[1][dim_1 - 1]) & 0x0000000F)) &&
+           (!(static_cast<uint64_t>(shapes[1][dim_1 - 2]) & 0x0000000F));
+  };
+  if (is_align()) {
+    return kOpFormat_DEFAULT;
+  }
+  return kOpFormat_FRAC_NZ;
+}
+
+REGISTER_ACL_OP(BatchMatMul).OutputSelector(&CheckBMMNdSupported).set_precision_mode(FORCE_FP32);
 }  // namespace transform
 }  // namespace mindspore
