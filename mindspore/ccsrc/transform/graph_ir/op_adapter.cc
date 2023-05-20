@@ -892,11 +892,20 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
   return 0;
 }
 
+int OpAdapterImpl::SetNoFoldingOpAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(op);
+  op->SetAttr("no_need_constant_folding", true);
+  return SetNormalOpAttr(op, prim);
+}
+
 int OpAdapterImpl::setAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
   int ret = 0;
   if (IsCustomPrim(prim)) {
     auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
     ret = SetCustomOpAttr(cus_op, prim);
+  } else if (IsNoNeedConstantFoldCNode(prim)) {
+    ret = SetNoFoldingOpAttr(op, prim);
   } else {
     ret = SetNormalOpAttr(op, prim);
   }

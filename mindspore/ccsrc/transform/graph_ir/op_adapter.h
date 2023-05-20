@@ -102,6 +102,7 @@ class OpAdapterImpl {
   int setAttr(const OperatorPtr &op, const std::string &attr_key, const ValuePtr &attr_value);
   int SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
   int SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &prim);
+  int SetNoFoldingOpAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const PrimitivePtr &prim);
   int setAttr(const OperatorPtr &op, const AnfNodePtr &node);
   int setAttr(const OperatorPtr &op, const uint32_t &input_idx, const ValuePtr &attr_value);

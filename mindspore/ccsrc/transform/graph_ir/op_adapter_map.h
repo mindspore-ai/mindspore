@@ -342,6 +342,7 @@ constexpr const char kNameRange[] = "Range";
 constexpr const char kNameSquareSumAll[] = "SquareSumAll";
 constexpr const char kNameAscendQuant[] = "Quant";
 constexpr const char kNameAscendDequant[] = "Dequant";
+constexpr const char kNameAscendAntiQuant[] = "AscendAntiQuant";
 constexpr const char kNameCropAndResize[] = "CropAndResize";
 constexpr const char kNameReverseSequence[] = "ReverseSequence";
 constexpr const char kNameEditDistance[] = "EditDistance";
