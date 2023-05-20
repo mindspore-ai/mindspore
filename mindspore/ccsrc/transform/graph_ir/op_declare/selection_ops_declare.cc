@@ -94,7 +94,7 @@ REG_ADPT_DESC(OneHotD, prim::kPrimOneHotD->name(), ADPT_DESC(OneHot))
 // GatherV2
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
 ATTR_INPUT_MAP(GatherV2) = {{"axis", "axis"}};
-ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
+ATTR_MAP(GatherV2) = {{"batch_dims", ATTR_DESC(batch_dims, AnyTraits<int64_t>())}};
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
