@@ -22,6 +22,129 @@
 #include "transform/acl_ir/acl_allocator.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
+#include "acl/acl.h"
+#include "acl/acl_mdl.h"
+
+namespace {
+/*
+1. Write a acl dump config file `acl_dump_cfg.json`, contents is as below, please refer to
+`https://gitee.com/mindspore/mindspore/blob/master/config/acl_dump_cfg.json`
+```json
+{
+  "dump": {
+    "dump_list": [],
+    "dump_path": "/tmp/acl_data_dump",
+    "dump_mode": "all",
+    "dump_op_switch": "on"
+  }
+}
+```
+
+2. Set acl dump config file path by environment variable `MS_ACL_DUMP_CFG_PATH`
+```bash
+export MS_ACL_DUMP_CFG_PATH=/xxx/acl_dump_cfg.json
+```
+
+3. Run mindspore to execute acl operators
+
+4. Convert acl dump data to numpy npy format
+```bash
+${HOME}/Ascend/CANN-6.4/tools/operator_cmp/compare/msaccucmp.py convert -d data/20230520102032/0/xxx/0/ \
+  -out /tmp/npy_acl_data
+```
+
+5. Write a python script file `print_data.py` to display npy data files
+```python
+import sys
+import numpy as np
+
+if len(sys.argv) < 2:
+    print(f"Usage: sys.argv[0] npy_file1 npy_file2 ...")
+    sys.exit()
+
+for npy_file in sys.argv[1:]:
+    data = np.load(npy_file)
+    print(f'content of file {npy_file}:')
+    print(f'dtype: {data.dtype}, shape: {data.shape}')
+    print(data)
+    print("")
+```
+
+6. Display contents of numpy data files
+```bash
+python3 print_data.py /tmp/npy_acl_data/xxx*.npy
+```
+*/
+
+constexpr auto kAclDumpConfigPath = "MS_ACL_DUMP_CFG_PATH";
+
+bool g_acl_initialized = false;
+std::mutex g_acl_init_mutex;
+
+void InitializeAcl() {
+  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
+  if (g_acl_initialized) {
+    return;
+  }
+
+  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  } else {
+    MS_LOG(INFO) << "Call aclInit successfully";
+  }
+  g_acl_initialized = true;
+}
+
+class AclDumper {
+ public:
+  AclDumper(AclDumper const &) = delete;             // disable copy constructor
+  AclDumper &operator=(AclDumper const &) = delete;  // disable assignment operator
+
+  // constructor
+  AclDumper() : acl_dump_config_(mindspore::common::GetEnv(kAclDumpConfigPath)) {
+    // acl dump config path is not set
+    if (acl_dump_config_.empty()) {
+      return;
+    }
+
+    // NOTE: function `aclmdlInitDump` must be called after `aclInit` to take effect, MindSpore never call `aclInit`
+    // before, so here call it once
+    InitializeAcl();
+
+    if (aclmdlInitDump() != ACL_ERROR_NONE) {
+      acl_dump_config_ = "";
+      MS_LOG(WARNING) << "Call aclmdlInitDump failed, , acl data dump function will be unusable.";
+    }
+  }
+
+  // destructor
+  ~AclDumper() {
+    if (acl_dump_config_.empty()) {
+      return;
+    }
+
+    if (aclmdlFinalizeDump() != ACL_ERROR_NONE) {
+      MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
+    }
+  }
+
+  // set dump
+  void SetDump() {
+    if (acl_dump_config_.empty()) {
+      return;
+    }
+    if (aclmdlSetDump(acl_dump_config_.c_str()) != ACL_ERROR_NONE) {
+      MS_LOG(WARNING)
+        << "Call aclmdlSetDump failed, acl data dump function will be unusable. Please check whether the config file `"
+        << acl_dump_config_ << "` set by environment variable `" << kAclDumpConfigPath
+        << "` is json file and correct, or may not have permission to read it.";
+    }
+  }
+
+ private:
+  std::string acl_dump_config_ = "";
+};
+}  // namespace
 
 namespace mindspore {
 namespace transform {
@@ -199,6 +322,9 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   AclAllocatorRegister::Instance().RegisterAllocator(stream_ptr);
   AoeDump();
+
+  AclDumper acl_dumper;
+  acl_dumper.SetDump();
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {
