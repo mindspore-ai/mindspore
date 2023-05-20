@@ -359,7 +359,7 @@ class AscendEnvChecker(EnvChecker):
         # DO NOT modify exception type to any other, you DO NOT know what kind of exceptions the te will throw.
         # pylint: disable=broad-except
         except Exception as e:
-            logger.error("CheckFailed:", e.args)
+            logger.error(f"CheckFailed: {e}")
             logger.error("MindSpore relies on whl packages of \"te\" and \"hccl\" in the \"latest\" "
                          "folder of the Ascend AI software package (Ascend Data Center Solution). Please check whether"
                          " they are installed correctly or not, refer to the match info on: "
