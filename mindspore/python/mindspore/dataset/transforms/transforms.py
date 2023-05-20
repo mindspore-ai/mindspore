@@ -220,12 +220,12 @@ class Compose(CompoundOperation):
         ``CPU``
 
     Examples:
-        >>> compose = transforms.Compose([vision.Decode(), vision.RandomCrop(512)])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=compose)
-        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
-        >>>
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
+        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
         >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8)
+        >>>
         >>> # create a list of transformations to be applied to the image data
         >>> transform = transforms.Compose([vision.Decode(to_pil=True),
         ...                                vision.RandomHorizontalFlip(0.5),
@@ -244,7 +244,7 @@ class Compose(CompoundOperation):
         ...                    vision.RandomErasing()]
         >>>
         >>> # apply the transform to the dataset through dataset.map()
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list, input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
         >>>
         >>> # Certain C++ and Python ops can be combined, but not all of them
         >>> # An example of combined operations
@@ -361,7 +361,10 @@ class Concatenate(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> import numpy as np
+        >>>
         >>> # concatenate string
         >>> prepend_tensor = np.array(["dw", "df"], dtype='S')
         >>> append_tensor = np.array(["dwsdf", "df"], dtype='S')
@@ -394,6 +397,8 @@ class Duplicate(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> # Data before
         >>> # |  x      |
         >>> # +---------+
@@ -436,7 +441,10 @@ class Fill(TensorOperation):
 
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> import numpy as np
+        >>>
         >>> # generate a 1D integer numpy array from 0 to 4
         >>> def generator_1d():
         ...     for i in range(5):
@@ -479,6 +487,8 @@ class Mask(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Relational
         >>> # Data before
         >>> # |  col   |
@@ -528,6 +538,12 @@ class OneHot(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
+        >>>
+        >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
+        >>> mnist_dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
+        >>>
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
@@ -564,6 +580,8 @@ class PadEnd(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
@@ -609,7 +627,11 @@ class Plugin(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
+        >>>
         >>> plugin = transforms.Plugin("pluginlib.so", "PluginDecode")
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=plugin)
     """
 
@@ -645,13 +667,18 @@ class RandomApply(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Compose
+        >>>
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
         >>> composed_transform = Compose([vision.Decode(to_pil=True),
         ...                               transforms.RandomApply(transforms_list, prob=0.6),
         ...                               vision.ToTensor()])
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
     """
 
@@ -694,13 +721,18 @@ class RandomChoice(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Compose
+        >>>
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
         >>> composed_transform = Compose([vision.Decode(),
         ...                               transforms.RandomChoice(transforms_list),
         ...                               vision.ToTensor()])
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
 
     """
@@ -744,13 +776,18 @@ class RandomOrder(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Compose
+        >>>
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
         >>> composed_transform = Compose([vision.Decode(to_pil=False),
         ...                               transforms.RandomOrder(transforms_list),
         ...                               vision.ToTensor()])
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
     """
 
@@ -855,6 +892,8 @@ class Slice(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
@@ -901,6 +940,8 @@ class TypeCast(TensorOperation):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> import numpy as np
         >>> from mindspore import dtype as mstype
         >>>
@@ -949,6 +990,8 @@ class Unique(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.transforms as transforms
         >>> # Data before
         >>> # |  x                 |
         >>> # +--------------------+

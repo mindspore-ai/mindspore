@@ -395,6 +395,7 @@ def encode_jpeg(image, quality=75):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
@@ -433,6 +434,7 @@ def encode_png(image, compression_level=6):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
@@ -464,6 +466,9 @@ def get_image_num_channels(image):
         TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
+        >>> from PIL import Image
+        >>> image = Image.open("/path/to/image_file")
         >>> num_channels = vision.get_image_num_channels(image)
     """
 
@@ -494,6 +499,9 @@ def get_image_size(image):
         TypeError: If `image` is not of type <class 'numpy.ndarray'> or <class 'PIL.Image.Image'>.
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
+        >>> from PIL import Image
+        >>> image = Image.open("/path/to/image_file")
         >>> image_size = vision.get_image_size(image)
     """
 
@@ -539,6 +547,7 @@ def read_file(filename):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> output = vision.read_file("/path/to/file")
     """
     if isinstance(filename, str):
@@ -575,6 +584,7 @@ def read_image(filename, mode=ImageReadMode.UNCHANGED):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import ImageReadMode
         >>> output = vision.read_image("/path/to/image_file", ImageReadMode.UNCHANGED)
     """
@@ -604,6 +614,7 @@ def write_file(filename, data):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> # Generate a random data with 1024 bytes
         >>> data = np.random.randint(256, size=(1024), dtype=np.uint8)
@@ -641,6 +652,7 @@ def write_jpeg(filename, image, quality=75):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)
@@ -681,6 +693,7 @@ def write_png(filename, image, compression_level=6):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> # Generate a random image with height=120, width=340, channels=3
         >>> image = np.random.randint(256, size=(120, 340, 3), dtype=np.uint8)

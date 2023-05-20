@@ -88,6 +88,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
         >>> dataset = ds.CSVDataset(dataset_files=csv_dataset_dir, column_names=['col1', 'col2', 'col3', 'col4'])
     """
@@ -193,6 +194,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
         >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
     """
@@ -313,6 +315,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         ValueError: If `num_samples` < 0.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> from mindspore import dtype as mstype
         >>>
         >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # contains 1 or multiple TFRecord files
@@ -417,6 +420,7 @@ class OBSMindDataset(GeneratorDataset):
           node(server), there is no such restriction.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # OBS
         >>> bucket = "iris"  # your obs bucket name
         >>> # the bucket directory structure is similar to the following:

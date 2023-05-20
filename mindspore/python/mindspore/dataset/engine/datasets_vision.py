@@ -185,6 +185,7 @@ class Caltech101Dataset(GeneratorDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> caltech101_dataset_directory = "/path/to/caltech101_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in caltech101_dataset_directory with 8 threads
@@ -350,6 +351,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> caltech256_dataset_dir = "/path/to/caltech256_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in caltech256_dataset_dir with 8 threads
@@ -483,6 +485,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> celeba_dataset_dir = "/path/to/celeba_dataset_directory"
         >>>
         >>> # Read 5 samples from CelebA dataset
@@ -653,6 +656,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
         >>>
         >>> # 1) Get all samples from CIFAR10 dataset in sequence
@@ -786,6 +790,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> cifar100_dataset_dir = "/path/to/cifar100_dataset_directory"
         >>>
         >>> # 1) Get all samples from CIFAR100 dataset in sequence
@@ -922,6 +927,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> cityscapes_dataset_dir = "/path/to/cityscapes_dataset_directory"
         >>>
         >>> # 1) Get all samples from Cityscapes dataset in sequence
@@ -1136,6 +1142,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
         >>> coco_annotation_file = "/path/to/coco_dataset_directory/annotation_file"
         >>>
@@ -1246,6 +1253,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
             dict, a str-to-list<int> mapping from label name to index.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
             >>> coco_annotation_file = "/path/to/coco_dataset_directory/annotation_file"
             >>>
@@ -1347,6 +1355,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> div2k_dataset_dir = "/path/to/div2k_dataset_directory"
         >>>
         >>> # 1) Get all samples from DIV2K dataset in sequence
@@ -1525,6 +1534,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> emnist_dataset_dir = "/path/to/emnist_dataset_directory"
         >>>
         >>> # Read 3 samples from EMNIST dataset
@@ -1660,6 +1670,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # Read 3 samples from FakeImage dataset
         >>> dataset = ds.FakeImageDataset(num_images=1000, image_size=(224,224,3),
         ...                               num_classes=10, base_seed=0, num_samples=3)
@@ -1751,6 +1762,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> fashion_mnist_dataset_dir = "/path/to/fashion_mnist_dataset_directory"
         >>>
         >>> # Read 3 samples from FASHIONMNIST dataset
@@ -1877,6 +1889,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> flickr_dataset_dir = "/path/to/flickr_dataset_directory"
         >>> annotation_file = "/path/to/flickr_annotation_file"
         >>>
@@ -2119,6 +2132,7 @@ class Flowers102Dataset(GeneratorDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> flowers102_dataset_dir = "/path/to/flowers102_dataset_directory"
         >>> dataset = ds.Flowers102Dataset(dataset_dir=flowers102_dataset_dir,
         ...                                task="Classification",
@@ -2288,6 +2302,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> food101_dataset_dir = "/path/to/food101_dataset_directory"
         >>>
         >>> # Read 3 samples from Food101 dataset
@@ -2430,6 +2445,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in image_folder_dataset_dir with 8 threads
@@ -2494,6 +2510,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
             dict, a str-to-int mapping from label name to index.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
             >>>
             >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir)
@@ -2587,6 +2604,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> kitti_dataset_dir = "/path/to/kitti_dataset_directory"
         >>>
         >>> # 1) Read all KITTI train dataset samples in kitti_dataset_dir in sequence
@@ -2727,6 +2745,7 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> kmnist_dataset_dir = "/path/to/kmnist_dataset_directory"
         >>>
         >>> # Read 3 samples from KMNIST dataset
@@ -2855,6 +2874,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # 1) Read LFW People dataset
         >>> lfw_people_dataset_dir = "/path/to/lfw_people_dataset_directory"
         >>> dataset = ds.LFWDataset(dataset_dir=lfw_people_dataset_dir, task="people", usage="10fold",
@@ -3014,6 +3034,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> lsun_dataset_dir = "/path/to/lsun_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in lsun_dataset_dir with 8 threads
@@ -3156,6 +3177,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> manifest_dataset_dir = "/path/to/manifest_dataset_file"
         >>>
         >>> # 1) Read all samples specified in manifest_dataset_dir dataset with 8 threads for training
@@ -3207,6 +3229,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
             dict, a str-to-int mapping from label name to index.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> manifest_dataset_dir = "/path/to/manifest_dataset_file"
             >>>
             >>> dataset = ds.ManifestDataset(dataset_file=manifest_dataset_dir)
@@ -3293,6 +3316,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
         >>>
         >>> # Read 3 samples from MNIST dataset
@@ -3415,6 +3439,7 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> omniglot_dataset_dir = "/path/to/omniglot_dataset_directory"
         >>> dataset = ds.OmniglotDataset(dataset_dir=omniglot_dataset_dir,
         ...                              num_parallel_workers=8)
@@ -3558,6 +3583,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # Read 3 samples from PhotoTour dataset.
         >>> dataset = ds.PhotoTourDataset(dataset_dir="/path/to/photo_tour_dataset_directory",
         ...                               name='liberty', usage='train', num_samples=3)
@@ -3702,6 +3728,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> place365_dataset_dir = "/path/to/place365_dataset_directory"
         >>>
         >>> # Read 3 samples from Places365 dataset
@@ -3842,6 +3869,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> qmnist_dataset_dir = "/path/to/qmnist_dataset_directory"
         >>>
         >>> # Read 3 samples from QMNIST train dataset
@@ -4041,6 +4069,7 @@ class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> rendered_sst2_dataset_dir = "/path/to/rendered_sst2_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in rendered_sst2_dataset_dir with 8 threads
@@ -4256,6 +4285,7 @@ class SBDataset(GeneratorDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> sb_dataset_dir = "/path/to/sb_dataset_directory"
         >>>
         >>> # 1) Get all samples from Semantic Boundaries Dataset in sequence
@@ -4386,6 +4416,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> sbu_dataset_dir = "/path/to/sbu_dataset_directory"
         >>> # Read 3 samples from SBU dataset
         >>> dataset = ds.SBUDataset(dataset_dir=sbu_dataset_dir, num_samples=3)
@@ -4502,6 +4533,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> semeion_dataset_dir = "/path/to/semeion_dataset_directory"
         >>>
         >>> # 1) Get all samples from SEMEION dataset in sequence
@@ -4632,6 +4664,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> stl10_dataset_dir = "/path/to/stl10_dataset_directory"
         >>>
         >>> # 1) Get all samples from STL10 dataset in sequence
@@ -4763,6 +4796,7 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> sun397_dataset_dir = "/path/to/sun397_dataset_directory"
         >>>
         >>> # 1) Read all samples (image files) in sun397_dataset_dir with 8 threads
@@ -4941,6 +4975,7 @@ class SVHNDataset(GeneratorDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> svhn_dataset_dir = "/path/to/svhn_dataset_directory"
         >>> dataset = ds.SVHNDataset(dataset_dir=svhn_dataset_dir, usage="train")
 
@@ -5031,6 +5066,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> usps_dataset_dir = "/path/to/usps_dataset_directory"
         >>>
         >>> # Read 3 samples from USPS dataset
@@ -5177,6 +5213,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
         >>>
         >>> # 1) Read VOC data for segmentation training
@@ -5275,6 +5312,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
             dict, a str-to-int mapping from label name to index.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
             >>>
             >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Detection")
@@ -5368,6 +5406,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> wider_face_dir = "/path/to/wider_face_dataset"
         >>>
         >>> # Read 3 samples from WIDERFace dataset

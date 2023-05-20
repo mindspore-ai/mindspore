@@ -24,9 +24,12 @@ and use Lookup to find the index of tokens in Vocab.
     class attributes (self.xxx) to support save() and load().
 
 Examples:
-    >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
+    >>> import mindspore.dataset as ds
+    >>>
     >>> # Create a dataset for text sentences saved as line data in a file
-    >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
+    >>> text_file_list = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
+    >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list, shuffle=False)
+    >>>
     >>> # Tokenize sentences to unicode characters
     >>> tokenizer = text.UnicodeCharTokenizer()
     >>> # Load vocabulary from list
@@ -109,6 +112,7 @@ class AddToken(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> dataset = ds.NumpySlicesDataset(data={"text": [['a', 'b', 'c', 'd', 'e']]})
         >>> # Data before
         >>> # |           text            |
@@ -167,18 +171,24 @@ class JiebaTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import JiebaMode
-        >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>>
+        >>> # 1) If with_offsets=False, return one data column {["text", dtype=str]}
         >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
         >>> jieba_mp_file = "/path/to/jieba/mp/file"
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=False)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-        >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
-        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>>
+        >>> # 2) If with_offsets=True, return three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
+        >>> #                                                ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=True)
-        >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                               output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
+        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_jieba_init
@@ -222,8 +232,10 @@ class JiebaTokenizer(TextTensorOperation):
                 the better chance the word will be tokenized. Default: ``None``, use default frequency.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import JiebaMode
+            >>>
             >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
             >>> jieba_mp_file = "/path/to/jieba/mp/file"
             >>> jieba_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP)
@@ -232,6 +244,9 @@ class JiebaTokenizer(TextTensorOperation):
             ...     for line in f:
             ...         word = line.split(',')[0]
             ...         jieba_op.add_word(word)
+            >>>
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=jieba_op, input_columns=["text"])
         """
 
@@ -262,12 +277,17 @@ class JiebaTokenizer(TextTensorOperation):
                 Rows containing invalid input will be ignored. No error nor warning Status is returned.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> from mindspore.dataset.text import JiebaMode
+            >>>
             >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
             >>> jieba_mp_file = "/path/to/jieba/mp/file"
             >>> user_dict = {"男默女泪": 10}
             >>> jieba_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP)
             >>> jieba_op.add_dict(user_dict)
+            >>>
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=jieba_op, input_columns=["text"])
         """
 
@@ -340,11 +360,15 @@ class Lookup(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>> # Load vocabulary from list
         >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
         >>> # Use Lookup operation to map tokens to ids
         >>> lookup = text.Lookup(vocab)
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=[lookup])
     """
 
@@ -392,12 +416,16 @@ class Ngram(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>> ngram_op = text.Ngram(3, separator="-")
         >>> output = ngram_op(["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"])
         >>> # output
         >>> # ["WildRose Country-Canada's Ocean Playground-Land of Living Skies"]
+        >>>
         >>> # same ngram_op called through map
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=ngram_op)
     """
 
@@ -427,8 +455,14 @@ class PythonTokenizer:
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> def my_tokenizer(line):
         ...     return line.split()
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
     """
 
@@ -478,12 +512,17 @@ class SentencePieceTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
+        >>>
         >>> sentence_piece_vocab_file = "/path/to/sentence/piece/vocab/file"
         >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 5000, 0.9995,
         ...                                           SentencePieceModel.UNIGRAM, {})
         >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer)
     """
 
@@ -517,6 +556,8 @@ class SlidingWindow(TextTensorOperation):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> dataset = ds.NumpySlicesDataset(data=[[1, 2, 3, 4, 5]], column_names="col1")
         >>> # Data before
         >>> # |     col1     |
@@ -566,6 +607,7 @@ class ToNumber(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>> from mindspore import dtype as mstype
+        >>>
         >>> data = [["1", "2", "3"]]
         >>> dataset = ds.NumpySlicesDataset(data)
         >>> to_number_op = text.ToNumber(mstype.int8)
@@ -604,11 +646,16 @@ class ToVectors(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
+        >>>
         >>> # Load vectors from file
         >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
         >>> # Use ToVectors operation to map tokens to vectors
         >>> to_vectors = text.ToVectors(vectors)
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=[to_vectors])
     """
 
@@ -639,6 +686,9 @@ class Truncate(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> dataset = ds.NumpySlicesDataset(data=[['a', 'b', 'c', 'd', 'e']], column_names=["text"], shuffle=False)
         >>> # Data before
         >>> # |           col1            |
@@ -679,7 +729,9 @@ class TruncateSequencePair(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
+        >>>
         >>> dataset = ds.NumpySlicesDataset(data={"col1": [[1, 2, 3]], "col2": [[4, 5]]})
         >>> # Data before
         >>> # |   col1    |   col2    |
@@ -718,13 +770,18 @@ class UnicodeCharTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=False)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
         >>> # If with_offsets=True, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=True)
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
     """
@@ -764,7 +821,9 @@ class WordpieceTokenizer(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
+        >>>
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
         >>> vocab = text.Vocab.from_list(vocab_list)
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -775,6 +834,9 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         ...                                       max_bytes_per_token=100, with_offsets=True)
+        >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
     """
@@ -843,27 +905,30 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>>
+            >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
             ...                                    keep_whitespace=False,
             ...                                    normalization_form=NormalizeForm.NONE,
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
+            >>> #                                                     ["offsets_start", dtype=uint32],
+            >>> #                                                     ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
             ...                                    keep_whitespace=False,
             ...                                    normalization_form=NormalizeForm.NONE,
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=True)
-            >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"])
+            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
+            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_basic_tokenizer
@@ -936,10 +1001,14 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>>
+            >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> vocab_list = ["床", "前", "明", "月", "光", "疑", "是", "地", "上", "霜", "举", "头", "望", "低",
             ...               "思", "故", "乡","繁", "體", "字", "嘿", "哈", "大", "笑", "嘻", "i", "am", "mak",
             ...               "make", "small", "mistake", "##s", "during", "work", "##ing", "hour", "😀", "😃",
@@ -951,14 +1020,14 @@ if platform.system().lower() != 'windows':
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                  ["offsets_start", dtype=uint32],
-            >>> #                                                  ["offsets_limit", dtype=uint32]}
+            >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
+            >>> #                                                     ["offsets_start", dtype=uint32],
+            >>> #                                                     ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
             ...                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=True)
-            >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
+            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                               output_columns=["token", "offsets_start",
             ...                                                               "offsets_limit"])
         """
@@ -1000,8 +1069,11 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> case_op = text.CaseFold()
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=case_op)
         """
 
@@ -1021,9 +1093,12 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
             >>> replace_op = text.FilterWikipediaXML()
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
         """
 
@@ -1057,9 +1132,13 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
+            >>>
             >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=normalize_op)
         """
 
@@ -1099,10 +1178,14 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
+            >>>
             >>> pattern = 'Canada'
             >>> replace = 'China'
             >>> replace_op = text.RegexReplace(pattern, replace)
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
         """
 
@@ -1143,18 +1226,23 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
-            >>> # If with_offsets=False, default output is one column {["text", dtype=str]}
+            >>>
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>>
+            >>> # 1) If with_offsets=False, default output is one column {["text", dtype=str]}
             >>> delim_pattern = r"[ |,]"
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>>
+            >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
+            >>> #                                                     ["offsets_start", dtype=uint32],
+            >>> #                                                     ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
-            >>> text_file_dataset_1 = text_file_dataset_1.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"])
+            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
+            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
         """
 
         @check_regex_tokenizer
@@ -1187,13 +1275,19 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>>
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>>
+            >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                  ["offsets_start", dtype=uint32],
-            >>> #                                                  ["offsets_limit", dtype=uint32]}
+            >>>
+            >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
+            >>> #                                                     ["offsets_start", dtype=uint32],
+            >>> #                                                     ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
@@ -1229,11 +1323,17 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>>
+            >>> text_file_list = ["/path/to/text_file_dataset_file"]
+            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>>
+            >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
+            >>>
+            >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=True)

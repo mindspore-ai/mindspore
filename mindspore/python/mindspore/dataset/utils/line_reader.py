@@ -37,6 +37,13 @@ class LineReader:
     Raises:
         TypeError: Parameter `filename` is wrong.
         RuntimeError: The input file does not exist or is not a regular file.
+
+    Examples:
+        >>> from mindspore.dataset import LineReader
+        >>>
+        >>> reader = LineReader("/path/to/txt/or/csv/file")
+        >>> reader.readline(1)
+        >>> reader.close()
     """
 
     def __init__(self, filename):

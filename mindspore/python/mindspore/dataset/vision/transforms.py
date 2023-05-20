@@ -31,6 +31,7 @@ The Python implementation is mainly based on PIL.
     class attributes (self.xxx) to support save() and load().
 
 Examples:
+    >>> import mindspore.dataset as ds
     >>> from mindspore.dataset.vision import Border, Inter
     >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
     >>> # create a dataset that reads all files in dataset_dir with 8 threads
@@ -115,6 +116,10 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustBrightness(brightness_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -159,6 +164,10 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustContrast(contrast_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -213,6 +222,10 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustGamma(gamma=10.0, gain=1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -258,6 +271,10 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustHue(hue_factor=0.2)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -303,6 +320,10 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustSaturation(saturation_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -347,6 +368,10 @@ class AdjustSharpness(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AdjustSharpness(sharpness_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -402,12 +427,16 @@ class Affine(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
         >>> decode_op = vision.Decode()
         >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1.0, 1.0],
         ...                           resample=Inter.BILINEAR)
         >>> affine_list = [decode_op, affine_op]
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=affine_list, input_columns=["image"])
     """
 
@@ -478,11 +507,15 @@ class AutoAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
         >>>
         >>> transforms_list = [vision.Decode(), vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
         ...                                                        interpolation=Inter.NEAREST,
         ...                                                        fill_value=0)]
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -524,6 +557,10 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -576,6 +613,10 @@ class BoundingBoxAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> # set bounding box operation with ratio of 1 to apply rotation on all bounding boxes
         >>> bbox_aug_op = vision.BoundingBoxAugment(vision.RandomRotation(90), 1)
         >>> # map to apply ops
@@ -619,14 +660,19 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>>
         >>> # crop image to a square
         >>> transforms_list1 = [vision.Decode(), vision.CenterCrop(50)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # crop image to portrait style
         >>> transforms_list2 = [vision.Decode(), vision.CenterCrop((60, 40))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
+        ...                                                 input_columns=["image"])
     """
 
     @check_center_crop
@@ -708,15 +754,20 @@ class ConvertColor(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.vision.utils as mode
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>>
         >>> # Convert RGB images to GRAY images
         >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2GRAY)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
         >>> # Convert RGB images to BGR images
         >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=convert_op,
-        ...                                                     input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
+        ...                                                 input_columns=["image"])
     """
 
     @check_convert_color
@@ -752,6 +803,10 @@ class Crop(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> decode_op = vision.Decode()
         >>> crop_op = vision.Crop((0, 0), 32)
         >>> transforms_list = [decode_op, crop_op]
@@ -796,7 +851,11 @@ class CutMixBatch(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import ImageBatchFormat
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
@@ -840,6 +899,10 @@ class CutOut(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.CutOut(80, num_patches=10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -877,12 +940,16 @@ class Decode(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
         >>> # Eager usage
         >>> import numpy as np
         >>> raw_image = np.fromfile("/path/to/image/file", np.uint8)
         >>> decoded_image = vision.Decode()(raw_image)
         >>>
         >>> # Pipeline usage
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -939,6 +1006,10 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Equalize()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -997,6 +1068,10 @@ class Erase(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Erase(10,10,10,10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1035,6 +1110,8 @@ class FiveCrop(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy
         >>> from mindspore.dataset.transforms import Compose
         >>>
@@ -1043,6 +1120,7 @@ class FiveCrop(PyTensorOperation):
         ...                            # 4D stack of 5 images
         ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -1092,6 +1170,10 @@ class GaussianBlur(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(to_pil=True), vision.GaussianBlur(3, 3)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1130,12 +1212,15 @@ class Grayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.Grayscale(3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -1171,6 +1256,10 @@ class HorizontalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(to_pil=True), vision.HorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1199,6 +1288,8 @@ class HsvToRgb(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
@@ -1206,6 +1297,7 @@ class HsvToRgb(PyTensorOperation):
         ...                            vision.ToTensor(),
         ...                            vision.HsvToRgb()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -1245,6 +1337,10 @@ class HWC2CHW(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(),
         ...                    vision.RandomHorizontalFlip(0.75),
         ...                    vision.RandomCrop(512),
@@ -1273,6 +1369,10 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Invert()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1319,6 +1419,8 @@ class LinearTransformation(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> from mindspore.dataset.transforms import Compose
         >>>
@@ -1331,6 +1433,7 @@ class LinearTransformation(PyTensorOperation):
         ...                            vision.ToTensor(),
         ...                            vision.LinearTransformation(transformation_matrix, mean_vector)])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -1382,6 +1485,10 @@ class MixUp(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> # first decode the image
         >>> image_folder_dataset = image_folder_dataset.map(operations=vision.Decode(),
         ...                                                 input_columns="image")
@@ -1452,6 +1559,10 @@ class MixUpBatch(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
@@ -1499,6 +1610,10 @@ class Normalize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> decode_op = vision.Decode() ## Decode output is expected to be HWC format
         >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], is_hwc=True)
         >>> transforms_list = [decode_op, normalize_op]
@@ -1545,6 +1660,10 @@ class NormalizePad(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> decode_op = vision.Decode()
         >>> normalize_pad_op = vision.NormalizePad(mean=[121.0, 115.0, 100.0],
         ...                                        std=[70.0, 68.0, 71.0],
@@ -1609,6 +1728,10 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Pad([100, 100, 100, 100])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1679,6 +1802,10 @@ class PadToSize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.PadToSize([256, 256])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1734,6 +1861,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>> from mindspore.dataset.vision import Inter
         >>>
@@ -1742,6 +1871,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = Compose([vision.Decode(),
         ...                            vision.Perspective(start_points, end_points, Inter.BILINEAR)])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -1790,6 +1920,15 @@ class Posterize(ImageTensorOperation):
         TypeError: If `bits` is not of type int.
         ValueError: If `bits` is not in range [0, 8].
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> transforms_list = [vision.Decode(), vision.Posterize(4)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
     """
 
     @check_posterize
@@ -1845,6 +1984,10 @@ class RandAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandAugment()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
     """
@@ -1888,6 +2031,10 @@ class RandomAdjustSharpness(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomAdjustSharpness(2.0, 0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1965,13 +2112,17 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = vision.Decode()
         >>> random_affine_op = vision.RandomAffine(degrees=15,
         ...                                        translate=(-0.1, 0.1, 0, 0),
         ...                                        scale=(0.9, 1.1),
         ...                                        resample=Inter.NEAREST)
         >>> transforms_list = [decode_op, random_affine_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -2070,6 +2221,10 @@ class RandomAutoContrast(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2110,6 +2265,10 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomColor((0.5, 2.0))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2176,6 +2335,10 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> decode_op = vision.Decode()
         >>> transform_op = vision.RandomColorAdjust(brightness=(0.5, 1),
         ...                                         contrast=(0.4, 1),
@@ -2279,10 +2442,14 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Border
+        >>>
         >>> decode_op = vision.Decode()
         >>> random_crop_op = vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=Border.EDGE)
         >>> transforms_list = [decode_op, random_crop_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -2369,12 +2536,16 @@ class RandomCropDecodeResize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> resize_crop_decode_op = vision.RandomCropDecodeResize(size=(50, 75),
         ...                                                       scale=(0.25, 0.5),
         ...                                                       interpolation=Inter.NEAREST,
         ...                                                       max_attempts=5)
         >>> transforms_list = [resize_crop_decode_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -2457,6 +2628,10 @@ class RandomCropWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> decode_op = vision.Decode()
         >>> random_crop_with_bbox_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
         >>> transforms_list = [decode_op, random_crop_with_bbox_op]
@@ -2507,6 +2682,10 @@ class RandomEqualize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomEqualize(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2562,12 +2741,15 @@ class RandomErasing(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.ToTensor(),
         ...                            vision.RandomErasing(value='random')])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -2617,12 +2799,15 @@ class RandomGrayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomGrayscale(0.3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -2672,6 +2857,10 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip(0.75)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2715,6 +2904,10 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlipWithBBox(0.70)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2747,6 +2940,10 @@ class RandomInvert(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomInvert(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2779,6 +2976,10 @@ class RandomLighting(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomLighting(0.1)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2832,12 +3033,15 @@ class RandomPerspective(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomPerspective(prob=0.1),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -2892,6 +3096,10 @@ class RandomPosterize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomPosterize((6, 8))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2960,11 +3168,15 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = vision.Decode()
         >>> resize_crop_op = vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5),
         ...                                           interpolation=Inter.BILINEAR)
         >>> transforms_list = [decode_op, resize_crop_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3047,10 +3259,14 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = vision.Decode()
         >>> bbox_op = vision.RandomResizedCropWithBBox(size=50, interpolation=Inter.NEAREST)
         >>> transforms_list = [decode_op, bbox_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3092,14 +3308,18 @@ class RandomResize(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> # randomly resize image, keeping aspect ratio
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # 1) randomly resize image, keeping aspect ratio
         >>> transforms_list1 = [vision.Decode(), vision.RandomResize(50)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
-        >>> # randomly resize image to landscape style
+        >>> # 2) randomly resize image to landscape style
         >>> transforms_list2 = [vision.Decode(), vision.RandomResize((40, 60))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
+        ...                                                 input_columns=["image"])
     """
 
     @check_resize
@@ -3136,14 +3356,20 @@ class RandomResizeWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> # randomly resize image with bounding boxes, keeping aspect ratio
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>>
+        >>> # 1) randomly resize image with bounding boxes, keeping aspect ratio
         >>> transforms_list1 = [vision.Decode(), vision.RandomResizeWithBBox(60)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
-        >>> # randomly resize image with bounding boxes to portrait style
+        >>>
+        >>> # 2) randomly resize image with bounding boxes to portrait style
         >>> transforms_list2 = [vision.Decode(), vision.RandomResizeWithBBox((80, 60))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
+        ...                                                 input_columns=["image"])
     """
 
     @check_resize
@@ -3202,11 +3428,15 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> transforms_list = [vision.Decode(),
         ...                    vision.RandomRotation(degrees=5.0,
         ...                    resample=Inter.NEAREST,
         ...                    expand=True)]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3279,6 +3509,10 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> policy = [[(vision.RandomRotation((45, 45)), 0.5),
         ...            (vision.RandomVerticalFlip(), 1),
         ...            (vision.RandomColorAdjust(), 0.8)],
@@ -3326,6 +3560,10 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomSharpness(degrees=(0.2, 1.9))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3372,6 +3610,10 @@ class RandomSolarize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomSolarize(threshold=(10,100))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3404,6 +3646,10 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlip(0.25)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3447,6 +3693,10 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlipWithBBox(0.20)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3482,6 +3732,10 @@ class Rescale(ImageTensorOperation):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3530,10 +3784,14 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = vision.Decode()
         >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
         >>> transforms_list = [decode_op, resize_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3612,8 +3870,12 @@ class ResizedCrop(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> transforms_list = [vision.Decode(), vision.ResizedCrop(0, 0, 128, 128, (100, 75), Inter.BILINEAR)]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3665,10 +3927,14 @@ class ResizeWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = vision.Decode()
         >>> bbox_op = vision.ResizeWithBBox(50, Inter.NEAREST)
         >>> transforms_list = [decode_op, bbox_op]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3702,6 +3968,8 @@ class RgbToHsv(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
@@ -3709,6 +3977,7 @@ class RgbToHsv(PyTensorOperation):
         ...                            vision.ToTensor(),
         ...                            vision.RgbToHsv()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -3771,11 +4040,15 @@ class Rotate(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> transforms_list = [vision.Decode(),
         ...                    vision.Rotate(degrees=30.0,
         ...                    resample=Inter.NEAREST,
         ...                    expand=True)]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -3833,12 +4106,17 @@ class SlicePatches(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
         >>> # default padding mode
         >>> decode_op = vision.Decode()
         >>> num_h, num_w = (1, 4)
         >>> slice_patches_op = vision.SlicePatches(num_h, num_w)
         >>> transforms_list = [decode_op, slice_patches_op]
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"],
         ...                                                 output_columns=cols)
@@ -3875,6 +4153,10 @@ class Solarize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.Solarize(threshold=(10, 100))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -3912,6 +4194,8 @@ class TenCrop(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy
         >>> from mindspore.dataset.transforms import Compose
         >>>
@@ -3920,6 +4204,7 @@ class TenCrop(PyTensorOperation):
         ...                            # 4D stack of 10 images
         ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -3956,6 +4241,8 @@ class ToNumpy(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # Use ToNumpy to explicitly select C++ implementation of subsequent op
@@ -3964,6 +4251,7 @@ class ToNumpy(PyTensorOperation):
         ...                            vision.ToNumpy(),
         ...                            vision.Resize((100, 120))])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -4001,6 +4289,8 @@ class ToPIL(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # data is already decoded, but not in PIL Image format
@@ -4008,6 +4298,7 @@ class ToPIL(PyTensorOperation):
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -4047,6 +4338,8 @@ class ToTensor(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # create a list of transformations to be applied to the "image" column of each data row
@@ -4054,6 +4347,7 @@ class ToTensor(ImageTensorOperation):
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -4093,6 +4387,8 @@ class ToType(TypeCast):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> from mindspore.dataset.transforms import Compose
         >>>
@@ -4101,6 +4397,7 @@ class ToType(TypeCast):
         ...                            vision.ToTensor(),
         ...                            vision.ToType(np.float32)])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -4143,12 +4440,14 @@ class TrivialAugmentWide(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
         >>>
-        >>> transforms_list = [vision.Decode(),
-        ...                    vision.TrivialAugmentWide(num_magnitude_bins=31,
-        ...                                              interpolation=Inter.NEAREST,
-        ...                                              fill_value=0)]
+        >>> transforms_list = [vision.Decode(), vision.TrivialAugmentWide(num_magnitude_bins=31,
+        ...                                                               interpolation=Inter.NEAREST,
+        ...                                                               fill_value=0)]
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
@@ -4191,6 +4490,8 @@ class UniformAugment(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms = [vision.CenterCrop(64),
@@ -4201,6 +4502,7 @@ class UniformAugment(CompoundOperation):
         ...                            vision.UniformAugment(transforms),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
@@ -4239,6 +4541,10 @@ class VerticalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.VerticalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
