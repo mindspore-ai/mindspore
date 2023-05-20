@@ -5053,9 +5053,10 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
     _check_is_tensor('input', input, "hardtanh")
     _check_value_type("min_val", min_val, [int, float], "hardtanh")
     _check_value_type("max_val", max_val, [int, float], "hardtanh")
+    input_dtype = input.dtype
     input = _get_cache_prim(P.Maximum)()(input, min_val)
     input = _get_cache_prim(P.Minimum)()(input, max_val)
-    return input
+    return input.astype(input_dtype)
 
 
 def huber_loss(input, target, reduction='mean', delta=1.0):
