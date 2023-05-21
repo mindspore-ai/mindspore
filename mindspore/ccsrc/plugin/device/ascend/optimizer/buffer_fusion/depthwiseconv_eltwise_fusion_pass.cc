@@ -33,7 +33,8 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     // DepthwiseConvolution--->Elemwise
     auto depthwise_conv = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(depthwise_conv);
-    if (cnode->isa<CNode>() && IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNativeD)) {
+    if (cnode->isa<CNode>() && (IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNativeD) ||
+                                IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2D))) {
       mindspore::HashSet<AnfNodePtr> record{cnode, depthwise_conv};
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);
@@ -67,10 +68,12 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() &&
-          common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNativeD)) {
+          (common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNativeD) ||
+           common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2D))) {
         MatchDepthwiseConvRelu(cnode, candidate_fusion, true);
       }
-    } else if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNativeD->name()) {
+    } else if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNativeD->name() ||
+               common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2D->name()) {
       MatchDepthwiseConvRelu(cnode, candidate_fusion, false);
     }
   }

@@ -23,7 +23,7 @@ broadcast_to_op_info = TBERegOp("BroadcastTo") \
     .compute_cost(10) \
     .kernel_name("broadcast_to_d") \
     .partial_flag(True) \
-    .attr("shape", "required", "listInt", "all") \
+    .attr("shape", "required", "listInt", "all", "[]") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \

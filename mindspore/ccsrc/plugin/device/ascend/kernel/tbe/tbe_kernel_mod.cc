@@ -180,6 +180,12 @@ vector<size_t> TbeKernelMod::GenParameters() {
   return kernel_json_info.parameters;
 }
 
+void TbeKernelMod::GenAtomicInitInfo(AtomicInitInfo *info) {
+  MS_EXCEPTION_IF_NULL(kernel_pack_);
+  MS_EXCEPTION_IF_NULL(info);
+  *info = kernel_pack_->kernel_json_info().atomic_init_info;
+}
+
 AddressPtr TbeKernelMod::GetOverflowAddress() {
   AddressPtr overflow_address_ptr = nullptr;
   auto is_overflow = kernel_pack_.get()->kernel_json_info().global_workspace.is_overflow;

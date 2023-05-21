@@ -219,7 +219,7 @@ void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &k
     if (common::AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
       auto pre_node = orders[idx - 1];
       auto pre_kernel_name = common::AnfAlgo::GetCNodeName(pre_node);
-      if (pre_kernel_name == kAtomicAddrCleanOpName) {
+      if (pre_kernel_name == kMemSetOpName) {
         (*other_list).pop_back();
         (*memcpy_list).push_back(pre_node);
       }

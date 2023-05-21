@@ -23,9 +23,9 @@ avg_pool_3d_op_info = TBERegOp("AvgPool3D") \
     .compute_cost(10) \
     .kernel_name("avg_pool3d_d") \
     .partial_flag(True) \
-    .attr("kernel_size", "required", "listInt", "all") \
-    .attr("strides", "required", "listInt", "all") \
-    .attr("pad_list", "required", "listInt", "all") \
+    .attr("kernel_size", "required", "listInt", "all", "[]") \
+    .attr("strides", "required", "listInt", "all", "[]") \
+    .attr("pad_list", "required", "listInt", "all", "[]") \
     .attr("ceil_mode", "optional", "bool", "all") \
     .attr("count_include_pad", "optional", "bool", "all") \
     .attr("divisor_override", "optional", "int", "all", '0') \

@@ -23,8 +23,8 @@ batch_to_space_nd_op_info = TBERegOp("BatchToSpaceNDD") \
     .compute_cost(10) \
     .kernel_name("batch_to_space_nd_d") \
     .partial_flag(True) \
-    .attr("block_shape", "required", "listInt", "all") \
-    .attr("crops", "required", "listListInt", "all") \
+    .attr("block_shape", "required", "listInt", "all", "[]") \
+    .attr("crops", "required", "listListInt", "all", "[[]]") \
     .input(0, "x", False, "required", "all", reshape_type="NH") \
     .output(0, "y", False, "required", "all", reshape_type="NH") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \

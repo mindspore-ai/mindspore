@@ -23,11 +23,11 @@ im2col_op_info = TBERegOp("Im2Col") \
     .compute_cost(10) \
     .kernel_name("im2col") \
     .partial_flag(True) \
-    .attr("ksizes", "required", "listInt", "all") \
-    .attr("strides", "optional", "listInt", "all", "1") \
-    .attr("dilations", "optional", "listInt", "all", "1") \
+    .attr("ksizes", "required", "listInt", "all", "[]") \
+    .attr("strides", "optional", "listInt", "all", "[1]") \
+    .attr("dilations", "optional", "listInt", "all", "[1]") \
     .attr("padding_mode", "optional", "str", "all", "CALCULATED") \
-    .attr("pads", "optional", "listInt", "all", "0") \
+    .attr("pads", "optional", "listInt", "all", "[0]") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_NHWC) \

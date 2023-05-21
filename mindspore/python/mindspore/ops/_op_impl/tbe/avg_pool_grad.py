@@ -23,9 +23,9 @@ avg_pool_grad_op_info = TBERegOp("AvgPoolGrad") \
     .compute_cost(10) \
     .kernel_name("avg_pool_grad_d") \
     .partial_flag(True) \
-    .attr("x_origin", "required", "listInt", "all") \
-    .attr("kernel_size", "required", "listInt", "all") \
-    .attr("strides", "required", "listInt", "all") \
+    .attr("x_origin", "required", "listInt", "all", "[]") \
+    .attr("kernel_size", "required", "listInt", "all", "[]") \
+    .attr("strides", "required", "listInt", "all", "[]") \
     .attr("pad_mode", "required", "str", "all") \
     .attr("format", "optional", "str", "all") \
     .input(0, "input_grad", False, "required", "all") \

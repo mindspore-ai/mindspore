@@ -108,6 +108,10 @@ constexpr auto kPatternTransdata = "Transdata";
 constexpr auto kPatternTranspose = "Transpose";
 constexpr auto kPatternUnknown = "";
 constexpr auto kPatternWriteSelect = "write_select";
+constexpr auto kModeInArgsFirstField = "_mode_in_args_first_field";
+constexpr auto kInterCoreSync = "_inter_core_sync";
+constexpr auto kInitValue = "init_value";
+constexpr auto kFloatType = "float";
 
 // Backend processor
 enum Processor {
@@ -130,6 +134,19 @@ struct GlobalWorkspace {
   bool is_overflow = false;
 };
 
+struct AtomicInitInfo {
+  std::vector<std::string> dtype_list;
+  std::vector<int64_t> init_value_int64_list;
+  std::vector<float> init_value_float_list;
+};
+
+struct NodeBaseInfo {
+  size_t workspace_num;
+  size_t input_num;
+  size_t output_num;
+  size_t offset_index;
+};
+
 struct KernelJsonInfo {
   std::string bin_file_name;
   std::string bin_file_suffix;
@@ -149,6 +166,8 @@ struct KernelJsonInfo {
   uint32_t task_ration{0};
   std::string core_type;
   std::vector<std::vector<size_t>> args_remap;
+  AtomicInitInfo atomic_init_info;
+  NodeBaseInfo node_base_info;
   KernelJsonInfo() = default;
 };
 
@@ -345,6 +364,7 @@ class BACKEND_EXPORT KernelMod {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
   virtual std::vector<size_t> GenParameters() { return {}; }
+  virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
   // Initialization for the kernel mod.
   virtual bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
                     const std::vector<KernelTensorPtr> &outputs) {

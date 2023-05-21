@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ from te_fusion.fusion_util import dump_fusion_json
 from te_fusion.parallel_compilation import init_multi_process_env, start_ga_multi_process, deinit_multi_process_env, \
     get_finished_compilation_task
 
-from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
-    adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level, LocalLock
+from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_context_param, \
+    get_fuzz_build_info, adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level, LocalLock
 from .tbe_job import TbeJob, JobStatus
 
 
@@ -406,10 +406,11 @@ def _pre_build_compute_op_info(compute_op, job):
     else:
         job.info("OpType {} support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
     options = get_options_info(job.content)
+    context_param = get_context_param()
     dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_full_name,
                            op_type, op_func_name, unknown_shape,
                            (inputs, outputs, attrs, options), int64_mode, is_dynamic_impl,
-                           None, job.pass_list)
+                           context_param, job.pass_list)
 
 
 def get_prebuild_output(op_name):

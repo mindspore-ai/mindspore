@@ -410,13 +410,7 @@ bool ParseAttrType(const std::string &value, const OpAttrPtr &op_attr_ptr) {
 }
 
 bool ParseAttrDefaultValue(const std::string &value, const OpAttrPtr &op_attr_ptr) {
-  std::string res = value;
-  auto pos = value.find('[');
-  if (pos != std::string::npos) {
-    const size_t remove_len = 2;
-    res = value.substr(1, value.length() - remove_len);
-  }
-  op_attr_ptr->set_default_value(res);
+  op_attr_ptr->set_default_value(value);
   return true;
 }
 

@@ -79,7 +79,7 @@ def test_yolov5_dynamic_gpu():
     check_and_print_when_fail(loss_list_pynative[:2], expect_loss[:2], 1e-1, 1e-1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

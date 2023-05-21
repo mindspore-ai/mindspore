@@ -23,7 +23,7 @@ expand_dims_op_info = TBERegOp("ExpandDims") \
     .compute_cost(10) \
     .kernel_name("expand_dims") \
     .partial_flag(True) \
-    .attr("axis", "required", "listInt", "all") \
+    .attr("axis", "required", "listInt", "all", "[]") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \

@@ -987,6 +987,7 @@ GVAR_DEF(PrimitivePtr, kPrimDeformableOffsetsGrad, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimCustomNormalize, std::make_shared<Primitive>("CustomNormalize"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNative, std::make_shared<Primitive>("DepthwiseConv2dNative"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNativeD, std::make_shared<Primitive>("DepthwiseConv2dNativeD"));
+GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2D, std::make_shared<Primitive>("DepthwiseConv2D"));
 GVAR_DEF(PrimitivePtr, kPrimCTCGreedyDecoder, std::make_shared<Primitive>("CTCGreedyDecoder"));
 GVAR_DEF(PrimitivePtr, kPrimDataFormatDimMap, std::make_shared<Primitive>("DataFormatDimMap"));
 GVAR_DEF(PrimitivePtr, kPrimDataFormatVecPermute, std::make_shared<Primitive>("DataFormatVecPermute"));

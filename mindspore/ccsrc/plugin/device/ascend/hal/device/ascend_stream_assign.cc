@@ -119,7 +119,7 @@ CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vect
       overflow_marker = cur_cnode_ptr;
     } else if (AnfAlgo::GetKernelType(cur_cnode_ptr) == HCCL_KERNEL) {
       (void)hcom_nodes->emplace_back(cur_cnode_ptr);
-    } else if (i > 0 && common::AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kAtomicAddrCleanOpName) {
+    } else if (i > 0 && common::AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kMemSetOpName) {
       auto graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
       AnfAlgo::SetGraphId(graph_id, cnode_ptr_list[i - 1].get());
     }
@@ -250,7 +250,7 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
     }
   }
   for (size_t i = 1; i < kernels.size(); ++i) {
-    if (common::AnfAlgo::GetCNodeName(kernels[i - 1]) == kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernels[i - 1]) == kMemSetOpName) {
       auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
       AnfAlgo::SetStreamId(stream_id, kernels[i - 1].get());
     }
@@ -532,7 +532,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     TrailingTimeOptimizationByReorder(graph_ptr);
   }
   AssignAllNodesStream(graph_ptr);
-  UpdateAtomicAddrCleanStreamId(graph_ptr);
+  UpdateMemSetStreamId(graph_ptr);
   InsertStreamActive(graph_ptr);
   InsertEventForHcomParallel(graph_ptr);
   InsertEventForIndependentParallel(graph_ptr);
@@ -542,7 +542,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
 
   GetIndependentMaxTarget(graph_ptr);
   InsertCtrlForIndependentParallel(graph_ptr);
-  AdjustAtomicAddrCleanOrder(graph_ptr);
+  AdjustMemSetOrder(graph_ptr);
   GetNeedActiveStreams(graph_ptr);
 
   MS_LOG(INFO) << "After finish stream assign and before check resource assign:";
@@ -713,7 +713,7 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
 
   auto it = float_status_pos;
   while (AnfAlgo::GetGraphId((*it).get()) == graph_id && it < cnode_ptr_list.end()) {
-    if (common::AnfAlgo::GetCNodeName(*it) == kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(*it) == kMemSetOpName) {
       ++it;
       continue;
     }
@@ -726,12 +726,12 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
       }
     }
     if (is_independent) {
-      if (common::AnfAlgo::GetCNodeName(*(it - 1)) == kAtomicAddrCleanOpName) {
+      if (common::AnfAlgo::GetCNodeName(*(it - 1)) == kMemSetOpName) {
         (void)moved_forward_cnodes->emplace_back(*(it - 1));
       }
       (void)moved_forward_cnodes->emplace_back(*it);
     } else {
-      if (common::AnfAlgo::GetCNodeName(*(it - 1)) == kAtomicAddrCleanOpName) {
+      if (common::AnfAlgo::GetCNodeName(*(it - 1)) == kMemSetOpName) {
         (void)moved_backward_cnodes->emplace_back(*(it - 1));
       }
       (void)moved_backward_cnodes->emplace_back(*it);
@@ -803,7 +803,7 @@ bool AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) con
   cnodes->clear();
   vector<CNodePtr> atomic_addr_clean;
   for (auto iter = ori_cnodes.begin(); iter < ori_cnodes.end(); ++iter) {
-    if (common::AnfAlgo::GetCNodeName(*iter) == kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(*iter) == kMemSetOpName) {
       (void)atomic_addr_clean.emplace_back(*iter);
       continue;
     }
@@ -1089,14 +1089,14 @@ uint32_t AscendStreamAssign::GetNodeTaskNum(const CNodePtr &cnode) const {
 }
 
 // section 3
-void AscendStreamAssign::UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const {
+void AscendStreamAssign::UpdateMemSetStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const {
   MS_LOG(INFO) << "Start";
   auto cnode_ptr_list = graph_ptr->execution_order();
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    // update AtomicAddrClean stream same with the next node
-    if (i > 0 && common::AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kAtomicAddrCleanOpName) {
+    // update MemSet stream same with the next node
+    if (i > 0 && common::AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kMemSetOpName) {
       AnfAlgo::SetStreamId(AnfAlgo::GetStreamId(cur_cnode_ptr), cnode_ptr_list[i - 1].get());
     }
   }
@@ -2927,14 +2927,14 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
 }
 
 // section12
-void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) const {
+void AscendStreamAssign::AdjustMemSetOrder(const NotNull<KernelGraphPtr> &graph_ptr) const {
   // Eg:[atomic, recv, memcpy] should be [recv, atomic, memcpy]
   std::vector<CNodePtr> update_orders;
   auto &exe_orders = graph_ptr->execution_order();
   size_t i = 0;
   while (i < exe_orders.size()) {
     auto cur_cnode = exe_orders.at(i);
-    if (common::AnfAlgo::GetCNodeName(cur_cnode) != kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(cur_cnode) != kMemSetOpName) {
       (void)update_orders.emplace_back(cur_cnode);
       i++;
       continue;

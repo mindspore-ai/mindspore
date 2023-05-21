@@ -302,6 +302,14 @@ def get_options_info(job_content):
     return options
 
 
+def get_context_param():
+    """
+    Get context param
+    :return: context param
+    """
+    return {"prebuild_targets": ["pattern", "coreType"]}
+
+
 def get_fuzz_build_info(job_content):
     """
     Get fuzz build info from job content info
