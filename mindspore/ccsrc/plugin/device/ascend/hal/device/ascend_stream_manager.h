@@ -65,11 +65,16 @@ class AscendStreamMng {
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(rtStream_t stream) const;
   bool SyncAllStreams() const;
+  void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
+  uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
 
  private:
   // Count streams and events number in task sink scenario
   uint32_t cur_stream_num_{0};
   uint32_t cur_event_num_{0};
+
+  // The max stream num on device ar a time
+  uint32_t busy_stream_num_{0};
 
   // Ensure the thread safety for creating and destroying stream.
   std::mutex stream_mutex_;
