@@ -1059,6 +1059,23 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   }
 }
 
+void GetIgnoreSyncHostToDeviceList(const OpCompilerInfoPtr &op_compiler_info) {
+  for (auto const &execute_kernel : op_compiler_info->execute_kernel_list_) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(execute_kernel.kernel_);
+    std::vector<size_t> ignore_input_index_list;
+    if (kernel_mod != nullptr) {
+      ignore_input_index_list = kernel_mod->GetLaunchIgnoredInputAddressIdx();
+    }
+    auto input_device_address_list = execute_kernel.inputs_device_address_;
+    for (auto index : ignore_input_index_list) {
+      if (index >= input_device_address_list.size()) {
+        continue;
+      }
+      op_compiler_info->ignore_host_to_device_inputs_.emplace(input_device_address_list[index]);
+    }
+  }
+}
+
 void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                                      const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1077,6 +1094,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
+    GetIgnoreSyncHostToDeviceList(op_compiler_info);
   }
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;

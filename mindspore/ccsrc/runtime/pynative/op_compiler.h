@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <set>
 #include "utils/ms_utils.h"
 #include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
@@ -59,6 +60,7 @@ struct OpCompilerInfo {
   std::vector<device::DeviceAddressPtr> outputs_;
   std::map<device::DeviceAddressPtr, tensor::TensorPtr> value_map_to_tensor_;
   ExecuteKernelInfoList execute_kernel_list_;
+  std::set<device::DeviceAddressPtr> ignore_host_to_device_inputs_;
 };
 using OpCompilerInfoPtr = std::shared_ptr<OpCompilerInfo>;
 
