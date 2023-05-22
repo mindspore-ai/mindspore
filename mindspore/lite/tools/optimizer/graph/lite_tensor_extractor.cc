@@ -295,8 +295,7 @@ int LiteTensorExtractor::GetCNodeOutputTensors(const CNodePtr &cnode, std::vecto
         }
         data_info.data_type_ = type;
         data_infos.emplace_back(data_info);
-        if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
-            CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm)) {
+        if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
           break;
         }
       }
