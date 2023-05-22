@@ -371,6 +371,7 @@ from .math_func import (
     atleast_2d,
     cartesian_prod,
     atleast_3d,
+    vander,
     vstack,
     row_stack,
     combinations,
