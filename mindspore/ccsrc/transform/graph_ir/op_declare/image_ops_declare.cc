@@ -125,6 +125,14 @@ OUTPUT_MAP(CombinedNonMaxSuppression) = {{0, OUTPUT_DESC(nmsed_boxes)},
 REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->name(),
               ADPT_DESC(CombinedNonMaxSuppression))
 
+// GridSampler2D
+INPUT_MAP(GridSampler2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler2D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
+
 // NonMaxSuppressionV3
 INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},
                                   {2, INPUT_DESC(scores)},

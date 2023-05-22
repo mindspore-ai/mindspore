@@ -34,6 +34,9 @@ class MIND_API GridSampler2D : public BaseOperator {
   std::string get_interpolation_mode() const;
   std::string get_padding_mode() const;
   bool get_align_corners() const;
+  void set_interpolation_mode(std::string interpolation_mode);
+  void set_padding_mode(std::string padding_mode);
+  void set_align_corners(bool align_corners);
 };
 MIND_API abstract::AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &,
                                                       const PrimitivePtr &primitive,
