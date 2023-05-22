@@ -834,6 +834,38 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
 using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
 using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;
 
+/// \brief Class AbstractNegligible describes a type, whose shape and value is unknown,
+/// and should choose other branch in control flow.
+///
+/// AbstractNegligible is even not a Tensor type, but any type.
+class MS_CORE_API AbstractNegligible : public AbstractAny {
+ public:
+  /// \brief Constructor of AbstractNegligible.
+  ///
+  /// \param[in] element The abstract to be wrapper as a abstract tensor.
+  /// \param[in] shape The dimension of abstract tensor.
+  AbstractNegligible() : AbstractAny() {}
+
+  /// \brief Destructor of AbstractNegligible.
+  ~AbstractNegligible() override = default;
+  MS_DECLARE_PARENT(AbstractNegligible, AbstractAny)
+
+  AbstractBasePtr Join(const AbstractBasePtr &other) override {
+    MS_EXCEPTION_IF_NULL(other);
+    return Clone();
+  }
+
+  AbstractBasePtr Broaden() const override { return Clone(); }
+
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractNegligible>(); }
+
+  TypePtr BuildType() const override;
+
+  std::string ToString() const override { return type_name(); }
+};
+using AbstractNegligiblePtr = std::shared_ptr<AbstractNegligible>;
+using AbstractNegligiblePtrList = std::vector<AbstractNegligiblePtr>;
+
 /// \brief Class AbstractJoinedAny describes a type, whose shape and value is unknown.
 ///
 /// AbstractJoinedAny is even not a Tensor type, but any type.
@@ -1325,7 +1357,7 @@ class MS_CORE_API AbstractNone final : public AbstractBase {
 };
 using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 
-/// \brief Class AbstractNone describes a Null node's abstract value.
+/// \brief Class AbstractNull describes a Null node's abstract value.
 ///
 /// The unassigned state value for variable,
 /// which means the variable is not assigned.

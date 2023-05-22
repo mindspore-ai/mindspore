@@ -932,7 +932,6 @@ class AfterOptARewriter : public BaseRewriter {
     size_t index_end = inputs.size() - end_num;
     size_t size_if_empty = 4;
     std::string exception_type = raiseutils::GetExceptionType(inputs[1]->abstract(), inputs[index_end], key_value);
-    MS_EXCEPTION_IF_NULL(cnode);
     std::string exception_string;
     // Process raise ValueError()
     if (inputs.size() == size_if_empty) {
@@ -982,6 +981,11 @@ class AfterOptARewriter : public BaseRewriter {
     const auto raise_pyexecute_node =
       fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple,
                            key_value_tuple, inputs[inputs.size() - 1]});
+    auto old_abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(old_abs);
+    const auto &type = old_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    fallback::SetRealType(raise_pyexecute_node, type);
     raise_pyexecute_node->set_debug_info(cnode->debug_info());
     MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
     return raise_pyexecute_node;

@@ -2216,6 +2216,8 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     res = std::make_shared<AbstractTensor>(preset_type, shape);
+  } else if (fallback::HasRealType(node)) {
+    res = std::make_shared<AbstractNegligible>();
   } else {
     const auto any_abstract = std::make_shared<AbstractAny>();
     // If no annotation dtype, try to use unique tensor dtype.
@@ -2233,13 +2235,8 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     fallback::SetRealType<AbstractBase, Type>(res, real_type);
   }
   if (fallback::HasRealShape(node)) {
-    const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(node);
-    fallback::SetRealShape<AbstractBase, BaseShape>(res, real_type);
-  }
-
-  auto prim = GetCNodePrimitive(node);
-  if (prim->HasAttr("is_raise_prim")) {
-    res->set_user_data("__raise_flag__", MakeValue(true));
+    const auto &real_shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
+    fallback::SetRealShape<AbstractBase, BaseShape>(res, real_shape);
   }
 
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
@@ -2950,7 +2947,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     // Return Any directly if meet variable condition.
     bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
     if (is_variable_condition) {
-      AbstractBasePtr res = std::make_shared<AbstractAny>();
+      AbstractBasePtr res = std::make_shared<AbstractNegligible>();
       auto prim = prim::kPrimRaise;
       (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
       cnode->set_input(0, NewValueNode(prim));

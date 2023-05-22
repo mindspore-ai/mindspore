@@ -71,7 +71,6 @@ void CheckTensorCondValid(const AbstractBasePtr &cond) {
       MS_EXCEPTION(ValueError) << "The truth value of an array with more than one element is ambiguous.";
     }
   }
-  return;
 }
 
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
@@ -158,6 +157,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   }
 
   auto b = branches[0];
+  SetVariableFlag(b);
   // Return AbstractFuncUnion, otherwise the switch_layer will be replaced by branches[0]
   // which will cancel the out of bound checking for index
   if (branches.size() == 1) {
@@ -165,6 +165,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
     return std::make_shared<AbstractFuncUnion>(func_list);
   }
   for (size_t i = 1; i < branches.size(); i++) {
+    SetVariableFlag(branches[i]);
     b = b->Join(branches[i]);
   }
   return b;

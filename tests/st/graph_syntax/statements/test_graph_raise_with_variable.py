@@ -16,7 +16,8 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor, context
+from mindspore import Tensor, context, jit
+from mindspore import dtype as mstype
 import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -85,7 +86,6 @@ def test_raise_3():
         print("res:", res)
 
 
-@pytest.mark.skip(reason="This case will be fixed by another pr in the future.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1076,3 +1076,90 @@ def test_raise_with_variable_and_constant_condition():
         res = net(x)
         print("res:", res)
     assert "Should not raise with variable under a constant condition" in str(raise_info_9.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_join_in_control_flow():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        if y < x:
+            raise ValueError("The input should not be ", x)
+        return x + y
+
+    x = Tensor([1], dtype=mstype.int32)
+    y = Tensor([2], dtype=mstype.int32)
+    res = foo(x, y)
+    assert res == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_join_in_control_flow_2():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y, w, z):
+        out = w
+        if y > x:
+            out = w + z
+        elif x == y:
+            raise ValueError("The input should not be ", y)
+        return out
+
+    x = Tensor([1], dtype=mstype.int32)
+    y = Tensor([2], dtype=mstype.int32)
+    res = foo(x, y, 1, 2)
+    assert res == 3
+
+
+class SimpleCellReLu(nn.Cell):
+    def construct(self, x):
+        return nn.ReLU()(x)
+
+
+class SimpleCellRaise(nn.Cell):
+    def construct(self, x):
+        raise ValueError("The input should not be ", x)
+
+
+class CellInList(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.cell_list = nn.CellList()
+        self.cell_list.append(SimpleCellReLu())
+        self.cell_list.append(SimpleCellRaise())
+        self.cell_list.append(SimpleCellRaise())
+
+    def construct(self, index, x):
+        return self.cell_list[index](x)
+
+
+def test_cell_in_list():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow(switch_layer).
+    Expectation: No exception.
+    """
+    net = CellInList()
+    x = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
+    idx = Tensor(0, mstype.int32)
+    out = net(idx, x)
+    relu_func = nn.ReLU()
+    true_value = relu_func(x)
+    ret = np.allclose(out.asnumpy(), true_value.asnumpy())
+    assert ret

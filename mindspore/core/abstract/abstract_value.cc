@@ -1274,15 +1274,6 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other_type);
   MS_EXCEPTION_IF_NULL(element_);
 
-  // AbstractTensor(raise) join with AbstractNone.
-  bool is_none = other->isa<AbstractNone>();
-  bool is_raise = other->isa<AbstractTensor>() && other->has_user_data("__raise_flag__");
-  if (this->has_user_data("__raise_flag__") && (is_none || is_raise)) {
-    auto join_res = std::make_shared<AbstractAny>();
-    join_res->set_user_data("__raise_flag__", MakeValue(true));
-    return join_res;
-  }
-
   // AbstractTensor join with AbstractUndetermined
   if (other_type->type_id() == kObjectTypeUndeterminedType) {
     auto other_undetermined_tensor = dyn_cast_ptr<AbstractUndetermined>(other);
@@ -1376,9 +1367,6 @@ AbstractBasePtr AbstractTensor::Clone() const {
   clone->set_value_range(get_min_value(), get_max_value());
   clone->set_shape_value(get_shape_value());
   clone->set_is_adapter(is_adapter());
-  if (has_user_data("__raise_flag__")) {
-    clone->set_user_data("__raise_flag__", MakeValue(true));
-  }
   return clone;
 }
 
@@ -1390,9 +1378,6 @@ AbstractBasePtr AbstractTensor::Broaden() const {
   broaden->set_shape(shp->Clone());
   broaden->set_value(kValueAny);
   broaden->set_is_adapter(is_adapter());
-  if (has_user_data("__raise_flag__")) {
-    broaden->set_user_data("__raise_flag__", MakeValue(true));
-  }
   return broaden;
 }
 
@@ -1424,6 +1409,12 @@ std::string AbstractTensor::ToString() const {
 }
 
 TypePtr AbstractAny::BuildType() const {
+  MS_EXCEPTION_IF_NULL(element_);
+  TypePtr element_type = element_->BuildType();
+  return std::make_shared<AnyType>(element_type);
+}
+
+TypePtr AbstractNegligible::BuildType() const {
   MS_EXCEPTION_IF_NULL(element_);
   TypePtr element_type = element_->BuildType();
   return std::make_shared<AnyType>(element_type);
@@ -1652,15 +1643,10 @@ std::string AbstractNone::ToString() const {
 
 AbstractBasePtr AbstractNone::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  bool is_raise = other->isa<AbstractTensor>() && other->has_user_data("__raise_flag__");
-  if (!other->isa<AbstractNone>() && !is_raise) {
+  if (!other->isa<AbstractNone>()) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
-  auto join_res = std::make_shared<AbstractAny>();
-  if (is_raise) {
-    join_res->set_user_data("__raise_flag__", MakeValue(true));
-  }
-  return join_res;
+  return shared_from_base<AbstractNone>();
 }
 
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
