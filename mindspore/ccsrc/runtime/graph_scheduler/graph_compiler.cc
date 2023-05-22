@@ -616,7 +616,7 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
                                                        const std::map<KernelWithIndex, TensorPtr> &op_output,
                                                        const std::map<AnfNodePtr, size_t> &parameter_index,
                                                        const std::vector<TensorPtr> &graph_inputs,
-                                                       InputTensorInfo *const input_tensor_info, size_t input_index) {
+                                                       InputTensorInfo *input_tensor_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(session_);
   return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_tensor_info,
                                            input_index);

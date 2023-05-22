@@ -1084,7 +1084,7 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   manager->AddFuncGraph(bprop_graph, true);
   bool is_control_flow = PyNativeAlgo::Common::IsControlFlowGraph(bprop_graph);
   if (is_control_flow) {
-    opt::EnvironConversion(resource);
+    (void)opt::EnvironConversion(resource);
     resource->optimize_graph()->set_flag(kFlagHasControlFlow, true);
   }
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
