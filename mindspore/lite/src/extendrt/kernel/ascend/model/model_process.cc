@@ -533,9 +533,15 @@ bool ModelProcess::ResetInputSize(const std::vector<ShapeVector> &new_shapes) {
       }
       elem_count *= shape[i];
     }
-    auto data_type = aclmdlGetInputDataType(model_desc_, index);
     input_infos_[index].dims = shape;
-    input_infos_[index].buffer_size = elem_count * aclDataTypeSize(data_type);
+    auto data_type = aclmdlGetInputDataType(model_desc_, index);
+    auto new_buffer_size = elem_count * aclDataTypeSize(data_type);
+    if (!is_dynamic_input_) {
+      input_infos_[index].buffer_size = new_buffer_size;
+    } else if (new_buffer_size > input_infos_[index].buffer_size) {
+      is_dynamic_resize_input_ = true;
+      input_infos_[index].buffer_size = new_buffer_size;
+    }
   }
   return true;
 }
@@ -612,26 +618,31 @@ bool ModelProcess::Resize(const std::vector<ShapeVector> &new_shapes) {
 
 bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes) {
   MS_LOG(INFO) << "Start to resize dynamic input shape";
-  // If it is not the first time ti resize input shape, the old addr need to be free
-  FreeResource(input_infos_);
+  // If it is not the first time to resize input shape, the old addr need to be free
   ResetInputSize(new_shapes);
+  if (is_dynamic_resize_input_) {
+    FreeResource(input_infos_);
+  }
   for (size_t i = 0; i < new_shapes.size(); ++i) {
-    void *data_buf = nullptr;
-    if (!CreateDataBuffer(&data_buf, input_infos_[i].buffer_size, inputs_)) {
-      MS_LOG(ERROR) << "Add input data buffer failed";
-      return false;
+    if (is_dynamic_resize_input_) {
+      void *data_buf = nullptr;
+      if (!CreateDataBuffer(&data_buf, input_infos_[i].buffer_size, inputs_)) {
+        MS_LOG(ERROR) << "Add input data buffer failed";
+        return false;
+      }
+      auto data_type = aclmdlGetInputDataType(model_desc_, i);
+      std::string input_name = aclmdlGetInputNameByIndex(model_desc_, i);
+      if (input_name.empty()) {
+        MS_LOG(ERROR) << "Get name of input " << i << " failed.";
+        return false;
+      }
+      MS_LOG(INFO) << "Name of input " << i << " is " << input_name;
+      input_infos_[i].cur_device_data = data_buf;
+      input_infos_[i].device_data = data_buf;
+      input_infos_[i].data_type = data_type;
+      input_infos_[i].name = input_name;
     }
-    auto data_type = aclmdlGetInputDataType(model_desc_, i);
-    std::string input_name = aclmdlGetInputNameByIndex(model_desc_, i);
-    if (input_name.empty()) {
-      MS_LOG(ERROR) << "Get name of input " << i << " failed.";
-      return false;
-    }
-    MS_LOG(INFO) << "Name of input " << i << " is " << input_name;
-    input_infos_[i].cur_device_data = data_buf;
-    input_infos_[i].device_data = data_buf;
-    input_infos_[i].data_type = data_type;
-    input_infos_[i].name = input_name;
+
     aclTensorDesc *input_desc =
       aclCreateTensorDesc(ACL_FLOAT, new_shapes[i].size(), &new_shapes[i][0], ACL_FORMAT_NCHW);
     auto ret = aclmdlSetDatasetTensorDesc(inputs_, input_desc, i);
@@ -640,6 +651,7 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
       return false;
     }
   }
+  is_dynamic_resize_input_ = false;
   MS_LOG(INFO) << "Resize dynamic input shape success";
   return true;
 }
@@ -728,13 +740,13 @@ bool ModelProcess::CheckInputTensors(const std::vector<KernelTensorPtr> &input_t
     auto device_data = tensor->GetData();
     auto host_data = tensor->GetHostData();
     if (device_data != nullptr && device_data->addr != nullptr) {
-      if (device_data->size != info.buffer_size) {
+      if (!is_dynamic_input_ && device_data->size != info.buffer_size) {
         MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
                       << device_data->size;
         return false;
       }
     } else if (host_data != nullptr && host_data->addr != nullptr) {
-      if (host_data->size != info.buffer_size) {
+      if (!is_dynamic_input_ && host_data->size != info.buffer_size) {
         MS_LOG(ERROR) << "Input " << i << " data size not match, required size " << info.buffer_size << ", given count "
                       << host_data->size;
         return false;
