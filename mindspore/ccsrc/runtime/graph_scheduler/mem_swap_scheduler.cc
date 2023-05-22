@@ -158,9 +158,11 @@ std::shared_ptr<device::SwapContext> GetSwapContext() {
   MS_EXCEPTION_IF_NULL(offload_context);
   const auto &swap_context = std::make_shared<device::SwapContext>();
   const auto max_hbm_size = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  swap_context->hbm_mem_size_ = FloatToSize(max_hbm_size * kGBToByte);
-  swap_context->ddr_mem_size_ = offload_context->offload_ddr_size();
+  swap_context->hbm_mem_size_ = FloatToSize(max_hbm_size * kGBToByte * offload_context->hbm_ratio());
+  swap_context->ddr_mem_size_ = static_cast<size_t>(offload_context->offload_ddr_size() * offload_context->ddr_ratio());
   swap_context->disk_mem_size_ = offload_context->offload_disk_size();
+  MS_LOG(INFO) << "Hbm size:" << swap_context->hbm_mem_size_ << ", ddr size:" << swap_context->ddr_mem_size_
+               << ", disk size:" << swap_context->disk_mem_size_ << " to generate the offload strategy";
   if (!offload_context->auto_offload()) {
     const auto &offload_param = offload_context->offload_param();
     swap_context->offload_param_to_ddr_ = (offload_param == kOffloadTargetDDR);

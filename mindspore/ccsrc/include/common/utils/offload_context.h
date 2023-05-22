@@ -64,6 +64,12 @@ class COMMON_EXPORT OffloadContext {
 
   bool ddr_size_configured() { return ddr_size_configured_; }
 
+  void set_ddr_ratio(float ddr_ratio);
+  float ddr_ratio() { return ddr_ratio_; }
+
+  void set_hbm_ratio(float hbm_ratio);
+  float hbm_ratio() { return hbm_ratio_; }
+
  private:
   OffloadContext();
   std::string offload_param_;
@@ -78,6 +84,8 @@ class COMMON_EXPORT OffloadContext {
   bool auto_offload_;
   size_t host_mem_block_size_;
   bool ddr_size_configured_;
+  float ddr_ratio_;
+  float hbm_ratio_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_OFFLOAD_CONTEXT_H_

@@ -93,6 +93,10 @@ void OffloadContext::set_auto_offload(bool auto_offload) { auto_offload_ = auto_
 
 void OffloadContext::set_host_mem_block_size(size_t host_mem_block_size) { host_mem_block_size_ = host_mem_block_size; }
 
+void OffloadContext::set_ddr_ratio(float ddr_ratio) { ddr_ratio_ = ddr_ratio; }
+
+void OffloadContext::set_hbm_ratio(float hbm_ratio) { hbm_ratio_ = hbm_ratio; }
+
 OffloadContext::OffloadContext()
     : offload_param_(kOffloadParam),
       offload_path_(kOffloadPath),
@@ -105,5 +109,7 @@ OffloadContext::OffloadContext()
       enable_pinned_mem_(true),
       auto_offload_(true),
       host_mem_block_size_(kGBToByte),
-      ddr_size_configured_(false) {}
+      ddr_size_configured_(false),
+      ddr_ratio_(1.0f),
+      hbm_ratio_(1.0f) {}
 }  // namespace mindspore

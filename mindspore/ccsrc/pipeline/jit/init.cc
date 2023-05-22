@@ -456,7 +456,11 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to automatically generate the offload strategy")
     .def("auto_offload", &OffloadContext::auto_offload, "Get the flag of whether auto offload")
     .def("set_host_mem_block_size", &OffloadContext::set_host_mem_block_size, "Set the block size for host memory pool")
-    .def("host_mem_block_size", &OffloadContext::host_mem_block_size, "Get the block size of host memory pool");
+    .def("host_mem_block_size", &OffloadContext::host_mem_block_size, "Get the block size of host memory pool")
+    .def("set_ddr_ratio", &OffloadContext::set_ddr_ratio, "Set the ddr usage ratio for offload strategy")
+    .def("ddr_ratio", &OffloadContext::ddr_ratio, "Get the ddr usage ratio of offload strategy")
+    .def("set_hbm_ratio", &OffloadContext::set_hbm_ratio, "Set the hbm usage ratio for offload strategy")
+    .def("hbm_ratio", &OffloadContext::hbm_ratio, "Get the hbm usage ratio of offload strategy");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
     mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);

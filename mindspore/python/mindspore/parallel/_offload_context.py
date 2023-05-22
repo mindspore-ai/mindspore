@@ -40,6 +40,8 @@ class _OffloadConfig:
     AIO_QUEUE_DEPTH = "aio_queue_depth"
     ENABLE_PINNED_MEM = "enable_pinned_mem"
     AUTO_OFFLOAD = "auto_offload"
+    DDR_RATIO = "ddr_ratio"
+    HBM_RATIO = "hbm_ratio"
     HOST_MEM_BLOCk_SIZE = "host_mem_block_size"
 
 
@@ -143,6 +145,16 @@ class _OffloadContext:
         self._context_handle.set_host_mem_block_size(
             int(block_size * K_GBTOBYTE))
 
+    def set_ddr_ratio(self, ddr_ratio):
+        Validator.check_float_range(
+            ddr_ratio, 0, 1, Validator.INC_RIGHT, 'ddr_ratio')
+        self._context_handle.set_ddr_ratio(ddr_ratio)
+
+    def set_hbm_ratio(self, hbm_ratio):
+        Validator.check_float_range(
+            hbm_ratio, 0, 1, Validator.INC_RIGHT, 'hbm_ratio')
+        self._context_handle.set_hbm_ratio(hbm_ratio)
+
     def set_offload_config(self, offload_config):
         """Set offfload context"""
         self.check_context_handle()
@@ -157,10 +169,12 @@ class _OffloadContext:
         enable_pinned_mem = _OffloadConfig.ENABLE_PINNED_MEM
         auto_offload = _OffloadConfig.AUTO_OFFLOAD
         host_mem_block_size = _OffloadConfig.HOST_MEM_BLOCk_SIZE
+        ddr_ratio = _OffloadConfig.DDR_RATIO
+        hbm_ratio = _OffloadConfig.HBM_RATIO
 
         for config_name in offload_config:
             unknown_config = []
-            if config_name not in [offload_param, offload_path, offload_checkpoint,
+            if config_name not in [offload_param, offload_path, offload_checkpoint, ddr_ratio, hbm_ratio,
                                    offload_ddr_size, offload_disk_size, enable_aio, aio_block_size,
                                    aio_queue_depth, enable_pinned_mem, auto_offload, host_mem_block_size]:
                 unknown_config.append(config_name)
@@ -188,6 +202,8 @@ class _OffloadContext:
             _OffloadConfig.ENABLE_PINNED_MEM: self._context_handle.enable_pinned_mem(),
             _OffloadConfig.AUTO_OFFLOAD: self._context_handle.auto_offload(),
             _OffloadConfig.HOST_MEM_BLOCk_SIZE: self._context_handle.host_mem_block_size(),
+            _OffloadConfig.DDR_RATIO: self._context_handle.ddr_ratio(),
+            _OffloadConfig.HBM_RATIO: self._context_handle.hbm_ratio()
         }
         return offload_config
 
@@ -224,4 +240,6 @@ _set_offload_context_func_map = {
     _OffloadConfig.ENABLE_PINNED_MEM: offload_context().set_enable_pinned_mem,
     _OffloadConfig.AUTO_OFFLOAD: offload_context().set_auto_offload,
     _OffloadConfig.HOST_MEM_BLOCk_SIZE: offload_context().set_host_mem_block_size,
+    _OffloadConfig.DDR_RATIO: offload_context().set_ddr_ratio,
+    _OffloadConfig.HBM_RATIO: offload_context().set_hbm_ratio
 }
