@@ -104,8 +104,8 @@ class LRUCache : public Cache<KeyType, ValueType> {
     while (size() > capacity - reserve_size) {
       const auto &back_element = elements_.back();
       evicted_elements->emplace_back(back_element.first, back_element.second);
-      elements_.pop_back();
       (void)element_keys_to_iters_.erase(back_element.first);
+      elements_.pop_back();
     }
   }
 
