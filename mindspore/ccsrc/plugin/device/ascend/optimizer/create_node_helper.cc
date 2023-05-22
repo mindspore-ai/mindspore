@@ -39,9 +39,9 @@ AnfNodePtr CreateNodeHelper::CreateNodeWithCheck(const AnfNodePtr &node, bool is
   MS_EXCEPTION_IF_NULL(cnode);
   auto ret_node = ConvertToTargetOp(cnode, op_adaptation_info);
   if ((ret_node != nullptr) && (ret_node != cnode)) {
-    MS_LOG(INFO) << "Replace op " << cnode->fullname_with_scope() << " debug string:" << cnode->DebugString()
-                 << " with " << ret_node->fullname_with_scope() << " debug string:" << ret_node->DebugString()
-                 << ", is dynamic shape:" << common::AnfAlgo::IsDynamicShape(node);
+    MS_LOG(DEBUG) << "Replace op " << cnode->fullname_with_scope() << " debug string:" << cnode->DebugString()
+                  << " with " << ret_node->fullname_with_scope() << " debug string:" << ret_node->DebugString()
+                  << ", is dynamic shape:" << common::AnfAlgo::IsDynamicShape(node);
   }
   return ret_node;
 }

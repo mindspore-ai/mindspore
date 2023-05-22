@@ -269,6 +269,40 @@ tensor::TensorPtr CreateEmptyTupleTensor(const ValueTuplePtr &value_tuple) {
   return tensor;
 }
 
+AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  tensor::TensorPtr tensor_ptr = nullptr;
+  if (value->isa<Scalar>()) {
+    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
+  } else if (value->isa<ValueTuple>()) {
+    tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
+  } else if (value->isa<ValueList>()) {
+    tensor_ptr = CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
+  } else {
+    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple";
+  }
+  if (tensor_ptr == nullptr) {
+    MS_LOG(DEBUG) << "Create tensor failed";
+    return nullptr;
+  }
+  auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
+  MS_EXCEPTION_IF_NULL(tensor_input);
+  tensor_input->set_abstract(tensor_ptr->ToAbstract());
+  if (kernel_graph != nullptr) {
+    tensor_input = kernel_graph->NewValueNode(tensor_input);
+    kernel_graph->AddValueNodeToGraph(tensor_input);
+    kernel_graph->FrontBackendlMapUpdate(input_node, tensor_input);
+  } else {
+    tensor_input = MakeValueNode(tensor_input);
+  }
+  tensor_input->set_scope(input_node->scope());
+  return tensor_input;
+}
+
 tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   MS_EXCEPTION_IF_NULL(value_tuple);
   tensor::TensorPtr tensor = nullptr;

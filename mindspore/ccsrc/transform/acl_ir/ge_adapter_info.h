@@ -51,7 +51,7 @@ struct GeTensorInfo {
   mindspore::HashMap<size_t, std::string> attr_input_map;
 
   // Input/Output
-  enum ParamMappingFlag {
+  enum ParamMappingFlag : unsigned int {
     kDynamicParam = 1 << 0,  // has dynamic input/output
     kEmptyParam = 1 << 1     // empty input/output
   };
@@ -131,9 +131,9 @@ class GeAdapterInfo {
     return std::nullopt;
   }
 
-  int GetInputMappingFlags() { return info_.input_mapping_flags; }
+  unsigned int GetInputMappingFlags() const { return info_.input_mapping_flags; }
 
-  int GetOutputMappingFlags() { return info_.output_mapping_flags; }
+  unsigned int GetOutputMappingFlags() const { return info_.output_mapping_flags; }
 
   const std::map<int, std::vector<enum ::ge::DataType>> &input_supported_dtypes() const {
     return info_.input_supported_dtypes;

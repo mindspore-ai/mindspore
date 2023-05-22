@@ -46,6 +46,7 @@ constexpr auto kMeanMatrixVNode = "MeanMatrixVNode";
 constexpr auto kKernelMatrixVNode = "KernelMatrixVNode";
 constexpr auto kMAvgPoolGrad = "m_avg_pool_grad";
 constexpr auto kRAvgPoolGrad = "r_avg_pool_grad";
+constexpr auto kXFromTensor = "x_from_tensor";
 
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -258,6 +259,7 @@ AnfNodePtr BuildAvgPoolGrad(const PatternMap &m, const AnfNodePtr &new_node) {
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), avgpool_grad_vm);
   auto output_names = std::vector<std::string>{"output"};
   common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), avgpool_grad_vm);
+  common::AnfAlgo::SetNodeAttr(kXFromTensor, MakeValue(true), avgpool_grad_vm);
   return avgpool_grad_vm;
 }
 }  // namespace
