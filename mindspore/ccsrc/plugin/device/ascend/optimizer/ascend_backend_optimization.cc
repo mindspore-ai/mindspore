@@ -753,7 +753,6 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
@@ -772,6 +771,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
     }
   } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -780,6 +780,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   } else {
     // Add PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR pass first to avoid the backward loss function
     // from the python frontend matching the pattern defined in PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR.
+    unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
