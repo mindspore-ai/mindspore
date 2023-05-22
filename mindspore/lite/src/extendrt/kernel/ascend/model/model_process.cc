@@ -145,6 +145,7 @@ std::pair<aclmdlIODims *, size_t> ModelProcess::GetDynamicDims() {
   if (aclmdlGetInputDynamicDims(model_desc_, -1, dynamic_dims_, gear_conut) != ACL_SUCCESS) {
     MS_LOG(ERROR) << "aclmdlGetInputDynamicDims failed.";
     delete[] dynamic_dims_;
+    dynamic_dims_ = nullptr;
     return std::make_pair(nullptr, 0);
   }
   return std::make_pair(dynamic_dims_, gear_conut);
