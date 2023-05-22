@@ -442,7 +442,7 @@ def get_bprop_adaptive_avg_pool2d_grad(self):
     shape = P.TensorShape()
 
     def bprop(x, out, dout):
-        dx = adaptive_avgpool_grad(dout, shape(x))
+        dx = adaptive_avgpool_grad(dout, F.cast(shape(x), mstype.int64))
         return (dx,)
 
     return bprop
