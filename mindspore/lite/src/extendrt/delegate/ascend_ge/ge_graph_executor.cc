@@ -49,6 +49,7 @@ constexpr auto kDataFlowGraphType = "data_flow";
 constexpr auto kCustomInputSize = 2;
 constexpr auto kGraphKernelParam = "graph_kernel_param";
 
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
 std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) {
   if (maps.find(kGraphKernelParam) == maps.end()) {
     return nullptr;
@@ -63,6 +64,7 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   param->graphKernelParam.graph_kernel_flags = oss.str();
   return param;
 }
+#endif
 
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
