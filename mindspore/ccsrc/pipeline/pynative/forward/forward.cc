@@ -32,6 +32,7 @@
 #include "include/backend/debug/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
 #endif
+#include "include/common/utils/tensor_future.h"
 
 namespace mindspore {
 namespace pynative {
@@ -66,6 +67,7 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   }
 }
 
+/// TODO(caifubi): delete and throw exception in Init().
 MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -90,9 +92,11 @@ MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
   return backend_policy;
 }
 
-void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
+void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
+  if (op_run_info->stub_output == nullptr) {
+    return;
+  }
   const auto &abs = op_run_info->base_op_run_info.abstract;
-  MS_EXCEPTION_IF_NULL(op_run_info->stub_output);
   auto success = op_run_info->stub_output->SetAbstract(abs);
   if (!success) {
     const auto &op_name = op_run_info->base_op_run_info.op_name;
@@ -147,19 +151,112 @@ ValuePtr ConstructOutputInVM(const FrontendOpRunInfoPtr &op_run_info, const std:
 
   return std::make_shared<ValueTuple>(result);
 }
+
+void UpdateOutputStubNodeValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &out_value) {
+  if (op_run_info->stub_output != nullptr) {
+    op_run_info->stub_output->SetValue(out_value);
+  }
+}
+
+BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
+  auto backend_op_run_info =
+    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim, true, false);
+  backend_op_run_info->output_tensors = op_run_info->output_tensors;
+  // Need to update promise in backend task.
+  backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
+  return backend_op_run_info;
+}
+
+void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
+  std::vector<ValuePtr> output_values;
+  for (auto &output_tensor : op_run_info->output_tensors) {
+    if (op_run_info->requires_grad) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    }
+    output_values.emplace_back(output_tensor);
+  }
+  auto result_value = std::make_shared<ValueTuple>(output_values);
+  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    op_run_info->out_value = result_value->value().front();
+  } else {
+    op_run_info->out_value = result_value;
+  }
+}
+
+void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
+                        std::vector<std::promise<DeviceAddressFutureDataPtr>> *device_sync_promises) {
+  auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
+    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    outputs->emplace_back(output_tensor);
+    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+
+    std::promise<DeviceAddressFutureDataPtr> promise;
+    auto future = promise.get_future();
+    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
+    output_tensor->set_address_future(device_address_future);
+    (void)device_sync_promises->emplace_back(std::move(promise));
+  };
+
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
+    auto elements = seq->elements();
+    for (const auto &element : elements) {
+      CreateOutputTensor(element, outputs, device_sync_promises);
+    }
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    auto shape = abstract_tensor->BuildShape();
+    auto type = abstract_tensor->element()->BuildType();
+    MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
+    if (!shape->isa<abstract::Shape>()) {
+      MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
+    }
+    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
+    create_tensor(type, shape_vector);
+  } else if (abstract->isa<abstract::AbstractScalar>()) {
+    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
+    const auto &type = scalar->BuildType();
+    MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
+    create_tensor(type, {});
+  } else {
+    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
+  }
+}
+
+void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
+  // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
+  if (op_run_info->stub_output != nullptr) {
+    if (op_run_info->base_op_run_info.has_dynamic_output) {
+      UpdateOutputStubNodeAbs(op_run_info);
+    }
+    op_run_info->stub_output->SetValue(op_run_info->out_value);
+  }
+}
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
-  if (forward_queue_ != nullptr) {
+  if (frontend_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
-    forward_queue_->Clear();
+    frontend_queue_->Clear();
+  }
+  if (backend_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
+    backend_queue_->Clear();
   }
 }
 
 void ForwardExecutor::WaitForwardTask() {
-  if (forward_queue_ != nullptr) {
+  if (frontend_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
-    forward_queue_->Wait();
+    frontend_queue_->Wait();
+  }
+  if (backend_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
+    backend_queue_->Wait();
   }
 }
 
@@ -198,76 +295,97 @@ void ForwardExecutor::Init() {
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { forward_queue_->Wait(); });
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
+    frontend_queue_->Wait();
+    backend_queue_->Wait();
+  });
 }
 
-void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_info) {
+bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
+#if defined(ENABLE_TEST) || defined(__APPLE__)
+  return false;
+#else
+  return !IsVmOp(op_name) && op_name != "Custom" && !ScopedFallbackRunning::on() && enable_async() &&
+         MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+#endif
+}
+
+void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
+  auto forward_task = std::make_shared<FrontendTask>(
+    [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpFrontend(op_run_info); }, op_run_info);
+  frontend_queue_->Push(forward_task);
+}
+
+void ForwardExecutor::DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
+                                          const session::BackendOpRunInfoPtr &backend_op_run_info) {
+  static auto run_backend_with_grad = [this](const FrontendOpRunInfoPtr &op_run_info,
+                                             const session::BackendOpRunInfoPtr &backend_op_run_info) {
+    // Update tensor device address in backend.
+    RunOpBackendInner(op_run_info, backend_op_run_info);
+
+    if (!op_run_info->requires_grad) {
+      MS_LOG(DEBUG) << "Grad flag is false";
+      return;
+    }
+    // 4. Do op grad and record op info
+    // If ms function is compile, op info will not be find in second training step
+    if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
+      grad()->ProcessOpGradInfo(op_run_info);
+    }
+  };
+
+  auto backend_task = std::make_shared<BackendTask>(run_backend_with_grad, op_run_info, backend_op_run_info);
+  backend_queue_->Push(backend_task);
+}
+
+void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
+  // Convert StubNode to Tensor and no need to concern about input StubNode anymore in this thread.
   PyNativeAlgo::Common::StubNodeToValue(op_run_info);
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
   // 2.Infer output abstract
   InferOutputAbstract(op_run_info);
+
   if (!op_run_info->base_op_run_info.has_dynamic_output) {
     // Output is dynamic shape, need to SetAbstract after RunOp.
-    UpdateStubNodeAbs(op_run_info);
+    UpdateOutputStubNodeAbs(op_run_info);
   }
 
-  // 3.Run op with selected backend
-  if (!op_run_info->output_get_by_infer_value) {
-    GetOutput(op_run_info);
-  }
-
-  if (!op_run_info->requires_grad || op_run_info->output_get_by_infer_value) {
-    if (op_run_info->stub_output != nullptr) {
-      op_run_info->stub_output->SetValue(op_run_info->out_value);
-    }
+  if (op_run_info->output_get_by_infer_value) {
+    UpdateOutputStubNodeValue(op_run_info, op_run_info->out_value);
     MS_LOG(DEBUG) << "Grad flag: " << op_run_info->requires_grad
                   << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
   }
 
+  PrepareOpInputs(op_run_info);
+  if (!op_run_info->base_op_run_info.has_dynamic_output && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
+    PrepareOpOutputs(op_run_info);
+    const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
+    DispatchBackendTask(op_run_info, backend_op_run_info);
+  } else {
+    RunOpBackendSync(op_run_info);
+  }
+}
+
+void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) {
+  backend_queue_->Wait();
+  const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
+  RunOpBackend(op_run_info, backend_op_run_info);
+  if (!op_run_info->requires_grad) {
+    MS_LOG(DEBUG) << "Grad flag is false";
+    UpdateStubTensor(op_run_info);
+    return;
+  }
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
   if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
-  } else {
-    if (op_run_info->stub_output != nullptr) {
-      op_run_info->stub_output->SetValue(op_run_info->out_value);
-    }
   }
-}
-
-void ForwardExecutor::RunOpForwardAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  auto forward_task = std::make_shared<ForwardTask>(
-    [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpForwardAsyncImpl(op_run_info); }, op_run_info);
-  forward_queue_->Push(forward_task);
-}
-
-void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
-  PyNativeAlgo::Common::StubNodeToValue(op_run_info);
-  // 1.Set cast for inputs
-  SetCastForInputs(op_run_info);
-  // 2.Infer output abstract
-  InferOutputAbstract(op_run_info);
-  // 3.Run op with selected backend
-  if (!op_run_info->output_get_by_infer_value) {
-    GetOutput(op_run_info);
-  }
-  if (!op_run_info->requires_grad || op_run_info->output_get_by_infer_value) {
-    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->requires_grad
-                  << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
-    return;
-  }
-
-  // 4. Do op grad and record op info
-  // If ms function is compile, op info will not be find in second training step
-  if (!op_run_info->async_status.is_ms_function_compiling && grad()->custom_bprop_cell_count() <= 0) {
-    grad()->ProcessOpGradInfo(op_run_info);
-  }
+  // output is dynamic shape. Need to update abstract and value.
+  UpdateStubTensor(op_run_info);
 }
 
 FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bool stub) {
@@ -332,15 +450,45 @@ void ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_inf
   infer_operation()->DoInfer(op_run_info);
 }
 
-void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
-  // Run op with selected backend, nop is no need run backend
-  op_run_info->out_value = RunOpWithBackendPolicy(op_run_info);
-  // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
-  if (op_run_info->stub_output != nullptr) {
-    if (op_run_info->base_op_run_info.has_dynamic_output) {
-      UpdateStubNodeAbs(op_run_info);
-    }
+VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_info,
+                                             const BackendOpRunInfoPtr &backend_op_run_info) {
+  MS_LOG(DEBUG) << "RunOpBackendInner start";
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  // get graph info for checking it whether existing in the cache
+  backend_op_run_info->base_op_run_info.graph_info = pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
+    backend_op_run_info->base_op_run_info, backend_op_run_info->op_prim);
+
+#if defined(__APPLE__)
+  backend_op_run_info->base_op_run_info.lazy_build = false;
+#endif
+
+  VectorRef outputs;
+  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
+  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
+  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  if (use_dynamic_shape_process) {
+    AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
+    cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
+  } else {
+    cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
   }
+
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
+    op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
+  }
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
+  MS_LOG(DEBUG) << "RunOpBackendInner end";
+  return outputs;
+}
+
+void ForwardExecutor::RunOpBackend(const FrontendOpRunInfoPtr &op_run_info,
+                                   const BackendOpRunInfoPtr &backend_op_run_info) {
+  // Run op with selected backend, nop is no need run backend
+  op_run_info->out_value = RunOpWithBackendPolicy(op_run_info, backend_op_run_info);
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
     op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
@@ -361,7 +509,8 @@ compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_de
   }
 }
 
-ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info) {
+ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info,
+                                                 const BackendOpRunInfoPtr &backend_op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   ValuePtr result;
   auto backend_policy = GetBackendPolicy(device_target_);
@@ -370,7 +519,7 @@ ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_
     if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
       result = RunOpInVM(op_run_info);
     } else {
-      result = RunOpInMs(op_run_info);
+      result = RunOpInMs(op_run_info, backend_op_run_info);
     }
 #else
     result = RunOpInVM(op_run_info);
@@ -506,9 +655,10 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
   // Do some finishing work before end graph
   if (IsFirstCell()) {
-    if (forward_queue_ != nullptr) {
+    if (frontend_queue_ != nullptr) {
       GilReleaseWithCheck gil_release;
-      forward_queue_->Wait();
+      frontend_queue_->Wait();
+      backend_queue_->Wait();
     }
     // Finish lazy task
     ExecuteLazyTask();
@@ -548,10 +698,11 @@ void ForwardExecutor::Sync() {
   }
 }
 
-ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
+ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
+                                    const BackendOpRunInfoPtr &backend_op_run_info) {
   if (!ScopedFallbackRunning::on()) {
     GilReleaseWithCheck gil_relase;
-    return RunOpInMsInner(op_run_info);
+    return RunOpInMsInner(op_run_info, backend_op_run_info);
   }
   // Print the op running in JIT Fallback.
   static const auto dump_fallback = (common::GetEnv("MS_DEV_FALLBACK_DUMP_NODE") == "1");
@@ -562,48 +713,36 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
     MS_LOG(INFO) << "NOTICE: The op is running in JIT Fallback:\n"
                  << "primitive: " << op_run_info->op_prim->ToString();
   }
-  return RunOpInMsInner(op_run_info);
+  return RunOpInMsInner(op_run_info, backend_op_run_info);
 }
 
-ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_LOG(DEBUG) << "RunOpInMs start";
+void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target,
                                             op_run_info->requires_grad ? grad()->top_cell() : nullptr);
-  // get graph info for checking it whether existing in the cache
-  op_run_info->base_op_run_info.graph_info =
-    pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
-  auto backend_op_run_info =
-    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim, true, false);
+}
 
-#if defined(__APPLE__)
-  backend_op_run_info->base_op_run_info.lazy_build = false;
-#endif
-
-  VectorRef outputs;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-  if (use_dynamic_shape_process) {
-    cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
-  } else {
-    cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
+void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) {
+  CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->output_tensors,
+                     &op_run_info->device_sync_promises);
+  TransformOutputValues(op_run_info);
+  UpdateOutputStubNodeValue(op_run_info, op_run_info->out_value);
+  // Not use GetNext abs
+  if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
+    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    // save abs for next infer
+    SetNodeAbsMapByValue(op_run_info);
   }
+}
 
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
-  }
-
+ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info,
+                                         const BackendOpRunInfoPtr &backend_op_run_info) {
+  const auto &outputs = RunOpBackendInner(op_run_info, backend_op_run_info);
   bool is_out_sequence = (op_run_info->base_op_run_info.abstract == nullptr ||
                           op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>());
   const auto &result_v =
     PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad, is_out_sequence);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;
 }
@@ -612,7 +751,8 @@ void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
   {
     GilReleaseWithCheck gil_release;
-    forward_queue_->Clear();
+    frontend_queue_->Clear();
+    backend_queue_->Clear();
   }
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);

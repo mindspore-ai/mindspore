@@ -21,20 +21,43 @@
 #include <utility>
 #include "runtime/pynative/async/task.h"
 #include "pipeline/pynative/base.h"
+#include "backend/common/session/session_basic.h"
 
 namespace mindspore {
 namespace pynative {
-class ForwardTask : public AsyncTask {
+class FrontendTask : public AsyncTask {
  public:
-  ForwardTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func, FrontendOpRunInfoPtr op_run_info)
-      : AsyncTask(kForwardTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
-  ~ForwardTask() override = default;
+  FrontendTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func, FrontendOpRunInfoPtr op_run_info)
+      : AsyncTask(kFrontendTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
+  ~FrontendTask() override = default;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
 
  private:
   std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func_;
   FrontendOpRunInfoPtr op_run_info_;
+};
+
+using BackendOpRunInfoPtr = session::BackendOpRunInfoPtr;
+class BackendTask : public AsyncTask {
+ public:
+  BackendTask(
+    std::function<void(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info)>
+      run_func,
+    FrontendOpRunInfoPtr op_run_info, BackendOpRunInfoPtr backend_op_run_info)
+      : AsyncTask(kBackendTask),
+        run_func_(std::move(run_func)),
+        op_run_info_(std::move(op_run_info)),
+        backend_op_run_info_(std::move(backend_op_run_info)) {}
+  ~BackendTask() override = default;
+  void Run() override;
+  void SetException(const std::exception_ptr &e) override;
+
+ private:
+  std::function<void(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info)>
+    run_func_;
+  FrontendOpRunInfoPtr op_run_info_;
+  BackendOpRunInfoPtr backend_op_run_info_;
 };
 }  // namespace pynative
 }  // namespace mindspore

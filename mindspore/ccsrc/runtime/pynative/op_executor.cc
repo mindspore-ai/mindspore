@@ -78,17 +78,17 @@ void OpExecutor::WaitAll() {
   WaitForRun();
 }
 
-void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::BackendOpBuildTask> &op_build_task) {
+void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTask> &op_build_task) {
   std::unique_lock<std::mutex> lock(build_mutex_);
   op_build_tasks_.push_back(op_build_task);
 }
 
-void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::BackendOpRunTask> &op_run_task) {
+void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task) {
   async_queue_.Push(op_run_task);
   (void)actor_in_queue_.insert(op_run_task->context()->graph_id());
 }
 
-std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> OpExecutor::PopOpBuildTasks() {
+std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> OpExecutor::PopOpBuildTasks() {
   std::unique_lock<std::mutex> lock(build_mutex_);
   auto build_tasks = op_build_tasks_;
   op_build_tasks_.clear();
@@ -114,7 +114,7 @@ bool OpExecutor::ActorInQueue(GraphId graph_id) {
 
 bool OpExecutor::BuildInQueue(GraphId graph_id) {
   return std::any_of(op_build_tasks_.begin(), op_build_tasks_.end(),
-                     [=](const std::shared_ptr<pynative::BackendOpBuildTask> &backend_op_build_task) {
+                     [&graph_id](const std::shared_ptr<pynative::DeviceOpBuildTask> &backend_op_build_task) {
                        return backend_op_build_task->context()->graph_id() == graph_id;
                      });
 }

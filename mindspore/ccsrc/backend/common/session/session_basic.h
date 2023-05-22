@@ -28,6 +28,7 @@
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/tensor_future.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/any.h"
@@ -69,6 +70,8 @@ struct BackendOpRunInfo {
   PrimitivePtr op_prim;
   bool is_infer = false;
   bool is_gradient_out = false;
+  std::vector<tensor::TensorPtr> output_tensors;
+  std::vector<std::promise<pynative::DeviceAddressFutureDataPtr>> device_sync_promises;
 };
 using BackendOpRunInfoPtr = std::shared_ptr<BackendOpRunInfo>;
 

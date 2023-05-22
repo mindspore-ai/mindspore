@@ -84,16 +84,6 @@ void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }
 }  // namespace
 
-bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const {
-#if defined(ENABLE_TEST) || defined(__APPLE__)
-  return true;
-#else
-  const auto &op_prim = op_run_info->op_prim;
-  return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) || op_prim->name() == "Custom" ||
-         ScopedFallbackRunning::on() || !forward_executor()->enable_async();
-#endif
-}
-
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
@@ -101,15 +91,16 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
   op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
 
-py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
+py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   SetCallbackForInputTensor(op_run_info);
 
   StoreAsyncStatus(op_run_info);
+  const auto &op_name = op_run_info->base_op_run_info.op_name;
   // 1. get top_type from Primitive::PredictOutputType
-  auto top_type = PredictOutTypeByName(op_run_info->base_op_run_info.op_name);
+  auto top_type = PredictOutTypeByName(op_name);
   // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)
-  if (DisablePyTraceAsync(op_run_info)) {
+  if (!forward_executor()->EnablePipeline(op_name)) {
     // Wait for async task finish
     forward_executor()->WaitForwardTask();
     PyNativeAlgo::Common::StubNodeToValue(op_run_info);
@@ -123,7 +114,7 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   GilReleaseWithCheck release_gil;
   // 4. set abstract and value in asynchronous thread after infer and run
   op_run_info->stub_output = node.second;
-  PyNativeExecutorTry(forward_executor()->RunOpSAsync, op_run_info);
+  forward_executor()->DispatchFrontendTask(op_run_info);
   // 5. return stub node
   return node.first;
 }
@@ -305,7 +296,7 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
          "set ms_funciton compile status.")
     .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
-    .def("run_op_async", &PyNativeExecutor::RunOpAsync, "run op asynchronously")
+    .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
 }  // namespace mindspore::pynative
