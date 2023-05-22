@@ -256,8 +256,8 @@ std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_ten
 
 GeDataType ConvertDataType(const MeDataType &type) { return TransformUtil::ConvertDataType(type); }
 
-MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims) {
-  return TransformUtil::ConvertGeTensor(ge_tensor, request_dims);
+MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims, bool ref_mem) {
+  return TransformUtil::ConvertGeTensor(ge_tensor, request_dims, ref_mem);
 }
 
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor) { return TransformUtil::ConvertGeTensor(tensor); }

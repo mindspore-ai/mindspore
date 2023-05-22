@@ -21,6 +21,8 @@
 
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/shape_utils.h"
+
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
 #endif
@@ -37,6 +39,40 @@ const size_t kIdx0 = 0;
 const size_t kIdx1 = 1;
 const size_t kIdx2 = 2;
 const size_t kIdx3 = 3;
+
+class TensorRefData : public tensor::TensorData {
+ public:
+  TensorRefData(void *data, ssize_t data_size, ssize_t itemsize, ssize_t ndim)
+      : data_(data), data_size_(data_size), itemsize_(itemsize), ndim_(ndim) {}
+
+  ~TensorRefData() override = default;
+
+  // Total number of elements.
+  ssize_t size() const override { return data_size_; }
+
+  // Byte size of a single element.
+  ssize_t itemsize() const override { return itemsize_; }
+
+  // Total number of bytes.
+  ssize_t nbytes() const override { return size() * itemsize(); }
+
+  // Number of dimensions.
+  ssize_t ndim() const override { return ndim_; }
+
+  void *data() override { return data_; }
+  const void *const_data() const override { return data_; }
+
+  bool is_sub_data() const override { return false; }
+  bool has_sub_data() const override { return false; }
+
+  std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const override { return ""; }
+
+ protected:
+  void *data_ = nullptr;
+  ssize_t data_size_ = 0;
+  ssize_t itemsize_ = 0;
+  ssize_t ndim_ = 0;
+};
 
 vector<int64_t> TransformUtil::ConvertIntToList(int64_t data, int size) {
   vector<int64_t> list{};
@@ -431,32 +467,40 @@ ShapeVector TransformUtil::ConvertGeShape(const GeShape &ge_shape, const ShapeVe
 }
 
 MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &me_dims,
-                                            const TypeId &me_type) {
-  MeTensor me_tensor(me_type, me_dims);
-
-  // Get the writable data pointer of the tensor and cast it to its data type.
-  auto me_data_ptr = me_tensor.data_c();
-  size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
-  MS_EXCEPTION_IF_NULL(me_data_ptr);
+                                            const TypeId &me_type, bool ref_mem) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
-  if (me_data_size < ge_tensor->GetSize()) {
-    MS_LOG(ERROR) << "ME tensor data size[" << me_data_size << " bytes] is less than GE tensor ["
-                  << ge_tensor->GetSize() << " bytes]";
-    return nullptr;
-  }
-
-  // Copy or use the writable data pointer of the ME tensor.
   MS_EXCEPTION_IF_NULL(ge_tensor->GetData());
   if (ge_tensor->GetSize() == 0) {
     MS_LOG(ERROR) << "GE tensor data size is zero!";
     return nullptr;
   }
 
-  // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
-  // which is the size limit of memcpy_s.
-  (void)memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
+  if (ref_mem) {
+    void *data = reinterpret_cast<void *>(const_cast<uint8_t *>(ge_tensor->GetData()));
+    ssize_t data_size = static_cast<ssize_t>(SizeOf(me_dims));
+    ssize_t itemsize = MeTensor(me_type, ShapeVector()).data().itemsize();
+    ssize_t ndim = me_dims.size();
+    auto ref_data = std::make_shared<TensorRefData>(data, data_size, itemsize, ndim);
+    return make_shared<MeTensor>(me_type, me_dims, ref_data);
+  } else {
+    MeTensor me_tensor(me_type, me_dims);
 
-  return make_shared<MeTensor>(me_tensor);
+    // Get the writable data pointer of the tensor and cast it to its data type.
+    auto me_data_ptr = me_tensor.data_c();
+    size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
+    MS_EXCEPTION_IF_NULL(me_data_ptr);
+    if (me_data_size < ge_tensor->GetSize()) {
+      MS_LOG(ERROR) << "ME tensor data size[" << me_data_size << " bytes] is less than GE tensor ["
+                    << ge_tensor->GetSize() << " bytes]";
+      return nullptr;
+    }
+
+    // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
+    // which is the size limit of memcpy_s.
+    (void)memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
+
+    return make_shared<MeTensor>(me_tensor);
+  }
 }
 
 MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
@@ -486,7 +530,7 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor, const T
 }
 
 // if request_dims is empty, use ge tensor's shape,otherwise convert to request shape
-MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims) {
+MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims, bool ref_mem) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
   vector<int64_t> me_dims = ConvertGeShape(ge_shape, request_dims);
@@ -498,7 +542,7 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const Sh
                   << static_cast<int>(ge_tensor->GetTensorDesc().GetDataType());
     return nullptr;
   }
-  return GenerateMeTensor(ge_tensor, me_dims, type_id);
+  return GenerateMeTensor(ge_tensor, me_dims, type_id, ref_mem);
 }
 
 std::string TransformUtil::PrintGeTensor(const GeTensorPtr ge_tensor) {
