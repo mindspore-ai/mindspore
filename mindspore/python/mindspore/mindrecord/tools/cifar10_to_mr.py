@@ -49,6 +49,14 @@ class Cifar10ToMR:
 
     Raises:
         ValueError: If source or destination is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import Cifar10ToMR
+        >>>
+        >>> cifar10_dir = "/path/to/cifar10"
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> cifar10_to_mr = Cifar10ToMR(cifar10_dir, mindrecord_file)
+        >>> cifar10_to_mr.transform()
     """
 
     def __init__(self, source, destination):
@@ -73,18 +81,8 @@ class Cifar10ToMR:
         self.destination = destination
         self.writer = None
 
+    # pylint: disable=missing-docstring
     def run(self, fields=None):
-        """
-        Execute transformation from cifar10 to MindRecord.
-
-        Args:
-            fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,
-                please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")
 
@@ -112,7 +110,10 @@ class Cifar10ToMR:
 
     def transform(self, fields=None):
         """
-        Encapsulate the :func:`mindspore.mindrecord.Cifar10ToMR.run` function to exit normally.
+        Execute transformation from cifar10 to MindRecord.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.Cifar10ToMR` .
 
         Args:
             fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,
@@ -120,6 +121,15 @@ class Cifar10ToMR:
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            ParamTypeError: If index field is invalid.
+            MRMOpenError: If failed to open MindRecord file.
+            MRMValidateDataError: If data does not match blob fields.
+            MRMSetHeaderError: If failed to set header.
+            MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If `parallel_writer` is not bool.
+            ValueError: If parameter `fields` is invalid.
         """
 
         t = ExceptionThread(target=self.run, kwargs={'fields': fields})

@@ -17,30 +17,20 @@
         - **ValueError** - 无效参数。
         - **Exception** - 找不到TensorFlow模块或其版本不正确。
 
-    .. py:method:: run()
+    .. py:method:: transform()
 
         执行从TFRecord格式数据集到MindRecord格式数据集的转换。
 
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
-    .. py:method:: tfrecord_iterator()
-
-        生成一个字典，其key是schema中的字段，value是数据。
-
-        返回：
-            dict，key与schema中字段名相同的数据字典。
-
-    .. py:method:: tfrecord_iterator_oldversion()
-
-        生成一个字典，其中key是schema中的字段，value是数据。该函数适用于早于2.1.0版本的TensorFlow。
-
-        返回：
-            dict，key与schema中字段名相同的数据字典。
-
-    .. py:method:: transform()
-
-        封装 :func:`mindspore.mindrecord.TFRecordToMR.run` 函数来保证异常时正常退出。
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.TFRecordToMR` 。
 
         返回：
             MSRStatus，SUCCESS或FAILED。
+
+        异常：
+            **ParamTypeError** - 设置MindRecord索引字段失败。
+            **MRMOpenError** - 新建MindRecord文件失败。
+            **MRMValidateDataError** - 原始数据集数据异常。
+            **MRMSetHeaderError** - 设置MindRecord文件头失败。
+            **MRMWriteDatasetError** - 创建MindRecord索引失败。
+            **TypeError** - 参数 `parallel_writer` 不是bool类型。

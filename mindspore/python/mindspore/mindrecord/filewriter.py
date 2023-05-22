@@ -54,19 +54,17 @@ class FileWriter:
 
     Examples:
         >>> from mindspore.mindrecord import FileWriter
-        >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-        >>> indexes = ["file_name", "label"]
-        >>> data = [{"file_name": "1.jpg", "label": 0,
-        ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"},
-        ...         {"file_name": "2.jpg", "label": 56,
-        ...          "data": b"\xe6\xda\xd1\xae\x07\xb8>\xd4\x00\xf8\x129\x15\xd9\xf2q\xc0\xa2\x91YFUO\x1dsE1"},
-        ...         {"file_name": "3.jpg", "label": 99,
-        ...          "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1"}]
+        >>>
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
-        >>> schema_id = writer.add_schema(schema_json, "test_schema")
-        >>> status = writer.add_index(indexes)
-        >>> status = writer.write_raw_data(data)
-        >>> status = writer.commit()
+        >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+        >>> writer.add_schema(schema_json, "test_schema")
+        >>> indexes = ["file_name", "label"]
+        >>> writer.add_index(indexes)
+        >>> for i in range(10):
+        ...     data = [{"file_name": str(i) + ".jpg", "label": i,
+        ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+        ...     writer.write_raw_data(data)
+        >>> writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
@@ -132,16 +130,21 @@ class FileWriter:
 
         Examples:
             >>> from mindspore.mindrecord import FileWriter
-            >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-            >>> data = [{"file_name": "1.jpg", "label": 0,
+            >>>
+            >>> data = [{"file_name": "0.jpg", "label": 0,
             ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
+            >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
             >>> schema_id = writer.add_schema(schema_json, "test_schema")
             >>> status = writer.write_raw_data(data)
             >>> status = writer.commit()
+            >>>
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
-            >>> status = write_append.write_raw_data(data)
-            >>> status = write_append.commit()
+            >>> for i in range(9):
+            ...     data = [{"file_name": str(i+1) + ".jpg", "label": i,
+            ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+            ...     write_append.write_raw_data(data)
+            >>> write_append.commit()
         """
         if platform.system().lower() == "windows":
             file_name = file_name.replace("\\", "/")
@@ -175,6 +178,44 @@ class FileWriter:
         Note:
             Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
 
+        .. list-table:: The data types supported by MindRecord.
+           :widths: 25 25 50
+           :header-rows: 1
+
+           * - Data Type
+             - Data Shape
+             - Details
+           * - int32
+             - /
+             - integer number
+           * - int64
+             - /
+             - integer number
+           * - float32
+             - /
+             - real number
+           * - float64
+             - /
+             - real number
+           * - string
+             - /
+             - string data
+           * - bytes
+             - /
+             - binary data
+           * - int32
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy ndarray
+           * - int64
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy ndarray
+           * - bytes
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy ndarray
+           * - bytes
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy ndarray
+
         Args:
             content (dict): Dictionary of schema content.
             desc (str, optional): String of schema description, Default: ``None`` .
@@ -186,6 +227,12 @@ class FileWriter:
             MRMInvalidSchemaError: If schema is invalid.
             MRMBuildSchemaError: If failed to build schema.
             MRMAddSchemaError: If failed to add schema.
+
+        Examples:
+            >>> # Examples of available schemas
+            >>> schema1 = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+            >>> schema2 = {"input_ids": {"type": "int32", "shape": [-1]},
+            ...            "input_masks": {"type": "int32", "shape": [-1]}}
         """
         ret, error_msg = self._validate_schema(content)
         if ret is False:
@@ -228,17 +275,6 @@ class FileWriter:
         return self._header.add_index_fields(index_fields)
 
     def open_and_set_header(self):
-        """
-        Open writer and set header which stores meta information. The function is only used for parallel \
-        writing and is called before the `write_raw_data` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
-        Raises:
-            MRMOpenError: If failed to open MindRecord file.
-            MRMSetHeaderError: If failed to set header.
-        """
         logger.warning("This interface will be deleted or invisible in the future.")
 
         if not self._writer.is_open:
@@ -286,7 +322,7 @@ class FileWriter:
                 raise ParamTypeError('raw_data', 'list')
             if self._flush and not self._append:
                 raise RuntimeError("Not allowed to call `write_raw_data` on flushed MindRecord files." \
-                                   "When creating new Mindrecord files, please remove `commit` before " \
+                                   "When creating new MindRecord files, please remove `commit` before " \
                                    "`write_raw_data`. In other cases, when appending to existing MindRecord files, " \
                                    "please call `open_for_append` first and then `write_raw_data`.")
             for each_raw in raw_data:
@@ -345,7 +381,6 @@ class FileWriter:
         Args:
             header_size (int): Size of header, between 16*1024(16KB) and
                 128*1024*1024(128MB).
-
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

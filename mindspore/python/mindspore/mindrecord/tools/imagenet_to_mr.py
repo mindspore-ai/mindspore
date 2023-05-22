@@ -52,6 +52,15 @@ class ImageNetToMR:
 
     Raises:
         ValueError: If `map_file` , `image_dir` or `destination` is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import ImageNetToMR
+        >>>
+        >>> map_file = "/path/to/imagenet/map_file"
+        >>> imagenet_dir = "/path/to/imagenet/train"
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> imagenet_to_mr = ImageNetToMR(map_file, imagenet_dir, mindrecord_file, 8)
+        >>> imagenet_to_mr.transform()
     """
 
     def __init__(self, map_file, image_dir, destination, partition_number=1):
@@ -73,14 +82,8 @@ class ImageNetToMR:
 
         self.writer = FileWriter(self.destination, self.partition_number)
 
+    # pylint: disable=missing-docstring
     def run(self):
-        """
-        Execute transformation from imagenet to MindRecord.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-
         t0_total = time.time()
 
         imagenet_schema_json = {"label": {"type": "int32"},
@@ -129,10 +132,21 @@ class ImageNetToMR:
 
     def transform(self):
         """
-        Encapsulate the :func:`mindspore.mindrecord.ImageNetToMR.run` function to exit normally.
+        Execute transformation from imagenet to MindRecord.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.ImageNetToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            ParamTypeError: If index field is invalid.
+            MRMOpenError: If failed to open MindRecord file.
+            MRMValidateDataError: If data does not match blob fields.
+            MRMSetHeaderError: If failed to set header.
+            MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If `parallel_writer` is not bool.
         """
 
         t = ExceptionThread(target=self.run)

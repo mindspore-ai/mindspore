@@ -489,7 +489,7 @@ class MindRecordFromOBS:
         return len(self)
 
     def get_col_names(self):
-        """ Get column names of Mindrecord format dataset."""
+        """ Get column names of MindRecord format dataset."""
 
         from ..datasets_standard_format import MindDataset
 

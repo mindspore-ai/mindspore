@@ -1410,7 +1410,7 @@ class Dataset:
                with random attribute in map operation.
             3. When array dimension is variable, one-dimensional arrays or
                multi-dimensional arrays with variable dimension 0 are supported.
-            4. Mindrecord does not support uint64, multi-dimensional uint8(drop dimension) nor
+            4. MindRecord does not support uint64, multi-dimensional uint8(drop dimension) nor
                multi-dimensional string.
 
         Args:

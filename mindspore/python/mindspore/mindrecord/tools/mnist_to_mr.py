@@ -47,6 +47,14 @@ class MnistToMR:
 
     Raises:
         ValueError: If `source` , `destination` , `partition_number` is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import MnistToMR
+        >>>
+        >>> mnist_dir = "/path/to/mnist"
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> mnist_to_mr = MnistToMR(mnist_dir, mindrecord_file)
+        >>> mnist_to_mr.transform()
     """
 
     def __init__(self, source, destination, partition_number=1):
@@ -79,14 +87,8 @@ class MnistToMR:
 
         self.mnist_schema_json = {"label": {"type": "int64"}, "data": {"type": "bytes"}}
 
+    # pylint: disable=missing-docstring
     def run(self):
-        """
-        Execute transformation from Mnist to MindRecord.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-
         if not cv_import:
             raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
 
@@ -99,10 +101,21 @@ class MnistToMR:
 
     def transform(self):
         """
-        Encapsulate the :func:`mindspore.mindrecord.MnistToMR.run` function to exit normally.
+        Execute transformation from Mnist to MindRecord.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MnistToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            ParamTypeError: If index field is invalid.
+            MRMOpenError: If failed to open MindRecord file.
+            MRMValidateDataError: If data does not match blob fields.
+            MRMSetHeaderError: If failed to set header.
+            MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If `parallel_writer` is not bool.
         """
 
         t = ExceptionThread(target=self.run)

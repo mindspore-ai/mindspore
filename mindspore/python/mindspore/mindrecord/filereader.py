@@ -85,6 +85,9 @@ class FileReader:
         """
         Yield a batch of data according to columns at a time.
 
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.FileReader` .
+
         Returns:
             dict, a batch whose keys are the same as columns.
 
@@ -98,7 +101,12 @@ class FileReader:
             iterator = self._reader.get_next()
 
     def close(self):
-        """Stop reader worker and close file."""
+        """
+        Stop reader worker and close file.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.FileReader` .
+        """
         self._reader.close()
 
     def schema(self):
@@ -107,6 +115,14 @@ class FileReader:
 
         Returns:
             dict, the schema info.
+
+        Examples:
+            >>> from mindspore.mindrecord import FileReader
+            >>>
+            >>> mindrecord_file = "/path/to/mindrecord/file"
+            >>> reader = FileReader(file_name=mindrecord_file)
+            >>> schema = reader.schema()
+            >>> reader.close()
         """
         return self._header.schema
 
@@ -116,5 +132,13 @@ class FileReader:
 
         Returns:
             int, the number of the samples in MindRecord.
+
+        Examples:
+            >>> from mindspore.mindrecord import FileReader
+            >>>
+            >>> mindrecord_file = "/path/to/mindrecord/file"
+            >>> reader = FileReader(file_name=mindrecord_file)
+            >>> length = reader.len()
+            >>> reader.close()
         """
         return self._reader.len()

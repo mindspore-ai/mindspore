@@ -48,6 +48,14 @@ class CsvToMR:
     Raises:
         ValueError: If `source` , `destination` , `partition_number` is invalid.
         RuntimeError: If `columns_list` is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import CsvToMR
+        >>>
+        >>> csv_file = "/path/to/csv/file"
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> csv_to_mr = CsvToMR(csv_file, mindrecord_file)
+        >>> csv_to_mr.transform()
     """
 
     def __init__(self, source, destination, columns_list=None, partition_number=1):
@@ -126,13 +134,8 @@ class CsvToMR:
                     row[col] = r[col]
             yield row
 
+    # pylint: disable=missing-docstring
     def run(self):
-        """
-        Execute transformation from csv to MindRecord.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
         if not os.path.exists(self.source):
             raise IOError("Csv file {} do not exist.".format(self.source))
 
@@ -179,10 +182,22 @@ class CsvToMR:
 
     def transform(self):
         """
-        Encapsulate the :func:`mindspore.mindrecord.CsvToMR.run` function to exit normally.
+        Execute transformation from csv to MindRecord.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.CsvToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            ParamTypeError: If index field is invalid.
+            MRMOpenError: If failed to open MindRecord file.
+            MRMValidateDataError: If data does not match blob fields.
+            MRMSetHeaderError: If failed to set header.
+            MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If parallel_writer is not bool.
+            IOError: Csv file does not exist.
         """
 
         t = ExceptionThread(target=self.run)
