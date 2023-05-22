@@ -32,6 +32,21 @@ class FixFormatDeco : public ExpanderDecorator {
     return std::static_pointer_cast<Expander>(std::make_shared<FixFormatDeco>(decorated));
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
+
+ protected:
+  virtual std::vector<std::string> GetFixedFormat(const AnfNodePtr &) const;
+};
+
+class UseInputFormatDeco : public FixFormatDeco {
+ public:
+  explicit UseInputFormatDeco(const ExpanderPtr &decorated) : FixFormatDeco(decorated) {}
+  ~UseInputFormatDeco() = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<UseInputFormatDeco>(decorated));
+  }
+
+ protected:
+  std::vector<std::string> GetFixedFormat(const AnfNodePtr &node) const override;
 };
 
 class InferValueDeco : public ExpanderDecorator {

@@ -53,5 +53,4 @@ from .squared_difference import SquaredDifference
 from .square_sum_v1 import SquareSumV1
 from .square_sum_all import SquareSumAll
 from .tanh_grad import TanhGrad
-from .tile import Tile
 from .softsign import Softsign
