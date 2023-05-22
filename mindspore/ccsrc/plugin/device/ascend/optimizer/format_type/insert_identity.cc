@@ -17,13 +17,7 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "kernel/kernel_build_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

@@ -146,7 +146,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &tensor_types) {
       continue;
     }
     auto &v = iter->second;
-    result.insert(result.end(), v.begin(), v.end());
+    (void)result.insert(result.end(), v.begin(), v.end());
   }
   return result;
 }
@@ -156,7 +156,7 @@ OpProto::OpProto(const std::string &name) : name_(name) {}
 
 OpProto &OpProto::SetInput(const std::string &name, const std::string &tensor_type, bool is_optional) {
   (void)input_names_.emplace_back(name);
-  (void)input_optional_flags_.push_back(is_optional);
+  input_optional_flags_.push_back(is_optional);
   (void)input_types_.emplace(name, ParseGeTypes(tensor_type));
   return *this;
 }
