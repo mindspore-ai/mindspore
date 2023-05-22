@@ -1,7 +1,7 @@
 mindspore.nn.Conv1d
 ======================
 
-.. py:class:: mindspore.nn.Conv1d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=HeUniform(math.sqrt(5)), bias_init=None)
+.. py:class:: mindspore.nn.Conv1d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=None, bias_init=None)
 
     对输入Tensor计算一维卷积。该Tensor的shape通常为 :math:`(N, C_{in}, L_{in})` ，其中 :math:`N` 是batch size， :math:`C_{in}` 是空间维度，:math:`L_{in}` 是序列的长度。
     对于每个batch中的Tensor，其shape为 :math:`(C_{in}, L_{in})` ，公式定义如下：
@@ -33,8 +33,8 @@ mindspore.nn.Conv1d
         - **dilation** (int) - 一维卷积核膨胀尺寸。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。 `k` 取值范围为[1, L]。默认值：``1`` 。
         - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：``1`` 。
         - **has_bias** (bool) - Conv1d层是否添加偏置参数。默认值： ``False`` 。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``"normal"`` 。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``"zeros"`` 。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``None`` ，权重使用HeUniform初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``None`` ，偏差使用Uniform初始化。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。

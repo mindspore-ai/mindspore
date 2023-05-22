@@ -1,7 +1,7 @@
 mindspore.nn.Conv3d
 =============================
 
-.. py:class:: mindspore.nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=HeUniform(math.sqrt(5)), bias_init=None, data_format='NCDHW')
+.. py:class:: mindspore.nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=None, bias_init=None, data_format='NCDHW')
 
     对输入Tensor计算三维卷积。该Tensor的shape通常为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size， :math:`C_{in}` 是空间维度。:math:`D_{in}, H_{in}, W_{in}` 分别为特征层的深度、高度和宽度。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` ，公式定义如下：
 
@@ -32,8 +32,8 @@ mindspore.nn.Conv3d
         - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若取值 :math:`k > 1`，则kernel对每k个元素进行采样。在深度、高度和宽度方向上的取值范围分别为[1, D]、[1, H]和[1, W]。默认值： ``1`` 。当前Ascend后端的深度维度只支持为1。 
         - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值： ``1`` 。
         - **has_bias** (bool) - Conv3d层是否添加偏置参数。默认值： ``False`` 。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ，"Normal"， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``"normal"`` 。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``"zeros"`` 。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ，"Normal"， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考Initializer的值。默认值： ``None`` ，权重使用HeUniform初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值： ``None`` ，偏差使用Uniform初始化。
         - **data_format** (str) - 数据格式的可选值。目前仅支持 ``'NCDHW'`` 。
 
     输入：

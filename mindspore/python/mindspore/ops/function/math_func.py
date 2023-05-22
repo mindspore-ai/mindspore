@@ -2983,8 +2983,6 @@ def inverse(input):
          [ 1.5 -0.5]]
     """
     _check_is_tensor("input", input, "inverse")
-    if input.dtype in mstype.int_type:
-        _get_cache_prim(P.Cast)()(input, mstype.float64)
     return _get_cache_prim(P.MatrixInverse)()(input)
 
 
