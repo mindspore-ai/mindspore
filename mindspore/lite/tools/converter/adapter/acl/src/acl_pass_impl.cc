@@ -228,8 +228,7 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     return lite::RET_OK;
   }
   if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
-    MS_LOG(ERROR) << "Const fold pass failed.";
-    return lite::RET_ERROR;
+    MS_LOG(WARNING) << "Const fold pass failed.";
   }
   return lite::RET_OK;
 }
@@ -523,7 +522,41 @@ STATUS AclPassImpl::MakeListToMakeTuple(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+STATUS AclPassImpl::AdjustInvalidCnodeName(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "AdjustInvalidCnodeName start.";
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  lite::GetAllFuncGraph(func_graph, &all_func_graphs);
+  size_t index = 0;
+  for (auto graph : all_func_graphs) {
+    auto node_list = TopoSort(graph->get_return());
+    for (auto &node : node_list) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      auto name = cnode->fullname_with_scope();
+      if (name.empty()) {
+        name = "cnode_" + std::to_string(index++);
+      }
+      while (!name.empty() && name[0] == '/') {
+        name = name.substr(1, name.size());
+        if (name.empty()) {
+          name = "cnode_" + std::to_string(index++);
+        }
+      }
+      cnode->set_fullname_with_scope(name);
+    }
+  }
+  return RET_OK;
+}
+
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
+  auto status = AdjustInvalidCnodeName(func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "AdjustInvalidCnodeName failed.";
+    return RET_ERROR;
+  }
   if (CommonPass(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Common pass failed.";
     return lite::RET_ERROR;
