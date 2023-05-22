@@ -6,6 +6,8 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/lib64)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/lib64/plugin/opskernel/)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/lib64/plugin/opskernel/)
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
     set(ASCEND_RPATH
 ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/x86_64)
@@ -114,10 +116,15 @@ if(MODE_ASCEND_ALL)
     find_library(CANN_KB cann_kb ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPSKERNEL opskernel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    set(AICPU_CANN_ACL_PATH ${ASCEND_CANN_RUNTIME_PATH}/plugin/opskernel/)
+    find_library(AICPU_ASCEND_ENGINE aicpu_ascend_engine ${AICPU_CANN_ACL_PATH})
+    find_library(HOST_CPU_ENGINE host_cpu_engine ${AICPU_CANN_ACL_PATH})
+    find_library(AICPU_TF_ENGINE aicpu_tf_engine ${AICPU_CANN_ACL_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING}
-            ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL})
+            ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE} ${HOST_CPU_ENGINE}
+            ${AICPU_TF_ENGINE})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
 endif()
 
