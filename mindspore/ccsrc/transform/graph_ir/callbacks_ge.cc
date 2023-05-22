@@ -77,7 +77,7 @@ static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string &pa
     return nullptr;
   }
 
-  return transform::ConvertGeTensor(ge_tensor_ptr, *parameter_shape_ptr);
+  return transform::ConvertGeTensor(ge_tensor_ptr, *parameter_shape_ptr, true);
 }
 
 uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {

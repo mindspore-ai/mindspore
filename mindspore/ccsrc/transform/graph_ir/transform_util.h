@@ -120,7 +120,7 @@ class TransformUtil {
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims);
+  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims, bool ref_mem = false);
   /*
    * Parameters:
    *     ge_tensors: [std::vector<GeTensorPtr>] the data tensor in GE
@@ -145,7 +145,8 @@ class TransformUtil {
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr GenerateMeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &me_dims, const TypeId &me_type);
+  static MeTensorPtr GenerateMeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &me_dims, const TypeId &me_type,
+                                      bool ref_mem = false);
   /*
    * Parameters:
    *     type: [GeDataType] the ge tensor data type
