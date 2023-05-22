@@ -2834,7 +2834,7 @@ def exp2(x, dtype=None):
 
     Args:
         x (Tensor): input values.
-        dtype (:class:`mindspore.dtype`, optional): Defaults to :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Defaults to ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3255,7 +3255,7 @@ def log1p(x, dtype=None):
 
     Args:
         x (Tensor): Input array.
-        dtype (:class:`mindspore.dtype`): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3291,7 +3291,7 @@ def logaddexp(x1, x2, dtype=None):
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be broadcastable to
             a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3323,7 +3323,7 @@ def log2(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3365,7 +3365,7 @@ def logaddexp2(x1, x2, dtype=None):
         x1 (Tensor): Input tensor.
         x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be broadcastable to
             a common shape (which becomes the shape of the output).
-        dtype (:class:`mindspore.dtype`): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3397,7 +3397,7 @@ def log10(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3439,7 +3439,7 @@ def sin(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3469,7 +3469,7 @@ def cos(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3500,7 +3500,7 @@ def tan(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3532,7 +3532,7 @@ def arcsin(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor. y-coordinate on the unit circle.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3566,7 +3566,7 @@ def arccos(input, dtype=None):
     Args:
         input (Tensor): Input tensor. x-coordinate on the unit circle.
             For real arguments, the domain is :math:`[-1, 1]`.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3601,7 +3601,7 @@ def arctan(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3630,7 +3630,7 @@ def sinh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3659,7 +3659,7 @@ def cosh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3688,7 +3688,7 @@ def tanh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3717,7 +3717,7 @@ def arcsinh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3746,7 +3746,7 @@ def arccosh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
@@ -3775,7 +3775,7 @@ def arctanh(x, dtype=None):
 
     Args:
         x (Tensor): Input tensor.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:
