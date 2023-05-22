@@ -408,8 +408,25 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
   return arg;
 }
 
-void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &front_cnode,
-                       const CNodePtr &backend_cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
+ValuePtr GetFrontArgByParameter(const std::vector<AnfNodePtr> &origin_paramters, const VectorRef &front_args,
+                                const AnfNodePtr &front_node) {
+  const auto &iter = std::find(origin_paramters.begin(), origin_paramters.end(), front_node);
+  const size_t index = iter - origin_paramters.begin();
+  // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
+  // and there is no need to input a tensor.
+  if (index >= front_args.size()) {
+    MS_LOG(EXCEPTION) << "Position out of front args range, position value is " << index << " and args size is "
+                      << front_args.size() << ".";
+  }
+  auto value = utils::cast<ValuePtr>(front_args[index]);
+  MS_EXCEPTION_IF_NULL(value);
+  return value;
+}
+
+void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
+                       const std::vector<AnfNodePtr> &origin_paramters, const VectorRef &front_args,
+                       const CNodePtr &front_cnode, const CNodePtr &backend_cnode,
+                       const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
                        const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
                        VectorRef *args) {
@@ -425,8 +442,15 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   }
   for (size_t index = 1; index < back_size; ++index) {
     auto input_node = backend_cnode->input(index);
-    auto value = GetInputofBpropCut(graph_compiler, backend_cnode, input_node, op_output_map, parameter_index,
-                                    graph_inputs, input_tensor_info, index - 1);
+    ValuePtr value = nullptr;
+    if (input_node->isa<Parameter>() && input_node->abstract() != nullptr &&
+        input_node->abstract()->isa<abstract::AbstractSequence>()) {
+      auto front_input_node = front_cnode->input(index);
+      value = GetFrontArgByParameter(origin_paramters, front_args, front_input_node);
+    } else {
+      value = GetInputofBpropCut(graph_compiler, backend_cnode, input_node, op_output_map, parameter_index,
+                                 graph_inputs, input_tensor_info, index - 1);
+    }
     MS_EXCEPTION_IF_NULL(value);
     (void)args->emplace_back(value);
   }
@@ -467,8 +491,10 @@ void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePt
   (void)tensors->emplace_back(tensor_ptr);
 }
 
-void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, const KernelGraphPtr &graph,
-                        const CNodePtr &kernel, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
+void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
+                        const std::vector<AnfNodePtr> &origin_paramters, const VectorRef &front_args,
+                        const KernelGraphPtr &graph, const CNodePtr &kernel,
+                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                         const std::map<AnfNodePtr, size_t> &parameter_index,
                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
                         VectorRef *op_outputs) {
@@ -497,8 +523,8 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, co
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == kBpropCutOpName) {
     VectorRef args;
-    GetControlOpInput(graph_compiler, cnode, kernel, op_output_map, parameter_index, graph_inputs, input_tensor_info,
-                      &args);
+    GetControlOpInput(graph_compiler, origin_paramters, front_args, cnode, kernel, op_output_map, parameter_index,
+                      graph_inputs, input_tensor_info, &args);
     py::gil_scoped_acquire acquire;
     BaseRef out = python_adapter::PyAdapterCallback::RunPrimitivePyHookFunction(prim, args);
     // Convert pyobject output to tensor.
@@ -720,8 +746,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       VectorRef op_outputs;
       if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
         WaitTaskFinish();
-        RunControlOperator(graph_compiler_, graph, kernel, op_output_map, parameter_index, inputs[graph_index],
-                           &input_tensor_info, &op_outputs);
+        const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
+        RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
+                           inputs[graph_index], &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
       } else if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionControl, kernel)) {
