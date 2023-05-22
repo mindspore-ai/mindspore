@@ -7752,9 +7752,9 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     y = _moveaxis(x.astype(mstype.float32), (row_axis, col_axis), (-2, -1))
     svd_res = ops.svd(y, compute_uv=False)
     if op == 'amax':
-        return svd_res.max(axis=-1)
+        return ops.amax(svd_res, axis=-1)
     if op == 'amin':
-        return svd_res.min(axis=-1)
+        return ops.amin(svd_res, axis=-1)
     if op == 'sum':
         return ops.sum(svd_res, dim=-1)
     raise ValueError(f"For svd_norm, the op input must be one of ['amax', 'amin', 'sum'], but got f{op}")
@@ -8044,6 +8044,270 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             ret = ret.reshape(ret_shape)
         return ret
     return None
+
+
+@_primexpr
+def _check_vector_norm_axis(axis, ndim):
+    """vector_norm axis check"""
+    if (not isinstance(axis, int)) and (not isinstance(axis, tuple)) and (axis is not None):
+        raise TypeError(f'For vector_norm , the dim must be tuple or int, but got {type(axis)}')
+
+    if axis is None:
+        axis = tuple(range(ndim))
+    if isinstance(axis, int):
+        axis = (axis,)
+
+    dim = []
+    for elem_dim in axis:
+        elem_dim = _normalize_axis_index(elem_dim, ndim)
+        if elem_dim in dim:
+            raise ValueError('For vector_norm, the elements of axis can not be duplicate.')
+        dim.append(elem_dim)
+    tuple_dim = tuple(dim)
+    return tuple_dim
+
+
+@_primexpr
+def _check_vector_norm_ord(ord):
+    """vector_norm ord check"""
+    if ord not in [0, 2, float('inf'), -float('inf')] and not isinstance(ord, (int, float)):
+        raise ValueError(f"For vector_norm, the ord mode must be in [0, 2, float('inf'), -float('inf')] "
+                         f"or must be int or float, but got {ord}.")
+
+
+def _compute_vector_norm_inf(x, dim, keepdims, norm_func):
+    """compute vector norm of `x` when ord is ``inf`` or ``-inf`` """
+    if len(dim) == 1:
+        ret_norm = norm_func(ops.abs(x), axis=dim[0], keepdims=keepdims)[0]
+    else:
+        start_dim = min(dim)
+        end_dim = max(dim)
+        flatten_x = ops.flatten(x, start_dim=start_dim, end_dim=end_dim)
+        ret_norm = norm_func(ops.abs(flatten_x), axis=start_dim, keepdims=False)[0]
+        if keepdims is True:
+            ret_shape = list(x.shape)
+            for i in dim:
+                ret_shape[i] = 1
+            ret_norm = ret_norm.reshape(ret_shape)
+    return ret_norm
+
+
+def vector_norm(x, ord=2, axis=None, keepdims=False, *, dtype=None):
+    r"""
+    Returns the vector norm of the given tensor on the specified dimensions.
+
+    `ord` is the calculation mode of norm. The following norm modes are supported.
+
+    ==========================      ==========================================
+    `ord`                           norm for vectors
+    ==========================      ==========================================
+    ``2`` (Default)                 ``2``-norm (see below)
+    ``inf``                         :math:`max(abs(x))`
+    ``-inf``                        :math:`min(abs(x))`
+    ``0``                           :math:`sum(x!=0)`
+    other ``int`` or ``float``      :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ==========================      ===========================================
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(*, n)` where * is zero s more batch dimensions.
+        ord (Union[int, float, inf, -inf], optional): norm's mode. refer to the table above for
+            behavior. Default: ``2`` .
+        axis (Union[int, Tuple(int)], optional): The dimensions along which to perform the vector norm calculation.
+            Default: ``None`` .
+
+            - When `axis` is int or a tuple, the norm calculation will be performed across these specified dimensions,
+              while the remaining dimensions will be considered as batch dimensions.
+
+            - When `dim` is None, the norm will be calculated after flattening the Tensor `x` .
+
+        keepdims (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
+            `dtype` before execution, and dtype of returned Tensor will also be `dtype`.
+            When `dtype` is ``None`` , the dtype of `A` is preserved. Default: ``None`` .
+
+    Returns:
+        Tensor, the result of norm calculation on the specified dimension, `axis`, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If `axis` is not an int or tuple.
+        ValueError: If `ord` is not in [int, float, inf, -inf].
+        ValueError: The elements of `axis` are duplicate.
+        ValueError: If any elements of `axis` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> x = ms.ops.arange(0, 12, dtype=ms.float32) - 6
+        >>> print(ms.ops.vector_norm(x, ord=2))
+        12.083046
+        >>> print(ms.ops.vector_norm(x, ord=float('inf')))
+        6.0
+        >>> print(ms.ops.vector_norm(x, ord=float('-inf')))
+        0.0
+        >>> print(ms.ops.vector_norm(x, ord=0))
+        11.0
+        >>> print(ms.ops.vector_norm(x, ord=4.5))
+        7.2243643
+    """
+    ndim = x.ndim
+    dim = _check_vector_norm_axis(axis, ndim)
+    _check_vector_norm_ord(ord)
+
+    if dtype is not None:
+        x = ops.cast(x, dtype)
+
+    if ord == 2:
+        s = _complex_square(x)
+        reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdims)
+        return ops.sqrt(reduce_sum(s, dim))
+    if ord == float('inf'):
+        inf_norm = _compute_vector_norm_inf(x, dim, keepdims, ops.max)
+        return inf_norm
+    if ord == float('-inf'):
+        inf_norm = _compute_vector_norm_inf(x, dim, keepdims, ops.min)
+        return inf_norm
+    if ord == 0:
+        return (x != 0).astype(x.dtype).sum(axis=dim, keepdims=keepdims)
+    # ord is other int or float
+    abs_x = ops.abs(x)
+    abs_x **= ord
+    reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdims)
+    ret = reduce_sum(abs_x, dim)
+    ret **= 1 / ord
+    return ret
+
+
+@_primexpr
+def _check_matrix_norm_axis(axis, ndim):
+    """matrix_norm axis check"""
+    if not isinstance(axis, tuple):
+        raise TypeError(f'For matrix_norm , the axis should be tuple of int, but got {type(axis)}')
+    if len(axis) != 2:
+        raise ValueError(f'For matrix_norm, the length of axis should be 2, but got {len(axis)}.')
+
+    row_axis, col_axis = axis
+    row_axis = _normalize_axis_index(row_axis, ndim)
+    col_axis = _normalize_axis_index(col_axis, ndim)
+    if row_axis == col_axis:
+        raise ValueError('For matrix_norm, the elements of axis can not be duplicate.')
+    return row_axis, col_axis
+
+
+@_primexpr
+def _check_matrix_norm_ord(ord):
+    """matrix_norm ord check"""
+    if ord not in [2, -2, 1, -1, float('inf'), float('-inf'), 'fro', 'nuc']:
+        raise ValueError(f"For matrix_norm, the ord mode must be in "
+                         f"[2, -2, 1, -1, float('inf'), float('-inf'), 'fro', 'nuc'] "
+                         f"but got {ord}.")
+
+
+def matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None):
+    r"""
+    Returns the matrix norm of a given tensor on the specified dimensions.
+
+    `ord` is the calculation mode of norm. The following norm modes are supported.
+
+    ====================== ================================
+    `ord`                  norm for matrix
+    ====================== ================================
+    ``'fro'`` (Default)    Frobenius norm
+    ``'nuc'``              nuclear norm
+    ``inf``                :math:`max(sum(abs(x), dim=1))`
+    ``-inf``               :math:`min(sum(abs(x), dim=1))`
+    ``1``                  :math:`max(sum(abs(x), dim=0))`
+    ``-1``                 :math:`min(sum(abs(x), dim=0))`
+    ``2``                  largest singular value
+    ``-2``                 smallest singular value
+    ====================== ================================
+
+    Args:
+        A (Tensor): Tensor of shape :math:`(*, m, n)` where * is zero or more batch dimensions.
+        ord (Union[int, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
+            behavior. Default: ``'fro'`` .
+        axis (Tuple(int, int), optional): calculate the dimension of the matrix norm.
+            Default: ``(-2, -1)`` .
+        keepdims (bool): whether the output Tensor retains the original dimension. Default: ``False`` .
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `A` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`.
+            When `dtype` is ``None`` , the dtype of `A` is preserved. Default: ``None`` .
+
+    Returns:
+        Tensor, the result of norm calculation on the specified dimension, `axis`, has the same dtype as `A`.
+
+    Raises:
+        TypeError: If `axis` is not a tuple of int.
+        ValueError: If the length of `axis` is not equal to 2.
+        ValueError: If `ord` is not in [2, -2, 1, -1, float('inf'), float('-inf'), 'fro', 'nuc'].
+        ValueError: If two elements of `axis` is same after normalize.
+        ValueError: If any elements of `axis` is out of range.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> A = ms.ops.arange(0, 12, dtype=ms.float32).reshape(3, 4)
+        >>> print(ms.ops.matrix_norm(x, ord='fro'))
+        22.494444
+        >>> print(ms.ops.matrix_norm(x, ord='nuc'))
+        24.364643
+        >>> print(ms.ops.matrix_norm(x, ord=float('inf')))
+        38.0
+        >>> print(ms.ops.matrix_norm(x, ord=float('-inf')))
+        6.0
+        >>> print(ms.ops.vector_norm(x, ord=1))
+        21.0
+        >>> print(ms.ops.vector_norm(x, ord=-1))
+        12.0
+        >>> print(ms.ops.vector_norm(x, ord=2))
+        22.409302
+        >>> print(ms.ops.vector_norm(x, ord=-2))
+        1.672928e-07
+    """
+    ndim = A.ndim
+    row_axis, col_axis = _check_matrix_norm_axis(axis, ndim)
+    _check_matrix_norm_ord(ord)
+    if dtype is not None:
+        A = ops.cast(A, dtype)
+
+    ret = None
+    if ord == 'fro':
+        ret = ops.sqrt(ops.reduce_sum(_complex_square(A), axis))
+    if ord == 'nuc':
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
+    if ord == float('inf'):
+        if row_axis > col_axis:
+            row_axis -= 1
+        ret = ops.max(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
+    if ord == float('-inf'):
+        if row_axis > col_axis:
+            row_axis -= 1
+        ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
+    if ord == 1:
+        if col_axis > row_axis:
+            col_axis -= 1
+        ret = ops.max(A.abs().sum(row_axis), axis=col_axis)[0]
+    if ord == -1:
+        if col_axis > row_axis:
+            col_axis -= 1
+        ret = ops.min(A.abs().sum(row_axis), axis=col_axis)[0]
+    if ord == 2:
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
+    if ord == -2:
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'amin')
+    if keepdims:
+        ret_shape = list(A.shape)
+        ret_shape[axis[0]] = 1
+        ret_shape[axis[1]] = 1
+        ret = ret.reshape(ret_shape)
+    return ret
 
 
 def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
@@ -11582,6 +11846,8 @@ __all__ = [
     'le',
     'lerp',
     'norm',
+    'vector_norm',
+    'matrix_norm',
     'tensor_gt',
     'logaddexp',
     'mv',

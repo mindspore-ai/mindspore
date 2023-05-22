@@ -40,6 +40,7 @@ mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv2d
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:cov
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
+mindspore/mindspore/python/mindspore/ops/function/math_func.py:matrix_norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__

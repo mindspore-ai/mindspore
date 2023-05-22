@@ -192,6 +192,8 @@ from .math_func import (
     le,
     lerp,
     norm,
+    vector_norm,
+    matrix_norm,
     round,
     tensor_gt,
     gt,
