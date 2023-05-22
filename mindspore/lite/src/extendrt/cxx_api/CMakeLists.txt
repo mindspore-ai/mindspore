@@ -40,7 +40,8 @@ if(ENABLE_GPU)
         "gpu/*.cc")
 endif()
 
-set(MSLIB_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
+set(MSLIB_INFER_SRC
+    ${LITE_SRC_DIR}/litert/cxx_api/types.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc

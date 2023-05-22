@@ -245,7 +245,13 @@ class LiteTensorImpl : public MutableTensorImpl {
     lite_tensor_->set_quant_params(lite_quant_params);
   }
 
-  bool IsDevice() const override { return false; }
+  bool IsDevice() const override {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return false;
+    }
+    return lite_tensor_->is_device();
+  }
 
   lite::Tensor *lite_tensor() const { return lite_tensor_; }
 
