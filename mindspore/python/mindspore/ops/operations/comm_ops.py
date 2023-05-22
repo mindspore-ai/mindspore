@@ -760,6 +760,7 @@ class NeighborExchange(Primitive):
         self.recv_shapes = recv_shapes
         self.send_shapes = send_shapes
         self.recv_type = recv_type
+        self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_eliminate', True)
 
     def __call__(self, tensor):
