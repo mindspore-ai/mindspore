@@ -23,19 +23,22 @@
 #include <algorithm>
 #include <functional>
 #include <map>
+#include <utility>
 #include "mindspore/core/ops/arg_max.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/argmax_helper.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/argmax_impl.cuh"
 namespace mindspore {
 namespace kernel {
 class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ArgmaxGpuKernelMod() { attr_ptr_ = std::make_shared<cukernel::ArgMaxAttr>(); }
+  ArgmaxGpuKernelMod() = default;
   ~ArgmaxGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+  }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -46,8 +49,18 @@ class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
-  std::shared_ptr<cukernel::ArgMaxAttr> attr_ptr_{nullptr};
+  template <typename S, typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using ArgmaxFunc = std::function<bool(ArgmaxGpuKernelMod *, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, ArgmaxFunc>> func_list_;
+  ArgmaxFunc kernel_func_;
+  bool is_null_input_;
+  int64_t axis_;
+  int64_t bound_;
+  size_t inner_size_;
+  size_t outer_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,82 +18,74 @@
 #include <utility>
 namespace mindspore {
 namespace kernel {
-namespace {
 template <typename T, typename S>
-std::unique_ptr<cukernel::GpuKernelHelperBase> CreateArgMaxKernelPtr(const std::string &kernel_name,
-                                                                     const uint32_t &device_id) {
-  return std::make_unique<cukernel::ArgMaxHelperGpuKernel<T, S>>(kernel_name, device_id);
-}
-using ArgMaxPtrCreatorFunc =
-  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
+bool ArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  S bound = static_cast<S>(bound_);
+  T *input_ptr = GetDeviceAddress<T>(inputs, 0);
+  S *output_ptr = GetDeviceAddress<S>(outputs, 0);
 
-const std::vector<std::pair<KernelAttr, ArgMaxPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32), CreateArgMaxKernelPtr<half, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<float, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<double, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32), CreateArgMaxKernelPtr<int8_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<int16_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<int32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<int64_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<uint8_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<uint16_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<uint32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
-   CreateArgMaxKernelPtr<uint64_t, int32_t>},
-
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64), CreateArgMaxKernelPtr<half, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<float, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<double, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64), CreateArgMaxKernelPtr<int8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<int16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<int32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<uint8_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<uint16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<uint32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
-   CreateArgMaxKernelPtr<uint64_t, int64_t>}};
-}  // namespace
-
-bool ArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  std::vector<void *> input_ptrs = ConvertPtrs(inputs);
-  std::vector<void *> work_ptrs = ConvertPtrs(workspace);
-  std::vector<void *> output_ptrs = ConvertPtrs(outputs);
-  if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
-    return false;
-  }
+  // call cuda kernel
+  CalArgmax(input_ptr, bound, outer_size_, inner_size_, output_ptr, device_id_,
+            reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 
+std::vector<std::pair<KernelAttr, ArgmaxGpuKernelMod::ArgmaxFunc>> ArgmaxGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<half, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<int16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<double, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxGpuKernelMod::LaunchKernel<uint64_t, int64_t>}};
+
 bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Argmax>(base_operator);
-  kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
+  kernel_func_ = func_list_[index].second;
   if (!is_match) {
     return false;
   }
-  attr_ptr_->axis = kernel_ptr->get_axis();
-  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  helper_ptr_->SetKernelParam(attr_ptr_);
 
   Resize(base_operator, inputs, outputs);
   return true;
@@ -102,25 +94,52 @@ bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 int ArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
-  std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  input_shapes.emplace_back(inp_shape);
-  output_shapes.emplace_back(out_shape);
-  if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
-    return KRET_RESIZE_FAILED;
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
-  output_size_list_ = helper_ptr_->GetOutputSizeList();
-  workspace_size_list_ = helper_ptr_->GetWorkSizeList();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Argmax>(base_operator);
+  axis_ = kernel_ptr->get_axis();
+  kernel_name_ = kernel_ptr->name();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  is_null_input_ =
+    CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
+  int64_t dims = static_cast<int64_t>(input_shape.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+                  << "), but got " << axis_;
+    return -1;
+  }
+  if (axis_ < 0) {
+    axis_ += dims;
+  }
+  bound_ = input_shape[axis_];
+  if (input_shape[axis_] != bound_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of input_shape[axis] should be "
+                  << static_cast<int64_t>(bound_) << ", but got " << input_shape[axis_];
+    return -1;
+  }
+  if (is_null_input_) {
+    return true;
+  }
+  outer_size_ = 1;
+  for (int64_t i = axis_ - 1; i >= 0; i--) {
+    outer_size_ *= input_shape[i];
+  }
+  inner_size_ = 1;
+  for (int64_t i = axis_ + 1; i < static_cast<int64_t>(input_shape.size()); i++) {
+    inner_size_ *= input_shape[i];
+  }
   return KRET_OK;
 }
 
 std::vector<KernelAttr> ArgmaxGpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(kernel_attr.begin(), kernel_attr.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ArgMaxPtrCreatorFunc> &item) { return item.first; });
+  static std::vector<KernelAttr> support_list;
+  if (support_list.empty()) {
+    (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                         [](const std::pair<KernelAttr, ArgmaxFunc> &pair) { return pair.first; });
+  }
   return support_list;
 }
 
