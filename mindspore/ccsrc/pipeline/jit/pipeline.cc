@@ -296,14 +296,14 @@ std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const B
   static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
   if (allow_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
-    MS_LOG(INFO) << "Real output: " << real_output << ", " << real_output->DebugString()
-                 << ", has \'PyExecuteOutputUserData\': "
-                 << real_output->has_user_data<kernel::PyExecuteOutputUserData>();
+    MS_LOG(DEBUG) << "Real output: " << real_output << ", " << real_output->DebugString()
+                  << ", has \'PyExecuteOutputUserData\': "
+                  << real_output->has_user_data<kernel::PyExecuteOutputUserData>();
     if (real_output->has_user_data<kernel::PyExecuteOutputUserData>()) {
       py::gil_scoped_acquire gil_acquire;
       const auto &output_data = real_output->user_data<kernel::PyExecuteOutputUserData>();
       py::object res_obj = output_data->obj;
-      MS_LOG(INFO) << "Has \'PyExecuteOutputUserData\', just return it. res_obj: " << res_obj;
+      MS_LOG(DEBUG) << "Has \'PyExecuteOutputUserData\', just return it. res_obj: " << res_obj;
       // Need support real none.
       return {res_obj, true};
     }

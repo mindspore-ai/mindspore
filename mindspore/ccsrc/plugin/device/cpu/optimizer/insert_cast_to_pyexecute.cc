@@ -31,13 +31,24 @@ const AnfNodePtr InsertCastToPyExecute::Process(const FuncGraphPtr &fg, const An
   if (cnode->abstract() == nullptr || !cnode->abstract()->isa<abstract::AbstractAny>()) {
     return nullptr;
   }
+
+  // If use tensor supposed dtype.
+  static const auto use_supposed_dtype = (common::GetEnv("MS_DEV_FALLBACK_USE_SUPPOSED_DTYPE") != "0");
+  if (use_supposed_dtype) {
+    auto any_abstract = cnode->abstract()->cast_ptr<abstract::AbstractAny>();
+    MS_EXCEPTION_IF_NULL(any_abstract);
+    if (any_abstract->supposed_tensor_dtype()) {
+      return nullptr;
+    }
+  }
+
   if (!common::AnfAlgo::HasNodeAttr(kAttrNeedCast, cnode)) {
     return nullptr;
   }
   common::AnfAlgo::EraseNodeAttr(kAttrNeedCast, node);
 
-  auto cast_node =
-    insert_cast_function_(fg, node, kOpFormat_DEFAULT, kNumberTypeFloat64, kNumberTypeFloat64, node->Shape());
+  const auto default_type = abstract::AbstractAny::DefaultDtype()->type_id();
+  auto cast_node = insert_cast_function_(fg, node, kOpFormat_DEFAULT, default_type, default_type, node->Shape());
   common::AnfAlgo::SetNodeAttr(kAttrAnyTypeCast, MakeValue(True), cast_node);
   if (fg->isa<session::KernelGraph>()) {
     auto kg = fg->cast_ptr<session::KernelGraph>();

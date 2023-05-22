@@ -57,6 +57,7 @@ TEST_F(TestInsertCastForPyExecute, test_insert_cast_for_py_execute) {
    *      x = cast(x)
    *      return x, y
    **/
+  common::SetEnv("MS_DEV_FALLBACK_USE_SUPPOSED_DTYPE", "0");
   FuncGraphPtr g = getPyFun_.CallAndParseRet("insert_cast_for_py_execute", "before");
 
   EXPECT_NE(g, nullptr);

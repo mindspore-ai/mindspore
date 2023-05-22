@@ -360,7 +360,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   FuncGraphPtr func_graph = out_node->func_graph();
   constexpr size_t source_node_index = 2;
   if (out_node_inputs.size() <= source_node_index) {
-    MS_LOG(EXCEPTION) << "Input size:" << out_node_inputs.size() << " should bigger than 2.";
+    MS_LOG(EXCEPTION) << "Input size: " << out_node_inputs.size() << " should bigger than 2.";
   }
 
   AnfNodePtr new_node =
@@ -375,7 +375,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
 }
 
 namespace {
-py::object BuildValue(const ValuePtr &value_ptr) {
+py::object BuildPyObject(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
     return py::none();
   } else {
@@ -408,7 +408,7 @@ tensor::TensorPtr GetShapeValue(const AbstractBasePtr &arg_element) {
     MS_EXCEPTION_IF_NULL(const_abstract_value);
     const_value = const_abstract_value->BuildValue();
   } else {
-    MS_LOG(INTERNAL_EXCEPTION) << "Unsupported shape data:" << arg_element->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Unsupported shape data: " << arg_element->ToString();
   }
   MS_EXCEPTION_IF_NULL(const_value);
   return const_value->cast<tensor::TensorPtr>();
@@ -472,7 +472,7 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
           return dic;
         }
         std::vector<int64_t> const_tensor_vector = TensorValueToVector<int64_t>(const_tensor);
-        shape_value_tuple[i] = BuildValue(MakeValue(const_tensor_vector));
+        shape_value_tuple[i] = BuildPyObject(MakeValue(const_tensor_vector));
       }
     }
     dic[ATTR_SHAPE_VALUE] = shape_value_tuple;
@@ -586,7 +586,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
           return dic;
         }
         std::vector<int64_t> const_tensor_vector = TensorValueToVector<int64_t>(const_tensor);
-        shape_value_list[i] = BuildValue(MakeValue(const_tensor_vector));
+        shape_value_list[i] = BuildPyObject(MakeValue(const_tensor_vector));
       }
     }
     dic[ATTR_SHAPE_VALUE] = shape_value_list;
@@ -599,7 +599,7 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_co
   MS_EXCEPTION_IF_NULL(dic);
   MS_EXCEPTION_IF_NULL(arg_tensor);
   if (only_convert_value) {
-    (*dic)[ATTR_VALUE] = BuildValue(arg_tensor->BuildValue());
+    (*dic)[ATTR_VALUE] = BuildPyObject(arg_tensor->BuildValue());
     return;
   }
   MS_EXCEPTION_IF_NULL(arg_tensor->shape());
@@ -611,10 +611,10 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_co
 
   auto shape_value = arg_tensor->get_shape_value();
   if (shape_value != nullptr) {
-    (*dic)[ATTR_SHAPE_VALUE] = BuildValue(shape_value);
+    (*dic)[ATTR_SHAPE_VALUE] = BuildPyObject(shape_value);
   }
   (*dic)[ATTR_DTYPE] = arg_tensor->BuildType();
-  (*dic)[ATTR_VALUE] = BuildValue(arg_tensor->BuildValue());
+  (*dic)[ATTR_VALUE] = BuildPyObject(arg_tensor->BuildValue());
 }
 namespace {
 py::object GetPyObjForPrimitiveAbstract(const PrimitiveAbstractClosurePtr &prim_abs) {
@@ -746,7 +746,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     ShapeVector shape;
     dic[ATTR_SHAPE] = shape;
     dic[ATTR_DTYPE] = abs_base->BuildType();
-    dic[ATTR_VALUE] = BuildValue(abs_base->BuildValue());
+    dic[ATTR_VALUE] = BuildPyObject(abs_base->BuildValue());
   } else if (abs_base->isa<AbstractTuple>()) {
     return AbstractTupleToPython(abs_base, only_convert_value);
   } else if (abs_base->isa<AbstractList>()) {
@@ -758,12 +758,12 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     ShapeVector shape;
     dic[ATTR_SHAPE] = shape;
     dic[ATTR_DTYPE] = arg_slice->BuildType();
-    dic[ATTR_VALUE] = BuildValue(arg_slice->BuildValue());
+    dic[ATTR_VALUE] = BuildPyObject(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractRowTensor>()) {
     auto arg = dyn_cast_ptr<AbstractRowTensor>(abs_base);
     dic[ATTR_SHAPE] = arg->shape()->shape();
     dic[ATTR_DTYPE] = arg->BuildType();
-    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
+    dic[ATTR_VALUE] = BuildPyObject(arg->BuildValue());
   } else if (abs_base->isa<AbstractCOOTensor>()) {
     auto arg = dyn_cast_ptr<AbstractCOOTensor>(abs_base);
     AbstractBasePtrList sparse_shape = arg->shape()->elements();
@@ -775,7 +775,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
                          });
     dic[ATTR_SHAPE] = sparse_shape_vector;
     dic[ATTR_DTYPE] = arg->BuildType();
-    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
+    dic[ATTR_VALUE] = BuildPyObject(arg->BuildValue());
   } else if (abs_base->isa<AbstractCSRTensor>()) {
     auto arg = dyn_cast_ptr<AbstractCSRTensor>(abs_base);
     AbstractBasePtrList sparse_shape = arg->shape()->elements();
@@ -787,7 +787,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
                          });
     dic[ATTR_SHAPE] = sparse_shape_vector;
     dic[ATTR_DTYPE] = arg->BuildType();
-    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
+    dic[ATTR_VALUE] = BuildPyObject(arg->BuildValue());
   } else if (abs_base->isa<AbstractEllipsis>()) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = py::ellipsis();
@@ -828,12 +828,12 @@ void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBa
     int64_t output_num = GetValue<int64_t>(output_num_value);
     if (res_spec->isa<AbstractTensor>() && output_num != 1) {
       MS_LOG(EXCEPTION) << "Custom operator primitive[" << prim->ToString()
-                        << "]'s attribute[output_num]:" << output_num << " not matches the infer result "
+                        << "]'s attribute[output_num]: " << output_num << ", not matches the infer result "
                         << res_spec->ToString();
     } else if (res_spec->isa<AbstractTuple>() &&
                (res_spec->cast_ptr<AbstractTuple>()->size() != LongToSize(output_num))) {
       MS_LOG(EXCEPTION) << "Custom operator primitive[" << prim->ToString()
-                        << "]'s attribute[output_num]:" << output_num << " not matches the infer result "
+                        << "]'s attribute[output_num]: " << output_num << ", not matches the infer result "
                         << res_spec->ToString();
     }
   }
@@ -1615,8 +1615,8 @@ EvalResultPtr GetEvaluatedValueForPrimitiveAttr(const AbstractBasePtrList &args_
   auto attr_name = GetValue<string>(item_arg->BuildValue());
   auto value = prim->GetAttr(attr_name);
   if (value == nullptr) {
-    MS_LOG(INFO) << "The Primitive :" << prim->ToString() << "has not attr " << attr_name;
-    MS_LOG(INFO) << "PrimAttr :" << prim->GetAttrsText();
+    MS_LOG(INFO) << "The Primitive: " << prim->ToString() << " has not attr " << attr_name;
+    MS_LOG(INFO) << "PrimAttr: " << prim->GetAttrsText();
     return nullptr;
   }
   return std::make_shared<EvalResult>(value->ToAbstract(), nullptr);
@@ -1970,7 +1970,7 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
                    << " CNode. node: " << node->DebugString() << ", key: " << type_var_str << ", type value is null.";
       return nullptr;
     }
-    const auto &py_type = BuildValue(type_value);
+    const auto &py_type = BuildPyObject(type_value);
     MS_LOG(DEBUG) << "type_value: " << type_value->ToString() << ", py_type: " << py_type;
     if (!py::isinstance<py::none>(py_type)) {
       return py::cast<TypePtr>(py_type);
@@ -1981,6 +1981,78 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
   };
   const auto &type = fallback::GetJitAnnotationTypeFromComment(node, func);
   return type;
+}
+
+TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) {
+  // If force to use ANY.
+  static const auto force_any = (common::GetEnv("MS_DEV_FALLBACK_FORCE_ANY") == "1");
+  if (force_any) {
+    return nullptr;
+  }
+
+  TypePtr res = nullptr;
+  // Check the abstract, return true if continue, otherwise return false.
+  auto unique_dtype_check = [&node, &res](const AbstractBasePtr &element_value_abs) -> bool {
+    if (!element_value_abs->isa<abstract::AbstractTensor>()) {
+      return true;
+    }
+    // Fetch the dtype from element_value_abs of tensor.
+    auto element_abs_tensor = element_value_abs->cast_ptr<abstract::AbstractTensor>();
+    MS_EXCEPTION_IF_NULL(element_abs_tensor);
+    MS_EXCEPTION_IF_NULL(element_abs_tensor->element());
+    const auto dtype = element_abs_tensor->element()->BuildType();
+    MS_EXCEPTION_IF_NULL(dtype);
+    // Check default dtype if it's AbstractAny(AbstractTensor)
+    if (element_value_abs->isa<abstract::AbstractAny>() &&
+        !element_value_abs->cast_ptr<abstract::AbstractAny>()->supposed_tensor_dtype()) {
+      return true;
+    }
+    if (res == nullptr) {
+      MS_EXCEPTION_IF_NULL(node);
+      MS_LOG(INFO) << "Tensor dtype found, set as unique dtype: " << dtype->ToString()
+                   << ", node: " << node->DebugString() << "\n\n"
+                   << trace::GetDebugInfo(node->debug_info());
+      res = dtype;
+      return true;
+    }
+    if (res != dtype) {
+      MS_EXCEPTION_IF_NULL(node);
+      MS_LOG(INFO) << "More than one tensor dtype found, not set unique dtype. node: " << node->DebugString() << "\n\n"
+                   << trace::GetDebugInfo(node->debug_info());
+      return false;
+    }
+    return true;
+  };
+  constexpr auto values_index = 2;
+  if (args_abs_list.size() <= values_index) {
+    return nullptr;
+  }
+  const auto &values_tuple_abs = dyn_cast<AbstractSequence>(args_abs_list[values_index]);
+  bool isPyExecute = (values_tuple_abs != nullptr);
+  if (isPyExecute) {  // PyExecute CNode.
+    const auto &elements_abs = values_tuple_abs->elements();
+    for (const auto &element_abs : elements_abs) {
+      if (!unique_dtype_check(element_abs)) {
+        return nullptr;
+      }
+    }
+  } else {  // PyInterpret CNode.
+    const auto &local_dict_abs = dyn_cast<AbstractDictionary>(args_abs_list[values_index]);
+    MS_EXCEPTION_IF_NULL(local_dict_abs);
+    const auto &elements_abs = local_dict_abs->elements();
+    for (const auto &element_abs_pair : elements_abs) {
+      const auto &element_value_abs = element_abs_pair.second;
+      if (!unique_dtype_check(element_value_abs)) {
+        return nullptr;
+      }
+    }
+  }
+
+  if (res != nullptr) {
+    MS_LOG(INFO) << "Apply unique dtype: " << res->ToString() << " to node: " << node->DebugString() << "\n\n"
+                 << trace::GetDebugInfo(node->debug_info());
+  }
+  return res;
 }
 }  // namespace
 
@@ -2111,16 +2183,16 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     }
   }
 
-  auto current_pyexecute_node = out_conf->node();
-  MS_EXCEPTION_IF_NULL(current_pyexecute_node);
-  MS_LOG(DEBUG) << "The current pyexecute node: " << current_pyexecute_node->DebugString();
+  auto node = out_conf->node();
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "The current pyexecute node: " << node->DebugString();
   // Get the type parameter.
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-  ValuePtr value_track = args_abs_list[0]->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_track);
-  auto script_obj = dyn_cast_ptr<StringImm>(value_track);
+  ValuePtr script_value_track = args_abs_list[0]->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(script_value_track);
+  auto script_obj = dyn_cast_ptr<StringImm>(script_value_track);
   if (script_obj == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper: " << script_value_track->ToString() << ".";
   }
 
   // Make global and local parameters.
@@ -2131,32 +2203,41 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   AbstractBasePtr res = nullptr;
   // Support Tensor annotation type. Add list and tuple here later.
   TypePtr dtype = nullptr;
-  TypePtr type = GetAnnotationType(current_pyexecute_node, args_abs_list);
+  TypePtr type = GetAnnotationType(node, args_abs_list);
   if (type != nullptr && type->isa<TensorType>()) {
     dtype = type->cast<TensorTypePtr>()->element();
   }
+  // Create output abstract.
   if (dtype != nullptr) {
     res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
-  } else if (fallback::HasRealType(current_pyexecute_node) && fallback::HasRealShape(current_pyexecute_node)) {
-    const auto &preset_type = fallback::GetRealType<AnfNode, Type>(current_pyexecute_node);
+  } else if (fallback::HasRealType(node) && fallback::HasRealShape(node)) {
+    const auto &preset_type = fallback::GetRealType<AnfNode, Type>(node);
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
-    const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(current_pyexecute_node);
+    const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     res = std::make_shared<AbstractTensor>(preset_type, shape);
   } else {
-    res = std::make_shared<AbstractAny>();
-    // Set input type for caller.
-    if (fallback::HasRealType(current_pyexecute_node)) {
-      const auto &real_type = fallback::GetRealType<AnfNode, Type>(current_pyexecute_node);
-      fallback::SetRealType<AbstractBase, Type>(res, real_type);
+    const auto any_abstract = std::make_shared<AbstractAny>();
+    // If no annotation dtype, try to use unique tensor dtype.
+    dtype = GetLocalArgsUniqueDtype(node, args_abs_list);
+    if (dtype != nullptr) {
+      any_abstract->element()->set_type(dtype);
+      any_abstract->set_supposed_tensor_dtype(true);
     }
-    if (fallback::HasRealShape(current_pyexecute_node)) {
-      const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(current_pyexecute_node);
-      fallback::SetRealShape<AbstractBase, BaseShape>(res, real_type);
-    }
+    res = any_abstract;
   }
 
-  auto prim = GetCNodePrimitive(current_pyexecute_node);
+  // Set input real type and shape for caller.
+  if (fallback::HasRealType(node)) {
+    const auto &real_type = fallback::GetRealType<AnfNode, Type>(node);
+    fallback::SetRealType<AbstractBase, Type>(res, real_type);
+  }
+  if (fallback::HasRealShape(node)) {
+    const auto &real_type = fallback::GetRealShape<AnfNode, BaseShape>(node);
+    fallback::SetRealShape<AbstractBase, BaseShape>(res, real_type);
+  }
+
+  auto prim = GetCNodePrimitive(node);
   if (prim->HasAttr("is_raise_prim")) {
     res->set_user_data("__raise_flag__", MakeValue(true));
   }
@@ -2178,9 +2259,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_LOG(INTERNAL_EXCEPTION) << "'args_abs_list' should not be empty";
     }
 
-    auto current_interpret_node = out_conf->node();
-    MS_EXCEPTION_IF_NULL(current_interpret_node);
-    MS_LOG(DEBUG) << "The current interpret node: " << current_interpret_node->DebugString();
+    auto node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(DEBUG) << "The current interpret node: " << node->DebugString();
     // Get the type parameter.
     MS_EXCEPTION_IF_NULL(args_abs_list[0]);
     ValuePtr value_track = args_abs_list[0]->GetValueTrack();
@@ -2188,7 +2269,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
 
     auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
     if (script_obj == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper: " << value_track->ToString() << ".";
     }
 
     // Make global and local parameters.
@@ -2200,14 +2281,22 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       AbstractBasePtr res = nullptr;
       // Support Tensor annotation type. Add list and tuple here later.
       TypePtr dtype = nullptr;
-      TypePtr type = GetAnnotationType(current_interpret_node, args_abs_list);
+      TypePtr type = GetAnnotationType(node, args_abs_list);
       if (type != nullptr && type->isa<TensorType>()) {
         dtype = type->cast<TensorTypePtr>()->element();
       }
+      // Create output abstract.
       if (dtype != nullptr) {
         res = std::make_shared<AbstractTensor>(dtype, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny})));
       } else {
-        res = std::make_shared<AbstractAny>();
+        const auto any_abstract = std::make_shared<AbstractAny>();
+        // If no annotation dtype, try to use unique tensor dtype.
+        dtype = GetLocalArgsUniqueDtype(node, args_abs_list);
+        if (dtype != nullptr) {
+          any_abstract->element()->set_type(dtype);
+          any_abstract->set_supposed_tensor_dtype(true);
+        }
+        res = any_abstract;
       }
       auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
@@ -2296,7 +2385,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     constexpr int params_size = 3;
     if (params_size != args_abs_list.size()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Unexpected params_size: " << params_size
-                                 << ", not equal to arguments.size:" << args_abs_list.size();
+                                 << ", not equal to arguments.size: " << args_abs_list.size();
     }
     // The first argument is script string, ignore it.
     auto params = py::tuple(params_size - 1);
@@ -2485,7 +2574,7 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     const auto args_size = args_abs_list.size();
     if (args_size != args_min_size && args_size != args_max_size) {
       MS_LOG(EXCEPTION) << "For Primitive GetAttr, the input size should be " << args_min_size << " or "
-                        << args_max_size << ", but got size:" << args_size;
+                        << args_max_size << ", but got size: " << args_size;
     }
     auto res_abstract = EvalUndeterminedArgs(args_abs_list);
     if (res_abstract != nullptr) {
@@ -2545,7 +2634,7 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
     constexpr auto resolve_args_size = 2;
     // Inputs: namespace, symbol
     if (args_abs_list.size() != resolve_args_size) {
-      MS_LOG(EXCEPTION) << "Expected args_abs_list size = 2, but has size:" << args_abs_list.size();
+      MS_LOG(EXCEPTION) << "Expected args_abs_list size = 2, but has size: " << args_abs_list.size();
     }
     EvalResultPtr res = nullptr;
     if (bound_node() != nullptr) {
@@ -2599,7 +2688,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(value_track);
     auto type_obj = dyn_cast_ptr<parse::PyObjectWrapper>(value_track);
     if (type_obj == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper: " << value_track->ToString() << ".";
     }
     if (!type_obj->isa<parse::ClassType>() && !type_obj->isa<parse::MsClassObject>()) {
       MS_LOG(EXCEPTION)

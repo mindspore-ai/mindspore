@@ -69,6 +69,33 @@ bool ContainsAnyType(const AbstractBasePtrList &args_abs_list) {
                      [](const AbstractBasePtr &item) { return item->isa<AbstractAny>(); });
 }
 
+TypePtr GetArgsUniqueDtype(const AbstractBasePtrList &args_abs_list) {
+  TypePtr res = nullptr;
+  for (const auto &arg : args_abs_list) {
+    if (!arg->isa<AbstractTensor>()) {
+      continue;
+    }
+    // Check default dtype if it's AbstractAny(AbstractTensor)
+    if (arg->isa<abstract::AbstractAny>() && !arg->cast_ptr<abstract::AbstractAny>()->supposed_tensor_dtype()) {
+      continue;
+    }
+    // Fetch the dtype from item of tensor.
+    auto tensor_abs = arg->cast_ptr<AbstractTensor>();
+    MS_EXCEPTION_IF_NULL(tensor_abs);
+    MS_EXCEPTION_IF_NULL(tensor_abs->element());
+    const auto dtype = tensor_abs->element()->BuildType();
+    MS_EXCEPTION_IF_NULL(dtype);
+    if (res == nullptr) {
+      res = dtype;
+      continue;
+    }
+    if (dtype != res) {
+      return nullptr;
+    }
+  }
+  return res;
+}
+
 FuncGraphPtr GetCloneBpropGraph(const MetaFuncGraphPtr &meta_func_graph, const FuncGraphPtr &generated_func_graph,
                                 const AnfNodePtr &bound_node, const ScopePtr &scope) {
   auto bound_cnode = dyn_cast_ptr<CNode>(bound_node);
@@ -337,8 +364,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
           const auto &cnode = node->cast<CNodePtr>();
           MS_EXCEPTION_IF_NULL(cnode);
           const auto &maybe_func = engine->GetCNodeOperatorAbstract(cnode, context, fg);
-          if (maybe_func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
-              maybe_func->isa<abstract::FuncGraphAbstractClosure>()) {
+          if (maybe_func->isa<MetaFuncGraphAbstractClosure>() || maybe_func->isa<FuncGraphAbstractClosure>()) {
             const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
             SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, fg, cnode, abs_func_graph, context);
           }
@@ -653,7 +679,13 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
      ignore_any_type_checking_prims.find(standard_prim_eval->prim()) != ignore_any_type_checking_prims.end());
   if (!ignore_any_type_checking && ContainsAnyType(args_abs_list)) {
     MS_LOG(INFO) << ToString() << " receives arguments that contain Any.";
-    res = std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
+    auto any_abstract = std::make_shared<AbstractAny>();
+    const auto &dtype = GetArgsUniqueDtype(args_abs_list);
+    if (dtype != nullptr) {
+      any_abstract->element()->set_type(dtype);
+      any_abstract->set_supposed_tensor_dtype(true);
+    }
+    res = std::make_shared<EvalResult>(any_abstract, std::make_shared<AttrValueMap>());
   } else {
     res = EvalPrim(engine, args_abs_list);
   }
@@ -815,11 +847,11 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
   MS_EXCEPTION_IF_NULL(axis);
   MS_EXCEPTION_IF_NULL(orig_abs);
   MS_EXCEPTION_IF_NULL(axis_size);
-  if (!orig_abs->isa<abstract::AbstractTensor>()) {
+  if (!orig_abs->isa<AbstractTensor>()) {
     MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
                       << orig_abs->ToString() << ".";
   }
-  auto orig_abs_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape());
+  auto orig_abs_shape = dyn_cast_ptr<Shape>(orig_abs->BuildShape());
   MS_EXCEPTION_IF_NULL(orig_abs_shape);
   ShapeVector orig_shape = orig_abs_shape->shape();
   int shape_len = SizeToInt(orig_shape.size());
@@ -836,7 +868,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
                       << *axis_size << " and " << temp_axes_size << ".";
   }
   (void)orig_shape.erase(orig_shape.begin() + *axis);
-  BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
+  BaseShapePtr new_shape = std::make_shared<Shape>(orig_shape);
   AbstractBasePtr abs_clone = orig_abs->Clone()->Broaden();
   abs_clone->set_shape(new_shape);
   return abs_clone;
@@ -845,7 +877,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
 AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, const ValuePtr &in_axes, int *axis_size) {
   MS_EXCEPTION_IF_NULL(physical_view_abs);
   MS_EXCEPTION_IF_NULL(in_axes);
-  auto physical_view_abs_sequence = dyn_cast_ptr<abstract::AbstractSequence>(physical_view_abs);
+  auto physical_view_abs_sequence = dyn_cast_ptr<AbstractSequence>(physical_view_abs);
   if (physical_view_abs_sequence != nullptr) {
     AbstractBasePtrList abs_list = physical_view_abs_sequence->elements();
     AbstractBasePtrList logical_view_abs_list;
@@ -884,8 +916,8 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   MS_EXCEPTION_IF_NULL(axis);
   AbstractBasePtr out_abs = nullptr;
   ShapeVector orig_shape;
-  if (orig_abs->isa<abstract::AbstractTensor>()) {
-    auto shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape());
+  if (orig_abs->isa<AbstractTensor>()) {
+    auto shape = dyn_cast_ptr<Shape>(orig_abs->BuildShape());
     if (shape != nullptr) {
       orig_shape = shape->shape();
     }
@@ -901,15 +933,15 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
   (void)orig_shape.insert(orig_shape.begin() + *axis, axis_size);
-  BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
-  if (orig_abs->isa<abstract::AbstractTensor>()) {
+  BaseShapePtr new_shape = std::make_shared<Shape>(orig_shape);
+  if (orig_abs->isa<AbstractTensor>()) {
     auto tmp_abs = orig_abs->Clone();
     MS_EXCEPTION_IF_NULL(tmp_abs);
     out_abs = tmp_abs->Broaden();
     MS_EXCEPTION_IF_NULL(out_abs);
     out_abs->set_shape(new_shape);
   } else if (orig_abs->isa<AbstractScalar>()) {
-    out_abs = std::make_shared<abstract::AbstractTensor>(orig_abs, new_shape);
+    out_abs = std::make_shared<AbstractTensor>(orig_abs, new_shape);
   } else {
     MS_LOG(EXCEPTION) << "The outputs of vmap's 'fn' should be consisting of tensors or constants, but got "
                       << orig_abs->ToString() << ".";
@@ -920,7 +952,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
 AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, const ValuePtr &out_axes, int axis_size) {
   MS_EXCEPTION_IF_NULL(logical_view_abs);
   MS_EXCEPTION_IF_NULL(out_axes);
-  auto logical_view_abs_sequence = dyn_cast_ptr<abstract::AbstractSequence>(logical_view_abs);
+  auto logical_view_abs_sequence = dyn_cast_ptr<AbstractSequence>(logical_view_abs);
   if (logical_view_abs_sequence != nullptr) {
     AbstractBasePtrList logical_view_abs_list = logical_view_abs_sequence->elements();
     AbstractBasePtrList physical_view_abs_list;
@@ -1061,7 +1093,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
   for (std::size_t i = 0; i < args_abs_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[i]);
     // For VirtualAbstractClosure, likely J's bprop, we just set its tuple arguments as used before really grad.
-    if (enable_eliminate_unused_element && args_abs_list[i]->isa<abstract::AbstractSequence>()) {
+    if (enable_eliminate_unused_element && args_abs_list[i]->isa<AbstractSequence>()) {
       MS_LOG(INFO) << "Notice: For VirtualAbstractClosure, update all use flags as true for arguments[" << i
                    << "]: " << args_abs_list[i]->ToString();
       SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
