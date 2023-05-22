@@ -1507,7 +1507,7 @@ def get_bprop_igammac(self):
     """Grad definition for `Igammac` operation."""
     shape_ = P.Shape()
     igammagrada = G.IgammaGradA()
-    lgamma = nn.LGamma()
+    lgamma = P.Lgamma()
     log_ = P.Log()
     exp_ = P.Exp()
     reshape_ = P.Reshape()

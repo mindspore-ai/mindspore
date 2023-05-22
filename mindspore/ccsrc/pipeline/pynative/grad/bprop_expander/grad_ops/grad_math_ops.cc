@@ -73,7 +73,7 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
   auto ra = rax[0];
   auto rx = rax[1];
   auto partial_a = ib->Emit("IgammaGradA", {a, x});
-  auto lgamma = LGamma(ib, a);
+  auto lgamma = ib->Emit("Lgamma", {a});
   auto partial_x = ib->Exp(
     ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
   auto dout = ib->GetInput(kIndex3);
