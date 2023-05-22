@@ -108,6 +108,28 @@ void EliminateTupleOfTuple(const FuncGraphPtr &fg) {
   fg->output()->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
 }
 
+template <typename T>
+bool IsFinite(T value) {
+  return !(std::isinf(value) || std::isnan(value));
+}
+
+bool IsFiniteScalar(void *data, TypeId type_id) {
+  MS_EXCEPTION_IF_NULL(data);
+  // check if float value is inf or nan
+  if (type_id == kNumberTypeFloat64) {
+    auto value = static_cast<double *>(data)[0];
+    return IsFinite(value);
+  } else if (type_id == kNumberTypeFloat32) {
+    auto value = static_cast<float *>(data)[0];
+    return IsFinite(value);
+  } else if (type_id == kNumberTypeFloat16) {
+    float16 *val = static_cast<float16 *>(data);
+    auto value = static_cast<float>(val[0]);
+    return IsFinite(value);
+  }
+  return true;
+}
+
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
   mindspore::OrderedSet<AnfNodePtr> value_nodes;
@@ -120,7 +142,8 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
         continue;
       }
       // data is nullptr means uninitialized.
-      if (tensor->data().const_data() == nullptr || tensor->DataSize() > 1) {
+      if (tensor->data().const_data() == nullptr || tensor->DataSize() > 1 ||
+          !IsFiniteScalar(tensor->data_c(), tensor->data_type())) {
         (void)value_nodes.insert(tnode);
       }
     }
