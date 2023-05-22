@@ -67,8 +67,8 @@ def array(obj, dtype=None, copy=True, ndmin=0):
         obj (Union[int, float, bool, list, tuple]): Input data, in any form that
             can be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
-            of the new tensor will be inferred from obj. Default is ``:class:`None``` .
+            be in format of np.int32, or \'int32\'. If dtype is ``None``, the data type
+            of the new tensor will be inferred from obj. Default is ``None`` .
         copy (bool): If `True`, then the object is copied. Otherwise, a copy will
             only be made if necessary. Default: ``True``.
         ndmin (int): Specifies the minimum number of dimensions that the resulting
@@ -154,8 +154,8 @@ def asarray(a, dtype=None):
         a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
             be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
-            of the new tensor will be inferred from obj. Default is ``:class:`None``` .
+            be in format of np.int32, or \'int32\'. If dtype is ``None``, the data type
+            of the new tensor will be inferred from obj. Default is ``None`` .
 
     Returns:
         Tensor, generated tensor with the specified dtype.
@@ -208,8 +208,8 @@ def asfarray(a, dtype=mstype.float32):
         a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
             be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
-            of the new tensor will be inferred from `a`. Default is ``:class:`mindspore.float32```.
+            be in format of np.int32, or \'int32\'. If dtype is ``None``, the data type
+            of the new tensor will be inferred from `a`. Default is ``mstype.float32``.
 
 
     Returns:
@@ -859,8 +859,8 @@ def eye(N, M=None, k=0, dtype=mstype.float32):
 
     Args:
         N (int): Number of rows in the output, must be larger than 0.
-        M (int, optional): Number of columns in the output. If is :class:`None`, default: ``N`` ,
-            if defined, must be larger than 0. Default: ``:class:`None```.
+        M (int, optional): Number of columns in the output. If is ``None``, default: ``N`` ,
+            if defined, must be larger than 0. Default: ``None``.
         k (int, optional): Index of the diagonal: 0 (the default) refers to the main
             diagonal, a positive value refers to an upper diagonal, and a negative value
             to a lower diagonal. Default: ``0`` .
@@ -2650,7 +2650,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
             creates unique statistic lengths for each axis. :class:`((before, after),)`
             yields same before and after statistic lengths for each axis. :class:`(stat_length,)`
             or int is a shortcut for :class:`before = after = statistic length` for all
-            axes. Default: ``:class:`None```, to use the entire axis.
+            axes. Default: ``None``, to use the entire axis.
         constant_values (Union[tuple, list, int], optional):
             Used in :class:`constant mode`. The values to set the padded values for each
             axis. :class:`((before_1, after_1), ... (before_N, after_N))` creates unique pad

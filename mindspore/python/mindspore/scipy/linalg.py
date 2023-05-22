@@ -364,11 +364,11 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
             eigenvectors will be computed.
         b (Tensor, optional): A :math:`(M, M)` complex Hermitian or real symmetric definite positive matrix in.
-            If omitted, identity matrix is assumed. Default: ``None`` `.
+            If omitted, identity matrix is assumed. Default: ``None``.
         lower (bool, optional): Whether the pertinent Tensor data is taken from the lower or upper
-            triangle of `a` and, if applicable, `b`. Default: `True`` `.
+            triangle of `a` and, if applicable, `b`. Default: ``True``.
         eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
-            Default: `False`` .
+            Default: ``False`` .
         type (int, optional): For the generalized problems, this keyword specifies the problem type
             to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs)::
 

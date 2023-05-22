@@ -812,7 +812,7 @@ def signbit(x, dtype=None):
 
     Args:
         x (Union[int, float, bool, list, tuple, Tensor]): The input value(s).
-        dtype (:class:`mindspore.dtype`, optional): Default:`` None`` . Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
     Returns:
