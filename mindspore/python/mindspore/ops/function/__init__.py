@@ -527,6 +527,7 @@ from .nn_func import (
     hardsigmoid,
 )
 from .linalg_func import (
+    cond,
     eig,
     eigvals,
     geqrf,
