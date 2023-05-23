@@ -218,6 +218,7 @@ REG_ADPT_DESC(HardShrink, kHardShrinkOpName, ADPT_DESC(HardShrink))
 INPUT_MAP(HardShrinkGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(HardShrinkGrad) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
 OUTPUT_MAP(HardShrinkGrad) = {{0, OUTPUT_DESC(backprops)}};
+REG_ADPT_DESC(HShrinkGrad, prim::kPrimHShrinkGrad->name(), ADPT_DESC(HardShrinkGrad))
 REG_ADPT_DESC(HardShrinkGrad, kHardShrinkGradOpName, ADPT_DESC(HardShrinkGrad))
 
 // SoftShrink
