@@ -120,7 +120,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegat
 #endif
 
 #if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
-  ConvolutionBaseStruct *conv_im2col = CreateConvolutionIm2Col(conv_param);
+  ConvolutionBaseStruct *conv_im2col = CreateConvolutionIm2Col(&convolution_delegate->base_, conv_param);
   return conv_im2col;
 #endif
 
@@ -152,7 +152,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
     if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
       conv = CreateConvolution1x1(conv_param);
     } else {
-      conv = CreateConvolutionIm2Col(conv_param);
+      conv = CreateConvolutionIm2Col(&convolution_delegate->base_, conv_param);
     }
   }
   return conv;
@@ -160,7 +160,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
 
 ConvolutionBaseStruct *ConvolutionDelegateConvolutionSelect(ConvolutionDelegateStruct *convolution_delegate) {
   ConvolutionBaseStruct *conv;
-  if (convolution_delegate->base_.out_[OUTPUT_INDEX]->format_ == NC4HW4) {
+  if (convolution_delegate->base_.out_[OUTPUT_INDEX]->format_ == Format_NC4HW4) {
     conv = ConvolutionDelegateConvNC4KernelSelect(convolution_delegate);
   } else {
     conv = ConvolutionDelegateConvNHWCKernelSelect(convolution_delegate);

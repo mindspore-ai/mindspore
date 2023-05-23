@@ -26,20 +26,45 @@ int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   TensorC *output = conv->base_.out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
-  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-
   NNACL_CHECK_FALSE(input->shape_size_ != DIMENSION_4D, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(output->shape_size_ != DIMENSION_4D, NNACL_OUTPUT_TENSOR_ERROR);
 
-  conv_param->input_batch_ = GetBatch(input);
-  conv_param->input_h_ = GetHeight(input);
-  conv_param->input_w_ = GetWidth(input);
-  conv_param->input_channel_ = GetChannel(input);
-  conv_param->output_batch_ = GetBatch(output);
-  conv_param->output_h_ = GetHeight(output);
-  conv_param->output_w_ = GetWidth(output);
-  conv_param->output_channel_ = GetChannel(output);
+  conv->input_b_ = GetBatch(input);
+  conv->input_h_ = GetHeight(input);
+  conv->input_w_ = GetWidth(input);
+  conv->input_c_ = GetChannel(input);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->input_h_, conv->input_w_, NNACL_CONVOLUTION_INPUT_HW_OVERFLOW);
+
+  conv->output_b_ = GetBatch(output);
+  conv->output_h_ = GetHeight(output);
+  conv->output_w_ = GetWidth(output);
+  conv->output_c_ = GetChannel(output);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->output_h_, conv->output_w_, NNACL_CONVOLUTION_INPUT_HW_OVERFLOW);
+
+  TensorC *filter = conv->base_.in_[SECOND_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(filter);
+  conv->kernel_h_ = GetHeight(filter);
+  conv->kernel_w_ = GetWidth(filter);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->kernel_h_, conv->kernel_w_, NNACL_CONVOLUTION_KERNEL_HW_OVERFLOW);
+
+  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
+  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
+  conv->stride_h_ = conv_param->stride_h_;
+  conv->stride_w_ = conv_param->stride_w_;
+  conv->dilation_h_ = conv_param->dilation_h_;
+  conv->dilation_w_ = conv_param->dilation_w_;
+  conv->pad_u_ = conv_param->pad_u_;
+  conv->pad_d_ = conv_param->pad_d_;
+  conv->pad_l_ = conv_param->pad_l_;
+  conv->pad_r_ = conv_param->pad_r_;
+  conv->group_ = conv_param->group_;
+  conv->tile_num_ = conv_param->tile_num_;
+  conv->input_unit_ = conv_param->input_unit_;
+  conv->output_unit_ = conv_param->output_unit_;
+  conv->channel_multiplie_ = conv_param->channel_multiplie_;
+  conv->output_padding_w_ = conv_param->output_padding_w_;
+  conv->output_padding_h_ = conv_param->output_padding_h_;
+
   return NNACL_OK;
 }
 

@@ -39,7 +39,7 @@ int Conv1x1Run(void *cdata, int task_id, float l, float r) {
                   : (float *)conv_1x1->conv_.bias_data_ + conv_1x1->thread_stride_ * task_id;
   float *weight = (float *)conv_1x1->conv_.packed_weight_ + total_thead_stride_ * matmul->deep_;
 
-  if (out_tensor->format_ == NC4HW4) {
+  if (out_tensor->format_ == Format_NC4HW4) {
     MatMulOpt(conv_1x1->pack_input_, weight, conv_1x1->output_ptr_ + total_thead_stride_ * matmul->row_, bias,
               matmul->act_type_, matmul->deep_, matmul->row_, cur_oc, matmul->row_, OutType_NC4HW4);
   } else {
@@ -81,7 +81,7 @@ int Conv1x1RunHw(void *cdata, int task_id, float l, float r) {
   float *thread_input_ptr = conv_1x1->input_ptr_ + total_thead_stride_ * matmul->deep_;
   float *thread_pack_input = conv_1x1->pack_input_ + total_row_tile_ * matmul->deep_;
   float *thread_output_ptr = NULL;
-  if (output_tensor->format_ != NC4HW4) {
+  if (output_tensor->format_ != Format_NC4HW4) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_thead_stride_, matmul->col_, NNACL_ERR);
     thread_output_ptr = conv_1x1->output_ptr_ + total_thead_stride_ * matmul->col_;
   } else {
@@ -95,7 +95,7 @@ int Conv1x1RunHw(void *cdata, int task_id, float l, float r) {
   for (int i = 0; i < cur_hw_; i += conv_1x1->row_tile_) {
     int cur_rows = (cur_hw_ - i >= conv_1x1->row_tile_) ? conv_1x1->row_tile_ : (cur_hw_ - i);
     Conv1x1PackMatmulInput(cur_intput, thread_pack_input, cur_rows, matmul->deep_);
-    if (output_tensor->format_ == NC4HW4) {
+    if (output_tensor->format_ == Format_NC4HW4) {
       MatMulOpt(thread_pack_input, (float *)conv_1x1->conv_.packed_weight_, cur_output, bias, matmul->act_type_,
                 matmul->deep_, cur_rows, matmul->col_, matmul->row_, OutType_NC4HW4);
       cur_output += conv_1x1->row_tile_ * MSMIN(matmul->col_, C4NUM);
