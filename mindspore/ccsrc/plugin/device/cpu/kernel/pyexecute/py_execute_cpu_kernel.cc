@@ -57,8 +57,9 @@ void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(input_abstract);
     if (input_abstract->isa<abstract::AbstractRefTensor>()) {
       const auto &param = dyn_cast<Parameter>(input);
-      MS_EXCEPTION_IF_NULL(param);
-      MS_LOG(DEBUG) << "AbstractRefTensor, input[" << i << "]: " << param->default_param()->ToString();
+      if (param != nullptr) {
+        MS_LOG(DEBUG) << "AbstractRefTensor, input[" << i << "]: " << param->default_param()->ToString();
+      }
       (void)inputs_info_.emplace_back(PyExecuteInputInfo({obj, input_abstract, kTypeUnknown, {}}));
     } else if (input_abstract->isa<abstract::AbstractTensor>()) {
       const auto &tensor_abstract = dyn_cast<abstract::AbstractTensor>(input_abstract);

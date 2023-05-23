@@ -506,16 +506,6 @@ class BeforeOptARewriter : public BaseRewriter {
     return node->input(key_index);
   }
 
-  // dict(k0:v0, k1:v1, ...) --> tuple(v0, v1, ...)
-  AnfNodePtr DictToTuple(const ValueDictionaryPtr &dict) const {
-    const auto &keys_values = dict->value();
-    std::vector<ValuePtr> value_list;
-    value_list.reserve(keys_values.size());
-    (void)std::transform(keys_values.begin(), keys_values.end(), std::back_inserter(value_list),
-                         [](const auto &value) { return value.second; });
-    return NewValueNode(std::make_shared<ValueTuple>(value_list));
-  }
-
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -543,31 +533,54 @@ class BeforeOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  static void CheckValueSequenceNesting(const ValuePtr &value, size_t depth) {
+  ValuePtr ConvertDictValue(const ValuePtr &value, size_t depth, bool convert_dict, bool *need_convert) const {
     MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
-
     if (value->isa<ValueSequence>()) {
       auto value_seq = value->cast<ValueSequencePtr>();
-      for (auto element : value_seq->value()) {
-        CheckValueSequenceNesting(element, depth + 1);
+      std::vector<ValuePtr> value_vec;
+      value_vec.reserve(value_seq->size());
+      bool new_need_convert = false;
+      for (const auto &element : value_seq->value()) {
+        (void)value_vec.emplace_back(ConvertDictValue(element, depth + 1, convert_dict, &new_need_convert));
       }
+      if (!new_need_convert) {
+        return value;
+      }
+      *need_convert = true;
+      if (value->isa<ValueTuple>()) {
+        return std::make_shared<ValueTuple>(value_vec);
+      }
+      return std::make_shared<ValueList>(value_vec);
     }
-    return;
+    // dict(k0:v0, k1:v1, ...) --> tuple(v0, v1, ...)
+    if (value->isa<ValueDictionary>() && convert_dict) {
+      *need_convert = true;
+      const auto &keys_values = value->cast<ValueDictionaryPtr>()->value();
+      std::vector<ValuePtr> value_vec;
+      value_vec.reserve(keys_values.size());
+      for (const auto &element : keys_values) {
+        (void)value_vec.emplace_back(ConvertDictValue(element.second, depth + 1, convert_dict, need_convert));
+      }
+      return std::make_shared<ValueTuple>(value_vec);
+    }
+    return value;
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
-    if (value->isa<ValueDictionary>()) {
-      const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-      if (!allow_fallback_runtime || !is_dict_output_) {
-        return DictToTuple(value->cast<ValueDictionaryPtr>());
-      }
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    bool convert_dict = !allow_fallback_runtime || !is_dict_output_;
+    bool need_convert = false;
+    auto new_value = ConvertDictValue(value, 0, convert_dict, &need_convert);
+    if (need_convert) {
+      auto new_node = NewValueNode(new_value);
+      new_node->set_debug_info(value_node->debug_info());
+      return new_node;
     }
-    CheckValueSequenceNesting(value, 0);
     return nullptr;
   }
 
