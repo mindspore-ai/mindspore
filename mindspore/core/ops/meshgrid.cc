@@ -88,6 +88,7 @@ AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input_args tuple size", SizeToLong(input_args.size()), kEqual, 1,
                                            prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   if (!input_args[0]->isa<abstract::AbstractTuple>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be tuple of tensors.";
   }
