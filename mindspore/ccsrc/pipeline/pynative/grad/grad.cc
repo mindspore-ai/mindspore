@@ -1011,6 +1011,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   set_top_cell(already_run_top_cell);
   op_num_in_bprop_graph_ = top_cell()->op_index();
   top_cell()->set_grad_operation(grad_operation_);
+  top_cell()->set_input_args_info(nullptr);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
   auto w_args = GetWeightsArgs(weights, &weight_param_is_tuple);
