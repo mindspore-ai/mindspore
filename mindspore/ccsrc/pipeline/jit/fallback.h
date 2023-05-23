@@ -164,7 +164,7 @@ bool CheckNeedSymbol(const AbstractBasePtr &abs);
 
 std::string MakeRaiseKey(int index);
 
-bool HasVariableCondition(const FuncGraphPtr &cur_graph, const FuncGraphPtr &prev_graph = nullptr);
+bool HasVariableCondition(const FuncGraphPtr &cur_graph, std::vector<FuncGraphPtr> *prev_graph);
 }  // namespace raiseutils
 }  // namespace mindspore
 

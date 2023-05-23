@@ -887,9 +887,9 @@ def test_isolated_raise():
     np_data = np.random.randint(6, size=(4,))
     data = ms.Tensor(np_data, dtype=ms.float32)
     net = CheckNet()
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(ValueError) as err:
         net(data)
-    assert "Should not raise with variable under a constant condition" in str(err.value)
+    assert "Check failed. Wrong shape," in str(err.value)
 
 
 @pytest.mark.level0
@@ -1055,27 +1055,6 @@ def test_raise_with_input_error_type_2():
         res = net(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info.value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_raise_with_variable_and_constant_condition():
-    """
-    Feature: graph raise.
-    Description: Test raise.
-    Expectation: No exception.
-    """
-    class RaiseNet(nn.Cell):
-        def construct(self, x):
-            raise ValueError(f"The input can not be {x}.")
-
-    with pytest.raises(RuntimeError) as raise_info_9:
-        net = RaiseNet()
-        x = Tensor(11)
-        res = net(x)
-        print("res:", res)
-    assert "Should not raise with variable under a constant condition" in str(raise_info_9.value)
 
 
 @pytest.mark.level0

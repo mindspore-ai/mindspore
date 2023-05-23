@@ -703,7 +703,7 @@ std::string GetExceptionType(const AbstractBasePtr &abs, const AnfNodePtr &node,
   MS_LOG(EXCEPTION) << "The abstract of exception type is not scalar: " << abs->ToString();
 }
 
-bool HasVariableCondition(const FuncGraphPtr &cur_graph, const FuncGraphPtr &prev_graph) {
+bool HasVariableCondition(const FuncGraphPtr &cur_graph, std::vector<FuncGraphPtr> *prev_graph) {
   if (cur_graph == nullptr) {
     return false;
   }
@@ -714,14 +714,15 @@ bool HasVariableCondition(const FuncGraphPtr &cur_graph, const FuncGraphPtr &pre
   for (auto &cur_fg_use : cur_fg_map) {
     auto temp_node = cur_fg_use.first->first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(temp_node);
-    if (prev_graph != nullptr && temp_node->func_graph() == prev_graph) {
-      return false;
+    if (std::find(prev_graph->begin(), prev_graph->end(), cur_graph) != prev_graph->end()) {
+      continue;
     }
-    if (HasVariableCondition(temp_node->func_graph(), cur_graph)) {
+    prev_graph->push_back(cur_graph);
+    if (HasVariableCondition(temp_node->func_graph(), prev_graph)) {
       return true;
     }
   }
-  if (HasVariableCondition(cur_graph->parent())) {
+  if (HasVariableCondition(cur_graph->parent(), prev_graph)) {
     return true;
   }
   return false;
