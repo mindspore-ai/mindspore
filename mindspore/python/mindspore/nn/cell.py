@@ -2223,14 +2223,17 @@ class Cell(Cell_):
             raise TypeError(
                 f"For 'set_inputs' and tuple(list) in 'set_inputs',the dtype of {index + 1}th input must be the same "
                 f"as network's input, but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
-        if net_input.dim() != 0 and set_input.dim() != net_input.dim():
-            raise ValueError(
-                f"For 'set_inputs' and tuple(list) in 'set_inputs',the dims of {index + 1}th input must be the same as "
-                f"network's input, but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
-        if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
-            raise ValueError(
-                f"For 'set_inputs' and tuple(list) in 'set_inputs',the shape of {index + 1}th input must be the same "
-                f"as network's input, but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
+        if -2 not in set_input.shape:
+            if net_input.dim() != 0 and set_input.dim() != net_input.dim():
+                raise ValueError(
+                    f"For 'set_inputs' and tuple(list) in 'set_inputs',the dims of {index + 1}th input must be the "
+                    f"same as network's input, but got 'set_inputs': {set_input.dim()} and network's input: "
+                    f"{net_input.dim()}.")
+            if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
+                raise ValueError(
+                    f"For 'set_inputs' and tuple(list) in 'set_inputs',the shape of {index + 1}th input must be the "
+                    f"same as network's input, but got 'set_inputs': {set_input.shape} and network's input: "
+                    f"{net_input.shape}.")
 
     def _check_compile_dynamic_shape(self, set_inputs, net_inputs):
         """
