@@ -22,9 +22,19 @@
 #include "nnacl/kernel.h"
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/matmul_parameter.h"
 
 typedef struct Convolution1x1Struct {
   ConvolutionBaseStruct conv_;
+  MatMulParameter matmul_param_;
+  int row_tile_;
+  int col_tile_;
+  bool pre_trans_input_;
+  float *input_ptr_;
+  float *output_ptr_;
+  float *pack_input_;
+  bool multi_thread_by_hw_;
+  int thread_stride_;
 } Convolution1x1Struct;
 
 ConvolutionBaseStruct *CreateConvolution1x1(ConvParameter *conv_param);

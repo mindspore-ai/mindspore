@@ -15,10 +15,118 @@
  */
 
 #include "nnacl/kernel/convolution_sw_1x1.h"
+
+int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
+  MatMulParameter *matmul_param = (MatMulParameter *)sw_1x1->matmul_->base_.param_;
+  NNACL_CHECK_NULL_RETURN_ERR(matmul_param);
+
+  if (sw_1x1->conv_.infershape_done_ || matmul_param->a_const_) {
+    TensorC *input_tensor = sw_1x1->conv_.base_.in_[FIRST_INPUT];
+    matmul_param->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
+    matmul_param->deep_ = GetChannel(input_tensor);
+  }
+
+  if (sw_1x1->conv_.infershape_done_ || matmul_param->b_const_) {
+    TensorC *weight_tensor = sw_1x1->conv_.base_.in_[SECOND_INPUT];
+    matmul_param->col_ = GetBatch(weight_tensor);
+    matmul_param->deep_ = GetChannel(weight_tensor);
+  }
+
+  sw_1x1->matmul_->a_batch_ = 1;
+  sw_1x1->matmul_->b_batch_ = 1;
+  matmul_param->batch = 1;
+
+  matmul_param->a_transpose_ = false;
+  matmul_param->b_transpose_ = true;
+
+  return sw_1x1->matmul_->base_.prepare(&sw_1x1->matmul_->base_);
+}
+
+int convolution_sw1x1_compute(KernelBase *self) {
+  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
+
+  sw_1x1->matmul_->base_.in_ = self->in_;
+  sw_1x1->matmul_->base_.in_size_ = self->in_size_;
+  sw_1x1->matmul_->base_.out_ = self->out_;
+  sw_1x1->matmul_->base_.out_size_ = self->out_size_;
+  sw_1x1->matmul_->base_.workspace_ = self->workspace_;
+  return sw_1x1->matmul_->base_.compute(&sw_1x1->matmul_->base_);
+}
+
+int convolution_sw1x1_resize(KernelBase *self) {
+  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
+
+  MatMulParameter *matmul_param = (MatMulParameter *)sw_1x1->matmul_->base_.param_;
+  NNACL_CHECK_NULL_RETURN_ERR(matmul_param);
+
+  TensorC *input_tensor = self->in_[FIRST_INPUT];
+  matmul_param->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
+  matmul_param->deep_ = GetChannel(input_tensor);
+
+  TensorC *weight_tensor = self->in_[SECOND_INPUT];
+  matmul_param->col_ = GetBatch(weight_tensor);
+
+  sw_1x1->matmul_->base_.in_ = self->in_;
+  sw_1x1->matmul_->base_.in_size_ = self->in_size_;
+  sw_1x1->matmul_->base_.out_ = self->out_;
+  sw_1x1->matmul_->base_.out_size_ = self->out_size_;
+  sw_1x1->matmul_->base_.workspace_ = self->workspace_;
+  return sw_1x1->matmul_->base_.resize(&sw_1x1->matmul_->base_);
+}
+
+int convolution_sw1x1_prepare(KernelBase *self) {
+  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
+
+  sw_1x1->matmul_->matrix_b_.origin_ptr_ = sw_1x1->conv_.origin_weight_;
+  sw_1x1->matmul_->matrix_b_.has_origin_ = true;
+  sw_1x1->matmul_->matrix_c_.origin_ptr_ = sw_1x1->conv_.origin_bias_;
+  sw_1x1->matmul_->matrix_c_.has_origin_ = true;
+
+  sw_1x1->matmul_->a_const_ = false;
+  sw_1x1->matmul_->b_const_ = true;
+
+  sw_1x1->matmul_->base_.in_ = self->in_;
+  sw_1x1->matmul_->base_.in_size_ = self->in_size_;
+  sw_1x1->matmul_->base_.out_ = self->out_;
+  sw_1x1->matmul_->base_.out_size_ = self->out_size_;
+  sw_1x1->matmul_->base_.workspace_ = self->workspace_;
+
+  ConvSW1x1Prepare(sw_1x1);
+  return sw_1x1->matmul_->base_.prepare(&sw_1x1->matmul_->base_);
+}
+
+int convolution_sw1x1_release(KernelBase *self) {
+  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
+
+  if (sw_1x1->matmul_ != NULL) {
+    if (sw_1x1->matmul_->base_.param_ != NULL) {
+      free(sw_1x1->matmul_->base_.param_);
+      sw_1x1->matmul_->base_.param_ = NULL;
+    }
+    free(sw_1x1->matmul_);
+    sw_1x1->matmul_ = NULL;
+  }
+  return NNACL_OK;
+}
+
 ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
+  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)malloc(sizeof(ConvolutionSW1x1Struct));
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(sw_1x1);
+  memset(sw_1x1, 0, sizeof(ConvolutionSW1x1Struct));
+  sw_1x1->conv_.base_.compute = convolution_sw1x1_compute;
+  sw_1x1->conv_.base_.resize = convolution_sw1x1_resize;
+  sw_1x1->conv_.base_.prepare = convolution_sw1x1_prepare;
+  sw_1x1->conv_.base_.release = convolution_sw1x1_release;
+
   MatMulParameter *matmul_param = (MatMulParameter *)malloc(sizeof(MatMulParameter));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul_param);
-
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->output_h_, conv_param->output_w_, NULL);
   matmul_param->row_ = conv_param->output_h_ * conv_param->output_w_;
   matmul_param->col_ = conv_param->output_channel_;
@@ -28,13 +136,6 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   matmul_param->act_type_ = conv_param->act_type_;
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
-  //  matmul_param->a_const_ = input_const_;
-  //  matmul_param->b_const_ = weight_const_;
 
-  ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)malloc(sizeof(ConvolutionSW1x1Struct));
-  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(sw_1x1);
-  memset(sw_1x1, 0, sizeof(ConvolutionSW1x1Struct));
-
-  sw_1x1->matmul_param_ = matmul_param;
   return (ConvolutionBaseStruct *)sw_1x1;
 }
