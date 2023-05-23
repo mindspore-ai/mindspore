@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/math/polygamma_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/digamma_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -78,7 +79,18 @@ bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   T1 *a = GetDeviceAddress<T1>(inputs, 0);
   T2 *input = GetDeviceAddress<T2>(inputs, 1);
   T2 *output = GetDeviceAddress<T2>(outputs, 0);
-  CalPolygamma(output_elements_, a, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  T1 a_val;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&a_val, a, sizeof(T1), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "For '" << kernel_name_ << "', "
+            << "cudaMemcpy input 'a' to host failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "For '" << kernel_name_ << "', "
+                                                                      << "cudaDeviceSyncFailed");
+  if (a_val == static_cast<T1>(0)) {
+    CalDigamma(output_elements_, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  } else {
+    CalPolygamma(output_elements_, a, input, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  }
   return true;
 }
 

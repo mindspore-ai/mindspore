@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 
+#include "utils/digamma_helper.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -127,6 +128,9 @@ static inline scalar_t zeta(scalar_t x, scalar_t q) {
 
 template <typename T1, typename T2>
 static inline T2 calc_polygamma(T1 a, T2 x) {
+  if (a == static_cast<T1>(0)) {
+    return CalcDigamma<T2>(x);
+  }
   const auto one = T1{1};
   const auto two = T1{2};
   return ((a % two) ? one : -one) * ::exp(::lgamma(static_cast<T1>(a) + one)) * zeta<T2>(static_cast<T2>(a + 1), x);
