@@ -167,6 +167,11 @@ class AclRunner {
   }
 
   size_t GetNumRealInputs() {
+    if (acl_param_.input_desc.empty()) {
+      return 0;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
+                               "Acl param input_desc size is not equal to acl param input_buffer size");
     for (size_t i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
       if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
         return i + 1;
@@ -192,6 +197,11 @@ class AclRunner {
   }
 
   size_t GetNumRealOutputs() {
+    if (acl_param_.output_desc.empty()) {
+      return 0;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.output_desc.size() == acl_param_.output_buffer.size(),
+                               "Acl param output_desc size is not equal to acl param output_buffer size");
     for (size_t i = acl_param_.output_desc.size() - 1; i >= 0; --i) {
       if (acl_param_.output_desc[i] != nullptr && acl_param_.output_buffer[i] != nullptr) {
         return i + 1;
