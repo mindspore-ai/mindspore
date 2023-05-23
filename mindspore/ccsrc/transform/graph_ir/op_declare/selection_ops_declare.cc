@@ -126,19 +126,12 @@ ATTR_MAP(GatherD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherD))
 
-// Range
-INPUT_MAP(RangeD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
-                    {"limit", ATTR_DESC(limit, AnyTraits<float>())},
-                    {"delta", ATTR_DESC(delta, AnyTraits<float>())}};
-OUTPUT_MAP(RangeD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(RangeD, kNameRange, ADPT_DESC(RangeD))
-
 // RangeV2
 INPUT_MAP(Range) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(limit)}, {3, INPUT_DESC(delta)}};
 ATTR_MAP(Range) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Range) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RangeV2, kNameRangeV2, ADPT_DESC(Range))
+REG_ADPT_DESC(Range, kNameRange, ADPT_DESC(Range))
 
 // InplaceAddD
 INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};

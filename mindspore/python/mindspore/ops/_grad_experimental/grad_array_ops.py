@@ -170,37 +170,22 @@ def get_bprop_masked_select(self):
 @bprop_getters.register(MaskedScatter)
 def get_bprop_masked_scatter(self):
     """Generate bprop for MaskedScatter"""
-    sort_ = P.Sort(descending=True)
-    masked_scatter = MaskedScatter()
     masked_fill = P.MaskedFill()
     masked_select = P.MaskedSelect()
-    size = P.Size()
-    zeros = P.Zeros()
-    concat = P.Concat(axis=0)
     reshape = P.Reshape()
-    shape = P.Shape()
-
+    shape = P.TensorShape()
+    range_ = P.Range()
+    scatter_update = P.TensorScatterElements()
     def bprop(x, mask, updates, out, dout):
-        dx = masked_fill(F.cast(dout, mstype.float32), mask, 0.0)
-        mask_selected = masked_select(F.cast(dout, mstype.float32), mask)
-        mask_broad = mask
-        if shape(mask) != shape(x):
-            broad_cast = P.BroadcastTo(shape(x))
-            mask_broad = broad_cast(mask)
-        mask_broad_vec = mask_broad.reshape(-1)
-        mask_sorted = F.cast(sort_(F.cast(mask_broad_vec, mstype.float32))[0], F.dtype(mask))
-        diff_num = size(updates) - size(mask_broad)
-        if diff_num > 0:
-            zeros_pad = zeros(diff_num, F.dtype(mask))
-            mask_sorted = concat((mask_sorted, zeros_pad))
-        zeros_tensor = zeros(size(updates), mstype.float32)
-        dupdates = masked_scatter(zeros_tensor, mask_sorted, mask_selected)
-        if shape(updates) != ():
-            dupdates = reshape(dupdates, shape(updates))
-        else:
-            zeros_tensor = zeros(shape(updates), mstype.float32)
-            dupdates = masked_scatter(zeros_tensor, mask, mask_selected)
-        return F.cast(dx, F.dtype(x)), zeros_like(mask), F.cast(dupdates, F.dtype(updates))
+        dout = F.cast(dout, mstype.float32)
+        dx = masked_fill(dout, mask, F.cast(0, mstype.float32))
+        dupdates = F.cast(zeros_like(updates).reshape(-1), mstype.float32)
+        dupdates_val = F.cast(masked_select(dout, mask), mstype.float32)
+        length = F.cast(shape(dupdates_val)[0], mstype.int32)
+        scatter_indices = range_(F.cast(0, mstype.int32), length, F.cast(1, mstype.int32))
+        dupdates = scatter_update(dupdates, scatter_indices, dupdates_val)
+        dupdates = reshape(dupdates, shape(updates))
+        return F.cast(dx, x.dtype), zeros_like(mask), F.cast(dupdates, updates.dtype)
 
     return bprop
 
