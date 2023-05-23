@@ -1211,6 +1211,11 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \param[in] value The corresponding user data.
   void set_list_user_data(const UserDataPtr &list_user_data) { list_user_data_ = list_user_data; }
 
+  /// \brief Get corresponding list user data.
+  ///
+  /// \return The corresponding list user data.
+  UserDataPtr list_user_data() { return list_user_data_; }
+
  protected:
   ValuePtr RealBuildValue() const override;
 
