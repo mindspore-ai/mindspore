@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,6 +215,12 @@ STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tenso
         for (size_t i = 0; i < data_count; i++) {
           value->push_back(static_cast<float>(reinterpret_cast<const int64_t *>(onnx_tensor.raw_data().data())[i]));
         }
+      }
+      break;
+    case onnx::TensorProto_DataType_FLOAT16:
+      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT16);
+      for (size_t i = 0; i < data_count; i++) {
+        value->push_back(static_cast<float>(reinterpret_cast<const float16 *>(onnx_tensor.raw_data().data())[i]));
       }
       break;
     default:

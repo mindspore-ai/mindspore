@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_arithmetic_operation_parser.h"
 #include <memory>
+#include <string>
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/div_fusion.h"
@@ -46,6 +47,7 @@
 #include "ops/sin.h"
 #include "ops/reciprocal.h"
 #include "ops/mod.h"
+#include "ops/greater_equal.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -242,6 +244,12 @@ PrimitiveCPtr OnnxModParser::Parse(const onnx::GraphProto &onnx_graph, const onn
   return prim->GetPrim();
 }
 
+PrimitiveCPtr OnnxGreaterEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::GreaterEqual>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
@@ -272,5 +280,6 @@ OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());
 OnnxNodeRegistrar g_onnxRoundParser("Round", new OnnxRoundParser());
 OnnxNodeRegistrar g_onnxReciprocalParser("Reciprocal", new OnnxReciprocalParser());
 OnnxNodeRegistrar g_onnxModParser("Mod", new OnnxModParser());
+OnnxNodeRegistrar g_onnxGreaterEqualParser("GreaterOrEqual", new OnnxGreaterEqualParser());
 }  // namespace lite
 }  // namespace mindspore
