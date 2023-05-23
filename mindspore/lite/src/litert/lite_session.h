@@ -71,6 +71,7 @@ class MS_API LiteSession {
   virtual std::vector<std::string> GetOutputTensorNames() const;
   virtual mindspore::lite::Tensor *GetOutputByTensorName(const std::string &tensor_name) const;
   virtual std::unordered_map<std::string, mindspore::lite::Tensor *> GetOutputs() const;
+  virtual std::vector<mindspore::lite::Tensor *> GetOutputsVector() const;
   virtual int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
                                     std::map<std::string, unsigned int> *outputGLTexture);
   virtual int Resize(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
@@ -213,6 +214,8 @@ class MS_API LiteSession {
   std::vector<Tensor *> outputs_;
   // graph input MSTensors
   std::vector<mindspore::lite::Tensor *> input_vec_;
+  // graph output MSTensors
+  std::vector<mindspore::lite::Tensor *> output_vec_;
   // graph input tensor name -- input tensors
   std::unordered_map<std::string, mindspore::lite::Tensor *> input_map_;
   // graph input tensor -- input tensor shape

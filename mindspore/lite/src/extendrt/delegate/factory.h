@@ -21,17 +21,16 @@
 #include <memory>
 
 #include "utils/hash_map.h"
-#include "runtime/hardware/device_context.h"
 #include "src/extendrt/delegate_graph_executor.h"
 #include "include/api/context.h"
 #include "src/common/config_infos.h"
+#include "src/extendrt/session/lite_graph_executor.h"
 
 namespace mindspore {
-using mindspore::device::GraphExecutor;
 // (zhaizhiqiang): Wrap graph executor as delegate.
 // typedef std::shared_ptr<GraphSinkDelegate> (*DelegateCreator)(const std::shared_ptr<Context> &);
 using DelegateCreator =
-  std::function<std::shared_ptr<GraphExecutor>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
+  std::function<std::shared_ptr<LiteGraphExecutor>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
 
 class MS_API DelegateRegistry {
  public:
@@ -42,8 +41,8 @@ class MS_API DelegateRegistry {
 
   void RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider, DelegateCreator *creator);
   void UnRegDelegate(const mindspore::DeviceType &device_type, const std::string &provider);
-  std::shared_ptr<GraphExecutor> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
-                                             const std::shared_ptr<Context> &ctx, const ConfigInfos &config_infos);
+  std::shared_ptr<LiteGraphExecutor> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
+                                                 const std::shared_ptr<Context> &ctx, const ConfigInfos &config_infos);
 
  private:
   mindspore::HashMap<DeviceType, mindspore::HashMap<std::string, DelegateCreator *>> creator_map_;

@@ -146,6 +146,14 @@ std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims) {
   return shape;
 }
 
+std::vector<int32_t> ConvertMSShapeInt32(const nvinfer1::Dims dims) {
+  std::vector<int32_t> shape;
+  for (int i = 0; i < dims.nbDims; i++) {
+    shape.push_back(static_cast<int32_t>(dims.d[i]));
+  }
+  return shape;
+}
+
 std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape) {
   std::vector<int64_t> nchw_shape;
   if (nhwc_shape.size() != DIMENSION_4D) {

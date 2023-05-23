@@ -31,6 +31,7 @@
 #include "ccsrc/include/common/utils/convert_utils.h"
 #include "common/config_infos.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "src/extendrt/session/lite_graph_executor.h"
 #include "src/extendrt/utils/func_graph_utils.h"
 #include "src/extendrt/delegate/tensorrt/optimizer/tensorrt_optimizer.h"
 #include "ops/custom.h"
@@ -263,7 +264,7 @@ bool TensorRTExecutor::Init() {
 
   std::vector<std::shared_ptr<DeviceInfoContext>> device_list = context_->MutableDeviceInfo();
   auto iter = std::find_if(device_list.begin(), device_list.end(), [](std::shared_ptr<DeviceInfoContext> device) {
-    return device->GetDeviceType() == DeviceType::kGPU;
+    return device->GetDeviceType() == mindspore::DeviceType::kGPU;
   });
   if (iter == device_list.end()) {
     MS_LOG(ERROR) << "no gpu device info found for TensorRT.";
@@ -404,6 +405,7 @@ Status TensorRTExecutor::BuildSubGraph(const FuncGraphPtr &func_graph) {
   std::vector<NodeWithOutputIndex> tensor_info_list;
   auto status = GetModelInputsInfo(func_graph, &tensor_info_list, &inputs_);
   if (status != kSuccess) {
+    MS_LOG(ERROR) << "GetModelInputsInfo failed";
     return status;
   }
   for (const auto &node : nodes) {
@@ -433,6 +435,7 @@ Status TensorRTExecutor::BuildSubGraph(const FuncGraphPtr &func_graph) {
   }
   status = GetModelOutputsInfo(func_graph, &tensor_info_list, &outputs_);
   if (status != kSuccess) {
+    MS_LOG(ERROR) << "GetModelOutputsInfo failed";
     return status;
   }
   for (auto &out_tensor_info : outputs_) {
@@ -549,18 +552,19 @@ bool TensorRTExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<st
 
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetCudaDevice failed";
     return false;
   }
   Status build_ret = BuildSubGraph(graph);
   if (build_ret != kSuccess) {
-    MS_LOG(INFO) << "BuildSubGraph failed";
+    MS_LOG(ERROR) << "BuildSubGraph failed";
     return false;
   }
   return true;
 }
 
-bool TensorRTExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
-                                std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
+bool TensorRTExecutor::RunGraph(uint32_t, const std::vector<lite::Tensor *> &inputs,
+                                std::vector<lite::Tensor *> *outputs, const std::map<string, string> &compile_options) {
   if (inputs.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute outputs size " << inputs.size();
     return false;
@@ -569,33 +573,30 @@ bool TensorRTExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inp
     MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
     return false;
   }
+  if (outputs_.size() != outputs->size()) {
+    MS_LOG(ERROR) << "Graph outputs size " << inputs_.size() << " != expected outputs size " << outputs->size();
+    return false;
+  }
   if (dump_outputs_.empty()) {
-    if (!outputs->empty() && outputs_.size() != outputs->size()) {
-      MS_LOG(ERROR) << "Graph outputs size " << inputs_.size() << " != expected outputs size " << outputs->size();
-      return false;
-    }
     return tensorrt_graph_->Execute(inputs, outputs) == RET_OK;
   }
 
-  if (!outputs->empty()) {
-    MS_LOG(ERROR) << "Cannot has graph outputs when dump op";
-    return false;
+  std::vector<lite::Tensor *> trt_outputs(outputs->begin(), outputs->end());
+  trt_outputs.reserve(outputs_.size() + dump_outputs_.size());
+  for (size_t i = 0; i < dump_outputs_.size(); i++) {
+    lite::Tensor *tensor = dump_outputs_[i].LiteTensor();
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "dump output tensor is nullptr.";
+      return false;
+    }
+    trt_outputs.push_back(tensor);
   }
-  std::vector<tensor::Tensor> trt_outputs;
   if (tensorrt_graph_->Execute(inputs, &trt_outputs) != RET_OK) {
     return false;
   }
-  if (trt_outputs.size() != outputs_.size() + dump_outputs_.size()) {
-    MS_LOG(ERROR) << "TensorRT Graph outputs size " << trt_outputs.size() << " != graph outputs size "
-                  << outputs_.size() << " + dump output size " << dump_outputs_.size();
-    return false;
-  }
-  for (size_t i = 0; i < outputs_.size(); i++) {
-    outputs->push_back(trt_outputs[i]);
-  }
   if (!has_dumped_) {
     has_dumped_ = true;
-    auto dump_tensor = [this](const std::string &file_name, const tensor::Tensor &tensor) {
+    auto dump_tensor = [this](const std::string &file_name, const lite::Tensor &tensor) {
       std::string new_file = file_name;
       for (size_t i = 0; i < new_file.size(); i++) {
         if (new_file[i] == '/' || new_file[i] == '\\') {
@@ -607,23 +608,23 @@ bool TensorRTExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inp
         MS_LOG(WARNING) << "Failed to open file " << dump_dir_ + "/" + file_name;
         return;
       }
-      fp.write(reinterpret_cast<const char *>(tensor.data_c()), tensor.Size());
+      fp.write(reinterpret_cast<const char *>(tensor.data()), tensor.Size());
     };
     for (size_t i = 0; i < inputs.size(); i++) {
-      dump_tensor("input_" + std::to_string(i) + ".bin", inputs[i]);
+      dump_tensor("input_" + std::to_string(i) + ".bin", *inputs[i]);
     }
     for (size_t i = 0; i < outputs->size(); i++) {
-      dump_tensor("output_" + std::to_string(i) + ".bin", (*outputs)[i]);
+      dump_tensor("output_" + std::to_string(i) + ".bin", *(*outputs)[i]);
     }
     for (size_t i = outputs_.size(); i < trt_outputs.size(); i++) {
       auto tensor_info = dump_outputs_[i - outputs_.size()];
-      dump_tensor(tensor_info.Name() + ".bin", trt_outputs[i]);
+      dump_tensor(tensor_info.Name() + ".bin", *trt_outputs[i]);
     }
   }
   return true;
 }
 
-bool TensorRTExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
+bool TensorRTExecutor::Resize(uint32_t, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<std::vector<int64_t>> &new_shapes) {
   if (tensorrt_graph_ == nullptr) {
     MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
@@ -632,28 +633,20 @@ bool TensorRTExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &input
   return tensorrt_graph_->Resize(inputs, new_shapes) == RET_OK;
 }
 
-std::vector<tensor::Tensor> TensorRTExecutor::GetInputInfos(uint32_t) {
-  std::vector<tensor::Tensor> tensors;
-  for (auto &tensor_info : inputs_) {
-    auto type_id = static_cast<enum TypeId>(tensor_info.DataType());
-    auto shape = tensor_info.Shape();
-    tensors.push_back(tensor::Tensor(type_id, shape));
-  }
+std::vector<lite::Tensor *> TensorRTExecutor::GetInputInfos(uint32_t) {
+  std::vector<lite::Tensor *> tensors(inputs_.size());
+  std::transform(inputs_.begin(), inputs_.end(), tensors.begin(), [](auto &t) { return t.LiteTensor(); });
   return tensors;
 }
 
-std::vector<tensor::Tensor> TensorRTExecutor::GetOutputInfos(uint32_t) {
-  std::vector<tensor::Tensor> tensors;
-  for (auto &tensor_info : outputs_) {
-    auto type_id = static_cast<enum TypeId>(tensor_info.DataType());
-    auto shape = tensor_info.Shape();
-    tensors.push_back(tensor::Tensor(type_id, shape));
-  }
+std::vector<lite::Tensor *> TensorRTExecutor::GetOutputInfos(uint32_t) {
+  std::vector<lite::Tensor *> tensors(outputs_.size());
+  std::transform(outputs_.begin(), outputs_.end(), tensors.begin(), [](auto &t) { return t.LiteTensor(); });
   return tensors;
 }
 
-static std::shared_ptr<device::GraphExecutor> TensorRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
-                                                                           const ConfigInfos &config_infos) {
+static std::shared_ptr<LiteGraphExecutor> TensorRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
+                                                                       const ConfigInfos &config_infos) {
   auto executor = std::make_shared<TensorRTExecutor>(ctx, config_infos);
   if (!executor->Init()) {
     return nullptr;

@@ -29,6 +29,7 @@
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/context.h"
 #include "common/config_infos.h"
+#include "src/tensor.h"
 
 namespace mindspore::lite {
 using mindspore::lite::RET_ERROR;
@@ -48,9 +49,9 @@ class TensorRTSubGraph {
 
   int Prepare();
 
-  int Execute(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
+  int Execute(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs);
 
-  int Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<ShapeVector> &new_shapes);
+  int Resize(const std::vector<lite::Tensor *> &inputs, const std::vector<ShapeVector> &new_shapes);
 
   int BuildTensorRTGraph();
 
@@ -90,9 +91,9 @@ class TensorRTSubGraph {
   nvinfer1::Dims SetInputDimsProfile(const TensorInfo &in_tensor, int index);
   int ParseInputsProfile();
 
-  int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs,
+  int PreExecute(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                  bool sync = true);
-  int PostExecute(std::vector<tensor::Tensor> *outputs, bool sync = true);
+  int PostExecute(std::vector<lite::Tensor *> *outputs, bool sync = true);
 
   int OnNewInputShapes(const std::vector<ShapeVector> &inputs);
 

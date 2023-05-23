@@ -598,7 +598,7 @@ Tensor *Tensor::CreateTensorByDeepCopy(const std::string &name, TypeId type, con
       shape_size *= static_cast<size_t>(shape[i]);
     }
   }
-  if (data_len != shape_size * data_type_size) {
+  if (data_len != 0 && data_len != shape_size * data_type_size) {
     std::vector<int> truncate_shape = {static_cast<int>(data_len)};
     tensor->set_shape(truncate_shape);
   } else {

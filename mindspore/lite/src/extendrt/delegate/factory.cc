@@ -40,10 +40,10 @@ void DelegateRegistry::UnRegDelegate(const mindspore::DeviceType &device_type, c
   }
 }
 
-std::shared_ptr<GraphExecutor> DelegateRegistry::GetDelegate(const mindspore::DeviceType &device_type,
-                                                             const std::string &provider,
-                                                             const std::shared_ptr<Context> &ctx,
-                                                             const ConfigInfos &config_infos) {
+std::shared_ptr<LiteGraphExecutor> DelegateRegistry::GetDelegate(const mindspore::DeviceType &device_type,
+                                                                 const std::string &provider,
+                                                                 const std::shared_ptr<Context> &ctx,
+                                                                 const ConfigInfos &config_infos) {
   //  find common delegate
   auto it = creator_map_.find(device_type);
   if (it == creator_map_.end()) {

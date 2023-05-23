@@ -42,6 +42,8 @@
 #include "src/extendrt/delegate/ascend_ge/aoe_api_tune_process.h"
 #include "extendrt/delegate/ascend_ge/ge_utils.h"
 #include "extendrt/delegate/ascend_ge/ge_dynamic_utils.h"
+#include "src/extendrt/session/lite_graph_executor.h"
+#include "utils/misc.h"
 
 namespace mindspore {
 namespace {
@@ -70,6 +72,38 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   return param;
 }
 #endif
+
+std::shared_ptr<GeTensor> ConvertLiteTensor(lite::Tensor *const tensor, const std::string &format) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return nullptr;
+  }
+  auto me_data_type = tensor->data_type();
+  size_t type_size = mindspore::GetDataTypeSize(me_data_type);
+  if (type_size == 0) {
+    MS_LOG(ERROR) << "The Me Tensor data type size is wrong, type size is: " << type_size;
+    return nullptr;
+  }
+  size_t elements_num = IntToSize(tensor->ElementsNum());
+
+  // get tensor buff size
+  size_t data_buff_size = elements_num * type_size;
+  if (data_buff_size == 0) {
+    MS_LOG(INFO) << "The Me Tensor data buff size is 0.";
+  }
+  // create ge tensor
+  auto desc = transform::TransformUtil::GetGeTensorDesc(tensor->ShapeVector(), tensor->data_type(), format);
+  if (desc == nullptr) {
+    MS_LOG(ERROR) << "Failed to get Tensor Desc";
+    return nullptr;
+  }
+  std::shared_ptr<GeTensor> tensor_ptr =
+    std::make_shared<GeTensor>(*desc, static_cast<uint8_t *>(tensor->MutableData()), data_buff_size);
+  if (tensor_ptr != nullptr) {
+    MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
+  }
+  return tensor_ptr;
+}
 }  // namespace
 
 std::atomic_uint32_t GeGraphExecutor::global_graph_idx_ = 0;
@@ -355,6 +389,62 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
   return true;
 }
 
+bool GeGraphExecutor::UpdateInputsOutputs(uint32_t graph_id, const FuncGraphPtr &anf_graph) {
+  std::vector<TensorPtr> orig_output;
+  std::vector<lite::Tensor *> output_tmp;
+  std::vector<AnfWithOutIndex> output_idxs;
+  if (!FuncGraphUtils::GetFuncGraphOutputs(anf_graph, &output_idxs)) {
+    MS_LOG(ERROR) << "Failed to get input infos from graph";
+    return false;
+  }
+  for (auto &tensor : output_idxs) {
+    auto name = FuncGraphUtils::GetTensorName(tensor);
+    auto data_type = FuncGraphUtils::GetTensorDataType(tensor);
+    auto shape_vector = FuncGraphUtils::GetTensorShape(tensor);
+    std::vector<int32_t> int32_shape;
+    std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(int32_shape),
+                   [](const auto &shape) { return static_cast<int32_t>(shape); });
+    auto lite_tensor = std::make_shared<lite::Tensor>(static_cast<TypeId>(data_type), int32_shape);
+    if (lite_tensor == nullptr) {
+      MS_LOG(ERROR) << "malloc tensor failed.";
+      return false;
+    }
+    lite_tensor->set_tensor_name(name);
+    orig_output.push_back(lite_tensor);
+    output_tmp.push_back(lite_tensor.get());
+  }
+  original_graph_outputs_[graph_id] = orig_output;
+  graph_outputs_[graph_id] = output_tmp;
+
+  std::vector<AnfWithOutIndex> input_idxs;
+  std::vector<TensorPtr> orig_input;
+  std::vector<lite::Tensor *> input_tmp;
+  if (!FuncGraphUtils::GetFuncGraphInputs(anf_graph, &input_idxs)) {
+    MS_LOG(ERROR) << "Failed to get input infos from graph";
+    return false;
+  }
+  for (auto &tensor : input_idxs) {
+    auto name = FuncGraphUtils::GetTensorName(tensor);
+    auto data_type = FuncGraphUtils::GetTensorDataType(tensor);
+    auto shape_vector = FuncGraphUtils::GetTensorShape(tensor);
+
+    std::vector<int32_t> int32_shape;
+    std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(int32_shape),
+                   [](const auto &shape) { return static_cast<int32_t>(shape); });
+    auto lite_tensor = std::make_shared<lite::Tensor>(static_cast<TypeId>(data_type), int32_shape);
+    if (lite_tensor == nullptr) {
+      MS_LOG(ERROR) << "malloc tensor failed.";
+      return false;
+    }
+    lite_tensor->set_tensor_name(name);
+    orig_input.push_back(lite_tensor);
+    input_tmp.push_back(lite_tensor.get());
+  }
+  original_graph_inputs_[graph_id] = orig_input;
+  graph_inputs_[graph_id] = input_tmp;
+  return true;
+}
+
 transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &anf_graph,
                                                           const std::map<string, string> &compile_options,
                                                           std::map<std::string, std::string> *ge_options_ptr) {
@@ -444,11 +534,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   }
   compute_graph_id_list_.push_back(compute_graph_id);
   *graph_id = compute_graph_id;
-  std::vector<tensor::TensorPtr> orig_output;
-  std::vector<std::string> output_names;
-  FuncGraphUtils::GetFuncGraphOutputsInfo(anf_graph, &orig_output, &output_names);
-  original_graph_outputs_[*graph_id] = orig_output;
-  return true;
+  return UpdateInputsOutputs(*graph_id, anf_graph);
 }
 
 bool GeGraphExecutor::AoeTuning(const FuncGraphPtr &anf_graph) {
@@ -581,8 +667,8 @@ bool GeGraphExecutor::RunDataFlowGraphAsync(uint32_t graph_id, const std::vector
   return true;
 }
 
-bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                               std::vector<tensor::Tensor> *outputs,
+bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                               std::vector<lite::Tensor *> *outputs,
                                const std::map<string, string> & /* compile_options */) {
   if (outputs == nullptr) {
     MS_LOG(ERROR) << " Input param is nullptr.";
@@ -592,8 +678,8 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   std::vector<::ge::Tensor> ge_inputs;
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
-    MS_LOG(INFO) << "Input " << i << " shape " << input.shape_c() << ", datatype " << input.data_type();
-    auto ge_tensor = transform::TransformUtil::ConvertTensor(std::make_shared<tensor::Tensor>(input), kOpFormat_NCHW);
+    MS_LOG(INFO) << "Input " << i << " shape " << input->shape() << ", datatype " << input->data_type();
+    auto ge_tensor = ConvertLiteTensor(input, kOpFormat_NCHW);
     if (ge_tensor == nullptr) {
       MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
       return false;
@@ -613,41 +699,30 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   MS_LOG(INFO) << "Call GE RunGraph Success in " << time_cost << " us, graph id " << graph_id
                << " the GE outputs num is: " << ge_outputs.size();
 
-  if (!outputs->empty()) {
-    if (outputs->size() != ge_outputs.size()) {
-      MS_LOG(ERROR) << "Invalid output size, outputs' size " << outputs->size() << "ge tensor size "
-                    << ge_outputs.size();
-      return false;
-    }
-    for (size_t i = 0; i < outputs->size(); ++i) {
-      const auto &tensor = ge_outputs[i];
-      auto &output = (*outputs)[i];
-      if (output.Size() < LongToSize(UlongToLong(tensor.GetSize()))) {
-        MS_LOG(EXCEPTION) << "Output node " << i << "'s mem size " << output.Size()
-                          << " is less than actual output size " << tensor.GetSize();
+  if (outputs->size() != ge_outputs.size()) {
+    MS_LOG(ERROR) << "Invalid output size, outputs' size " << outputs->size() << "ge tensor size " << ge_outputs.size();
+    return false;
+  }
+  for (size_t i = 0; i < outputs->size(); ++i) {
+    auto &ge_tensor = ge_outputs[i];
+    auto &output = (*outputs)[i];
+    if (output->data() != nullptr) {
+      if (output->Size() < LongToSize(UlongToLong(ge_tensor.GetSize()))) {
+        MS_LOG(EXCEPTION) << "Output node " << i << "'s mem size " << output->Size()
+                          << " is less than actual output size " << ge_tensor.GetSize();
       }
-      if ((*outputs)[i].data_c() == nullptr) {
-        MS_LOG(ERROR) << "Output data ptr is nullptr.";
-        return false;
-      }
-      auto mem_ret = common::huge_memcpy(reinterpret_cast<uint8_t *>(output.data_c()), output.Size(), tensor.GetData(),
-                                         tensor.GetSize());
+      auto mem_ret = common::huge_memcpy(reinterpret_cast<uint8_t *>(output->data()), output->Size(),
+                                         ge_tensor.GetData(), ge_tensor.GetSize());
       if (mem_ret != EOK) {
-        MS_LOG(ERROR) << "Failed to copy output data, dst size: " << output.Size()
-                      << ", src size: " << tensor.GetSize();
+        MS_LOG(ERROR) << "Failed to copy output data, dst size: " << output->Size()
+                      << ", src size: " << ge_tensor.GetSize();
         return false;
       }
-    }
-  } else {
-    for (size_t i = 0; i < ge_outputs.size(); i++) {
-      auto &ge_tensor = ge_outputs[i];
-      auto ms_tensor = ConvertGeTensorNoCopy(&ge_tensor, graph_id, i);
-      if (ms_tensor == nullptr) {
-        MS_LOG(ERROR) << "Failed to converter output " << i << " GE Tensor to ME Tensor";
+    } else {
+      if (GeMoveOutputData(&ge_tensor, output, graph_id, i) == false) {
+        MS_LOG(ERROR) << "Failed to move output " << i << "data";
         return false;
       }
-      MS_LOG(INFO) << "Output " << i << " shape " << ms_tensor->shape_c() << ", datatype " << ms_tensor->data_type();
-      outputs->push_back(*ms_tensor);
     }
   }
   graph_inputs_[graph_id] = inputs;
@@ -656,62 +731,75 @@ bool GeGraphExecutor::RunGraph(uint32_t graph_id, const std::vector<tensor::Tens
   return true;
 }
 
-std::vector<tensor::Tensor> GeGraphExecutor::GetInputInfos(uint32_t graph_id) {
-  return graph_inputs_.find(graph_id) != graph_inputs_.end() ? graph_inputs_.at(graph_id)
-                                                             : std::vector<tensor::Tensor>();
-}
-
-tensor::TensorPtr GeGraphExecutor::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr, uint32_t graph_id, size_t idx) {
+bool GeGraphExecutor::GeMoveOutputData(::ge::Tensor *ge_tensor_ptr, lite::Tensor *output, uint32_t graph_id,
+                                       size_t idx) {
   auto &ge_tensor = *ge_tensor_ptr;
   auto ge_tensor_desc = ge_tensor.GetTensorDesc();
   auto me_shape = transform::TransformUtil::ConvertGeShape(ge_tensor_desc.GetShape());
-  if (original_graph_outputs_.find(graph_id) == original_graph_outputs_.end()) {
+  if (graph_outputs_.find(graph_id) == graph_outputs_.end()) {
     MS_LOG(ERROR) << "Graph original outputs with the given graph id is not found.";
-    return nullptr;
+    return false;
   }
-  auto original_outputs = original_graph_outputs_[graph_id];
+  if (output->data() != nullptr) {
+    MS_LOG(ERROR) << "output tensor data is not nullptr.";
+    return false;
+  }
+  auto original_outputs = graph_outputs_[graph_id];
   if (idx >= original_outputs.size()) {
     MS_LOG(ERROR) << "Graph output index is out of range.";
-    return nullptr;
+    return false;
   }
-  TypeId type_id = static_cast<TypeId>(original_outputs[idx]->data_type_c());
+  TypeId type_id = original_outputs[idx]->data_type();
   if (type_id == kTypeUnknown) {
     MS_LOG(ERROR) << "Could not convert Ge Tensor because of unsupported data type: "
                   << static_cast<int>(ge_tensor_desc.GetDataType());
-    return nullptr;
+    return false;
   }
   if (ge_tensor_desc.GetPlacement() != ::ge::kPlacementHost) {
     MS_LOG(ERROR) << "It is not supported that graph output data's placement is device now.";
-    return nullptr;
+    return false;
   }
   auto &&ge_data_uni = ge_tensor.ResetData();
   auto deleter = ge_data_uni.get_deleter();
   auto ge_data = ge_data_uni.release();
   if (ge_data == nullptr) {
     MS_LOG(ERROR) << "Ge data cannot be nullptr";
-    return nullptr;
+    return false;
   }
   constexpr int64_t kTensorAlignBytes = 64;
   if (reinterpret_cast<uintptr_t>(ge_data) % kTensorAlignBytes != 0) {
     MS_LOG(ERROR) << "Skip zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data)
                   << ", bytes not aligned with expected.";
-    return nullptr;
+    return false;
   }
   int64_t elem_num = 1;
-  for (size_t i = 0; i < me_shape.size(); ++i) {
-    elem_num *= me_shape[i];
+  for (size_t j = 0; j < me_shape.size(); ++j) {
+    elem_num *= me_shape[j];
   }
   if (GetTypeByte(TypeIdToType(type_id)) * elem_num != ge_tensor.GetSize()) {
     MS_LOG(ERROR) << "Output datatype error! Output tensor size from GE RunGraph does not match.";
-    return nullptr;
+    return false;
   }
-  auto tensor_data = std::make_shared<TensorRefData>(ge_data, elem_num, ge_tensor.GetSize(), me_shape.size(), deleter);
-  return std::make_shared<tensor::Tensor>(type_id, me_shape, tensor_data);
+
+  std::shared_ptr<GeAllocator> ge_allocator = std::make_shared<GeAllocator>(deleter);
+  if (ge_allocator == nullptr) {
+    MS_LOG(ERROR) << "malloc GeAllocator failed.";
+    return false;
+  }
+  output->SetShapeVector(me_shape);
+  output->set_allocator(ge_allocator);
+  output->set_data(ge_data, true);
+  return true;
 }
 
-std::vector<tensor::Tensor> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) {
+std::vector<lite::Tensor *> GeGraphExecutor::GetInputInfos(uint32_t graph_id) {
+  return graph_inputs_.find(graph_id) != graph_inputs_.end() ? graph_inputs_.at(graph_id)
+                                                             : std::vector<lite::Tensor *>();
+}
+
+std::vector<lite::Tensor *> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) {
   return graph_outputs_.find(graph_id) != graph_outputs_.end() ? graph_outputs_.at(graph_id)
-                                                               : std::vector<tensor::Tensor>();
+                                                               : std::vector<lite::Tensor *>();
 }
 
 std::map<int64_t, GeSessionContext> GeSessionManager::ge_session_map_;
@@ -802,8 +890,8 @@ void GeSessionManager::TryReleaseGeSessionContext(int64_t session_id) {
   }
 }
 
-static std::shared_ptr<device::GraphExecutor> GeGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
-                                                                     const ConfigInfos &config_infos) {
+static std::shared_ptr<LiteGraphExecutor> GeGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
+                                                                 const ConfigInfos &config_infos) {
   auto ge_executor = std::make_shared<GeGraphExecutor>(ctx, config_infos);
   if (!ge_executor->Init()) {
     MS_LOG(ERROR) << "Failed to init GeGraphExecutor";

@@ -79,10 +79,10 @@ void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
   return this->cuda_tensor_map_.find(tensor_name)->second.data;
 }
 
-int TensorRTAllocator::SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name,
+int TensorRTAllocator::SyncMemHostToDevice(lite::Tensor *host_tensor, const std::string &device_tensor_name,
                                            bool sync) {
-  return SyncMemInHostAndDevice(const_cast<void *>(host_tensor.data_c()), device_tensor_name, host_tensor.Size(), true,
-                                sync);
+  return SyncMemInHostAndDevice(const_cast<void *>(host_tensor->MutableData()), device_tensor_name, host_tensor->Size(),
+                                true, sync);
 }
 
 int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name,

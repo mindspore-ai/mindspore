@@ -29,6 +29,7 @@
 #include "src/litert/cxx_api/converters.h"
 #include "ir/graph_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore {
 Status BishengSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
@@ -159,7 +160,7 @@ void ResetTensorData(const std::vector<void *> &old_data, const std::vector<lite
   }
 }
 
-Status RefDataFromOuter(const std::vector<tensor::Tensor> &outer_tensors,
+Status RefDataFromOuter(const std::vector<lite::Tensor *> &outer_tensors,
                         const std::vector<infer::abstract::Tensor *> &inner_tensors) {
   if (outer_tensors.size() != inner_tensors.size()) {
     MS_LOG(EXCEPTION) << "user input size " << outer_tensors.size() << " is not equal to graph input size "
@@ -169,15 +170,15 @@ Status RefDataFromOuter(const std::vector<tensor::Tensor> &outer_tensors,
   for (size_t i = 0; i < outer_tensors.size(); i++) {
     auto &user_input = outer_tensors.at(i);
     auto input = inner_tensors.at(i);
-    if (user_input.data_type() != input->data_type()) {
+    if (user_input->data_type() != input->data_type()) {
       ResetTensorData(old_data, inner_tensors);
-      MS_LOG(ERROR) << "Tensor " << user_input.id() << " has a different data type from input" << input->tensor_name()
-                    << ".";
+      MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has a different data type from input"
+                    << input->tensor_name() << ".";
       return kLiteError;
     }
-    if (user_input.data_c() == nullptr) {
+    if (user_input->data() == nullptr) {
       ResetTensorData(old_data, inner_tensors);
-      MS_LOG(ERROR) << "Tensor " << user_input.id() << " has no data.";
+      MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has no data.";
       return kLiteError;
     }
     old_data.push_back(input->data());
@@ -185,47 +186,21 @@ Status RefDataFromOuter(const std::vector<tensor::Tensor> &outer_tensors,
       MS_LOG(ERROR) << "Not support string type tensor now!";
       return kLiteError;
     }
-    if (user_input.data_c() != input->data()) {
-      if (input->Size() != user_input.Size()) {
+    if (user_input->data() != input->data()) {
+      if (input->Size() != user_input->Size()) {
         ResetTensorData(old_data, inner_tensors);
-        MS_LOG(ERROR) << "Tensor " << user_input.id() << " has wrong data size.";
+        MS_LOG(ERROR) << "Tensor " << user_input->tensor_name() << " has wrong data size.";
         return kLiteError;
       }
-      input->set_data(user_input.data_c(), false);
+      input->set_data(user_input->data(), false);
     }
   }
   return kSuccess;
 }
-
-std::vector<mindspore::tensor::Tensor> LiteTensorToTensor(const std::vector<infer::abstract::Tensor *> &inner_tensors) {
-  std::vector<mindspore::tensor::Tensor> tensors;
-  for (auto inner_tensor : inner_tensors) {
-    if (inner_tensor == nullptr) {
-      MS_LOG(ERROR) << "Input inner_tensors has nullptr.";
-      return std::vector<mindspore::tensor::Tensor>{};
-    }
-    auto type_id = inner_tensor->data_type();
-    auto shape = inner_tensor->shape();
-    auto data = inner_tensor->MutableData();
-    auto data_size = inner_tensor->Size();
-    auto ref_tensor_data = std::make_shared<TensorRefData>(data, inner_tensor->ElementsNum(), data_size, shape.size());
-    std::vector<int64_t> shape64;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape64),
-                   [](int dim) { return static_cast<int64_t>(dim); });
-    mindspore::tensor::Tensor tensor(type_id, shape64, ref_tensor_data);
-    auto device_address = inner_tensor->device_data();
-    if (device_address != nullptr) {
-      auto lite_device_address = std::make_shared<LiteDeviceAddress>(device_address, inner_tensor->Size());
-      tensor.set_device_address(lite_device_address);
-    }
-    tensors.emplace_back(std::move(tensor));
-  }
-  return tensors;
-}
 }  // namespace
 
-Status BishengSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                                std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+Status BishengSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                std::vector<lite::Tensor *> *outputs, const MSKernelCallBack &before,
                                 const MSKernelCallBack &after) {
   MS_LOG(INFO) << "BishengSession::RunGraph";
 
@@ -244,21 +219,22 @@ Status BishengSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Ten
     }
   }
 
-  // copy the data from outputs to user outputs tensors
-  *outputs = LiteTensorToTensor(this->outputs_);
-  if (outputs->size() != this->outputs_.size()) {
-    MS_LOG(ERROR) << "Convert output tensors failed";
-    return kLiteNullptr;
+  if (outputs_.size() != outputs->size()) {
+    MS_LOG(ERROR) << "outputs size error.";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    MoveCommonTensorData((*outputs)[i], outputs_[i]);
   }
   return kSuccess;
 }
 
-Status BishengSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                                std::vector<tensor::Tensor> *outputs) {
+Status BishengSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                std::vector<lite::Tensor *> *outputs) {
   return RunGraph(graph_id, inputs, outputs, nullptr, nullptr);
 }
 
-Status BishengSession::Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+Status BishengSession::Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<std::vector<int64_t>> &new_shapes) {
   MS_LOG(EXCEPTION) << "BishengSession::Resize not implemented";
 }

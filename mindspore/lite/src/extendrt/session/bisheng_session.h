@@ -38,11 +38,11 @@ class BishengSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                  std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                  std::vector<lite::Tensor *> *outputs) override;
+  Status Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
 
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;

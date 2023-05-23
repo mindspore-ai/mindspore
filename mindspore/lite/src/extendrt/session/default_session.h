@@ -35,11 +35,11 @@ class DefaultInferSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                  std::vector<tensor::Tensor> *outputs) override;
-  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                  std::vector<lite::Tensor *> *outputs) override;
+  Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                   const MSKernelCallBack &before, const MSKernelCallBack &after) override;
-  Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  Status Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
   std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
   std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) override;
@@ -53,14 +53,8 @@ class DefaultInferSession : public InferSession {
 
   virtual std::shared_ptr<infer::abstract::GraphRuntime> GetGraphRuntime() { return runtime_; }
 
-  void ResetTensorData(const std::vector<void *> &old_data, const std::vector<lite::Tensor *> &tensors);
-
  private:
-  Status CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
-                                std::vector<infer::abstract::Tensor *> inner_tensors);
   std::vector<MutableTensorImplPtr> AbstractTensorsToTensorImpls(
-    const std::vector<infer::abstract::Tensor *> &abstract_tensors);
-  std::vector<mindspore::tensor::Tensor> LiteTensorToTensor(
     const std::vector<infer::abstract::Tensor *> &abstract_tensors);
   std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
                                      bool verify_size);

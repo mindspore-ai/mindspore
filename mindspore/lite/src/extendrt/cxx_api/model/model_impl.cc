@@ -42,6 +42,7 @@
 #include "src/common/common.h"
 #include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+#include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "utils/ms_utils_secure.h"
 #include "ops/custom.h"
 #include "ops/return.h"
@@ -543,8 +544,24 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
     MS_LOG(ERROR) << "The size of inputs is incorrect.";
     return kLiteInputParamInvalid;
   }
-  std::vector<mindspore::tensor::Tensor> resize_inputs = TensorUtils::MSTensorToTensor(inputs);
-  return session_->Resize(graph_id_, resize_inputs, dims);
+
+  std::vector<lite::Tensor *> inner_input;
+  inner_input.resize(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto input = inputs[i];
+    if (input.impl_ == nullptr) {
+      MS_LOG(ERROR) << "Input tensor " << input.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(input.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Input tensor " << input.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_input[i] = lite_impl->lite_tensor();
+  }
+
+  return session_->Resize(graph_id_, inner_input, dims);
 }
 
 std::vector<MSTensor> ModelImpl::GetInputs() {
@@ -555,6 +572,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   auto graph_inputs = session_->GetInputs(graph_id_);
   std::vector<MSTensor> inputs;
+  inputs.reserve(graph_inputs.size());
   std::transform(graph_inputs.begin(), graph_inputs.end(), std::back_inserter(inputs),
                  [](auto &impl) { return MSTensor(impl); });
   return inputs;
@@ -568,6 +586,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   }
   auto graph_outputs = session_->GetOutputs(graph_id_);
   std::vector<MSTensor> outputs;
+  outputs.reserve(graph_outputs.size());
   std::transform(graph_outputs.begin(), graph_outputs.end(), std::back_inserter(outputs),
                  [](auto &impl) { return MSTensor(impl); });
   return outputs;
@@ -618,53 +637,50 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kLiteError;
   }
   MS_EXCEPTION_IF_NULL(outputs);
-  std::vector<mindspore::tensor::Tensor> graph_inputs = TensorUtils::MSTensorToTensor(inputs);
-  std::vector<mindspore::tensor::Tensor> graph_outputs;
-  std::vector<mindspore::tensor::Tensor> org_graph_outputs;
-  if (!outputs->empty()) {
-    graph_outputs = TensorUtils::MSTensorToTensor(*outputs);
-    org_graph_outputs = graph_outputs;
+  std::vector<lite::Tensor *> graph_inputs(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto impl = inputs[i].impl();
+    if (impl == nullptr) {
+      MS_LOG(ERROR) << "tensor impl is nullptr.";
+      return kLiteError;
+    }
+    graph_inputs[i] = std::static_pointer_cast<LiteTensorImpl>(impl)->lite_tensor();
+    if (graph_inputs[i] == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor implement.";
+      return kLiteError;
+    }
   }
+  if (outputs->empty()) {
+    auto outputs_impl = session_->GetOutputs(graph_id_);
+    for (size_t i = 0; i < outputs_impl.size(); i++) {
+      auto tensor =
+        MSTensor(outputs_impl[i]->Name(), outputs_impl[i]->DataType(), outputs_impl[i]->Shape(), nullptr, 0);
+      if (tensor.impl() == nullptr) {
+        MS_LOG(ERROR) << "CreateTensor failed.";
+        return kLiteError;
+      }
+      outputs->push_back(tensor);
+    }
+  }
+
+  std::vector<lite::Tensor *> graph_outputs(outputs->size());
+  for (size_t i = 0; i < outputs->size(); i++) {
+    auto impl = (*outputs)[i].impl();
+    if (impl == nullptr) {
+      MS_LOG(ERROR) << "tensor impl is nullptr.";
+      return kLiteError;
+    }
+    graph_outputs[i] = std::static_pointer_cast<LiteTensorImpl>(impl)->lite_tensor();
+    if (graph_outputs[i] == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor implement.";
+      return kLiteError;
+    }
+  }
+
   auto ret = session_->RunGraph(graph_id_, graph_inputs, &graph_outputs, before, after);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
     return ret;
-  }
-  bool output_remain = false;
-  if (!org_graph_outputs.empty() && org_graph_outputs.size() == graph_outputs.size()) {
-    output_remain = true;
-    for (size_t i = 0; i < org_graph_outputs.size(); i++) {
-      if (org_graph_outputs[i].data_ptr() != graph_outputs[i].data_ptr() ||
-          org_graph_outputs[i].device_address() != graph_outputs[i].device_address()) {
-        output_remain = false;
-        break;
-      }
-    }
-  }
-  if (!output_remain) {
-    auto session_outputs = session_->GetOutputNames(graph_id_);
-    if (session_outputs.empty() || session_outputs.size() != graph_outputs.size()) {
-      MS_LOG(ERROR) << "output name is wrong.";
-      return kLiteError;
-    }
-    *outputs = TensorUtils::TensorToMSTensor(graph_outputs, session_outputs);
-  }
-  auto session_outputs = session_->GetOutputs(graph_id_);
-  if (graph_outputs.size() != session_outputs.size()) {
-    MS_LOG(ERROR) << "Outputs count get from session " << session_outputs.size() << " != outputs count of RunGraph "
-                  << graph_outputs.size();
-    return kCoreFailed;
-  }
-  for (size_t i = 0; i < session_outputs.size(); i++) {
-    MSTensor session_output(session_outputs[i]);
-    auto &execute_output = outputs->at(i);
-    session_output.SetShape(execute_output.Shape());
-    if (session_output.Data().get() != execute_output.Data().get()) {
-      session_output.SetData(execute_output.MutableData(), false);
-    }
-    if (session_output.GetDeviceData() != execute_output.GetDeviceData()) {
-      session_output.SetDeviceData(execute_output.GetDeviceData());
-    }
   }
   return kSuccess;
 }

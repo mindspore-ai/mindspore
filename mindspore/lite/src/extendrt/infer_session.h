@@ -29,6 +29,7 @@
 #include "extendrt/session/type.h"
 #include "common/mutable_tensor_impl.h"
 #include "src/common/config_infos.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 class InferSession : public std::enable_shared_from_this<InferSession> {
@@ -75,8 +76,8 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
   ///
   /// \return Status.
-  virtual Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                          std::vector<tensor::Tensor> *outputs) = 0;
+  virtual Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                          std::vector<lite::Tensor *> *outputs) = 0;
 
   /// \brief Run Model Graph to inference.
   ///
@@ -86,8 +87,8 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] after CallBack after predict.
   ///
   /// \return Status.
-  virtual Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                          std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+  virtual Status RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                          std::vector<lite::Tensor *> *outputs, const MSKernelCallBack &before,
                           const MSKernelCallBack &after) = 0;
 
   /// \brief Resize model inputs shape and memory from specified dims.
@@ -96,7 +97,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] dims Define dst resize shapes.
   ///
   /// \return Status.
-  virtual Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  virtual Status Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<std::vector<int64_t>> &dims) {
     return kSuccess;
   }

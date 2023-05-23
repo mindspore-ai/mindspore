@@ -46,24 +46,25 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
                     uint32_t *graph_id) override;
   bool CompileGraph(const void *model_data, size_t data_size, const std::map<string, string> &compile_options,
                     uint32_t *graph_id) override;
-  bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+  bool RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                 const std::map<string, string> &compile_options) override;
 
-  bool Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+  bool Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
               const std::vector<ShapeVector> &dims) override;
-  std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
-  std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
+  std::vector<mindspore::lite::Tensor *> GetInputInfos(uint32_t graph_id) override;
+  std::vector<mindspore::lite::Tensor *> GetOutputInfos(uint32_t graph_id) override;
 
   std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context,
                                                        const ConfigInfos &config_infos);
-  std::vector<MSTensor> GetLiteSessionOutputs();
   void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
-  std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
-                                     bool verify_size);
 
  private:
   bool ExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
   bool IsNeedExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
+  void MoveOutputsData(const std::vector<lite::Tensor *> &dst_outputs, const std::vector<lite::Tensor *> &src_outputs,
+                       const std::vector<AllocatorPtr> &old_allocators);
+  int MoveInputsData(const std::vector<mindspore::lite::Tensor *> &dst_tensors,
+                     const std::vector<lite::Tensor *> &src_tensors);
 
  private:
   const std::shared_ptr<mindspore::Context> context_;

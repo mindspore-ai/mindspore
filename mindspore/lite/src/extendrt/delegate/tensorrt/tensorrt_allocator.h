@@ -23,6 +23,7 @@
 #include "include/api/types.h"
 #include "ir/tensor.h"
 #include "src/extendrt/delegate/tensorrt/tensor_info.h"
+#include "src/tensor.h"
 
 namespace mindspore::lite {
 struct CudaTensorParam {
@@ -52,7 +53,7 @@ class TensorRTAllocator {
   int SyncMemInHostAndDevice(void *host_data, const std::string &device_tensor_name, size_t data_size,
                              bool is_host2device, bool sync = true);
 
-  int SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name, bool sync = true);
+  int SyncMemHostToDevice(lite::Tensor *host_tensor, const std::string &device_tensor_name, bool sync = true);
   int SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name, bool sync = true);
   int SyncMemDeviceToHost(void *dst_data, size_t data_size, const std::string &device_tensor_name, bool sync = true);
 

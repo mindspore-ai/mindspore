@@ -43,7 +43,7 @@ MS_API int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
 int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
                           const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map);
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors);
-int MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
+void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 int MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 int SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);

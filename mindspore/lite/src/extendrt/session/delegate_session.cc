@@ -19,11 +19,13 @@
 #include <string>
 #include <mutex>
 #include <memory>
+#include <utility>
 #include "extendrt/utils/tensor_utils.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
+#include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "extendrt/utils/func_graph_utils.h"
@@ -61,7 +63,7 @@ Status GraphSinkSession::CompileGraph(const void *model_data, size_t data_size, 
     return kCoreFailed;
   }
   DelegateGraphInfo graph_info;
-  auto status = InitGraphInfo(&graph_info, *graph_id);
+  auto status = InitGraphInfo(*graph_id, &graph_info);
   if (!status.IsOk()) {
     MS_LOG(ERROR) << "Failed to get inputs and outputs info from graph";
     return status;
@@ -88,18 +90,12 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
     }
   }
   DelegateGraphInfo graph_info;
-  // the funcgraph constructed by flowgraph has no inputs and outputs.
-  auto status = !is_data_flow_graph_ ? InitGraphInputsOutputs(graph, &graph_info) : kSuccess;
-  if (!status.IsOk()) {
-    MS_LOG(ERROR) << "Failed to get inputs and outputs info from graph";
-    return status;
-  }
   auto ret = graph_executor_->CompileGraph(graph, options_, graph_id);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::CompileGraph compile graph failed";
     return kCoreFailed;
   }
-  status = !is_data_flow_graph_ ? UpdateGraphInputsOutputs(*graph_id, &graph_info) : kSuccess;
+  auto status = !is_data_flow_graph_ ? InitGraphInfo(*graph_id, &graph_info) : kSuccess;
   if (!status.IsOk()) {
     MS_LOG(ERROR) << "Failed to update inputs and outputs info from graph executor";
     return status;
@@ -108,7 +104,7 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
   return kSuccess;
 }
 
-Status GraphSinkSession::InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id) {
+Status GraphSinkSession::InitGraphInfo(uint32_t graph_id, DelegateGraphInfo *graph_info_ptr) {
   auto &info = *graph_info_ptr;
 
   auto new_inputs = graph_executor_->GetInputInfos(graph_id);
@@ -119,10 +115,12 @@ Status GraphSinkSession::InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32
   info.inputs.clear();
   info.input_names.clear();
   for (size_t i = 0; i < new_inputs.size(); i++) {
-    auto &input = new_inputs[i];
-    info.input_names.push_back(input.name());
-    auto data_type = static_cast<enum DataType>(input.data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input.shape_c());
+    auto impl = std::make_shared<LiteTensorImpl>(new_inputs[i]);
+    if (impl == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return kCoreFailed;
+    }
+    info.input_names.push_back(impl->Name());
     info.inputs.push_back(impl);
   }
 
@@ -135,106 +133,19 @@ Status GraphSinkSession::InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32
   info.outputs.clear();
   info.output_names.clear();
   for (size_t i = 0; i < new_outputs.size(); i++) {
-    auto &output = new_outputs[i];
-    info.output_names.push_back(output.name());
-    auto data_type = static_cast<enum DataType>(output.data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output.shape_c());
+    auto impl = std::make_shared<LiteTensorImpl>(new_outputs[i]);
+    if (impl == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return kCoreFailed;
+    }
+    info.output_names.push_back(impl->Name());
     info.outputs.push_back(impl);
   }
   return kSuccess;
 }
 
-Status GraphSinkSession::InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info_ptr) {
-  auto &info = *graph_info_ptr;
-  std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
-  {
-    std::unique_lock<std::mutex> l(kernel_graph_mutex);
-    FuncGraphReuseManager::GetInstance()->GetInOut(config_infos_, &graph_inputs, &graph_outputs, &info.input_names,
-                                                   &info.output_names);
-    if (graph_inputs.empty() || graph_outputs.empty() || info.input_names.empty() || info.output_names.empty()) {
-      FuncGraphUtils::GetFuncGraphInputsInfo(graph, &graph_inputs, &info.input_names);
-      FuncGraphUtils::GetFuncGraphOutputsInfo(graph, &graph_outputs, &info.output_names);
-      FuncGraphReuseManager::GetInstance()->StoreInOut(config_infos_, graph_inputs, graph_outputs, info.input_names,
-                                                       info.output_names);
-    } else {
-      MS_LOG(INFO) << "the input and output are the same as the last time. We do not need to construct, and we can "
-                      "directly use the cached input and output info.";
-    }
-  }
-  if (graph_inputs.size() != info.input_names.size()) {
-    MS_LOG(ERROR) << "Graph input size " << graph_inputs.size() << " != input names size " << info.input_names.size();
-    return kCoreFailed;
-  }
-  if (graph_outputs.size() != info.output_names.size()) {
-    MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size "
-                  << info.output_names.size();
-    return kCoreFailed;
-  }
-  info.inputs.clear();
-  for (size_t i = 0; i < info.input_names.size(); i++) {
-    auto &input = graph_inputs[i];
-    auto data_type = static_cast<enum DataType>(input->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input->shape_c());
-    info.inputs.push_back(impl);
-  }
-  info.outputs.clear();
-  for (size_t i = 0; i < info.output_names.size(); i++) {
-    auto &output = graph_outputs[i];
-    auto data_type = static_cast<enum DataType>(output->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output->shape_c());
-    info.outputs.push_back(impl);
-  }
-  return kSuccess;
-}
-
-Status GraphSinkSession::UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info_ptr) {
-  auto &info = *graph_info_ptr;
-  auto new_inputs = graph_executor_->GetInputInfos(graph_id);
-  auto generate_tensor_names = [](size_t size, const std::string &prefix) {
-    std::vector<std::string> names;
-    for (size_t i = 0; i < size; i++) {
-      names.push_back(prefix + std::to_string(i));
-    }
-    return names;
-  };
-  if (!new_inputs.empty()) {
-    info.input_names =
-      !info.input_names.empty() ? info.input_names : generate_tensor_names(new_inputs.size(), "input_");
-    if (new_inputs.size() != info.input_names.size()) {
-      MS_LOG(ERROR) << "Input count " << new_inputs.size() << " get from executor != input names count "
-                    << info.input_names.size();
-      return kCoreFailed;
-    }
-    info.inputs.clear();
-    for (size_t i = 0; i < new_inputs.size(); i++) {
-      auto &input = new_inputs[i];
-      auto data_type = static_cast<enum DataType>(input.data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(info.input_names[i], data_type, input.shape_c());
-      info.inputs.push_back(impl);
-    }
-  }
-  auto new_outputs = graph_executor_->GetOutputInfos(graph_id);
-  if (!new_outputs.empty()) {
-    info.output_names =
-      !info.output_names.empty() ? info.output_names : generate_tensor_names(new_outputs.size(), "output_");
-    if (new_outputs.size() != info.output_names.size()) {
-      MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != output names count "
-                    << info.output_names.size();
-      return kCoreFailed;
-    }
-    info.outputs.clear();
-    for (size_t i = 0; i < new_outputs.size(); i++) {
-      auto &output = new_outputs[i];
-      auto data_type = static_cast<enum DataType>(output.data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(info.output_names[i], data_type, output.shape_c());
-      info.outputs.push_back(impl);
-    }
-  }
-  return kSuccess;
-}
-
-Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                                  std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                  std::vector<lite::Tensor *> *outputs, const MSKernelCallBack &before,
                                   const MSKernelCallBack &after) {
   MS_LOG(INFO) << "GraphSinkSession::RunGraph";
   MS_EXCEPTION_IF_NULL(outputs);
@@ -247,49 +158,24 @@ Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::T
   }
   if (is_data_flow_graph_) {
     DelegateGraphInfo graph_info;
-    UpdateGraphInputsOutputs(graph_id, &graph_info);
+    InitGraphInfo(graph_id, &graph_info);
     graph_infos_[graph_id] = graph_info;
   }
   return kSuccess;
 }
 
-Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
-                                  std::vector<tensor::Tensor> *outputs) {
+Status GraphSinkSession::RunGraph(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
+                                  std::vector<lite::Tensor *> *outputs) {
   return RunGraph(graph_id, inputs, outputs, nullptr, nullptr);
 }
 
-Status GraphSinkSession::Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+Status GraphSinkSession::Resize(uint32_t graph_id, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<std::vector<int64_t>> &new_shapes) {
   MS_LOG(INFO) << "GraphSinkSession::Resize";
   MS_EXCEPTION_IF_NULL(graph_executor_);
-  auto info_it = graph_infos_.find(graph_id);
-  if (info_it == graph_infos_.end()) {
-    MS_LOG(ERROR) << "Failed to find graph id " << graph_id;
-    return kCoreFailed;
-  }
-  auto &info = info_it->second;
   auto ret = graph_executor_->Resize(graph_id, inputs, new_shapes);
   if (!ret) {
     return kCoreFailed;
-  }
-  auto new_outputs = graph_executor_->GetOutputInfos(graph_id);
-  if (new_outputs.empty()) {
-    return kSuccess;
-  }
-  if (new_outputs.size() != info.outputs.size()) {
-    MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != last output count "
-                  << info.outputs.size();
-    return kCoreFailed;
-  }
-  for (size_t i = 0; i < new_shapes.size(); i++) {
-    auto &input_shape = new_shapes[i];
-    info.inputs[i]->SetShape(input_shape);
-    info.inputs[i]->SetData(nullptr, false);  // reset data
-  }
-  for (size_t i = 0; i < info.outputs.size(); i++) {
-    auto &output = new_outputs[i];
-    info.outputs[i]->SetShape(output.shape_c());
-    info.outputs[i]->SetData(nullptr, false);  // reset data
   }
   return kSuccess;
 }
