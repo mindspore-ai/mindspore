@@ -158,7 +158,7 @@ def test_multiple_return_contains_dict():
     assert out[2] == (1, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -204,7 +204,7 @@ def test_multiple_return_contains_dict_3():
     assert out[1] == {'a': 1}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
