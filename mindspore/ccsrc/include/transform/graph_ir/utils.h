@@ -50,7 +50,7 @@ std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr> &me_
 std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors);
 GeDataType ConvertDataType(const MeDataType &type);
 
-MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims);
+MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims, bool ref_mem = false);
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor);
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
 
