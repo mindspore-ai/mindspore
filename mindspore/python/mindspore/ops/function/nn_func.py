@@ -1703,7 +1703,8 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         output_size = (int(input.shape[-3] * output_ratio[0]), int(input.shape[-2] * output_ratio[1]),
                        int(input.shape[-1] * output_ratio[2]))
     if input.dtype != _random_samples.dtype:
-        raise TypeError("Expect _random_samples to have the same dtypes as input")
+        raise TypeError(f"For 'fractional_max_pool3d', 'input' and '_random_samples' must be same dtype, \
+                but got {input.dtype} and {_random_samples.dtype}.")
     fractional_max_pool = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
     output = fractional_max_pool(input, _random_samples)
     if return_indices:
