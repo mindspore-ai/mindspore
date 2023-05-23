@@ -38,6 +38,7 @@ static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;
 static constexpr int kBitNum32 = 32;
 static constexpr int kMaxVarCorr = 10;
+static constexpr int kNumberBase = 10;
 
 namespace mindspore::lite {
 
@@ -55,8 +56,10 @@ class MS_API WeightDecoder {
     while (!iss1.eof() || !iss2.eof()) {
       getline(iss1, string1, '.');
       getline(iss2, string2, '.');
-      if (stoi(string1) > stoi(string2)) return 1;
-      if (stoi(string1) < stoi(string2)) return -1;
+      int64_t integer1 = std::strtol(string1.c_str(), nullptr, kNumberBase);
+      int64_t integer2 = std::strtol(string2.c_str(), nullptr, kNumberBase);
+      if (integer1 > integer2) return 1;
+      if (integer1 < integer2) return -1;
       string1 = string2 = "0";
     }
     return 0;
