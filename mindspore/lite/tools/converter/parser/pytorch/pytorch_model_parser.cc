@@ -18,9 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_map>
-#include "torch/csrc/jit/passes/freeze_module.h"
 #include "torch/csrc/jit/passes/inliner.h"
-#include "torch/csrc/jit/passes/normalize_ops.h"
 #include "include/registry/node_parser_registry.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
@@ -28,6 +26,8 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
+#include "tools/converter/parser/pytorch/pytorch_lstm_adjust.h"
+#include "tools/converter/parser/pytorch/torch_graph_transfrom.h"
 #include "src/common/file_utils.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
@@ -39,6 +39,14 @@
 using mindspore::converter::kFmkTypePytorch;
 namespace mindspore {
 namespace lite {
+STATUS PytorchModelParser::TorchModelAdjust(const FuncGraphPtr &anf_graph) {
+  auto pass = std::make_shared<mindspore::opt::PytorchLstmAdjustPass>();
+  MS_CHECK_TRUE_RET(pass != nullptr, RET_ERROR);
+  auto ret = pass->Run(anf_graph);
+  MS_CHECK_TRUE_MSG(ret, RET_ERROR, "torch lstm adjust failed!");
+  return RET_OK;
+}
+
 api::FuncGraphPtr PytorchModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   NotSupportOp::GetInstance()->set_fmk_type("PYTORCH");
@@ -59,6 +67,14 @@ api::FuncGraphPtr PytorchModelParser::Parse(const converter::ConverterParameters
     MS_LOG(ERROR) << "convert pytorch graph failed.";
     return nullptr;
   }
+
+  status = TorchModelAdjust(anf_graph);
+  if (RET_OK != status) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    MS_LOG(ERROR) << "adjust pytorch graph failed.";
+    return nullptr;
+  }
+
   static auto root_func_manager = Manage(anf_graph);
   MS_ASSERT(root_func_manager != nullptr);
   for (auto &subgraph : all_subgraphs_) {
@@ -99,13 +115,8 @@ STATUS PytorchModelParser::InitOriginModel(const std::string &model_file) {
   }
 
   auto module = torch::jit::load(model_path);
-  module.eval();                               // eval to expand function call
-  module = torch::jit::freeze_module(module);  // freeze module
-  torch_model_ = module.get_method("forward").graph();
-  CHECK_NULL_RETURN(torch_model_);
-  // parse submodules in graph
-  torch::jit::Inline(*torch_model_);
-  torch::jit::NormalizeOps(torch_model_);
+  torch_model_ = torch::jit::TorchGraphTransform(module);
+  MS_CHECK_TRUE_RET(torch_model_ != nullptr, RET_ERROR);
   return RET_OK;
 }
 
@@ -322,6 +333,28 @@ STATUS ConvertConstNode(const torch::jit::Node *torch_node, const FuncGraphPtr &
                          [](double ele) { return static_cast<float>(ele); });
           parameter = opt::BuildFloatVecParameterNode(anf_graph, data, output->debugName());
         } break;
+        case c10::TypeKind::TensorType: {
+          auto tensor_vector = value.value().toTensorVector();
+          size_t idx = 0;
+          std::vector<AnfNodePtr> make_tuple_inputs;
+          for (const auto &torch_tensor : tensor_vector) {
+            auto tensor_info = ConvertTorchTensor(torch_tensor);
+            if (tensor_info == nullptr) {
+              MS_LOG(ERROR) << "create tensor info failed";
+              return RET_ERROR;
+            }
+            parameter =
+              opt::BuildParameterNode(anf_graph, tensor_info, output->debugName() + "_" + std::to_string(idx));
+            idx++;
+            make_tuple_inputs.emplace_back(parameter);
+          }
+          // using make_tuple to pack tensor list
+          auto make_tuple_prim = std::make_shared<ops::MakeTuple>();
+          auto make_tuple = anf_graph->NewCNode(make_tuple_prim->GetPrim(), make_tuple_inputs);
+          MS_CHECK_TRUE_RET(make_tuple != nullptr, RET_ERROR);
+          anf_nodes_map->emplace(output->debugName(), make_tuple);
+          return RET_OK;
+        }
         default:
           MS_LOG(ERROR) << "Unsupported data type: " << c10::typeKindToString(element_type);
           return RET_ERROR;
@@ -329,23 +362,9 @@ STATUS ConvertConstNode(const torch::jit::Node *torch_node, const FuncGraphPtr &
     } break;
     case c10::TypeKind::TensorType: {
       auto torch_tensor = value.value().toTensor();
-      auto data_type = PytorchNodeParser::GetDataTypeFromTorch(torch_tensor.scalar_type());
-      auto data_size = torch_tensor.numel() * abstract::TypeIdSize(data_type);
-      char *data_ptr = reinterpret_cast<char *>(malloc(data_size));
-      if (data_ptr == nullptr) {
-        MS_LOG(ERROR) << "malloc data failed.";
-        return RET_ERROR;
-      }
-      if (CopyDataFromTorchTensor(data_ptr, torch_tensor, data_type) != RET_OK) {
-        MS_LOG(ERROR) << "Copy data from torch tensor failed.";
-        free(data_ptr);
-        return RET_ERROR;
-      }
-      auto data_shape = torch_tensor.sizes().vec();
-      auto tensor_info = CreateTensorInfo(data_ptr, data_size, data_shape, data_type);
-      free(data_ptr);
+      auto tensor_info = ConvertTorchTensor(torch_tensor);
       if (tensor_info == nullptr) {
-        MS_LOG(ERROR) << "Create tensorInfo failed.";
+        MS_LOG(ERROR) << "create tensor info failed";
         return RET_ERROR;
       }
       parameter = opt::BuildParameterNode(anf_graph, tensor_info, output->debugName());
@@ -501,6 +520,28 @@ STATUS PytorchModelParser::ConvertNodes(const FuncGraphPtr &anf_graph) {
     }
   }
   return status;
+}
+tensor::TensorPtr PytorchModelParser::ConvertTorchTensor(const at::Tensor &torch_tensor) {
+  auto data_type = PytorchNodeParser::GetDataTypeFromTorch(torch_tensor.scalar_type());
+  auto data_size = torch_tensor.numel() * abstract::TypeIdSize(data_type);
+  char *data_ptr = reinterpret_cast<char *>(malloc(data_size));
+  if (data_ptr == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed.";
+    return nullptr;
+  }
+  if (CopyDataFromTorchTensor(data_ptr, torch_tensor, data_type) != RET_OK) {
+    MS_LOG(ERROR) << "Copy data from torch tensor failed.";
+    free(data_ptr);
+    return nullptr;
+  }
+  auto data_shape = torch_tensor.sizes().vec();
+  auto tensor_info = CreateTensorInfo(data_ptr, data_size, data_shape, data_type);
+  free(data_ptr);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensorInfo failed.";
+    return nullptr;
+  }
+  return tensor_info;
 }
 
 REG_MODEL_PARSER(kFmkTypePytorch, LiteModelParserCreator<PytorchModelParser>)

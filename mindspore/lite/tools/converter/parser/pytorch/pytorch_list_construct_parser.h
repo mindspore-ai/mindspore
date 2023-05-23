@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/pytorch/pytorch_concat_parser.h"
-#include <memory>
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LIST_CONSTRUCT_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LIST_CONSTRUCT_PARSER_H_
+
 #include <vector>
-#include "ops/concat.h"
-#include "nnacl/op_base.h"
+#include "tools/converter/parser/pytorch/pytorch_node_parser.h"
+#include "tools/converter/parser/pytorch/pytorch_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr PytorchListConstructParser::Parse(const torch::jit::Node *torch_node,
-                                                std::vector<size_t> *input_indices) {
-  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
-  auto prim = std::make_unique<ops::Concat>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  prim->set_axis(0);
-  return prim->GetPrim();
-}
+class PytorchListConstructParser : public PytorchNodeParser {
+ public:
+  PytorchListConstructParser() : PytorchNodeParser("ListConstruct") {}
+  ~PytorchListConstructParser() override = default;
 
-PytorchNodeRegistrar g_pytorchListConstructParser("ListConstruct", new PytorchListConstructParser());
+  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
+};
 }  // namespace lite
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LIST_CONSTRUCT_PARSER_H_

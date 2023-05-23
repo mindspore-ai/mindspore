@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_CONCAT_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_CONCAT_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LSTM_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LSTM_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
@@ -23,13 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-class PytorchListConstructParser : public PytorchNodeParser {
+class PytorchLstmParser : public PytorchNodeParser {
  public:
-  PytorchListConstructParser() : PytorchNodeParser("ListConstruct") {}
-  ~PytorchListConstructParser() override = default;
+  PytorchLstmParser() : PytorchNodeParser("lstm") {}
+  ~PytorchLstmParser() override = default;
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_CONCAT_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LSTM_PARSER_H_

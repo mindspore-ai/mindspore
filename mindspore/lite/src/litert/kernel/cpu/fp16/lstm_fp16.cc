@@ -218,7 +218,7 @@ int LstmFp16CPUKernel::InitProjectWeight() {
   if (in_tensors_.size() < C7NUM) {
     return RET_OK;
   }
-  auto weight_pro = in_tensors_.at(SEVEN_INPUT);
+  auto weight_pro = in_tensors_.at(SEVENTH_INPUT);
   auto shape = weight_pro->shape();
   if (shape.size() != C3NUM) {
     MS_LOG(ERROR) << "Project-weight's shape must be 3D.";

@@ -125,7 +125,9 @@
 #define FOURTH_INPUT 3
 #define FIFTH_INPUT 4
 #define SIXTH_INPUT 5
-#define SEVEN_INPUT 6
+#define SEVENTH_INPUT 6
+#define EIGHTH_INPUT 7
+#define NINTH_INPUT 8
 
 #define ONE_TENSOR 1
 #define TWO_TENSOR 2
