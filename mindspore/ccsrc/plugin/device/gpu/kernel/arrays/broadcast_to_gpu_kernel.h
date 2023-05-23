@@ -25,7 +25,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -58,14 +58,10 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
  private:
   std::string kernel_name_{};
   BroadcastToLaunchFunc kernel_func_;
-  void ResetResource() noexcept;
   static std::vector<std::pair<KernelAttr, BroadcastToLaunchFunc>> func_list_;
-  size_t input_size_;
-  size_t output_size_;
-  size_t input_type_size_;  // sizeof(T)
-  std::vector<size_t> input_shape_ = {1, 1, 1, 1, 1, 1, 1, 1};
-  std::vector<size_t> output_shape_ = {1, 1, 1, 1, 1, 1, 1, 1};
-  bool is_null_input_ = false;
+  bool is_broadcast_;
+  std::vector<int64_t> simplified_inp_shape_;
+  std::vector<int64_t> simplified_out_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

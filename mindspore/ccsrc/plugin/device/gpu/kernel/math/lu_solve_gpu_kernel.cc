@@ -18,7 +18,8 @@
 #include <vector>
 #include "mindspore/core/ops/lu_solve_.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
+#include "plugin/device/gpu/kernel/math/broadcast_public.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
@@ -149,26 +150,22 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   MatrixTranspose(b, LongToSize(batch_num_b_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), b_col_major, device_id_,
                   cuda_stream_);
   if (need_broadcast_) {
+    std::vector<int64_t> simplified_inp_shape;
+    std::vector<int64_t> simplified_out_shape;
     // expand_size :(*,m,m)
     auto origin_size = lhs_shape_;
     auto expand_size = output_shape_;
     expand_size[out_shape_len_ - kIndex1] = m_;
-    BroadcastTo(origin_size[kIndex0], origin_size[kIndex1], origin_size[kIndex2], origin_size[kIndex3],
-                origin_size[kIndex4], origin_size[kIndex5], origin_size[kIndex6], origin_size[kIndex7],
-                expand_size[kIndex0], expand_size[kIndex1], expand_size[kIndex2], expand_size[kIndex3],
-                expand_size[kIndex4], expand_size[kIndex5], expand_size[kIndex6], expand_size[kIndex7], a_col_major,
-                a_broadcast, cuda_stream_);
+    SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
+    BroadcastTo(simplified_inp_shape, simplified_out_shape, a_col_major, a_broadcast, device_id_, cuda_stream_);
 
     // expand_size :(*,k,m)
     origin_size = rhs_shape_;
     expand_size = output_shape_;
     std::swap(origin_size[out_shape_len_ - kIndex1], origin_size[out_shape_len_ - kIndex2]);
     std::swap(expand_size[out_shape_len_ - kIndex1], expand_size[out_shape_len_ - kIndex2]);
-    BroadcastTo(origin_size[kIndex0], origin_size[kIndex1], origin_size[kIndex2], origin_size[kIndex3],
-                origin_size[kIndex4], origin_size[kIndex5], origin_size[kIndex6], origin_size[kIndex7],
-                expand_size[kIndex0], expand_size[kIndex1], expand_size[kIndex2], expand_size[kIndex3],
-                expand_size[kIndex4], expand_size[kIndex5], expand_size[kIndex6], expand_size[kIndex7], b_col_major,
-                b_broadcast, cuda_stream_);
+    SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
+    BroadcastTo(simplified_inp_shape, simplified_out_shape, b_col_major, b_broadcast, device_id_, cuda_stream_);
 
     // origin_size:(*,m,1)
     // expand_size :(*,m,1)
@@ -176,11 +173,8 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     origin_size[out_shape_len_ - kIndex1] = 1;
     expand_size = output_shape_;
     expand_size[out_shape_len_ - kIndex1] = 1;
-    BroadcastTo(origin_size[kIndex0], origin_size[kIndex1], origin_size[kIndex2], origin_size[kIndex3],
-                origin_size[kIndex4], origin_size[kIndex5], origin_size[kIndex6], origin_size[kIndex7],
-                expand_size[kIndex0], expand_size[kIndex1], expand_size[kIndex2], expand_size[kIndex3],
-                expand_size[kIndex4], expand_size[kIndex5], expand_size[kIndex6], expand_size[kIndex7], piv_array,
-                piv_broadcast, cuda_stream_);
+    SimplifyBroadcastToShape(origin_size, expand_size, &simplified_inp_shape, &simplified_out_shape);
+    BroadcastTo(simplified_inp_shape, simplified_out_shape, piv_array, piv_broadcast, device_id_, cuda_stream_);
   } else {
     a_broadcast = a_col_major;
     b_broadcast = b_col_major;

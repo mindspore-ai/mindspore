@@ -31,7 +31,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/sequence/sequence_addn_gpu_kernel.cc"          "whitespace/indent"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/sequence/sequence_addn_cpu_kernel.cc"          "whitespace/indent"
 "mindspore/mindspore/ccsrc/pipeline/jit/resource.cc"                                               "readability/fn_size"
-
+"mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/binary_ops_gpu_kernel.cc"                 "whitespace/indent"
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/PostProcess/Yolov4TinyMindsporePost.h" "runtime/references"
