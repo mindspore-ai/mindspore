@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,19 @@ PrimitiveCPtr PytorchAddmmParser::Parse(const torch::jit::Node *torch_node, std:
   return prim->GetPrim();
 }
 
+PrimitiveCPtr PytorchLinearParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
+  auto prim = std::make_unique<ops::MatMulFusion>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  input_indices->resize(kInputSize2);
+  std::iota(input_indices->begin(), input_indices->end(), 0);
+
+  prim->set_activation_type(mindspore::NO_ACTIVATION);
+  prim->set_transpose_b(true);
+  return prim->GetPrim();
+}
+
 PytorchNodeRegistrar g_pytorchMatmulParser("addmm", new PytorchAddmmParser());
+PytorchNodeRegistrar g_pytorchLinearParser("linear", new PytorchLinearParser());
 }  // namespace lite
 }  // namespace mindspore

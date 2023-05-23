@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_MATMUL_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_MATMUL_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_UNSTACK_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_UNSTACK_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
@@ -23,21 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-class PytorchAddmmParser : public PytorchNodeParser {
+class PytorchUnbindParser : public PytorchNodeParser {
  public:
-  PytorchAddmmParser() : PytorchNodeParser("Addmm") {}
-  ~PytorchAddmmParser() override = default;
-
-  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
-};
-
-class PytorchLinearParser : public PytorchNodeParser {
- public:
-  PytorchLinearParser() : PytorchNodeParser("Linear") {}
-  ~PytorchLinearParser() override = default;
+  PytorchUnbindParser() : PytorchNodeParser("Unbind") {}
+  ~PytorchUnbindParser() override = default;
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_MATMUL_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_UNSTACK_PARSER_H_

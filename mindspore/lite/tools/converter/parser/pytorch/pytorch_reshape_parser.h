@@ -30,6 +30,22 @@ class PytorchReshapeParser : public PytorchNodeParser {
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };
+
+class PytorchSqueezeParser : public PytorchNodeParser {
+ public:
+  PytorchSqueezeParser() : PytorchNodeParser("Squeeze") {}
+  ~PytorchSqueezeParser() override = default;
+
+  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
+};
+
+class PytorchUnSqueezeParser : public PytorchNodeParser {
+ public:
+  PytorchUnSqueezeParser() : PytorchNodeParser("UnSqueeze") {}
+  ~PytorchUnSqueezeParser() override = default;
+
+  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_RESHAPE_PARSER_H_
