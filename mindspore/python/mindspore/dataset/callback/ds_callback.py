@@ -39,13 +39,28 @@ class DSCallback:
         >>> from mindspore.dataset.transforms import transforms
         >>>
         >>> class PrintInfo(DSCallback):
+        ...     def ds_begin(self, ds_run_context):
+        ...         print("callback: start dataset pipeline", flush=True)
+        ...
+        ...     def ds_epoch_begin(self, ds_run_context):
+        ...         print("callback: epoch begin, we are in epoch", ds_run_context.cur_epoch_num, flush=True)
+        ...
         ...     def ds_epoch_end(self, ds_run_context):
-        ...         print(ds_run_context.cur_epoch_num)
-        ...         print(ds_run_context.cur_step_num)
+        ...         print("callback: epoch end, we are in epoch", ds_run_context.cur_epoch_num, flush=True)
         >>>
-        >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
-        >>> op = transforms.OneHot(10)
-        >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
+        >>> dataset = ds.GeneratorDataset([1, 2], "col1", shuffle=False, num_parallel_workers=1)
+        >>> dataset = dataset.map(operations=lambda x: x, callbacks=PrintInfo())
+        >>>
+        >>> # Start dataset pipeline
+        >>> iterator = dataset.create_tuple_iterator(num_epochs=2)
+        >>> for i in range(2):
+        >>>     for d in iterator:
+        >>>         pass
+        callback: start dataset pipeline
+        callback: epoch begin, we are in epoch 1
+        callback: epoch end, we are in epoch 1
+        callback: epoch begin, we are in epoch 2
+        callback: epoch end, we are in epoch 2
     """
 
     @check_callback

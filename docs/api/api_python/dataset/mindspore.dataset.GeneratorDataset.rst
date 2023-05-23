@@ -14,7 +14,7 @@
         - **column_names** (Union[str, list[str]]，可选) - 指定数据集生成的列名。默认值： ``None`` ，不指定。用户可以通过此参数或 `schema` 参数指定列名。
         - **column_types** (list[mindspore.dtype]，可选) - 指定生成数据集各个数据列的数据类型。默认值： ``None`` ，不指定。
           如果未指定该参数，则自动推断类型；如果指定了该参数，将在数据输出时做类型匹配检查。
-        - **schema** (Union[str, Schema], 可选) - 数据格式策略，用于指定读取数据列的数据类型、数据维度等信息。
+        - **schema** (Union[str, :class:`~.dataset.Schema`], 可选) - 数据格式策略，用于指定读取数据列的数据类型、数据维度等信息。
           支持传入JSON文件路径或 :class:`mindspore.dataset.Schema` 构造的对象。默认值： ``None`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值： ``1`` 。

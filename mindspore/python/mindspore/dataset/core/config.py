@@ -225,6 +225,7 @@ def get_num_parallel_workers():
     """
     Get the global configuration of number of parallel workers.
     This is the DEFAULT num_parallel_workers value used for each operation.
+    If `set_num_parallel_workers` is never called before, the default value(8) will be returned.
 
     Returns:
         int, number of parallel workers to be used as a default for each operation.
@@ -261,7 +262,7 @@ def set_numa_enable(numa_enable):
 def get_numa_enable():
     """
     Get the state of numa to indicate enabled/disabled.
-    This is the DEFAULT numa enabled value used for the all process.
+    This is the numa config used for all processes, it is disabled by default.
 
     Returns:
         bool, the default state of numa enabled.
@@ -367,7 +368,7 @@ def _set_auto_workers_config(option):
 
 def get_auto_num_workers():
     """
-    Get the setting (turned on or off) automatic number of workers.
+    Get the setting (turned on or off) automatic number of workers, it is disabled by default.
 
     Returns:
         bool, whether auto number worker feature is turned on.
@@ -404,7 +405,8 @@ def set_callback_timeout(timeout):
 
 def get_callback_timeout():
     """
-    Get the default timeout for :class:`mindspore.dataset.WaitedDSCallback` .
+    Get the default timeout (in seconds) for :class:`mindspore.dataset.WaitedDSCallback` .
+    If `set_callback_timeout` is never called before, the default value(60) will be returned.
 
     Returns:
         int, Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.WaitedDSCallback` in case of
@@ -542,7 +544,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
 
 def get_enable_autotune():
     """
-    Get whether AutoTune is currently enabled.
+    Get whether AutoTune is currently enabled, it is disabled by default.
 
     Returns:
         bool, whether AutoTune is currently enabled.
@@ -583,6 +585,7 @@ def set_autotune_interval(interval):
 def get_autotune_interval():
     """
     Get the current configuration adjustment interval (in steps) for AutoTune.
+    If `set_autotune_interval` is never called before, the default value(0) will be returned.
 
     Returns:
         int, the configuration adjustment interval (in steps) for AutoTune.
@@ -620,8 +623,9 @@ def get_enable_shared_mem():
 
 def set_enable_shared_mem(enable):
     """
-    Set the default state of shared memory flag. If `shared_mem_enable` is ``True``, will use shared memory queues
+    Set the default state of shared memory flag. If set to ``True``, will use shared memory queues
     to pass data to processes that are created for operations that set `python_multiprocessing` to ``True``.
+    It is enabled by default.
 
     Note:
         `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
@@ -690,7 +694,7 @@ def set_auto_offload(offload):
 
 def get_auto_offload():
     """
-    Get the state of the automatic offload flag (True or False)
+    Get the state of the automatic offload flag (True or False), it is disabled by default.
 
     Returns:
         bool, Whether the automatic offload feature is enabled.
@@ -725,7 +729,7 @@ def set_enable_watchdog(enable):
 def get_enable_watchdog():
     """
     Get the state of watchdog Python thread to indicate enabled or disabled state.
-    This is the DEFAULT watchdog Python thread state value used for the all processes.
+    This is a Python watchdog thread used for all processes, it is enabled by default.
 
     Returns:
         bool, the default state of watchdog Python thread enabled.
@@ -769,7 +773,8 @@ def get_multiprocessing_timeout_interval():
 
     Returns:
         int, interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets data from
-        subprocesses/child threads. Default: 300s.
+        subprocesses/child threads. If `set_multiprocessing_timeout_interval` is never called before,
+        the default value(300) will be returned.
 
     Examples:
         >>> # Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data
@@ -800,7 +805,8 @@ def set_dynamic_shape(is_dynamic):
 
 def get_dynamic_shape():
     """
-    Get the dynamic shape flag of the dataset
+    Get the dynamic shape flag of the dataset, it is set to False by default.
+
     Returns:
         bool, whether the dataset is dynamic shape.
 
@@ -832,6 +838,7 @@ def set_fast_recovery(fast_recovery):
 def get_fast_recovery():
     """
     Get whether the fast recovery mode is enabled for the current dataset pipeline.
+    It is set to True by default.
 
     Returns:
         bool, whether the dataset recovers fast in failover reset.
@@ -927,7 +934,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
 def get_debug_mode():
     """
-    Get the debug_mode flag of the dataset pipeline
+    Get the debug_mode flag of the dataset pipeline, it is set to False by default.
 
     Returns:
         bool, whether dataset pipeline debug mode is enabled
@@ -1015,6 +1022,7 @@ def set_error_samples_mode(error_samples_mode):
 def get_error_samples_mode():
     """
     Get the current configuration for strategy for processing erroneous samples in a dataset pipeline.
+    If `set_error_samples_mode` is never called before, the default setting is ErrorSamplesMode.RETURN.
 
     Returns:
         ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.

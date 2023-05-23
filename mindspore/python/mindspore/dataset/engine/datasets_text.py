@@ -80,6 +80,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> ag_news_dataset_dir = "/path/to/ag_news_dataset_file"
         >>> dataset = ds.AGNewsDataset(dataset_dir=ag_news_dataset_dir, usage='all')
 
@@ -183,6 +184,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> amazon_review_dataset_dir = "/path/to/amazon_review_dataset_dir"
         >>> dataset = ds.AmazonReviewDataset(dataset_dir=amazon_review_dataset_dir, usage='all')
 
@@ -422,6 +424,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
         >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
 
@@ -517,6 +520,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
         >>> dataset = ds.CoNLL2000Dataset(dataset_dir=conll2000_dataset_dir, usage='all')
 
@@ -612,6 +616,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> dbpedia_dataset_dir = "/path/to/dbpedia_dataset_directory"
         >>>
         >>> # 1) Read 3 samples from DBpedia dataset
@@ -705,6 +710,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> en_wik9_dataset_dir = "/path/to/en_wik9_dataset"
         >>> dataset2 = ds.EnWik9Dataset(dataset_dir=en_wik9_dataset_dir, num_samples=2,
         ...                             shuffle=True)
@@ -822,6 +828,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> imdb_dataset_dir = "/path/to/imdb_dataset_directory"
         >>>
         >>> # 1) Read all samples (text files) in imdb_dataset_dir with 8 threads
@@ -946,6 +953,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
         >>> dataset = ds.IWSLT2016Dataset(dataset_dir=iwslt2016_dataset_dir, usage='all',
         ...                               language_pair=('de', 'en'), valid_set='tst2013', test_set='tst2014')
@@ -1073,6 +1081,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> iwslt2017_dataset_dir = "/path/to/iwslt2017_dataset_dir"
         >>> dataset = ds.IWSLT2017Dataset(dataset_dir=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
 
@@ -1177,6 +1186,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> multi30k_dataset_dir = "/path/to/multi30k_dataset_directory"
         >>> data = ds.Multi30kDataset(dataset_dir=multi30k_dataset_dir, usage='all', language_pair=['de', 'en'])
 
@@ -1277,6 +1287,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> penn_treebank_dataset_dir = "/path/to/penn_treebank_dataset_directory"
         >>> dataset = ds.PennTreebankDataset(dataset_dir=penn_treebank_dataset_dir, usage='all')
 
@@ -1374,6 +1385,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
         >>> dataset = ds.SogouNewsDataset(dataset_dir=sogou_news_dataset_dir, usage='all')
 
@@ -1468,6 +1480,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> squad_dataset_dir = "/path/to/squad_dataset_file"
         >>> dataset = ds.SQuADDataset(dataset_dir=squad_dataset_dir, usage='all')
 
@@ -1581,6 +1594,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> sst2_dataset_dir = "/path/to/sst2_dataset_directory"
         >>>
         >>> # 1) Read 3 samples from SST2 dataset
@@ -1679,8 +1693,9 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
-        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
-        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir)
+        >>> import mindspore.dataset as ds
+        >>> text_file_list = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
+        >>> dataset = ds.TextFileDataset(dataset_files=text_file_list)
     """
 
     @check_textfiledataset
@@ -1740,6 +1755,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> udpos_dataset_dir = "/path/to/udpos_dataset_dir"
         >>> dataset = ds.UDPOSDataset(dataset_dir=udpos_dataset_dir, usage='all')
 
@@ -1850,6 +1866,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
         }
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> wiki_text_dataset_dir = "/path/to/wiki_text_dataset_directory"
         >>> dataset = ds.WikiTextDataset(dataset_dir=wiki_text_dataset_dir, usage='all')
     """
@@ -1911,6 +1928,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> yahoo_answers_dataset_dir = "/path/to/yahoo_answers_dataset_directory"
         >>>
         >>> # 1) Read 3 samples from YahooAnswers dataset
@@ -2008,6 +2026,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> yelp_review_dataset_dir = "/path/to/yelp_review_dataset_dir"
         >>> dataset = ds.YelpReviewDataset(dataset_dir=yelp_review_dataset_dir, usage='all')
 

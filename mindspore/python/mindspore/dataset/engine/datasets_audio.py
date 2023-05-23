@@ -107,6 +107,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> cmu_arctic_dataset_directory = "/path/to/cmu_arctic_dataset_directory"
         >>>
         >>> # 1) Read 500 samples (audio files) in cmu_arctic_dataset_directory
@@ -243,6 +244,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> gtzan_dataset_directory = "/path/to/gtzan_dataset_directory"
         >>>
         >>> # 1) Read 500 samples (audio files) in gtzan_dataset_directory
@@ -380,6 +382,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> libri_tts_dataset_dir = "/path/to/libri_tts_dataset_directory"
         >>>
         >>> # 1) Read 500 samples (audio files) in libri_tts_dataset_directory
@@ -525,6 +528,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> lj_speech_dataset_dir = "/path/to/lj_speech_dataset_directory"
         >>>
         >>> # 1) Get all samples from LJSPEECH dataset in sequence
@@ -667,6 +671,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> speech_commands_dataset_dir = "/path/to/speech_commands_dataset_directory"
         >>>
         >>> # Read 3 samples from SpeechCommands dataset
@@ -799,6 +804,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # 1) Get all train samples from TEDLIUM_release1 dataset in sequence.
         >>> dataset = ds.TedliumDataset(dataset_dir="/path/to/tedlium1_dataset_directory",
         ...                             release="release1", shuffle=False)
@@ -998,6 +1004,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> yes_no_dataset_dir = "/path/to/yes_no_dataset_directory"
         >>>
         >>> # Read 3 samples from YesNo dataset

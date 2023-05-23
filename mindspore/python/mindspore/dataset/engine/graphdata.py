@@ -120,6 +120,7 @@ class GraphData:
         ``CPU``
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> graph_dataset_dir = "/path/to/graph_dataset_file"
         >>> graph_data = ds.GraphData(dataset_file=graph_dataset_dir, num_parallel_workers=2)
         >>> nodes = graph_data.get_all_nodes(node_type=1)
@@ -206,7 +207,7 @@ class GraphData:
         Examples:
             >>> from mindspore.dataset import GraphData
             >>>
-            >>> g = ds.GraphData("/path/to/testdata", 1)
+            >>> g = GraphData("/path/to/testdata", 1)
             >>> edges = g.get_all_edges(0)
             >>> nodes = g.get_nodes_from_edges(edges)
 
@@ -506,7 +507,7 @@ class GraphData:
         Examples:
         >>> from mindspore.dataset import GraphData
         >>>
-        >>> g = ds.GraphData("/path/to/testdata", 2)
+        >>> g = GraphData("/path/to/testdata", 2)
         >>> graph_info = g.graph_info()
         """
         if self._working_mode == 'server':
@@ -1333,6 +1334,7 @@ class InMemoryGraphDataset(GeneratorDataset):
 
     Examples:
         >>> from mindspore.dataset import InMemoryGraphDataset, Graph
+        >>> import numpy as np
         >>>
         >>> class MyDataset(InMemoryGraphDataset):
         ...     def __init__(self, data_dir):
@@ -1341,6 +1343,7 @@ class InMemoryGraphDataset(GeneratorDataset):
         ...     def process(self):
         ...         # create graph with loading data in given data_dir
         ...         # here create graph with numpy array directly instead
+        ...         print("Call process fun to process data.", flush=True)
         ...         edges = np.array([[0, 1], [1, 2]])
         ...         graph = Graph(edges=edges)
         ...         self.graphs.append(graph)
@@ -1352,6 +1355,16 @@ class InMemoryGraphDataset(GeneratorDataset):
         ...
         ...     def __len__(self):
         ...         return len(self.graphs)
+        >>>
+        >>> # Init MyDataset object, 'process' will be called by parent's __init__.
+        >>> graph_data = MyDataset("data/save/load/path")
+        Call process fun to process data.
+        >>>
+        >>> # Save processed data into disk in numpy.npz format.
+        >>> graph_data.save()
+        >>>
+        >>> # Load data from given path.
+        >>> graph_data.load()
     """
 
     def __init__(self, data_dir, save_dir="./processed", column_names="graph", num_samples=None, num_parallel_workers=1,
@@ -1381,6 +1394,7 @@ class InMemoryGraphDataset(GeneratorDataset):
     def process(self):
         """
         Process method based on origin dataset, override this method in your our dataset class.
+        If this method is overrode, it will be called during parent's `__init__`.
         """
         raise NotImplementedError("'process' method should be implemented in your own logic.")
 

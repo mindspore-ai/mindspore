@@ -609,6 +609,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
          - not allowed
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import numpy as np
         >>>
         >>> # 1) Multidimensional generator function as callable input.
@@ -946,6 +947,7 @@ class NumpySlicesDataset(GeneratorDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # 1) Input data can be a list
         >>> data = [1, 2, 3]
         >>> dataset = ds.NumpySlicesDataset(data=data, column_names=["column_1"])
@@ -1007,6 +1009,7 @@ class PaddedDataset(GeneratorDataset):
         ValueError: If the padded_samples is empty.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> import numpy as np
         >>> data = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
         >>> dataset = ds.PaddedDataset(padded_samples=data)

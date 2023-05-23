@@ -118,6 +118,7 @@ class BuiltinSampler:
                 :class:`mindspore.dataset.WeightedRandomSampler` ) are supported.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
             >>> sampler.add_child(ds.RandomSampler(num_samples=4))
             >>> dataset = ds.Cifar10Dataset(cifar10_dataset_dir, sampler=sampler)
@@ -134,6 +135,7 @@ class BuiltinSampler:
             Sampler, The child sampler of given sampler.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
             >>> sampler.add_child(ds.RandomSampler(num_samples=2))
             >>> child_sampler = sampler.get_child()
@@ -209,6 +211,7 @@ class BuiltinSampler:
             int, the number of samples, or None.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
             >>> num_samplers = sampler.get_num_samples()
         """
@@ -236,6 +239,7 @@ class Sampler(BuiltinSampler):
     dataset_size and num_samples will be set by dataset once a dataset iterator is created.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> class ReverseSampler(ds.Sampler):
         ...     def __iter__(self):
         ...         for i in range(self.dataset_size - 1, -1, -1):
@@ -353,6 +357,7 @@ class DistributedSampler(BuiltinSampler):
         RuntimeError: If `offset` is greater than `num_shards` .
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
         >>> sampler = ds.DistributedSampler(10, 5)
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
@@ -452,6 +457,7 @@ class PKSampler(BuiltinSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # creates a PKSampler that will get 3 samples from every class.
         >>> sampler = ds.PKSampler(3)
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
@@ -532,6 +538,7 @@ class RandomSampler(BuiltinSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # creates a RandomSampler
         >>> sampler = ds.RandomSampler()
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
@@ -598,6 +605,7 @@ class SequentialSampler(BuiltinSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> # creates a SequentialSampler
         >>> sampler = ds.SequentialSampler()
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
@@ -665,6 +673,7 @@ class SubsetSampler(BuiltinSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> indices = [0, 1, 2, 3, 4, 5]
         >>>
         >>> # creates a SubsetSampler, will sample from the provided indices
@@ -753,6 +762,7 @@ class SubsetRandomSampler(SubsetSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> indices = [0, 1, 2, 3, 7, 88, 119]
         >>>
         >>> # create a SubsetRandomSampler, will sample from the provided indices
@@ -793,6 +803,7 @@ class IterSampler(Sampler):
         num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> class MySampler:
         ...     def __iter__(self):
         ...         for i in range(99, -1, -1):
@@ -832,6 +843,7 @@ class WeightedRandomSampler(BuiltinSampler):
         ValueError: If `num_samples` is a negative value.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.1, 0.3]
         >>>
         >>> # creates a WeightedRandomSampler that will sample 4 elements without replacement

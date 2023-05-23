@@ -9,7 +9,7 @@
         - **dataset_files** (Union[str, list[str]]) - MindRecord文件路径，支持单文件路径字符串、多文件路径字符串列表。如果 `dataset_files` 的类型是字符串，则它代表一组具有相同前缀名的MindRecord文件，同一路径下具有相同前缀名的其他MindRecord文件将会被自动寻找并加载。如果 `dataset_files` 的类型是列表，则它表示所需读取的MindRecord数据文件。
         - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列。默认值： ``None`` ，读取所有列。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``None`` ，采用 ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``None`` ，采用 ``mindspore.dataset.Shuffle.GLOBAL`` 。
           如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 
@@ -23,7 +23,7 @@
         - **padded_sample** (dict, 可选) - 指定额外添加到数据集的样本，可用于在分布式训练时补齐分片数据，注意字典的键名需要与 `column_list` 指定的列名相同。默认值： ``None`` ，不添加样本。需要与 `num_padded` 参数同时使用。
         - **num_padded** (int, 可选) - 指定额外添加的数据集样本的数量。在分布式训练时可用于为数据集补齐样本，使得总样本数量可被 `num_shards` 整除。默认值： ``None`` ，不添加样本。需要与 `padded_sample` 参数同时使用。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。
-        - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
+        - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
     异常：
         - **ValueError** - `dataset_files` 参数所指向的文件无效或不存在。

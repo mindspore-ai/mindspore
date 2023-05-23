@@ -218,6 +218,10 @@ def zip(datasets):
 
     Examples:
             >>> # Create a dataset which is the combination of dataset_1 and dataset_2
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_1 = ds.GeneratorDataset([1], "column1")
+            >>> dataset_2 = ds.GeneratorDataset([2], "column2")
             >>> dataset = ds.zip((dataset_1, dataset_2))
     """
     if len(datasets) <= 1:
@@ -458,6 +462,9 @@ class Dataset:
             str, JSON string of the pipeline.
 
         Examples:
+            >>> import mindspore.dataset as ds
+            >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
+            >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
             >>> dataset_json = dataset.to_json("/path/to/mnist_dataset_pipeline.json")
         """
         ir_tree, _ = self.create_ir_tree()
@@ -514,6 +521,7 @@ class Dataset:
         Examples:
             >>> # Create a dataset where certain counts rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
+            >>> import mindspore.dataset as ds
             >>> import numpy as np
             >>> def generate_2_columns(n):
             ...     for i in range(n):
@@ -595,9 +603,14 @@ class Dataset:
             BatchDataset, dataset batched.
 
         Examples:
-            >>> # 1) Create a dataset where every 100 rows are combined into a batch
+            >>> # 1) Create a dataset where every 5 rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
-            >>> dataset = dataset.batch(100, True)
+            >>> import mindspore.dataset as ds
+            >>> from PIL import Image
+            >>>
+            >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
+            >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, num_samples=10)
+            >>> dataset = dataset.batch(5, True)
             >>>
             >>> # 2) resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
             >>> def np_resize(col, BatchInfo):
@@ -657,11 +670,14 @@ class Dataset:
 
         Examples:
             >>> # 1) Pad every sample to the largest sample's shape and batch the samples
-            >>> dataset = dataset.padded_batch(100, True, pad_info={})
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.NumpySlicesDataset([[1], [1, 2], [1, 2, 3], [1, 2, 3, 4]], "column1")
+            >>> dataset = dataset.padded_batch(2, True, pad_info={})
             >>>
-            >>> # 2) Create a dataset where every 100 rows are combined into a batch
+            >>> # 2) Create a dataset where every 3 rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
-            >>> dataset = dataset.padded_batch(100, True)
+            >>> dataset = ds.NumpySlicesDataset([i for i in range(10)], "column1")
+            >>> dataset = dataset.padded_batch(3, True)
             >>>
             >>> # 3) Create a dataset where its batch size is dynamic
             >>> # Define a callable batch size function and let batch size increase 1 each time.
@@ -690,6 +706,7 @@ class Dataset:
             RuntimeError: If condition name already exists.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import numpy as np
             >>> def gen():
             ...     for i in range(100):
@@ -747,9 +764,12 @@ class Dataset:
             RuntimeError: If exist sync operations before shuffle.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
-            >>> # Optionally set the seed for the first epoch
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>>
+            >>> # Optionally set the seed for fixed randomness
             >>> ds.config.set_seed(58)
+            >>>
             >>> # Create a shuffled dataset using a shuffle buffer of size 4
             >>> dataset = dataset.shuffle(4)
         """
@@ -767,6 +787,7 @@ class Dataset:
             Dataset, dataset applied by the function.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> # 1) flat_map on one column dataset
             >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]], shuffle=False)
             >>>
@@ -882,14 +903,18 @@ class Dataset:
             Dataset, dataset after mapping operation.
 
         Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
             >>> # dataset is an instance of Dataset which has 2 columns, "image" and "label".
             >>> # image is of type bytes type which can be decoded to RGB
             >>> # label is of type int32
+            >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
+            >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir)
             >>>
             >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
-            >>> decode_op = c_vision.Decode(rgb=True)
-            >>> random_jitter_op = c_vision.RandomColorAdjust(brightness=(0.8, 0.8), contrast=(1, 1),
-            ...                                               saturation=(1, 1), hue=(0, 0))
+            >>> decode_op = vision.Decode(rgb=True)
+            >>> random_jitter_op = vision.RandomColorAdjust(brightness=(0.8, 0.8), contrast=(1, 1),
+            ...                                             saturation=(1, 1), hue=(0, 0))
             >>>
             >>> # 1) Simple map example.
             >>>
@@ -964,8 +989,10 @@ class Dataset:
             Dataset, dataset filtered.
 
         Examples:
-            >>> # generator data(0 ~ 63)
+            >>> # generator data(0 ~ 19)
             >>> # filter the data that greater than or equal to 11
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(20)], "data")
             >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
         """
         return FilterDataset(self, predicate, input_columns, num_parallel_workers)
@@ -986,7 +1013,8 @@ class Dataset:
             Dataset, dataset repeated.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>>
             >>> # Create a dataset where the dataset is repeated for 50 epochs
             >>> dataset = dataset.repeat(50)
@@ -1015,8 +1043,9 @@ class Dataset:
             Dataset, dataset that containing rows like origin rows subtract skipped rows.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
-            >>> # Create a dataset which skips first 3 elements from data
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> # Skip first 3 elements of dataset and retain 7 elements.
             >>> dataset = dataset.skip(3)
         """
         return SkipDataset(self, count)
@@ -1039,8 +1068,10 @@ class Dataset:
             Dataset, dataset taken.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
-            >>> # Create a dataset where the dataset includes 50 elements.
+            >>> import mindspore.dataset as ds
+            >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
+            >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
+            >>> # Take 50 samples from MNIST dataset.
             >>> dataset = dataset.take(50)
         """
         return TakeDataset(self, count)
@@ -1144,9 +1175,9 @@ class Dataset:
                 floats don't sum to 1.
 
         Examples:
-            >>> # TextFileDataset is not a mappable dataset, so this non-optimized split will be called.
-            >>> # Since many datasets have shuffle on by default, set shuffle to False if split will be called!
-            >>> dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
+            >>> # Split the data into train part and test part.
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> train_dataset, test_dataset = dataset.split([0.9, 0.1])
         """
         if self.is_shuffled():
@@ -1193,8 +1224,11 @@ class Dataset:
             TypeError: The parameter is not dataset object or tuple of dataset objects.
 
         Examples:
-            >>> # Create a dataset which is the combination of dataset and dataset_1
-            >>> dataset = dataset.zip(dataset_1)
+            >>> # Create a dataset which is the combination of dataset_1 and dataset_2
+            >>> import mindspore.dataset as ds
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1")
+            >>> dataset_2 = ds.GeneratorDataset([1, 2, 3], "column2")
+            >>> dataset = dataset_1.zip(dataset_2)
         """
         if isinstance(datasets, tuple):
             datasets = (self, *datasets)
@@ -1221,6 +1255,10 @@ class Dataset:
             Dataset, dataset concatenated.
 
         Examples:
+            >>> import mindspore.dataset as ds
+            >>> dataset_1 = ds.GeneratorDataset([1, 2, 3], "column1")
+            >>> dataset_2 = ds.GeneratorDataset([2, 3, 4], "column1")
+            >>>
             >>> # Create a dataset by concatenating dataset_1 and dataset_2 with "+" operator
             >>> dataset = dataset_1 + dataset_2
             >>> # Create a dataset by concatenating dataset_1 and dataset_2 with concat operation
@@ -1247,13 +1285,14 @@ class Dataset:
             Dataset, dataset renamed.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
             >>> input_columns = ["input_col1", "input_col2", "input_col3"]
             >>> output_columns = ["output_col1", "output_col2", "output_col3"]
             >>>
-            >>> # Create a dataset where input_col1 is renamed to output_col1, and
-            >>> # input_col2 is renamed to output_col2, and input_col3 is renamed
-            >>> # to output_col3.
+            >>> # Create a dataset with 3 columns
+            >>> dataset = ds.GeneratorDataset([(1, 2, 3), (3, 4, 5), (5, 6, 7)], column_names=input_columns)
+            >>>
+            >>> # Rename "input_col1" to "output_col1", "input_col2" to "output_col2", "input_col3" to "output_col3"
             >>> dataset = dataset.rename(input_columns=input_columns, output_columns=output_columns)
         """
 
@@ -1272,10 +1311,12 @@ class Dataset:
             Dataset, dataset projected.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
-            >>> columns_to_project = ["column3", "column1", "column2"]
+            >>> import mindspore.dataset as ds
+            >>> # Create a dataset with 3 columns
+            >>> input_columns = ["column1", "column2", "column3"]
+            >>> dataset = ds.GeneratorDataset([(1, 2, 3), (3, 4, 5), (5, 6, 7)], column_names=input_columns)
             >>>
-            >>> # Create a dataset that consists of column3, column1, column2
+            >>> columns_to_project = ["column3", "column1", "column2"]
             >>> # in that order, regardless of the original order of columns.
             >>> dataset = dataset.project(columns=columns_to_project)
         """
@@ -1294,7 +1335,8 @@ class Dataset:
             Dataset, dataset applied by the function.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>>
             >>> # Declare an apply_func function which returns a Dataset object
             >>> def apply_func(data):
@@ -1336,10 +1378,10 @@ class Dataset:
             Dataset, dataset for transferring.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import time
             >>>
             >>> data = ds.TFRecordDataset('/path/to/TF_FILES', '/path/to/TF_SCHEMA_FILE', shuffle=ds.Shuffle.FILES)
-            >>>
             >>> data = data.device_que()
             >>> data.send()
             >>> time.sleep(0.1)
@@ -1419,12 +1461,12 @@ class Dataset:
             file_type (str, optional): Dataset format. Default: ``'mindrecord'`` .
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import numpy as np
             >>>
             >>> def generator_1d():
             ...     for i in range(10):
             ...         yield (np.array([i]),)
-            >>>
             >>>
             >>> # apply dataset operations
             >>> d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
@@ -1465,7 +1507,8 @@ class Dataset:
             Iterator, tuple iterator over the dataset.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> iterator = dataset.create_tuple_iterator()
             >>> for item in iterator:
             ...     # item is a list
@@ -1498,7 +1541,8 @@ class Dataset:
             Iterator, dictionary iterator over the dataset.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> iterator = dataset.create_dict_iterator()
             >>> for item in iterator:
             ...     # item is a dict
@@ -1527,7 +1571,8 @@ class Dataset:
             int, tuple of the input index information.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> # set input_indexs
             >>> dataset.input_indexs = 10
             >>> print(dataset.input_indexs)
@@ -1588,8 +1633,12 @@ class Dataset:
             list, list of column names in the dataset.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> col_names = dataset.get_col_names()
+            >>> print(col_names)
+            ['column1']
+
         """
         if self._col_names is None:
             runtime_getter = self._init_tree_getters()
@@ -1612,14 +1661,17 @@ class Dataset:
             list, list of shapes of each column.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> import numpy as np
             >>>
             >>> def generator1():
             ...     for i in range(1, 100):
-            ...         yield np.ones((16, i, 83)), np.array(i)
+            ...         yield np.ones((16, 83, 83)), np.array([i])
             >>>
             >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> output_shapes = dataset.output_shapes()
+            >>> print(output_shapes)
+            [[16, 83, 83], [1]]
         """
         # cache single shape
         if not estimate and self.saved_output_shapes is not None:
@@ -1654,8 +1706,17 @@ class Dataset:
             list, list of data types.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> import numpy as np
+            >>>
+            >>> def generator1():
+            ...     for i in range(1, 100):
+            ...         yield np.ones((16, 83, 83)).astype(np.float32), np.array([i]).astype(np.int32)
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> output_types = dataset.output_types()
+            >>> print(output_types)
+            [dtype('float32'), dtype('int32')]
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
@@ -1679,8 +1740,18 @@ class Dataset:
             int, number of batches.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> import numpy as np
+            >>>
+            >>> # A generator return 66 samples
+            >>> def generator1():
+            ...     for i in range(66):
+            ...         yield np.ones((16, 83, 83)), np.array([i])
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> dataset_size = dataset.get_dataset_size()
+            >>> print(dataset_size)
+            66
         """
         if self.dataset_size is None:
             runtime_getter = self.__init_size_getter()
@@ -1698,7 +1769,11 @@ class Dataset:
             int, number of classes.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> # Read image files
+            >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir)
+            >>> # Check how many classes exist in image folder
             >>> num_classes = dataset.num_classes()
         """
         if self._num_classes is None:
@@ -1737,12 +1812,11 @@ class Dataset:
 
         Examples:
             >>> import numpy as np
-            >>>
+            >>> import mindspore.dataset as ds
             >>>
             >>> def gen():
             ...     for i in range(100):
             ...         yield (np.array(i),)
-            >>>
             >>>
             >>> class Augment:
             ...     def __init__(self, loss):
@@ -1753,7 +1827,6 @@ class Dataset:
             ...
             ...     def update(self, data):
             ...         self.loss = data["loss"]
-            >>>
             >>>
             >>> batch_size = 10
             >>> dataset = ds.GeneratorDataset(gen, column_names=["input"])
@@ -1793,8 +1866,12 @@ class Dataset:
             int, the batch size of data.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset = dataset.batch(2)
             >>> batch_size = dataset.get_batch_size()
+            >>> print(batch_size)
+            2
         """
         if self._batch_size is None:
             runtime_getter = self._init_tree_getters()
@@ -1811,8 +1888,12 @@ class Dataset:
             int, the count of repeat.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset = dataset.repeat(5)
             >>> repeat_count = dataset.get_repeat_count()
+            >>> print(repeat_count)
+            5
         """
         if self._repeat_count is None:
             runtime_getter = self._init_tree_getters()
@@ -1831,7 +1912,11 @@ class Dataset:
             in the list is used to indicate the super category.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> # Read image files
+            >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir)
+            >>> # Check how many classes exist in image folder
             >>> class_indexing = dataset.get_class_indexing()
         """
         if self.children:
@@ -1843,6 +1928,7 @@ class Dataset:
         Reset the dataset for next epoch.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> mind_dataset_dir = ["/path/to/mind_dataset_file"]
             >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
             >>> for _ in range(5):
@@ -2206,8 +2292,11 @@ class MappableDataset(SourceDataset):
             new_sampler (Sampler): The child sampler to be added.
 
         Examples:
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>>
             >>> new_sampler = ds.DistributedSampler(10, 2)
-            >>> dataset.add_sampler(new_sampler)  # dataset is an instance of Dataset
+            >>> dataset.add_sampler(new_sampler)
         """
         # Note: By adding a sampler, the sampled IDs will flow to the new_sampler
         # after first passing through the current samplers attached to this dataset.
@@ -2223,7 +2312,9 @@ class MappableDataset(SourceDataset):
             new_sampler (Sampler): The new sampler to replace with.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>>
             >>> # use a DistributedSampler instead
             >>> new_sampler = ds.DistributedSampler(10, 2)
             >>> dataset.use_sampler(new_sampler)
@@ -2294,7 +2385,9 @@ class MappableDataset(SourceDataset):
                 floats don't sum to 1.
 
         Examples:
+            >>> import mindspore.dataset as ds
             >>> # Since many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
             >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir, shuffle=False)
             >>>
             >>> # Set the seed, and tell split to use this seed when randomizing.
@@ -2528,12 +2621,30 @@ class BatchInfo(cde.CBatchInfo):
     def get_batch_num(self):
         """
         Return the batch number of the current batch.
+
+        Examples:
+            >>> # Create a dataset where its batch size is dynamic
+            >>> # Define a callable batch size function and let batch size increase 1 each time.
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> def add_one(BatchInfo):
+            ...     return BatchInfo.get_batch_num() + 1
+            >>> dataset = dataset.batch(batch_size=add_one)
         """
         return
 
     def get_epoch_num(self):
         """
         Return the epoch number of the current batch.
+
+        Examples:
+            >>> # Create a dataset where its batch size is dynamic
+            >>> # Define a callable batch size function and let batch size increase 1 each epoch.
+            >>> import mindspore.dataset as ds
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> def add_one_by_epoch(BatchInfo):
+            ...     return BatchInfo.get_epoch_num() + 1
+            >>> dataset = dataset.batch(batch_size=add_one_by_epoch)
         """
         return
 
@@ -4039,6 +4150,7 @@ class Schema:
         RuntimeError: If schema file failed to load.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> from mindspore import dtype as mstype
         >>>
         >>> # Create schema; specify column name, mindspore.dtype and shape of the column
@@ -4066,6 +4178,7 @@ class Schema:
             ValueError: If column type is unknown.
 
         Examples:
+        >>> import mindspore.dataset as ds
         >>> from mindspore import dtype as mstype
         >>>
         >>> schema = ds.Schema()
@@ -4117,9 +4230,11 @@ class Schema:
 
         Examples:
             >>> from mindspore.dataset import Schema
+            >>> from mindspore import dtype as mstype
             >>>
-            >>> schema1 = ds.Schema()
-            >>> schema2 = schema1.to_json()
+            >>> schema = Schema()
+            >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+            >>> json = schema.to_json()
         """
         return self.cpp_schema.to_json()
 
@@ -4137,12 +4252,11 @@ class Schema:
 
         Examples:
             >>> import json
-            >>>
             >>> from mindspore.dataset import Schema
             >>>
             >>> with open("/path/to/schema_file") as file:
             ...     json_obj = json.load(file)
-            ...     schema = ds.Schema()
+            ...     schema = Schema()
             ...     schema.from_json(json_obj)
         """
         self.cpp_schema.from_string(json.dumps(json_obj, indent=2))
