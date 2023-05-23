@@ -281,7 +281,7 @@ class AssignParser(Parser):
         # Add .to_float(mindspore.float16) if origin subnet has this attribute
         if hasattr(sub_tree.get_origin_network(), "to_float_fp16")\
             and sub_tree.get_origin_network().to_float_fp16:
-            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}')).to_float16(mindspore.float16)"
+            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}')).to_float(mindspore.float16)"
         else:
             new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}'))"
         new_ast = ast.parse(new_code).body[0]
