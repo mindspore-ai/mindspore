@@ -64,6 +64,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/base/softmax_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/detection_post_process_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/stack_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/unstack_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/strided_slice_base_coder.cc
         #### cmsis int8 coder
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/add_int8_coder.cc

@@ -47,6 +47,7 @@
 #include "nnacl/layer_norm_parameter.h"
 #include "nnacl/broadcast_to_parameter.h"
 #include "nnacl/custom_gru_parameter.h"
+#include "nnacl/unstack_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -80,6 +81,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const BroadcastShapeInfo &param);
   void CodeStruct(const std::string &name, const CustomGruParameter &param);
   void CodeStruct(const std::string &name, const SlidingWindowParam &param);
+  void CodeStruct(const std::string &name, const UnstackParameter &param);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
  private:

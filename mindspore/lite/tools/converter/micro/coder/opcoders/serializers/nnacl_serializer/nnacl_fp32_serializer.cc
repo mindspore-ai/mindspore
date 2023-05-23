@@ -216,6 +216,11 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SlidingWindo
                         param.in_sh_step_, param.in_sw_step_, param.in_kh_step_, param.in_kw_step_, param.kernel_step_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const UnstackParameter &param) {
+  CodeBaseStruct<false>("UnstackParameter", name, param.op_parameter_, param.num_, param.axis_, param.pre_dims_,
+                        param.axis_dim_, param.after_dims_);
+}
+
 void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
   std::vector<std::string> tensor_names;
   int size = tensor.size();
