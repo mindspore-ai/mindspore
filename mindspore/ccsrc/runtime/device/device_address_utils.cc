@@ -96,17 +96,19 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
       continue;
     }
 
+    const auto &real_device_context = device::FetchRealDeviceContext(item, device_context);
+    MS_EXCEPTION_IF_NULL(real_device_context);
     if (common::AnfAlgo::CheckPrimitiveType(item, prim::kPrimMakeTuple)) {
       std::vector<AnfNodePtr> outs = common::AnfAlgo::GetAllOutput(item);
       for (const auto &out : outs) {
         MS_EXCEPTION_IF_NULL(out);
-        if (!out->isa<Parameter>() || NodeDeviceAddressExist(device_context, out, 0)) {
+        if (!out->isa<Parameter>() || NodeDeviceAddressExist(real_device_context, out, 0)) {
           continue;
         }
         nodes_list.push_back(out);
       }
     }
-    if (!item->isa<Parameter>() || NodeDeviceAddressExist(device_context, item, 0)) {
+    if (!item->isa<Parameter>() || NodeDeviceAddressExist(real_device_context, item, 0)) {
       continue;
     }
     nodes_list.push_back(item);
@@ -115,11 +117,13 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
   // Create device address for anf node in nodes_list
   for (const auto &item : nodes_list) {
     MS_EXCEPTION_IF_NULL(item);
+    const auto &real_device_context = device::FetchRealDeviceContext(item, device_context);
+    MS_EXCEPTION_IF_NULL(real_device_context);
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(item, index);
       if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
-        CreateDeviceAddressByMapTensorNode(device_context, item, index);
+        CreateDeviceAddressByMapTensorNode(real_device_context, item, index);
         continue;
       }
 
@@ -129,7 +133,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
       }
 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
-      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+      auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
         trans::GetRuntimePaddingShape(item, index));
       MS_EXCEPTION_IF_NULL(device_address);

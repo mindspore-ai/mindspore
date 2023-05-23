@@ -396,9 +396,7 @@ bool IsEmptySequenceTensor(const TensorPtr &tensor) {
 }  // namespace
 
 void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
-                                                      const KernelGraphPtr &graph,
-                                                      const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(device_context);
+                                                      const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input_node);
@@ -596,9 +594,11 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto &input_node = input_nodes[j];
       const auto &input_tensor = tensors[j];
       MS_EXCEPTION_IF_NULL(input_node);
+      const auto &real_device_context = device::FetchRealDeviceContext(input_node, device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context);
       const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
       if (IsPersistentDeviceTensor(input_node) && parser->IsRootGraphPersistentDeviceTensor(front_node)) {
-        PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
+        PrepareDataForWeightNode(input_node, front_node, input_tensor, real_device_context, context);
       }
     }
   }
@@ -624,8 +624,6 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
   for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info_->graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    const auto device_context = graph_compiler_info_->device_contexts_[i];
-    MS_EXCEPTION_IF_NULL(device_context);
 
     const auto &input_nodes = graph->input_nodes();
     const auto &tensors = input_tensors[i];
@@ -654,7 +652,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       MS_LOG(DEBUG) << "Set tensor position:" << tensor_position << " for input data.";
       host_tensors[tensor_position] = input_tensor;
 
-      UpdateDeviceAddressForDataNode(input_node, input_tensor, graph, device_context);
+      UpdateDeviceAddressForDataNode(input_node, input_tensor, graph);
     }
   }
 

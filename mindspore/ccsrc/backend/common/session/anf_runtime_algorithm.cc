@@ -1710,6 +1710,12 @@ bool AnfRuntimeAlgorithm::IsKernelSelectBackoffOp(const AnfNodePtr &node) {
 std::string AnfRuntimeAlgorithm::FetchDeviceTarget(const AnfNodePtr &node, const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
+  // The parameter also may be have the user data to express device target.
+  auto ud_target = node->user_data<std::string>(kAttrPrimitiveTarget);
+  if (ud_target != nullptr) {
+    return *ud_target;
+  }
+
   if (!node->isa<CNode>()) {
     return device::GetDeviceNameByType(graph->device_target());
   }
@@ -1721,15 +1727,48 @@ std::string AnfRuntimeAlgorithm::FetchDeviceTarget(const AnfNodePtr &node, const
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto ud_target = cnode->user_data<std::string>(kAttrPrimitiveTarget);
-  if (ud_target != nullptr) {
-    return *ud_target;
-  }
   if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
     return common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);
   }
 
   return device::GetDeviceNameByType(graph->device_target());
+}
+
+void AnfRuntimeAlgorithm::SetParameterDeviceTarget(const KernelGraphPtr graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager({graph});
+    graph->set_manager(manager);
+  }
+
+  const auto &graph_device_target = device::GetDeviceNameByType(graph->device_target());
+  for (auto &input_node : graph->input_nodes()) {
+    const auto &iter = manager->node_users().find(input_node);
+    if (iter == manager->node_users().end()) {
+      continue;
+    }
+
+    std::string device_target_affinity = graph_device_target;
+    for (const auto &user_node : iter->second) {
+      if (!AnfUtils::IsRealCNodeKernel(user_node.first)) {
+        continue;
+      }
+      device_target_affinity = FetchDeviceTarget(user_node.first, graph.get());
+      // If there is node with the same device target as the graph, then select the device target of graph affinity.
+      if (device_target_affinity == graph_device_target) {
+        break;
+      }
+    }
+
+    // Set the device target for parameter when it is different with the graph.
+    if (device_target_affinity != graph_device_target) {
+      MS_LOG(INFO) << "Set the affinity device target for parameter:" << input_node->fullname_with_scope()
+                   << " in graph:" << graph->graph_id() << " from graph device target:" << graph_device_target
+                   << " to real device target:" << device_target_affinity;
+      input_node->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(device_target_affinity));
+    }
+  }
 }
 
 TypeId AnfRuntimeAlgorithm::GetAbstractObjectType(const AbstractBasePtr &abstract) {
