@@ -592,7 +592,7 @@ def logical_not(a, dtype=None):
 
     Args:
         a (Tensor): The input tensor whose dtype is bool.
-        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+        dtype (:class:`mindspore.dtype`, optional): Default: ``None``. Overrides the dtype of the
             output Tensor.
 
     Returns:

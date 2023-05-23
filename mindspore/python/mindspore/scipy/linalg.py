@@ -358,7 +358,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Note:
         - `eigh` is not supported on Windows platform yet.
         - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+          `int64` is passed, it will be cast to `mstype.float64`.
 
     Args:
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
@@ -393,7 +393,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         - Tensor with shape :math:`(N,)`, the :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
           each repeated according to its multiplicity.
 
-        - Tensor with shape :math:`(M, N)`, (if ``eigvals_only == False``)
+        - Tensor with shape :math:`(M, N)`, if `eigvals_only == False`.
 
     Raises:
         RuntimeError: If eigenvalue computation does not converge, an error occurred, or b matrix is not

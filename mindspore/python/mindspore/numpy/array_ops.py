@@ -375,13 +375,13 @@ def concatenate(arrays, axis=0):
 
     Note:
         To match Numpy behaviour, :math:`axis >= 32` will not cause value error, the
-        `axis` will be treated as :class:`None` instead.
+        `axis` will be treated as ``None`` instead.
 
     Args:
         arrays (Union[Tensor, tuple(Tensor), list(Tensor)]): a tensor or a list
             of tensors to be concatenated.
         axis (Union[None, int], optional): The axis along which the tensors will be joined,
-            if `axis` is :class:`None`, tensors are flattened before use. Default: ``0`` .
+            if `axis` is ``None``, tensors are flattened before use. Default: ``0`` .
 
     Returns:
         A tensor concatenated from a tensor or a list of tensors.
@@ -448,7 +448,7 @@ def append(arr, values, axis=None):
             the correct shape (the same shape as `arr`, excluding `axis`). If `axis` is
             not specified, `values` can be any shape and will be flattened before use.
         axis (None, int, optional): The `axis` along which values are appended. If `axis` is not
-            given, both `arr` and `values` are flattened before use, default is :class:`None`.
+            given, both `arr` and `values` are flattened before use, default is ``None``.
 
     Returns:
         Tensor, a copy of tensor with values appended to axis.

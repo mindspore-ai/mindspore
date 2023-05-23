@@ -68,7 +68,7 @@ def array(obj, dtype=None, copy=True, ndmin=0):
             can be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
             be in format of np.int32, or \'int32\'. If dtype is ``None``, the data type
-            of the new tensor will be inferred from obj. Default is ``None`` .
+            of the new tensor will be inferred from obj. Default is ``None``.
         copy (bool): If `True`, then the object is copied. Otherwise, a copy will
             only be made if necessary. Default: ``True``.
         ndmin (int): Specifies the minimum number of dimensions that the resulting
@@ -345,8 +345,8 @@ def full(shape, fill_value, dtype=None):
         fill_value (Union[int, float, bool, list, tuple]): Scalar or array_like
             fill value.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype,
-            if `dtype` is :class:`None`, the data type of the new tensor will be inferred from
-            `fill_value`. Default is :class:`None`.
+            if `dtype` is ``None``, the data type of the new tensor will be inferred from
+            `fill_value`. Default is ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with `fill_value`.
@@ -512,7 +512,7 @@ def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
 
     Args:
         minval(Union[int]): Start value of interval. The interval includes this value. When `maxval`
-            is :class:`None`, `minval` must be greater than 0. When `maxval` is not :class:`None`,
+            is ``None``, `minval` must be greater than 0. When `maxval` is not ``None``,
             `minval` must be less than `maxval`.
         maxval(Union[int], optional): End value of interval. The interval does not include this value.
         shape (Union[int, tuple(int)]): Shape of the new tensor, e.g., :math:`(2, 3)` or :math:`2`.
@@ -861,7 +861,7 @@ def eye(N, M=None, k=0, dtype=mstype.float32):
         N (int): Number of rows in the output, must be larger than 0.
         M (int, optional): Number of columns in the output. If is ``None``, default: ``N`` ,
             if defined, must be larger than 0. Default: ``None``.
-        k (int, optional): Index of the diagonal: 0 (the default) refers to the main
+        k (int, optional): Index of the diagonal: ``0`` (the default) refers to the main
             diagonal, a positive value refers to an upper diagonal, and a negative value
             to a lower diagonal. Default: ``0`` .
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
@@ -917,7 +917,7 @@ def identity(n, dtype=mstype.float32):
     Args:
         n (int): Number of rows and columns in the output, must be larger than 0.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype,
-            default is :class:`mstype.float32`.
+            default is `mstype.float32`.
 
     Returns:
         A tensor of shape `(n, n)`, where all elements are equal to zero,

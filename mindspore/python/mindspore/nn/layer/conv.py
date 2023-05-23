@@ -587,7 +587,7 @@ class Conv3d(_Conv):
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
-            Available initialization methods are the same as 'weight_init'. Refer to the values of
+            Available initialization methods are the same as `weight_init`. Refer to the values of
             Initializer for more details. Default: ``'zeros'`` .
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'``.
 

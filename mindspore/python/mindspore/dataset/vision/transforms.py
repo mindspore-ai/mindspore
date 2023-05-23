@@ -453,7 +453,7 @@ class AutoAugment(ImageTensorOperation):
             - ``AutoAugmentPolicy.SVHN``, means to apply AutoAugment learned on SVHN dataset.
 
         interpolation (Inter, optional): Image interpolation mode for Resize operation. Default: ``Inter.NEAREST``.
-            It can be ``Inter.NEAREST``, ``Inter.BILINEAR``, ``Inter.BICUBIC``, ``Inter.AREA``].
+            It can be ``Inter.NEAREST``, ``Inter.BILINEAR``, ``Inter.BICUBIC``, ``Inter.AREA``.
 
             - ``Inter.NEAREST`` : means interpolation method is nearest-neighbor interpolation.
 

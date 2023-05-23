@@ -29,7 +29,7 @@
     Returns
         Tensor, the value of the cross entropy.
 
-.. py:method:: entropy(probs1)
+.. py:method:: entropy(probs1=None)
 
     Compute the value of the entropy.
 

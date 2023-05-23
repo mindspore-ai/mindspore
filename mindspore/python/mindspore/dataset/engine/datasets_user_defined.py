@@ -557,10 +557,11 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - If you configure `python_multiprocessing=True (Default: ``True``)` and `num_parallel_workers>1 (default: 1)`
-          indicates that the multi-process mode is started for data load acceleration. At this time, as the dataset
-          iterates, the memory consumption of the subprocess will gradually increase, mainly because the subprocess
-          of the user-defined dataset obtains the member variables from the main process in the Copy On Write way.
+        - If you configure `python_multiprocessing=True` (Default: ``True`` ) and `num_parallel_workers>1`
+          (default: ``1`` ) indicates that the multi-process mode is started for data load acceleration.
+          At this time, as the datasetiterates, the memory consumption of the subprocess will gradually increase,
+          mainly because the subprocess of the user-defined dataset obtains the member variables from the main
+          process in the Copy On Write way.
           Example: If you define a dataset with `__ init__` function which contains a large number of member variable
           data (for example, a very large file name list is loaded during the dataset construction) and uses the
           multi-process mode, which may cause the problem of OOM (the estimated total memory usage is:
