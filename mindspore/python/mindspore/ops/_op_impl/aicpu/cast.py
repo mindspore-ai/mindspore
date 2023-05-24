@@ -32,6 +32,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.U8_Default, DataType.F32_Default) \
     .dtype_format(DataType.U8_Default, DataType.F64_Default) \
     .dtype_format(DataType.U8_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U8_Default, DataType.C64_Default) \
+    .dtype_format(DataType.U8_Default, DataType.C128_Default) \
     .dtype_format(DataType.U16_Default, DataType.U8_Default) \
     .dtype_format(DataType.U16_Default, DataType.U16_Default) \
     .dtype_format(DataType.U16_Default, DataType.U32_Default) \
@@ -44,6 +46,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.U16_Default, DataType.F32_Default) \
     .dtype_format(DataType.U16_Default, DataType.F64_Default) \
     .dtype_format(DataType.U16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U16_Default, DataType.C64_Default) \
+    .dtype_format(DataType.U16_Default, DataType.C128_Default) \
     .dtype_format(DataType.U32_Default, DataType.U8_Default) \
     .dtype_format(DataType.U32_Default, DataType.U16_Default) \
     .dtype_format(DataType.U32_Default, DataType.U32_Default) \
@@ -56,6 +60,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.U32_Default, DataType.F32_Default) \
     .dtype_format(DataType.U32_Default, DataType.F64_Default) \
     .dtype_format(DataType.U32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U32_Default, DataType.C64_Default) \
+    .dtype_format(DataType.U32_Default, DataType.C128_Default) \
     .dtype_format(DataType.U64_Default, DataType.U8_Default) \
     .dtype_format(DataType.U64_Default, DataType.U16_Default) \
     .dtype_format(DataType.U64_Default, DataType.U32_Default) \
@@ -68,6 +74,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.U64_Default, DataType.F32_Default) \
     .dtype_format(DataType.U64_Default, DataType.F64_Default) \
     .dtype_format(DataType.U64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U64_Default, DataType.C64_Default) \
+    .dtype_format(DataType.U64_Default, DataType.C128_Default) \
     .dtype_format(DataType.I8_Default, DataType.U8_Default) \
     .dtype_format(DataType.I8_Default, DataType.U16_Default) \
     .dtype_format(DataType.I8_Default, DataType.U32_Default) \
@@ -80,6 +88,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.I8_Default, DataType.F32_Default) \
     .dtype_format(DataType.I8_Default, DataType.F64_Default) \
     .dtype_format(DataType.I8_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I8_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I8_Default, DataType.C128_Default) \
     .dtype_format(DataType.I16_Default, DataType.U8_Default) \
     .dtype_format(DataType.I16_Default, DataType.U16_Default) \
     .dtype_format(DataType.I16_Default, DataType.U32_Default) \
@@ -92,6 +102,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.I16_Default, DataType.F32_Default) \
     .dtype_format(DataType.I16_Default, DataType.F64_Default) \
     .dtype_format(DataType.I16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I16_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I16_Default, DataType.C128_Default) \
     .dtype_format(DataType.I32_Default, DataType.U8_Default) \
     .dtype_format(DataType.I32_Default, DataType.U16_Default) \
     .dtype_format(DataType.I32_Default, DataType.U32_Default) \
@@ -104,6 +116,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.I32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.F64_Default) \
     .dtype_format(DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I32_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I32_Default, DataType.C128_Default) \
     .dtype_format(DataType.I32_5HD, DataType.I64_5HD) \
     .dtype_format(DataType.I64_Default, DataType.U8_Default) \
     .dtype_format(DataType.I64_Default, DataType.U16_Default) \
@@ -117,6 +131,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.I64_Default, DataType.F32_Default) \
     .dtype_format(DataType.I64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I64_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I64_Default, DataType.C128_Default) \
     .dtype_format(DataType.F16_Default, DataType.U8_Default) \
     .dtype_format(DataType.F16_Default, DataType.U16_Default) \
     .dtype_format(DataType.F16_Default, DataType.U32_Default) \
@@ -129,6 +145,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.F16_Default, DataType.F32_Default) \
     .dtype_format(DataType.F16_Default, DataType.F64_Default) \
     .dtype_format(DataType.F16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F16_Default, DataType.C64_Default) \
+    .dtype_format(DataType.F16_Default, DataType.C128_Default) \
     .dtype_format(DataType.F32_Default, DataType.U8_Default) \
     .dtype_format(DataType.F32_Default, DataType.U16_Default) \
     .dtype_format(DataType.F32_Default, DataType.U32_Default) \
@@ -141,6 +159,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_Default, DataType.F64_Default) \
     .dtype_format(DataType.F32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F32_Default, DataType.C64_Default) \
+    .dtype_format(DataType.F32_Default, DataType.C128_Default) \
     .dtype_format(DataType.F64_Default, DataType.U8_Default) \
     .dtype_format(DataType.F64_Default, DataType.U16_Default) \
     .dtype_format(DataType.F64_Default, DataType.U32_Default) \
@@ -153,6 +173,8 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.F64_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .dtype_format(DataType.F64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F64_Default, DataType.C64_Default) \
+    .dtype_format(DataType.F64_Default, DataType.C128_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.U8_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.U16_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.U32_Default) \
@@ -165,6 +187,36 @@ cast_op_info = AiCPURegOp("Cast") \
     .dtype_format(DataType.BOOL_Default, DataType.F32_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.F64_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.C64_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.C128_Default) \
+    .dtype_format(DataType.C64_Default, DataType.U8_Default) \
+    .dtype_format(DataType.C64_Default, DataType.U16_Default) \
+    .dtype_format(DataType.C64_Default, DataType.U32_Default) \
+    .dtype_format(DataType.C64_Default, DataType.U64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I8_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I16_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I32_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.F16_Default) \
+    .dtype_format(DataType.C64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.C64_Default, DataType.F64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.C64_Default, DataType.C64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.C128_Default) \
+    .dtype_format(DataType.C128_Default, DataType.U8_Default) \
+    .dtype_format(DataType.C128_Default, DataType.U16_Default) \
+    .dtype_format(DataType.C128_Default, DataType.U32_Default) \
+    .dtype_format(DataType.C128_Default, DataType.U64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I8_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I16_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I32_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.F16_Default) \
+    .dtype_format(DataType.C128_Default, DataType.F32_Default) \
+    .dtype_format(DataType.C128_Default, DataType.F64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.C128_Default, DataType.C64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.C128_Default) \
     .get_op_info()
 
 @op_info_register(cast_op_info)
