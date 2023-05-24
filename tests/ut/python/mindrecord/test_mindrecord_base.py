@@ -20,7 +20,7 @@ import numpy as np
 from utils import get_data, get_nlp_data
 
 from mindspore import log as logger
-from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
+from mindspore.mindrecord import FileWriter, FileReader, MindPage
 
 FILES_NUM = 4
 
@@ -306,12 +306,11 @@ def test_cv_page_reader_tutorial():
     test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
     reader = MindPage(mindrecord_file_name + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
-    ret = reader.set_category_field("label")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "label"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -336,12 +335,11 @@ def test_cv_page_reader_tutorial_by_file_name():
     test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
     reader = MindPage(mindrecord_file_name + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
-    ret = reader.set_category_field("file_name")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "file_name"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -441,12 +439,11 @@ def test_nlp_page_reader_tutorial():
     test_nlp_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
     reader = MindPage(mindrecord_file_name + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     assert fields == ['id', 'rating'], \
         'failed on getting candidate category fields.'
 
-    ret = reader.set_category_field("rating")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "rating"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))

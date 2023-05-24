@@ -86,11 +86,10 @@ def test_nlp_page_reader():
     reader = ShardSegment()
     reader.open(NLP_FILE_NAME + "0")
 
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     logger.info("fields: {}".format(fields))
 
-    ret = reader.set_category_field("rating")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "rating"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -162,11 +161,10 @@ def test_cv_page_reader():
     """test cv page reader using shard api"""
     reader = ShardSegment()
     reader.open(CV_FILE_NAME + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     logger.info("fields: {}".format(fields))
 
-    ret = reader.set_category_field("label")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "label"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -220,11 +218,10 @@ def test_mkv_page_reader():
     reader = ShardSegment()
     reader.open(MKV_FILE_NAME + "0")
 
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     logger.info("fields: {}".format(fields))
 
-    ret = reader.set_category_field("id")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "id"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -241,11 +238,10 @@ def test_mkv_page_reader_random():
     reader = ShardSegment()
     reader.open(MKV_FILE_NAME + "0")
 
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     logger.info("fields: {}".format(fields))
 
-    ret = reader.set_category_field("id")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "id"
 
     names = random.sample(range(1, 6), 5)
     for name in names:

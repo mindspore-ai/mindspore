@@ -16,6 +16,9 @@
 
         返回用于数据分组的候选category字段。
 
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+
         返回：
             list[str]，候选category 字段。
 
@@ -25,12 +28,8 @@
 
         返回用于数据分组的category字段。
 
-        返回：
-            list[str]，候选category字段。
-
-    .. py:method:: get_category_fields()
-
-        返回用于数据分组的候选category字段。
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
 
         返回：
             list[str]，候选category字段。
@@ -39,6 +38,9 @@
     .. py:method:: read_at_page_by_id(category_id, page, num_row)
 
         以分页方式按category ID进行查询。
+
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
 
         参数：
             - **category_id** (int) - category ID，参考 `read_category_info` 函数的返回值。
@@ -57,6 +59,9 @@
 
         以分页方式按category字段进行查询。
 
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+
         参数：
             - **category_name** (str) - category字段对应的字符，参考 `read_category_info` 函数的返回值。
             - **page** (int) - 分页的索引。
@@ -69,21 +74,11 @@
 
         当数据按指定的category字段进行分组时，返回category信息。
 
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+
         返回：
             str，分组信息的描述。
 
         异常：
             - **MRMReadCategoryInfoError** - 读取category信息失败。
-
-    .. py:method:: set_category_field(category_field)
-
-        设置要读取的category字段。
-
-        .. note::
-            必须是候选category字段。
-
-        参数：
-            - **category_field** (str) - category字段名称。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED

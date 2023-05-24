@@ -16,7 +16,6 @@
 This module is to support reading page from MindRecord.
 """
 
-from mindspore import log as logger
 from .shardsegment import ShardSegment
 from .shardutils import check_parameter
 from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategoryError
@@ -36,6 +35,27 @@ class MindPage:
     Raises:
         ParamValueError: If `file_name` , `num_consumer` or columns is invalid.
         MRMInitSegmentError: If failed to initialize ShardSegment.
+
+    Examples:
+        >>> from mindspore.mindrecord import MindPage
+        >>>
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> mind_page = MindPage(mindrecord_file)
+        >>>
+        >>> # get all the index fields
+        >>> fields = mind_page.candidate_fields
+        >>>
+        >>> # set the field to be retrieved
+        >>> mind_page.category_field = "file_name"
+        >>>
+        >>> # get all the group info
+        >>> info = mind_page.read_category_info()
+        >>>
+        >>> # get the row by id which is from category info
+        >>> row_by_id = mind_page.read_at_page_by_id(0, 0, 1)
+        >>>
+        >>> # get the row by name which is from category info
+        >>> row_by_name = mind_page.read_at_page_by_name("8.jpg", 0, 1)
     """
     @check_parameter
     def __init__(self, file_name, num_consumer=4):
@@ -49,6 +69,9 @@ class MindPage:
         """
         Return candidate category fields.
 
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+
         Returns:
             list[str], by which data could be grouped.
         """
@@ -59,47 +82,21 @@ class MindPage:
         """
         Getter function for category fields.
 
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+
         Returns:
             list[str], by which data could be grouped.
         """
         return self._category_field
 
-    def get_category_fields(self):
-        """
-        Return candidate category fields.
-
-        Returns:
-            list[str], by which data could be grouped.
-        """
-        logger.warning("WARN_DEPRECATED: The usage of get_category_fields is deprecated."
-                       " Please use candidate_fields")
-        return self.candidate_fields
-
-    def set_category_field(self, category_field):
-        """
-        Set category field for reading.
-
-        Note:
-            Should be a candidate category field.
-
-        Args:
-            category_field (str): String of category field name.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-        logger.warning("WARN_DEPRECATED: The usage of set_category_field is deprecated."
-                       " Please use category_field")
-        if not category_field or not isinstance(category_field, str):
-            raise ParamTypeError('category_fields', 'str')
-        if category_field not in self._candidate_fields:
-            raise MRMDefineCategoryError("Field '{}' is not a candidate category field.".format(category_field))
-        return self._segment.set_category_field(category_field)
-
     @category_field.setter
     def category_field(self, category_field):
         """
         Setter function for category field.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -115,6 +112,9 @@ class MindPage:
         """
         Return category information when data is grouped by indicated category field.
 
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+
         Returns:
             str, description of group information.
 
@@ -126,6 +126,9 @@ class MindPage:
     def read_at_page_by_id(self, category_id, page, num_row):
         """
         Query by category id in pagination.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
 
         Args:
              category_id (int): Category id, referred to the return of `read_category_info` .
@@ -151,6 +154,9 @@ class MindPage:
     def read_at_page_by_name(self, category_name, page, num_row):
         """
         Query by category name in pagination.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
 
         Args:
             category_name (str): String of category field's value,

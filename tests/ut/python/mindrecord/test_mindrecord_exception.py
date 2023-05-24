@@ -20,7 +20,7 @@ import numpy as np
 from utils import get_data
 
 from mindspore import log as logger
-from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
+from mindspore.mindrecord import FileWriter, FileReader, MindPage
 from mindspore.mindrecord import ParamValueError, MRMGetMetaError
 
 FILES_NUM = 4
@@ -360,12 +360,11 @@ def test_mindpage_pageno_pagesize_not_int():
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(4, file_name)
     reader = MindPage(file_name + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
-    ret = reader.set_category_field("label")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "label"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
@@ -397,12 +396,11 @@ def test_mindpage_filename_not_exist():
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(4, file_name)
     reader = MindPage(file_name + "0")
-    fields = reader.get_category_fields()
+    fields = reader.candidate_fields
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
-    ret = reader.set_category_field("file_name")
-    assert ret == SUCCESS, 'failed on setting category field.'
+    reader.category_field = "file_name"
 
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))

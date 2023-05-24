@@ -11,16 +11,20 @@
     异常：
         - **ValueError** - 参数 `source` 、 `destination` 、 `partition_number` 无效。
 
-    .. py:method:: run()
+    .. py:method:: transform()
 
         执行从MNIST数据集到MindRecord格式数据集的转换。
 
-        返回：
-            MSRStatus，MNIST数据集是否成功转换为MindRecord格式数据集。
-
-    .. py:method:: transform()
-
-        封装 :func:`mindspore.mindrecord.MnistToMR.run` 函数来保证异常时正常退出。
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.MnistToMR` 。
 
         返回：
             MSRStatus，SUCCESS或FAILED。
+
+        异常：
+            **ParamTypeError** - 设置MindRecord索引字段失败。
+            **MRMOpenError** - 新建MindRecord文件失败。
+            **MRMValidateDataError** - 原始数据集数据异常。
+            **MRMSetHeaderError** - 设置MindRecord文件头失败。
+            **MRMWriteDatasetError** - 创建MindRecord索引失败。
+            **TypeError** - 参数 `parallel_writer` 不是bool类型。

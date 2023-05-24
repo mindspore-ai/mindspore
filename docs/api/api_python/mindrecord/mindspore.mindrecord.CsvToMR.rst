@@ -16,17 +16,21 @@
         - **ValueError** - 参数 `source` 、`destination` 、`partition_number` 无效。
         - **RuntimeError** - 参数 `columns_list` 无效。
 
-
-    .. py:method:: run()
+    .. py:method:: transform()
 
         执行从CSV格式数据集到MindRecord格式数据集的转换。
 
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
-    .. py:method:: transform()
-
-        封装 :func:`mindspore.mindrecord.CsvToMR.run` 函数来保证异常时正常退出。
+        .. note::
+            请参考类的示例 :class:`mindspore.mindrecord.CsvToMR` 。
 
         返回：
             MSRStatus，SUCCESS或FAILED。
+
+        异常：
+            **ParamTypeError** - 设置MindRecord索引字段失败。
+            **MRMOpenError** - 新建MindRecord文件失败。
+            **MRMValidateDataError** - 原始数据集数据异常。
+            **MRMSetHeaderError** - 设置MindRecord文件头失败。
+            **MRMWriteDatasetError** - 创建MindRecord索引失败。
+            **TypeError** - 参数 `parallel_writer` 不是bool类型。
+            **IOError** - 参数 `source` 不存在。

@@ -83,6 +83,20 @@ class TFRecordToMR:
     Raises:
         ValueError: If parameter is invalid.
         Exception: when tensorflow module is not found or version is not correct.
+
+    Examples:
+        >>> from mindspore.mindrecord import TFRecordToMR
+        >>>
+        >>> tfrecord_file = "/path/to/tfrecord/file"
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
+        ...                 "image_bytes": tf.io.FixedLenFeature([], tf.string),
+        ...                 "int64_scalar": tf.io.FixedLenFeature([], tf.int64),
+        ...                 "float_scalar": tf.io.FixedLenFeature([], tf.float32),
+        ...                 "int64_list": tf.io.FixedLenFeature([6], tf.int64),
+        ...                 "float_list": tf.io.FixedLenFeature([7], tf.float32)}
+        >>> tfrecord_to_mr = TFRecordToMR(tfrecord_file, mindrecord_file, feature_dict, ["image_bytes"])
+        >>> tfrecord_to_mr.transform()
     """
 
     def __init__(self, source, destination, feature_dict, bytes_fields=None):
@@ -207,14 +221,8 @@ class TFRecordToMR:
             else:
                 ms_dict[cast_key] = float(val)
 
+    # pylint: disable=missing-docstring
     def tfrecord_iterator_oldversion(self):
-        """
-        Yield a dict with key to be fields in schema, and value to be data.
-        This function is for old version tensorflow whose version number < 2.1.0.
-
-        Returns:
-            dict, data dictionary whose keys are the same as columns.
-        """
         logger.warning("This interface will be deleted or invisible in the future.")
 
         dataset = self.tf.data.TFRecordDataset(self.source)
@@ -261,14 +269,8 @@ class TFRecordToMR:
                     np.asarray(val, _cast_string_type_to_np_type(self.mindrecord_schema[cast_key]["type"]))
         return ms_dict
 
-
+    # pylint: disable=missing-docstring
     def tfrecord_iterator(self):
-        """
-        Yield a dictionary whose keys are fields in schema.
-
-        Returns:
-            dict, data dictionary whose keys are the same as columns.
-        """
         logger.warning("This interface will be deleted or invisible in the future.")
 
         dataset = self.tf.data.TFRecordDataset(self.source)
@@ -282,13 +284,8 @@ class TFRecordToMR:
             except self.tf.errors.InvalidArgumentError:
                 raise ValueError("TFRecord feature_dict parameter error.")
 
+    # pylint: disable=missing-docstring
     def run(self):
-        """
-        Execute transformation from TFRecord to MindRecord.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
         writer = FileWriter(self.destination)
         logger.info("Transformed MindRecord schema is: {}, TFRecord feature dict is: {}"
                     .format(self.mindrecord_schema, self.feature_dict))
@@ -318,10 +315,21 @@ class TFRecordToMR:
 
     def transform(self):
         """
-        Encapsulate the :func:`mindspore.mindrecord.TFRecordToMR.run` function to exit normally.
+        Execute transformation from TFRecord to MindRecord.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.TFRecordToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            ParamTypeError: If index field is invalid.
+            MRMOpenError: If failed to open MindRecord file.
+            MRMValidateDataError: If data does not match blob fields.
+            MRMSetHeaderError: If failed to set header.
+            MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If `parallel_writer` is not bool.
         """
 
         t = ExceptionThread(target=self.run)

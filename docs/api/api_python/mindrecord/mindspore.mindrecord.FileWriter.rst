@@ -42,6 +42,44 @@
         .. note::
             请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
 
+        .. list-table:: MindRecord支持的数据类型
+           :widths: 25 25 50
+           :header-rows: 1
+
+           * - 数据类型
+             - 数据维度
+             - 说明
+           * - int32
+             - /
+             - 整数
+           * - int64
+             - /
+             - 整数
+           * - float32
+             - /
+             - 浮点数
+           * - float64
+             - /
+             - 浮点数
+           * - string
+             - /
+             - 字符串
+           * - bytes
+             - /
+             - 二进制
+           * - int32
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy.ndarray类型
+           * - int64
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy.ndarray类型
+           * - bytes
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy.ndarray类型
+           * - bytes
+             - [-1] / [-1, 32, 32] / [3, 224, 224]
+             - numpy.ndarray类型
+
         参数：
             - **content** (dict) - schema内容的字典。
             - **desc** (str，可选) - schema的描述。默认值： ``None`` 。
@@ -71,17 +109,6 @@
             - **MRMGenerateIndexError** - 写入数据库失败。
             - **MRMCommitError** - 数据同步到磁盘失败。
             - **RuntimeError** - 并行写失败。
-
-    .. py:method:: open_and_set_header()
-
-        打开MindRecord文件准备写入并且设置描述其meta信息的头部。该函数仅用于并行写入，并在 `write_raw_data` 函数之前调用。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
-        异常：
-            - **MRMOpenError** - 打开MindRecord文件失败。
-            - **MRMSetHeaderError** - 设置MindRecord文件的header失败。
 
     .. py:method:: open_for_append(file_name)
 
