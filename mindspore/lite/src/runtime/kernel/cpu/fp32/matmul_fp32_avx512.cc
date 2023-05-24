@@ -36,6 +36,7 @@ void MatmulFp32AVX512CPUKernel::InitGlobalVariable() {
   row_tile_ = C1NUM;
   col_tile_ = C16NUM;
   col_min_unit_ = C64NUM;
+  out_need_aligned_ = false;
 
   if (params_->row_ == 1) {
     if (!params_->b_const_ && params_->col_ <= C128NUM) {
@@ -43,8 +44,6 @@ void MatmulFp32AVX512CPUKernel::InitGlobalVariable() {
     }
   } else if (params_->col_ == 1) {
     out_need_aligned_ = true;
-  } else {
-    out_need_aligned_ = false;
   }
 
   if (!(params_->deep_ < C128NUM)) {

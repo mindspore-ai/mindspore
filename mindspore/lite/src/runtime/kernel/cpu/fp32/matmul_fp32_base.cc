@@ -47,8 +47,8 @@ int MatmulRun(void *cdata, int task_id, float, float) {
 
 MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
   // packed const-matrix will be delete by framework.
-  if (out_need_aligned_ && output_data_ != nullptr) {
-    free(output_data_);
+  if (output_data_ != nullptr) {
+    ms_context_->allocator->Free(output_data_);
     output_data_ = nullptr;
   }
   if (matrix_c_.pack_ptr != nullptr) {
@@ -667,14 +667,14 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   if (out_need_aligned_) {
     if (output_data_ != nullptr) {
-      free(output_data_);
+      ms_context_->allocator->Free(output_data_);
     }
     // avx need to malloc dst aligned to C8NUM
     // avx512 need to malloc dst aligned to C16NUM
     int out_channel = params_->col_;
     int oc_block_num = UP_DIV(out_channel, col_tile_);
-    output_data_ = reinterpret_cast<float *>(
-      malloc(params_->batch * params_->row_ * oc_block_num * col_tile_ * static_cast<int>(sizeof(float))));
+    output_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
+      params_->batch * params_->row_ * oc_block_num * col_tile_ * static_cast<int>(sizeof(float))));
     if (output_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp output data failed.";
       return RET_NULL_PTR;
@@ -747,6 +747,9 @@ int MatmulFp32BaseCPUKernel::Run() {
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(out_data);
   if (!out_need_aligned_) {
+    if (output_data_ != nullptr) {  // only out_need_aligned_ is true, output != nullptr
+      ms_context_->allocator->Free(output_data_);
+    }
     output_data_ = out_data;
   }
   if (!params_->a_const_) {
