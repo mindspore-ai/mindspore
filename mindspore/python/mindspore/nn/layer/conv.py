@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import math
 import numpy as np
 
-from mindspore import log as logger
 from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import _primexpr
@@ -110,8 +109,6 @@ class _Conv(Cell):
                 self.bias_init = bias_init
             self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
-            if self.bias_init is not None:
-                logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
             self.bias = None
 
     def construct(self, *inputs):
@@ -1112,8 +1109,6 @@ class Conv2dTranspose(_Conv):
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
         self.output_padding = output_padding
-        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DTranspose's out_channel refers to Conv2D's out_channel.
         self.conv2d_transpose = P.Conv2DTranspose(out_channel=in_channels,
@@ -1306,8 +1301,6 @@ class Conv1dTranspose(_Conv):
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
-        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel.
         self.conv2d_transpose = P.Conv2DBackpropInput(out_channel=in_channels,
