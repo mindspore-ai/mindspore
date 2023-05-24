@@ -64,8 +64,10 @@ class ImageGradients(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.ImageGradients()
-        >>> image = Tensor(np.array([[[[1, 2], [3, 4]]]]), dtype=mindspore.int32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.ImageGradients()
+        >>> image = ms.Tensor(np.array([[[[1, 2], [3, 4]]]]), dtype=ms.int32)
         >>> output = net(image)
         >>> print(output)
         (Tensor(shape=[1, 1, 2, 2], dtype=Int32, value=
@@ -252,12 +254,11 @@ class SSIM(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.SSIM()
-        >>> img1 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
-        >>> img2 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
+        >>> net = ms.nn.SSIM()
+        >>> img1 = ms.Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
+        >>> img2 = ms.Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
         >>> output = net(img1, img2)
         >>> print(output)
         [1.]
@@ -348,11 +349,10 @@ class MSSSIM(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
-        >>> img1 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
-        >>> img2 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
+        >>> import mindspore as ms
+        >>> net = ms.nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
+        >>> img1 = ms.Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
+        >>> img2 = ms.Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
         >>> output = net(img1, img2)
         >>> print(output)
         [1.]
@@ -450,9 +450,10 @@ class PSNR(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.PSNR()
-        >>> img1 = Tensor([[[[1, 2, 3, 4], [1, 2, 3, 4]]]])
-        >>> img2 = Tensor([[[[3, 4, 5, 6], [3, 4, 5, 6]]]])
+        >>> import mindspore as ms
+        >>> net = ms.nn.PSNR()
+        >>> img1 = ms.Tensor([[[[1, 2, 3, 4], [1, 2, 3, 4]]]])
+        >>> img2 = ms.Tensor([[[[3, 4, 5, 6], [3, 4, 5, 6]]]])
         >>> output = net(img1, img2)
         >>> print(output)
         [-6.0206]
@@ -533,8 +534,10 @@ class CentralCrop(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.CentralCrop(central_fraction=0.5)
-        >>> image = Tensor(np.random.random((4, 3, 4, 4)), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.CentralCrop(central_fraction=0.5)
+        >>> image = ms.Tensor(np.random.random((4, 3, 4, 4)), ms.float32)
         >>> output = net(image)
         >>> print(output.shape)
         (4, 3, 2, 2)
@@ -594,9 +597,11 @@ class PixelShuffle(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>> input_x = np.arange(3 * 2 * 8 * 4 * 4).reshape((3, 2, 8, 4, 4))
-        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
-        >>> pixel_shuffle = nn.PixelShuffle(2)
+        >>> input_x = ms.Tensor(input_x, ms.dtype.int32)
+        >>> pixel_shuffle = ms.nn.PixelShuffle(2)
         >>> output = pixel_shuffle(input_x)
         >>> print(output.shape)
         (3, 2, 2, 8, 8)
@@ -640,9 +645,11 @@ class PixelUnshuffle(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> pixel_unshuffle = nn.PixelUnshuffle(2)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> pixel_unshuffle = ms.nn.PixelUnshuffle(2)
         >>> input_x = np.arange(8 * 8).reshape((1, 1, 8, 8))
-        >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
+        >>> input_x = ms.Tensor(input_x, ms.dtype.int32)
         >>> output = pixel_unshuffle(input_x)
         >>> print(output.shape)
         (1, 4, 4, 4)

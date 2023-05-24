@@ -81,8 +81,10 @@ class DenseThor(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 2, 3], [3, 4, 5]]), mindspore.float32)
-        >>> net = nn.DenseThor(3, 4, weight_init="ones")
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[1, 2, 3], [3, 4, 5]]), ms.float32)
+        >>> net = ms.nn.DenseThor(3, 4, weight_init="ones")
         >>> output = net(x)
         >>> print(output)
         [[  6.  6.  6.  6.]
@@ -367,9 +369,11 @@ class Conv2dThor(_ConvThor):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
         >>> # for Ascend
-        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float16)
+        >>> x = ms.Tensor(np.ones([1, 120, 1024, 640]), ms.float16)
         >>> print(net(x).shape)
         (1, 240, 1024, 640)
     """
@@ -566,8 +570,10 @@ class EmbeddingThor(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = nn.EmbeddingThor(20000, 768,  True)
-        >>> x = Tensor(np.ones([8, 128]), mindspore.int32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.EmbeddingThor(20000, 768,  True)
+        >>> x = ms.Tensor(np.ones([8, 128]), ms.int32)
         >>>
         >>> # Maps the input word IDs to word embedding.
         >>> output = net(x)
@@ -716,8 +722,10 @@ class EmbeddingLookupThor(Cell):
         ``Ascend``
 
     Examples:
-        >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
-        >>> result = nn.EmbeddingLookup(4,2)(input_indices)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> input_indices = ms.Tensor(np.array([[1, 0], [3, 2]]), ms.int32)
+        >>> result = ms.nn.EmbeddingLookup(4,2)(input_indices)
         >>> print(result.shape)
         (2, 2, 2)
     """

@@ -230,10 +230,9 @@ class BatchNorm1d(_BatchNorm):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.BatchNorm1d(num_features=4)
-        >>> x = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
+        >>> import mindspore as ms
+        >>> net = ms.nn.BatchNorm1d(num_features=4)
+        >>> x = ms.Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
         ...                      [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
         >>> output = net(x)
         >>> print(output)
@@ -326,10 +325,9 @@ class BatchNorm2d(_BatchNorm):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.BatchNorm2d(num_features=3)
-        >>> x = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> net = ms.nn.BatchNorm2d(num_features=3)
+        >>> x = ms.Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
         >>> output = net(x)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
@@ -403,10 +401,9 @@ class BatchNorm3d(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.BatchNorm3d(num_features=3)
-        >>> x = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> net = ms.nn.BatchNorm3d(num_features=3)
+        >>> x = ms.Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
         >>> output = net(x)
         >>> print(output.shape)
         (16, 3, 10, 32, 32)
@@ -541,16 +538,13 @@ class SyncBatchNorm(_BatchNorm):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.communication import init
-        >>> from mindspore import Tensor
-        >>> from mindspore import nn
-        >>> from mindspore import dtype as mstype
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> ms.reset_auto_parallel_context()
         >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL)
-        >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
-        >>> x = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
+        >>> sync_bn_op = ms.nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
+        >>> x = ms.Tensor(np.ones([1, 3, 2, 2]), ms.float32)
         >>> output = sync_bn_op(x)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
@@ -694,9 +688,11 @@ class LayerNorm(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.ones([20, 5, 10, 10]), ms.float32)
         >>> shape1 = x.shape[1:]
-        >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
+        >>> m = ms.nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
         >>> output = m(x).shape
         >>> print(output)
         (20, 5, 10, 10)
@@ -856,12 +852,10 @@ class InstanceNorm1d(_InstanceNorm):
         ``GPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.InstanceNorm1d(3)
-        >>> x = Tensor(np.ones([2, 3, 5]), mindspore.float32)
+        >>> net = ms.nn.InstanceNorm1d(3)
+        >>> x = ms.Tensor(np.ones([2, 3, 5]), ms.float32)
         >>> output = net(x)
         >>> print(output.shape)
         (2, 3, 5)
@@ -935,12 +929,10 @@ class InstanceNorm2d(_InstanceNorm):
         ``GPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.InstanceNorm2d(3)
-        >>> x = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
+        >>> net = ms.nn.InstanceNorm2d(3)
+        >>> x = ms.Tensor(np.ones([2, 3, 2, 2]), ms.float32)
         >>> output = net(x)
         >>> print(output.shape)
         (2, 3, 2, 2)
@@ -1013,12 +1005,10 @@ class InstanceNorm3d(_InstanceNorm):
         ``GPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> net = nn.InstanceNorm3d(3)
-        >>> x = Tensor(np.ones([2, 3, 5, 2, 2]), mindspore.float32)
+        >>> net = ms.nn.InstanceNorm3d(3)
+        >>> x = ms.Tensor(np.ones([2, 3, 5, 2, 2]), ms.float32)
         >>> output = net(x)
         >>> print(output.shape)
         (2, 3, 5, 2, 2)
@@ -1076,8 +1066,10 @@ class GroupNorm(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> group_norm_op = nn.GroupNorm(2, 2)
-        >>> x = Tensor(np.ones([1, 2, 4, 4], np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> group_norm_op = ms.nn.GroupNorm(2, 2)
+        >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
         >>> output = group_norm_op(x)
         >>> print(output)
         [[[[0. 0. 0. 0.]

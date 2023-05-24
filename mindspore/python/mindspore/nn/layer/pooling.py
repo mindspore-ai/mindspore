@@ -132,11 +132,9 @@ class LPPool1d(Cell):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
         >>> import numpy as np
-        >>> a = Tensor(np.arange(2 * 3 * 4).reshape((2, 3, 4)), dtype=ms.float32)
-        >>> net = nn.LPPool1d(norm_type=1, kernel_size=3, stride=1)
+        >>> a = ms.Tensor(np.arange(2 * 3 * 4).reshape((2, 3, 4)), dtype=ms.float32)
+        >>> net = ms.nn.LPPool1d(norm_type=1, kernel_size=3, stride=1)
         >>> out = net(a)
         >>> print(out)
         [[[ 3.  6.]
@@ -213,11 +211,9 @@ class LPPool2d(Cell):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
         >>> import numpy as np
-        >>> a = Tensor(np.arange(2 * 3 * 4 * 5).reshape((2, 3, 4, 5)), dtype=ms.float32)
-        >>> net = nn.LPPool2d(norm_type=1, kernel_size=3, stride=1)
+        >>> a = ms.Tensor(np.arange(2 * 3 * 4 * 5).reshape((2, 3, 4, 5)), dtype=ms.float32)
+        >>> net = ms.nn.LPPool2d(norm_type=1, kernel_size=3, stride=1)
         >>> out = net(a)
         >>> print(out)
         [[[[  54.   63.   72.]
@@ -509,14 +505,16 @@ class MaxPool2d(_PoolNd):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> pool = nn.MaxPool2d(kernel_size=3, stride=1)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> pool = ms.nn.MaxPool2d(kernel_size=3, stride=1)
+        >>> x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), ms.float32)
         >>> output = pool(x)
         >>> print(output.shape)
         (1, 2, 2, 2)
         >>> np_x = np.random.randint(0, 10, [5, 3, 4, 5])
-        >>> x = Tensor(np_x, mindspore.float32)
-        >>> pool2 = nn.MaxPool2d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=1, return_indices=True)
+        >>> x = ms.Tensor(np_x, ms.float32)
+        >>> pool2 = ms.nn.MaxPool2d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=1, return_indices=True)
         >>> output = pool2(x)
         >>> print(output[0].shape)
         (5, 3, 5, 6)
@@ -658,14 +656,17 @@ class MaxPool1d(_PoolNd):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
         >>> mpool1 = nn.MaxPool1d(kernel_size=3, stride=1)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4]), mindspore.float32)
+        >>> x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4]), ms.float32)
         >>> output = mpool1(x)
         >>> result = output.shape
         >>> print(result)
         (1, 2, 2)
         >>> np_x = np.random.randint(0, 10, [5, 3, 4])
-        >>> x = Tensor(np_x, mindspore.float32)
+        >>> x = ms.Tensor(np_x, ms.float32)
         >>> mpool2 = nn.MaxPool1d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=1, return_indices=True)
         >>> output = mpool2(x)
         >>> print(output[0].shape)
@@ -857,15 +858,13 @@ class AvgPool3d(_PoolNd):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
-        >>> pool = nn.AvgPool3d(kernel_size=3, stride=1)
-        >>> x = ops.randn(1, 2, 4, 4, 5).astype(ms.float32)
+        >>> pool = ms.nn.AvgPool3d(kernel_size=3, stride=1)
+        >>> x = ms.ops.randn(1, 2, 4, 4, 5).astype(ms.float32)
         >>> output = pool(x)
         >>> print(output.shape)
         (1, 2, 2, 2, 3)
-        >>> x1 = ops.randn(6, 5, 7, 7, 5).astype(ms.float32)
-        >>> pool2 = nn.AvgPool3d(4, stride=2, pad_mode='pad', padding=(2, 2, 1), divisor_override=10)
+        >>> x1 = ms.ops.randn(6, 5, 7, 7, 5).astype(ms.float32)
+        >>> pool2 = ms.nn.AvgPool3d(4, stride=2, pad_mode='pad', padding=(2, 2, 1), divisor_override=10)
         >>> output2 = pool2(x1)
         >>> print(output2.shape)
         (6, 5, 4, 4, 2)
@@ -971,16 +970,14 @@ class AvgPool2d(_PoolNd):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> pool = nn.AvgPool2d(kernel_size=3, stride=1)
+        >>> pool = ms.nn.AvgPool2d(kernel_size=3, stride=1)
         >>> x = ms.Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), ms.float32)
         >>> output = pool(x)
         >>> print(output.shape)
         (1, 2, 2, 2)
-        >>> x = ops.randn(6, 6, 8, 8)
-        >>> pool2 = nn.AvgPool2d(4, stride=1, pad_mode='pad', padding=2, divisor_override=5)
+        >>> x = ms.ops.randn(6, 6, 8, 8)
+        >>> pool2 = ms.nn.AvgPool2d(4, stride=1, pad_mode='pad', padding=2, divisor_override=5)
         >>> output2 = pool2(x)
         >>> print(output2.shape)
         (6, 6, 9, 9)
@@ -1107,17 +1104,15 @@ class AvgPool1d(_PoolNd):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> pool = nn.AvgPool1d(kernel_size=6, stride=1)
+        >>> pool = ms.nn.AvgPool1d(kernel_size=6, stride=1)
         >>> x = ms.Tensor(np.random.randint(0, 10, [1, 3, 6]), ms.float32)
         >>> output = pool(x)
         >>> result = output.shape
         >>> print(result)
         (1, 3, 1)
-        >>> pool2 = nn.AvgPool1d(4, stride=1, ceil_mode=True, pad_mode='pad', padding=2)
-        >>> x1 = ops.randn(6, 6, 8)
+        >>> pool2 = ms.nn.AvgPool1d(4, stride=1, ceil_mode=True, pad_mode='pad', padding=2)
+        >>> x1 = ms.ops.randn(6, 6, 8)
         >>> output = pool2(x1)
         >>> print(output.shape)
         (6, 6, 9)
@@ -1238,11 +1233,10 @@ class AdaptiveAvgPool1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> pool = nn.AdaptiveAvgPool1d(output_size=2)
-        >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> pool = ms.nn.AdaptiveAvgPool1d(output_size=2)
+        >>> input = ms.Tensor(np.random.randint(0, 10, [1, 3, 6]), ms.float32)
         >>> output = pool(input)
         >>> result = output.shape
         >>> print(result)
@@ -1320,10 +1314,12 @@ class AdaptiveAvgPool2d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> pool = nn.AdaptiveAvgPool2d(2)
-        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> pool = ms.nn.AdaptiveAvgPool2d(2)
+        >>> input_x = ms.Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), ms.float32)
         >>> output = pool(input_x)
         >>> result = output.shape
         >>> print(result)
@@ -1384,27 +1380,29 @@ class AdaptiveAvgPool3d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>> # case 1: output_size=(3, 3, 4)
         >>> output_size=(3, 3, 4)
         >>> input_x_val = np.random.randn(4, 3, 5, 6, 7)
-        >>> input_x = Tensor(input_x_val, mindspore.float32)
-        >>> net = nn.AdaptiveAvgPool3d(output_size)
+        >>> input_x = ms.Tensor(input_x_val, ms.float32)
+        >>> net = ms.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
         (4, 3, 3, 3, 4)
         >>> # case 2: output_size=4
         >>> output_size=5
         >>> input_x_val = np.random.randn(2, 3, 8, 6, 12)
-        >>> input_x = Tensor(input_x_val, mindspore.float32)
-        >>> net = nn.AdaptiveAvgPool3d(output_size)
+        >>> input_x = ms.Tensor(input_x_val, ms.float32)
+        >>> net = ms.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
         (2, 3, 5, 5, 5)
         >>> # case 3: output_size=(None, 4, 5)
         >>> output_size=(None, 4, 5)
         >>> input_x_val = np.random.randn(4, 1, 9, 10, 8)
-        >>> input_x = Tensor(input_x_val, mindspore.float32)
-        >>> net = nn.AdaptiveAvgPool3d(output_size)
+        >>> input_x = ms.Tensor(input_x_val, ms.float32)
+        >>> net = ms.nn.AdaptiveAvgPool3d(output_size)
         >>> output = net(input_x)
         >>> print(output.shape)
         (4, 1, 9, 4, 5)
@@ -1453,11 +1451,10 @@ class AdaptiveMaxPool1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> pool = nn.AdaptiveMaxPool1d(output_size=3)
-        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> pool = ms.nn.AdaptiveMaxPool1d(output_size=3)
+        >>> x = ms.Tensor(np.random.randint(0, 10, [1, 3, 6]), ms.float32)
         >>> output = pool(x)
         >>> result = output.shape
         >>> print(result)
@@ -1545,11 +1542,13 @@ class AdaptiveMaxPool2d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>> # case 1: output_size=(None, 2)
-        >>> input = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        >>> input = ms.Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
-        >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d((None, 2))
+        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), ms.float32)
+        >>> adaptive_max_pool_2d = ms.nn.AdaptiveMaxPool2d((None, 2))
         >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[2. 3.]
@@ -1562,7 +1561,7 @@ class AdaptiveMaxPool2d(Cell):
            [5. 6.]
            [8. 9.]]]]
         >>> # case 2: output_size=2
-        >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d(2)
+        >>> adaptive_max_pool_2d = ms.nn.AdaptiveMaxPool2d(2)
         >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[5. 6.]
@@ -1572,7 +1571,7 @@ class AdaptiveMaxPool2d(Cell):
           [[5. 6.]
            [8. 9.]]]]
         >>> # case 3: output_size=(1, 2)
-        >>> adaptive_max_pool_2d = nn.AdaptiveMaxPool2d((1, 2))
+        >>> adaptive_max_pool_2d = ms.nn.AdaptiveMaxPool2d((1, 2))
         >>> output = adaptive_max_pool_2d(input)
         >>> print(output)
         [[[[8. 9.]]
@@ -1624,9 +1623,11 @@ class AdaptiveMaxPool3d(Cell):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> input = ms.Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
         >>> output_size = (1, 1, 2)
-        >>> net = nn.AdaptiveMaxPool3d(output_size, True)
+        >>> net = ms.nn.AdaptiveMaxPool3d(output_size, True)
         >>> output = net(input)
         >>> print(output[0].asnumpy())
         [[[[33. 35.]]]]
@@ -1708,16 +1709,14 @@ class FractionalMaxPool2d(Cell):
     Examples:
         >>> # the kernel_size is an int number and the output_size is a tuple.
         >>> import numpy as np
-        >>> from mindspore import nn
-        >>> from mindspore import Tensor
-        >>> import mindspore.common.dtype as mstype
-        >>> input = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
+        >>> import mindspore as ms
+        >>> input = ms.Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
         ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
         ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
-        ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
-        >>> _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
-        >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
+        ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), ms.float32)
+        >>> _random_samples = ms.Tensor(np.array([[[0.8, 0.8]]]), ms.float32)
+        >>> net = ms.nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
         ...                              return_indices=True)
         >>> y, argmax = net(input)
         >>> y
@@ -1726,7 +1725,7 @@ class FractionalMaxPool2d(Cell):
         >>> argmax
         [[[[ 1  9]
            [16 24]]]]
-        >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_ratio=(0.5, 0.5), _random_samples=_random_samples,
+        >>> net = ms.nn.FractionalMaxPool2d(kernel_size=2, output_ratio=(0.5, 0.5), _random_samples=_random_samples,
         ...                              return_indices=True)
         >>> y, argmax = net(input)
         >>> print(y)
@@ -1816,20 +1815,18 @@ class FractionalMaxPool3d(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import nn
-        >>> from mindspore import Tensor
-        >>> import mindspore.common.dtype as mstype
-        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        ...            .reshape([1, 1, 2, 2, 4]), mstype.float32)
-        >>> _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        >>> net = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_size=(1, 1, 3),
+        >>> import mindspore as ms
+        >>> x = ms.Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+        ...            .reshape([1, 1, 2, 2, 4]), ms.float32)
+        >>> _random_samples = ms.Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), ms.float32)
+        >>> net = ms.nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_size=(1, 1, 3),
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)
         [[[[[13. 14. 16.]]]]]
         >>> print(argmax)
         [[[[[12 13 15]]]]]
-        >>> net = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
+        >>> net = ms.nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)
@@ -1903,9 +1900,11 @@ class MaxUnpool1d(Cell):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
-        >>> indices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
-        >>> maxunpool1d = nn.MaxUnpool1d(kernel_size =2, stride=2, padding=0)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
+        >>> indices = ms.Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
+        >>> maxunpool1d = ms.nn.MaxUnpool1d(kernel_size =2, stride=2, padding=0)
         >>> output = maxunpool1d(x, indices)
         >>> print(output.asnumpy())
         [[0. 2. 0. 4. 0. 6. 0. 8.]]
@@ -1991,9 +1990,11 @@ class MaxUnpool2d(Cell):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
-        >>> indices = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
-        >>> maxunpool2d = nn.MaxUnpool2d(kernel_size=1, stride=1, padding=0)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
+        >>> indices = ms.Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
+        >>> maxunpool2d = ms.nn.MaxUnpool2d(kernel_size=1, stride=1, padding=0)
         >>> output = maxunpool2d(x, indices)
         >>> print(output.asnumpy())
         [[[[0. 1.]
@@ -2084,9 +2085,11 @@ class MaxUnpool3d(Cell):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
-        >>> indices= Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
-        >>> maxunpool3d = nn.MaxUnpool3d(kernel_size=1, stride=1, padding=0)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
+        >>> indices= ms.Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
+        >>> maxunpool3d = ms.nn.MaxUnpool3d(kernel_size=1, stride=1, padding=0)
         >>> output = maxunpool3d(x, indices)
         >>> print(output.asnumpy())
         [[[[[0. 1.]

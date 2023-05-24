@@ -75,9 +75,11 @@ class L1Regularizer(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>> scale = 0.5
-        >>> net = nn.L1Regularizer(scale)
-        >>> weights = Tensor(np.array([[1.0, -2.0], [-3.0, 4.0]]).astype(np.float32))
+        >>> net = ms.nn.L1Regularizer(scale)
+        >>> weights = ms.Tensor(np.array([[1.0, -2.0], [-3.0, 4.0]]).astype(np.float32))
         >>> output = net(weights)
         >>> print(output.asnumpy())
         5.0
@@ -149,6 +151,9 @@ class Dropout(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(p=0.2)
         >>> net.set_train()
@@ -238,10 +243,9 @@ class Dropout1d(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore import nn, Tensor
-        >>> op = nn.Dropout1d(p=0.6)
+        >>> op = ms.nn.Dropout1d(p=0.6)
         >>> op.training = True
-        >>> a = Tensor(np.ones((3, 3)), ms.float32)
+        >>> a = ms.Tensor(np.ones((3, 3)), ms.float32)
         >>> output = op(a)
     """
 
@@ -281,6 +285,9 @@ class Dropout2d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> dropout = nn.Dropout2d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output = dropout(x)
@@ -329,6 +336,9 @@ class Dropout3d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> dropout = nn.Dropout3d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
         >>> output = dropout(x)
@@ -365,8 +375,9 @@ class Upsample(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
-        >>> upsample = nn.Upsample(size=(5, 5))
+        >>> import mindspore as ms
+        >>> x = ms.Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
+        >>> upsample = ms.nn.Upsample(size=(5, 5))
         >>> out = upsample(x)
         >>> print(x.asnumpy())
         [[[[1. 2. 3. 4.]
@@ -421,6 +432,9 @@ class Flatten(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> net = nn.Flatten()
         >>> output = net(x)
@@ -473,6 +487,9 @@ class Identity(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
         >>> net = nn.Identity()
         >>> output = net(x)
@@ -534,6 +551,9 @@ class Dense(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
         >>> net = nn.Dense(3, 4)
         >>> output = net(x)
@@ -678,6 +698,9 @@ class ClipByNorm(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.ClipByNorm()
         >>> x = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
@@ -798,8 +821,8 @@ class Pad(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> import mindspore.nn as nn
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn, ops
         >>> import numpy as np
         >>> # If `mode` is "CONSTANT"
         >>> class Net(nn.Cell):
@@ -945,6 +968,8 @@ class ResizeBilinear(Cell):
         Deprecated
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> x = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
         >>> resize_bilinear = nn.ResizeBilinear()
         >>> result = resize_bilinear(x, size=(5,5))
@@ -1018,10 +1043,13 @@ class Unfold(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> net = nn.Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
         >>> # As stated in the above code:
         >>> # ksize_row = 2, ksize_col = 2, rate_row = 2, rate_col = 2, stride_row = 2, stride_col = 2.
-        >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mstype.float16)
+        >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mindspore.float16)
         >>> # in_batch = 2, in_depth = 3, in_row = 6, in_col = 6.
         >>> # Substituting the formula to get:
         >>> # out_batch = in_batch = 2
@@ -1223,6 +1251,8 @@ class MatrixSetDiag(Cell):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = nn.MatrixSetDiag()
@@ -1352,6 +1382,9 @@ class Unflatten(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> input = Tensor(np.arange(0, 100).reshape(2, 10, 5), mindspore.float32)
         >>> net = nn.Unflatten(1, (2, 5))
         >>> output = net(input)

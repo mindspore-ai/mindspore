@@ -253,14 +253,13 @@ class ConstantPad1d(_ConstantPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ConstantPad1d
+        >>> import mindspore as ms
         >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = Tensor(x)
+        >>> x = ms.Tensor(x)
         >>> # padding is tuple
         >>> padding = (0, 1)
         >>> value = 0.5
-        >>> pad1d = ConstantPad1d(padding, value)
+        >>> pad1d = ms.nn.ConstantPad1d(padding, value)
         >>> out = pad1d(x)
         >>> print(out)
         [[[[1.  1.  1.  1.  0.5]
@@ -274,7 +273,7 @@ class ConstantPad1d(_ConstantPadNd):
         >>> # padding is int
         >>> padding = 1
         >>> value = 0.5
-        >>> pad1d = ConstantPad1d(padding, value)
+        >>> pad1d = ms.nn.ConstantPad1d(padding, value)
         >>> out = pad1d(x)
         >>> print(out)
         [[[[0.5 1.  1.  1.  1.  0.5]
@@ -288,7 +287,7 @@ class ConstantPad1d(_ConstantPadNd):
         >>> # padding is negative
         >>> padding = (-1, 0)
         >>> value = 0.5
-        >>> pad1d = ConstantPad1d(padding, value)
+        >>> pad1d = ms.nn.ConstantPad1d(padding, value)
         >>> out = pad1d(x)
         >>> print(out)
         [[[[1. 1. 1.]
@@ -332,13 +331,12 @@ class ConstantPad2d(_ConstantPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ConstantPad2d
+        >>> import mindspore as ms
         >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = Tensor(x)
+        >>> x = ms.Tensor(x)
         >>> padding = (-1, 1, 0, 1)
         >>> value = 0.5
-        >>> pad2d = ConstantPad2d(padding, value)
+        >>> pad2d = ms.nn.ConstantPad2d(padding, value)
         >>> out = pad2d(x)
         >>> print(out)
         [[[[1.  1.  1.  0.5]
@@ -386,13 +384,12 @@ class ConstantPad3d(_ConstantPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ConstantPad3d
+        >>> import mindspore as ms
         >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = Tensor(x)
+        >>> x = ms.Tensor(x)
         >>> padding = (-1, 1, 0, 1, 1, 0)
         >>> value = 0.5
-        >>> pad3d = ConstantPad3d(padding, value)
+        >>> pad3d = ms.nn.ConstantPad3d(padding, value)
         >>> out = pad3d(x)
         >>> print(out)
         [[[[0.5 0.5 0.5 0.5]
@@ -476,14 +473,13 @@ class ReflectionPad1d(_ReflectionPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReflectionPad1d
-        >>> x = Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> x = ms.Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
         >>> # x has shape (1, 2, 4)
         >>> padding = (3, 1)
         >>> # The first and the second dimension of x remain the same.
         >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 4 + 3 + 1 = 8
-        >>> pad1d = ReflectionPad1d(padding)
+        >>> pad1d = ms.nn.ReflectionPad1d(padding)
         >>> out = pad1d(x)
         >>> # The shape of out is (1, 2, 8)
         >>> print(out)
@@ -525,12 +521,11 @@ class ReflectionPad2d(_ReflectionPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReflectionPad2d
-        >>> x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> x = ms.Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
         >>> # x has shape (1, 3, 3)
         >>> padding = (1, 1, 2, 0)
-        >>> pad2d = ReflectionPad2d(padding)
+        >>> pad2d = ms.nn.ReflectionPad2d(padding)
         >>> # The first dimension of x remains the same.
         >>> # The second dimension of x: H_out = H_in + pad_up + pad_down = 3 + 1 + 1 = 5
         >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 3 + 2 + 0 = 5
@@ -583,13 +578,12 @@ class ReflectionPad3d(_ReflectionPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReflectionPad3d
+        >>> import mindspore as ms
         >>> arr = np.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
-        >>> x = Tensor(arr)
+        >>> x = ms.Tensor(arr)
         >>> # x has shape (1, 2, 2, 2)
         >>> padding = (1, 1, 1, 0, 0, 1)
-        >>> pad3d = ReflectionPad3d(padding)
+        >>> pad3d = ms.nn.ReflectionPad3d(padding)
         >>> out = pad3d(x)
         >>> # The first dimension of x remains the same.
         >>> # The second dimension of x: D_out = D_in + pad_front + pad_back = 2 + 0 + 1 = 3
@@ -639,12 +633,11 @@ class ZeroPad2d(_ConstantPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ZeroPad2d
+        >>> import mindspore as ms
         >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = Tensor(x)
+        >>> x = ms.Tensor(x)
         >>> padding = (-1, 1, 0, 1)
-        >>> pad = ZeroPad2d(padding)
+        >>> pad = ms.nn.ZeroPad2d(padding)
         >>> out = pad(x)
         >>> print(out)
         [[[[1. 1. 1. 0.]
@@ -735,11 +728,9 @@ class ReplicationPad1d(_ReplicationPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReplicationPad1d
-        >>> pad1d = ReplicationPad1d(2)
-        >>> input = Tensor(np.arange(0, 8).reshape(1, 2, 4), mindspore.float32)
+        >>> import mindspore as ms
+        >>> pad1d = ms.nn.ReplicationPad1d(2)
+        >>> input = ms.Tensor(np.arange(0, 8).reshape(1, 2, 4), ms.float32)
         >>> print(input)
         [[[0. 1. 2. 3.]
           [4. 5. 6. 7.]]]
@@ -747,7 +738,7 @@ class ReplicationPad1d(_ReplicationPadNd):
         >>> print(out)
         [[[0. 0. 0. 1. 2. 3. 3. 3.]
           [4. 4. 4. 5. 6. 7. 7. 7.]]]
-        >>> pad1d = ReplicationPad1d((3, 1))
+        >>> pad1d = ms.nn.ReplicationPad1d((3, 1))
         >>> out = pad1d(input)
         >>> print(out)
         [[[0. 0. 0. 0. 1. 2. 3. 3.]
@@ -798,11 +789,9 @@ class ReplicationPad2d(_ReplicationPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReplicationPad2d
-        >>> pad2d = ReplicationPad2d(2)
-        >>> input = Tensor(np.arange(0, 9).reshape(1, 1, 3, 3), mindspore.float32)
+        >>> import mindspore as ms
+        >>> pad2d = ms.nn.ReplicationPad2d(2)
+        >>> input = ms.Tensor(np.arange(0, 9).reshape(1, 1, 3, 3), ms.float32)
         >>> print(input)
         [[[[0. 1. 2.]
            [3. 4. 5.]
@@ -816,7 +805,7 @@ class ReplicationPad2d(_ReplicationPadNd):
            [6. 6. 6. 7. 8. 8. 8.]
            [6. 6. 6. 7. 8. 8. 8.]
            [6. 6. 6. 7. 8. 8. 8.]]]]
-        >>> pad2d = ReplicationPad2d((1, 1, 2, 0))
+        >>> pad2d = ms.nn.ReplicationPad2d((1, 1, 2, 0))
         >>> out = pad2d(input)
         >>> print(out)
         [[[[0. 0. 1. 2. 2.]
@@ -875,11 +864,9 @@ class ReplicationPad3d(_ReplicationPadNd):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore.nn import ReplicationPad3d
-        >>> pad3d = ReplicationPad3d(1)
-        >>> input = Tensor(np.arange(0, 9).reshape(1, 1, 1, 3, 3), mindspore.float32)
+        >>> import mindspore as ms
+        >>> pad3d = ms.nn.ReplicationPad3d(1)
+        >>> input = ms.Tensor(np.arange(0, 9).reshape(1, 1, 1, 3, 3), ms.float32)
         >>> out = pad3d(input)
         >>> print(out)
         [[[[[0. 0. 1. 2. 2.]

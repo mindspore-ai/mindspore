@@ -116,6 +116,9 @@ class BiDense(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x1 = Tensor(np.random.randn(128, 20), mindspore.float32)
         >>> x2 = Tensor(np.random.randn(128, 30), mindspore.float32)
         >>> net = nn.BiDense(20, 30, 40)

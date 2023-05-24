@@ -89,6 +89,9 @@ class Conv2dBnAct(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')
         >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> result = net(x)
@@ -192,6 +195,9 @@ class DenseBnAct(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.DenseBnAct(3, 4)
         >>> x = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> result = net(x)
