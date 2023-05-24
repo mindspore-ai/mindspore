@@ -1152,6 +1152,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
     try {
       MS_LOG(DEBUG) << "Join node: " << node->DebugString() << ", " << joined_abs->ToString() << ", and "
                     << abs->ToString();
+      MS_LOG_TRY_CATCH_SCOPE;
       joined_abs = joined_abs->Join(abs);
     } catch (const py::type_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
