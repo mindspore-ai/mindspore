@@ -665,19 +665,19 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
       from mindspore import set_context, GRAPH_MODE, PYNATIVE_MODE
 
-      # Execucation in static graph mode
+      # Execution in static graph mode
       set_context(mode=GRAPH_MODE)
 
-      # Execucation in PyNative mode
+      # Execution in PyNative mode
       set_context(mode=PYNATIVE_MODE)
 
-      # Execucation on CPU backend
+      # Execution on CPU backend
       set_context(device_target="CPU")
 
-      # Execucation on GPU backend
+      # Execution on GPU backend
       set_context(device_target="GPU")
 
-      # Execucation on Ascend backend
+      # Execution on Ascend backend
       set_context(device_target="Ascend")
       ...
 
