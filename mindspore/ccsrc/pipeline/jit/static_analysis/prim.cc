@@ -245,7 +245,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   (void)std::transform(graph_specialize_args.begin(),
                        graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
                        std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
-  auto new_graph = forward_graph->GenerateGraph(graph_specialize_args_without_sens);
+  auto new_graph = forward_graph->GenerateFuncGraph(graph_specialize_args_without_sens);
   engine->func_graph_manager()->AddFuncGraph(new_graph);
   ScopePtr scope = kDefaultScope;
   if (out_conf != nullptr) {
