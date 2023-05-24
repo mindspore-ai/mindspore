@@ -122,6 +122,31 @@ _fallback_unsupported_python_builtin_type = (
     memoryview, property,
 )
 
+_modules_from_mindspore = (
+    "mindspore",           # https://gitee.com/mindspore/mindspore
+    "msadapter",           # https://openi.pcl.ac.cn/OpenI/MSAdapter
+    "mindinsight",         # https://gitee.com/mindspore/mindinsight
+    "mindelec",            # https://gitee.com/mindspore/mindscience/tree/master/MindElec
+    "mindflow",            # https://gitee.com/mindspore/mindscience/tree/master/MindFlow
+    "mindsponge",          # https://gitee.com/mindspore/mindscience/tree/master/MindSPONGE
+    "mindquantum",         # https://gitee.com/mindspore/mindquantum
+    "mindearth",           # https://gitee.com/mindspore/mindsciencetmp/tree/master/MindEarth
+    "mindformers",         # https://gitee.com/mindspore/mindformers
+    "mindarmour",          # https://gitee.com/mindspore/mindarmour
+    "mindpandas",          # https://gitee.com/mindspore/mindpandas
+    "mindtext",            # https://gitee.com/mindspore/mindnlp
+    "mindvision",          # https://gitee.com/mindspore/vision
+    "mindspore_gl",        # https://gitee.com/mindspore/graphlearning
+    "mindspore_federated", # https://gitee.com/mindspore/federated
+    "mindspore_gs",        # https://gitee.com/mindspore/golden-stick
+    "mindspore_serving",   # https://gitee.com/mindspore/serving
+    "mindspore_xai",       # https://gitee.com/mindspore/xai
+    "mindspore_hub",       # https://gitee.com/mindspore/hub
+    "mindspore_rl",        # https://gitee.com/mindspore/reinforcement
+    "mindspore_rec",       # https://gitee.com/mindspore/recommender
+    "ringmo_framework",    # https://gitee.com/mindspore/ringmo-framework
+)
+
 _global_params = {}
 _local_value_nodes = {}
 
@@ -909,7 +934,7 @@ def _in_user_workspace(module):
 def get_module_source_location(module):
     """Get the source location of the module."""
     module_leftmost_name = module.__name__.split('.')[0]
-    if module_leftmost_name in ["mindspore", "msadapter"]:
+    if module_leftmost_name in _modules_from_mindspore:
         return MODULE_FROM_MINDSPORE
     if _in_user_workspace(module):
         return MODULE_FROM_USER_WORKSPACE
