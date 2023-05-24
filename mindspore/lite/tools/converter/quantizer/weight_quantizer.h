@@ -93,12 +93,12 @@ class WeightQuantizer : public Quantizer {
     dequant_strategy_ = param_->weightQuantParam.dequant_strategy;
     max_segments_ = param_->weightQuantParam.max_segments;
     ascend_backend_ = param_->ascendQuantParam.mode != AscendQuantMode::NONE;
-    if (param_->weightQuantParam.dequant_strategy == ON_THE_FLY) {
-      if (ascend_backend_) {
-        weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_LAYER;
-      } else {
-        weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
-      }
+    per_channel_ = param_->weightQuantParam.per_channel;
+    bias_correction_ = param_->weightQuantParam.bias_correction;
+    if (per_channel_) {
+      weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+    } else {
+      weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
   }
 
@@ -150,6 +150,8 @@ class WeightQuantizer : public Quantizer {
   WeightQuantType weight_quant_type_ = WeightQuantType::FIXED_BIT_PER_CHANNEL;
   DequantStrategy dequant_strategy_ = DEFAULT;
   int max_segments_{1};
+  bool per_channel_{true};
+  bool bias_correction_{true};
   // Support for mark shared weight node.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
   bool ascend_backend_ = false;

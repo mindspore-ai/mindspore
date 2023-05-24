@@ -68,6 +68,8 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
 
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
                           bool symmetric, bool narrow_range = false);
+int CalWeightQuantBiasPerLayer(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
+                               std::vector<schema::QuantParamT> *quant_params);
 
 void EncodeMinMax(float min_value, float max_value, int quant_min, int quant_max, bool symmetric, float *encode_min,
                   float *encode_max);
@@ -105,7 +107,7 @@ T QuantizeData(const float origin_data, const schema::QuantParamT *quant_param) 
 template <typename T>
 int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                     const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
-                    bool symmetric = false, bool narrow_range = false) {
+                    bool symmetric = false, bool narrow_range = false, bool cal_gain = false) {
   auto min_max = GetFloatMinMaxValue(raw_datas, elem_count);
   schema::QuantParamT quant_param;
   int status = CalQuantizationParams(&quant_param, min_max.first, min_max.second, bit_num, quant_min, quant_max,
@@ -120,6 +122,17 @@ int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schem
     float raw_data = raw_datas[i];
     auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
     (*quant_datas)[i] = quant_data;
+  }
+  if (cal_gain) {
+    std::vector<float> dequant_datas(quant_datas->size());
+    for (size_t i = 0; i < elem_count; i++) {
+      dequant_datas.at(i) = quant_param.scale * (quant_datas->at(i) - quant_param.zeroPoint);
+    }
+    auto ret = CalWeightQuantBiasPerLayer(raw_datas, elem_count, dequant_datas, quant_params);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Cal weight quant bias failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }

@@ -24,15 +24,15 @@ int FixedBitWeightQuantization::QuantFilter(const AnfNodePtr &parameter_node, co
                                             const PrimitivePtr &primitive, quant::QuantType quant_type, int quant_max,
                                             int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
                                             TypeId quant_data_type, int index, int preferred_dim, bool symmetric,
-                                            bool narrow_range) {
+                                            bool narrow_range, bool bias_correction) {
   if (quant_data_type == kNumberTypeInt8) {
     return FixedBitQuantFilter<int8_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min, bit_num,
                                        weight_quant_type, quant_data_type, index, preferred_dim, symmetric,
-                                       narrow_range);
+                                       narrow_range, bias_correction);
   } else if (quant_data_type == kNumberTypeInt16) {
     return FixedBitQuantFilter<int16_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min, bit_num,
                                         weight_quant_type, quant_data_type, index, preferred_dim, symmetric,
-                                        narrow_range);
+                                        narrow_range, bias_correction);
   } else {
     MS_LOG(ERROR) << quant_data_type << " dont support.";
     return RET_ERROR;

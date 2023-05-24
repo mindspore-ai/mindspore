@@ -35,7 +35,7 @@ class FixedBitWeightQuantization {
   int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                   quant::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index, int preferred_dim,
-                  bool symmetric = false, bool narrow_range = false);
+                  bool symmetric = false, bool narrow_range = false, bool bias_correction = true);
 
   int StatisticsFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, quant::QuantType quant_type,
                        int quant_max, int quant_min, size_t bit_num, WeightQuantType weight_quant_type,
@@ -53,7 +53,8 @@ class FixedBitWeightQuantization {
   int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                           const PrimitivePtr &primitive, quant::QuantType quant_type, int quant_max, int quant_min,
                           size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
-                          int preferred_dim, bool symmetric = false, bool narrow_range = false) {
+                          int preferred_dim, bool symmetric = false, bool narrow_range = false,
+                          bool bias_correction = true) {
     size_t elem_count = weight->DataSize();
     auto *raw_data = static_cast<float *>(weight->data_c());
     if (raw_data == nullptr) {
@@ -63,7 +64,7 @@ class FixedBitWeightQuantization {
     std::vector<T> quant_data(elem_count);
     auto status =
       FixedBitStatisticsFilter<T>(weight, primitive, quant_type, quant_max, quant_min, bit_num, weight_quant_type,
-                                  index, preferred_dim, &quant_data, symmetric, narrow_range);
+                                  index, preferred_dim, &quant_data, symmetric, narrow_range, bias_correction);
     if (status == RET_NO_CHANGE) {
       return status;
     } else if (status != RET_OK) {
@@ -86,7 +87,8 @@ class FixedBitWeightQuantization {
   int FixedBitStatisticsFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
                                quant::QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
                                WeightQuantType weight_quant_type, int index, int preferred_dim,
-                               std::vector<T> *quant_data, bool symmetric = false, bool narrow_range = false) {
+                               std::vector<T> *quant_data, bool symmetric = false, bool narrow_range = false,
+                               bool bias_correction = true) {
     MS_ASSERT(weight != nullptr);
     MS_ASSERT(primitive != nullptr);
     auto dims = weight->shape();
@@ -103,8 +105,8 @@ class FixedBitWeightQuantization {
 
     std::vector<schema::QuantParamT> quant_params;
     int ret = RET_OK;
+    bool cal_gain = (quant_type == QUANT_WEIGHT) && bias_correction ? true : false;
     if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-      bool cal_gain = (quant_type == QUANT_WEIGHT) ? true : false;
       ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
                                  quant_min, bit_num, quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
                                  cal_gain, symmetric, narrow_range);
@@ -116,7 +118,7 @@ class FixedBitWeightQuantization {
       }
     } else if (weight_quant_type == FIXED_BIT_PER_LAYER) {
       ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
-                               quant_min, bit_num, quant_data, symmetric, narrow_range);
+                               quant_min, bit_num, quant_data, symmetric, narrow_range, cal_gain);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do per layer quant failed.";
         return ret;

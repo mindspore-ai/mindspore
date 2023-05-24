@@ -231,5 +231,54 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
   }
   return RET_OK;
 }
+
+int CalWeightQuantBiasPerLayer(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
+                               std::vector<schema::QuantParamT> *quant_params) {
+  CHECK_NULL_RETURN(raw_datas);
+  CHECK_NULL_RETURN(quant_params);
+  MS_CHECK_GT(elem_count, 0, RET_ERROR);
+  double total_raws = 0;
+  double total_dequants = 0;
+  double average_raws = 0;
+  double average_dequants = 0;
+  double var_raws = 0;
+  double var_dequants = 0;
+
+  for (size_t data_index = 0; data_index < elem_count; data_index++) {
+    auto data = raw_datas[data_index];
+    auto dequant_data = dequant_datas[data_index];
+    total_raws += data;
+    total_dequants += dequant_data;
+  }
+
+  average_raws = total_raws / elem_count;
+  average_dequants = total_dequants / elem_count;
+
+  constexpr int pow_exponent = 2;
+  for (size_t data_index = 0; data_index < elem_count; data_index++) {
+    var_raws += std::pow(raw_datas[data_index] - average_raws, pow_exponent);
+    var_dequants += std::pow(dequant_datas[data_index] - average_dequants, pow_exponent);
+  }
+
+  var_raws = std::sqrt(var_raws / elem_count);
+  var_dequants = std::sqrt(var_dequants / elem_count);
+
+  quant_params->at(0).varCorr = 1;
+  if (fabs(var_raws) > DBL_EPSILON && fabs(var_dequants) > DBL_EPSILON) {
+    auto temp_var_corr = var_raws / var_dequants;
+    const int min_var_corr = 0;
+    const int max_var_corr = 10;
+    if (temp_var_corr > min_var_corr && temp_var_corr < max_var_corr) {
+      quant_params->at(0).varCorr = temp_var_corr;
+    } else {
+      MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
+    }
+  }
+  quant_params->at(0).meanCorr = average_raws - average_dequants * quant_params->at(0).varCorr;
+  MS_LOG(INFO) << " average_raws:" << average_raws << " average_dequants:" << average_dequants
+               << " var_raws:" << var_dequants << " var_dequants:" << var_dequants
+               << " varCorr:" << quant_params->at(0).varCorr << " meanCorr:" << quant_params->at(0).meanCorr;
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

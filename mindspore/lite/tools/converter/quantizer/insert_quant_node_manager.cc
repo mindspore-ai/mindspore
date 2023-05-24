@@ -648,8 +648,10 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
     std::vector<float16> scales;
     std::vector<float16> zps;
     for (size_t i = 0; i < input_quant_params.size(); ++i) {
-      scales.push_back(static_cast<float16>(input_quant_params.at(i).scale));
-      zps.push_back(static_cast<float16>(-input_quant_params.at(i).zeroPoint));
+      scales.push_back(static_cast<float16>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
+      zps.push_back(static_cast<float16>(-input_quant_params.at(i).zeroPoint +
+                                         input_quant_params.at(i).meanCorr /
+                                           (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
     }
     scales_node = opt::BuildFloat16VecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
     zps_node = opt::BuildFloat16VecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
@@ -657,11 +659,32 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
     std::vector<float> scales;
     std::vector<float> zps;
     for (size_t i = 0; i < input_quant_params.size(); ++i) {
-      scales.push_back(static_cast<float>(input_quant_params.at(i).scale));
-      zps.push_back(static_cast<float>(-input_quant_params.at(i).zeroPoint));
+      scales.push_back(static_cast<float>(input_quant_params.at(i).scale * input_quant_params.at(i).varCorr));
+      zps.push_back(static_cast<float>(-input_quant_params.at(i).zeroPoint +
+                                       input_quant_params.at(i).meanCorr /
+                                         (input_quant_params.at(i).scale * input_quant_params.at(i).varCorr)));
     }
     scales_node = opt::BuildFloatVecParameterNode(func_graph, scales, input_node->fullname_with_scope() + "-scales");
     zps_node = opt::BuildFloatVecParameterNode(func_graph, zps, input_node->fullname_with_scope() + "-zps");
+  }
+  if (input_quant_params.size() > 1) {
+    ShapeVector shape;
+    if (opt::FetchShapeFromAbstract(input_node->abstract(), &shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "fetch shape failed." << input_node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+    std::vector<int64_t> shape_vector = {};
+    for (size_t i = 0; i < shape.size(); i++) {
+      if (i == (size_t)axis) {
+        shape_vector.push_back((int64_t)input_quant_params.size());
+      } else {
+        shape_vector.push_back(1);
+      }
+    }
+    auto scales_abstract = scales_node->abstract();
+    scales_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
+    auto zps_abstract = zps_node->abstract();
+    zps_abstract->set_shape(std::make_shared<abstract::Shape>(shape_vector));
   }
 
   auto add_cnode = NewAddNode(func_graph, cast_cnode, zps_node);

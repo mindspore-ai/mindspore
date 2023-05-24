@@ -197,7 +197,8 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     } else {
       FixedBitWeightQuantization fixed_bit_quant;
       status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
-                                           tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
+                                           tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric, false,
+                                           bias_correction_);
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -450,7 +451,11 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   std::set<PrimitivePtr> per_layer_primitive_types;
   if (ascend_backend_) {
     support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul};
-    per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul};
+    if (per_channel_) {
+      per_layer_primitive_types = {};
+    } else {
+      per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul};
+    }
   } else {
     support_primitive_types = {prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
                                prim::kPrimMatMulFusion,  prim::kPrimFullConnection,
