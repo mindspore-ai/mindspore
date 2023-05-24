@@ -1134,6 +1134,44 @@ class AfterOptARewriter : public BaseRewriter {
     return pyexecute_node;
   }
 
+  // JoinedStr(XXXXXX)
+  // TO
+  // A = PyExecute("list(map(str, __inner_convert_object__), ("__inner_convert_object__",), ((XXXXXX,),)")
+  // B = PyExecute("".join(__inner_str_list__)", ("__inner_str_list__",), (A,)).
+  // replace(B --> JoinedStr)
+  AnfNodePtr ConvertJoinedStr(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    MS_LOG(DEBUG) << " make_slice node: " << cnode->DebugString();
+    // Convert all node to list[str]
+    constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
+    constexpr auto kConvertToListKey = "__inner_convert_object__";
+    std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
+    std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+
+    std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
+    auto list_str_key_node = fg->NewCNode(list_str_key_list);
+    auto list_str_value_node = fg->NewCNode(list_str_value_list);
+    auto convet_list_str_node = fallback::CreatePyExecuteCNodeInOrder(
+      fg, NewValueNode(kConvertToListString), list_str_key_node,
+      fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_str_value_node}), cnode->debug_info());
+
+    // change to string.
+    constexpr auto eval_string_script = "\"\".join(__inner_str_list__)";
+    constexpr auto eval_key_string = "__inner_str_list__";
+    auto eval_key_node = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), NewValueNode(eval_key_string)});
+    auto eval_value_node = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), convet_list_str_node});
+
+    auto joined_result_node = fallback::CreatePyExecuteCNode(fg, NewValueNode(eval_string_script), eval_key_node,
+                                                             eval_value_node, cnode->debug_info());
+    return joined_result_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -1157,7 +1195,8 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
     {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice},
-    {prim::kPrimIsInstance, &ThisClass::ConvertBuiltinCNodeToPyExecute}};
+    {prim::kPrimIsInstance, &ThisClass::ConvertBuiltinCNodeToPyExecute},
+    {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr}};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
