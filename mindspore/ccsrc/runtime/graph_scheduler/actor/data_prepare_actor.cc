@@ -41,6 +41,7 @@ constexpr size_t kMapTensorNum = 3;
 constexpr size_t kMapTensorKeyIndex = 0;
 constexpr size_t kMapTensorValueIndex = 1;
 constexpr size_t kMapTensorStatusIndex = 2;
+constexpr size_t kPinMemThreshold = 1024 << 10;
 
 bool IsDataTakenOverByMemOffload(const DeviceContext *device_context) {
   if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
@@ -55,21 +56,22 @@ device::StorageInfo GetStorageInfo(const TensorPtr &host_tensor, const DeviceTen
                                    const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(host_tensor);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto swap_manager = device_context->device_res_manager_->swap_manager();
+  MS_EXCEPTION_IF_NULL(swap_manager);
   if (host_tensor->data_type() == device_tensor->type_id()) {
     const auto &offload_file = host_tensor->GetOffloadFilePath();
     if (!offload_file.empty()) {
       return {nullptr, offload_file};
-    } else {
-      return {host_tensor->data_c(), ""};
+    } else if (host_tensor->Size() > kPinMemThreshold) {
+      host_tensor->PinMemory(swap_manager->GetPinMemPool());
     }
+    return {host_tensor->data_c(), ""};
   }
   const auto shape_size = abstract::ShapeSize(host_tensor->shape());
   const auto data_size = host_tensor->Size();
   const trans::TypeIdArgs type_args{host_tensor->data_c(), shape_size, host_tensor->data_type(),
                                     device_tensor->type_id(), data_size};
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto swap_manager = device_context->device_res_manager_->swap_manager();
-  MS_EXCEPTION_IF_NULL(swap_manager);
   auto offload_ptr = swap_manager->AllocHostMemory(device_tensor->GetSize());
   MS_EXCEPTION_IF_NULL(offload_ptr);
   bool trans_ret = trans::TransDataType(type_args, offload_ptr);

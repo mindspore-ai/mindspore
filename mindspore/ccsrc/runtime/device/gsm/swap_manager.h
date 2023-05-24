@@ -93,6 +93,7 @@ class BACKEND_EXPORT SwapManager {
                                      const std::vector<DeviceAddress *> &outputs);
   void SetSwappableBeforeMemFree(const std::vector<DeviceAddress *> &inputs,
                                  const std::vector<DeviceAddress *> &outputs, const KernelInfo *kernel_info);
+  PinMemPool *GetPinMemPool() { return pin_mem_pool_; }
 
  private:
   void *AllocDeviceMemorySimply(const size_t &size);

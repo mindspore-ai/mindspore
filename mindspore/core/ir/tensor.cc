@@ -675,6 +675,7 @@ Tensor::Tensor(const Tensor &tensor)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
+      pin_mem_register_(tensor.pin_mem_register_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_) {
   user_data_ = tensor.user_data_;
@@ -698,6 +699,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
+      pin_mem_register_(tensor.pin_mem_register_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_) {
   user_data_ = tensor.user_data_;
@@ -798,6 +800,14 @@ Tensor::Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compres
                TensorCompressionType compression_type)
     : Tensor(origin_data_type, shape, MakeTensorData<CompressionTensorData>(kNumberTypeInt8, compression_data_size)) {
   compression_type_ = compression_type;
+}
+
+Tensor::~Tensor() {
+  try {
+    UnPinMemory();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Exception when destruct tensor. Error info " << e.what();
+  }
 }
 
 bool Tensor::operator==(const Tensor &tensor) const {
@@ -1144,6 +1154,21 @@ size_t Tensor::GetFusionSize(const TensorPtrList &flat_tensors) {
 }
 
 bool Tensor::is_persistent_data() const { return this->data().is_persistent_data(); }
+
+void Tensor::PinMemory(PinnedMemRegister *pin_mem_register) {
+  if (pin_mem_register == nullptr) {
+    return;
+  }
+  pin_mem_register_ = pin_mem_register;
+  pin_mem_register_->RegisterPinnedMem(data_c(), data().nbytes());
+}
+
+void Tensor::UnPinMemory() {
+  if (pin_mem_register_ == nullptr) {
+    return;
+  }
+  pin_mem_register_->UnRegisterPinnedMem(data_c());
+}
 
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
     : MetaSparseTensor(values->data_type(), shape), indptr_(indptr), indices_(indices), values_(values) {}

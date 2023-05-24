@@ -25,6 +25,8 @@ class GPUPinMemPool : public PinMemPool {
  public:
   ~GPUPinMemPool() = default;
   static GPUPinMemPool &GetInstance();
+  void RegisterPinnedMem(void *addr, size_t size) override;
+  void UnRegisterPinnedMem(void *addr) override;
 
  private:
   GPUPinMemPool() = default;

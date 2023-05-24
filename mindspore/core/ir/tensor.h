@@ -59,6 +59,29 @@ enum TensorCompressionType {
   kFSEInfer = 6
 };
 
+// Pinned memory register interface.
+class MS_CORE_API PinnedMemRegister {
+ public:
+  /// \brief Default constructor for register.
+  PinnedMemRegister() = default;
+
+  /// \brief Virtual destructor for register.
+  virtual ~PinnedMemRegister() = default;
+
+  /// \brief Register pinned memory.
+  ///
+  /// \param[in] addr The host address to pin.
+  /// \param[in] size The host data size.
+  /// \return Void.
+  virtual void RegisterPinnedMem(void *addr, size_t size) = 0;
+
+  /// \brief UnRegister pinned memory.
+  ///
+  /// \param[in] addr The host address to unpin.
+  /// \return Void.
+  virtual void UnRegisterPinnedMem(void *addr) = 0;
+};
+
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
@@ -377,7 +400,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   }
 
   /// Destructor of Tensor.
-  ~Tensor() override = default;
+  ~Tensor() override;
 
   MS_DECLARE_PARENT(Tensor, MetaTensor);
 
@@ -809,6 +832,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return offload file path, or empty string if tensor has not offload.
   const std::string GetOffloadFilePath() const;
 
+  /// \brief pin tensor memory.
+  ///
+  /// \param[in] register to pin tensor data.
+  void PinMemory(PinnedMemRegister *pin_mem_register);
+
+  /// \brief unpin tensor memory.
+  void UnPinMemory();
+
  private:
   void ExecuteLazyTask() const;
 
@@ -834,6 +865,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
+  PinnedMemRegister *pin_mem_register_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
