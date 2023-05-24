@@ -761,6 +761,7 @@ class Profiler:
         """Analyse step trace info."""
         points, is_training_mode_flag = None, False
         try:
+            self._is_support_step_info_collect()
             if not self._dynamic_status:
                 points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
@@ -997,6 +998,7 @@ class Profiler:
         parser = GpuFrameWorkParser(self._output_path, self._dev_id)
         graph_ids = parser.get_graph_ids()
         ProfilerInfo.set_graph_ids(graph_ids)
+        self._is_support_step_info_collect()
         self._analyse_step_trace(
             is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
             is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
