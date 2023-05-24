@@ -52,6 +52,9 @@ class ConverterFuncGraph {
   static STATUS UnifyFuncGraphInputDataType(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static FuncGraphPtr Load(const std::shared_ptr<ConverterPara> &param);
   static FuncGraphPtr Load3rdModelToFuncgraph(const std::shared_ptr<ConverterPara> &param);
+  static STATUS Quantize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+  static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
+  static void ClearBuiltinPass();
 };
 }  // namespace lite
 }  // namespace mindspore
