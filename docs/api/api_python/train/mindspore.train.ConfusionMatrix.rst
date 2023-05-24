@@ -1,7 +1,7 @@
 mindspore.train.ConfusionMatrix
 ================================
 
-.. py:class:: mindspore.train.ConfusionMatrix(num_classes, normalize='no_norm', threshold=0.5)
+.. py:class:: mindspore.train.ConfusionMatrix(num_classes, normalize="no_norm", threshold=0.5)
 
     计算混淆矩阵(confusion matrix)，通常用于评估分类模型的性能，包括二分类和多分类场景。
 
@@ -9,7 +9,7 @@ mindspore.train.ConfusionMatrix
 
     参数：
         - **num_classes** (int) - 数据集中的类别数量。
-        - **normalize** (str) - 计算ConfsMatrix的参数支持四种归一化模式，默认值：'no_norm'。
+        - **normalize** (str) - 计算ConfsMatrix的参数支持四种归一化模式，默认值："no_norm"。
 
           - **"no_norm"** (None) - 不使用标准化。
           - **"target"** (str) - 基于目标值的标准化。

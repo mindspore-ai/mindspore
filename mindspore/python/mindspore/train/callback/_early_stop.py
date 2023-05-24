@@ -53,7 +53,7 @@ class EarlyStopping(Callback):
             otherwise the valid monitor is "loss".
             When monitor is "loss", if train network has multiple outputs,
             the first element will be returned as training loss.
-            Default: "eval_loss".
+            Default: 'eval_loss'.
         patience (int): `monitor` value is better than history best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
             with no improvement that would be waited. When the waiting
@@ -66,7 +66,7 @@ class EarlyStopping(Callback):
             quantity monitored has stopped decreasing; in "max" mode it will be
             reduced when the quantity monitored has stopped increasing; in "auto"
             mode, the direction is automatically inferred from the name of the
-            monitored quantity. Default: "auto".
+            monitored quantity. Default: 'auto'.
         min_delta (float): threshold for measuring the new optimum, to only focus on
             significant changes. Default: 0.
         baseline (float): Baseline value for the monitor. When the monitor value shows

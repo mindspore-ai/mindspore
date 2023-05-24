@@ -1,7 +1,7 @@
 mindspore.train.RootMeanSquareDistance
 =======================================
 
-.. py:class:: mindspore.train.RootMeanSquareDistance(symmetric=False, distance_metric='euclidean')
+.. py:class:: mindspore.train.RootMeanSquareDistance(symmetric=False, distance_metric="euclidean")
 
     计算从 `y_pred` 到 `y` 的均方根表面距离。
 

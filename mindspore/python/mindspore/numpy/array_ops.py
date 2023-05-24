@@ -1863,7 +1863,7 @@ def take(a, indices, axis=None, mode='clip'):
         axis (int, optional): The axis over which to select values. By default,
             the flattened input array is used. Defaults to None.
         mode ('raise', 'wrap', 'clip', optional): Specifies how out-of-bounds
-            indices will behave. Defaults to "clip".
+            indices will behave. Defaults to 'clip'.
 
             'raise' – raise an error;
 
@@ -2422,7 +2422,7 @@ def unravel_index(indices, shape, order='C'):
             are indices into the flattened version of an array of dimensions shape.
         shape (tuple of integers): The shape of the array to use for unraveling indices.
         order (Union['C', 'F'], optional): Determines whether the indices should be viewed as
-            indexing in row-major (C-style) or column-major (Fortran-style) order. Defaults to "C".
+            indexing in row-major (C-style) or column-major (Fortran-style) order. Defaults to 'C'.
 
     Returns:
         Tensor, each array in the tuple has the same shape as the indices array.
