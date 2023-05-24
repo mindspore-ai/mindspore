@@ -445,11 +445,13 @@ void ModelProcess::DestroyInputsBuffer() {
 }
 
 void ModelProcess::DestroyOutputsBuffer() {
-  for (const auto &item : output_infos_) {
-    if (!is_run_on_device_) {
-      aclrtFree(item.device_data);
-    } else {
-      aclrtFreeHost(item.device_data);
+  if (!is_dynamic_input_) {
+    for (const auto &item : output_infos_) {
+      if (!is_run_on_device_) {
+        aclrtFree(item.device_data);
+      } else {
+        aclrtFreeHost(item.device_data);
+      }
     }
   }
   output_infos_.clear();
@@ -610,6 +612,9 @@ bool ModelProcess::Resize(const std::vector<ShapeVector> &new_shapes) {
 }
 
 bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes) {
+  MS_LOG(INFO) << "Start to resize dynamic input shape";
+  // If it is not the first time ti resize input shape, the old addr need to be free
+  FreeResource(input_infos_);
   ResetInputSize(new_shapes);
   for (size_t i = 0; i < new_shapes.size(); ++i) {
     void *data_buf = nullptr;
@@ -636,6 +641,7 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
       return false;
     }
   }
+  MS_LOG(INFO) << "Resize dynamic input shape success";
   return true;
 }
 
@@ -860,7 +866,12 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &output
       MS_LOG(ERROR) << "Failed to get dataset buffer of output " << i;
       return false;
     }
-    ret = aclUpdateDataBuffer(data_buffer, output_buffer, info.buffer_size);
+    auto output_buffer_size = info.buffer_size;
+    if (is_dynamic_input_) {
+      output_buffer = nullptr;
+      output_buffer_size = 0;
+    }
+    ret = aclUpdateDataBuffer(data_buffer, output_buffer, output_buffer_size);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Failed to update Data Buffer of output " << i << ", buffer size: " << info.buffer_size
                     << ", output shape: " << output->GetShapeVector();
@@ -942,8 +953,24 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
     MS_LOG(ERROR) << "Build outputs failed";
     return false;
   }
+  // The device_data is malloced by acl, user need to free the addr
+  if (is_dynamic_output_) {
+    FreeResource(output_infos_);
+  }
   MS_LOG(INFO) << "Execute model success";
   return true;
+}
+
+void ModelProcess::FreeResource(std::vector<AclTensorInfo> acl_tensor_info) {
+  for (const auto &item : acl_tensor_info) {
+    if (item.device_data != nullptr) {
+      if (!is_run_on_device_) {
+        aclrtFree(item.device_data);
+      } else {
+        aclrtFreeHost(item.device_data);
+      }
+    }
+  }
 }
 
 bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
