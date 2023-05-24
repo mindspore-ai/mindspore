@@ -2657,20 +2657,20 @@ def dense(input, weight, bias=None):
         output = input * weight^{T} + bias
 
     Args:
-        input (Union[Tensor, Parameter]): Input Tensor of shape :math:`(*, in\_channels)`,
+        input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
             where :math:`*` means any number of additional dimensions.
-        weight (Union[Tensor, Parameter]): The weight applied to the input.
+        weight (Tensor): The weight applied to the input.
             The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
-        bias (Union[Tensor, Parameter], optional): Additive biases to the output.
+        bias (Tensor, optional): Additive biases to the output.
             The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
 
     Returns:
         Output whose shape is determined by the shape of the input and the weight.
 
     Raises:
-        TypeError: If `input` is not Tensor or Parameter.
-        TypeError: If `weight` is not Tensor or Parameter.
-        TypeError: If `bias` is not Tensor or Parameter.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `weight` is not a Tensor.
+        TypeError: If `bias` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
