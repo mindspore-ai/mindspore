@@ -20,7 +20,6 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -40,3 +39,24 @@ def test_fallback_len_asnumpy():
 
     out = foo(Tensor([1, 2, 3, 4]))
     assert out[0] == 5, out[1] == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_len_numpy():
+    """
+    Feature: Graph len syntax.
+    Description: Graph syntax len support numpy ndarray.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        x = np.array([[1, 2, 3], [0, 0, 0]])
+        return len(x)
+
+    out = foo()
+    assert out == 2
