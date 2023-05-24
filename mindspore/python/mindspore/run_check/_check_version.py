@@ -73,7 +73,7 @@ class GPUEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.version = ["10.1", "11.1", "11.6"]
-        self.lib_key_to_lib_name = {'libcu': 'libcuda.so', 'libcudnn': 'libcudnn.so'}
+        self.lib_key_to_lib_name = {'libcudart': 'libcuda.so', 'libcudnn': 'libcudnn.so'}
         self.library_path = library_path
         # env
         self.path = os.getenv("PATH")
@@ -81,7 +81,7 @@ class GPUEnvChecker(EnvChecker):
 
         # check
         self.v = "0"
-        self.cuda_lib_path = self._get_lib_path("libcu")
+        self.cuda_lib_path = self._get_lib_path("libcudart")
         self.cuda_bin_path = self._get_bin_path("cuda")
         self.cudnn_lib_path = self._get_lib_path("libcudnn")
 
