@@ -5,7 +5,7 @@ mindspore.train.ConvertModelUtils
 
     该接口用于增加计算图，提升二阶算法THOR运行时的性能。
 
-    .. py:method:: convert_to_thor_model(model, network, loss_fn=None, optimizer=None, metrics=None, amp_level='O0', loss_scale_manager=None, keep_batchnorm_fp32=False)
+    .. py:method:: convert_to_thor_model(model, network, loss_fn=None, optimizer=None, metrics=None, amp_level="O0", loss_scale_manager=None, keep_batchnorm_fp32=False)
         :staticmethod:
 
         该接口用于增加计算图，提升二阶算法THOR运行时的性能。

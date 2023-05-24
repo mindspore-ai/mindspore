@@ -367,7 +367,7 @@ class ModelCheckpoint(Callback):
         parameters of the optimizer by default.
 
     Args:
-        prefix (str): The prefix name of checkpoint files. Default: "CKP".
+        prefix (str): The prefix name of checkpoint files. Default: 'CKP'.
         directory (str): The path of the folder which will be saved in the checkpoint file.
             By default, the file is saved in the current directory. Default: None.
         config (CheckpointConfig): Checkpoint strategy configuration. Default: None.

@@ -69,7 +69,7 @@ class ReduceLROnPlateau(Callback):
             quantity monitored has stopped decreasing; in "max" mode it will be
             reduced when the quantity monitored has stopped increasing; in "auto"
             mode, the direction is automatically inferred from the name of the
-            monitored quantity. Default: "auto".
+            monitored quantity. Default: 'auto'.
         min_delta (float): threshold for measuring the new optimum, to only focus on
             significant changes. Default: 1e-4.
         cooldown (int): number of epochs to wait before resuming normal operation after

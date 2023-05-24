@@ -18,7 +18,7 @@ mindspore.train.CheckpointConfig
         - **saved_network** (Cell) - 保存在checkpoint文件中的网络。如果 `saved_network` 没有被训练，则保存 `saved_network` 的初始值。默认值：None。
         - **append_info** (list) - 保存在checkpoint文件中的信息。支持"epoch_num"、"step_num"和dict类型。dict的key必须是str，dict的value必须是int、float、bool、string、Parameter或Tensor中的一个。默认值：None。
         - **enc_key** (Union[None, bytes]) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值：None。
-        - **enc_mode** (str) - 仅当 `enc_key` 不设为None时，该参数有效。指定了加密模式，目前支持AES-GCM，AES-CBC和SM4-CBC。默认值：AES-GCM。
+        - **enc_mode** (str) - 仅当 `enc_key` 不设为None时，该参数有效。指定了加密模式，目前支持AES-GCM，AES-CBC和SM4-CBC。默认值：'AES-GCM'。
         - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值：False。
 
     异常：

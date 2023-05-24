@@ -1,7 +1,7 @@
 mindspore.train.ConfusionMatrixMetric
 ======================================
 
-.. py:class:: mindspore.train.ConfusionMatrixMetric(skip_channel=True, metric_name='sensitivity', calculation_method=False, decrease='mean')
+.. py:class:: mindspore.train.ConfusionMatrixMetric(skip_channel=True, metric_name="sensitivity", calculation_method=False, decrease='mean')
 
     计算与混淆矩阵相关的度量。
 

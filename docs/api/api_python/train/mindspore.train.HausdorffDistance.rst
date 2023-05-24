@@ -1,7 +1,7 @@
 mindspore.train.HausdorffDistance
 ============================================
 
-.. py:class:: mindspore.train.HausdorffDistance(distance_metric='euclidean', percentile=None, directed=False, crop=True)
+.. py:class:: mindspore.train.HausdorffDistance(distance_metric="euclidean", percentile=None, directed=False, crop=True)
 
     计算Hausdorff距离。Hausdorff距离是两个点集之间两点的最小距离的最大值，度量了两个点集间的最大不匹配程度。
 

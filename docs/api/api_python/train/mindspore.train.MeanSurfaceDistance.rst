@@ -1,7 +1,7 @@
 mindspore.train.MeanSurfaceDistance
 ===============================================
 
-.. py:class:: mindspore.train.MeanSurfaceDistance(symmetric=False, distance_metric='euclidean')
+.. py:class:: mindspore.train.MeanSurfaceDistance(symmetric=False, distance_metric="euclidean")
 
     计算从 `y_pred` 到 `y` 的平均表面距离。通常情况下，用来衡量分割任务中，预测情况和真实情况之间的差异度。
 
