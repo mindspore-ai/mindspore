@@ -53,6 +53,8 @@ class MindIRSerializer {
   int SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file,
                       const std::shared_ptr<ConverterPara> &param);
   int ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph);
+  int ConvertParameterNode(const CNodePtr &cnode, const ParameterPtr &parameter_ptr, size_t index);
+  int ConvertValueNode(const CNodePtr &cnode, const ValueNodePtr &value_node_ptr, size_t index);
   std::shared_ptr<mindspore::QuantizationParam> ConvertQuantParamTToQuantizationParam(
     std::vector<schema::QuantParamT> quant_param);
   int UpdateParamCount(const FuncGraphPtr &func_graph);

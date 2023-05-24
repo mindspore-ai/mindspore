@@ -196,6 +196,145 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   return RET_OK;
 }
 
+int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph, const CNodePtr &cnode,
+                                   const std::shared_ptr<mindspore::Primitive> &primitive,
+                                   const std::unique_ptr<schema::CNodeT> &dst_node) {
+  CHECK_NULL_RETURN(meta_graph);
+  CHECK_NULL_RETURN(dst_node);
+  CHECK_NULL_RETURN(cnode);
+  // quant_type not exist in cnode, return
+  auto quant_type_attr = primitive->GetAttr(quant::kQuantType);
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    if (quant_type_attr != nullptr) {
+      dst_node->quantType = static_cast<schema::QuantType>(GetValue<int32_t>(quant_type_attr));
+    } else {
+      MS_LOG(DEBUG) << "quant_type not exist in cnode, node name: " << dst_node->name;
+      return RET_OK;
+    }
+  } else {
+    dst_node->quantType = schema::QuantType_QUANT_NONE;
+  }
+
+  // convert input quant param
+  for (size_t i = 0; i < dst_node->inputIndex.size(); i++) {
+    auto activate_index = dst_node->inputIndex[i];
+    MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > activate_index, RET_ERROR, "allTensors size is wrong.");
+    auto tensor_input = meta_graph->allTensors[activate_index].get();
+    CHECK_NULL_RETURN(tensor_input);
+
+    auto input = cnode->input(i + quant::kPrimOffset);
+    tensor::TensorPtr input_tensor = GetInputTensor(input);
+    if (input_tensor == nullptr) {
+      MS_LOG(DEBUG) << input->fullname_with_scope() << " can't cast to tensor";
+      continue;
+    }
+    auto quantization_params = input_tensor->quant_params();
+    if (quantization_params.empty()) {
+      MS_LOG(DEBUG) << input->fullname_with_scope() << " quantization params empty.";
+      continue;
+    }
+    auto quantization_param = quantization_params[0];
+    auto cluster_centroid_list_attr = quantization_param->GetAttr(quant::kClusterCentroidList);
+    if (cluster_centroid_list_attr != nullptr) {
+      tensor_input->quantClusters = GetValue<std::vector<float>>(cluster_centroid_list_attr);
+      continue;
+    }
+    if (!TensorQuantParamsInited(*tensor_input)) {
+      tensor_input->quantParams.clear();
+      // set QuantParamT into meta_graph tensor
+      if (SetQuantizationParamToTensorT(tensor_input, quantization_param, dst_node) != RET_OK) {
+        MS_LOG(ERROR) << "[input][" << i << "]node: " << dst_node->name << " SetQuantizationParamToTensorT failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+
+  // output_quant_params
+  for (size_t i = 0; i < dst_node->outputIndex.size(); ++i) {
+    auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[i]].get();
+    auto quantization_param_value = primitive->GetAttr(quant::kQuantParam);
+    if (quantization_param_value == nullptr) {
+      MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " output quant param Not exist.";
+      continue;
+    }
+    auto quantization_param = quantization_param_value->cast<mindspore::QuantizationParamPtr>();
+    if (quantization_param == nullptr) {
+      MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " output quant param Not exist.";
+      continue;
+    }
+    if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_QUANT_WEIGHT) {
+      // set QuantParamT into meta_graph tensor
+      if (SetQuantizationParamToTensorT(output_tensor, quantization_param, dst_node) != RET_OK) {
+        MS_LOG(ERROR) << "[output]node: " << dst_node->name << " SetQuantizationParamToTensorT failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int AnfExporter::SetQuantizationParamToTensorT(mindspore::schema::TensorT *tensorT,
+                                               const mindspore::QuantizationParamPtr &quantization_param,
+                                               const std::unique_ptr<schema::CNodeT> &dst_node) {
+  CHECK_NULL_RETURN(tensorT);
+  CHECK_NULL_RETURN(quantization_param);
+  auto scale_list_attr = quantization_param->GetAttr(quant::kScaleList);
+  auto zero_point_list_attr = quantization_param->GetAttr(quant::kZeroPointList);
+  auto min_list_attr = quantization_param->GetAttr(quant::kMinList);
+  auto max_list_attr = quantization_param->GetAttr(quant::kMaxList);
+  auto var_corr_list_attr = quantization_param->GetAttr(quant::kVarCorrList);
+  auto mean_corr_list_attr = quantization_param->GetAttr(quant::kMeanCorrList);
+  auto num_bits_list_attr = quantization_param->GetAttr(quant::kNumBitList);
+  auto narrow_range_list_attr = quantization_param->GetAttr(quant::kNarrowRangeList);
+  CHECK_NULL_RETURN(scale_list_attr);
+  CHECK_NULL_RETURN(zero_point_list_attr);
+  CHECK_NULL_RETURN(min_list_attr);
+  CHECK_NULL_RETURN(max_list_attr);
+  CHECK_NULL_RETURN(var_corr_list_attr);
+  CHECK_NULL_RETURN(mean_corr_list_attr);
+  CHECK_NULL_RETURN(num_bits_list_attr);
+  CHECK_NULL_RETURN(narrow_range_list_attr);
+  auto scale_list = GetValue<std::vector<double>>(scale_list_attr);
+  auto zero_point_list = GetValue<std::vector<int32_t>>(zero_point_list_attr);
+  auto min_list = GetValue<std::vector<double>>(min_list_attr);
+  auto max_list = GetValue<std::vector<double>>(max_list_attr);
+  auto var_corr_list = GetValue<std::vector<float>>(var_corr_list_attr);
+  auto mean_corr_list = GetValue<std::vector<float>>(mean_corr_list_attr);
+  auto num_bits_list = GetValue<std::vector<int32_t>>(num_bits_list_attr);
+  auto narrow_range_list = GetValue<std::vector<bool>>(narrow_range_list_attr);
+
+  for (size_t index = 0; index < scale_list.size(); ++index) {
+    schema::QuantParamT quant_param;
+    quant_param.scale = scale_list.at(index);
+    quant_param.zeroPoint = zero_point_list.at(index);
+    quant_param.min = min_list.at(index);
+    quant_param.max = max_list.at(index);
+    quant_param.varCorr = var_corr_list.at(index);
+    quant_param.meanCorr = mean_corr_list.at(index);
+    quant_param.numBits = num_bits_list.at(index);
+    quant_param.narrowRange = narrow_range_list.at(index);
+    quant_param.inited = true;
+    auto output_quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
+    MS_LOG(DEBUG) << "node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
+                  << " zp: " << output_quant_param_ptr->zeroPoint;
+    tensorT->quantParams.emplace_back(std::move(output_quant_param_ptr));
+  }
+  return RET_OK;
+}
+
+tensor::TensorPtr AnfExporter::GetInputTensor(const AnfNodePtr &node) {
+  // Only Parameter or ValueNode Node has tensor
+  if (node->isa<Parameter>()) {
+    auto parameter = node->cast<ParameterPtr>();
+    if (parameter->default_param() != nullptr) {
+      return parameter->default_param()->cast<tensor::TensorPtr>();
+    }
+  } else if (node->isa<ValueNode>()) {
+    return node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
+  }
+  return nullptr;
+}
+
 int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                              const AnfNodePtr &input, size_t *tensor_index_ptr) {
   MS_CHECK_TRUE_MSG(meta_graphT != nullptr, RET_NULL_PTR, "meta_graphT is nullptr");
@@ -567,6 +706,11 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       break;
     }
 
+    ret = ConvertQuantParam(meta_graphT, cnode, prim, node);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "New ConvertQuantParam failed";
+      break;
+    }
     fb_graph_node_mutex_.lock();
     meta_graphT->nodes.push_back(std::move(node));
     meta_graphT->subGraph.at(subgraph_index)->nodeIndices.push_back(node_idx_++);

@@ -247,7 +247,7 @@ int ConvertValueNodeToParameter(const FuncGraphPtr &func_graph) {
 }
 
 int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  if (!param->train_model) {
+  if (!param->train_model && param->save_type == kMindIR) {
     auto status = ConvertValueNodeToParameter(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert value node To parameter failed.";
@@ -358,6 +358,16 @@ int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
   if (param_->commonQuantParam.quant_type == quant::QUANT_NONE || param_->fullQuantParam.target_device == ASCEND) {
     return RET_OK;
   }
+  // set manager
+  if (func_graph->manager() == nullptr) {
+    auto root_func_manager = Manage(func_graph);
+    std::set<FuncGraphPtr> all_func_graphs = {};
+    lite::GetAllFuncGraph(func_graph, &all_func_graphs);
+    for (auto graph : all_func_graphs) {
+      graph->set_manager(root_func_manager);
+    }
+  }
+
   std::set<FuncGraphPtr> all_func_graphs{};
   quant::GetFuncGraphs(func_graph, &all_func_graphs);
   // Support for multi-subgraph models
