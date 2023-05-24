@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ constexpr size_t kFirstInputIndex = 0;
 constexpr size_t kInputIndex = 1;
 constexpr size_t kAttachIndex = 2;
 constexpr size_t kMakeTupleSize = 3;
-constexpr size_t kMinDependSize = 3;
+constexpr size_t kDependSize = 3;
 constexpr size_t kUpdateStateSize = 3;
 constexpr size_t kAssignSize = 4;
 constexpr size_t kAssignRefInputIndex = 1;
@@ -166,18 +166,11 @@ AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
     return nullptr;
   }
   // Replace Depend with its input.
-  if (depend->size() == kMinDependSize) {
-    auto depend_input = depend->input(kInputIndex);
-    mgr->Replace(depend, depend_input);
-  } else {
-    auto inputs = depend->inputs();
-    inputs.pop_back();
-    auto fg = depend->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    auto new_depend = fg->NewCNode(inputs);
-    new_depend->set_abstract(depend->abstract());
-    mgr->Replace(depend, new_depend);
+  if (depend->size() != kDependSize) {
+    MS_LOG(EXCEPTION) << "The Depend node has wrong inputs. " << depend->DebugString();
   }
+  auto depend_input = depend->input(kInputIndex);
+  (void)mgr->Replace(depend, depend_input);
   // Replace UpdateState node with the input monad of Depend.
   return input_monad;
 }
@@ -381,7 +374,7 @@ void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_st
   // 1. Remove the use of UpdateState nodes, except the last one.
   for (auto i = update_states.size() - 1; i > 0; i--) {
     auto &us = update_states[i];
-    mgr->Replace(us, us->input(kInputIndex));
+    (void)mgr->Replace(us, us->input(kInputIndex));
   }
 
   // 2. Remove the Depend users of last UpdateState node.
@@ -415,7 +408,7 @@ void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_st
   for (ssize_t i = depend_nodes.size() - 1; i >= end; i--) {
     const auto &depend_node = depend_nodes[i];
     const auto &depend_cnode = depend_node->cast<CNodePtr>();
-    mgr->Replace(depend_cnode, depend_cnode->input(kInputIndex));
+    (void)mgr->Replace(depend_cnode, depend_cnode->input(kInputIndex));
   }
 }
 
@@ -462,7 +455,7 @@ AnfNodePtr EliminateUpdateStateForLoads(const CNodePtr &old_update_state, const 
     auto load_attach = load->input(kAttachIndex);
     if (load_attach != input_monad) {
       // Set all load use same input monad.
-      mgr->Replace(load_attach, input_monad);
+      (void)mgr->Replace(load_attach, input_monad);
     }
   }
 
@@ -512,7 +505,7 @@ AnfNodePtr EliminateUpdateStateBetweenAssigns(const CNodePtr &update_state, cons
       MS_EXCEPTION_IF_NULL(fg);
       auto mgr = fg->manager();
       MS_EXCEPTION_IF_NULL(mgr);
-      mgr->Replace(u2, u1);
+      (void)mgr->Replace(u2, u1);
 
       AnfNodePtrList make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1, assign};
       auto make_tuple = MakeTupleForSameNodes(fg, update_state, make_tuple_inputs);
@@ -605,12 +598,12 @@ AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const CNodePtr &update_sta
         MS_EXCEPTION_IF_NULL(fg);
         auto mgr = fg->manager();
         MS_EXCEPTION_IF_NULL(mgr);
-        mgr->Replace(u3, u1);
+        (void)mgr->Replace(u3, u1);
 
         AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), make_tuple_cnode->input(kInputIndex),
                                              make_tuple_cnode->input(kAttachIndex), assign};
         auto new_make_tuple = MakeTupleForSameNodes(fg, update_state, new_make_tuple_inputs);
-        mgr->Replace(make_tuple, new_make_tuple);
+        (void)mgr->Replace(make_tuple, new_make_tuple);
         auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, new_make_tuple});
         new_update_state->set_abstract(update_state->abstract());
         new_update_state->set_scope(update_state->scope());
@@ -679,12 +672,12 @@ AnfNodePtr EliminateUpdateStateBetweenMakeTupleAssign(const CNodePtr &update_sta
           MS_EXCEPTION_IF_NULL(fg);
           auto mgr = fg->manager();
           MS_EXCEPTION_IF_NULL(mgr);
-          mgr->Replace(u2, u1);
+          (void)mgr->Replace(u2, u1);
           AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1,
                                                make_tuple_cnode->input(kInputIndex),
                                                make_tuple_cnode->input(kAttachIndex)};
           auto new_make_tuple = MakeTupleForSameNodes(fg, update_state, new_make_tuple_inputs);
-          mgr->Replace(make_tuple, new_make_tuple);
+          (void)mgr->Replace(make_tuple, new_make_tuple);
           auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, new_make_tuple});
           new_update_state->set_abstract(update_state->abstract());
           new_update_state->set_scope(update_state->scope());
@@ -824,14 +817,14 @@ bool UpdatestateDependEliminater::operator()(const FuncGraphPtr &func_graph, con
   auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
-  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  std::vector<AnfNodePtr> todo = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto &node : todo) {
-    if (node == nullptr || !all_nodes.contains(node)) {
+    if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
       continue;
     }
     auto new_node = EliminateUpdateStateWithDepend(node->cast<CNodePtr>());
     if (new_node != nullptr) {
-      manager->Replace(node, new_node);
+      (void)manager->Replace(node, new_node);
       change = true;
     }
   }
@@ -859,14 +852,14 @@ bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, con
   auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
-  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  std::vector<AnfNodePtr> todo = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto &node : todo) {
-    if (node == nullptr || !all_nodes.contains(node)) {
+    if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
       continue;
     }
     auto new_node = EliminateUpdateStateForAssign(node->cast<CNodePtr>());
     if (new_node != nullptr) {
-      manager->Replace(node, new_node);
+      (void)manager->Replace(node, new_node);
       change = true;
     }
     bool load_eliminate = EliminateLoadBeforeAssigns(manager, node->cast<CNodePtr>());
@@ -896,9 +889,9 @@ bool UpdatestateLoadsEliminater::operator()(const FuncGraphPtr &func_graph, cons
   auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
-  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  std::vector<AnfNodePtr> todo = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto &node : todo) {
-    if (node == nullptr || !all_nodes.contains(node)) {
+    if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
       continue;
     }
     std::vector<CNodePtr> update_states;
@@ -908,7 +901,7 @@ bool UpdatestateLoadsEliminater::operator()(const FuncGraphPtr &func_graph, cons
     if (update_states.size() > 1 && loads.size() > 1) {
       auto new_node = EliminateUpdateStateForLoads(update_state_node, update_states, loads);
       if (new_node != nullptr) {
-        manager->Replace(node, new_node);
+        (void)manager->Replace(node, new_node);
         change = true;
       }
     }
