@@ -22,6 +22,22 @@
 #include "nnacl/lstm_parameter.h"
 
 namespace mindspore::kernel {
+/*
+ * 1. LSTM(exclude mindir) without project
+ *    weight_ih: second input, shape is [bidirectional, 4 * hidden_size, input_size]
+ *    weight_hh: third input, shape is [bidirectional, 4 * hidden_size, hidden_size]
+ *    bias: forth input, shape is [bidirectional, 8 * hidden_size]
+ *    h_init: fifth input, shape is [bidirectional, batch_size, hidden_size]
+ *    c_init: sixth input, shape is [bidirectional, batch_size, hidden_size]
+ *
+ * 2. LSTM(exclude mindir) with project
+ *    weight_ih: second input, shape is [bidirectional, 4 * hidden_size, input_size]
+ *    weight_hh: third input, shape is [bidirectional, 4 * hidden_size, project_size]
+ *    bias: forth input, shape is [bidirectional, 8 * hidden_size]
+ *    h_init: fifth input, shape is [bidirectional, batch_size, project_size]
+ *    c_init: sixth input, shape is [bidirectional, batch_size, hidden_size]
+ *    weight_pro: seventh input, shape is [bidirectional, project_size, hidden_size]
+ */
 class LstmFp16CPUKernel : public LiteKernel {
  public:
   LstmFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -42,14 +58,17 @@ class LstmFp16CPUKernel : public LiteKernel {
   int InitParam();
   int InitInputWeightBias();
   int InitStateWeightBias();
+  int InitProjectWeight();
   int MallocRunBuffer();
 
   float16_t *weight_i_ptr_ = nullptr;
   float16_t *weight_h_ptr_ = nullptr;
+  float16_t *weight_project_ptr_ = nullptr;
   float16_t *input_bias_ = nullptr;
   float16_t *state_bias_ = nullptr;
+  float16_t *project_bias_ = nullptr;
 
-  float16_t *buffer_[6] = {0};
+  float16_t *buffer_[C7NUM] = {0};
   const int gate_num = 4;
   const int packed_input_index = 0;
   const int input_gate_index = 1;
@@ -57,6 +76,7 @@ class LstmFp16CPUKernel : public LiteKernel {
   const int state_gate_index = 3;
   const int cell_state_index = 4;
   const int hidden_state_index = 5;
+  const int project_input_index = 6;
 
   int weight_batch_ = 0;
   bool is_vec_ = false;

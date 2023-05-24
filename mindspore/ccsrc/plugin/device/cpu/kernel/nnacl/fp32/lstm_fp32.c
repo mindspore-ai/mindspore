@@ -62,7 +62,7 @@ void PackLstmBias(float *dst, const float *src, int batch, int col, int col_alig
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
     float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align;
-    memcpy(dst_batch, src_batch, col * sizeof(float));
+    (void)memcpy(dst_batch, src_batch, col * sizeof(float));
   }
   if (is_bidirectional) {
     const float *backward_src = src + batch * col;
@@ -70,7 +70,7 @@ void PackLstmBias(float *dst, const float *src, int batch, int col, int col_alig
     for (int i = 0; i < unidirectional_batch; i++) {
       const float *backward_src_batch = backward_src + i * col;
       float *backward_dst_batch = backward_dst + ((order == NULL) ? i : order[i]) * col_align;
-      memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
+      (void)memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
     }
   }
 }
@@ -81,7 +81,7 @@ void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, in
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
     float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align;
-    memcpy(dst_batch, src_batch, col * sizeof(float));
+    (void)memcpy(dst_batch, src_batch, col * sizeof(float));
   }
   if (is_bidirectional) {
     const float *backward_src = src + b_stride;
@@ -89,7 +89,7 @@ void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, in
     for (int i = 0; i < unidirectional_batch; i++) {
       const float *backward_src_batch = backward_src + i * col;
       float *backward_dst_batch = backward_dst + ((order == NULL) ? i : order[i]) * col_align;
-      memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
+      (void)memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
     }
   }
 }
@@ -156,10 +156,10 @@ int ElementOptMulAcc(const float *input0, const float input1, float *output, con
   return NNACL_OK;
 }
 
-void UpdataState(float *cell_state, const float *forget_gate, const float *input_gate, const float *cell_gate,
+void UpdateState(float *cell_state, const float *forget_gate, const float *input_gate, const float *cell_gate,
                  float *state_buffer, int batch, int hidden_size, const float zoneout) {
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // zoneout * old_cell_state
-    memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float));
+    (void)memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float));
     ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
   }
 
@@ -171,19 +171,42 @@ void UpdataState(float *cell_state, const float *forget_gate, const float *input
   }
 }
 
-void UpdataOutput(const float *cell_state, const float *output_gate, float *hidden_state, float *state_buffer,
-                  int batch, int hidden_size, const float zoneout) {
+void UpdateOutput(float *hidden_state, float *output, const float *cell_state, const float *output_gate,
+                  const float *weight_project, float *buffer[C8NUM], const LstmParameter *lstm_param) {
+  int batch = lstm_param->batch_;
+  int hidden_size = lstm_param->hidden_size_;
+  int project_size = lstm_param->project_size_;
+  float *state_buffer = buffer[C4NUM];
+  float *hidden_buffer = weight_project ? buffer[C2NUM] : hidden_state;
+  float zoneout = lstm_param->zoneout_hidden_;
   if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
-    memcpy(state_buffer, hidden_state, batch * hidden_size * sizeof(float));
-    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * hidden_size, false);
+    (void)memcpy(state_buffer, hidden_state, batch * project_size * sizeof(float));
+    ElementOptMul(state_buffer, &zoneout, state_buffer, batch * project_size, false);
   }
 
-  Tanh(cell_state, batch * hidden_size, hidden_state);
-  ElementMul(hidden_state, output_gate, hidden_state, batch * hidden_size);
+  Tanh(cell_state, batch * hidden_size, hidden_buffer);
+  ElementMul(hidden_buffer, output_gate, hidden_buffer, batch * hidden_size);
 
-  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
-    ElementOptMulAcc(hidden_state, 1 - zoneout, state_buffer, batch * hidden_size);
+  if (weight_project) {
+    float *left_matrix = hidden_buffer;
+    if (batch != 1) {
+      left_matrix = buffer[C6NUM];
+      PackLstmInput(hidden_buffer, left_matrix, batch, hidden_size);
+    }
+#ifdef ENABLE_AVX
+    int col_tile = batch == 1 ? C8NUM : C16NUM;
+#elif defined(ENABLE_ARM32)
+    int col_tile = C4NUM;
+#else
+    int col_tile = C8NUM;
+#endif
+    LstmMatMul(hidden_state, left_matrix, weight_project, NULL, batch, hidden_size, project_size,
+               UP_ROUND(project_size, col_tile), batch == 1, buffer[C7NUM]);
   }
+  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
+    ElementOptMulAcc(hidden_state, 1 - zoneout, state_buffer, batch * project_size);
+  }
+  (void)memcpy(output, hidden_state, batch * project_size * sizeof(float));
 }
 
 void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
@@ -205,8 +228,8 @@ void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight,
 }
 
 void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *cell_gate, float *output_gate,
-                  const float *state_weight, const float *state_bias, float *hidden_state, float *cell_state,
-                  float *buffer[C6NUM], const LstmParameter *lstm_param) {
+                  const float *state_weight, const float *state_bias, const float *weight_project, float *hidden_state,
+                  float *cell_state, float *buffer[C8NUM], const LstmParameter *lstm_param) {
   float *packed_state = buffer[1];
   float *state_gate = buffer[C2NUM];
   float *cell_buffer = buffer[C3NUM];
@@ -215,12 +238,12 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
   bool is_vec = lstm_param->batch_ == 1;
   // state * weight
   if (is_vec) {
-    UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
+    UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->project_size_,
                    lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   } else {
     // pack state for matmul
-    PackLstmInput(hidden_state, packed_state, lstm_param->batch_, lstm_param->hidden_size_);
-    UpdateLstmGate(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
+    PackLstmInput(hidden_state, packed_state, lstm_param->batch_, lstm_param->project_size_);
+    UpdateLstmGate(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->project_size_,
                    lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   }
   ElementAdd(input_gate, state_gate, input_gate, lstm_param->batch_ * lstm_param->hidden_size_);
@@ -240,28 +263,26 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
   // update cell_gate
   Tanh(cell_gate, lstm_param->batch_ * lstm_param->hidden_size_, cell_gate);
   // update cell state
-  UpdataState(cell_state, forget_gate, input_gate, cell_gate, cell_buffer, lstm_param->batch_, lstm_param->hidden_size_,
+  UpdateState(cell_state, forget_gate, input_gate, cell_gate, cell_buffer, lstm_param->batch_, lstm_param->hidden_size_,
               lstm_param->zoneout_cell_);
 
   // update output_gate
   Sigmoid(output_gate, lstm_param->batch_ * lstm_param->hidden_size_, output_gate);
   // update output
-  UpdataOutput(cell_state, output_gate, hidden_state, hidden_buffer, lstm_param->batch_, lstm_param->hidden_size_,
-               lstm_param->zoneout_hidden_);
-  memcpy(output, hidden_state, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float));
+  UpdateOutput(hidden_state, output, cell_state, output_gate, weight_project, buffer, lstm_param);
 
   if (!(lstm_param->zoneout_cell_ >= -FLT_EPSILON && lstm_param->zoneout_cell_ <= FLT_EPSILON)) {
-    memcpy(cell_state, cell_buffer, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float));
+    (void)memcpy(cell_state, cell_buffer, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float));
   }
 
   if (!(lstm_param->zoneout_hidden_ >= -FLT_EPSILON && lstm_param->zoneout_hidden_ <= FLT_EPSILON)) {
-    memcpy(hidden_state, hidden_buffer, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float));
+    (void)memcpy(hidden_state, hidden_buffer, lstm_param->batch_ * lstm_param->project_size_ * sizeof(float));
   }
 }
 
 void LstmUnidirectional(float *output, const float *packed_input, const float *weight_i, const float *weight_h,
                         const float *input_bias, const float *state_bias, float *hidden_state, float *cell_state,
-                        float *buffer[C6NUM], const LstmParameter *lstm_param, bool is_backward) {
+                        float *buffer[C8NUM], const LstmParameter *lstm_param, bool is_backward) {
   float *gate = buffer[0];
   for (int i = 0; i < 4; i++) {
     const float *weight_loop = weight_i + lstm_param->input_size_ * lstm_param->input_col_align_ * i;
@@ -283,13 +304,13 @@ void LstmUnidirectional(float *output, const float *packed_input, const float *w
     float *cell_gate_t = cell_gate + lstm_param->batch_ * lstm_param->hidden_size_ * real_t;
     float *output_gate_t = output_gate + lstm_param->batch_ * lstm_param->hidden_size_ * real_t;
     float *output_ptr = output + real_t * lstm_param->output_step_;
-    LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias,
+    LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias, NULL,
                  hidden_state, cell_state, buffer, lstm_param);
   }
 }
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *input_bias,
-          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[C7NUM],
+          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[C9NUM],
           const LstmParameter *lstm_param) {
   // forward
   float *packed_input = buffer[0];

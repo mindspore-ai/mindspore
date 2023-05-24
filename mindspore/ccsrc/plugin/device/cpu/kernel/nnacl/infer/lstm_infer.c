@@ -20,7 +20,7 @@
 static const int num_of_gates = 4;
 static const int no_of_recorde_values = 6;
 
-int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *parameter) {
+int CheckInputShapeValid(const TensorC *const *inputs, size_t inputs_size, const LstmParameter *parameter) {
   const TensorC *input = inputs[FIRST_INPUT];
   const TensorC *weight_i = inputs[SECOND_INPUT];
   const TensorC *weight_g = inputs[THIRD_INPUT];
@@ -29,6 +29,7 @@ int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *para
   int batch = input->shape_[kNHWC_H];
   int input_size = input->shape_[kNHWC_W];
   int hidden_size = weight_i->shape_[kNHWC_H] / C4NUM;
+  int project_size = inputs_size == C7NUM ? inputs[C6NUM]->shape_[kNHWC_H] : hidden_size;
   bool bidirectional = parameter->bidirectional_;
   if (input->shape_size_ != DIMENSION_3D || weight_i->shape_size_ != DIMENSION_3D) {
     return NNACL_ERR;
@@ -38,14 +39,14 @@ int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *para
                          weight_i->shape_[kNHWC_W] == input_size,
                        NNACL_ERR);
   NNACL_CHECK_TRUE_RET(weight_g->shape_[kNHWC_N] == bidirection && weight_g->shape_[kNHWC_H] == hidden_size * C4NUM &&
-                         weight_g->shape_[kNHWC_W] == hidden_size,
+                         weight_g->shape_[kNHWC_W] == project_size,
                        NNACL_ERR);
   NNACL_CHECK_TRUE_RET(bias->shape_[kNHWC_N] == bidirection && bias->shape_[kNHWC_H] == hidden_size * C8NUM, NNACL_ERR);
   if (!bidirectional && cell->shape_size_ == DIMENSION_2D) {
     NNACL_CHECK_TRUE_RET(cell->shape_[kNHWC_N] == batch && cell->shape_[kNHWC_H] == hidden_size, NNACL_ERR);
   } else {
     NNACL_CHECK_TRUE_RET(
-      cell->shape_[kNHWC_N] == bidirection && cell->shape_[kNHWC_H] == batch && cell->shape_[kNHWC_W] == hidden_size,
+      cell->shape_[kNHWC_N] == bidirection && cell->shape_[kNHWC_H] == batch && cell->shape_[kNHWC_W] == project_size,
       NNACL_ERR);
   }
   return NNACL_OK;
@@ -74,16 +75,19 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   int hidden_size = 1;
+  int project_size = 1;
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);
   if (inputs_size == DIMENSION_4D) {  // if input from MINDIR
     hidden_size = weight_i->shape_[THIRD_INPUT];
+    project_size = hidden_size;
     out_shape[THIRD_INPUT] = hidden_size * dir_multiplier;
   } else {
-    if (CheckInputShapeValid(inputs, param) != NNACL_OK) {
+    if (CheckInputShapeValid(inputs, inputs_size, param) != NNACL_OK) {
       return NNACL_ERR;
     }
     hidden_size = weight_i->shape_[1] / num_of_gates;
-    out_shape[2] = hidden_size;
+    project_size = inputs_size == C7NUM ? inputs[C6NUM]->shape_[kNHWC_H] : hidden_size;
+    out_shape[THIRD_INPUT] = project_size;
     if (param->bidirectional_) {
       int ret = ShapeInsert(out_shape, &out_shape_size, 1, 2);
       if (ret != NNACL_OK) {
@@ -102,8 +106,9 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
 
   ShapeSet(state_shape, &state_shape_size, input->shape_, input->shape_size_);
   state_shape[FIRST_INPUT] = dir_multiplier;
-  state_shape[THIRD_INPUT] = hidden_size;
+  state_shape[THIRD_INPUT] = project_size;
   SetShapeArray(outputs[SECOND_INPUT], state_shape, state_shape_size);
+  state_shape[THIRD_INPUT] = hidden_size;
   SetShapeArray(outputs[THIRD_INPUT], state_shape, state_shape_size);
 
   if (outputs_size > DIMENSION_4D) {

@@ -23,7 +23,7 @@ typedef struct LstmParameter {
   OpParameter op_parameter_;
   // shape correlative
   int input_size_;
-  int hidden_size_;  // output_size
+  int hidden_size_;
   int project_size_;
   int seq_len_;
   int batch_;

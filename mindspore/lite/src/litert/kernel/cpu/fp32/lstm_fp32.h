@@ -22,6 +22,22 @@
 #include "nnacl/fp32/lstm_fp32.h"
 
 namespace mindspore::kernel {
+/*
+ * 1. LSTM(exclude mindir) without project
+ *    weight_ih: second input, shape is [bidirectional, 4 * hidden_size, input_size]
+ *    weight_hh: third input, shape is [bidirectional, 4 * hidden_size, hidden_size]
+ *    bias: forth input, shape is [bidirectional, 8 * hidden_size]
+ *    h_init: fifth input, shape is [bidirectional, batch_size, hidden_size]
+ *    c_init: sixth input, shape is [bidirectional, batch_size, hidden_size]
+ *
+ * 2. LSTM(exclude mindir) with project
+ *    weight_ih: second input, shape is [bidirectional, 4 * hidden_size, input_size]
+ *    weight_hh: third input, shape is [bidirectional, 4 * hidden_size, project_size]
+ *    bias: forth input, shape is [bidirectional, 8 * hidden_size]
+ *    h_init: fifth input, shape is [bidirectional, batch_size, project_size]
+ *    c_init: sixth input, shape is [bidirectional, batch_size, hidden_size]
+ *    weight_pro: seventh input, shape is [bidirectional, project_size, hidden_size]
+ */
 class LstmCPUKernel : public LiteKernel {
  public:
   LstmCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -45,13 +61,15 @@ class LstmCPUKernel : public LiteKernel {
   int MallocRunBuffer(bool is_double);
   int InitInputWeightBias();
   int InitStateWeightBias();
+  int InitProjectWeight();
   int LstmPreProcessWithInput(const float *weight_i, const float *input_bias, float *dst);
   int ExecuteUnidirectionalOrSingleThread();
   int ExecuteBidirectionalWithMultiThread();
   void LstmForwardLoop(float *buffer[]);
   void LstmBackwardLoop(float *buffer[]);
   void LstmUnidirectional(float *output, const float *weight_h, const float *state_bias, float *hidden_state,
-                          float *cell_state, float *intermediate_states, float *buffer[], bool is_backward);
+                          float *cell_state, const float *weight_project, float *intermediate_states, float *buffer[],
+                          bool is_backward);
   void RecordStates(const float *hidden_state, float *cell_state, float *input_gate, const float *output_gate,
                     float *forget_gate, const float *cell_gate, float *intermediate_states, int step);
   const float *weight_loop_;
@@ -62,6 +80,7 @@ class LstmCPUKernel : public LiteKernel {
 
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
+  float *weight_project_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
   float *intermediate_states_ = nullptr;
@@ -80,12 +99,12 @@ class LstmCPUKernel : public LiteKernel {
   int cell_state_input_index_ = onnx_cell_state_index;
 
   float *packed_input_{nullptr};
-  float *buffer_forward_[C7NUM] = {nullptr};
-  float *buffer_backward_[C7NUM] = {nullptr};
+  float *buffer_forward_[C9NUM] = {nullptr};
+  float *buffer_backward_[C9NUM] = {nullptr};
   std::vector<void *> buffer_running_malloc_;
   const int gate_num = 4;
   const int input_gate_index = 0;
-  const int tmp_hidden_output_index = 6;
+  const int tmp_hidden_output_index = 8;
   static const int out_intermediate_states_index = 3;
   const int weights_order_IFOG[2 * 4] = {0, 2, 3, 1, 4, 6, 7, 5};  // IFGO order to IOFG order
 
