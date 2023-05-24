@@ -111,6 +111,7 @@ constexpr auto kUnknowErrorString = "Unknown error occurred";
 error_message::Context ErrorManagerAdapter::context_;
 std::mutex ErrorManagerAdapter::initialized_mutex_;
 bool ErrorManagerAdapter::initialized_ = false;
+std::vector<std::string> ErrorManagerAdapter::traceback_;
 
 bool ErrorManagerAdapter::Init() {
   std::unique_lock<std::mutex> lock(initialized_mutex_);
@@ -163,11 +164,14 @@ std::string ErrorManagerAdapter::GetWarningMessage(bool add_title) {
 void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
   const auto &error_message = GetErrorMessage(true);
   if (!error_message.empty()) {
-    *oss << error_message;
+    (void)traceback_.emplace_back(error_message);
   }
   const auto &warning_message = GetWarningMessage(true);
   if (!warning_message.empty()) {
-    *oss << warning_message;
+    (void)traceback_.emplace_back(warning_message);
+  }
+  for (const auto &message : traceback_) {
+    *oss << message;
   }
 }
 
