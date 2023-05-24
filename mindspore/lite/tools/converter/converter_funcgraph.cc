@@ -60,6 +60,9 @@
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/offline_packing_optimizer.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
+#include "tools/optimizer/format/to_nhwc_format.h"
+#include "tools/optimizer/format/to_nchw_format.h"
+#include "tools/converter/quantizer/quantization_optimizer.h"
 
 namespace mindspore {
 namespace lite {
@@ -330,6 +333,12 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
 
   bool is_optimized = IsOptimizedFuncGraph(func_graph);
   if (is_optimized) {
+    auto status = Quantize(param, func_graph);
+    ClearBuiltinPass();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Quantize failed.";
+      return status;
+    }
     return RET_OK;
   }
 
@@ -439,5 +448,42 @@ STATUS ConverterFuncGraph::UnifyFuncGraphOutputFormat(const std::shared_ptr<Conv
   func_graph->set_attr(kOutputFormat, MakeValue(static_cast<int>(spec_output_format)));
   return RET_OK;
 }
+STATUS ConverterFuncGraph::Quantize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  if (!StoreBuiltinPass(param)) {
+    MS_LOG(ERROR) << "store pass failed.";
+    return RET_ERROR;
+  }
+  if (!RunOptimizerPass(func_graph, {"ToNHWCFormat", "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run ToNHWCFormat pass failed";
+    return RET_ERROR;
+  }
+  quant::QuantizationOptimizer quantization_optimizer(param);
+  auto status = quantization_optimizer.Run(func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Post training quantization failed.";
+    return status;
+  }
+  return RET_OK;
+}
+bool ConverterFuncGraph::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return false;
+  }
+  auto fmk = param->fmk_type;
+  auto is_train = param->train_model;
+
+  // pass_name, pass and boolean value to indicate whether can be called by external extension,
+  std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
+    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true}};
+  for (const auto &pass_info : pass_infos) {
+    MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
+    PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
+  }
+  return true;
+}
+void ConverterFuncGraph::ClearBuiltinPass() { PassStorage::ClearPass(); }
 }  // namespace lite
 }  // namespace mindspore
