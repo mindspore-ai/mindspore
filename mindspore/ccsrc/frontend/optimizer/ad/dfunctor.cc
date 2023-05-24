@@ -608,8 +608,13 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   auto k_prim = g_k_prims.KPrimitive(primitive_user, value_node, resources_);
   if (k_prim != nullptr) {
     auto prim_recompute_attr = prim->GetAttr(kAttrRecompute);
-    if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>() && !GetValue<bool>(prim_recompute_attr)) {
-      k_prim->set_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH, true);
+    if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>()) {
+      auto recomputed = GetValue<bool>(prim_recompute_attr);
+      if (recomputed) {
+        k_prim->set_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH, true);
+      } else {
+        k_prim->set_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH, true);
+      }
     }
     return NewValueNode(k_prim);
   }

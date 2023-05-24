@@ -1515,6 +1515,9 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<FuncGraph>() && value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH)) {
+    return nullptr;
+  }
   if (!value->isa<FuncGraph>() || value->cast_ptr<FuncGraph>()->parent() == nullptr ||
       (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast_ptr<FuncGraph>()->parent()))) {
     return BuildValueNode(value, origin_node, ival);

@@ -32,28 +32,13 @@ namespace irpass {
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kHandledNotRecomputeNodeFlag = "handled_not_recompute_node";
 
-bool EnableGraphReuse() {
-  static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
-  static const auto cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
-  return cell_reuse_enable;
-}
+bool EnableGraphReuse();
 
-bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller) {
-  MS_EXCEPTION_IF_NULL(opt);
-  auto manager = opt->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  const auto &node_users = manager->node_users();
-  auto iter = node_users.find(k_fg_caller);
-  if (iter == node_users.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The node " << k_fg_caller->DebugString() << " should have users.";
-  }
+bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller);
 
-  return std::any_of(iter->second.begin(), iter->second.end(), [](const std::pair<AnfNodePtr, int> &node_and_idx) {
-    auto user = node_and_idx.first;
-    return IsPrimitiveCNode(user, prim::kPrimTupleGetItem) &&
-           common::AnfAlgo::GetTupleGetItemOutIndex(user->cast<CNodePtr>()) == 1;
-  });
-}
+AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &bprop_getter);
+
+bool AddRecomputePrimitive(const FuncGraphPtr &root, const opt::OptimizerPtr &opt);
 
 class AddRecomputePrimal : public AnfVisitor {
  public:
@@ -323,23 +308,6 @@ class AddRecomputeDepend : public AnfVisitor {
     // Add attr in case of repeatedly handling.
     new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
     return new_tuple_getitem;
-  }
-
-  static AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &bprop_getter) {
-    const auto &node_users = manager->node_users();
-    auto iter = node_users.find(bprop_getter);
-    if (iter == node_users.end()) {
-      return nullptr;
-    }
-    if (iter->second.size() != 1) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The number of bprop caller should be 1, but got " << iter->second.size()
-                                 << ", bprop_getter: " << bprop_getter->DebugString();
-    }
-    auto user_node_idx = iter->second.begin();
-    if (user_node_idx->second != 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The bprop_getter should be used in input 0, but got " << user_node_idx->second;
-    }
-    return user_node_idx->first;
   }
 
   void Visit(const CNodePtr &cnode) override {
