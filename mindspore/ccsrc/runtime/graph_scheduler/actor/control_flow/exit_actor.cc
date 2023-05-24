@@ -228,6 +228,10 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
         host_shape);
     }
     MS_EXCEPTION_IF_NULL(new_device_tensor);
+    const auto &swap_manager = device_context->device_res_manager_->swap_manager();
+    if (swap_manager != nullptr) {
+      swap_manager->AddSwappableTensor(new_device_tensor);
+    }
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);

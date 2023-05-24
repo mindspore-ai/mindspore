@@ -31,6 +31,38 @@
 
 namespace mindspore {
 namespace device {
+class SwappableTensorCandidates {
+  using CandidateItem = std::pair<std::weak_ptr<DeviceAddress>, DeviceAddress *>;
+
+ public:
+  class CandidateIter {
+   public:
+    explicit CandidateIter(SwappableTensorCandidates *candidates);
+    bool IsEnd();
+    void Next();
+    DeviceAddressPtr Get();
+
+   private:
+    size_t current_size_level_{0};
+    size_t current_candidate_idx_{0};
+    std::vector<std::vector<CandidateItem>> &swappable_tensors_;
+    std::vector<std::queue<size_t>> &null_index_;
+    HashSet<DeviceAddress *> &all_swappable_tensors_;
+  };
+  void Init(size_t size_level_num);
+  DeviceAddressPtr GetLowerBoundCandidate(size_t size);
+  CandidateIter Begin();
+  void Add(const DeviceAddressPtr &candidate);
+
+ private:
+  size_t GetSizeLevel(size_t size) const;
+
+  size_t size_level_num_;
+  std::vector<std::vector<CandidateItem>> swappable_tensors_;
+  std::vector<std::queue<size_t>> null_index_;
+  HashSet<DeviceAddress *> all_swappable_tensors_;
+};
+
 class BACKEND_EXPORT SwapManager {
  public:
   SwapManager(size_t stream_id, DynamicMemPoolBestFit *device_memory_pool, PinMemPool *pin_mem_pool);
@@ -67,7 +99,6 @@ class BACKEND_EXPORT SwapManager {
   std::vector<void *> AllocDeviceContinuousMemSimply(const std::vector<size_t> &size_list);
   void *AllocHostMemorySimply(const size_t &size);
   bool EnoughFileSpace(const size_t &size);
-  size_t GetSizeLevel(size_t size) const;
 
   template <class Input, class Output>
   bool TryAllocate(std::queue<const DeviceAddress *> queue, const Input &input,
@@ -88,9 +119,8 @@ class BACKEND_EXPORT SwapManager {
   struct compare {
     bool operator()(const DeviceAddressPtr &l, const DeviceAddressPtr &r) const { return l->GetSize() < r->GetSize(); }
   };
-  std::vector<std::vector<DeviceAddressPtr>> swappable_tensors_;
-  HashSet<DeviceAddressPtr> all_swappable_tensors_;
-  const size_t size_level_num_{8};
+  SwappableTensorCandidates candidates_;
+  const size_t size_level_num_{0};
   std::mutex swapping_tensors_device_mutex_;
   std::queue<const DeviceAddress *> swapping_tensors_device_;
   std::mutex swapping_tensors_host_mutex_;
