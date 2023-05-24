@@ -877,6 +877,7 @@ def get_user_workspace_root_dir(module_path):
 
 
 user_workspace_dir_ = get_user_workspace_root_dir(os.getcwd())
+python_builtin_dir_ = os.path.abspath(os.path.dirname(os.__file__))
 
 
 def get_jit_dir():
@@ -914,21 +915,21 @@ def _in_user_workspace(module):
     # A modules without __file__ attribute is considered to be in user workspace.
     if not hasattr(module, '__file__'):
         return True
-    # Check if module path is not under jit_ignore_dir_ but under jit_dir_.
     module_path = os.path.abspath(module.__file__)
     if module_path.startswith(user_workspace_dir_):
         return True
+    if module_path.startswith(python_builtin_dir_):
+        return False
+    # Check if module path is not under jit_ignore_dir_ but under jit_dir_.
     for path in jit_ignore_dir_:
         if module_path.startswith(path):
             return False
     for path in jit_dir_:
         if module_path.startswith(path):
             return True
-    # If a module is not under sys.path, it means that the module has not been imported.
-    # It cannot be a third-party library, so it is considered to be in user workspace.
-    if not _in_sys_path(module_path):
-        return True
-    return False
+    # Check if module path is under site-packages.
+    split_path = module_path.split(os.path.sep)
+    return "site-packages" not in split_path
 
 
 def get_module_source_location(module):
@@ -936,7 +937,7 @@ def get_module_source_location(module):
     module_leftmost_name = module.__name__.split('.')[0]
     if module_leftmost_name in _modules_from_mindspore:
         return MODULE_FROM_MINDSPORE
-    if _in_user_workspace(module):
+    if module_leftmost_name not in sys.builtin_module_names and _in_user_workspace(module):
         return MODULE_FROM_USER_WORKSPACE
     return MODULE_FROM_THIRDPARTY
 
@@ -946,6 +947,8 @@ def is_from_third_party_library(value):
     if inspect.ismodule(value):
         module = value
     elif inspect.isfunction(value) or inspect.ismethod(value):
+        if value in _convert_map():
+            return False
         module = inspect.getmodule(value)
     else:
         return False

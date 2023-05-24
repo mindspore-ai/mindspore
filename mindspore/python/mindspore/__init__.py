@@ -25,7 +25,7 @@ from mindspore.train import *
 from mindspore.log import *
 from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_auto_parallel_context, \
     get_auto_parallel_context, reset_auto_parallel_context, ParallelMode, set_ps_context, \
-    get_ps_context, reset_ps_context
+    get_ps_context, reset_ps_context, STRICT, COMPATIBLE, LAX
 from mindspore.version import __version__
 from mindspore.profiler import Profiler, EnvProfiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters, \
