@@ -3,10 +3,10 @@ mindspore.ops.digamma
 
 .. py:function:: mindspore.ops.digamma(input)
 
-    计算lgamma对数函数在输入上的梯度。
+    计算对数gamma函数在输入上的导数。
 
     .. math::
-        P(input) = grad(\ln \Gamma(input))
+        P(x) = \frac{d}{dx}(\ln (\Gamma(x)))
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

@@ -10377,10 +10377,10 @@ def lgamma(input):
 
 def digamma(input):
     r"""
-    Computes the grad of the lgamma function on input.
+    Computes the derivative of the lgamma function on input.
 
     .. math::
-        P(input) = grad(\ln \Gamma(input))
+        P(x) = \frac{d}{dx}(\ln (\Gamma(x)))
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
