@@ -237,33 +237,40 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
         return RET_OK;
       }
       auto quant_params_holder = GetCNodeQuantHolder(primitive);
-      if (quant_params_holder == nullptr || quant_params_holder->quant_type() == quant::QUANT_NONE) {
+      if (quant_params_holder == nullptr) {
+        MS_LOG(DEBUG) << cnode->fullname_with_scope() << " quant_params_holder not exist.";
         continue;
       }
-
       auto quant_type = MakeValue(static_cast<int>(quant_params_holder->quant_type()));
       MS_CHECK_TRUE_MSG(quant_type != nullptr, RET_ERROR, "quant_type is nullptr.");
-
       primitive->AddAttr(quant::kQuantType, quant_type);
       auto input_quant_params = quant_params_holder->get_input_quant_params();
+      int ret = 0;
       for (unsigned int index = 0; index < input_quant_params.size(); index++) {
+        if (index + quant::kPrimOffset >= cnode->size()) {
+          MS_LOG(DEBUG) << cnode->fullname_with_scope() << " quant_params index out of range, index: " << index
+                        << " but cnode size: " << cnode->size();
+          continue;
+        }
         auto input = cnode->input(index + quant::kPrimOffset);
-        if (!input->isa<Parameter>()) {
-          continue;
-        }
-        auto parameter_ptr = input->cast<ParameterPtr>();
-        auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
-        auto quant_cluster = quant_params_holder->GetQuantClusters(index);
-        if (!quant_cluster.empty()) {
-          QuantizationParam quantization(quant::kClusterQuant);
-          quantization.AddAttr(quant::kClusterCentroidList, MakeValue(quant_cluster));
-          tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{
-            std::make_shared<mindspore::QuantizationParam>(quantization)});
-          continue;
-        }
-        if (quant_params_holder->CheckInit(index, true)) {
-          auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params[index]);
-          tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_ptr});
+        if (input->isa<mindspore::Parameter>()) {
+          ret = ConvertParameterNode(cnode, input->cast<ParameterPtr>(), index);
+          if (ret == RET_NO_CHANGE) {
+            continue;
+          } else if (ret != RET_OK) {
+            MS_LOG(ERROR) << input->fullname_with_scope() << " converter parameter node quant param failed.";
+            return ret;
+          }
+        } else if (input->isa<mindspore::ValueNode>()) {
+          ret = ConvertValueNode(cnode, input->cast<ValueNodePtr>(), index);
+          if (ret == RET_NO_CHANGE) {
+            continue;
+          } else if (ret != RET_OK) {
+            MS_LOG(ERROR) << input->fullname_with_scope() << " converter value node quant param failed.";
+            return ret;
+          }
+        } else {
+          MS_LOG(DEBUG) << input->fullname_with_scope() << " Not supported to convert quant param.";
         }
       }
 
@@ -275,6 +282,62 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
         }
       }
     }
+  }
+  return RET_OK;
+}
+
+int MindIRSerializer::ConvertParameterNode(const CNodePtr &cnode, const ParameterPtr &parameter_ptr, size_t index) {
+  auto input = cnode->input(index + quant::kPrimOffset);
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
+  auto quant_params_holder = GetCNodeQuantHolder(primitive);
+  auto input_quant_params = quant_params_holder->get_input_quant_params();
+  CHECK_NULL_RETURN(parameter_ptr);
+  if (!parameter_ptr->has_default()) {
+    MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have default.";
+    return RET_NO_CHANGE;
+  }
+  CHECK_NULL_RETURN(parameter_ptr->default_param());
+  auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
+  auto quant_cluster = quant_params_holder->GetQuantClusters(index);
+  if (!quant_cluster.empty()) {
+    QuantizationParam quantization(quant::kClusterQuant);
+    quantization.AddAttr(quant::kClusterCentroidList, MakeValue(quant_cluster));
+    tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{
+      std::make_shared<mindspore::QuantizationParam>(quantization)});
+    return RET_NO_CHANGE;
+  }
+  if (quant_params_holder->CheckInit(index, true)) {
+    auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params[index]);
+    tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_ptr});
+  }
+  return RET_OK;
+}
+
+int MindIRSerializer::ConvertValueNode(const CNodePtr &cnode, const ValueNodePtr &value_node_ptr, size_t index) {
+  auto input = cnode->input(index + quant::kPrimOffset);
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
+  auto quant_params_holder = GetCNodeQuantHolder(primitive);
+  auto input_quant_params = quant_params_holder->get_input_quant_params();
+  CHECK_NULL_RETURN(value_node_ptr);
+
+  auto tensor = value_node_ptr->value()->cast<tensor::TensorPtr>();
+  if (tensor == nullptr) {
+    MS_LOG(WARNING) << input->fullname_with_scope() << " can't cast to tensor";
+    return RET_NO_CHANGE;
+  }
+  auto quant_cluster = quant_params_holder->GetQuantClusters(index);
+  if (!quant_cluster.empty()) {
+    QuantizationParam quantization(quant::kClusterQuant);
+    quantization.AddAttr(quant::kClusterCentroidList, MakeValue(quant_cluster));
+    tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{
+      std::make_shared<mindspore::QuantizationParam>(quantization)});
+    return RET_NO_CHANGE;
+  }
+  if (quant_params_holder->CheckInit(index, true)) {
+    auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params[index]);
+    tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_ptr});
   }
   return RET_OK;
 }
