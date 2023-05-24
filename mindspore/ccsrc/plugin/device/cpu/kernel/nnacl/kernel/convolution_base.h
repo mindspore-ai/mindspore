@@ -23,6 +23,25 @@
 
 typedef struct ConvolutionBaseStruct {
   KernelBase base_;
+  bool weight_is_packed_;
+  bool is_repack_;
+  bool is_sharing_pack_;
+  bool infershape_done_;
+  void *packed_weight_;
+  void *bias_data_;
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
+  int (*malloc_weight_bias_)(struct ConvolutionBaseStruct *conv_base);
+  void (*pack_weight_)(struct ConvolutionBaseStruct *conv_base);
+
+  void *pack_weight_manager_;
+  void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
+  void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
 } ConvolutionBaseStruct;
+
+int ConvBasePrepare(ConvolutionBaseStruct *conv);
+int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv);
+int ConvBaseRepackWeight(ConvolutionBaseStruct *conv);
+void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size);
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_BASE_H_
