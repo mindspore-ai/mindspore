@@ -866,13 +866,13 @@ def _generate_shapes(shape):
         elif isinstance(shape[0], tuple):
             size = shape[0]
         else:
-            raise TypeError("If the length of the argument 'shape' is 1, the type of the argument 'shape' must be "
-                            "one of ['int', 'list', 'tuple'], but got ", shape[0])
+            raise TypeError(f"If the length of the argument 'shape' is 1, the type of the argument 'shape' must be "
+                            f"one of ['int', 'list', 'tuple'], but got {shape[0]}.")
     else:
         for value in shape:
             if not isinstance(value, int):
-                raise TypeError("If the length of the argument 'shape' is > 1, the type of the argument 'shape' must "
-                                "all be int, but got ", value)
+                raise TypeError(f"If the length of the argument 'shape' is > 1, the type of the argument 'shape' must "
+                                f"all be int, but got {value}.")
         size = shape
     return size
 
