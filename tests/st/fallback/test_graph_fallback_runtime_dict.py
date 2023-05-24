@@ -165,7 +165,7 @@ def test_multiple_return_contains_dict():
     assert out[2] == (1, 2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -213,7 +213,7 @@ def test_multiple_return_contains_dict_3():
     assert out[1] == {'a': 1}
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -351,7 +351,7 @@ def test_net_dict_1_grad():
     assert np.all(outputs.asnumpy() == np.zeros((64, 1, 32, 32)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -402,7 +402,7 @@ def test_net_dict_2():
     assert outputs['fc'].shape == (64, 10)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
