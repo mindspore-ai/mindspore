@@ -20,6 +20,7 @@
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/elewise_calculation_ops.h"
+#include "ops/bitwise_ops.h"
 
 DECLARE_OP_ADAPTER(ClipByValue)
 DECLARE_OP_USE_OUTPUT(ClipByValue)
@@ -344,4 +345,10 @@ DECLARE_OP_USE_OUTPUT(IsClose)
 
 DECLARE_OP_ADAPTER(CosineSimilarity)
 DECLARE_OP_USE_OUTPUT(CosineSimilarity)
+
+DECLARE_OP_ADAPTER(LeftShift)
+DECLARE_OP_USE_OUTPUT(LeftShift)
+
+DECLARE_OP_ADAPTER(RightShift)
+DECLARE_OP_USE_OUTPUT(RightShift)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_

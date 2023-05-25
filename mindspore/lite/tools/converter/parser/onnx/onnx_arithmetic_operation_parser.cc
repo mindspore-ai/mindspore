@@ -28,23 +28,29 @@
 #include "ops/greater.h"
 #include "ops/floor.h"
 #include "ops/abs.h"
+#include "ops/sin.h"
+#include "ops/sinh.h"
+#include "ops/asin.h"
+#include "ops/asinh.h"
 #include "ops/cos.h"
+#include "ops/cosh.h"
+#include "ops/acos.h"
+#include "ops/acosh.h"
+#include "ops/tan.h"
+#include "ops/atan.h"
+#include "ops/atanh.h"
 #include "ops/ceil.h"
 #include "ops/log.h"
-#include "ops/atan.h"
-#include "ops/asin.h"
 #include "ops/logical_and.h"
 #include "ops/logical_not.h"
 #include "ops/logical_or.h"
 #include "ops/neg.h"
 #include "ops/round.h"
-#include "ops/tan.h"
 #include "ops/sqrt.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/minimum.h"
 #include "ops/maximum.h"
 #include "ops/eltwise.h"
-#include "ops/sin.h"
 #include "ops/reciprocal.h"
 #include "ops/mod.h"
 #include "ops/greater_equal.h"
@@ -118,8 +124,68 @@ PrimitiveCPtr OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onn
   return prim->GetPrim();
 }
 
+PrimitiveCPtr OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Sin>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxSinhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Sinh>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Asin>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAsinhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Asinh>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
 PrimitiveCPtr OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Cos>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxCoshParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Cosh>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAcosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::ACos>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAcoshParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Acosh>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Tan>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Atan>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxAtanhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Atanh>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim->GetPrim();
 }
@@ -132,18 +198,6 @@ PrimitiveCPtr OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const on
 
 PrimitiveCPtr OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Log>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
-
-PrimitiveCPtr OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Atan>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
-
-PrimitiveCPtr OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Asin>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim->GetPrim();
 }
@@ -174,18 +228,6 @@ PrimitiveCPtr OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onn
 
 PrimitiveCPtr OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Round>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
-
-PrimitiveCPtr OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Sin>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
-
-PrimitiveCPtr OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Tan>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim->GetPrim();
 }
@@ -266,14 +308,20 @@ OnnxNodeRegistrar g_onnxFloorParser("Floor", new OnnxFloorParser());
 OnnxNodeRegistrar g_onnxAbsParser("Abs", new OnnxAbsParser());
 OnnxNodeRegistrar g_onnxNegParser("Neg", new OnnxNegParser());
 OnnxNodeRegistrar g_onnxExpParser("Exp", new OnnxExpParser());
-OnnxNodeRegistrar g_onnxCosParser("Cos", new OnnxCosParser());
 OnnxNodeRegistrar g_onnxSinParser("Sin", new OnnxSinParser());
+OnnxNodeRegistrar g_onnxSinhParser("Sinh", new OnnxSinhParser());
+OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
+OnnxNodeRegistrar g_onnxAsinhParser("Asinh", new OnnxAsinhParser());
+OnnxNodeRegistrar g_onnxCosParser("Cos", new OnnxCosParser());
+OnnxNodeRegistrar g_onnxCoshParser("Cosh", new OnnxCoshParser());
+OnnxNodeRegistrar g_onnxAcosParser("Acos", new OnnxAcosParser());
+OnnxNodeRegistrar g_onnxAcoshParser("Acosh", new OnnxAcoshParser());
+OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
+OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());
+OnnxNodeRegistrar g_onnxAtanhParser("Atanh", new OnnxAtanhParser());
 OnnxNodeRegistrar g_onnxSqrtParser("Sqrt", new OnnxSqrtParser());
 OnnxNodeRegistrar g_onnxCeilParser("Ceil", new OnnxCeilParser());
 OnnxNodeRegistrar g_onnxLogParser("Log", new OnnxLogParser());
-OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
-OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());
-OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxAndParser("And", new OnnxAndParser());
 OnnxNodeRegistrar g_onnxOrParser("Or", new OnnxOrParser());
 OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());

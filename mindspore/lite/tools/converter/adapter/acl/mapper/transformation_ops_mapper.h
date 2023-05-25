@@ -45,4 +45,4 @@ class BatchToSpaceMapper : public PrimitiveMapper {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_ARGMAX_FUSION_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TRANSFORMATION_OPS_MAPPER_H_

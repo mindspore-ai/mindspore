@@ -24,6 +24,9 @@
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
 #include "ops/softplus.h"
+#include "ops/selu.h"
+#include "ops/celu.h"
+#include "ops/hswish.h"
 
 namespace mindspore {
 namespace lite {
@@ -164,6 +167,26 @@ PrimitiveCPtr OnnxSoftPlusParser::Parse(const onnx::GraphProto &onnx_graph, cons
   return prim->GetPrim();
 }
 
+PrimitiveCPtr OnnxSeluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::SeLU>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+
+  return prim->GetPrim();
+}
+
+PrimitiveCPtr OnnxCeluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::CeLU>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "alpha") {
+      prim->set_alpha(onnx_node_attr.f());
+    }
+  }
+
+  return prim->GetPrim();
+}
+
 OnnxNodeRegistrar g_onnxReluParser("Relu", new OnnxReluParser());
 OnnxNodeRegistrar g_onnxLeakyReluParser("LeakyRelu", new OnnxLeakyReluParser());
 OnnxNodeRegistrar g_onnxPReluParser("PRelu", new OnnxPReluParser());
@@ -174,5 +197,7 @@ OnnxNodeRegistrar g_onnxHardSigmoidParser("HardSigmoid", new OnnxHardSigmoidPars
 OnnxNodeRegistrar g_onnxSoftPlusParser("Softplus", new OnnxSoftPlusParser());
 OnnxNodeRegistrar g_onnxGeluParser("Gelu", new OnnxGeluParser());
 OnnxNodeRegistrar g_onnxMegatronGeluParser("GeLUFunction", new OnnxGeluParser());
+OnnxNodeRegistrar g_onnxSeluParser("Selu", new OnnxSeluParser());
+OnnxNodeRegistrar g_onnxCeluParser("Celu", new OnnxCeluParser());
 }  // namespace lite
 }  // namespace mindspore
