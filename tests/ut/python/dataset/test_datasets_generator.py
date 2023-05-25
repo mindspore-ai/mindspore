@@ -2295,6 +2295,46 @@ def test_generator_split_with_next():
     assert dataset_val.get_dataset_size() == 2
 
 
+def test_generator_with_next_and_dataset_size_when_iter():
+    """
+    Feature: GeneratorDataset
+    Description: When GeneratorDataset is __next__ and call get_dataset_size in iter
+    Expectation: The dataset is processed as expected
+    """
+
+    # Iterator as input source
+    class Iterator:
+        def __init__(self):
+            self._index = 0
+            self._data = np.random.sample((50, 2))
+            self._label = np.random.sample((50, 1))
+
+        def __next__(self):
+            if self._index >= len(self._data):
+                raise StopIteration
+
+            item = (self._data[self._index], self._label[self._index])
+            self._index += 1
+            return item
+
+        def __iter__(self):
+            self._index = 0
+            return self
+
+        def __len__(self):
+            return len(self._data)
+
+    data = Iterator()
+    dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"])
+
+    count = 0
+    for _ in dataset.create_dict_iterator():
+        if count > 2:
+            print("epoch: get_dataset_size: {}".format(dataset.get_dataset_size()), flush=True)
+        count += 1
+    assert count == 50
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2352,3 +2392,4 @@ if __name__ == "__main__":
     test_generator_split_with_yield()
     test_generator_split_with_getitem()
     test_generator_split_with_next()
+    test_generator_with_next_and_dataset_size_when_iter()

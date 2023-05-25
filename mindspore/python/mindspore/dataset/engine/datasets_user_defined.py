@@ -745,13 +745,11 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             except RuntimeError as e:
                 raise Exception(str(e))
         else:
-            try:
-                new_op.sampler = None
-                new_op.sample_fn = sample_fn
-                new_op.source_len = min(new_op.source_len,
-                                        new_op.num_samples) if new_op.num_samples != 0 else new_op.source_len
-                iter(self.source)
-            except TypeError:
+            new_op.sampler = None
+            new_op.sample_fn = sample_fn
+            new_op.source_len = min(new_op.source_len,
+                                    new_op.num_samples) if new_op.num_samples != 0 else new_op.source_len
+            if not hasattr(self.source, "__iter__"):
                 # Use generator function if input callable
                 new_op.prepared_source = (lambda: _generator_fn(self.source, new_op.num_samples))
             else:
