@@ -62,7 +62,7 @@ AnfNodePtr MatMulBiasAddFusionCPU::CreateMatmulWithBias(const FuncGraphPtr &grap
   common::AnfAlgo::CopyNodeAttrs(matmul, new_node);
 
   auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
-  prim->AddAttr(kAttrWithBiasAdd, MakeValue(true));
+  (void)prim->AddAttr(kAttrWithBiasAdd, MakeValue(true));
   new_node->AddAttr(kAttrWithBiasAdd, MakeValue(true));
 
   return new_node;
