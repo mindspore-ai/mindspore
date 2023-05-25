@@ -6915,7 +6915,8 @@ class MatrixSolve(Primitive):
         >>> matrix_solve = ops.MatrixSolve(adjoint = False)
         >>> output = matrix_solve(matrix, rhs)
         >>> print(output)
-        [[5.0], [-1.0]]
+        [[5.0]
+         [-1.0]]
     """
 
     @prim_attr_register
