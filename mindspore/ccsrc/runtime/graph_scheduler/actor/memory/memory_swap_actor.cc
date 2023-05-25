@@ -82,7 +82,17 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
   const auto &device_ptrs = device_contexts_[0]->device_res_manager_->AllocateContinuousMemory(size_list);
   for (size_t i = 0; i < device_tensors.size(); ++i) {
     MS_EXCEPTION_IF_NULL(device_tensors[i]);
-    device_tensors[i]->set_ptr(device_ptrs[i]);
+    // If data already exists in device, copy it to continuous memory and release the original data.
+    if (device_tensors[i]->status() == device::DeviceAddressStatus::kInDevice &&
+        device_tensors[i]->GetPtr() != nullptr) {
+      const auto original_ptr = device_tensors[i]->GetMutablePtr();
+      device_tensors[i]->set_ptr(device_ptrs[i]);
+      device_tensors[i]->SyncDeviceToDevice(device_tensors[i]->host_shape(), device_tensors[i]->GetSize(),
+                                            device_tensors[i]->type_id(), original_ptr, device_tensors[i]->format());
+      device_contexts_[0]->device_res_manager_->FreeMemory(original_ptr);
+    } else {
+      device_tensors[i]->set_ptr(device_ptrs[i]);
+    }
     device_tensors[i]->set_from_mem_pool(true);
   }
 }

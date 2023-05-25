@@ -43,6 +43,10 @@ class MemSwapScheduler {
 
   void BuildSwapActorForGraph(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                               const DeviceContext *device_context, std::vector<MemSwapActorPtr> *actors);
+  void LinkCtrlArrowForGraph(const std::shared_ptr<device::SwapStrategy> &strategy, const KernelGraphPtr &graph,
+                             const ControlNodeParserPtr &parser, ActorSet *actor_set) const;
+  void LinkDataArrowForGraph(const std::shared_ptr<device::SwapStrategy> &strategy, const KernelGraphPtr &graph,
+                             const ControlNodeParserPtr &parser) const;
   AbstractActor *GetActorForLink(size_t id, const std::shared_ptr<device::SwapStrategy> &strategy,
                                  const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                                  ActorSet *actor_set) const;
