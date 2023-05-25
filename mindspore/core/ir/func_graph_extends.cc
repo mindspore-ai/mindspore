@@ -280,8 +280,8 @@ FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
   auto params = specialized_graph->parameters();
   (void)specialized_parameter_list.insert(specialized_parameter_list.end(), params.end() - SizeToInt(fv_param_count_),
                                           params.end());
-  std::vector<AnfNodePtr> specialized_parameter_list_update(specialized_parameter_list.begin() + pos_arg_indexes.size(),
-                                                            specialized_parameter_list.end());
+  std::vector<AnfNodePtr> specialized_parameter_list_update(
+    specialized_parameter_list.begin() + SizeToLong(pos_arg_indexes.size()), specialized_parameter_list.end());
   for (size_t i = 0; i < pos_arg_indexes.size(); i++) {
     (void)specialized_parameter_list_update.insert(specialized_parameter_list_update.begin() + pos_arg_indexes[i],
                                                    specialized_parameter_list[i]);
