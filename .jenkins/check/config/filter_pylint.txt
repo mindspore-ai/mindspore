@@ -82,6 +82,7 @@
 "mindspore/mindspore/python"                                                                                             "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "unidiomatic-typecheck"
 "mindspore/mindspore/python/mindspore/experimental/map_parameter.py"                                                     "protected-access"
+"mindspore/mindspore/python/mindspore/ops/_op_impl/aicpu/cast.py"                                                        "astroid-error"                  
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
