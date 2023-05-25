@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/kernel/convolution_sw_1x1.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 
 int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
   MatMulParameter *matmul_param = (MatMulParameter *)sw_1x1->matmul_->base_.param_;
@@ -35,6 +36,11 @@ int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
   sw_1x1->matmul_->a_batch_ = 1;
   sw_1x1->matmul_->b_batch_ = 1;
   matmul_param->batch = 1;
+
+  int ret = MatmulFP32Base_MallocBatchOffset(sw_1x1->matmul_);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
 
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
@@ -105,6 +111,8 @@ int convolution_sw1x1_release(KernelBase *self) {
   ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
 
+  MatmulFp32Base_FreeBatchOffset(sw_1x1->matmul_);
+
   if (sw_1x1->matmul_ != NULL) {
     if (sw_1x1->matmul_->base_.param_ != NULL) {
       free(sw_1x1->matmul_->base_.param_);
@@ -120,6 +128,8 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)malloc(sizeof(ConvolutionSW1x1Struct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(sw_1x1);
   memset(sw_1x1, 0, sizeof(ConvolutionSW1x1Struct));
+
+  sw_1x1->conv_.is_sharing_pack_ = false;
   sw_1x1->conv_.base_.compute = convolution_sw1x1_compute;
   sw_1x1->conv_.base_.resize = convolution_sw1x1_resize;
   sw_1x1->conv_.base_.prepare = convolution_sw1x1_prepare;
@@ -137,5 +147,9 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
 
+  KernelBase *matmul = CreateMatmulFp32();
+  matmul->param_ = (OpParameter *)matmul_param;
+  ((MatmulFp32Struct *)matmul)->is_sharing_pack_ = false;
+  sw_1x1->matmul_ = (MatmulFp32Struct *)matmul;
   return (ConvolutionBaseStruct *)sw_1x1;
 }
