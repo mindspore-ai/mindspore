@@ -251,6 +251,12 @@ FuncGraphPtr DynamicObfuscator::ObfuscateMindIR(const FuncGraphPtr &func_graph) 
   auto mgr = Manage(func_graph);
   MS_EXCEPTION_IF_NULL(mgr);
   auto all_nodes = mgr->all_nodes();
+  for (auto item : all_nodes) {
+    auto abs = item->abstract();
+    if (abs != nullptr) {
+      item->set_abstract(abs->Broaden());
+    }
+  }
   int node_nums = SizeToLong(all_nodes.size());
   MS_LOG(INFO) << "Total node num: " << node_nums;
 
