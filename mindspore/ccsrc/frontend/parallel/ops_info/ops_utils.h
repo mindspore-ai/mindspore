@@ -589,6 +589,7 @@ constexpr char VIRTUAL_ASSIGN_ADD[] = "_VirtualAssignAdd";
 constexpr char VIRTUAL_ACCU_GRAD[] = "_VirtualAccuGrad";
 constexpr char ACCU_GRAD[] = "accu_grad";
 constexpr char PARAMETER_START[] = "parameter_start";
+constexpr char PARAMETER_START_SHARE_CELL[] = "parameter_start_share_cell";
 constexpr char PARAM_INDEX[] = "param_index";
 constexpr char PARAMETER[] = "parameter";
 constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
@@ -596,6 +597,13 @@ constexpr char INTERLEAVED_NUM[] = "interleave_num";
 constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
 constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
 constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
+constexpr char USER_NODE_STAGE[] = "user_node_stage";
+constexpr char NODE_STAGE[] = "node_stage";
+constexpr char SLICE_SHAPE[] = "slice_shape";
+constexpr char SLICE_DTYPE[] = "slice_dtype";
+constexpr char INPUT_PARAM[] = "input_param";
+constexpr char ORIGIN_INPUT_IS_PARAM[] = "origin_input_is_param";
+constexpr char CALL_BACKWARD_END_NEXT[] = "call_backward_end_next";
 
 // Parallel don't care
 constexpr char MAKE_TUPLE[] = "MakeTuple";
