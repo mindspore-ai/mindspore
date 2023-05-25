@@ -120,6 +120,7 @@ class ModelProcess {
   std::vector<ShapeVector> cur_input_shapes_;
   bool is_dynamic_output_ = false;
   bool is_dynamic_input_ = false;
+  bool is_dynamic_resize_input_ = false;
   aclmdlIODims *dynamic_dims_ = nullptr;
 };
 }  // namespace acl
