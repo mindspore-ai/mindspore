@@ -424,7 +424,6 @@
     "ReduceMeanD",
     "SquareSumV1",
     "SplitVD",
-    "BiasAddGrad",
     "SoftmaxCrossEntropyWithLogits"
   ],
   "SkipNodesComments": {
