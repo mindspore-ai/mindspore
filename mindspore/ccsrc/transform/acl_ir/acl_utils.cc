@@ -75,8 +75,8 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<float> &va
 
 void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<std::string> &value, aclopAttr *attr) {
   std::vector<const char *> convert_list;
-  std::transform(value.begin(), value.end(), std::back_inserter(convert_list),
-                 [](const std::string &s) { return s.c_str(); });
+  (void)std::transform(value.begin(), value.end(), std::back_inserter(convert_list),
+                       [](const std::string &s) { return s.c_str(); });
   auto ret = aclopSetAttrListString(attr, attr_name.c_str(), value.size(), convert_list.data());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
