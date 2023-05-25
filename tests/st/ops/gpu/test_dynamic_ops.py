@@ -376,14 +376,12 @@ def test_dynamic_reduce_sum():
     for i in [2, 96]:
         data = []
         data.append(np.random.rand(i, 256).astype(dtype))
-        data.append(np.array(1).astype(np.float32))
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
     net = GradNetWrtX(ReduceSumNet())
     t0 = Tensor(dtype=ms.float32, shape=[None, 256])
-    t1 = Tensor(dtype=ms.float32, shape=[], init=One())
-    net.set_inputs(t0, t1)
+    net.set_inputs(t0)
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
@@ -642,6 +640,6 @@ def test_dynamic_resize_nearest_neighbor_grad():
     """
     dynamic_range = range(2, 64)
     data_type = np.float32
-    input_shape = [(4, 16, None, 8), (4, 16, 2, 2)]
+    input_shape = [(4, 16, None, 8)]
     net = GradNetWrtX(ResizeNearestNeighbor())
     comm_func(dynamic_range, input_shape, data_type, net)
