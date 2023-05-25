@@ -802,11 +802,11 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             # get process memory usage
             process = psutil.Process(os.getpid())
             process_memory = process.memory_info().rss
-            sys_memory_free = psutil.virtual_memory().free
+            sys_memory_available = psutil.virtual_memory().available
 
             total_memory_maybe_used = process_memory * self.num_parallel_workers * valid_num_shards
-            if total_memory_maybe_used / sys_memory_free > 0.85:
-                valid_num_worker = math.floor(sys_memory_free * 0.85 / valid_num_shards / process_memory)
+            if total_memory_maybe_used / sys_memory_available > 0.85:
+                valid_num_worker = math.floor(sys_memory_available * 0.85 / valid_num_shards / process_memory)
                 valid_num_worker = 1 if valid_num_worker <= 0 else valid_num_worker
                 info = "GeneratorDataset's num_parallel_workers: {} is too large which may cause a lot of memory " \
                        "occupation (>85%) or out of memory(OOM) during multiprocessing. Therefore, it is recommended " \
