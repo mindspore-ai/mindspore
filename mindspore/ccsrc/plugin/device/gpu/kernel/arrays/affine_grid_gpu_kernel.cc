@@ -184,14 +184,11 @@ int AffineGridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (!CheckShapeOfOutputs(outputs)) {
     return KRET_RESIZE_FAILED;
   }
-  if (grid_dim_ == AffineGridDim::spatial) {
-    // We use cudnn here. However, cudnn does not support align_corners, we transform thetas as an alternative.
-    workspace_size_list_ = {input_size_list_[0]};
-  } else {
-    size_t base_grid_size = std::accumulate(grid_shape_.begin() + 1, grid_shape_.end() - 1, 0L);  // H+W or D+H+W
-    size_t wrapped_grid_size = grid_shape_.front() * base_grid_size * grid_shape_.back();  // N*(H+W)*2 or N*(D+H+W)*3
-    workspace_size_list_ = {(base_grid_size + wrapped_grid_size) * data_type_bytes_};
-  }
+
+  size_t base_grid_size = std::accumulate(grid_shape_.begin() + 1, grid_shape_.end() - 1, 0L);  // H+W or D+H+W
+  size_t wrapped_grid_size = grid_shape_.front() * base_grid_size * grid_shape_.back();  // N*(H+W)*2 or N*(D+H+W)*3
+  workspace_size_list_ = {(base_grid_size + wrapped_grid_size) * data_type_bytes_};
+
   return KRET_OK;
 }
 
