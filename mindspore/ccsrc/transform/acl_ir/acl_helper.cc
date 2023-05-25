@@ -181,7 +181,6 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  // TODO(acl): for excuded nodes, acl have some bugs
   static const std::set<std::string> excuded_nodes = {prim::kCTCLoss};
   std::string name = GetCNodeFuncName(cnode);
   if (excuded_nodes.count(name) != 0) {
@@ -206,7 +205,6 @@ namespace {
 void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const AclAdapterInfo &acl_info,
                        const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
                        std::vector<std::string> *input_reshape_types) {
-  // TODO(DYNAMIC)
   auto input_info = acl_info.inputs();
   for (size_t i = 0; i < input_num; ++i) {
     auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
