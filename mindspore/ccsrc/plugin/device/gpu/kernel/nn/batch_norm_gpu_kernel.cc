@@ -20,6 +20,8 @@
 #include <utility>
 #include <memory>
 #include "mindspore/core/ops/batch_norm.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -68,22 +70,35 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               epsilon_),
       "Kernel launch failed");
   }
+  if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+    SiLUOpt(y, y, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+  }
   return true;
 }
 
 bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
   auto kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNorm>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "Cast BatchNorm failed!";
     return false;
   }
+  auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
+  if (activation_type_attr != nullptr) {
+    activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
+  }
+
   if (kernel_name_ == kBatchNormOpName) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-  } else if (kernel_name_ == kBatchNormWithActivation) {
+  } else if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::RELU) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
+  } else if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
+    // batch_norm + silu cuda kernel fusion
+    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
   } else if (kernel_name_ == kBatchNormWithAddAndActivation) {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
   } else {

@@ -89,6 +89,7 @@ class BatchNormGpuKernelMod : public NativeGpuKernelMod {
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
   void *cuda_stream_{nullptr};
+  ActivationType activation_type_ = NO_ACTIVATION;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -370,7 +370,9 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   // The fusion operator generates a new primitive and can't be supported in dynamic shape scene.
   if (!graph->is_dynamic_shape()) {
     pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+    pm->AddPass(std::make_shared<opt::BatchNormSiluFusion>());
     pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+    pm->AddPass(std::make_shared<opt::BatchNormSiluGradFusion>());
     pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
     pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
     pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());

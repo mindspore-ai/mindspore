@@ -26,6 +26,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "kernel/graph_kernel_info.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -92,6 +93,7 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
 
   auto prim = std::make_shared<Primitive>(kBatchNormWithActivation);
   MS_EXCEPTION_IF_NULL(prim);
+  prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::RELU)));
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, umonad};
   auto fused_batch_norm_with_relu = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_with_relu);

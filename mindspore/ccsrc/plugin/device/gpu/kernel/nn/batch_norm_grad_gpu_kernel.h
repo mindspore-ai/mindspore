@@ -39,6 +39,7 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -122,6 +123,8 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
   float beta_data_diff_;
+  void *cuda_stream_{nullptr};
+  ActivationType activation_type_ = NO_ACTIVATION;
 };
 }  // namespace kernel
 }  // namespace mindspore

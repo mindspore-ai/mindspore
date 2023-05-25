@@ -28,7 +28,9 @@
 #include "plugin/device/gpu/optimizer/apply_momentum_scale_fusion.h"
 #include "plugin/device/gpu/optimizer/apply_momentum_weight_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_relu_fusion.h"
+#include "plugin/device/gpu/optimizer/batch_norm_silu_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_relu_grad_fusion.h"
+#include "plugin/device/gpu/optimizer/batch_norm_silu_grad_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/post_batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_grad_fusion.h"
@@ -179,7 +181,9 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormSiluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormSiluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
   pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());

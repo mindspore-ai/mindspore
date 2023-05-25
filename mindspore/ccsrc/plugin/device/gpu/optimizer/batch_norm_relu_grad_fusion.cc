@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "utils/ms_context.h"
 #include "kernel/graph_kernel_info.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -92,6 +93,7 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
 
   auto prim = std::make_shared<Primitive>(kBatchNormGradWithActivation);
   MS_EXCEPTION_IF_NULL(prim);
+  prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::RELU)));
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
   auto fused_batch_norm_grad_with_relu = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_grad_with_relu);
