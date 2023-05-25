@@ -477,7 +477,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
             'all' will read from all 1,0948 samples. Default: None, read all samples.
         num_samples (int, optional): Number of samples (rows) to be read. Default: None, read the full dataset.
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Default: `mindspore.dataset.Shuffle.GLOBAL` .
+            Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
