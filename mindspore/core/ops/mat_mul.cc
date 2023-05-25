@@ -116,12 +116,35 @@ class MatMulInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    constexpr auto kMatMulInputNum = 2;
     auto op_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
+                                             kMatMulInputNum, op_name);
     auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(x->element());
+    MS_EXCEPTION_IF_NULL(x->element()->GetTypeTrack());
+    auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+    MS_EXCEPTION_IF_NULL(y);
+    MS_EXCEPTION_IF_NULL(y->element());
+    MS_EXCEPTION_IF_NULL(y->element()->GetTypeTrack());
+
     TypePtr x_type = x->element()->GetTypeTrack();
     if (x_type->type_id() == TypeId::kNumberTypeInt8) {
       x_type = kInt32;
     }
+    TypePtr y_type = y->element()->GetTypeTrack();
+    if (y_type->type_id() == TypeId::kNumberTypeInt8) {
+      y_type = kInt32;
+    }
+
+    if (x_type->type_id() != y_type->type_id()) {
+      MS_EXCEPTION(TypeError) << "For '" << op_name
+                              << "', the type of 'x2' should be same as 'x1', but got 'x1' with type "
+                              << x_type->type_name() << " and 'x2' with type " << y_type->type_name() << ".";
+    }
+
     if (primitive->HasAttr("cast_type")) {
       auto out_type = primitive->GetAttr("cast_type");
       MS_EXCEPTION_IF_NULL(out_type);
