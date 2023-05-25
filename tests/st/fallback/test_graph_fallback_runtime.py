@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
+import os
 import math
 from functools import reduce
 import pytest
@@ -1343,3 +1344,89 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
         input_x = Tensor(np.arange(6).reshape(3, 2).astype(np.float32))
         net(input_x)
     assert "does not match the shape" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_save_with_args():
+    """
+    Feature: Fallback runtime.
+    Description: Test numpy.save() and isolated side effect for top args.
+    Expectation: No error.
+    """
+    def _save_tensor(data):
+        np.save("data_from_args.npy", data.asnumpy())
+
+    class NpSaveWithArgsNet(nn.Cell):
+        def construct(self, *args):
+            x = args[0]
+            _save_tensor(x)
+            return x
+
+    x = ms.Tensor(np.array([-0.5962, 0.4985, 0.2349, -0.4396, 0.4525]), ms.float32)
+    net = NpSaveWithArgsNet()
+    output = net(x)
+    print(f'output: {output}')
+    x_load = np.load("data_from_args.npy")
+    assert np.all(x_load == x.asnumpy())
+    os.remove("data_from_args.npy")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_save_with_call_kw1():
+    """
+    Feature: Fallback runtime.
+    Description: Test numpy.save() and isolated side effect for calling kw function.
+    Expectation: No error.
+    """
+    def _save_tensor(data):
+        np.save("data_from_kw.npy", data.asnumpy())
+
+    class NpSaveWithCallKw(nn.Cell):
+        def construct(self, x):
+            _save_tensor(data=x)
+            return x
+
+    x = ms.Tensor(np.array([-0.5962, 0.4985, 0.2349, -0.4396, 0.4525]), ms.float32)
+    net = NpSaveWithCallKw()
+    output = net(x)
+    print(f'output: {output}')
+    x_load = np.load("data_from_kw.npy")
+    assert np.all(x_load == x.asnumpy())
+    os.remove("data_from_kw.npy")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_save_with_call_kw2():
+    """
+    Feature: Fallback runtime.
+    Description: Test numpy.save() and isolated side effect for calling kw function with if.
+    Expectation: No error.
+    """
+    def _save_tensor_with_if(data):
+        if True:  # pylint: disable=using-constant-test
+            np.save("data_from_kw_with_if.npy", data.asnumpy())
+
+    class NpSaveWithCallKw(nn.Cell):
+        def construct(self, x):
+            _save_tensor_with_if(data=x)
+            return x
+
+    x = ms.Tensor(np.array([-0.5962, 0.4985, 0.2349, -0.4396, 0.4525]), ms.float32)
+    net = NpSaveWithCallKw()
+    output = net(x)
+    print(f'output: {output}')
+    x_load = np.load("data_from_kw_with_if.npy")
+    assert np.all(x_load == x.asnumpy())
+    os.remove("data_from_kw_with_if.npy")
