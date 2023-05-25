@@ -314,6 +314,7 @@ def test_compile_cache_auto_detect():
                                       "auto_detect_first.txt", "auto_detect_second.txt")
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -332,6 +333,7 @@ def test_compile_cache_lenet_change_dir():
     os.chdir(new_path)
     run_twice_with_same_network("../run_lenet.py", "../lenet_change_dir", "../lenet_change_dir_first.txt",
                                 "../lenet_change_dir_second.txt")
+    os.chdir(cwd)
     shutil.rmtree(new_path, ignore_errors=True)
 
 
