@@ -9577,7 +9577,7 @@ class ApplyAdamWithAmsgradV2(Primitive):
             Default: ``False`` .
 
     Inputs:
-        - **var** (Parameter) - Variable to be updated. The data type can be float16 or float32.
+        - **var** (Parameter) - Variable to be updated. The data type can be float16, float32 or float64.
         - **m** (Parameter) - The 1st moment vector in the updating formula,
           the shape and data type value should be the same as `var`.
         - **v** (Parameter) - The 2nd moment vector in the updating formula,
@@ -9585,16 +9585,16 @@ class ApplyAdamWithAmsgradV2(Primitive):
         - **vhat** (Parameter) - :math:`\hat v_t` in the updating formula,
           the shape and data type value should be the same as `var`.
         - **beta1_power** (Union[float, Tensor]) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
-          with float16 or float32 data type.
+          with float16, float32 or float64 data type.
         - **beta2_power** (Union[float, Tensor]) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
-          with float16 or float32 data type.
-        - **lr** (Union[float, Tensor]) - Learning rate, with float16 or float32 data type.
+          with float16, float32 or float64 data type.
+        - **lr** (Union[float, Tensor]) - Learning rate, with float16, float32 or float64 data type.
         - **beta1** (Union[float, Tensor]) - Exponential decay rate of the first moment.
-          The data type can be float16 or float32.
+          The data type can be float16, float32 or float64.
         - **beta2** (Union[float, Tensor]) - Exponential decay rate of the second moment.
-          The data type can be float16 or float32.
+          The data type can be float16, float32 or float64.
         - **epsilon** (Union[float, Tensor]) - A value added to the denominator to ensure numerical stability.
-          The data type can be float16 or float32.
+          The data type can be float16, float32 or float64.
         - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
 
     Outputs:
@@ -9608,7 +9608,7 @@ class ApplyAdamWithAmsgradV2(Primitive):
     Raises:
         TypeError: If `var`, `m`, `v`, `vhat` is not a Parameter.
         TypeError: If dtype of `var`, `m`, `v`, `vhat`, `beta1_power`, `beta2_power`,
-            `lr`, `beta1` , `beta2` , `epsilon` or `grad` is not float32 or float16.
+            `lr`, `beta1` , `beta2` , `epsilon` or `grad` is not float64, float32 or float16.
         RuntimeError: If the data type of `var`, `m`, `v` , `vhat` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
@@ -9643,8 +9643,8 @@ class ApplyAdamWithAmsgradV2(Primitive):
     >>> grad = Tensor(np.array([[0.4, 0.2], [0.2, 0.3]]).astype(np.float32))
     >>> output = net(grad)
     >>> print(net.var.asnumpy())
-    [[0.19908068 0.1985858 ]
-    [0.19844867 0.19849943]]
+    [[0.19886853 0.1985858 ]
+    [0.19853032 0.19849943]]
     """
 
     __mindspore_signature__ = (

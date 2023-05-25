@@ -67,6 +67,7 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         kSparseApplyFtrlOpName,
                                                         kRandomShuffleOpName,
                                                         kApplyAdamWithAmsgradOpName,
+                                                        kApplyAdamWithAmsgradV2OpName,
                                                         kApplyFtrlOpName,
                                                         prim::kMatrixBandPart,
                                                         prim::kGer,

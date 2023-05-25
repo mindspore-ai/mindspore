@@ -107,7 +107,7 @@ TuplePtr ApplyAdamWithAmsgradV2InferType(const PrimitivePtr &prim, const std::ve
   auto beta2_type = input_args[8]->BuildType();
   auto epsilon_type = input_args[9]->BuildType();
   auto grad_type = input_args[10]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // var, m, v, vhat, grad valid and must has the same type
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));

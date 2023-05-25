@@ -59,6 +59,7 @@ static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentSumOpNam
                                                         kApplyCenteredRMSPropOpName,
                                                         kRandomShuffleOpName,
                                                         kApplyAdamWithAmsgradOpName,
+                                                        kApplyAdamWithAmsgradV2OpName,
                                                         kApplyProximalAdagradOpName,
                                                         prim::kMatrixBandPart,
                                                         prim::kDiag,
