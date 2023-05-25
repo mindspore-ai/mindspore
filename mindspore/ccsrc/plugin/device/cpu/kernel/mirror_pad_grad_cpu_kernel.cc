@@ -140,9 +140,9 @@ void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<
   const size_t length = IntToSize(output_size_);
   auto copy_size = int64_t(sizeof(T)) * extents[dims_ - 1];
   for (size_t i = 0; i < length; i += extents[dims_ - 1]) {
-    std::vector<int64_t> pos(dims_, 0);
+    std::vector<int64_t> pos(LongToSize(dims_), 0);
     auto idx = i / extents[dims_ - 1];
-    for (int j = dims_ - 2; j >= 0; --j) {
+    for (int j = LongToInt(dims_ - 2); j >= 0; --j) {
       if (idx == 0) {
         break;
       }
