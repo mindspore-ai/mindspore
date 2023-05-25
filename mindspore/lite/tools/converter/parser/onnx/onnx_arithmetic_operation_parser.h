@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,6 +250,14 @@ class OnnxModParser : public OnnxNodeParser {
  public:
   OnnxModParser() : OnnxNodeParser("Mod") {}
   ~OnnxModParser() override = default;
+
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+};
+
+class OnnxGreaterEqualParser : public OnnxNodeParser {
+ public:
+  OnnxGreaterEqualParser() : OnnxNodeParser("GreaterEqual") {}
+  ~OnnxGreaterEqualParser() override = default;
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,10 @@ ADD_CONVERTER_ONLY_OP(Einsum);
 ADD_CONVERTER_ONLY_OP(QuantizeLinear);
 ADD_CONVERTER_ONLY_OP(DequantizeLinear);
 ADD_CONVERTER_ONLY_OP(FakeQuantWithMinMaxVars);
+ADD_CONVERTER_ONLY_OP(MegatronAllReduce);
+ADD_CONVERTER_ONLY_OP(MegatronLinearAllGather);
+ADD_CONVERTER_ONLY_OP(MegatronMakeViewlessTensor);
+ADD_CONVERTER_ONLY_OP(MegatronScaledMaskedSoftmax);
 }  // namespace lite
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,5 +173,6 @@ OnnxNodeRegistrar g_onnxSigmoidParser("Sigmoid", new OnnxSigmoidParser());
 OnnxNodeRegistrar g_onnxHardSigmoidParser("HardSigmoid", new OnnxHardSigmoidParser());
 OnnxNodeRegistrar g_onnxSoftPlusParser("Softplus", new OnnxSoftPlusParser());
 OnnxNodeRegistrar g_onnxGeluParser("Gelu", new OnnxGeluParser());
+OnnxNodeRegistrar g_onnxMegatronGeluParser("GeLUFunction", new OnnxGeluParser());
 }  // namespace lite
 }  // namespace mindspore

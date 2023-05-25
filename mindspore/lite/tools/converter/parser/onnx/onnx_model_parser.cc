@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
 #include "tools/converter/parser/onnx/onnx_einsum_adjust.h"
 #include "tools/converter/parser/onnx/onnx_quantize_linear_adjust.h"
+#include "tools/converter/parser/onnx/onnx_megatron_op_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/converter/parser/unify_format.h"
@@ -57,6 +58,11 @@ constexpr int kTensorsNumIndex = 2;
 int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converter::ConverterParameters &flag) {
   for (const auto &func_graph : all_func_graphs) {
     MS_ASSERT(func_graph != nullptr);
+    if (!OnnxMegatronOpAdjust::Adjust(func_graph, flag)) {
+      MS_LOG(ERROR) << "onnx magatron adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
     if (!OnnxInputAdjust::Adjust(func_graph, flag)) {
       MS_LOG(ERROR) << "onnx adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
