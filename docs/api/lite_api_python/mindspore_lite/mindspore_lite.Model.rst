@@ -44,28 +44,6 @@ mindspore_lite.Model
             - **RuntimeError** - 从 `config_path` 加载配置文件失败。
             - **RuntimeError** - 从文件加载并构建模型失败。
 
-    .. py:method:: build_multi_models(model_path0, model_path1, model_type, context, config_path)
-
-        用于加载共享权重的两个模型。Beta接口，后续可能会被删除。
-
-        参数：
-            - **model_path0** (str) - 第一个模型的文件路径。
-            - **model_path1** (str) - 第二个模型的文件路径。
-            - **model_type** (ModelType) - 输入模型的文件类型，当前仅支持 ``ModelType.MINDIR`` 。
-            - **context** (Context，可选) - 定义上下文，用于在执行期间传递选项。
-            - **config_path** (str，可选) - 定义配置文件的路径，用于在构建模型期间传递用户定义选项。
-
-        返回：
-            list[Model]，共享权重的两个Model对象。
-
-        异常：
-            - **TypeError** - `model_path0` 、 `model_path1` 或 `config_path` 不是str类型。
-            - **TypeError** - `model_type` 不是ModelType类型。
-            - **TypeError** - `context` 不是Context类型。
-            - **RuntimeError** - `model_path0` 、 `model_path1` 或 `config_path` 指定的文件不存在。
-            - **RuntimeError** - 加载 `config_path` 指定的配置失败。
-            - **RuntimeError** - 加载模型失败。
-
     .. py:method:: get_inputs()
 
         获取模型的所有输入Tensor。

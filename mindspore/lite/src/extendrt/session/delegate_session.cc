@@ -27,8 +27,6 @@
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "extendrt/utils/func_graph_utils.h"
-#include "extendrt/delegate/comm_group_info.h"
-#include "backend/common/session/executor.h"
 #include "common/common.h"
 
 namespace mindspore {
@@ -36,133 +34,12 @@ namespace {
 constexpr auto kAscendProviderGe = "ge";
 constexpr auto kDataFlowGraphType = "data_flow";
 constexpr auto kIsAdapted = "is_adapted";
-constexpr auto kHcclPluginFileName = "libhccl.so";
 
 std::mutex kernel_graph_mutex;
 std::mutex g_build_graph_mutex;
 }  // namespace
 
-typedef enum {
-  HCCL_SUCCESS = 0,              /**< success */
-  HCCL_E_PARA = 1,               /**< parameter error */
-  HCCL_E_PTR = 2,                /**< empty pointer */
-  HCCL_E_MEMORY = 3,             /**< memory error */
-  HCCL_E_INTERNAL = 4,           /**< internal error */
-  HCCL_E_NOT_SUPPORT = 5,        /**< not support feature */
-  HCCL_E_NOT_FOUND = 6,          /**< not found specific resource */
-  HCCL_E_UNAVAIL = 7,            /**< resource unavailable */
-  HCCL_E_SYSCALL = 8,            /**< call system interface error */
-  HCCL_E_TIMEOUT = 9,            /**< timeout */
-  HCCL_E_OPEN_FILE_FAILURE = 10, /**< open file fail */
-  HCCL_E_TCP_CONNECT = 11,       /**< tcp connect fail */
-  HCCL_E_ROCE_CONNECT = 12,      /**< roce connect fail */
-  HCCL_E_TCP_TRANSFER = 13,      /**< tcp transfer fail */
-  HCCL_E_ROCE_TRANSFER = 14,     /**< roce transfer fail */
-  HCCL_E_RUNTIME = 15,           /**< call runtime api fail */
-  HCCL_E_DRV = 16,               /**< call driver api fail */
-  HCCL_E_PROFILING = 17,         /**< call profiling api fail */
-  HCCL_E_CCE = 18,               /**< call cce api fail */
-  HCCL_E_NETWORK = 19,           /**< call network api fail */
-  HCCL_E_AGAIN = 20,             /**< try again */
-  HCCL_E_RESERVED                /**< reserved */
-} HcclResult;
-
-using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
-
-extern "C" {
-HcclResult HcomCreateGroup(const char *, uint32_t, uint32_t *);
-HcclResult HcomInitByFile(const char *, const char *);
-HcclResult HcomDestroy();
-}
-
-constexpr const char *kHcomCreateGroupName = "HcomCreateGroup";
-constexpr const char *kHcomInitByFileName = "HcomInitByFile";
-constexpr const char *kHcomDestroyName = "HcomDestroy";
-
-using HcomCreateGroupFunObj = std::function<HcclResult(const char *, uint32_t, uint32_t *)>;
-using HcomInitByFileFunObj = std::function<HcclResult(const char *, const char *)>;
-using HcomDestroyFunObj = std::function<HcclResult()>;
-using HcomCreateGroupFunPtr = HcclResult (*)(const char *, uint32_t, uint32_t *);
-using HcomInitByFileFunPtr = HcclResult (*)(const char *, const char *);
-using HcomDestroyFunPtr = HcclResult (*)();
-
-HcomCreateGroupFunObj HcomCreateGroup_;
-HcomInitByFileFunObj HcomInitByFile_;
-HcomDestroyFunObj HcomDestroy_;
-
-bool ge_initialize_ = true;
-bool init_hccl_exec_ = false;
-
-bool do_hccl_sym_load() {
-  void *libhccl = dlopen(kHcclPluginFileName, RTLD_DEEPBIND | RTLD_NOW | RTLD_LOCAL);
-  if (libhccl == nullptr) {
-    MS_LOG(ERROR) << "Dlopen libhccl" << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
-    return false;
-  }
-  HcomCreateGroup_ = DlsymWithCast<HcomCreateGroupFunPtr>(libhccl, kHcomCreateGroupName);
-  HcomInitByFile_ = DlsymWithCast<HcomInitByFileFunPtr>(libhccl, kHcomInitByFileName);
-  HcomDestroy_ = DlsymWithCast<HcomDestroyFunPtr>(libhccl, kHcomDestroyName);
-  if (HcomCreateGroup_ == nullptr || HcomInitByFile_ == nullptr || HcomDestroy_ == nullptr) {
-    MS_LOG(ERROR) << "Dlsys libhccl failed, result = " << GetDlErrorMsg();
-    return false;
-  }
-  return true;
-}
-
-bool load_hccl_symbols() {
-  static std::once_flag g_flag;
-  static bool ret = false;
-  std::call_once(g_flag, [] { ret = do_hccl_sym_load(); });
-  return ret;
-}
-
-bool InitHcclExec(const char *rankTablePath, const char *identify) {
-  if (ge_initialize_) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start init hccl exec.";
-  MS_EXCEPTION_IF_NULL(HcomInitByFile_);
-  HcclResult hccl_ret = HcomInitByFile_(rankTablePath, identify);
-  if (hccl_ret == HCCL_E_PTR) {
-    MS_LOG(WARNING) << "Hccl comm is null, hcom executor initialize is not required";
-  } else if (hccl_ret == HCCL_SUCCESS) {
-    MS_LOG(INFO) << "Hcom DynamicKernel Initialize success";
-  } else {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Initialize failed";
-    return false;
-  }
-  init_hccl_exec_ = true;
-  MS_LOG(INFO) << "InitHcclExec success";
-  return true;
-}
-
-bool FinalizeHcclExec() {
-  if (!init_hccl_exec_) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start finalize hccl exec.";
-  MS_EXCEPTION_IF_NULL(HcomDestroy_);
-  HcclResult hccl_ret = HcomDestroy_();
-  if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Finalize failed";
-    return false;
-  }
-  init_hccl_exec_ = false;
-  MS_LOG(INFO) << "HcclExec destroy success";
-  return true;
-}
-
-GraphSinkSession::~GraphSinkSession() {
-  graph_executor_ = nullptr;
-  if (is_use_ascend_ge_) {
-    lite::AscendGeExecutorPlugin::GetInstance().DestroyGeContext();
-    FinalizeHcclExec();
-  }
-}
-
-Status GraphSinkSession::GeDeviceContextInit(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
-  return lite::AscendGeExecutorPlugin::GetInstance().InitializeGeContext(context, config_info);
-}
+GraphSinkSession::~GraphSinkSession() = default;
 
 Status GraphSinkSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "GraphSinkSession::Init";
@@ -170,72 +47,8 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context, const Con
     MS_LOG(ERROR) << "GraphSinkSession::Init failed, graph executor is nullptr.";
     return kLiteUninitializedObj;
   }
-  auto device_list = context->MutableDeviceInfo();
-  for (const auto &device_info : device_list) {
-    if (device_info == nullptr) {
-      MS_LOG(ERROR) << "GraphSinkSession::Init failed, device info is nullptr.";
-      return kLiteUninitializedObj;
-    }
-    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
-      MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
-      is_use_ascend_ge_ = true;
-      auto ret = GeDeviceContextInit(context, config_info);
-      if (!ret) {
-        MS_LOG(ERROR) << "GraphSinkSession::Init failed, GE device context init failed.";
-        return kLiteError;
-      }
-
-      if (!load_hccl_symbols()) {
-        return kCoreFailed;
-      }
-      auto ascend_info = device_info->Cast<mindspore::AscendDeviceInfo>();
-      uint32_t device_id = ascend_info->GetDeviceID();
-      std::string rank_table_file = "";
-      if (config_info.empty() || config_info.find(lite::kAscendContextSection) == config_info.end()) {
-        MS_LOG(INFO) << "There is no ascend context info in config file.";
-      } else {
-        auto config_info_ascend = config_info.at(lite::kAscendContextSection);
-        if (config_info_ascend.find(lite::kRankTableFilePathKey) == config_info_ascend.end()) {
-          MS_LOG(INFO)
-            << "There is no rank table file in Ascend section of config file, distributed inference is not enabled."
-            << " If using distributed inference, make sure rank_table_file in the config file,"
-            << " device_id and rank_id are set in AscendDeviceInfo.";
-        } else {
-          rank_table_file = config_info_ascend[lite::kRankTableFilePathKey];
-          MS_LOG(INFO) << "Distributed inference is enabled, rank table file: " << rank_table_file;
-        }
-      }
-      auto device_id_s = std::to_string(device_id);
-      InitHcclExec(reinterpret_cast<const char *>(rank_table_file.c_str()),
-                   reinterpret_cast<const char *>(device_id_s.c_str()));
-
-      auto group_info_file = context->GetGroupInfoFile();
-      if (!group_info_file.empty()) {
-        MS_LOG(INFO) << "Get env group_info"
-                     << " success: " << group_info_file;
-        GroupInfoMap group_info_map;
-        lite::CommGroupInfo comm_group_info;
-
-        if (!comm_group_info.LoadGroupInfo(group_info_file, &group_info_map)) {
-          MS_LOG(ERROR) << "LoadGroupInfo failed.";
-          return kMEInvalidInput;
-        }
-        for (const auto &[group_name, rank_ids] : group_info_map) {
-          MS_LOG(INFO) << "group_name" << group_name << "rank_ids" << rank_ids;
-          auto rank_size = rank_ids.size();
-          auto res = HcomCreateGroup_(reinterpret_cast<const char *>(group_name.c_str()), UlongToUint(rank_size),
-                                      std::vector<unsigned int>(rank_ids).data());
-          if (res != HCCL_SUCCESS) {
-            MS_LOG(ERROR) << "Create group " << group_name << " rank ids " << rank_ids << " failed.";
-            return kMEInvalidInput;
-          }
-        }
-        MS_LOG(INFO) << "Create groups by checkpoint file success ";
-      }
-      break;
-    }
-  }
   context_ = context;
+  config_infos_ = config_info;
   return kSuccess;
 }
 
@@ -559,10 +372,11 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
     return nullptr;
   }
   auto session = std::make_shared<GraphSinkSession>(delegate);
-  if (provider != kAscendProviderGe) {
-    session->Init(ctx);
+  auto ret = session->Init(ctx, config_infos);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
+    return nullptr;
   }
-  session->SetConfigInfo(config_infos);
   return session;
 }
 REG_SESSION(kDelegateSession, DelegateSessionCreator);

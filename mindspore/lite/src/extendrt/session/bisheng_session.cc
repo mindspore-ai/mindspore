@@ -293,16 +293,15 @@ static std::shared_ptr<InferSession> BishengSessionCreator(const std::shared_ptr
   if (device_contexts.empty()) {
     return nullptr;
   }
-  auto provider = device_contexts.at(0)->GetProvider();
-
   auto delegate = std::make_shared<mindspore::BishengDelegate>();
   if (delegate == nullptr) {
     return nullptr;
   }
   auto session = std::make_shared<BishengSession>(delegate);
-  constexpr auto kAscendProviderBisheng = "bisheng";
-  if (provider != kAscendProviderBisheng) {
-    session->Init(ctx);
+  auto ret = session->Init(ctx, config_infos);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
+    return nullptr;
   }
   return session;
 }

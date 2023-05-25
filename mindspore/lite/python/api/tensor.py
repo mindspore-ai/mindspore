@@ -175,6 +175,21 @@ data_type_cxx_py_map = {
     _c_lite_wrapper.DataType.kInvalidType: DataType.INVALID,
 }
 
+numpy_data_type_map = {
+    numpy.bool_: DataType.BOOL,
+    numpy.int8: DataType.INT8,
+    numpy.int16: DataType.INT16,
+    numpy.int32: DataType.INT32,
+    numpy.int64: DataType.INT64,
+    numpy.uint8: DataType.UINT8,
+    numpy.uint16: DataType.UINT16,
+    numpy.uint32: DataType.UINT32,
+    numpy.uint64: DataType.UINT64,
+    numpy.float16: DataType.FLOAT16,
+    numpy.float32: DataType.FLOAT32,
+    numpy.float64: DataType.FLOAT64,
+}
+
 format_py_cxx_map = {
     Format.DEFAULT: _c_lite_wrapper.Format.DEFAULT_FORMAT,
     Format.NCHW: _c_lite_wrapper.Format.NCHW,
@@ -263,11 +278,21 @@ class Tensor:
 
     def __init__(self, tensor=None):
         if tensor is not None:
-            if not isinstance(tensor, _c_lite_wrapper.TensorBind):
-                raise TypeError(f"tensor must be MindSpore Lite's Tensor._tensor, but got {type(tensor)}.")
-            self._tensor = tensor
+            if isinstance(tensor, _c_lite_wrapper.TensorBind):
+                self._tensor = tensor
+            elif isinstance(tensor, numpy.ndarray):
+                shape = tensor.shape
+                dtype = tensor.dtype
+                if dtype.type not in numpy_data_type_map:
+                    raise TypeError(f"Unsupported numpy dtype value {dtype}")
+                dtype = numpy_data_type_map.get(dtype.type)
+                self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(dtype), shape)
+                self.set_data_from_numpy(tensor)
+            else:
+                raise TypeError(
+                    f"tensor must be MindSpore Lite's Tensor._tensor or numpy ndarray, but got {type(tensor)}.")
         else:
-            self._tensor = _c_lite_wrapper.create_tensor()
+            self._tensor = _c_lite_wrapper.create_tensor(data_type_py_cxx_map.get(DataType.FLOAT32), ())
 
     def __str__(self):
         res = f"name: {self.name},\n" \
@@ -399,8 +424,8 @@ class Tensor:
             TypeError: `shape` is not a list.
             TypeError: `shape` is a list, but the elements is not int.
         """
-        if not isinstance(shape, list):
-            raise TypeError(f"shape must be list, but got {type(shape)}.")
+        if not isinstance(shape, (list, tuple)):
+            raise TypeError(f"shape must be list or tuple, but got {type(shape)}.")
         for i, element in enumerate(shape):
             if not isinstance(element, int):
                 raise TypeError(f"shape element must be int, but got {type(element)} at index {i}.")
@@ -480,21 +505,9 @@ class Tensor:
             raise TypeError(f"numpy_obj must be numpy.ndarray, but got {type(numpy_obj)}.")
         if not numpy_obj.flags['FORC']:
             numpy_obj = numpy.ascontiguousarray(numpy_obj)
-        data_type_map = {
-            numpy.bool_: DataType.BOOL,
-            numpy.int8: DataType.INT8,
-            numpy.int16: DataType.INT16,
-            numpy.int32: DataType.INT32,
-            numpy.int64: DataType.INT64,
-            numpy.uint8: DataType.UINT8,
-            numpy.uint16: DataType.UINT16,
-            numpy.uint32: DataType.UINT32,
-            numpy.uint64: DataType.UINT64,
-            numpy.float16: DataType.FLOAT16,
-            numpy.float32: DataType.FLOAT32,
-            numpy.float64: DataType.FLOAT64,
-        }
-        if data_type_map.get(numpy_obj.dtype.type) != self.dtype:
+        if numpy_obj.dtype.type not in numpy_data_type_map:
+            raise TypeError(f"Unsupported numpy dtype value {numpy_obj.dtype}")
+        if numpy_data_type_map.get(numpy_obj.dtype.type) != self.dtype:
             raise RuntimeError(
                 f"data type not equal! Numpy type: {numpy_obj.dtype.type}, Tensor type: {self.dtype}")
         if numpy_obj.nbytes != self.data_size:

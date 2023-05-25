@@ -29,10 +29,7 @@ AscendGeExecutorPlugin::AscendGeExecutorPlugin() = default;
 AscendGeExecutorPlugin::~AscendGeExecutorPlugin() {
 #if !defined(_WIN32)
   MS_LOG(DEBUG) << "~AscendGeExecutorPlugin() begin.";
-  if (ge_plugin_impl_ != nullptr) {
-    delete ge_plugin_impl_;
-    ge_plugin_impl_ = nullptr;
-  }
+  ge_plugin_impl_ = nullptr;
   DLSoClose(handle_);
   MS_LOG(DEBUG) << "~AscendGeExecutorPlugin() end.";
 #endif
@@ -65,7 +62,7 @@ bool AscendGeExecutorPlugin::Register() {
     MS_LOG(ERROR) << "Cast " << kFunCreateAscendGePluginImpl << " failed.";
     return false;
   }
-  ge_plugin_impl_ = create_plugin_impl_func();
+  ge_plugin_impl_ = std::shared_ptr<AscendGeExecutorPluginImplBase>(create_plugin_impl_func());
   if (ge_plugin_impl_ == nullptr) {
     MS_LOG(ERROR) << "Create Ascend ge plugin implement failed.";
     return false;
@@ -74,29 +71,6 @@ bool AscendGeExecutorPlugin::Register() {
   MS_LOG(INFO) << "Register Ascend ge plugin success.";
 #endif
   return true;
-}
-
-Status AscendGeExecutorPlugin::InitializeGeContext(const std::shared_ptr<Context> &context,
-                                                   const ConfigInfos &config_info) {
-  Status ret = kSuccess;
-#if !defined(_WIN32)
-  if (!is_registered_ || ge_plugin_impl_ == nullptr) {
-    MS_LOG(ERROR) << "The Ascend ge executor is not registered.";
-    return kLiteError;
-  }
-  ret = ge_plugin_impl_->AscendGeDeviceContextInitialize(context, config_info);
-#endif
-  return ret;
-}
-
-void AscendGeExecutorPlugin::DestroyGeContext() {
-#if !defined(_WIN32)
-  if (!is_registered_ || ge_plugin_impl_ == nullptr) {
-    MS_LOG(ERROR) << "The Ascend ge executor is not registered.";
-    return;
-  }
-  ge_plugin_impl_->AscendGeDeviceContextDestroy();
-#endif
 }
 
 void AscendGeExecutorPlugin::AdaptGraph(FuncGraphPtr graph) {

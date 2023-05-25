@@ -16,6 +16,8 @@
 
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
 #include <cxxabi.h>
+#include <utility>
+#include <vector>
 #include "include/common/utils/scoped_long_running.h"
 #include "include/api/context.h"
 #include "include/api/status.h"
@@ -26,14 +28,240 @@
 #include "runtime/config.h"
 #include "common/config_infos.h"
 #include "common/common.h"
+#include "extendrt/delegate/comm_group_info.h"
+#include "backend/common/session/executor.h"
 
 namespace mindspore {
-Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
-  MsContext::GetInstance()->set_backend_policy("ge");
-  return InitGe(MsContext::GetInstance(), context, config_info);
+constexpr auto kHcclPluginFileName = "libhccl.so";
+
+typedef enum {
+  HCCL_SUCCESS = 0,              /**< success */
+  HCCL_E_PARA = 1,               /**< parameter error */
+  HCCL_E_PTR = 2,                /**< empty pointer */
+  HCCL_E_MEMORY = 3,             /**< memory error */
+  HCCL_E_INTERNAL = 4,           /**< internal error */
+  HCCL_E_NOT_SUPPORT = 5,        /**< not support feature */
+  HCCL_E_NOT_FOUND = 6,          /**< not found specific resource */
+  HCCL_E_UNAVAIL = 7,            /**< resource unavailable */
+  HCCL_E_SYSCALL = 8,            /**< call system interface error */
+  HCCL_E_TIMEOUT = 9,            /**< timeout */
+  HCCL_E_OPEN_FILE_FAILURE = 10, /**< open file fail */
+  HCCL_E_TCP_CONNECT = 11,       /**< tcp connect fail */
+  HCCL_E_ROCE_CONNECT = 12,      /**< roce connect fail */
+  HCCL_E_TCP_TRANSFER = 13,      /**< tcp transfer fail */
+  HCCL_E_ROCE_TRANSFER = 14,     /**< roce transfer fail */
+  HCCL_E_RUNTIME = 15,           /**< call runtime api fail */
+  HCCL_E_DRV = 16,               /**< call driver api fail */
+  HCCL_E_PROFILING = 17,         /**< call profiling api fail */
+  HCCL_E_CCE = 18,               /**< call cce api fail */
+  HCCL_E_NETWORK = 19,           /**< call network api fail */
+  HCCL_E_AGAIN = 20,             /**< try again */
+  HCCL_E_RESERVED                /**< reserved */
+} HcclResult;
+
+using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
+
+extern "C" {
+HcclResult HcomCreateGroup(const char *, uint32_t, uint32_t *);
+HcclResult HcomInitByFile(const char *, const char *);
+HcclResult HcomDestroy();
 }
 
-void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
+constexpr const char *kHcomCreateGroupName = "HcomCreateGroup";
+constexpr const char *kHcomInitByFileName = "HcomInitByFile";
+constexpr const char *kHcomDestroyName = "HcomDestroy";
+
+using HcomCreateGroupFunObj = std::function<HcclResult(const char *, uint32_t, uint32_t *)>;
+using HcomInitByFileFunObj = std::function<HcclResult(const char *, const char *)>;
+using HcomDestroyFunObj = std::function<HcclResult()>;
+using HcomCreateGroupFunPtr = HcclResult (*)(const char *, uint32_t, uint32_t *);
+using HcomInitByFileFunPtr = HcclResult (*)(const char *, const char *);
+using HcomDestroyFunPtr = HcclResult (*)();
+
+HcomCreateGroupFunObj HcomCreateGroup_;
+HcomInitByFileFunObj HcomInitByFile_;
+HcomDestroyFunObj HcomDestroy_;
+
+bool ge_initialize_ = true;
+bool init_hccl_exec_ = false;
+
+bool do_hccl_sym_load() {
+  void *libhccl = dlopen(kHcclPluginFileName, RTLD_DEEPBIND | RTLD_NOW | RTLD_LOCAL);
+  if (libhccl == nullptr) {
+    MS_LOG(ERROR) << "Dlopen libhccl" << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
+    return false;
+  }
+  HcomCreateGroup_ = DlsymWithCast<HcomCreateGroupFunPtr>(libhccl, kHcomCreateGroupName);
+  HcomInitByFile_ = DlsymWithCast<HcomInitByFileFunPtr>(libhccl, kHcomInitByFileName);
+  HcomDestroy_ = DlsymWithCast<HcomDestroyFunPtr>(libhccl, kHcomDestroyName);
+  if (HcomCreateGroup_ == nullptr || HcomInitByFile_ == nullptr || HcomDestroy_ == nullptr) {
+    MS_LOG(ERROR) << "Dlsys libhccl failed, result = " << GetDlErrorMsg();
+    return false;
+  }
+  return true;
+}
+
+bool load_hccl_symbols() {
+  static std::once_flag g_flag;
+  static bool ret = false;
+  std::call_once(g_flag, [] { ret = do_hccl_sym_load(); });
+  return ret;
+}
+
+bool InitHcclExec(const std::string &rank_table_path, const std::string &identify) {
+  if (ge_initialize_) {
+    return true;
+  }
+  MS_LOG(INFO) << "Start init hccl exec.";
+  MS_EXCEPTION_IF_NULL(HcomInitByFile_);
+  HcclResult hccl_ret = HcomInitByFile_(rank_table_path.c_str(), identify.c_str());
+  if (hccl_ret == HCCL_E_PTR) {
+    MS_LOG(WARNING) << "Hccl comm is null, hcom executor initialize is not required";
+  } else if (hccl_ret == HCCL_SUCCESS) {
+    MS_LOG(INFO) << "Hcom DynamicKernel Initialize success";
+  } else {
+    MS_LOG(ERROR) << "Hcom DynamicKernel Initialize failed";
+    return false;
+  }
+  init_hccl_exec_ = true;
+  MS_LOG(INFO) << "InitHcclExec success";
+  return true;
+}
+
+bool FinalizeHcclExec() {
+  if (!init_hccl_exec_) {
+    return true;
+  }
+  MS_LOG(INFO) << "Start finalize hccl exec.";
+  MS_EXCEPTION_IF_NULL(HcomDestroy_);
+  HcclResult hccl_ret = HcomDestroy_();
+  if (hccl_ret != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "Hcom DynamicKernel Finalize failed";
+    return false;
+  }
+  init_hccl_exec_ = false;
+  MS_LOG(INFO) << "HcclExec destroy success";
+  return true;
+}
+
+std::weak_ptr<GeDeviceContext> GeDeviceContext::global_ge_context_;
+std::mutex GeDeviceContext::global_ge_context_mutex_;
+
+GeDeviceContext::GeDeviceContext() = default;
+
+GeDeviceContext::~GeDeviceContext() { Destroy(); }
+
+std::shared_ptr<GeDeviceContext> GeDeviceContext::InitGlobalContext(const std::shared_ptr<Context> &context,
+                                                                    const ConfigInfos &config_info) {
+  std::lock_guard<std::mutex> lock(global_ge_context_mutex_);
+  auto ge_context = global_ge_context_.lock();
+  if (ge_context != nullptr) {
+    MS_LOG(INFO) << "GE Context has been initialized, skip.";
+  } else {
+    ge_context = std::make_shared<GeDeviceContext>();
+    if (!ge_context) {
+      MS_LOG(ERROR) << "Failed to create GeDeviceContext";
+      return nullptr;
+    }
+    auto status = ge_context->Initialize(context, config_info);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "Failed to initialize GeDeviceContext";
+      return nullptr;
+    }
+    global_ge_context_ = ge_context;
+    MS_LOG(INFO) << "Init global ge context success.";
+  }
+  return ge_context;
+}
+
+std::shared_ptr<AscendDeviceInfo> GeDeviceContext::GetGeAscendDeviceInfo(const std::shared_ptr<Context> &context) {
+  auto device_list = context->MutableDeviceInfo();
+  auto ascend_info_iter = std::find_if(
+    device_list.begin(), device_list.end(), [&](std::shared_ptr<mindspore::DeviceInfoContext> &device_info) {
+      return (device_info && device_info->GetDeviceType() == kAscend && device_info->GetProvider() == "ge");
+    });
+  if (ascend_info_iter == device_list.end()) {
+    MS_LOG(ERROR) << "AscendDeviceInfo is not set. If using distributed inference, make sure device_id "
+                     "and rank_id are set in AscendDeviceInfo";
+    return nullptr;
+  }
+  auto device_info = *(ascend_info_iter);
+  return device_info->Cast<mindspore::AscendDeviceInfo>();
+}
+
+Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
+  MsContext::GetInstance()->set_backend_policy("ge");
+  auto status = InitGe(MsContext::GetInstance(), context, config_info);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Failed to Init GE";
+    return status;
+  }
+  status = InitHccl(context, config_info);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Failed to Init HCCL";
+    return status;
+  }
+  return kSuccess;
+}
+
+void GeDeviceContext::Destroy() {
+  (void)FinalizeGe(MsContext::GetInstance());
+  FinalizeHcclExec();
+}
+
+Status GeDeviceContext::InitHccl(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
+  if (!load_hccl_symbols()) {
+    return kCoreFailed;
+  }
+  auto ascend_info = GetGeAscendDeviceInfo(context);
+  if (ascend_info == nullptr) {
+    MS_LOG(ERROR) << "Failed to Get AscendDeviceInfo from context";
+    return kCoreFailed;
+  }
+  uint32_t device_id = ascend_info->GetDeviceID();
+  std::string rank_table_file = "";
+  if (config_info.empty() || config_info.find(lite::kAscendContextSection) == config_info.end()) {
+    MS_LOG(INFO) << "There is no ascend context info in config file.";
+  } else {
+    auto config_info_ascend = config_info.at(lite::kAscendContextSection);
+    if (config_info_ascend.find(lite::kRankTableFilePathKey) == config_info_ascend.end()) {
+      MS_LOG(INFO)
+        << "There is no rank table file in Ascend section of config file, distributed inference is not enabled."
+        << " If using distributed inference, make sure rank_table_file in the config file,"
+        << " device_id and rank_id are set in AscendDeviceInfo.";
+    } else {
+      rank_table_file = config_info_ascend[lite::kRankTableFilePathKey];
+      MS_LOG(INFO) << "Distributed inference is enabled, rank table file: " << rank_table_file;
+    }
+  }
+  auto device_id_s = std::to_string(device_id);
+  InitHcclExec(rank_table_file, device_id_s);
+
+  auto group_info_file = context->GetGroupInfoFile();
+  if (!group_info_file.empty()) {
+    MS_LOG(INFO) << "Get env group_info"
+                 << " success: " << group_info_file;
+    GroupInfoMap group_info_map;
+    lite::CommGroupInfo comm_group_info;
+
+    if (!comm_group_info.LoadGroupInfo(group_info_file, &group_info_map)) {
+      MS_LOG(ERROR) << "LoadGroupInfo failed.";
+      return kMEInvalidInput;
+    }
+    for (const auto &[group_name, rank_ids] : group_info_map) {
+      MS_LOG(INFO) << "group_name" << group_name << "rank_ids" << rank_ids;
+      auto rank_size = rank_ids.size();
+      auto res = HcomCreateGroup_(reinterpret_cast<const char *>(group_name.c_str()), UlongToUint(rank_size),
+                                  std::vector<unsigned int>(rank_ids).data());
+      if (res != HCCL_SUCCESS) {
+        MS_LOG(ERROR) << "Create group " << group_name << " rank ids " << rank_ids << " failed.";
+        return kMEInvalidInput;
+      }
+    }
+    MS_LOG(INFO) << "Create groups by checkpoint file success ";
+  }
+  return kSuccess;
+}
 
 Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
                                const ConfigInfos &config_info) {
@@ -169,17 +397,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
 void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
                                      std::map<std::string, std::string> *ge_options, const ConfigInfos &config_info) {
-  auto device_list = context->MutableDeviceInfo();
-  auto ascend_info_iter = std::find_if(
-    device_list.begin(), device_list.end(),
-    [&](std::shared_ptr<mindspore::DeviceInfoContext> &device_info) { return (device_info->GetProvider() == "ge"); });
-  if (ascend_info_iter == device_list.end()) {
-    MS_LOG(ERROR) << "AscendDeviceInfo is not set. If using distributed inference, make sure device_id "
-                     "and rank_id are set in AscendDeviceInfo";
+  auto ascend_info = GetGeAscendDeviceInfo(context);
+  if (ascend_info == nullptr) {
+    MS_LOG(ERROR) << "Failed to Get AscendDeviceInfo from context";
     return;
   }
-  auto device_info = *(ascend_info_iter);
-  auto ascend_info = device_info->Cast<mindspore::AscendDeviceInfo>();
   std::string rank_table_file = "";
   uint32_t device_id = ascend_info->GetDeviceID();
   uint32_t rank_id = ascend_info->GetRankID();

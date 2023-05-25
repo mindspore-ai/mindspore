@@ -23,8 +23,8 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-ModelGroup::ModelGroup() {
-  impl_ = std::make_shared<ModelGroupImpl>();
+ModelGroup::ModelGroup(ModelGroupFlag flags) {
+  impl_ = std::make_shared<ModelGroupImpl>(flags);
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "New model group impl_ failed.";
   }
@@ -44,6 +44,11 @@ Status ModelGroup::AddModel(const std::vector<std::pair<const void *, size_t>> &
     return kLiteUninitializedObj;
   }
   return impl_->AddModel(model_buff_list);
+}
+
+Status ModelGroup::AddModel(const std::vector<Model> &models) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kLiteNotSupport;
 }
 
 Status ModelGroup::CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context) {

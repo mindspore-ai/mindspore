@@ -304,7 +304,11 @@ std::vector<tensor::TensorPtr> LiteInferSession::ConvertToTensors(
 static std::shared_ptr<InferSession> LiteInferSessionCreator(const std::shared_ptr<Context> &ctx,
                                                              const ConfigInfos &config_infos) {
   auto session = std::make_shared<LiteInferSession>();
-  session->Init(ctx);
+  auto ret = session->Init(ctx, config_infos);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
+    return nullptr;
+  }
   return session;
 }
 REG_SESSION(kLiteInferSession, LiteInferSessionCreator);

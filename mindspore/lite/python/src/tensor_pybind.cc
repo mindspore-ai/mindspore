@@ -107,8 +107,8 @@ void TensorPyBind(const py::module &m) {
     });
 }
 
-MSTensorPtr create_tensor() {
-  auto tensor = mindspore::MSTensor::CreateTensor("", DataType::kNumberTypeFloat32, {}, nullptr, 0);
+MSTensorPtr create_tensor(DataType data_type, const std::vector<int64_t> &shape) {
+  auto tensor = mindspore::MSTensor::CreateTensor("", data_type, shape, nullptr, 0);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "create tensor failed.";
     return {};

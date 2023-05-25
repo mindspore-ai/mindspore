@@ -183,6 +183,7 @@ inline bool StartsWithPrefix(const std::string &source, const std::string &prefi
 std::vector<std::string> StrSplit(const std::string &str, const std::string &pattern);
 
 bool ConvertStrToInt(const std::string &str, int *value);
+bool ConvertStrToInt(const std::string &str, int64_t *value);
 
 bool ParseShapeStr(const std::string &shape_str, std::vector<int64_t> *shape_ptr);
 

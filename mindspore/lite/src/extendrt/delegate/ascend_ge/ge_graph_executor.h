@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <set>
 
 #include "include/api/context.h"
 #include "include/model.h"
@@ -27,6 +28,7 @@
 #include "extendrt/session/lite_graph_executor.h"
 #include "common/config_infos.h"
 #include "include/transform/graph_ir/utils.h"
+#include "extendrt/delegate/ascend_ge/ge_device_context.h"
 
 namespace mindspore {
 class GeGraphExecutor : public LiteGraphExecutor {
@@ -48,18 +50,24 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
   std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
+  bool Init();
 
  private:
   const std::shared_ptr<mindspore::Context> context_;
   ConfigInfos config_infos_;
   std::shared_ptr<ge::Session> ge_session_ = nullptr;
+  int64_t session_id_ = -1;
   std::vector<uint32_t> init_graph_id_list_;
   std::vector<uint32_t> compute_graph_id_list_;
+
+  std::shared_ptr<GeDeviceContext> ge_global_context_ = nullptr;
 
   std::shared_ptr<AscendDeviceInfo> GetAscendDeviceInfo();
   void GetGeGraphOptions(const FuncGraphPtr &anf_graph, std::map<std::string, std::string> *ge_options);
   void GetGeSessionOptions(std::map<std::string, std::string> *ge_options);
   bool CreateSession();
+  int64_t GetSessionId();
+  transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph);
 
   bool AddGraph(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &options,
                 uint32_t *graph_id);
@@ -76,6 +84,26 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
   std::map<uint32_t, std::vector<tensor::TensorPtr>> original_graph_outputs_;
+};
+
+struct GeSessionContext {
+  std::weak_ptr<ge::Session> ge_session;
+  std::map<std::string, std::string> session_options;
+  std::set<std::string> session_variables;
+};
+
+class GeSessionManager {
+ public:
+  static std::shared_ptr<ge::Session> CreateGeSession(int64_t session_id,
+                                                      const std::map<std::string, std::string> &session_options);
+  // return new Variables not in session
+  static std::set<std::string> UpdateSessionVariables(int64_t session_id,
+                                                      const std::vector<std::string> &graph_variables);
+  static void TryReleaseGeSessionContext(int64_t session_id);
+
+ private:
+  static std::map<int64_t, GeSessionContext> ge_session_map_;
+  static std::mutex session_mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_GRAPH_EXECUTOR_H_

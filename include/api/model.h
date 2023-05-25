@@ -45,8 +45,6 @@ class MS_API Model {
  public:
   Model();
   ~Model();
-  Model(const Model &) = delete;
-  void operator=(const Model &) = delete;
 
   /// \brief Build a model from model buffer so that it can run on a device.
   ///
@@ -72,12 +70,6 @@ class MS_API Model {
   /// \return Status. kSuccess: build success, kLiteModelRebuild: build model repeatedly, Other: other types of errors.
   inline Status Build(const std::string &model_path, ModelType model_type,
                       const std::shared_ptr<Context> &model_context = nullptr);
-
-  inline static std::vector<std::shared_ptr<Model>> Build(const std::string &model_path,
-                                                          const std::string &inc_model_path, ModelType model_type,
-                                                          const std::shared_ptr<Context> &model_context = nullptr,
-                                                          const std::string &config_file = "");
-
   /// \brief Build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
@@ -128,9 +120,9 @@ class MS_API Model {
   /// \param[in] model_context A context used to store options during execution.
   /// \param[in] train_cfg A config used by training
   /// \return Status
-
   Status Build(GraphCell graph, Node *optimizer, std::vector<Expr *> inputs,
                const std::shared_ptr<Context> &model_context, const std::shared_ptr<TrainCfg> &train_cfg);
+
   /// \brief Build a Transfer Learning model where the backbone weights are fixed and the head weights are trainable
   ///
   /// \param[in] backbone The static, non-learnable part of the graph
@@ -378,6 +370,8 @@ class MS_API Model {
   /// \return Status of operation.
   Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
 
+  const std::shared_ptr<ModelImpl> impl() const { return impl_; }
+
  private:
   friend class Serialization;
   // api without std::string
@@ -394,11 +388,6 @@ class MS_API Model {
                const std::vector<char> &cropto_lib_path);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                const Key &dec_key, const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path);
-
-  static std::vector<std::shared_ptr<Model>> Build(const std::vector<char> &model_path,
-                                                   const std::vector<char> &inc_model_path, ModelType model_type,
-                                                   const std::shared_ptr<Context> &model_context,
-                                                   const std::vector<char> &config_file);
   std::shared_ptr<ModelImpl> impl_;
 };
 
@@ -440,13 +429,6 @@ Status Model::Build(const std::string &model_path, ModelType model_type, const s
 Status Model::Build(const std::string &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
   return Build(StringToChar(model_path), model_type, model_context);
-}
-
-std::vector<std::shared_ptr<Model>> Model::Build(const std::string &model_path, const std::string &inc_model_path,
-                                                 ModelType model_type, const std::shared_ptr<Context> &model_context,
-                                                 const std::string &config_file) {
-  return Model::Build(StringToChar(model_path), StringToChar(inc_model_path), model_type, model_context,
-                      StringToChar(config_file));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

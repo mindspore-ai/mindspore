@@ -150,31 +150,6 @@ public class Model {
     }
 
     /**
-     * Build model.
-     *
-     * @param modelPath      model path.
-     * @param incModelPath   incremental model path.
-     * @param modelType      model type.
-     * @param context        model build context.
-     * @param configFile     model config file.
-     * @return build status.
-     */
-    public static List<Model> build(String modelPath, String incModelPath, int modelType, MSContext context,
-                                    String configFile) {
-        if (context == null || modelPath == null || incModelPath == null) {
-            return null;
-        }
-
-        List<Long> modelAddrs = buildWithInc(modelPath, incModelPath, modelType, context.getMSContextPtr(), configFile);
-        List<Model> models = new ArrayList<>(modelAddrs.size());
-        for (Long modelAddr : modelAddrs) {
-            Model msModel = new Model(modelAddr);
-            models.add(msModel);
-        }
-        return models;
-    }
-
-    /**
      * Execute predict.
      *
      * @return predict status.
@@ -433,9 +408,6 @@ public class Model {
 
     private native boolean buildByBuffer(long modelPtr, MappedByteBuffer buffer, int modelType, long contextPtr,
                                       char[] dec_key, String dec_mod, String cropto_lib_path);
-
-    private static native List<Long> buildWithInc(String modelPath, String incModelPath, int modelType, long contextPtr,
-                                                  String cfgPath);
 
     private native List<Long> getInputs(long modelPtr);
 

@@ -54,7 +54,7 @@ class ConverterPlugin {
 
 class ModelImpl {
  public:
-  ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
+  ModelImpl();
   ~ModelImpl();
 
   /// \brief Build a model from model buffer so that it can run on a device.
@@ -78,10 +78,6 @@ class ModelImpl {
   ///
   /// \return Status.
   Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context);
-
-  static Status Build(const std::vector<std::shared_ptr<ModelImpl>> &model_impls,
-                      const std::vector<std::string> &model_paths, ModelType model_type,
-                      const std::shared_ptr<Context> &model_context);
 
   /// \brief Build a model from func graph so that it can run on a device.
   ///
@@ -218,8 +214,6 @@ class ModelImpl {
   ///
   /// \return value of config as string type.
   Status ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context);
-
-  Status Warmup();
 
   /// \brief Set Mindspore Context.
   /// This is used for load mindir file for model, turn off the infer shape flow

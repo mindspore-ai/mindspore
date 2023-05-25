@@ -31,12 +31,16 @@ class ModelGroupImpl;
 
 /// \brief The ModelGroup class is used to define a MindSpore model group, facilitating
 /// multiple models to share workspace memory.
+
+enum class ModelGroupFlag : int {
+  kShareWeight = 0x0001,
+  kShareWorkspace = 0x0002,
+};
+
 class MS_API ModelGroup {
  public:
-  ModelGroup();
+  explicit ModelGroup(ModelGroupFlag flags = ModelGroupFlag::kShareWorkspace);
   ~ModelGroup() = default;
-  ModelGroup(const ModelGroup &) = delete;
-  ModelGroup &operator=(const ModelGroup &) = delete;
 
   /// \brief Add models that require shared workspace memory.
   ///
@@ -51,6 +55,13 @@ class MS_API ModelGroup {
   ///
   /// \return Status.
   Status AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list);
+
+  /// \brief Add models that require shared weight memory.
+  ///
+  /// \param[in] model_list Define the list of model object.
+  ///
+  /// \return Status.
+  Status AddModel(const std::vector<Model> &model_list);
 
   /// \brief Calculate the max workspace of the added models.
   ///

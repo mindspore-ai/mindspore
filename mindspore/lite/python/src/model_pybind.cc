@@ -25,12 +25,6 @@ namespace mindspore::lite {
 namespace py = pybind11;
 using MSTensorPtr = std::shared_ptr<MSTensor>;
 
-std::vector<std::shared_ptr<Model>> BuildMultiModels(const std::string &model_path, const std::string &inc_model_path,
-                                                     ModelType model_type, const std::shared_ptr<Context> &context,
-                                                     const std::string &config_file) {
-  return Model::Build(model_path, inc_model_path, model_type, context, config_file);
-}
-
 std::vector<MSTensorPtr> MSTensorToMSTensorPtr(const std::vector<MSTensor> &tensors) {
   std::vector<MSTensorPtr> tensors_ptr;
   std::transform(tensors.begin(), tensors.end(), std::back_inserter(tensors_ptr),
@@ -134,7 +128,6 @@ void ModelPyBind(const py::module &m) {
     .def("build_from_file",
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &>(&Model::Build),
          py::call_guard<py::gil_scoped_release>())
-    .def_static("build_multi_models", &BuildMultiModels, py::call_guard<py::gil_scoped_release>())
     .def("build_from_buff_with_decrypt",
          py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
@@ -228,10 +221,31 @@ void ModelParallelRunnerPyBind(const py::module &m) {
 #endif
 }
 
+Status PyModelGroupAddModelByObject(ModelGroup *model_group, const std::vector<Model *> &models_ptr) {
+  if (model_group == nullptr) {
+    MS_LOG(ERROR) << "Model group object cannot be nullptr";
+    return {};
+  }
+  std::vector<Model> models;
+  for (auto model_ptr : models_ptr) {
+    if (model_ptr == nullptr) {
+      MS_LOG(ERROR) << "Model object cannot be nullptr";
+      return {};
+    }
+    models.push_back(*model_ptr);
+  }
+  return model_group->AddModel(models);
+}
+
 void ModelGroupPyBind(const py::module &m) {
+  (void)py::enum_<ModelGroupFlag>(m, "ModelGroupFlag")
+    .value("kShareWeight", ModelGroupFlag::kShareWeight)
+    .value("kShareWorkspace", ModelGroupFlag::kShareWorkspace);
+
   (void)py::class_<ModelGroup, std::shared_ptr<ModelGroup>>(m, "ModelGroupBind")
-    .def(py::init<>())
+    .def(py::init<ModelGroupFlag>())
     .def("add_model", py::overload_cast<const std::vector<std::string> &>(&ModelGroup::AddModel))
+    .def("add_model_by_object", &PyModelGroupAddModelByObject)
     .def("cal_max_size_of_workspace",
          py::overload_cast<ModelType, const std::shared_ptr<Context> &>(&ModelGroup::CalMaxSizeOfWorkspace));
 }
