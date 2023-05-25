@@ -76,7 +76,7 @@ def mutable(input_data, dynamic_len=False):
     the length of the tuple or list is different for each run, it does not need to be re-compiled.
 
     Args:
-        input_data (Union[int, float, Tensor, tuple, list, dict]): The input data to be made mutable. If
+        input_data (Union[Tensor, tuple, list, dict]): The input data to be made mutable. If
             'input_data' is list/tuple/dict, the type of each element should also in the valid types.
         dynamic_len (bool): Whether to set the whole sequence to be dynamic length. In graph compilation, if
             `dynamic_len` is ``True`` , the `input_data` must be list or tuple and the elements of `input_data` must
@@ -84,6 +84,7 @@ def mutable(input_data, dynamic_len=False):
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+        `dynamic_len` is an experimental argument. Currently, `dynamic_len` is not supported to be ``True`` .
 
     Note:
         Currently this api only works in GRAPH mode.
@@ -92,7 +93,7 @@ def mutable(input_data, dynamic_len=False):
         The origin input data which has been set mutable.
 
     Raises:
-        TypeError: If `input_data` is not one of int, float, Tensor, tuple, list, dict or their nested structure.
+        TypeError: If `input_data` is not one of Tensor, tuple, list, dict or their nested structure.
         TypeError: If `dynamic_len` is ``True`` and `input_data` is not tuple or list.
         ValueError: If `dynamic_len` is ``True`` , `input_data` is tuple or list but the elements within `input_data`
         do not have the same shape and type.
