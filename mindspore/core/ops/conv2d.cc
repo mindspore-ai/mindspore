@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,10 +210,10 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
 
-  const int64_t shape_size = 4;
   ShapeVector output_shape;
+  const auto shape_size = 4;
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
-    std::vector<int64_t> pad_list(shape_size, 0);
+    std::vector<int64_t> pad_list(shape_size, abstract::Shape::kShapeDimAny);
     std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[kIndex0]), MakeValue(pad_list[kIndex1]),
                                           MakeValue(pad_list[kIndex2]), MakeValue(pad_list[kIndex3])};
     primitive->set_attr("pad_list", MakeValue(pad_list_val));

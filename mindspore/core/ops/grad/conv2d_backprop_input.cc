@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <algorithm>
 
 #include "ops/grad/conv2d_backprop_input.h"
 #include "utils/check_convert_utils.h"
@@ -28,9 +29,42 @@
 namespace mindspore {
 namespace ops {
 namespace {
+using abstract::Shape;
 constexpr size_t kConv2DBackpropInputDoutIndex = 0;
 constexpr size_t kConv2DBackpropInputInputIndex = 1;
 constexpr size_t kConv2DBackpropInputSizeIndex = 2;
+constexpr auto kPadSize = 4;
+
+ShapeVector CalPadListForSameMode(const ShapeVector &dout_shape_norm, const ShapeVector &x_size_v,
+                                  const ShapeVector &kernel_size, const ShapeVector &stride,
+                                  const ShapeVector &dilation) {
+  ShapeVector pad_list(kPadSize, Shape::kShapeDimAny);
+  if (IsDynamicRank(dout_shape_norm) || IsDynamicRank(x_size_v)) {
+    return pad_list;
+  }
+  const auto stride_h = stride[kIndex2];
+  const auto stride_w = stride[kIndex3];
+  const auto kernel_h = kernel_size[kIndex0];
+  const auto kernel_w = kernel_size[kIndex1];
+  const auto dilation_h = dilation[kIndex2];
+  const auto dilation_w = dilation[kIndex3];
+  constexpr auto pad_divisor = 2;
+  if (dout_shape_norm[kInputIndex2] != Shape::kShapeDimAny && x_size_v[kInputIndex2] != Shape::kShapeDimAny) {
+    auto pad_needed_h =
+      (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
+    pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
+    pad_list[kIndex0] = pad_needed_h / pad_divisor;
+    pad_list[kIndex1] = pad_needed_h - pad_list[kIndex0];
+  }
+  if (dout_shape_norm[kInputIndex3] != Shape::kShapeDimAny && x_size_v[kInputIndex3] != Shape::kShapeDimAny) {
+    auto pad_needed_w =
+      (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
+    pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
+    pad_list[kIndex2] = pad_needed_w / pad_divisor;
+    pad_list[kIndex3] = pad_needed_w - pad_list[kIndex2];
+  }
+  return pad_list;
+}
 
 void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
                 const std::vector<int64_t> &x_size_v) {
@@ -42,13 +76,13 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   auto stride = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[stride]", primitive->GetAttr(kStride), prim_name);
   auto dilation =
     CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
-  // default pad mode is valid
+
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
 
-  ShapeVector pad_list = {0, 0, 0, 0};
+  ShapeVector pad_list(kPadSize, Shape::kShapeDimAny);
   auto is_valid_pad_attr = [&attr_pad_list_prt]() -> bool {
     if (attr_pad_list_prt->isa<None>()) {
       return false;
@@ -58,34 +92,10 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   };
   if (is_valid_pad_attr()) {
     pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
+  } else if (pad_mode == VALID) {
+    std::fill(pad_list.begin(), pad_list.end(), 0);
   } else if (pad_mode == SAME) {
-    auto stride_h = stride[2];
-    auto stride_w = stride[3];
-    auto kernel_h = kernel_size[0];
-    auto kernel_w = kernel_size[1];
-    auto dilation_h = dilation[2];
-    auto dilation_w = dilation[3];
-    int64_t pad_top = abstract::Shape::kShapeDimAny;
-    int64_t pad_bottom = abstract::Shape::kShapeDimAny;
-    int64_t pad_left = abstract::Shape::kShapeDimAny;
-    int64_t pad_right = abstract::Shape::kShapeDimAny;
-    if (dout_shape_norm[kInputIndex2] != abstract::Shape::kShapeDimAny &&
-        x_size_v[kInputIndex2] != abstract::Shape::kShapeDimAny) {
-      auto pad_needed_h =
-        (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
-      pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
-      pad_top = pad_needed_h / 2;
-      pad_bottom = pad_needed_h - pad_top;
-    }
-    if (dout_shape_norm[kInputIndex3] != abstract::Shape::kShapeDimAny &&
-        x_size_v[kInputIndex3] != abstract::Shape::kShapeDimAny) {
-      auto pad_needed_w =
-        (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
-      pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
-      pad_left = pad_needed_w / 2;
-      pad_right = pad_needed_w - pad_left;
-    }
-    pad_list = {pad_top, pad_bottom, pad_left, pad_right};
+    pad_list = CalPadListForSameMode(dout_shape_norm, x_size_v, kernel_size, stride, dilation);
   } else if (pad_mode == PAD) {
     pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
   }
