@@ -21,14 +21,14 @@
         停止数据集加载并且关闭文件句柄。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.FileReader` 。
+            请参考 :class:`mindspore.mindrecord.FileReader` 类的样例代码。
 
     .. py:method:: get_next()
 
         按列名一次返回下一批的数据。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.FileReader` 。
+            请参考 :class:`mindspore.mindrecord.FileReader` 类的样例代码。
 
         返回：
             dict，下一批数据，键值与数据列名相同。

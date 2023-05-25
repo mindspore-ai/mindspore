@@ -70,7 +70,7 @@ class MindPage:
         Return candidate category fields.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Returns:
             list[str], by which data could be grouped.
@@ -83,7 +83,7 @@ class MindPage:
         Getter function for category fields.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Returns:
             list[str], by which data could be grouped.
@@ -96,7 +96,7 @@ class MindPage:
         Setter function for category field.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -113,7 +113,7 @@ class MindPage:
         Return category information when data is grouped by indicated category field.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Returns:
             str, description of group information.
@@ -128,7 +128,7 @@ class MindPage:
         Query by category id in pagination.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Args:
              category_id (int): Category id, referred to the return of `read_category_info` .
@@ -156,7 +156,7 @@ class MindPage:
         Query by category name in pagination.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MindPage` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
 
         Args:
             category_name (str): String of category field's value,

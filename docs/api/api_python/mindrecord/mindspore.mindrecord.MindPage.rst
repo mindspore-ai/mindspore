@@ -17,7 +17,7 @@
         返回用于数据分组的候选category字段。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
             list[str]，候选category 字段。
@@ -29,7 +29,7 @@
         返回用于数据分组的category字段。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
             list[str]，候选category字段。
@@ -40,7 +40,7 @@
         以分页方式按category ID进行查询。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         参数：
             - **category_id** (int) - category ID，参考 `read_category_info` 函数的返回值。
@@ -60,7 +60,7 @@
         以分页方式按category字段进行查询。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         参数：
             - **category_name** (str) - category字段对应的字符，参考 `read_category_info` 函数的返回值。
@@ -75,7 +75,7 @@
         当数据按指定的category字段进行分组时，返回category信息。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MindPage` 。
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
             str，分组信息的描述。

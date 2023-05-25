@@ -16,15 +16,15 @@
         执行从MNIST数据集到MindRecord格式数据集的转换。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.MnistToMR` 。
+            请参考 :class:`mindspore.mindrecord.MnistToMR` 类的样例代码。
 
         返回：
             MSRStatus，SUCCESS或FAILED。
 
         异常：
-            **ParamTypeError** - 设置MindRecord索引字段失败。
-            **MRMOpenError** - 新建MindRecord文件失败。
-            **MRMValidateDataError** - 原始数据集数据异常。
-            **MRMSetHeaderError** - 设置MindRecord文件头失败。
-            **MRMWriteDatasetError** - 创建MindRecord索引失败。
-            **TypeError** - 参数 `parallel_writer` 不是bool类型。
+            - **ParamTypeError** - 设置MindRecord索引字段失败。
+            - **MRMOpenError** - 新建MindRecord文件失败。
+            - **MRMValidateDataError** - 原始数据集数据异常。
+            - **MRMSetHeaderError** - 设置MindRecord文件头失败。
+            - **MRMWriteDatasetError** - 创建MindRecord索引失败。
+            - **TypeError** - 参数 `parallel_writer` 不是bool类型。

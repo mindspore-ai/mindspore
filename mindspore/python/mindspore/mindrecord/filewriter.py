@@ -176,7 +176,7 @@ class FileWriter:
         The schema is added to describe the raw data to be written.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
 
         .. list-table:: The data types supported by MindRecord.
            :widths: 25 25 50
@@ -250,7 +250,7 @@ class FileWriter:
             If the function is not called, the fields of the primitive type
             in schema are set as indexes by default.
 
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
 
         Args:
             index_fields (list[str]): fields from schema.
@@ -289,7 +289,7 @@ class FileWriter:
         files after the raw data is verified against the schema.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
 
         Args:
            raw_data (list[dict]): List of raw data.
@@ -425,7 +425,7 @@ class FileWriter:
         Flush data in memory to disk and generate the corresponding database files.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

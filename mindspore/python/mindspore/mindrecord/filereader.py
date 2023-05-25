@@ -86,7 +86,7 @@ class FileReader:
         Yield a batch of data according to columns at a time.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileReader` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileReader` .
 
         Returns:
             dict, a batch whose keys are the same as columns.
@@ -105,7 +105,7 @@ class FileReader:
         Stop reader worker and close file.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.FileReader` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.FileReader` .
         """
         self._reader.close()
 
