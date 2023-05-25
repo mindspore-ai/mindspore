@@ -94,8 +94,10 @@ class ReduceLogSumExp(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> op = ms.nn.ReduceLogSumExp(1, keep_dims=True)
         >>> output = op(x)
         >>> print(output.shape)
         (3, 1, 5, 6)
@@ -188,8 +190,10 @@ class LGamma(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([2, 3, 4]).astype(np.float32))
-        >>> op = nn.LGamma()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([2, 3, 4]).astype(np.float32))
+        >>> op = ms.nn.LGamma()
         >>> output = op(x)
         >>> print(output)
         [3.5762787e-07 6.9314754e-01 1.7917603e+00]
@@ -305,8 +309,10 @@ class DiGamma(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([2, 3, 4]).astype(np.float32))
-        >>> op = nn.DiGamma()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([2, 3, 4]).astype(np.float32))
+        >>> op = ms.nn.DiGamma()
         >>> output = op(x)
         >>> print(output)
         [0.42278463  0.92278427 1.2561178]
@@ -571,9 +577,11 @@ class IGamma(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
-        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
-        >>> igamma = nn.IGamma()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> a = ms.Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = ms.Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> igamma = ms.nn.IGamma()
         >>> output = igamma(a, x)
         >>> print (output)
         [0.593994  0.35276785  0.21486944  0.13337152]
@@ -660,9 +668,11 @@ class LBeta(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
-        >>> y = Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
-        >>> lbeta = nn.LBeta()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> y = ms.Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
+        >>> lbeta = ms.nn.LBeta()
         >>> output = lbeta(y, x)
         >>> print(output)
         [-1.7917596  -4.094345  -12.000229  -14.754799]
@@ -905,9 +915,11 @@ class CosineSimilarity(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x1 = Tensor([[1.0, 3.0, 4.0, 7.0], [2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0]])
-        >>> x2 = Tensor([[2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0], [1.0, 3.0, 4.0, 7.0]])
-        >>> func = nn.layer.CosineSimilarity()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x1 = ms.Tensor([[1.0, 3.0, 4.0, 7.0], [2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0]])
+        >>> x2 = ms.Tensor([[2.0, 4.0, 2.0, 5.0], [3.0, 1.0, 5.0, 8.0], [1.0, 3.0, 4.0, 7.0]])
+        >>> func = ms.nn.layer.CosineSimilarity()
         >>> out = func(x1, x2)
         >>> print(out.asnumpy())
         [0.9402562 0.8614609 0.9516245]
@@ -996,8 +1008,10 @@ class MatInverse(Cell):
         ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
-        >>> op = nn.MatInverse()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> op = ms.nn.MatInverse()
         >>> output = op(x)
         >>> print(output)
         [[49.36112  -13.555558  2.1111116]
@@ -1038,8 +1052,10 @@ class MatDet(Cell):
         ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
-        >>> op = nn.MatDet()
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> op = ms.nn.MatDet()
         >>> output = op(x)
         >>> print(output)
         35.999996

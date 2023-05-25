@@ -134,9 +134,8 @@ class SequentialCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor
         >>> import mindspore
-        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>>
         >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
@@ -257,9 +256,8 @@ class SequentialCell(Cell):
             cell(Cell): The Cell to be appended.
 
         Examples:
-            >>> from mindspore import Tensor
             >>> import mindspore
-            >>> import mindspore.nn as nn
+            >>> from mindspore import Tensor, nn
             >>> import numpy as np
             >>>
             >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
@@ -329,14 +327,13 @@ class CellList(_CellListBase, Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.nn as nn
         >>> import mindspore as ms
         >>> import numpy as np
         >>>
-        >>> conv = nn.Conv2d(100, 20, 3)
-        >>> bn = nn.BatchNorm2d(20)
-        >>> relu = nn.ReLU()
-        >>> cell_ls = nn.CellList([bn])
+        >>> conv = ms.nn.Conv2d(100, 20, 3)
+        >>> bn = ms.nn.BatchNorm2d(20)
+        >>> relu = ms.nn.ReLU()
+        >>> cell_ls = ms.nn.CellList([bn])
         >>> cell_ls.insert(0, conv)
         >>> cell_ls.append(relu)
         >>> cell_ls.extend([relu, relu])

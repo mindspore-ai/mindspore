@@ -265,6 +265,9 @@ class Conv2d(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> output = net(x).shape
@@ -422,6 +425,9 @@ class Conv1d(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> x = Tensor(np.ones([1, 120, 640]), mindspore.float32)
         >>> output = net(x).shape
@@ -643,6 +649,9 @@ class Conv3d(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)
         >>> conv3d = nn.Conv3d(in_channels=3, out_channels=32, kernel_size=(4, 3, 3))
         >>> output = conv3d(x)
@@ -853,6 +862,9 @@ class Conv3dTranspose(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
         >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2),
         ...                                       pad_mode='pad')
@@ -1054,6 +1066,9 @@ class Conv2dTranspose(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> x = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
         >>> output = net(x).shape
@@ -1237,6 +1252,9 @@ class Conv1dTranspose(_Conv):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> x = Tensor(np.ones([1, 3, 50]), mindspore.float32)
         >>> output = net(x).shape

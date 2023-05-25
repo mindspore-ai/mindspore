@@ -94,9 +94,11 @@ class TimeDistributed(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.random.random([32, 10, 3]), mindspore.float32)
-        >>> dense = nn.Dense(3, 6)
-        >>> net = nn.TimeDistributed(dense, time_axis=1, reshape_with_axis=0)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.random.random([32, 10, 3]), ms.float32)
+        >>> dense = ms.nn.Dense(3, 6)
+        >>> net = ms.nn.TimeDistributed(dense, time_axis=1, reshape_with_axis=0)
         >>> output = net(x)
         >>> print(output.shape)
         (32, 10, 6)

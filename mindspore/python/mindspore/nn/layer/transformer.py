@@ -123,12 +123,14 @@ class MultiheadAttention(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
         >>> embed_dim, num_heads = 128, 8
         >>> seq_length, batch_size = 10, 8
-        >>> query = Tensor(np.random.randn(seq_length, batch_size, embed_dim), mindspore.float32)
-        >>> key = Tensor(np.random.randn(seq_length, batch_size, embed_dim), mindspore.float32)
-        >>> value = Tensor(np.random.randn(seq_length, batch_size, embed_dim), mindspore.float32)
-        >>> multihead_attn = nn.MultiheadAttention(embed_dim, num_heads)
+        >>> query = ms.Tensor(np.random.randn(seq_length, batch_size, embed_dim), ms.float32)
+        >>> key = ms.Tensor(np.random.randn(seq_length, batch_size, embed_dim), ms.float32)
+        >>> value = ms.Tensor(np.random.randn(seq_length, batch_size, embed_dim), ms.float32)
+        >>> multihead_attn = ms.nn.MultiheadAttention(embed_dim, num_heads)
         >>> attn_output, attn_output_weights = multihead_attn(query, key, value)
         >>> print(attn_output.shape)
         (10, 8, 128)
@@ -267,12 +269,14 @@ class TransformerEncoderLayer(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> encoder_layer = nn.TransformerEncoderLayer(d_model=512, nhead=8)
-        >>> src = Tensor(np.random.rand(10, 32, 512), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> encoder_layer = ms.nn.TransformerEncoderLayer(d_model=512, nhead=8)
+        >>> src = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
         >>> out = encoder_layer(src)
         >>> # Alternatively, when batch_first=True:
-        >>> encoder_layer = nn.TransformerEncoderLayer(d_model=512, nhead=8, batch_first=True)
-        >>> src = Tensor(np.random.rand(32, 10, 512), mindspore.float32)
+        >>> encoder_layer = ms.nn.TransformerEncoderLayer(d_model=512, nhead=8, batch_first=True)
+        >>> src = ms.Tensor(np.random.rand(32, 10, 512), ms.float32)
         >>> out = encoder_layer(src)
         >>> print(out.shape)
         (32, 10, 512)
@@ -379,14 +383,16 @@ class TransformerDecoderLayer(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> decoder_layer = nn.TransformerDecoderLayer(d_model=512, nhead=8)
-        >>> memory = Tensor(np.random.rand(10, 32, 512), mindspore.float32)
-        >>> tgt = Tensor(np.random.rand(20, 32, 512), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> decoder_layer = ms.nn.TransformerDecoderLayer(d_model=512, nhead=8)
+        >>> memory = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
+        >>> tgt = ms.Tensor(np.random.rand(20, 32, 512), ms.float32)
         >>> out = decoder_layer(tgt, memory)
         >>> # Alternatively, when `batch_first` is ``True``:
-        >>> decoder_layer = nn.TransformerDecoderLayer(d_model=512, nhead=8, batch_first=True)
-        >>> memory = Tensor(np.random.rand(32, 10, 512), mindspore.float32)
-        >>> tgt = Tensor(np.random.rand(32, 20, 512), mindspore.float32)
+        >>> decoder_layer = ms.nn.TransformerDecoderLayer(d_model=512, nhead=8, batch_first=True)
+        >>> memory = ms.Tensor(np.random.rand(32, 10, 512), ms.float32)
+        >>> tgt = ms.Tensor(np.random.rand(32, 20, 512), ms.float32)
         >>> out = decoder_layer(tgt, memory)
         >>> print(out.shape)
         (32, 20, 512)
@@ -487,9 +493,11 @@ class TransformerEncoder(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> encoder_layer = nn.TransformerEncoderLayer(d_model=512, nhead=8)
-        >>> transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=6)
-        >>> src = Tensor(np.random.rand(10, 32, 512), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> encoder_layer = ms.nn.TransformerEncoderLayer(d_model=512, nhead=8)
+        >>> transformer_encoder = ms.nn.TransformerEncoder(encoder_layer, num_layers=6)
+        >>> src = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
         >>> out = transformer_encoder(src)
         >>> print(out.shape)
         (10, 32, 512)
@@ -546,10 +554,12 @@ class TransformerDecoder(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> decoder_layer = nn.TransformerDecoderLayer(d_model=512, nhead=8)
-        >>> transformer_decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
-        >>> memory = Tensor(np.random.rand(10, 32, 512), mindspore.float32)
-        >>> tgt = Tensor(np.random.rand(20, 32, 512), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> decoder_layer = ms.nn.TransformerDecoderLayer(d_model=512, nhead=8)
+        >>> transformer_decoder = ms.nn.TransformerDecoder(decoder_layer, num_layers=6)
+        >>> memory = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
+        >>> tgt = ms.Tensor(np.random.rand(20, 32, 512), ms.float32)
         >>> out = transformer_decoder(tgt, memory)
         >>> print(out.shape)
         (20, 32, 512)
@@ -625,9 +635,11 @@ class Transformer(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> transformer_model = nn.Transformer(nhead=16, num_encoder_layers=12)
-        >>> src = Tensor(np.random.rand(10, 32, 512), mindspore.float32)
-        >>> tgt = Tensor(np.random.rand(20, 32, 512), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> transformer_model = ms.nn.Transformer(nhead=16, num_encoder_layers=12)
+        >>> src = ms.Tensor(np.random.rand(10, 32, 512), ms.float32)
+        >>> tgt = ms.Tensor(np.random.rand(20, 32, 512), ms.float32)
         >>> out = transformer_model(src, tgt)
         >>> print(out.shape)
         (20, 32, 512)

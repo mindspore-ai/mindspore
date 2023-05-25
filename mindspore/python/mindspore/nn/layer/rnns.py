@@ -635,9 +635,11 @@ class RNN(_RNNBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.RNN(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
-        >>> x = Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.RNN(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> x = ms.Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> h0 = ms.Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
         >>> output, hn = net(x, h0)
         >>> print(output.shape)
         (3, 5, 16)
@@ -734,9 +736,11 @@ class GRU(_RNNBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.GRU(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
-        >>> x = Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.GRU(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> x = ms.Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> h0 = ms.Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
         >>> output, hn = net(x, h0)
         >>> print(output.shape)
         (3, 5, 16)
@@ -832,10 +836,12 @@ class LSTM(_RNNBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.LSTM(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
-        >>> x = Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
-        >>> c0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.LSTM(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> x = ms.Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> h0 = ms.Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
+        >>> c0 = ms.Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
         >>> output, (hn, cn) = net(x, (h0, c0))
         >>> print(output.shape)
         (3, 5, 16)

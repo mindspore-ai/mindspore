@@ -45,8 +45,10 @@ class ChannelShuffle(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> channel_shuffle = nn.ChannelShuffle(2)
-        >>> x = Tensor(np.arange(16).astype(np.int32).reshape(1, 4, 2, 2))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> channel_shuffle = ms.nn.ChannelShuffle(2)
+        >>> x = ms.Tensor(np.arange(16).astype(np.int32).reshape(1, 4, 2, 2))
         >>> print(x)
         [[[[ 0  1]
            [ 2  3]]

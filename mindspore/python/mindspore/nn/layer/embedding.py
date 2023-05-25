@@ -86,6 +86,9 @@ class Embedding(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.Embedding(20000, 768,  True)
         >>> x = Tensor(np.ones([8, 128]), mindspore.int32)
         >>> # Maps the input word IDs to word embedding.
@@ -213,6 +216,9 @@ class EmbeddingLookup(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
         >>> result = nn.EmbeddingLookup(4,2)(input_indices)
         >>> print(result.shape)
@@ -534,6 +540,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> input_indices = Tensor([[2, 4, 6, 0, 0], [1, 3, 5, 0, 0]], mindspore.int32)
         >>> input_values = Tensor([[1, 1, 1, 0, 0], [1, 1, 1, 0, 0]], mindspore.float32)
         >>> field_ids = Tensor([[0, 1, 1, 0, 0], [0, 0, 1, 0, 0]], mindspore.int32)

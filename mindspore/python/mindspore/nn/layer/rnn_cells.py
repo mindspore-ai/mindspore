@@ -205,9 +205,11 @@ class RNNCell(RNNCellBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.RNNCell(10, 16)
-        >>> x = Tensor(np.ones([5, 3, 10]).astype(np.float32))
-        >>> hx = Tensor(np.ones([3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.RNNCell(10, 16)
+        >>> x = ms.Tensor(np.ones([5, 3, 10]).astype(np.float32))
+        >>> hx = ms.Tensor(np.ones([3, 16]).astype(np.float32))
         >>> output = []
         >>> for i in range(5):
         ...     hx = net(x[i], hx)
@@ -285,10 +287,12 @@ class LSTMCell(RNNCellBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.LSTMCell(10, 16)
-        >>> x = Tensor(np.ones([5, 3, 10]).astype(np.float32))
-        >>> h = Tensor(np.ones([3, 16]).astype(np.float32))
-        >>> c = Tensor(np.ones([3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.LSTMCell(10, 16)
+        >>> x = ms.Tensor(np.ones([5, 3, 10]).astype(np.float32))
+        >>> h = ms.Tensor(np.ones([3, 16]).astype(np.float32))
+        >>> c = ms.Tensor(np.ones([3, 16]).astype(np.float32))
         >>> output = []
         >>> for i in range(5):
         ...     hx = net(x[i], (h, c))
@@ -365,9 +369,11 @@ class GRUCell(RNNCellBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = nn.GRUCell(10, 16)
-        >>> x = Tensor(np.ones([5, 3, 10]).astype(np.float32))
-        >>> hx = Tensor(np.ones([3, 16]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> net = ms.nn.GRUCell(10, 16)
+        >>> x = ms.Tensor(np.ones([5, 3, 10]).astype(np.float32))
+        >>> hx = ms.Tensor(np.ones([3, 16]).astype(np.float32))
         >>> output = []
         >>> for i in range(5):
         ...     hx = net(x[i], hx)

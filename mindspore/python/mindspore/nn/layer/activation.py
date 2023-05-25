@@ -94,6 +94,9 @@ class CELU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
         >>> celu = nn.CELU()
         >>> output = celu(x)
@@ -145,6 +148,9 @@ class Softmin(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # axis = -1(default), and the sum of return value is 1.0.
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmin = nn.Softmin()
@@ -183,6 +189,9 @@ class Softmax2d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[[[0.1, 0.2]], [[0.3, 0.4]], [[0.6, 0.5]]]]), mindspore.float32)
         >>> softmax2d = nn.Softmax2d()
         >>> output = softmax2d(x)
@@ -244,6 +253,9 @@ class Softmax(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # axis = -1(default), and the sum of return value is 1.0.
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
@@ -292,6 +304,9 @@ class LogSoftmax(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> log_softmax = nn.LogSoftmax()
         >>> output = log_softmax(x)
@@ -346,6 +361,9 @@ class ELU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
         >>> elu = nn.ELU()
         >>> result = elu(x)
@@ -390,6 +408,9 @@ class ReLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> relu = nn.ReLU()
         >>> output = relu(x)
@@ -433,6 +454,9 @@ class ReLU6(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> relu6 = nn.ReLU6()
         >>> output = relu6(x)
@@ -480,6 +504,9 @@ class LeakyReLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> leaky_relu = nn.LeakyReLU()
         >>> output = leaky_relu(x)
@@ -543,8 +570,7 @@ class RReLU(Cell):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0], [2.0, 0]]), mindspore.float32)
         >>> r_relu = nn.RReLU()
@@ -590,6 +616,9 @@ class SeLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> selu = nn.SeLU()
         >>> output = selu(input_x)
@@ -639,6 +668,9 @@ class SiLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> silu = nn.SiLU()
         >>> output = silu(x)
@@ -679,6 +711,9 @@ class Tanh(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
         >>> tanh = nn.Tanh()
         >>> output = tanh(x)
@@ -722,9 +757,8 @@ class Tanhshrink(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> x = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
         >>> tanhshrink = nn.Tanhshrink()
@@ -845,6 +879,9 @@ class GELU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> gelu = nn.GELU()
         >>> output = gelu(x)
@@ -958,6 +995,9 @@ class Sigmoid(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> sigmoid = nn.Sigmoid()
         >>> output = sigmoid(x)
@@ -984,6 +1024,9 @@ class Softsign(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> softsign = nn.Softsign()
         >>> output = softsign(x)
@@ -1045,6 +1088,9 @@ class PReLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
         >>> prelu = nn.PReLU()
         >>> output = prelu(x)
@@ -1114,6 +1160,9 @@ class HSwish(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hswish = nn.HSwish()
         >>> result = hswish(x)
@@ -1152,6 +1201,9 @@ class HSigmoid(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
         >>> result = hsigmoid(x)
@@ -1193,6 +1245,9 @@ class LogSigmoid(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> net = nn.LogSigmoid()
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> output = net(x)
@@ -1228,6 +1283,9 @@ class LRN(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
         ...                       [[0.3], [0.4]]]]), mindspore.float32)
         >>> output = nn.LRN()(input_x)
@@ -1280,7 +1338,10 @@ class SoftShrink(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mstype.float16)
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> input_x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float16)
         >>> softshrink = nn.SoftShrink()
         >>> output = softshrink(input_x)
         >>> print(output)
@@ -1378,9 +1439,9 @@ class Threshold(Cell):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, nn
         >>> m = nn.Threshold(0.1, 20)
-        >>> inputs = mindspore.Tensor([0.1, 0.2, 0.3], mindspore.float32)
+        >>> inputs = Tensor([0.1, 0.2, 0.3], mindspore.float32)
         >>> outputs = m(inputs)
         >>> print(outputs)
         [ 20.0     0.2      0.3]
@@ -1406,6 +1467,9 @@ class Mish(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> mish = nn.Mish()
         >>> output = mish(x)
@@ -1447,8 +1511,9 @@ class GLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> m = nn.GLU()
-        >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
+        >>> import mindspore as ms
+        >>> m = ms.nn.GLU()
+        >>> input = ms.Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
         >>> output = m(input)
         >>> print(output)
         [[0.05744425 0.11973753]
@@ -1512,6 +1577,7 @@ def get_activation(name, prim_name=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> sigmoid = nn.get_activation('sigmoid')
         >>> print(sigmoid)
         Sigmoid<>
