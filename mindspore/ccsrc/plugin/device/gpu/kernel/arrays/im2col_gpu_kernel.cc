@@ -121,10 +121,10 @@ bool Im2ColGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
                              << ", " << y_width << "].";
   }
 
-  CudaIm2Col(batches, x_channel, x_height, x_width, y_out_plane, y_height, y_width, kernel_height, kernel_width,
-             stride_height, stride_width, dilation_height, dilation_width, pad_height, pad_width, x, y, device_id_,
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaGetLastError(), "Im2Col kernel failed.");
+  auto status = CudaIm2Col(batches, x_channel, x_height, x_width, y_out_plane, y_height, y_width, kernel_height,
+                           kernel_width, stride_height, stride_width, dilation_height, dilation_width, pad_height,
+                           pad_width, x, y, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 
