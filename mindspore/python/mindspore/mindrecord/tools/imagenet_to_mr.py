@@ -135,7 +135,7 @@ class ImageNetToMR:
         Execute transformation from imagenet to MindRecord.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.ImageNetToMR` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.ImageNetToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

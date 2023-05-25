@@ -104,7 +104,7 @@ class MnistToMR:
         Execute transformation from Mnist to MindRecord.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.MnistToMR` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.MnistToMR` .
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

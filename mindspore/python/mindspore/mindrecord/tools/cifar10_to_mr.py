@@ -38,10 +38,6 @@ class Cifar10ToMR:
     """
     A class to transform from cifar10 to MindRecord.
 
-    Note:
-        For details about Examples, please refer to `Converting the CIFAR-10 Dataset <https://
-        www.mindspore.cn/tutorials/en/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
-
     Args:
         source (str): The cifar10 directory to be transformed.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
@@ -113,7 +109,7 @@ class Cifar10ToMR:
         Execute transformation from cifar10 to MindRecord.
 
         Note:
-            Please refer to the Examples of class: `mindspore.mindrecord.Cifar10ToMR` .
+            Please refer to the Examples of :class:`mindspore.mindrecord.Cifar10ToMR` .
 
         Args:
             fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,

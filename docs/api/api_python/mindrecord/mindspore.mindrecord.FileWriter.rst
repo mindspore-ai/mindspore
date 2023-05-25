@@ -21,7 +21,7 @@
         .. note::
             - 索引字段应为Primitive类型，例如 `int` 、`float` 、`str` 。
             - 如果不调用该函数，则默认将schema中所有的Primitive类型的字段设置为索引。
-              请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
+              请参考 :class:`mindspore.mindrecord.FileWriter` 类的样例代码。
 
         参数：
             - **index_fields** (list[str]) - schema中的字段。
@@ -40,7 +40,7 @@
         增加描述用户自定义数据的schema。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
+            请参考 :class:`mindspore.mindrecord.FileWriter` 类的样例代码。
 
         .. list-table:: MindRecord支持的数据类型
            :widths: 25 25 50
@@ -97,7 +97,7 @@
         将内存中的数据同步到磁盘，并生成相应的数据库文件。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
+            请参考 :class:`mindspore.mindrecord.FileWriter` 类的样例代码。
 
         返回：
             MSRStatus，SUCCESS或FAILED。
@@ -159,7 +159,7 @@
         根据schema校验用户自定义数据后，将数据转换为一系列连续的MindRecord格式的数据集文件。
 
         .. note::
-            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
+            请参考 :class:`mindspore.mindrecord.FileWriter` 类的样例代码。
 
         参数：
             - **raw_data** (list[dict]) - 用户自定义数据的列表。
