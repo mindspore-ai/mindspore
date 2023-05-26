@@ -39,19 +39,12 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
     const int MAX = 0x3fffffff;
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto input_rank = SizeToLong(input_shape.size());
-    auto other_rank = SizeToLong(other_shape.size());
-    CheckAndConvertUtils::Check("input rank", input_rank, kEqual, other_rank, op_name);
     int64_t input_size = 1, other_size = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size *= input_shape[i];
+    }
+    for (size_t i = 0; i < other_shape.size(); i++) {
       other_size *= other_shape[i];
-      if (input_shape[i] != other_shape[i] && (input_shape[i] != 1 || other_shape[i] != 1)) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name
-                                 << "', the size of tensor 'input' must match the size of tensor 'other' at the " << i
-                                 << "th dimension, but got 'input' size: " << input_shape[i]
-                                 << ", 'other' size: " << other_shape[i] << ".";
-      }
     }
     if (input_size > MAX) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
