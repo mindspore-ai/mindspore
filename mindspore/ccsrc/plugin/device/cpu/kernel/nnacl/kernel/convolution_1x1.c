@@ -147,7 +147,7 @@ int Conv1x1MallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   if (conv->base_.in_size_ == THREE_TENSOR) {
     size = UP_ROUND(output_channel, conv_1x1->col_tile_) * sizeof(float);
-    conv->bias_data_ = malloc(size);
+    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
     memset(conv->bias_data_, 0, size);
   }
@@ -281,6 +281,7 @@ int convolution_1x1_release(KernelBase *self) {
   Convolution1x1Struct *conv_1x1 = (Convolution1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_1x1);
   Conv1x1FreeTmpBuffer(conv_1x1);
+  ConvBaseRelease(&conv_1x1->conv_);
   return NNACL_OK;
 }
 

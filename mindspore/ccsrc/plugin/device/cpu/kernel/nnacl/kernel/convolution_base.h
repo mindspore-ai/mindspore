@@ -62,10 +62,10 @@ typedef struct ConvolutionBaseStruct {
   int stride_w_;
   int dilation_h_;
   int dilation_w_;
-  //  int pad_u_;
-  //  int pad_d_;
-  //  int pad_l_;
-  //  int pad_r_;
+  int pad_u_;
+  int pad_d_;
+  int pad_l_;
+  int pad_r_;
   //  int group_;
   //  int tile_num_;
   //  int channel_multiplie_;
@@ -73,10 +73,12 @@ typedef struct ConvolutionBaseStruct {
   //  int output_padding_h_;
 } ConvolutionBaseStruct;
 
+void ConvBaseRelease(ConvolutionBaseStruct *conv);
 int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv);
 int ConvBasePrepare(ConvolutionBaseStruct *conv);
 int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv);
 int ConvBaseRepackWeight(ConvolutionBaseStruct *conv);
+void ConvBaseUpdateOriginWeightAndBias(ConvolutionBaseStruct *conv);
 void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size);
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_BASE_H_

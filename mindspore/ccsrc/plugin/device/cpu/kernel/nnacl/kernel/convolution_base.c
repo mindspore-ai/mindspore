@@ -17,6 +17,22 @@
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/conv_parameter.h"
 
+void ConvBaseRelease(ConvolutionBaseStruct *conv) {
+  if (!conv->base_.train_session_) {
+    if (!conv->is_sharing_pack_) {
+      conv->base_.env_->free(conv->base_.env_->allocator_, conv->packed_weight_);
+    } else {
+      conv->free_by_sharing_weight_(conv->pack_weight_manager_, conv->packed_weight_);
+    }
+    conv->packed_weight_ = NULL;
+  }
+
+  if (conv->bias_data_ != NULL) {
+    conv->base_.env_->free(conv->base_.env_->allocator_, conv->bias_data_);
+    conv->bias_data_ = NULL;
+  }
+}
+
 int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(conv->base_.in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(conv->base_.out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
@@ -53,17 +69,10 @@ int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   conv->stride_w_ = conv_param->stride_w_;
   conv->dilation_h_ = conv_param->dilation_h_;
   conv->dilation_w_ = conv_param->dilation_w_;
-  //  conv->pad_u_ = conv_param->pad_u_;
-  //  conv->pad_d_ = conv_param->pad_d_;
-  //  conv->pad_l_ = conv_param->pad_l_;
-  //  conv->pad_r_ = conv_param->pad_r_;
-  //  conv->group_ = conv_param->group_;
-  //  conv->tile_num_ = conv_param->tile_num_;
-  //  conv->input_unit_ = conv_param->input_unit_;
-  //  conv->output_unit_ = conv_param->output_unit_;
-  //  conv->channel_multiplie_ = conv_param->channel_multiplie_;
-  //  conv->output_padding_w_ = conv_param->output_padding_w_;
-  //  conv->output_padding_h_ = conv_param->output_padding_h_;
+  conv->pad_u_ = conv_param->pad_u_;
+  conv->pad_d_ = conv_param->pad_d_;
+  conv->pad_l_ = conv_param->pad_l_;
+  conv->pad_r_ = conv_param->pad_r_;
 
   return NNACL_OK;
 }
@@ -139,7 +148,7 @@ void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size) 
     if (data_size <= 0) {
       return NULL;
     }
-    data = malloc(data_size);
+    data = conv->base_.env_->alloc(conv->base_.env_->allocator_, data_size);
     conv->weight_is_packed_ = false;
     conv->is_sharing_pack_ = false;
   } else {

@@ -22,10 +22,21 @@
 #include "nnacl/kernel/convolution_1x1.h"
 #include "nnacl/kernel/convolution_im2col.h"
 #include "nnacl/kernel/convolution_winograd.h"
+#include "nnacl/kernel/convolution_depthwise_sw.h"
 #ifdef ENABLE_AVX
 #include "nnacl/kernel/convolution_sw_1x1.h"
 #include "nnacl/kernel/convolution_sw_avx.h"
+#include "nnacl/kernel/convolution_depthwise_sw_avx.h"
 #endif
+#ifdef ENABLE_ARM64
+#include "nnacl/kernel/convolution_depthwise_indirect.h"
+#endif
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+#include "nnacl/kernel/convolution_depthwise_3x3.h"
+#include "nnacl/fp32/conv_depthwise_fp32.h"
+#endif
+
+#define MaxDwConvSWSize 32
 
 float *ConvolutionDelegateCopyData(const TensorC *tensor) {
   NNACL_CHECK_NULL_RETURN_NULL(tensor);
@@ -270,6 +281,54 @@ KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param) {
   delegate->base_.release = convolution_delegate_release;
   delegate->base_.compute = convolution_delegate_compute;
   return (KernelBase *)delegate;
+}
+
+KernelBase *CreateConvolutionDepthwise(ConvParameter *conv_param) {
+  NNACL_CHECK_NULL_RETURN_NULL(conv_param);
+
+  KernelBase *kernel = NULL;
+
+  if (conv_param->dynamic_shape_) {
+    kernel = CreateConvDw(conv_param);
+    if (kernel != NULL) {
+      return kernel;
+    }
+  }
+
+#ifdef ENABLE_AVX
+  kernel = CreateConvDwSWAVX(conv_param);
+  if (kernel != NULL) {
+    return kernel;
+  }
+#endif
+
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+  if (CheckConvDw1DWinograd(conv_param, conv_param->thread_num_)) {
+    kernel = CreateConvDw3x3(conv_param);
+    if (kernel != NULL) {
+      return kernel;
+    }
+  }
+#endif
+
+#ifdef ENABLE_ARM64
+  if (CheckConvDwUseIndirectBuffer(conv_param)) {
+    kernel = CreateConvDwIndirect(conv_param);
+    if (kernel != NULL) {
+      return kernel;
+    }
+  }
+#endif
+
+  if (conv_param->input_channel_ < MaxDwConvSWSize) {
+    CreateConvDwSW(conv_param);
+    if (kernel != NULL) {
+      return kernel;
+    }
+  }
+
+  kernel = CreateConvDw(conv_param);
+  return kernel;
 }
 
 KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {

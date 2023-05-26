@@ -85,6 +85,9 @@
 #endif
 #endif
 
+#define NNACL_MIN(x, y) ((x) < (y) ? (x) : (y))
+#define NNACL_MAX(x, y) ((x) > (y) ? (x) : (y))
+
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
 #define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))
@@ -109,6 +112,8 @@
 #define INT_ADD_OVERFLOW(x, y) (INT_MAX - (x)) < (y)
 
 #define INT_ADD_OVERFLOW_THRESHOLD(x, y, threshold) ((threshold) - (x)) < (y)
+
+#define MALLOC_MAX_SIZE (2000 * 1024 * 1024)
 
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
@@ -241,6 +246,7 @@
 #define NNACL_CHECK_NULL_RETURN_ERR(ptr)
 #define NNACL_CHECK_NULL_RETURN_VOID(ptr)
 #define NNACL_CHECK_NULL_RETURN_NULL(ptr)
+#define NNACL_CHECK_MALLOC_SIZE(val)
 #else
 #define NNACL_CHECK_TRUE_RET(value, errcode) \
   do {                                       \
@@ -268,6 +274,8 @@
   NNACL_CHECK_TRUE_RET(!(INT_MUL_OVERFLOW(value1, value2)), errcode)
 #define NNACL_CHECK_INT_ADD_NOT_OVERFLOW(value1, value2, errcode) \
   NNACL_CHECK_TRUE_RET(!(INT_ADD_OVERFLOW(value1, value2)), errcode)
+#define NNACL_CHECK_MALLOC_SIZE(malloc_size) \
+  NNACL_CHECK_FALSE((malloc_size) > MALLOC_MAX_SIZE, NNACL_MALLOC_SIZE_INVALID)
 
 #define NNACL_CHECK_ZERO_RETURN_ERR(val) \
   do {                                   \

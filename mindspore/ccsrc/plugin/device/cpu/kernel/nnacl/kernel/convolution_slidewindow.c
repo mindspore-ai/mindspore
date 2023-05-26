@@ -178,7 +178,12 @@ int convolution_sw_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_sw_release(KernelBase *self) { return NNACL_OK; }
+int convolution_sw_release(KernelBase *self) {
+  ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(conv);
+  ConvBaseRelease(conv);
+  return NNACL_OK;
+}
 
 int convolution_sw_resize(KernelBase *self) {
   ConvolutionSWStruct *conv_sw = (ConvolutionSWStruct *)self;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
-#define NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
+#ifndef NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_INDIRECT_H_
+#define NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_INDIRECT_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
@@ -23,14 +23,17 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/kernel/convolution_base.h"
 
-typedef struct ConvolutionDepthwiseStruct {
+typedef struct ConvolutionDepthwiseIndirectStruct {
   ConvolutionBaseStruct conv_;
-  ConvDwCalcParam dw_param_;
-  float *input_ptr_;
+  int div_flag_;
+  int step_w_;
+  int step_h_;
+  float *zero_ptr_;
   float *output_ptr_;
-} ConvolutionDepthwiseStruct;
+  float *packed_input_;
+  float **indirect_buffer_;
+} ConvolutionDepthwiseIndirectStruct;
 
-int convolution_depthwise_release(KernelBase *self);
-KernelBase *CreateConvDw(ConvParameter *conv);
+KernelBase *CreateConvDwIndirect(ConvParameter *conv_param);
 
-#endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
+#endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_INDIRECT_H_

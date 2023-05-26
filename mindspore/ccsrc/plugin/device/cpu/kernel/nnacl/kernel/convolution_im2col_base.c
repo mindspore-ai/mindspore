@@ -131,7 +131,12 @@ void ConvIm2ColBaseInitGlobalVariable(ConvolutionBaseStruct *conv) {
   conv_im2col->row_major_to_col_nmajor_ = RowMajor2Col8Major;
 }
 
-int convolution_im2col_base_release(KernelBase *self) { return NNACL_OK; }
+int convolution_im2col_base_release(KernelBase *self) {
+  ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(conv);
+  ConvBaseRelease(conv);
+  return NNACL_OK;
+}
 
 int convolution_im2col_base_compute(KernelBase *self) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
