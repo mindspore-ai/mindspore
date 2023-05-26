@@ -19,8 +19,6 @@
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/conv_common_fp32.h"
 
-#define ConvIm2ColBaseMinBlock 1
-
 int ConvIm2ColBaseImpl(void *cdata, int task_id, float l, float r) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(cdata);
@@ -59,7 +57,7 @@ int ConvIm2ColBaseUpdateThreadNumProcess(KernelBase *self, int32_t kernel_type, 
   }
 
   int output_hw = conv_im2col->conv_.output_h_ * conv_im2col->conv_.output_w_;
-  self->thread_nr_ = MSMIN(UP_DIV(UP_DIV(output_hw, conv_im2col->row_tile_), ConvIm2ColBaseMinBlock), self->thread_nr_);
+  self->thread_nr_ = MSMIN(UP_DIV(UP_DIV(output_hw, conv_im2col->row_tile_), ConvMinBlock), self->thread_nr_);
   return NNACL_OK;
 }
 

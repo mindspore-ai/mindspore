@@ -23,6 +23,7 @@
 typedef struct ConvParameter {
   OpParameter op_parameter_;
   ConvQuantArg conv_quant_arg_;
+
   int kernel_h_;
   int kernel_w_;
   int stride_h_;
@@ -52,6 +53,8 @@ typedef struct ConvParameter {
   int output_padding_w_;
   int output_padding_h_;
   int out_format_;
+
+  bool dynamic_shape_;
 } ConvParameter;
 
 typedef struct SlidingWindowParam {

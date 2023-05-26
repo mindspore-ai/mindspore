@@ -53,17 +53,17 @@ int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   conv->stride_w_ = conv_param->stride_w_;
   conv->dilation_h_ = conv_param->dilation_h_;
   conv->dilation_w_ = conv_param->dilation_w_;
-  conv->pad_u_ = conv_param->pad_u_;
-  conv->pad_d_ = conv_param->pad_d_;
-  conv->pad_l_ = conv_param->pad_l_;
-  conv->pad_r_ = conv_param->pad_r_;
-  conv->group_ = conv_param->group_;
-  conv->tile_num_ = conv_param->tile_num_;
-  conv->input_unit_ = conv_param->input_unit_;
-  conv->output_unit_ = conv_param->output_unit_;
-  conv->channel_multiplie_ = conv_param->channel_multiplie_;
-  conv->output_padding_w_ = conv_param->output_padding_w_;
-  conv->output_padding_h_ = conv_param->output_padding_h_;
+  //  conv->pad_u_ = conv_param->pad_u_;
+  //  conv->pad_d_ = conv_param->pad_d_;
+  //  conv->pad_l_ = conv_param->pad_l_;
+  //  conv->pad_r_ = conv_param->pad_r_;
+  //  conv->group_ = conv_param->group_;
+  //  conv->tile_num_ = conv_param->tile_num_;
+  //  conv->input_unit_ = conv_param->input_unit_;
+  //  conv->output_unit_ = conv_param->output_unit_;
+  //  conv->channel_multiplie_ = conv_param->channel_multiplie_;
+  //  conv->output_padding_w_ = conv_param->output_padding_w_;
+  //  conv->output_padding_h_ = conv_param->output_padding_h_;
 
   return NNACL_OK;
 }

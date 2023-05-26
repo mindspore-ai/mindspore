@@ -135,7 +135,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
 
   int out_unit;
   if (CheckIfUseWinograd(&out_unit, conv_param)) {
-    conv = CreateConvolutionWinograd(conv_param);
+    conv = CreateConvolutionWinograd(conv_param, out_unit);
   }
 
 #ifdef ENABLE_AVX
