@@ -15,4 +15,4 @@ mindspore.ops.triu
     异常：
         - **TypeError** - 如果 `diagonal` 不是int。
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **ValueError** - 如果 `input` 的shape的长度小于1。
+        - **ValueError** - 如果 `input` 的shape的长度小于2。
