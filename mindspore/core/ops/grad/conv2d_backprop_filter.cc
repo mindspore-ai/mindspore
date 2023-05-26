@@ -28,9 +28,105 @@ namespace ops {
 namespace {
 constexpr size_t kConv2DBackpropFilterDoutIndex = 0;
 constexpr size_t kConv2DBackpropFilterInputIndex = 1;
+constexpr int64_t kNumOne = 1;
+constexpr int64_t kNumTwo = 2;
+constexpr int64_t kNumFour = 4;
+
+void SetAttrPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
+                    const std::vector<int64_t> &x_size_v) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  // check
+  auto kernel_size =
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[kernel_size]", primitive->GetAttr(kKernelSize), prim_name);
+  auto stride = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[stride]", primitive->GetAttr(kStride), prim_name);
+  auto dilation =
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
+  // default pad mode is valid
+  auto attr_pad_list_prt = primitive->GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+
+  ShapeVector pad_list = {0, 0, 0, 0};
+  if (pad_mode == SAME) {
+    int64_t stride_h, stride_w, kernel_h, kernel_w, dilation_h, dilation_w;
+    if (stride.size() == kNumOne) {
+      stride_h = stride[kIndex0];
+      stride_w = stride[kIndex0];
+    } else if (stride.size() == kNumTwo) {
+      stride_h = stride[kIndex0];
+      stride_w = stride[kIndex1];
+    } else if (stride.size() == kNumFour) {
+      stride_h = stride[kIndex2];
+      stride_w = stride[kIndex3];
+    } else {
+      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the size of stride must be 1, 2 or 4, but got "
+                               << stride.size();
+    }
+    if (kernel_size.size() == kNumOne) {
+      kernel_h = kernel_size[kIndex0];
+      kernel_w = kernel_size[kIndex0];
+    } else if (kernel_size.size() == kNumTwo) {
+      kernel_h = kernel_size[kIndex0];
+      kernel_w = kernel_size[kIndex1];
+    } else {
+      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the size of kernel_size must be 1 or 2, but got "
+                               << kernel_size.size();
+    }
+    if (dilation.size() == kNumOne) {
+      dilation_h = dilation[kIndex0];
+      dilation_w = dilation[kIndex0];
+    } else if (dilation.size() == kNumTwo) {
+      dilation_h = dilation[kIndex0];
+      dilation_w = dilation[kIndex1];
+    } else if (dilation.size() == kNumFour) {
+      dilation_h = dilation[kIndex2];
+      dilation_w = dilation[kIndex3];
+    } else {
+      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the size of dilation must be 1, 2 or 4, but got "
+                               << dilation.size();
+    }
+
+    int64_t pad_top = abstract::Shape::kShapeDimAny;
+    int64_t pad_bottom = abstract::Shape::kShapeDimAny;
+    int64_t pad_left = abstract::Shape::kShapeDimAny;
+    int64_t pad_right = abstract::Shape::kShapeDimAny;
+    if (dout_shape_norm[kInputIndex2] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex2] != abstract::Shape::kShapeDimAny) {
+      auto pad_needed_h =
+        (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
+      pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
+      pad_top = pad_needed_h / kNumTwo;
+      pad_bottom = pad_needed_h - pad_top;
+    }
+    if (dout_shape_norm[kInputIndex3] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex3] != abstract::Shape::kShapeDimAny) {
+      auto pad_needed_w =
+        (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
+      pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
+      pad_left = pad_needed_w / kNumTwo;
+      pad_right = pad_needed_w - pad_left;
+    }
+    pad_list = {pad_top, pad_bottom, pad_left, pad_right};
+  } else if (pad_mode == PAD) {
+    pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
+  }
+  (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
+}
 
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto input_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterInputIndex]->BuildShape())[kShape];
+  auto dout_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterDoutIndex]->BuildShape())[kShape];
+  auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  ShapeVector tmp_shape = {dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]};
+  auto dout_shape_norm = format == Format::NCHW ? dout_shape : tmp_shape;
+  SetAttrPadList(primitive, dout_shape_norm, input_shape);
+
   constexpr size_t kFilterSizeIndex = 2;
   auto filter_size = input_args[kFilterSizeIndex];
   auto out_shape = GetShapeValue(primitive, filter_size);
