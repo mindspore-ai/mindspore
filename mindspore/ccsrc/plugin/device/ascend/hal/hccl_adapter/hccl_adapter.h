@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_RUNTIME_HCCL_ADAPTER_HCCL_ADAPTER_H
 #define MINDSPORE_RUNTIME_HCCL_ADAPTER_HCCL_ADAPTER_H
 
+#include "plugin/device/ascend/hal/hccl_adapter/plugin/hccl_plugin.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -24,7 +25,7 @@
 #include <mutex>
 #include "mindspore/core/ir/anf.h"
 #include "hccl/hccl_types.h"
-#include "plugin/device/ascend/hal/hccl_adapter/plugin/hccl_plugin.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace ge {
 class OpsKernelInfoStore;
@@ -94,6 +95,10 @@ class HcclAdapter {
 
   // Return whether using CM to initialize HCCL.
   bool UseHcclCM() const;
+
+  bool IsSameServer(const std::vector<uint32_t> &rank_ids) const;
+
+  string GetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const;
 
  private:
   HcclAdapter() = default;

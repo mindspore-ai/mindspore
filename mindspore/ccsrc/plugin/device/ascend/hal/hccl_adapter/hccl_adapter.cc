@@ -29,6 +29,7 @@
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/hccl_adapter/converter.h"
 #include "include/backend/distributed/constants.h"
+#include "include/common/utils/parallel_context.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -106,6 +107,11 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
 }
 
 namespace mindspore::hccl {
+namespace {
+const char kDefaultGroup[] = "__default_group";
+constexpr uint32_t kDeviceNumOfServer = 8;
+}  // namespace
+
 HcclAdapter &HcclAdapter::GetInstance() {
   static HcclAdapter instance;
   return instance;
@@ -656,5 +662,34 @@ HcclResult HcclAdapter::HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclA
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_to_allv_(send_buf, params.sendcounts.data(), params.sdispls.data(), dataType, recv_buf,
                                   params.recvcounts.data(), params.rdispls.data(), dataType, hccl_comm, stream);
+}
+
+bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const {
+  auto min_iter = min_element(rank_ids.begin(), rank_ids.end());
+  uint32_t min = (min_iter != rank_ids.end()) ? *min_iter : 0;
+  auto max_iter = max_element(rank_ids.begin(), rank_ids.end());
+  uint32_t max = (max_iter != rank_ids.end()) ? *max_iter : 0;
+  return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
+}
+
+string HcclAdapter::GetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const {
+  string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
+  if (communi_parallel_mode == parallel::kAllGroupParallel) {
+    return original_group;
+  }
+
+  if (communi_parallel_mode == parallel::kNoGroupParallel) {
+    return kDefaultGroup;
+  }
+
+  if (rank_ids.empty() || original_group == kHcclWorldGroup) {
+    return kDefaultGroup;
+  }
+
+  if (IsSameServer(rank_ids)) {
+    return original_group;
+  }
+
+  return kDefaultGroup;
 }
 }  // namespace mindspore::hccl
