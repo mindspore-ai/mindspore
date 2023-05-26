@@ -2268,4 +2268,14 @@ bool AnfRuntimeAlgorithm::HasSelectKernelBuildInfo(const AnfNodePtr &node) {
   }
   return true;
 }
+
+bool AnfRuntimeAlgorithm::NeedEraseCache(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  if (!prim->HasAttr(kRandomCache)) {
+    return false;
+  }
+  auto random_cache_value = prim->GetAttr(kRandomCache);
+  MS_EXCEPTION_IF_NULL(random_cache_value);
+  return !GetValue<bool>(random_cache_value);
+}
 }  // namespace mindspore::session

@@ -276,6 +276,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     return iter->second;
   }
 
+  MS_LOG(INFO) << "Run Op cache miss " << op_run_info->base_op_run_info.graph_info;
   CheckBackendPolicy();
 
   *single_op_cache_hit = false;
@@ -322,9 +323,9 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
-  auto op_compiler_info =
-    std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, outputs_tensor_num,
-                                     outputs_padding_type, device_context, false);
+  auto op_compiler_info = std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index,
+                                                           outputs_tensor_num, outputs_padding_type, device_context,
+                                                           op_run_info->base_op_run_info.need_earse_cache);
 
   graph->set_graph_info(graph_info);
   ConvertGraphToExecuteInfo(op_compiler_info);
@@ -376,6 +377,9 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
   bool has_hidden_side_effect;
   {
     PrimitiveReadLock read_lock(op_prim->shared_mutex());
+    if (op_info.need_earse_cache) {
+      return graph_info;
+    }
     has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
     // The value of the attribute affects the operator selection
     const auto &attr_map = op_prim->attrs();

@@ -757,15 +757,20 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
       } else {
+        auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, true, &op_run_info, &graph_info,
-                                                        &graph_output_info);
-        op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
-        AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
-        RunOpDynamic(op_run_info, &op_outputs);
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, is_dynamic, &op_run_info,
+                                                        &graph_info, &graph_output_info);
+        if (is_dynamic) {
+          op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
+          AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
+          RunOpDynamic(op_run_info, &op_outputs);
+        } else {
+          RunOp(op_run_info, &op_outputs);
+        }
       }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
@@ -1139,14 +1144,6 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
                                        op_run_info->base_op_run_info.op_name, true);
     runtime::OpExecutor::GetInstance().Wait();
-  }
-
-  if (!single_op_cache_hit) {
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    // If op not support dynamic shape, op will select static opinfo, update graph dynamic attr
-    op_compiler_info->need_erase_ = !enable_cache;
   }
 
   RunOpImpl(single_op_cache_hit, op_compiler_info, op_run_info, outputs);

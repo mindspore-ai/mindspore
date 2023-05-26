@@ -536,6 +536,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     auto input_parameter = ad_param()->fg_->add_parameter();
     input_parameter->set_abstract(abs_list[i]);
+    input_parameter->set_name(input_parameter->UniqueName());
     TraceGuard trace_guard(std::make_shared<TraceCopy>(input_parameter->debug_info()));
     auto tape_parameter = ad_param()->tape_->add_parameter();
     tape_parameter->set_abstract(abs_list[i]);
@@ -1757,6 +1758,7 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
   ParameterPtr sens_param = nullptr;
   if (has_sens_arg) {
     sens_param = ad_param()->tape_->add_parameter();
+    sens_param->set_name(sens_param->UniqueName());
     sens_param->debug_info()->set_name("sens");
     sens_param->set_abstract(sens_abstract);
   }
