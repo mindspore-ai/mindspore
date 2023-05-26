@@ -38,8 +38,8 @@ class COMMON_EXPORT OffloadContext {
   void set_offload_checkpoint(const std::string &offload_checkpoint);
   std::string offload_checkpoint() const { return offload_checkpoint_; }
 
-  void set_offload_ddr_size(size_t offload_ddr_size);
-  size_t offload_ddr_size();
+  void set_offload_cpu_size(size_t offload_cpu_size);
+  size_t offload_cpu_size();
 
   void set_offload_disk_size(size_t offload_disk_size);
   size_t offload_disk_size() const { return offload_disk_size_; }
@@ -62,20 +62,20 @@ class COMMON_EXPORT OffloadContext {
   void set_host_mem_block_size(size_t host_mem_block_size);
   size_t host_mem_block_size() const { return host_mem_block_size_; }
 
-  bool ddr_size_configured() { return ddr_size_configured_; }
+  bool cpu_size_configured() const { return cpu_size_configured_; }
 
-  void set_ddr_ratio(float ddr_ratio);
-  float ddr_ratio() { return ddr_ratio_; }
+  void set_cpu_ratio(float cpu_ratio);
+  float cpu_ratio() const { return cpu_ratio_; }
 
   void set_hbm_ratio(float hbm_ratio);
-  float hbm_ratio() { return hbm_ratio_; }
+  float hbm_ratio() const { return hbm_ratio_; }
 
  private:
   OffloadContext();
   std::string offload_param_;
   std::string offload_path_;
   std::string offload_checkpoint_;
-  size_t offload_ddr_size_;
+  size_t offload_cpu_size_;
   size_t offload_disk_size_;
   bool enable_aio_;
   size_t aio_block_size_;
@@ -83,8 +83,8 @@ class COMMON_EXPORT OffloadContext {
   bool enable_pinned_mem_;
   bool auto_offload_;
   size_t host_mem_block_size_;
-  bool ddr_size_configured_;
-  float ddr_ratio_;
+  bool cpu_size_configured_;
+  float cpu_ratio_;
   float hbm_ratio_;
 };
 }  // namespace mindspore

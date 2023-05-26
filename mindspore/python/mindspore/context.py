@@ -825,8 +825,7 @@ def set_offload_context(offload_config):
                         configure.It supports the following keys.
             offload_param (str):  The param for offload destination, cpu or disk.
             offload_path (str):  The path of offload.
-            offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk.
-            offload_ddr_size (str):  The ddr size for offload. The format is "xxGB".
+            offload_cpu_size (str):  The cpu memory size for offload. The format is "xxGB".
             offload_disk_size (str): The disk size for offload. The format is "xxGB"
             enable_aio (bool): The flag of whether enabling aio. Default: ``True``.
             aio_block_size (str): The size of aio block. The format is "xxGB"

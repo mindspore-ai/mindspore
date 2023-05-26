@@ -94,16 +94,16 @@ void PinMemPool::Init() {
     return;
   }
   const auto &offload_context = OffloadContext::GetInstance();
-  auto ddr_size = offload_context->offload_ddr_size();
-  if (!mindspore::IsStandAlone() && !offload_context->ddr_size_configured()) {
+  auto cpu_mem_size = offload_context->offload_cpu_size();
+  if (!mindspore::IsStandAlone() && !offload_context->cpu_size_configured()) {
     auto local_rank_size = GetLocalRankSize();
     if (local_rank_size == 0) {
       MS_LOG(ERROR) << "Local rank size can not be 0, reset to 1.";
       local_rank_size = 1;
     }
-    ddr_size = ddr_size / local_rank_size;
+    cpu_mem_size = cpu_mem_size / local_rank_size;
   }
-  max_size_ = ddr_size;
+  max_size_ = cpu_mem_size;
   SetMemPoolBlockSize(max_size_);
   inited_ = true;
   MS_LOG(INFO) << "PinMemPool init success.";

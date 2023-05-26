@@ -86,7 +86,7 @@ void SwapStrategyBuilder::ResetState(const KernelGraphPtr &graph, const std::sha
 
   context_ = context;
   total_mem_level0_ = context->hbm_mem_size_;
-  total_mem_level1_ = context->ddr_mem_size_;
+  total_mem_level1_ = context->cpu_mem_size_;
 
   kernel_num_ = graph->execution_order().size();
 
@@ -133,8 +133,8 @@ void SwapStrategyBuilder::RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &
   span->weight_ = (dist - 1) * info->tensor_size_;
   span->output_span_ = output_span;
 
-  bool offload_param = context_->offload_param_to_ddr_ || context_->offload_param_to_disk_;
-  bool offload_checkpoint = context_->offload_checkpoint_to_ddr_ || context_->offload_checkpoint_to_disk_;
+  bool offload_param = context_->offload_param_to_cpu_ || context_->offload_param_to_disk_;
+  bool offload_checkpoint = context_->offload_checkpoint_to_cpu_ || context_->offload_checkpoint_to_disk_;
   if (offload_param && info->node_ != nullptr && info->node_->isa<Parameter>()) {
     const auto parameter = info->node_->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
@@ -239,9 +239,9 @@ void SwapStrategyBuilder::ClassifyOffloadSpanLevel(const std::vector<std::shared
 
 void SwapStrategyBuilder::ClassifySpanLevel() {
   MS_EXCEPTION_IF_NULL(context_);
-  ClassifyOffloadSpanLevel(offload_param_spans_, context_->offload_param_to_ddr_);
+  ClassifyOffloadSpanLevel(offload_param_spans_, context_->offload_param_to_cpu_);
   offload_param_spans_.clear();
-  ClassifyOffloadSpanLevel(offload_checkpoint_spans_, context_->offload_checkpoint_to_ddr_);
+  ClassifyOffloadSpanLevel(offload_checkpoint_spans_, context_->offload_checkpoint_to_cpu_);
   offload_checkpoint_spans_.clear();
 
   while (!span_queue_.empty()) {

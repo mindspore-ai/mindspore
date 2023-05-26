@@ -57,7 +57,7 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_variable_mem_size) {
   std::vector<std::vector<size_t>> inputs = {{10000, 10000}, {10000, 136}, {100, 136}};
   std::vector<std::vector<size_t>> expects = {{5, 2, 5, 0, 5, 0}, {5, 2, 5, 0, 5, 0}, {5, 2, 5, 0, 5, 0}};
   for (size_t i = 0; i < 3; ++i) {
-    context->ddr_mem_size_ = inputs[i][0];
+    context->cpu_mem_size_ = inputs[i][0];
     context->hbm_mem_size_ = inputs[i][1];
     auto strategy = builder->Build(kernel_graph, context);
     EXPECT_NE(strategy, nullptr);
@@ -85,7 +85,7 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_offload_param) {
   auto kernel_graph = kernel_graph_add_net_;
   EXPECT_NE(kernel_graph, nullptr);
 
-  context->ddr_mem_size_ = 10000;
+  context->cpu_mem_size_ = 10000;
   context->hbm_mem_size_ = 10000;
   for (const auto &kernel : kernel_graph->execution_order()) {
     for (const auto &input : kernel->inputs()) {
@@ -100,7 +100,7 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_offload_param) {
   std::vector<std::vector<size_t>> inputs = {{true, false}, {false, true}, {true, true}};
   std::vector<std::vector<size_t>> expects = {{5, 2, 5, 5, 15, 10}, {5, 2, 5, 5, 15, 10}, {5, 2, 5, 5, 15, 10}};
   for (size_t i = 0; i < 3; ++i) {
-    context->offload_param_to_ddr_ = inputs[i][0];
+    context->offload_param_to_cpu_ = inputs[i][0];
     context->offload_param_to_disk_ = inputs[i][1];
     auto strategy = builder->Build(kernel_graph, context);
     EXPECT_NE(strategy, nullptr);
@@ -128,7 +128,7 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_all_reduce_nodes) {
   auto kernel_graph = kernel_graph_add_with_all_reduce_net_;
   EXPECT_NE(kernel_graph, nullptr);
 
-  context->ddr_mem_size_ = 100;
+  context->cpu_mem_size_ = 100;
   context->hbm_mem_size_ = 250;
   auto strategy = builder->Build(kernel_graph, context);
   EXPECT_NE(strategy, nullptr);

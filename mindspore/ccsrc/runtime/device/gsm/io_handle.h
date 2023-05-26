@@ -60,7 +60,7 @@ class BACKEND_EXPORT IOHandle {
   bool Wait(AsyncIOToken sync_token);
 
  private:
-  bool IsAligned(const void *data, size_t byte_num);
+  bool IsAligned(const void *data, size_t byte_num) const;
 
  private:
   AsyncIO *aio_{nullptr};
