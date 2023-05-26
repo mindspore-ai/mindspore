@@ -5690,6 +5690,8 @@ def _init_and_select_elem(input, initial, where, cmp_fn):    # pylint: disable=r
 
     if where is not None and (where.shape or not where):
         if initial is None:
+            if not where:
+                return input
             raise ValueError('initial value must be provided for where masks')
         where = where.broadcast_to(input.shape)
         initial = initial.broadcast_to(input.shape)
