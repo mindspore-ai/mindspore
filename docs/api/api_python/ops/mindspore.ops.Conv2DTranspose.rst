@@ -1,7 +1,7 @@
 mindspore.ops.Conv2DTranspose
 ==============================
 
-.. py:class:: mindspore.ops.Conv2DTranspose(out_channel, kernel_size, pad_mode='valid', pad=0, pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format='NCHW')
+.. py:class:: mindspore.ops.Conv2DTranspose(out_channel, kernel_size, pad_mode="valid", pad=0, pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format='NCHW')
 
     计算二维转置卷积，也称为反卷积，实际不是真正的反卷积。因为它不能完全的恢复输入矩阵的数据，但能恢复输入矩阵的形状。
 

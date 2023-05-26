@@ -50,8 +50,8 @@ mindspore.ops.AdamWeightDecay
 
     异常：
         - **TypeError**: -如果 `use_locking` 不是bool类型。
-        - **TypeError**: -如果 `lr`, `beta1`, `beta2`, `epsilon` 或者 `decay` 不是float32。
-        - **TypeError**: -如果 `var`, `m` 或者 `v` 不是数据类型为float16或者float32的Parameter。
+        - **TypeError**: -如果 `lr` 、 `beta1` 、 `beta2` 、 `epsilon` 或者 `decay` 不是float32。
+        - **TypeError**: -如果 `var` 、 `m` 或者 `v` 不是数据类型为float16或者float32的Parameter。
         - **TypeError**: -如果 `gradient` 不是Tensor。
         - **ValueError** - 如果 `eps` 小于等于0。
         - **ValueError** - 如果 `beta1` 、 `beta2` 不在（0.0,1.0）范围内。

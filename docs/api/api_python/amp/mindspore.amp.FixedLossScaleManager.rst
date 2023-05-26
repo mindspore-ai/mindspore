@@ -14,7 +14,7 @@ mindspore.amp.FixedLossScaleManager
         返回 `drop_overflow_update` ，该值表示是否在发生溢出时放弃本轮参数更新。
 
         返回：
-            bool, `drop_overflow_update` 的值。
+            bool， `drop_overflow_update` 的值。
 
     .. py:method:: get_loss_scale()
 

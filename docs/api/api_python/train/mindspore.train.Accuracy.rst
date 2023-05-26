@@ -35,7 +35,7 @@ mindspore.train.Accuracy
         对于'classification'，如果预测的最大值的索引匹配真实的标签，预测正确；对于'multilabel'，如果预测值与真实标签匹配，预测正确。
 
         参数：
-            - **inputs** - 预测值 `y_pred`  和真实标签 `y` ， `y_pred`  和 `y` 支持Tensor、list或numpy.ndarray类型。
+            - **inputs** - 预测值 `y_pred` 和真实标签 `y` ， `y_pred`  和 `y` 支持Tensor、list或numpy.ndarray类型。
 
               - 对于'classification'情况， `y_pred`  在大多数情况下由范围 :math:`[0, 1]` 中的浮点数组成，shape为 :math:`(N, C)` ，其中 :math:`N` 是样本数， :math:`C` 是类别数。
                 `y` 由整数值组成，如果是one_hot编码格式，shape是 :math:`(N, C)` ；如果是类别索引，shape是 :math:`(N,)` 。

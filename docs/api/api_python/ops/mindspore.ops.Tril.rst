@@ -11,6 +11,7 @@ mindspore.ops.Tril
 
     参数：
         - **diagonal** (int，可选) - 指定对角线位置，默认值：0，指定主对角线。
+
     输入：
         - **x** (Tensor) - 输入Tensor。shape为 :math:`(x_1, x_2, ..., x_R)` ，其rank至少为2。
           支持的数据类型有包括所有数值型和bool类型。
