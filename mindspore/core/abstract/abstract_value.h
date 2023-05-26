@@ -795,7 +795,7 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
   ///
   /// \param[in] element The abstract to be wrapper as a abstract tensor.
   /// \param[in] shape The dimension of abstract tensor.
-  AbstractAny() : AbstractTensor(kFloat64, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}))) {}
+  AbstractAny() : AbstractTensor(DefaultDtype(), std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}))) {}
 
   /// \brief Destructor of AbstractAny.
   ~AbstractAny() override = default;
@@ -803,16 +803,33 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override {
     MS_EXCEPTION_IF_NULL(other);
-    return Clone();
+    return std::make_shared<AbstractAny>();
   }
 
   AbstractBasePtr Broaden() const override { return Clone(); }
 
-  AbstractBasePtr Clone() const override { return std::make_shared<AbstractAny>(); }
+  AbstractBasePtr Clone() const override {
+    auto any_abstract = std::make_shared<AbstractAny>();
+    if (supposed_tensor_dtype()) {
+      MS_EXCEPTION_IF_NULL(element());
+      const auto &dtype = element()->BuildType();
+      any_abstract->element()->set_type(dtype);
+      any_abstract->set_supposed_tensor_dtype(true);
+    }
+    return any_abstract;
+  }
 
   TypePtr BuildType() const override;
 
   std::string ToString() const override { return type_name(); }
+
+  bool supposed_tensor_dtype() const { return supposed_tensor_dtype_; }
+  void set_supposed_tensor_dtype(bool flag) { supposed_tensor_dtype_ = flag; }
+
+  static TypePtr DefaultDtype() { return kFloat64; }
+
+ private:
+  bool supposed_tensor_dtype_{false};
 };
 using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
 using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;

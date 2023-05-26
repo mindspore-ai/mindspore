@@ -473,8 +473,22 @@ def test_gelu():
         tanh_var = ms.ops.tanh(var3)
         return 0.5 * x * (1 + tanh_var)
 
+    @ms.jit
+    def gelu_forward_3(x):
+        math_var = math.sqrt(2 / math.pi)
+        pow_var = ms.ops.pow(x, 3)
+        var1 = 0.044715 * pow_var
+        var2 = x + var1
+        var3 = math_var * var2  # No @jit.typing
+        tanh_var = ms.ops.tanh(var3)
+        return 0.5 * x * (1 + tanh_var)
+
     x = ms.Tensor(9, dtype=ms.float32)
-    return gelu_forward_1(x) + gelu_forward_2(x)
+    res1 = gelu_forward_1(x)
+    res2 = gelu_forward_2(x)
+    res3 = gelu_forward_3(x)
+    assert np.all(res1.asnumpy() == res2.asnumpy())
+    assert np.all(res1.asnumpy() == res3.asnumpy())
 
 
 @pytest.mark.level0
