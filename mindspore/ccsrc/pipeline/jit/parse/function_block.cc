@@ -320,6 +320,8 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   // If namespace is None, the symbol is an undefined name.
   if (info[namespace_index].is_none()) {
     const auto undefined_symbol = std::make_shared<ValueProblem>(ValueProblemType::kUndefined);
+    MS_LOG(WARNING) << "Undefined symbol: " << var_name << ", during parsing " << py::str(ast->function()) << " of "
+                    << py::str(ast->obj());
     return NewValueNode(undefined_symbol);
   }
 
@@ -355,7 +357,7 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
 
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
-  MS_LOG(DEBUG) << "var_name: " << var_name;
+  MS_LOG(DEBUG) << "var_name: " << var_name << ", ast object type: " << parser_.ast()->target_type();
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (parser_.support_fallback() != "0");
@@ -363,7 +365,10 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
   // Handle self. The prefix of var_name is "self".
   constexpr auto self_name = "self";
   const auto self_name_len = strlen(self_name);
-  if (var_name.compare(0, self_name_len, self_name) == 0) {
+  // For PARSE_TARGET_METHOD or PARSE_TARGET_OBJECT_INSTANCE, should deal with self here, exclude PARSE_TARGET_FUNCTION.
+  if ((parser_.ast()->target_type() == PARSE_TARGET_METHOD ||
+       parser_.ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE) &&
+      var_name.compare(0, self_name_len, self_name) == 0) {
     auto start = var_name.find_first_of('.');
     if (start != std::string::npos) {  // 'self.xxx'
       ++start;

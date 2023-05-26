@@ -1910,8 +1910,8 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
     const auto &keys_tuple = keys_tuple_abs->BuildValue();
     const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
     ValuePtr type_value = nullptr;
-    bool isPyExecute = (keys != nullptr);
-    if (isPyExecute) {  // PyExecute.
+    bool is_py_execute = (keys != nullptr);
+    if (is_py_execute) {  // PyExecute.
       bool found = false;
       size_t i = 0;
       for (; i < keys->value().size(); ++i) {
@@ -1966,7 +1966,7 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
     }
 
     if (type_value == nullptr) {
-      MS_LOG(INFO) << "Not valid " << (isPyExecute ? "PyExecute" : "PyInterpret")
+      MS_LOG(INFO) << "Not valid " << (is_py_execute ? "PyExecute" : "PyInterpret")
                    << " CNode. node: " << node->DebugString() << ", key: " << type_var_str << ", type value is null.";
       return nullptr;
     }
@@ -1975,7 +1975,7 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
     if (!py::isinstance<py::none>(py_type)) {
       return py::cast<TypePtr>(py_type);
     }
-    MS_LOG(INFO) << "Not valid " << (isPyExecute ? "PyExecute" : "PyInterpret")
+    MS_LOG(INFO) << "Not valid " << (is_py_execute ? "PyExecute" : "PyInterpret")
                  << " CNode. node: " << node->DebugString() << ", key: " << type_var_str << ", type value is None.";
     return nullptr;
   };
@@ -2028,8 +2028,8 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
     return nullptr;
   }
   const auto &values_tuple_abs = dyn_cast<AbstractSequence>(args_abs_list[values_index]);
-  bool isPyExecute = (values_tuple_abs != nullptr);
-  if (isPyExecute) {  // PyExecute CNode.
+  bool is_py_execute = (values_tuple_abs != nullptr);
+  if (is_py_execute) {  // PyExecute CNode.
     const auto &elements_abs = values_tuple_abs->elements();
     for (const auto &element_abs : elements_abs) {
       if (!unique_dtype_check(element_abs)) {

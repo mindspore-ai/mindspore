@@ -49,6 +49,7 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     MS_LOG(ERROR) << "Parse the python code failed, obj is nullptr or none";
     return nullptr;
   }
+  MS_LOG(DEBUG) << "ast obj: " << py::str(obj) << ", python_mod_get_parse_method: " << python_mod_get_parse_method;
 
   auto ast = std::make_shared<ParseFunctionAst>(obj);
   bool success = ast->InitParseAstInfo(python_mod_get_parse_method);
@@ -1437,12 +1438,12 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
 }
 
 AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const {
+  MS_EXCEPTION_IF_NULL(block);
   std::string var_name = "self.";
   std::string attr_name = node.attr("attr").cast<std::string>();
   (void)var_name.append(attr_name);
-  auto attr_obj = ast()->obj().attr(attr_name.c_str());
-  MS_EXCEPTION_IF_NULL(block);
   MS_LOG(DEBUG) << "var_name: " << var_name;
+  auto attr_obj = ast()->obj().attr(attr_name.c_str());
   bool check_need_resolve = py::hasattr(ast()->obj(), attr_name.c_str()) &&
                             (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
                              py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||

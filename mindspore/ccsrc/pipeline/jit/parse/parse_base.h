@@ -48,7 +48,7 @@ enum AstSubType : int64_t {
 };
 
 // Define the parse target type.
-enum ParseTargetTypeDef {
+enum ParseTargetType {
   PARSE_TARGET_FUNCTION = 0,         // Function
   PARSE_TARGET_METHOD = 1,           // Method
   PARSE_TARGET_OBJECT_INSTANCE = 2,  // Object instance
@@ -179,7 +179,7 @@ const char RESOLVE_NAMESPACE_NAME_COMMON_OPS[] = "CommonOPS";      // For common
 const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // For Module namespace.
 
 // Define Resolve type.
-enum ResolveTypeDef : int64_t {
+enum ResolveType : int64_t {
   RESOLVE_TYPE_NONE = 0,                // Resolve None.
   RESOLVE_TYPE_FUNCTION = 1,            // Resolve function.
   RESOLVE_TYPE_METHOD = 2,              // Resolve class method.
@@ -193,20 +193,20 @@ enum ResolveTypeDef : int64_t {
 };
 
 // Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.
-enum ClassInstanceTypeDef {
+enum ClassInstanceType {
   CLASS_INSTANCE_TYPE_CELL = 0,         // Class instance type is Cell.
   CLASS_INSTANCE_TYPE_PRIMITIVE = 1,    // Class instance type is Primitive.
   CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,  // Class instance type is Numpy Array.
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 
-// Define syntax support.
-enum SyntaxSupportDef : int {
-  SYNTAX_SUPPORTED = 0,                  // supported syntax
-  SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1,  // unsupported internal type
-  SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2,  // unsupported external type
-  SYNTAX_HYBRID_TYPE = 3,                // hybrid type
-  SYNTAX_UNSUPPORTED_NAMESPACE = 4       // unsupported namespace
+// Define syntax support type.
+enum SyntaxSupportType : int {
+  SYNTAX_SUPPORTED = 0,                  // Supported syntax
+  SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1,  // Unsupported internal type
+  SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2,  // Unsupported external type
+  SYNTAX_HYBRID_TYPE = 3,                // Hybrid type
+  SYNTAX_UNSUPPORTED_NAMESPACE = 4       // Unsupported namespace
 };
 
 // Convert python object to ValuePtr.
