@@ -121,7 +121,7 @@ class DynamicLossScaleManager(LossScaleManager):
     adjusted, inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
-        init_loss_scale (float): Initialize loss scale. Default: 2**24.
+        init_loss_scale (float): Initialize loss scale. Default: 2 ** 24.
         scale_factor (int): Coefficient of increase and decrease. Default: 2.
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
 

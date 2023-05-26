@@ -114,7 +114,7 @@ class TopKCategoricalAccuracy(Metric):
 class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
     """
     Calculates the top-1 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
-    Refer to :class:`TopKCategoricalAccuracy` for more details.
+    Refer to :class:`mindspore.train.TopKCategoricalAccuracy` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -141,7 +141,7 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
 class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
     """
     Calculates the top-5 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
-    Refer to :class:`TopKCategoricalAccuracy` for more details.
+    Refer to :class:`mindspore.train.TopKCategoricalAccuracy` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

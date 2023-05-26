@@ -12,7 +12,7 @@
 
     输入：
         - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。秩应小于8。
-        - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值: ()，缩小所有维度。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
+        - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值： ()，缩小所有维度。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
 
     输出：
         与输入 `x` 具有相同数据类型的Tensor。

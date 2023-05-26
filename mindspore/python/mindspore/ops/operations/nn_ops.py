@@ -1898,8 +1898,8 @@ class MaxPoolV1(Primitive):
 
 class MaxPoolWithArgmax(Primitive):
     r"""
-    `ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
-    use `ops.MaxPoolWithArgmaxV2` instead.
+    :class:`mindspore.ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
+    use :class:`mindspore.ops.MaxPoolWithArgmaxV2` instead.
 
     Supported Platforms:
         Deprecated
@@ -2687,8 +2687,8 @@ class BiasAdd(Primitive):
     consistent with the shape of the input Tensor.
 
     Args:
-        data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'.
-            Default is 'NCHW'.
+        data_format (str): The format of input and output data. It should be "NHWC", "NCHW" or "NCDHW".
+            Default is "NCHW".
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
@@ -2700,7 +2700,7 @@ class BiasAdd(Primitive):
 
     Raises:
         TypeError: If `data_format` is not a str.
-        ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
+        ValueError: If value of `data_format` is not in the range of ["NHWC","NCHW","NCDHW"].
         TypeError: If `input_x` or `bias` is not a Tensor.
         TypeError: If dtype of `input_x` or `bias` is neither float16 nor float32.
         TypeError: If dtype of `input_x` or `bias` is inconsistent.
@@ -2741,7 +2741,7 @@ class NLLLoss(Primitive):
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
     N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
 
-    If reduction is not 'none' (default 'mean'), then
+    If reduction is not "none" (default "mean"), then
 
     .. math::
 
@@ -2751,7 +2751,7 @@ class NLLLoss(Primitive):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
+        reduction (str): Apply specific reduction method to the output: "none", "mean", or "sum". Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
@@ -2763,7 +2763,7 @@ class NLLLoss(Primitive):
     Outputs:
         Tuple of 2 tensors composed with `loss` and `total_weight`.
 
-        - **loss** (Tensor) - When `reduction` is 'none' and `logits` is a 2D tensor, the `loss` shape is :math:`(N,)`.
+        - **loss** (Tensor) - When `reduction` is "none" and `logits` is a 2D tensor, the `loss` shape is :math:`(N,)`.
           Otherwise, the `loss` is a scalar. The data type is the same with `input's`.
         - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is the same with `weight's`.
 
@@ -3098,12 +3098,12 @@ class MultiMarginLoss(Primitive):
     Args:
         p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
         margin (int, optional): A parameter to change pairwise distance. Default: 1.0.
-        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
-            'sum'. Default: 'mean'.
+        reduction (str, optional): Apply specific reduction method to the output: "none", "mean",
+            "sum". Default: "mean".
 
-            - 'none': no reduction will be applied.
-            - 'mean': the sum of the output will be divided by the number of elements in the output.
-            - 'sum': the output will be summed.
+            - "none": no reduction will be applied.
+            - "mean": the sum of the output will be divided by the number of elements in the output.
+            - "sum": the output will be summed.
 
     Inputs:
         - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
@@ -3113,7 +3113,7 @@ class MultiMarginLoss(Primitive):
           support float16, float32 or float64.
 
     Outputs:
-        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Tensor, When `reduction` is "none", the shape is :math:`(N,)`.
         Otherwise, it is a scalar. Has the same data type with `inputs`.
 
     Supported Platforms:
@@ -3153,7 +3153,7 @@ class SoftMarginLoss(Primitive):
     where :math:`x.nelement()` is the number of elements of x.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: "none", "mean" or "sum". Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -3167,7 +3167,7 @@ class SoftMarginLoss(Primitive):
         TypeError: If `logits` or `labels` is not a Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `reduction` is not one of "none", "mean" or "sum".
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4527,8 +4527,8 @@ class MirrorPad(Primitive):
     Pads the input tensor according to the paddings and mode.
 
     Args:
-        mode (str): Specifies the padding mode. The optional values are "REFLECT" and "SYMMETRIC".
-            Default: "REFLECT".
+        mode (str): Specifies the padding mode. The optional values are 'REFLECT' and 'SYMMETRIC'.
+            Default: 'REFLECT'.
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
