@@ -129,11 +129,10 @@ void GraphKernelBuild::Init() {
     const auto kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
     if (kernel_generator == "AKG") {
       kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kCPUDevice);
-    } else if (kernel_generator == "BISHENG") {
+    } else if (kernel_generator == "MLIR") {
       kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kernel_generator);
     } else {
-      MS_EXCEPTION(UnknownError) << "Kernel generator only supports AKG and BISHENG but got " << kernel_generator
-                                 << ".";
+      MS_EXCEPTION(UnknownError) << "Kernel generator only supports AKG and MLIR but got " << kernel_generator << ".";
     }
   }
 }

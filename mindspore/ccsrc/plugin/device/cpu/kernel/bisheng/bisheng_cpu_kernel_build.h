@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-const char kBISHENG[] = "BISHENG";
+const char kMLIR[] = "MLIR";
 
 class BishengCpuKernelBuilder : public AkgKernelBuilder {
  public:
@@ -42,7 +42,7 @@ class BishengCpuKernelBuilder : public AkgKernelBuilder {
   bool ParallelBuild(const std::vector<JsonNodePair> &json_and_node) override;
 };
 
-REG_AKG_KERNEL_BUILDER(kBISHENG, BishengCpuKernelBuilder);
+REG_AKG_KERNEL_BUILDER(kMLIR, BishengCpuKernelBuilder);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_BUILD_H_

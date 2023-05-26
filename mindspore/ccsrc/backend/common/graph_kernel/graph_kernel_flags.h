@@ -205,7 +205,7 @@ class BACKEND_EXPORT GraphKernelFlags {
 
   /**
    * Kernel Generator.
-   * The generator used to compile kernels, AKG or BISHENG.
+   * The generator used to compile kernels.
    */
   std::string kernel_generator{"AKG"};
 
