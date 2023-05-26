@@ -663,6 +663,7 @@ OUTPUT_MAP(ArgMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMin, kArgMinOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinD, kArgMinDOpName, ADPT_DESC(ArgMin))
 REG_ADPT_DESC(ArgMinV2, kArgminV2OpName, ADPT_DESC(ArgMin))
+REG_ADPT_DESC(Argmin, kArgminOpName, ADPT_DESC(ArgMin))
 
 // Threshold
 INPUT_MAP(Threshold) = {{1, INPUT_DESC(x)}};
