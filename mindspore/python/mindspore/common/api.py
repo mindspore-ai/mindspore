@@ -301,9 +301,6 @@ class _MindsporeFunctionExecutor:
     """
 
     def __init__(self, fn, ms_create_time, input_signature=None, hash_args=None, jit_config=None):
-        if not isinstance(fn, (types.FunctionType, types.MethodType)):
-            raise RuntimeError('fn {} is not function or method'.format(fn))
-
         self.fn = fn
         self.input_signature = input_signature
         self.hash_args = hash_args
@@ -361,9 +358,8 @@ class _MindsporeFunctionExecutor:
     def __del__(self):
         if isinstance(jit_compile_cache, dict):
             jit_compile_cache.pop(id(self), None)
-        if hasattr(self, "compile_cache") and self.compile_cache:
-            logger.info(f"Recycle for Function <{self.fn.__name__}>, compile_cache = {self.compile_cache}")
-            _cell_graph_executor.del_net_res(self.fn, self.compile_cache)
+            if self.compile_cache:
+                self._graph_executor.del_net_res(self.fn, self.compile_cache)
 
     def compile(self, method_name, *args, **kwargs):
         """Returns pipeline for the given args."""
