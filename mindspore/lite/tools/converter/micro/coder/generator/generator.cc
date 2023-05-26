@@ -444,6 +444,7 @@ int Generator::CodeMSModelImplement() {
 
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), *config_);
+  CodeCopyOutputsImplement(ofs, ctx_);
   if (config_->target() == kCortex_M) {
     CodeCortexCalcWorkspaceSize(ofs, ctx_);
     CodeCortexSetWorkspace(ofs, ctx_);
