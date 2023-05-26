@@ -81,6 +81,7 @@ int AddV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   input2_shape_.resize(MAX_DIMS, 1);
   output_shape_.resize(MAX_DIMS, 1);
 
+  output_num_ = 1;
   for (size_t i = 0; i < shape3.size(); i++) {
     if (need_broadcast_) {
       if (i < MAX_DIMS) {
