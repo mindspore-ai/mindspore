@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 from .sparse_utils import get_platform, compare_res, compare_coo
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -51,7 +51,7 @@ def test_make_coo():
     compare_coo(coo3, coo2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -78,7 +78,7 @@ def test_make_coo_empty():
     compare_coo(coo3, coo2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -132,7 +132,7 @@ def test_coo_tensor_with_control_if():
     assert out[2] == shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -207,7 +207,7 @@ def test_coo_method():
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_coo_coalesce():
@@ -239,7 +239,7 @@ def test_coo_coalesce():
     assert np.allclose(expect_values, coalesce_output.values.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -268,7 +268,7 @@ def test_dtype_coo_tensor():
     assert out4 in [mstype.float32]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -416,7 +416,7 @@ def test_coo_bprop():
     compare_res(test_coo_to_dense(indices, values, dense_shape), values_on)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dense_to_coo():
@@ -441,7 +441,7 @@ def test_dense_to_coo():
     compare_coo(coo_tensor_graph, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
