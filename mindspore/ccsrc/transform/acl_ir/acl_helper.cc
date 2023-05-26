@@ -320,6 +320,9 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
     *shape = trans::PaddingShape(*shape, kOpFormat_NCDHW);
     return kOpFormat_NCDHW;
   }
+  if (acl_info.is_need_pad_no_shape() && shape->empty()) {
+    shape->push_back(1);
+  }
   // case2: no special config
   auto info_list = acl_info.inputs();
   if (info_list.empty()) {

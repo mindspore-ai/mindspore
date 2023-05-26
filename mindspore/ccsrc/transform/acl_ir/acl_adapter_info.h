@@ -62,6 +62,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &set_is_need_pad_no_shape() {
+    is_need_pad_no_shape_ = true;
+    return *this;
+  }
+
   AclAdapterInfo &set_is_need_retrieve_output_shape() {
     is_need_retrieve_output_shape_ = true;
     return *this;
@@ -84,6 +89,7 @@ class AclAdapterInfo {
 
   const std::string &op_type() const { return op_type_; }
   const bool &is_3d() const { return is_3d_ops_; }
+  const bool &is_need_pad_no_shape() const { return is_need_pad_no_shape_; }
   const bool &is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
   const bool &is_dynamic() const { return is_dynamic_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
@@ -94,6 +100,7 @@ class AclAdapterInfo {
  private:
   std::string op_type_;
   bool is_3d_ops_{false};
+  bool is_need_pad_no_shape_{false};
   bool is_need_retrieve_output_shape_{false};
   bool is_dynamic_{true};
   AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
