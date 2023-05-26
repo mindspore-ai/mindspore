@@ -15,6 +15,7 @@
 """math Operations."""
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as validator
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import functional as F
@@ -334,6 +335,64 @@ def tensor_dot(x1, x2, axes):
     mul_result = matmul_op(x1_reshaped, x2_reshaped)
     final_result = reshape_op(mul_result, output_shape)
     return final_result
+
+
+def vecdot(x, y, *, dim=-1):
+    r"""
+    Calculates the dot product of two batches of vectors across the specified dimension.
+
+    The formula of calculation is as follows.
+    :math:`\bar{x_{i}}` represents the conjugate for complex vectors, and it is the raw value for real vectors.
+
+    .. math::
+
+        \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
+
+    Args:
+        x (Tensor): First batch of vectors. The shape of Tensor is :math:`(*,N)`
+            where :math:`*` means, any number of additional dimensions. Supporting broadcasting.
+            The dtype of Tensor should be one of the following types: float, double, int, complex64 and complex128.
+        y (Tensor): Second batch of vectors. The shape of Tensor is :math:`(*,N)`
+            where :math:`*` means, any number of additional dimensions. Supporting broadcasting.
+            The dtype of Tensor should be one of the following types: float, double, int, complex64 and complex128.
+        dim (int): Dimension across which to calculate the dot product. Default: ``-1`` .
+
+    Returns:
+        Tensor, the shape is almost same as the shape of Tensor after broadcasting,
+        while the specified dimension `dim` in shape has been removed.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If type of `dim` is not int.
+        ValueError: If `dim` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    .. note::
+        Currently, complex numbers are not supported on GPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import ops
+        >>> x = ms.Tensor([[1, 3], [5, 7], [9, 8]], dtype=ms.float32)
+        >>> y = ms.Tensor([[4, 5], [6, 7], [3, 2]], dtype=ms.float32)
+        >>> output = ops.vecdot(x, y, dim=-1)
+        >>> print(output)
+        [19. 79. 43.]
+    """
+    if (not isinstance(x, Tensor)) or (not isinstance(y, Tensor)):
+        raise TypeError("For vecdot, x or y must be Tensor.")
+    if not isinstance(dim, int):
+        raise TypeError(f"For vecdot, the dim should be int, but got {type(dim)}.")
+    ndim = x.ndim if x.ndim > y.ndim else y.ndim
+    if (dim < -ndim) or (dim >= ndim):
+        raise ValueError(f"For vecdot, the dim is out of range.")
+    if (x.dtype == mstype.complex64) or (x.dtype == mstype.complex128):
+        x = x.conj()
+    result = x * y
+    result = result.sum(axis=dim)
+    return result
 
 
 @_primexpr
