@@ -1327,6 +1327,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>>
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
@@ -1387,7 +1389,9 @@ def _get_funcgraph(net, *inputs):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>>
-        >>> net = LeNet()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.get_funcgraph(net, input_tensor)
 
