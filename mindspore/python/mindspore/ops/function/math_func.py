@@ -2910,7 +2910,7 @@ def inverse(input):
         ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1., 2.], [3., 4.]], mstype.float32)
