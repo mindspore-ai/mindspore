@@ -18,6 +18,7 @@ MindSpore Lite Python API.
 from __future__ import absolute_import
 import os
 import sys
+import logging
 from importlib.abc import MetaPathFinder
 
 from mindspore_lite.version import __version__
@@ -31,15 +32,16 @@ if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
 
 
 def install_custom_kernels():
-    custom_kernel_path = __path__[0] + "/custom_kernels/"
+    """install  mindspore lite custom kernels"""
+    custom_kernel_path = os.path.join(__path__[0], "custom_kernels/")
     if os.path.exists(custom_kernel_path):
         ascend_custom_kernel_path = custom_kernel_path + "ascend/"
         install_script_path = ascend_custom_kernel_path + "install.sh"
         cmd_str = "bash " + install_script_path
         out = os.popen(cmd_str).read()
-        print(out)
+        logging.info(out)
     else:
-        print("no custom kernel " + custom_kernel_path)
+        logging.error("no custom kernel %s", custom_kernel_path)
 
 
 def mslite_add_path():
