@@ -179,3 +179,51 @@ def test_getattr_for_other_cell_method():
     out1, out2 = net(x)
     assert out1 == 10
     assert out2 == 20
+
+
+class SubCellClass1(nn.Cell):
+    def __init__(self):
+        super(SubCellClass1, self).__init__()
+        self.a = 1
+
+    def construct(self, x):
+        @jit
+        def add(x):
+            return x + self.a
+        return add(x)
+
+
+class SubCellClass2(nn.Cell):
+    def __init__(self):
+        super(SubCellClass2, self).__init__()
+        self.a = 1
+
+    def construct(self, x):
+        b = self
+        @jit
+        def add(x):
+            return x + b.a
+        return add(x)
+
+
+class PlainClass():
+    def __init__(self):
+        self.a = 1
+
+    def construct(self, x):
+        @jit
+        def add(x):
+            return x + self.a
+        return add(x)
+
+
+def test_getattr_from_self_in_function_closure():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr from self in function.
+    Expectation: No Exception
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    SubCellClass1()(1)
+    SubCellClass2()(1)
+    PlainClass().construct(1)

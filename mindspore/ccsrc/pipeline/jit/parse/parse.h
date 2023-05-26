@@ -463,7 +463,7 @@ class ParseFunctionAst {
 
   py::function function() { return function_; }
 
-  ParseTargetTypeDef target_type() const { return target_type_; }
+  ParseTargetType target_type() const { return target_type_; }
 
   py::object obj() { return obj_; }
 
@@ -489,7 +489,7 @@ class ParseFunctionAst {
   py::module module_;
 
   // Is function or method.
-  ParseTargetTypeDef target_type_;
+  ParseTargetType target_type_;
 
   std::string function_name_;
   std::string function_module_;

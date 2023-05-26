@@ -461,7 +461,7 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
   return func_graph;
 }
 
-ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_type) {
+ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveType obj_type) {
   if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER) {
     MS_LOG(INFO) << "Convert constant numpy int64_t number:" << (std::string)py::str(obj);
     return MakeValue(py::cast<int64_t>(obj));
@@ -840,11 +840,10 @@ std::vector<std::string> GetObjKey(const py::object &obj) {
 }
 
 // Get obj detail type
-ResolveTypeDef GetObjType(const py::object &obj) {
+ResolveType GetObjType(const py::object &obj) {
   try {
     py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-    auto obj_type =
-      ResolveTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
+    auto obj_type = ResolveType(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
     return obj_type;
   } catch (const py::error_already_set &ex) {
     MS_LOG(ERROR) << "Meet a exception from Python when get the type of \'" << py::str(obj) << "\'.\n" << ex.what();
@@ -856,10 +855,10 @@ ResolveTypeDef GetObjType(const py::object &obj) {
 }
 
 // Get class instance detail type.
-ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
+ClassInstanceType GetClassInstanceType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto class_type =
-    ClassInstanceTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_CLASS_INSTANCE_TYPE, obj).cast<int32_t>());
+    ClassInstanceType(python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_CLASS_INSTANCE_TYPE, obj).cast<int32_t>());
   return class_type;
 }
 

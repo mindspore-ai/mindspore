@@ -41,8 +41,8 @@ void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 const mindspore::OrderedMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
 
 std::vector<std::string> GetObjKey(const py::object &obj);
-ResolveTypeDef GetObjType(const py::object &obj);
-ClassInstanceTypeDef GetClassInstanceType(const py::object &obj);
+ResolveType GetObjType(const py::object &obj);
+ClassInstanceType GetClassInstanceType(const py::object &obj);
 
 bool IsCellInstance(const py::object &obj);
 bool IsNumpyArrayInstance(const py::object &obj);
