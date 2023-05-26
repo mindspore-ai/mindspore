@@ -378,7 +378,12 @@ class BishengOpInfoRegisterHelper {
 template <typename T>
 class BishengOpInfoRegister : public BishengOpInfoRegisterHelper {
  public:
-  BishengOpInfoRegister() : BishengOpInfoRegisterHelper(), func_list_(T::func_list_) {}
+  BishengOpInfoRegister()
+      : BishengOpInfoRegisterHelper(),
+        func_list_(T::func_list_),
+        bisheng_name_(T::bisheng_name_),
+        tiling_func_(T::tiling_func_),
+        workspace_func_list_(T::workspace_func_list_) {}
   const BishengOpInfoRegister<T> &End() {
     BishengOpInfoRegisterHelper::End();
     Factory<BiShengKernelMod>::Instance().Register(op_info_->op_name(),
@@ -387,6 +392,7 @@ class BishengOpInfoRegister : public BishengOpInfoRegisterHelper {
   }
   BishengOpInfoRegister<T> &OpName(const std::string &name) {
     BishengOpInfoRegisterHelper::OpName(name);
+    bisheng_name_ = name;
     return *this;
   }
   BishengOpInfoRegister<T> &Input(size_t index, const std::string &name, bool is_required = true) {
@@ -401,15 +407,26 @@ class BishengOpInfoRegister : public BishengOpInfoRegisterHelper {
     BishengOpInfoRegisterHelper::Attr(name, type, is_required);
     return *this;
   }
+  BishengOpInfoRegister<T> &WorkSpace(const typename T::WorkSpaceFunc &workspace_func) {
+    (void)workspace_func_list_.emplace_back(workspace_func);
+    return *this;
+  }
   BishengOpInfoRegister<T> &DataTypeFormat(const std::vector<std::pair<std::string, std::string>> &args,
                                            typename T::Func &&func) {
     auto attr = BishengOpInfoRegisterHelper::DataTypeFormat(args);
     func_list_.emplace_back(attr, std::move(func));
     return *this;
   }
+  BishengOpInfoRegister<T> &Tiling(const typename T::TilingFunc &tiling_func) {
+    tiling_func_ = tiling_func;
+    return *this;
+  }
 
  private:
   typename T::FuncList &func_list_;
+  std::string &bisheng_name_;
+  typename T::TilingFunc &tiling_func_;
+  std::vector<typename T::WorkSpaceFunc> &workspace_func_list_;
 };
 }  // namespace mindspore::kernel
 
