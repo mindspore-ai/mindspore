@@ -373,7 +373,7 @@ namespace {
 ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &parent_node,
                             const AnfNodePtr &input_node, const std::map<KernelWithIndex, TensorPtr> &op_output,
                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info,
+                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
                             size_t input_index) {
   if (!IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
     auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
@@ -411,7 +411,7 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
 ValuePtr GetFrontArgByParameter(const std::vector<AnfNodePtr> &origin_paramters, const VectorRef &front_args,
                                 const AnfNodePtr &front_node) {
   const auto &iter = std::find(origin_paramters.begin(), origin_paramters.end(), front_node);
-  const size_t index = iter - origin_paramters.begin();
+  const size_t index = static_cast<size_t>(iter - origin_paramters.begin());
   // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
   // and there is no need to input a tensor.
   if (index >= front_args.size()) {
