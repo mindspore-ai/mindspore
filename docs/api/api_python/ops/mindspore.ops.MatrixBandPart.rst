@@ -8,7 +8,7 @@ mindspore.ops.MatrixBandPart
     更多参考详见 :func:`mindspore.ops.matrix_band_part` 。
 
     输入：
-        - **x** (Tensor) - `x` 的shape为 :math:`(*, m, n)` ，其中 :math:`*` 表示任意batch维度。`x` 的数据类型必须为float16、float32、float64、int32或int64。
+        - **x** (Tensor) - `x` 的shape为 :math:`(*, m, n)` ，其中 :math:`*` 表示任意batch维度。
         - **lower** (Union[int, Tensor]) - 要保留的下部子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个下三角形。
         - **upper** (Union[int, Tensor]) - 要保留的上部子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个上三角形。
 
