@@ -391,6 +391,7 @@ AutoGradCellImpl::AutoGradCellImpl(const AnfNodePtrList &cell_inputs, const std:
   for (size_t i = 0; i < cell_inputs.size(); ++i) {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));
     auto parameter = ad_param()->tape_->add_parameter();
+    parameter->set_name(parameter->UniqueName());
     parameter->set_abstract(abs_list[i]);
     auto zeros_like_dout = ZerosLike(ad_param()->tape_, abs_list[i]);
     auto func_node = std::make_shared<FunctionNode>(ad_param()->tape_, zeros_like_dout);
@@ -1246,6 +1247,7 @@ void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has
   ParameterPtr sens_param = nullptr;
   if (has_sens_arg) {
     sens_param = ad_param()->tape_->add_parameter();
+    sens_param->set_name(sens_param->UniqueName());
     sens_param->debug_info()->set_name("sens");
     sens_param->set_abstract(ad_param()->last_node_->abstract());
   }

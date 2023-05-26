@@ -800,6 +800,7 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info, cons
 }
 
 void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
   if (!common::AnfAlgo::IsReduceOp(op_run_info->base_op_run_info.op_name)) {
     return;
   }
@@ -808,6 +809,11 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   if (input_tensors.size() < kReduceOpInputNum) {
     MS_LOG(EXCEPTION) << "Invalid input tensor size " << input_tensors.size() << " of Op "
                       << op_run_info->base_op_run_info.op_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  if (op_run_info->op_prim->HasAttr(kAttrSkipMode) && GetValue<bool>(op_run_info->op_prim->GetAttr(kAttrSkipMode))) {
+    return;
   }
 
   const auto &axis_shape = input_tensors[1]->shape();
