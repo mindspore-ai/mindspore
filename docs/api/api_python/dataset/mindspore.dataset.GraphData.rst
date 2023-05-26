@@ -135,7 +135,7 @@ mindspore.dataset.GraphData
         参数：
             - **node_list** (Union[list, numpy.ndarray]) - 给定的节点列表。
             - **neighbor_type** (int) - 指定相邻节点的类型。
-            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值：mindspore.dataset.OutputFormat.NORMAL，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
+            - **output_format** (OutputFormat, 可选) - 输出存储格式。默认值：OutputFormat.NORMAL，取值范围：[OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR]。
 
         返回：
             对于普通格式或COO格式，将返回numpy.ndarray类型的数组表示相邻节点。如果指定了CSR格式，将返回两个numpy.ndarray数组，第一个表示偏移表，第二个表示相邻节点。
@@ -239,7 +239,7 @@ mindspore.dataset.GraphData
             - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。
             - **neighbor_nums** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点数。
             - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型，列表或数组中每个元素都应该是int类型。
-            - **strategy** (SamplingStrategy, 可选) - 采样策略。默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
+            - **strategy** (SamplingStrategy, 可选) - 采样策略。默认值：SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
               - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
               - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
