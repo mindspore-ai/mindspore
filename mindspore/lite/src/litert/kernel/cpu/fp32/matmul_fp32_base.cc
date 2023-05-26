@@ -461,6 +461,11 @@ int MatmulFp32BaseCPUKernel::FullConnectionPrepare() {
 void MatmulFp32BaseCPUKernel::InitShapeA() {
   auto a_shape = in_tensors_[kInputIndex]->shape();
   int batch = 1;
+  if (a_shape.size() == C1NUM) {
+    params_->row_ = 1;
+    params_->deep_ = a_shape[Index0];
+    return;
+  }
   MS_CHECK_TRUE_RET_VOID(a_shape.size() >= C2NUM);
   for (size_t i = 0; i < a_shape.size() - C2NUM; ++i) {
     batch *= a_shape[i];

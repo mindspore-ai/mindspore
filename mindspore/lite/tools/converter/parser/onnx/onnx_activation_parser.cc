@@ -61,8 +61,7 @@ PrimitiveCPtr OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const o
   auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                                 [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
   if (node_iter == onnx_graph.initializer().end()) {
-    MS_LOG(ERROR) << "not find node: " << input_name.c_str();
-    return nullptr;
+    MS_LOG(WARNING) << "not find node: " << input_name.c_str();
   } else {
     params.push_back(*node_iter);
   }
