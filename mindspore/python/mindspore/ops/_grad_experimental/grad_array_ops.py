@@ -594,6 +594,7 @@ def get_bprop_im2col(self):
     stride = self.strides
     padding = (self.pads[0], self.pads[-1])
     shape_op = P.TensorShape()
+    cast_op = P.Cast()
     col2im = Col2Im(kernel_size=kernel_size,
                     dilation=dilation,
                     stride=stride,
@@ -601,6 +602,7 @@ def get_bprop_im2col(self):
 
     def bprop(x, out, dout):
         x_shape = shape_op(x)[2:]
+        x_shape = cast_op(x_shape, mstype.int32)
         dx = col2im(dout, x_shape)
         return (dx,)
 
