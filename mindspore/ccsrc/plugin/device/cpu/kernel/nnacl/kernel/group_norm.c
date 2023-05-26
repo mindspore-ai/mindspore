@@ -41,7 +41,7 @@ static int groupnorm_resize(struct KernelBase *self) {
 
   TensorC *in0 = self->in_[0];
   NNACL_CHECK_FALSE(in0->shape_size_ < C1NUM, NNACL_GROUP_NORM_SHAPE_SIZE_INVALID);
-  NNACL_CHECK_FALSE(in0->format_ != NCHW, NNACL_GROUP_NORM_FORMAT_INVALID);
+  NNACL_CHECK_FALSE(in0->format_ != Format_NCHW, NNACL_GROUP_NORM_FORMAT_INVALID);
 
   param->unit_ = GetHeight(in0) * GetWidth(in0);
   param->batch_ = GetBatch(in0);

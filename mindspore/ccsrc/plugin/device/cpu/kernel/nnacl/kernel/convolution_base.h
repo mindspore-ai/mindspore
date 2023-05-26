@@ -32,15 +32,45 @@ typedef struct ConvolutionBaseStruct {
   void *origin_weight_;  // do not free
   void *origin_bias_;    // do not free
 
+  void (*init_global_variable_)(struct ConvolutionBaseStruct *conv_im2col);
   int (*malloc_weight_bias_)(struct ConvolutionBaseStruct *conv_base);
   void (*pack_weight_)(struct ConvolutionBaseStruct *conv_base);
-  void (*init_global_variable_)(struct ConvolutionBaseStruct *conv);
   int (*run_impl_)(struct ConvolutionBaseStruct *conv, int task_id);
 
   bool is_sharing_pack_;
   void *pack_weight_manager_;
   void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
   void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
+
+  bool use_batch_cut_flag_;
+
+  int input_b_;
+  int input_h_;
+  int input_w_;
+  int input_c_;
+  int output_b_;
+  int output_h_;
+  int output_w_;
+  int output_c_;
+
+  int kernel_h_;
+  int kernel_w_;
+
+  int stride_h_;
+  int stride_w_;
+  int dilation_h_;
+  int dilation_w_;
+  int pad_u_;
+  int pad_d_;
+  int pad_l_;
+  int pad_r_;
+  int group_;
+  int tile_num_;
+  int input_unit_;
+  int output_unit_;
+  int channel_multiplie_;
+  int output_padding_w_;
+  int output_padding_h_;
 } ConvolutionBaseStruct;
 
 int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv);

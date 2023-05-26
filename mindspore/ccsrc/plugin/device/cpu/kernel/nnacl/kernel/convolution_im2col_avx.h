@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_CONVOLLUTION_IM2COL_H_
-#define NNACL_KERNEL_CONVOLLUTION_IM2COL_H_
+#ifndef NNACL_KERNEL_CONVOLLUTION_IM2COL_AVX_H_
+#define NNACL_KERNEL_CONVOLLUTION_IM2COL_AVX_H_
 
+#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/kernel/convolution_base.h"
+#include "nnacl/kernel/convolution_im2col_base.h"
 
-ConvolutionBaseStruct *CreateConvolutionIm2Col(KernelBase *base, ConvParameter *conv_param);
-
-#endif  // NNACL_KERNEL_CONVOLLUTION_IM2COL_H_
+ConvolutionBaseStruct *CreateConvIm2ColAVX(ConvParameter *conv_param);
+#endif
+#endif  // NNACL_KERNEL_CONVOLLUTION_IM2COL_AVX_H_

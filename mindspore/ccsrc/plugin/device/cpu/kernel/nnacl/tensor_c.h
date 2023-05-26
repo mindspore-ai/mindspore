@@ -17,8 +17,6 @@
 #define NNACL_TENSOR_C_H_
 #include "nnacl/op_base.h"
 
-typedef enum TensorCFormat { NCHW, NHWC, NC4HW4, NUM_OF_FORMAT } TensorCFormat;
-
 typedef struct TensorC {
   bool shape_changed_;
   int data_type_;

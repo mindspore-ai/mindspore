@@ -98,7 +98,7 @@ int group_convolution_release(KernelBase *self) {
 int GroupConvCreatorNewInputTensor(GroupConvolutionStruct *group_conv, KernelBase *new_conv) {
   TensorC *in_tensor = (TensorC *)malloc(sizeof(TensorC));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(in_tensor);
-  in_tensor->format_ = NHWC;
+  in_tensor->format_ = Format_NHWC;
   in_tensor->category_ = VarTensor;
   in_tensor->data_type_ = group_conv->data_type_;
   memcpy(in_tensor->shape_, group_conv->input_shape_, DIMENSION_4D * sizeof(int));
@@ -113,7 +113,7 @@ int GroupConvCreatorNewOutputTensor(GroupConvolutionStruct *group_conv, KernelBa
 
   TensorC *out_tensor = (TensorC *)malloc(sizeof(TensorC));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(out_tensor);
-  out_tensor->format_ = NHWC;
+  out_tensor->format_ = Format_NHWC;
   out_tensor->category_ = VarTensor;
   out_tensor->data_type_ = group_conv->data_type_;
   memcpy(out_tensor->shape_, group_conv->output_shape_, DIMENSION_4D * sizeof(int));
@@ -127,7 +127,7 @@ TensorC *CreateConstTensor(const TensorC *tensor, const int *shape, const int sh
   TensorC *new_tensor = (TensorC *)malloc(sizeof(TensorC));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(new_tensor);
   new_tensor->data_type_ = tensor->data_type_;
-  new_tensor->format_ = NHWC;
+  new_tensor->format_ = Format_NHWC;
   new_tensor->category_ = ConstTensor;
   memcpy(new_tensor->shape_, shape, shape_size * sizeof(int));
 

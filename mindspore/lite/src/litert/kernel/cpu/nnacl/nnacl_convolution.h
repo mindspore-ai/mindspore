@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "nnacl/nnacl_kernel.h"
-#include "nnacl/matmul_parameter.h"
 
 namespace mindspore::nnacl {
 class ConvolutionKernel : public NNACLKernel {
