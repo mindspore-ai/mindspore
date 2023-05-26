@@ -38,6 +38,21 @@ class MutableTensorImpl : public MSTensor::Impl {
   virtual void SetQuantParams(const std::vector<QuantParam> &quant_param) = 0;
   virtual void SetDeviceData(void *data) = 0;
   virtual void *GetDeviceData() = 0;
+  virtual int64_t ElementNum() const {
+    const auto &shape = Shape();
+    int64_t ele_num = 1;
+    for (auto &dim : shape) {
+      if (dim < 0) {
+        return 0;
+      }
+      if (INT32_MAX / ele_num < dim) {
+        MS_LOG(ERROR) << "The shape " << shape << " is invalid";
+        return 0;
+      }
+      ele_num *= dim;
+    }
+    return ele_num;
+  }
 };
 using MutableTensorImplPtr = std::shared_ptr<MutableTensorImpl>;
 }  // namespace mindspore

@@ -159,10 +159,6 @@ class TensorTensorImpl : public MutableTensorImpl {
     tensor_->set_user_data("quant_param", std::make_shared<std::vector<QuantParam>>(quant_param));
   }
 
-  int64_t ElementNum() const {
-    auto &shape = Shape();
-    return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
-  }
   size_t DataSize() const override { return ElementNum() * lite::DataTypeSize(static_cast<enum TypeId>(DataType())); }
 
   std::shared_ptr<Impl> Clone() const override { return std::make_shared<TensorTensorImpl>(tensor_); }
