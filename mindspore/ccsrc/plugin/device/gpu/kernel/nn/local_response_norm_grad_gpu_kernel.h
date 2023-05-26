@@ -147,7 +147,9 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
+    input_shape_.clear();
     transpose_shape_.clear();
+    workspace_size_list_.clear();
     int lrnN = kCoef * depth_radius_ + 1;
     double lrnAlpha = lrnN * alpha_;
     auto in_shape = inputs[kIndex0]->GetShapeVector();
