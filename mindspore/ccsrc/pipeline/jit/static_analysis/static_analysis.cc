@@ -1138,16 +1138,30 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
   MS_EXCEPTION_IF_NULL(node);
 
   // Return Any if some branch returns Any.
-  if (std::any_of(out_abs_list.cbegin(), out_abs_list.cend(),
-                  [](const AbstractBasePtr &abs) { return abs->isa<AbstractAny>(); })) {
+  if (std::any_of(out_abs_list.cbegin(), out_abs_list.cend(), [](const AbstractBasePtr &abs) {
+        return abs->isa<AbstractAny>() && !abs->isa<AbstractNegligible>();
+      })) {
     MS_LOG(INFO) << "The branches outputs contain Any output.\nJoin them to Any output.";
     return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
   }
 
-  AbstractBasePtr last_out_abs = out_abs_list[0];
-  AbstractBasePtr joined_abs = out_abs_list[0];
-  for (size_t i = 1; i < out_abs_list.size(); ++i) {
-    const auto &abs = out_abs_list[i];
+  // Skip Negligible
+  AbstractBasePtrList skip_ignore_abs_list;
+  for (const auto &index : out_abs_list) {
+    if (!index->isa<AbstractNegligible>()) {
+      (void)skip_ignore_abs_list.emplace_back(index);
+    }
+  }
+
+  // If all abstracts is Negligible.
+  if (skip_ignore_abs_list.empty()) {
+    return std::make_shared<EvalResult>(out_abs_list[0], std::make_shared<AttrValueMap>());
+  }
+
+  AbstractBasePtr last_out_abs = skip_ignore_abs_list[0];
+  AbstractBasePtr joined_abs = skip_ignore_abs_list[0];
+  for (size_t i = 1; i < skip_ignore_abs_list.size(); ++i) {
+    const auto &abs = skip_ignore_abs_list[i];
     MS_EXCEPTION_IF_NULL(abs);
     try {
       MS_LOG(DEBUG) << "Join node: " << node->DebugString() << ", " << joined_abs->ToString() << ", and "
