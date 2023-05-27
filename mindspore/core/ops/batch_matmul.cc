@@ -105,6 +105,10 @@ void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const S
                                                 const ShapeVector &y_shape) {
   ShapeVector x_batch(x_shape.begin(), x_shape.end() - SizeToLong(kMatSize));
   ShapeVector y_batch(y_shape.begin(), y_shape.end() - SizeToLong(kMatSize));
+  if (x_batch.empty() && y_batch.empty()) {
+    MS_EXCEPTION(ValueError) << "For " << name << ", one of the inputs must have a batch dim, but got x shape "
+                             << x_shape << ", y shape " << y_shape;
+  }
   if (x_batch == y_batch) {
     return;
   }
