@@ -85,6 +85,7 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.celu
     mindspore.ops.elu
     mindspore.ops.fast_gelu
     mindspore.ops.gelu
@@ -405,6 +406,8 @@ Linear Algebraic Functions
     mindspore.ops.lu_solve
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
+    mindspore.ops.matrix_band_part
+    mindspore.ops.matrix_power
     mindspore.ops.matrix_solve
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
@@ -413,6 +416,7 @@ Linear Algebraic Functions
     mindspore.ops.mm
     mindspore.ops.mv
     mindspore.ops.outer
+    mindspore.ops.ormqr
     mindspore.ops.orgqr
     mindspore.ops.ormqr
     mindspore.ops.pinv
@@ -517,7 +521,6 @@ Array Operation
     mindspore.ops.dsplit
     mindspore.ops.dstack
     mindspore.ops.einsum
-    mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.flip
     mindspore.ops.fliplr
@@ -586,6 +589,7 @@ Array Operation
     mindspore.ops.triu
     mindspore.ops.transpose
     mindspore.ops.unbind
+    mindspore.ops.unfold
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad

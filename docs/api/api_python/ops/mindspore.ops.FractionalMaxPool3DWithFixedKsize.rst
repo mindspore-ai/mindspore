@@ -12,6 +12,9 @@ mindspore.ops.FractionalMaxPool3DWithFixedKsize
 
     输入和输出的数据格式可以是"NCDHW"和"NDHWC"，N是批量大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **ksize** (Union[float, tuple]) - 池化窗口大小。可以是一个三元组，表示shape为 :math:`(k_D, k_H, k_W)` ，或者是一个单独的 `K` 表示shape为 :math:`(K, K, K)` 。
         - **output_shape** (Union[int, tuple]) - 目标输出shape，可以是一个三元组，表示shape为 :math:`(D_{out}, H_{out}, W_{out})` ，或者是一个单独的 `S` 表示shape为 :math:`(S, S, S)` 。

@@ -9,6 +9,9 @@ mindspore.ops.fractional_max_pool3d
 
     输入输出的数据格式可以是”NCDHW“。其中，N是批次大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 4D或5D的Tensor，支持的数据类型：float16、float32、double。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{in}, H_{in}, W_{in})` 。
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为int，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正int值分别表示池化核的深度，高和宽。取值必须为正int。

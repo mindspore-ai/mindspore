@@ -113,7 +113,6 @@
     mindspore.Tensor.erfc
     mindspore.Tensor.erfinv
     mindspore.Tensor.exp
-    mindspore.Tensor.expand
     mindspore.Tensor.expand_as
     mindspore.Tensor.expand_dims
     mindspore.Tensor.expm1
@@ -205,6 +204,7 @@
     mindspore.Tensor.masked_scatter
     mindspore.Tensor.masked_select
     mindspore.Tensor.matmul
+    mindspore.Tensor.matrix_power
     mindspore.Tensor.max
     mindspore.Tensor.maximum
     mindspore.Tensor.mean
@@ -319,6 +319,7 @@
     mindspore.Tensor.true_divide
     mindspore.Tensor.trunc
     mindspore.Tensor.unbind
+    mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad
     mindspore.Tensor.unsorted_segment_max

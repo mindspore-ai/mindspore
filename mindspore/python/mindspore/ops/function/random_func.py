@@ -618,6 +618,9 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
     Returns the tensor with the determined shape inferred by n, the random numbers in it drawn from the data range
     that a given type can represent.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
             The value of `n` must be greater than zero.

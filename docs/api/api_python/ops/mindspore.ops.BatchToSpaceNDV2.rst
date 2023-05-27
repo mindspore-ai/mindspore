@@ -7,6 +7,9 @@ mindspore.ops.BatchToSpaceNDV2
 
     更多参考详见 :func:`mindspore.ops.batch_to_space_nd`。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **input_x** (Tensor) - 输入Tensor，必须大于或者等于二维（Ascend平台必须为四维）。批次维度需能被 `block_shape` 整除。
         - **block_shape** (Tensor) - 分割批次维度的块的数量，取值需大于或者等于1。如果 `block_shape` 为list或者tuple，其长度 `M` 为空间维度的长度。如果 `block_shape` 为整数，那么所有空间维度分割的个数均为 `block_shape` 。在Ascend后端 `M` 必须为2。

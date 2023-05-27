@@ -101,6 +101,9 @@ class CeLU(Primitive):
 
     Refer to :func:`mindspore.ops.celu` for more details.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
@@ -224,6 +227,9 @@ class AdaptiveAvgPool2D(Primitive):
     AdaptiveAvgPool2D operation.
 
     Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
@@ -9490,6 +9496,9 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
 
     The input and output data format can be "NCDHW" and "NDHWC". N is the batch size, C is the number of channels,
     D the feature depth, H is the feature height, and W is the feature width.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         ksize (Union[float, tuple]): Size of the pooling window. `ksize` can be a tuple of three values specify a

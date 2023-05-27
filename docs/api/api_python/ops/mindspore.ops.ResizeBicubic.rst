@@ -5,6 +5,9 @@ mindspore.ops.ResizeBicubic
 
     使用双三次插值调整图像大小到指定的大小。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **align_corners** (bool，可选) - 如果为 ``True`` ，则输入输出图像四个角像素的中心被对齐，同时保留角像素处的值。默认值： ``False`` 。
         - **half_pixel_centers** (bool，可选) - 是否使用半像素中心对齐。如果设置为 ``True`` ，那么 `align_corners` 应该设置为 ``False`` 。默认值： ``False`` 。

@@ -7,6 +7,9 @@ mindspore.ops.matrix_power
     如果 :math:`n=0` ，则返回一个单位矩阵，其shape和输入 `input` 一致。
     如果 :math:`n<0` 且输入矩阵 `input` 可逆，则返回输入矩阵 `input` 的逆矩阵的 :math:`-n` 次幂。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 一个3-D Tensor。支持的数据类型为float16和float32。
           shape为 :math:`(b, m, m)` ，表示b个m-D的方阵。

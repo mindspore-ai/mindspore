@@ -10884,6 +10884,9 @@ def zeta(input, other):
 
         \zeta(x, q) = \sum_{k=0}^{\infty} \frac{1}{(k + q)^x}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Union[Tensor, int, float]): Input Tensor. Represented as :math:`x` in the formula. If it's a Tensor, its
             dtype must be either float32 or float64.
@@ -10897,6 +10900,9 @@ def zeta(input, other):
         TypeError: If neither `input` nor `other` is not tensor.
         TypeError: If dtype of `input` is neither float32 nor float64.
         TypeError: If dtype of `other` is neither float32 nor float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
@@ -10930,6 +10936,9 @@ def matrix_power(input, n):
     - When :math:`n=0` , returns the identity matrix, which has the same shape as `input` .
     - When :math:`n<0` and `input` is invertible, returns the inverse of `input` to the power of :math:`-n` .
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): A 3-D Tensor. Supported data types are float16 and float32.
             The shape is :math:`(b, m, m)` , represents b m-D square matrices.
@@ -10947,7 +10956,7 @@ def matrix_power(input, n):
         ValueError: If `n` is negative but got input `input` has singular matrices.
 
     Supported Platforms:
-
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
