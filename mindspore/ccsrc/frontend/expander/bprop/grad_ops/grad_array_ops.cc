@@ -945,7 +945,7 @@ REG_BPROP_BUILDER("GatherNd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   } else {
     shp = ib->EmitValue(MakeValue(x_shp));
   }
-  return {ib->ScatterNd(indices, dout, shp), ib->ZerosLike(indices)};
+  return {ib->ScatterNd(ib->Cast(indices, kInt64), dout, shp), ib->ZerosLike(indices)};
 });
 
 REG_BPROP_BUILDER("ScatterNd").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
