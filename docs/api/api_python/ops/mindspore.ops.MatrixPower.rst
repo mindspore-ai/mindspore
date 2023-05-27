@@ -7,6 +7,9 @@ mindspore.ops.MatrixPower
     如果 :math:`n=0` ，则返回一个batch的单位矩阵。
     如果n为负数，则为返回每个矩阵（如果可逆）逆矩阵的 :math:`abs(n)` 次幂。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **n** (int) - 指数，必须是整数。
   

@@ -6190,6 +6190,9 @@ class MatrixPower(Primitive):
     When n equals 0, it returns a group of identity matrices. If n is negative,
     it computes the inverse of each matrix (if possible) raised to the power of abs(n).
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         n (int) : The exponent, a required int.
 
@@ -6209,7 +6212,7 @@ class MatrixPower(Primitive):
         ValueError: If n is negative but got input x has singular matrices.
 
     Supported Platforms:
-
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
@@ -6242,7 +6245,7 @@ class MatrixDeterminant(Primitive):
         Tensor, the shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Supported Platforms:
-
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -7576,6 +7579,9 @@ class Zeta(Primitive):
     .. math::
         \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.
         - **q** (Tensor) - A Tensor, must have the same shape and type as `x`.
@@ -7932,6 +7938,9 @@ class FFTWithSize(Primitive):
         - FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
         - RFFT requires float32 or float64 inputs, return complex64 or complex128 outputs.
         - IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
@@ -8645,13 +8654,19 @@ class Ormqr(Primitive):
     Multiplies a(m, n) matrix C (given by other) with a matrix Q, where Q is represented using Householder
     reflectors (x, tau), which is the output of geqrf().
 
+    Refer to :func:`mindspore.ops.ormqr` for more details.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         left (bool, optional): controls the order of multiplication. If ``True`` , compute op(Q)*C.
             If ``False`` , compute C*op(Q). Default: ``True`` .
         transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape: (*, mn, k) where mn equals to m or n depending on the the args of `left`,
+        - **x** (Tensor) - Tensor of shape: (*, mn, k) where the value of mn depending on `left`,
+          When `left` is True, the value of mn is equal to m; otherwise, the value of mn is equal to n.
           and `*` is zero or more batch dimensions.
         - **tau** (Tensor) - Tensor of shape (*, min(mn, k)) where `*` is zero or more batch dimensions,
           and its type is the same as `x`.

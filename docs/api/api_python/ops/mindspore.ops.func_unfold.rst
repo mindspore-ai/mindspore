@@ -25,6 +25,9 @@ mindspore.ops.unfold
         - 在2.0rc1版本，该算子的输出为四维Tensor，其shape为 :math:`(N, C, \prod(\text{kernel_size}), L)` 。
         - 在之后的版本中，其输出则为三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。 
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 四维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小。如果是两个int，则分别为滑窗的高度和宽度；如果是一个int，则高度和宽度均为这个int值。是一个必要参数。

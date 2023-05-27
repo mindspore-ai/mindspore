@@ -79,6 +79,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
+    mindspore.ops.ResizeNearestNeighborV2
 
 损失函数
 ^^^^^^^^^^
@@ -113,6 +114,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.CeLU
     mindspore.ops.Elu
     mindspore.ops.FastGeLU
     mindspore.ops.GeLU
@@ -233,6 +235,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.FFTWithSize
     mindspore.ops.Gcd
 
 逐元素运算
@@ -329,6 +332,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
+    mindspore.ops.Zeta
 
 
 Reduction算子
@@ -389,6 +393,8 @@ Reduction算子
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
+    mindspore.ops.MatrixPower
+    mindspore.ops.Ormqr
     mindspore.ops.Orgqr
     mindspore.ops.Svd
 
@@ -446,6 +452,7 @@ Array操作
     mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
+    mindspore.ops.BatchToSpaceNDV2
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle
@@ -460,8 +467,8 @@ Array操作
     mindspore.ops.Diag
     mindspore.ops.DType
     mindspore.ops.Eig
-    mindspore.ops.Expand
     mindspore.ops.ExpandDims
+    mindspore.ops.FillDiagonal
     mindspore.ops.FillV2
     mindspore.ops.FloatStatus
     mindspore.ops.Fmax
@@ -474,9 +481,11 @@ Array操作
     mindspore.ops.Hypot
     mindspore.ops.Identity
     mindspore.ops.Igamma
+    mindspore.ops.Igammac
     mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
+    mindspore.ops.IndexPut
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceIndexAdd
     mindspore.ops.InplaceSub
@@ -489,6 +498,7 @@ Array操作
     mindspore.ops.LogSpace
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
+    mindspore.ops.MaskedScatter
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDiagPartV3
@@ -530,6 +540,7 @@ Array操作
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
+    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterMul
@@ -541,6 +552,7 @@ Array操作
     mindspore.ops.Transpose
     mindspore.ops.Tril
     mindspore.ops.TrilIndices
+    mindspore.ops.Triu
     mindspore.ops.TriuIndices
     mindspore.ops.Unique
     mindspore.ops.UniqueConsecutive

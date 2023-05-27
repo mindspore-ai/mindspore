@@ -419,6 +419,9 @@ class Im2Col(Primitive):
     Note:
         Currently, only 4-D input tensors (batched image-like tensors) are supported.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.
@@ -1583,6 +1586,9 @@ class MatrixBandPart(Primitive):
     the central band set to zero.
 
     Refer to :func:`mindspore.ops.matrix_band_part` for more details.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
@@ -4790,11 +4796,14 @@ class Triu(Primitive):
     The upper triangular section of the matrix comprises of the
     elements present on and above the main diagonal.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         diagonal (int, optional): The index of diagonal. Default: ``0`` , indicating the main diagonal.
 
     Inputs:
-        - **x** (Tensor) -  The input tensor with shape :math:`(N, *)`
+        - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
           where :math:`*` means any number of additional dimensions. The data type is Number.
 
     Outputs:
@@ -4803,10 +4812,10 @@ class Triu(Primitive):
     Raises:
         TypeError: If `x` is not an Tensor.
         TypeError: If `diagonal` is not an int.
-        ValueError: If length of shape of x is less than 1.
+        ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
@@ -5929,6 +5938,9 @@ class BatchToSpaceNDV2(Primitive):
 
     Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be greater or equal to 2-D
           tensor(equal to 4-D tensor on Ascend), batch dimension must be divisible by product of `block_shape`.
@@ -6653,17 +6665,20 @@ class MaskedFill(Primitive):
 
 class MaskedScatter(Primitive):
     """
-    Updates the value in the input with the updates value according to the mask.
-    The shapes of `mask` and `x` must be the same or broadcastable.
+    Updates the value in the input with value in `updates` according to the `mask`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
-        - **x** (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **mask** (Tensor[bool]): A bool tensor with a shape broadcastable to x.
-        - **updates** (Tensor): A tensor with the same data type as x. The
+        - **x** (Tensor): The input Tensor to be updated.
+        - **mask** (Tensor[bool]): The mask Tensor indicating which elements should be modified or replaced.
+          The shapes of `mask` and `x` must be the same or broadcastable.
+        - **updates** (Tensor): The values to scatter into the target tensor `x`. It has the same data type as `x`. The
           number of elements must be greater than or equal to the number of True's in `mask`.
 
     Outputs:
-        Tensor, with the same type and shape as x.
+        Tensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If `x`, `mask` or `updates` is not a Tensor.
@@ -6671,10 +6686,10 @@ class MaskedScatter(Primitive):
         TypeError: If dtype of `mask` is not bool.
         TypeError: If the dim of `x` less than the dim of `mask`.
         ValueError: If `mask` can not be broadcastable to `x`.
-        ValueError: If the number of elements in `updates` is less than the number required for the updates.
+        ValueError: If the number of elements in `updates` is less than number of True's in `mask`.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x= Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
@@ -7348,6 +7363,9 @@ class TensorScatterElements(Primitive):
         If there are multiple index vectors in `indices` that correspond to the same position,
         the value of that position in the output will be nondeterministic.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         axis (int, optional): Specify which axis to do scatter operation. Default: ``0`` .
         reduction (str, optional): Which reduction operation to scatter, default is ``"none"`` . Other option: "add".
@@ -7401,6 +7419,9 @@ class ExtractVolumePatches(Primitive):
     r"""
     Extract patches from input and put them in the "depth" output dimension.
     "depth" dimension is the second dim of output.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
@@ -8009,24 +8030,25 @@ class IndexFill(Primitive):
 
 class IndexPut(Primitive):
     r"""
-    According to the index number of indexes, replace the value corresponding to x1 with the value in x2.
+    According to the index number of `indexes`, replace the value corresponding to `x1` with the value in `x2`.
 
     Args:
         accumulate (int): If accumulate is 1, the elements in x2 are added to x1,
             else the elements in x2 replace the corresponding element in x1, should be 0 or 1. Default: ``0`` .
     Inputs:
         - **x1** (Tensor) - The assigned target tensor, 1-D or higher dimensional.
-        - **x2** (Tensor) - 1-D Tensor of the same type as "x1". if size= 1 will be broadcast
+        - **x2** (Tensor) - 1-D Tensor of the same type as `x1`. If the size of `x2` is 1,
+          it will broadcast to the same size as `x1`.
         - **indices** (tuple[Tensor], list[Tensor]) - the indices of type int32 or int64, used to index into x1.
         The rank of tensors in indices should be 1-D, size of indices should <= x1.rank and the tensors in indices
         should be broadcastable.
 
     Outputs:
-        The Tensor to be assigned. Should be of the same type and shape as "x1".
+        Tensor, has the same dtype and shape as `x1`.
 
     Raises:
             TypeError: If the dtype of `x1` is not equal to the dtype of `x2`.
-            TypeError: If the dtype of `indices` is not tuple[Tensor], list[Tensor].
+            TypeError: If `indices` is not tuple[Tensor] or list[Tensor].
             TypeError: If the dtype of tensors in `indices` are not int32 or int64.
             TypeError: If the dtype of tensors in `indices` are inconsistent.
             TypeError: If the dtype of `accumulate` are not int.
@@ -8039,7 +8061,7 @@ class IndexPut(Primitive):
             ValueError: If `accumulate` is not equal to 0 or 1.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32))
@@ -8278,6 +8300,9 @@ class FillDiagonal(Primitive):
     Fills the main diagonal of a Tensor in-place with a specified value and returns the result.
     The input has at least 2 dimensions, and all dimensions of input must be equal in length
     when the dimension of input is greater than 2.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         fill_value (float): The value to fill the diagonal of `input_x`.

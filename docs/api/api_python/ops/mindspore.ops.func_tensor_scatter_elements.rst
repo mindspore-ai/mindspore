@@ -23,6 +23,9 @@
     .. note::
         如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，也不会抛出索引错误。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 其rank必须至少为1。
         - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64的。其rank必须和 `input_x` 一致。取值范围是[-s, s)，这里的s是 `input_x` 在 `axis` 指定轴的size。

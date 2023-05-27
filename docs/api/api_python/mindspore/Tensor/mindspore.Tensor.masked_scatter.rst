@@ -5,6 +5,9 @@ mindspore.Tensor.masked_scatter
 
     返回一个Tensor。根据mask, 使用 `tensor` 中的值，更新Tensor本身的值，`mask` 和Tensor本身的shape必须相等或者 `mask` 是可广播的。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **mask** (Tensor[bool]) - 一个bool Tensor, 其shape可以被广播到Tensor本身。
         - **x** (Tensor) - 一个Tensor, 其数据类型与Tensor本身相同。 `tensor` 中的元素数量必须大于等于 `mask` 中的True元素
