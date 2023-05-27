@@ -206,6 +206,7 @@
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/add_depend_for_all_gather.h"
 
 namespace mindspore {
 namespace opt {
@@ -773,6 +774,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
     } else {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
     }
+    unify_mindir_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
