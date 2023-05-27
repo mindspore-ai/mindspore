@@ -33,9 +33,7 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 Status DefaultInferSession::Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MS_LOG(INFO) << "DefaultInferSession::Init";
-  // context_ = context;
-
-  // Set MSContext::GetInstance param?
+  // Set MSContext::GetInstance param
 
   // init compiler and runtime according to context
   compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context_);

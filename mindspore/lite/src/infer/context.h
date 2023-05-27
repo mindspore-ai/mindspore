@@ -22,10 +22,6 @@
 
 namespace mindspore::infer::abstract {
 using Context = mindspore::lite::InnerContext;
-// class Context : public std::enable_shared_from_this<Context> {
-//  public:
-//   virtual ~Context() = default;
-// };
 }  // namespace mindspore::infer::abstract
 
 #endif  // MINDSPORE_LITE_INFER_CONTEXT_H_

@@ -29,7 +29,6 @@ namespace mindspore::infer {
 class FlowExecutor : public mindspore::infer::abstract::Executor {
  public:
   FlowExecutor();
-  //   explicit FlowExecutor(const std::string &name);
   explicit FlowExecutor(const std::string &name, std::shared_ptr<abstract::ExecutionPlan> execution_plan);
   virtual ~FlowExecutor() = default;
 
