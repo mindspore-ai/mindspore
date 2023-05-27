@@ -846,6 +846,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def triu(self, diagonal=0):
         r"""
         For details, please refer to :func:`mindspore.ops.triu`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
         """
         self._init_check()
         validator.check_value_type('diagonal', diagonal, [int], 'triu')
@@ -2240,6 +2244,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Fills the main diagonal of a Tensor with a specified value and returns the result.
         The input has at least 2 dimensions, and all dimensions of input must be equal in length
         when the dimension of input is greater than 2.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             fill_value (float): The value to fill with the diagonal of `self`.
@@ -3736,6 +3743,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def unfold(self, kernel_size, dilation=1, padding=0, stride=1):
         r"""
         For details, please refer to :func:`mindspore.ops.unfold`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
         """
         self._init_check()
         return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
@@ -3991,6 +4002,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def matrix_power(self, n):
         r"""
         For details, please refer to :func:`mindspore.ops.matrix_power`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
         """
         self._init_check()
         return tensor_operator_registry.get('matrix_power')(self, n)
@@ -4238,6 +4253,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.ormqr`,
         Args `input2` and `input3` correspond to the args `tau` and `other` of :func:`mindspore.ops.ormqr`.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
         """
         self._init_check()
         return tensor_operator_registry.get('ormqr')(self, input2, input3, left, transpose)
@@ -4247,6 +4266,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         Returns a Tensor. Updates the value in the "self Tensor" with the `tensor` value according to the mask.
         The shape of `mask` and the "self Tensor" must be the same or `mask` is broadcastable.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             mask (Tensor[bool]): A bool tensor with a shape broadcastable to the "self Tensor".
@@ -4265,7 +4287,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ValueError: If the number of elements in `tensor` is less than the number required for the updates.
 
         Supported Platforms:
-            ``CPU``
+            ``Ascend`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
@@ -4312,7 +4334,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ValueError: If size(`indices`) > rank("self Tensor").
 
         Supported Platforms:
-            ``CPU``
+            ``Ascend`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32))

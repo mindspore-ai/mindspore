@@ -28,6 +28,9 @@ mindspore.ops.FFTWithSize
         - RFFT要求float32或float64类型的输入，返回complex64或complex128类型的输出。
         - IRFFT要求complex64或complex128类型的输入，返回float32或float64类型的输出。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **signal_ndim** (int) - 表示每个信号中的维数，控制着傅里叶变换的维数，其值只能为1、2或3。
         - **inverse** (bool) - 表示该操作是否为逆变换，用以选择FFT、IFFT、RFFT和IRFFT。

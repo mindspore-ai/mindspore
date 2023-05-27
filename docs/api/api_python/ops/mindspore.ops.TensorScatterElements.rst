@@ -10,6 +10,9 @@ mindspore.ops.TensorScatterElements
     .. warning::
         如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **axis** (int，可选) - 指定进行操作的轴。默认值：0。
         - **reduction** (str，可选) - 指定进行的reduction操作。默认值是"none"，可选"add"。

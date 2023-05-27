@@ -12,6 +12,9 @@ mindspore.ops.Zeta
 
         \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x** (Tensor) - Tensor，数据类型为：float32、float64。
         - **q** (Tensor) - Tensor，数据类型与 `x` 一致。
