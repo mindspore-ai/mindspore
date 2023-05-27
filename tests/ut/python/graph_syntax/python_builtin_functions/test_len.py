@@ -162,19 +162,3 @@ def test_len_dict():
 
     out = foo()
     assert out == 2
-
-
-def test_len_numpy():
-    """
-    Feature: Graph len syntax.
-    Description: Graph syntax len support numpy ndarray.
-    Expectation: No exception.
-    """
-
-    @jit
-    def foo():
-        x = np.array([[1, 2, 3], [0, 0, 0]])
-        return len(x)
-
-    out = foo()
-    assert out == 2

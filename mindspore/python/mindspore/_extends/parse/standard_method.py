@@ -2777,16 +2777,8 @@ def ms_sum(*data):
     return result
 
 
-@constexpr
-def python_len(data):
-    """Return the result of python built-in len function"""
-    return len(data)
-
-
 def ms_len(data):
     """Implementation of `len`."""
-    if not isinstance(data, Tensor) and F.isconstant(data):
-        return python_len(data)
     return data.__len__()
 
 
