@@ -46,21 +46,18 @@ class BackupAndRestore(Callback):
         ValueError: If delete_checkpoint is not bool.
 
     Examples:
-        .. note::
-            Before running the following example, you need to customize the network LeNet5 and
-            dataset preparation function create_dataset. Refer to
-            `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_
-            and `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ .
-
         >>> from mindspore import nn
         >>> from mindspore.train import Model, BackupAndRestore
         >>>
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
-        >>> data_path = './MNIST_Data'
-        >>> dataset = create_dataset(data_path)
+        >>> # Create the dataset taking MNIST as an example. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> dataset = create_dataset()
         >>> backup_ckpt = BackupAndRestore("backup")
         >>> model.train(10, dataset, callbacks=backup_ckpt)
     """

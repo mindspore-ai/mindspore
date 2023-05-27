@@ -105,43 +105,18 @@ class CheckpointConfig:
         ValueError: If input parameter is not the correct type.
 
     Examples:
-        .. note::
-            Before running the following example, you need to customize the network LeNet5 and
-            dataset preparation function create_dataset. Refer to
-            `Building a Network <https://www.mindspore.cn/tutorials/en/master/beginner/model.html>`_
-            and `Dataset <https://www.mindspore.cn/tutorials/en/master/beginner/dataset.html>`_ .
-
         >>> from mindspore import nn
-        >>> from mindspore.common.initializer import Normal
         >>> from mindspore.train import Model, CheckpointConfig, ModelCheckpoint
         >>>
-        >>> class LeNet5(nn.Cell):
-        ...     def __init__(self, num_class=10, num_channel=1):
-        ...         super(LeNet5, self).__init__()
-        ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
-        ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-        ...         self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
-        ...         self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
-        ...         self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
-        ...         self.relu = nn.ReLU()
-        ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-        ...         self.flatten = nn.Flatten()
-        ...
-        ...     def construct(self, x):
-        ...         x = self.max_pool2d(self.relu(self.conv1(x)))
-        ...         x = self.max_pool2d(self.relu(self.conv2(x)))
-        ...         x = self.flatten(x)
-        ...         x = self.relu(self.fc1(x))
-        ...         x = self.relu(self.fc2(x))
-        ...         x = self.fc3(x)
-        ...         return x
-        >>>
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
-        >>> data_path = './MNIST_Data'
-        >>> dataset = create_dataset(data_path)
+        >>> # Create the dataset taking MNIST as an example. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> dataset = create_dataset()
         >>> config = CheckpointConfig(saved_network=net)
         >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
         >>> model.train(10, dataset, callbacks=ckpoint_cb)
