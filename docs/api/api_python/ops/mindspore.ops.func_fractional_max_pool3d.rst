@@ -7,7 +7,7 @@ mindspore.ops.fractional_max_pool3d
 
     分数最大池化的详细描述在 `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_ 。
 
-    输入输出的数据格式可以是”NCDHW“。其中，N是批次大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
+    输入输出的数据格式可以是“NCDHW”。其中，N是批次大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
 
     参数：
         - **input** (Tensor) - 4D或5D的Tensor，支持的数据类型：float16、float32、double。支持shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{in}, H_{in}, W_{in})` 。
@@ -23,7 +23,7 @@ mindspore.ops.fractional_max_pool3d
 
     异常：
         - **TypeError** - `input` 不是四维或五维Tensor。
-        - **TypeError** - `random_samples` 不是三维Tensor。
+        - **TypeError** - `_random_samples` 不是三维Tensor。
         - **TypeError** - `input` 数据类型不是float16、float32、double。
         - **TypeError** - `_random_samples` 数据类型不是float16、float32、double。
         - **TypeError** - `argmax` 数据类型不是int32、int64。
