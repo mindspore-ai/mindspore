@@ -5735,12 +5735,16 @@ def cdist(x1, x2, p=2.0):
     """
     Computes p-norm distance between each pair of row vectors of two input Tensors.
 
+    Note:
+        On Ascend, the supported dtypes are float16 and float32.
+        On CPU, the supported dtypes are float16 and float32.
+        On GPU, the supported dtypes are float32 and float64.
+
     Args:
         x1 (Tensor): Input tensor of shape :math:`(B, P, M)`.
           Letter :math:`B` represents 0 or positive int number.
           When :math:`B` is equal to 0, it means this dimension can be ignored,
-          i.e. shape of the tensor is :math:`(P, M)`. The supported dtype is
-          [float32, float64] on GPU, or [float32] on CPU.
+          i.e. shape of the tensor is :math:`(P, M)`.
         x2 (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x1`.
         p (float, optional): P value for the p-norm distance to calculate between each
           vector pair, P ∈ [0,∞]. Default: 2.0.
@@ -5750,7 +5754,7 @@ def cdist(x1, x2, p=2.0):
 
     Raises:
         TypeError: If `x1` or `x2` is not Tensor.
-        TypeError: If dtype of `x1` or `x2` is not in [float32, float64] on GPU, or is not in [float32] on CPU.
+        TypeError: If dtype of `x1` or `x2` is not listed in the "Note" above.
         TypeError: If `p` is not float32.
         ValueError: If `p` is negative.
         ValueError: If dimension of `x1` is not the same as `x2`.
