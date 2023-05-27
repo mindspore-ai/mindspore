@@ -455,7 +455,7 @@
 
     .. py:method:: set_data_parallel()
 
-        递归设置该Cell中的所有算子的并行策略为数据并行。
+        在非自动策略搜索的情况下，如果此Cell的所有算子（包括此Cell内含嵌套的cell）未指定并行策略，则将为这些基本算子设置为数据并行策略。
 
         .. note:: 仅在图模式，使用auto_parallel_context = ParallelMode.AUTO_PARALLEL生效。
 
