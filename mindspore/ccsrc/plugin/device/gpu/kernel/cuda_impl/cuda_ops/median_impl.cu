@@ -388,6 +388,8 @@ __global__ void MedianKernel(const T *input, T *output, S *indices, S size, S nu
         break;
       }
     }
+  } else {
+    indices[0] = 0;
   }
 }
 

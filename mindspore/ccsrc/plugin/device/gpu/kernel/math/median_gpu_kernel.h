@@ -42,10 +42,7 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output0_addr = GetDeviceAddress<T>(outputs, 0);
-    S *output1_addr = nullptr;
-    if (!global_median_) {
-      output1_addr = GetDeviceAddress<S>(outputs, 1);
-    }
+    S *output1_addr = GetDeviceAddress<S>(outputs, 1);
     Median(input_addr, output0_addr, output1_addr, input_shape_, axis_, global_median_,
            reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
