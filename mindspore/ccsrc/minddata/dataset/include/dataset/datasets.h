@@ -387,7 +387,7 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   /// \code
   ///     // Create objects for the tensor ops
   ///     std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>(true);
-  ///     std::shared_ptr<TensorTransform> random_color_op = std::make_shared<vision::RandomColor>(0.0, 0.0);
+  ///     std::shared_ptr<TensorTransform> resize_op = std::make_shared<vision::Resize>({224, 224});
   ///
   ///     /* 1) Simple map example */
   ///     // Apply decode_op on column "image". This column will be replaced by the outputted
@@ -400,11 +400,11 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///    /* 2) Map example with more than one operation */
   ///    // Create a dataset where the images are decoded, then randomly color jittered.
   ///    // decode_op takes column "image" as input and outputs one column. The column
-  ///    // outputted by decode_op is passed as input to random_jitter_op.
-  ///    // random_jitter_op will output one column. Column "image" will be replaced by
-  ///    // the column outputted by random_jitter_op (the very last operation). All other
+  ///    // outputted by decode_op is passed as input to resize_op.
+  ///    // resize_op will output one column. Column "image" will be replaced by
+  ///    // the column outputted by resize_op (the very last operation). All other
   ///    // columns are unchanged.
-  ///    dataset = dataset->Map({decode_op, random_jitter_op}, {"image"})
+  ///    dataset = dataset->Map({decode_op, resize_op}, {"image"})
   /// \endcode
   std::shared_ptr<MapDataset> Map(const std::vector<TensorTransform *> &operations,
                                   const std::vector<std::string> &input_columns = {},
