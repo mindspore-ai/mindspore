@@ -49,7 +49,7 @@ mindspore.dataset
   可以将预处理完成的数据循环输出。
 
 数据处理Pipeline示例如下，完整示例请参考
-`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/r2.0/docs/api/api_python/datasets_example.py>`_ ：
+`datasets_example.py <https://gitee.com/mindspore/mindspore/blob/r2.0/docs/api/api_python/datasets_example.py>`_ ：
 
 .. code-block:: python
 
