@@ -1579,7 +1579,6 @@ class MatrixBandPart(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
-          The data type must be float16, float32, float64, int32 or int64.
         - **lower** (Union[int, Tensor]) - Number of subdiagonals to keep. The data type must be int32 or int64.
           If negative, keep entire lower triangle.
         - **upper** (Union[int, Tensor]) - Number of superdiagonals to keep. The data type must be int32 or int64.
