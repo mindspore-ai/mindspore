@@ -27,7 +27,7 @@ from mindspore.ops.operations import _csr_ops
 from .sparse_utils import get_platform, compare_res, compare_csr
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_make_csr():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -85,7 +85,7 @@ def test_make_csr_empty():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -147,7 +147,7 @@ def test_csr_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -404,7 +404,7 @@ def test_csr_ops():
     assert np.allclose(graph_res_sparse[2].values.asnumpy(), expect3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -507,7 +507,7 @@ def test_csrops_export_and_import_mindir():
     assert out[4].shape == outputs_after_load[4].shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -547,7 +547,7 @@ def test_isinstance_csr_tensor():
     assert out2 == (False, False, False, True, True, False, True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -806,7 +806,7 @@ def test_bprop2():
     compare_res(test_csr_to_dense(indptr, indices, values, dense_shape), values_on)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dense_to_csr():
@@ -892,7 +892,7 @@ def test_csr_magic_methods():
     compare_csr(sub_output, sub_expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
