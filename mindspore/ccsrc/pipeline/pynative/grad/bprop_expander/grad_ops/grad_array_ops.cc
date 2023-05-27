@@ -1245,7 +1245,7 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   auto dout_dtype = ib->GetDtype(dout)->type_id();
 
   NodePtr dx;
-  if (!input_dynamic && !IsDynamic(broadcast_shape)) {
+  if (!input_dynamic) {
     auto tuple_out = BroadcastGradientArgs(broadcast_shape, x_shape);
     MS_EXCEPTION_IF_CHECK_FAIL(!tuple_out.empty(), "BroadcastGradientArgs out should not be empty!");
     auto reduction_axes = tuple_out[kIndex1];
