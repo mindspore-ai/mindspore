@@ -43,8 +43,9 @@ constexpr uint64_t kParallelDataNums = 32 * 1024;
 namespace aicpu {
 uint32_t NthElement::Compute(CpuKernelContext &ctx) {
   Tensor *input_n = ctx.Input(1);
-  KERNEL_CHECK_FALSE((input_n->GetTensorShape()->GetDimSizes().empty()), KERNEL_STATUS_PARAM_INVALID,
-                     "Input n must be a scalar.");
+  auto shape_n = input_n->GetTensorShape();
+  KERNEL_CHECK_FALSE((shape_n->GetDimSizes().empty() || (shape_n->GetDims() == 1 && shape_n->GetDimSize(0) == 1)),
+                     KERNEL_STATUS_PARAM_INVALID, "Input n must be a scalar or a single 1-dimension number.");
   DataType n_type = input_n->GetDataType();
   KERNEL_CHECK_FALSE((n_type == DT_INT32), KERNEL_STATUS_PARAM_INVALID, "The type of input n must be int32.");
   KERNEL_CHECK_NULLPTR(input_n->GetData(), KERNEL_STATUS_PARAM_INVALID, "NthElement Get input n failed.");
