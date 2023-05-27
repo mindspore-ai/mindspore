@@ -211,6 +211,8 @@ class AscendStreamAssign {
   std::map<std::string, std::map<uint32_t, std::set<uint32_t>>> group_hcom_graph_map_;
   // key:graph id, value:stream set
   std::map<uint32_t, std::set<uint32_t>> independent_graph_map_;
+  // key:graph id, value:assigned stream num
+  std::map<uint32_t, size_t> graph_stream_num_;
 
   // attr for memory copy reuse
   std::map<uint32_t, std::vector<uint32_t>> stream_relations_{};

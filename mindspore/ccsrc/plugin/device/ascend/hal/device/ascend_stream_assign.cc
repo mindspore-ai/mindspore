@@ -28,6 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "include/common/utils/utils.h"
@@ -35,6 +36,8 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/stream_exec_order_recorder.h"
 #endif
+
+using mindspore::ge::model_runner::ModelRunner;
 
 namespace mindspore {
 namespace device {
@@ -46,7 +49,7 @@ const char kDefaultGroup[] = "__default_group";
 constexpr auto kAttrStreamID = "stream_id";
 
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
-constexpr uint32_t kMaxCommonNodeNumPerStream = 350;
+constexpr uint32_t kReservedStreamNum = 40;
 
 constexpr uint32_t kTaskNumPerHcomNode = 300;
 constexpr uint32_t kTaskNumPerWorldHcomNode = 350;
@@ -956,19 +959,32 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
     independent_graph_map_[iter_graph.first] = stream_set;
   }
 
-  auto total_stream_num =
+  auto cur_graph_stream_num =
     resource_manager.cur_stream_num() +
     Uint32tMulWithOverflowCheck(static_cast<uint32_t>(hcom_stream_.size() + comm_sub_graph_stream_.size()),
                                 kHcomSecondaryStreamNum);
-  MS_LOG(INFO) << "Total stream number: " << total_stream_num << ", common stream number: " << common_stream_num
-               << ", hcom stream number: " << hcom_stream_.size() << "*" << (kHcomSecondaryStreamNum + 1)
+  auto total_stream_num = resource_manager.GetBusyStreamNum() + cur_graph_stream_num;
+  MS_LOG(INFO) << "Total stream number: " << total_stream_num
+               << ", current graph stream number: " << resource_manager.cur_stream_num()
+               << ", common stream number: " << common_stream_num << ", hcom stream number: " << hcom_stream_.size()
+               << "*" << (kHcomSecondaryStreamNum + 1)
                << ", comm subgraph stream number: " << comm_sub_graph_stream_.size() << "*"
                << (kHcomSecondaryStreamNum + 1) << ", independent stream number: " << independent_stream_.size() << ".";
 
-  if (total_stream_num > max_stream_count_) {
-    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count_
-                      << ", search details information in mindspore's FAQ.";
+  auto iter = graph_stream_num_.begin();
+  while (total_stream_num > max_stream_count_ - kReservedStreamNum) {
+    if (iter == graph_stream_num_.end()) {
+      MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count_
+                        << ", search details information in mindspore's FAQ.";
+    }
+    if (ModelRunner::Instance().GetModelStatus(iter->first) == ge::model_runner::ModelStatus::EXECUTED) {
+      ModelRunner::Instance().UnloadModel(iter->first);
+      total_stream_num -= iter->second;
+    }
+    iter++;
   }
+  resource_manager.SetBusyStreamNum(total_stream_num);
+  graph_stream_num_[graph_ptr->graph_id()] = cur_graph_stream_num;
 }
 
 void AscendStreamAssign::ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &graph_ptr,

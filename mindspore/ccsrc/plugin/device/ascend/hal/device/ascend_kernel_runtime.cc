@@ -547,6 +547,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
     task_info_list, wait_active_stream_list, force_copy_stream_list, stream_, 0, 0, 0, 0, 0, 0,
     resource_manager.cur_stream_num(), graph.label_num(), resource_manager.cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph.graph_id(), model));
+  ModelRunner::Instance().SetModelStatus(graph.graph_id(), ge::model_runner::ModelStatus::RAW);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
   }
@@ -1068,6 +1069,11 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 }
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
+  if (ModelRunner::Instance().GetModelStatus(graph.graph_id()) == ge::model_runner::ModelStatus::UNLOADED) {
+    if (!LoadTask(graph)) {
+      return false;
+    }
+  }
   current_graph_ = &graph;
   SetCurrentContext();
   if (graph.is_dynamic_shape()) {
@@ -1131,6 +1137,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 #endif
     return false;
   }
+  ModelRunner::Instance().SetModelStatus(graph.graph_id(), ge::model_runner::ModelStatus::EXECUTED);
   task_fail_infoes_.clear();
   return true;
 }

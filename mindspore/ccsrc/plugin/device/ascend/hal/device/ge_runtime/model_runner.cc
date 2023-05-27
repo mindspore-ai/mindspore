@@ -119,6 +119,7 @@ void ModelRunner::UnloadModel(uint32_t model_id) {
   if (iter != runtime_models_.cend()) {
     (void)runtime_models_.erase(iter);
   }
+  model_status_[model_id] = ModelStatus::UNLOADED;
 }
 
 void ModelRunner::RunModel(uint32_t model_id) {

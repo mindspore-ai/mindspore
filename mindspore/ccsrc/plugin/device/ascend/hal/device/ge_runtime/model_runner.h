@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <tuple>
 #include <string>
@@ -26,6 +27,12 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 
 namespace mindspore::ge::model_runner {
+enum ModelStatus {
+  RAW = 0,
+  EXECUTED,
+  UNLOADED,
+};
+
 class RuntimeModel;
 using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 class ModelRunner {
@@ -57,11 +64,16 @@ class ModelRunner {
 
   void RunModel(uint32_t model_id);
 
+  void SetModelStatus(uint32_t model_id, ModelStatus status) { model_status_[model_id] = status; }
+
+  ModelStatus GetModelStatus(uint32_t model_id) { return model_status_[model_id]; }
+
  private:
   ModelRunner() = default;
   ~ModelRunner() = default;
 
   std::map<uint32_t, std::shared_ptr<RuntimeModel>> runtime_models_;
+  std::unordered_map<uint32_t, ModelStatus> model_status_{};
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_MODEL_RUNNER_H_
