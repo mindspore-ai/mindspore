@@ -24,6 +24,9 @@ mindspore.ops.Im2Col
     .. note::
         目前，只支持4-D Tensor(一个batch的图像Tensor)。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **ksizes** (Union[int, tuple[int], list[int]]) - 内核的大小，应该是两个整数，分别代表高度和宽度。如果是一个整数，则表示高度等于宽度。必须被指定。
         - **strides** (Union[int, tuple[int], list[int]]，可选) - 窗口的滑动步幅，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值：1。

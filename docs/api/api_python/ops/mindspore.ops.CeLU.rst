@@ -7,6 +7,9 @@
 
     更多参考详见 :func:`mindspore.ops.celu`。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **alpha** (float，可选) - celu公式定义的阈值 :math:`\alpha` 。默认值：1.0。
 

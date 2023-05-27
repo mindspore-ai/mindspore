@@ -5,6 +5,9 @@ mindspore.ops.adaptive_max_pool3d
 
     对输入Tensor执行三维的自适应最大池化操作。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N, C, D, H, W)` 的Tensor。
         - **output_size** (Union[int, tuple]) - 指定输出的size。可以用一个整数统一表示输出的深度、高度和宽度，或者用一个整数三元组来分别表示输出的深度、高度和宽度。指定的值必须是正整数。如果是None则表示对应维度输出和输入size相同。

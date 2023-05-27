@@ -1145,7 +1145,10 @@ class RandpermV2(Primitive):
     r"""
     Generates random permutation of integers from 0 to n-1 without repeating.
 
-    Refer to :func:`mindspore.ops.randperm` for more detail.
+    Refer to :func:`mindspore.ops.randperm` for more details.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Supported Platforms:
         ``CPU``

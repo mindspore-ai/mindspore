@@ -10,6 +10,9 @@ mindspore.ops.celu
     
     详情请参考： `celu <https://arxiv.org/abs/1704.07483>`_ 。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **x** (Tensor) - celu的输入，数据类型为float16或float32。
         - **alpha** (float，可选) - celu公式定义的阈值 :math:`\alpha` 。默认值：1.0。

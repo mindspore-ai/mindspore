@@ -6,6 +6,9 @@ mindspore.ops.ormqr
     计算一个普通矩阵与Householder矩阵的乘积。计算维度为(m, n)的矩阵C（由 `other` 给出）和一个矩阵Q的乘积，
     其中Q由Householder反射系数（`input`, `tau`）生成。返回一个Tensor。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - shape :math:`(*, mn, k)`，当 `left` 为True时， mn的值等于m，否则mn的值等于n。 `*` 表示Tensor在轴0上的长度为0或者大于0。
         - **tau** (Tensor) - shape :math:`(*, min(mn, k))`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0，其类型与 `input` 相同。

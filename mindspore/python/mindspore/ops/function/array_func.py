@@ -537,6 +537,9 @@ def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         x (Tensor): Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
         lower (Union[int, Tensor]): Number of subdiagonals to keep. The data type must be int32 or int64.
@@ -558,7 +561,7 @@ def matrix_band_part(x, lower, upper):
         ValueError: If the shape of `upper` is not equal to 0D.
 
     Supported Platforms:
-
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
@@ -3752,6 +3755,9 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         If some values of the `indices` are out of bound, instead of raising an index error,
         the corresponding `updates` will not be updated to `input_x`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input_x (Tensor): The target tensor. The rank of `input` must be at least 1.
         indices (Tensor): The index to do add operation whose data type must be mindspore.int32 or
@@ -5345,8 +5351,11 @@ def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
     Returns the upper triangle part of 'input' (elements that contain the diagonal and below),
     and set the other elements to zeros.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
-        input (Tensor): The input tensor with shape :math:`(N,∗)` where ∗ means any number of additional dimensions.
+        input (Tensor): The input tensor with shape :math:`(M, N, *)` where * means any number of additional dimensions.
         diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
             indicating the main diagonal.
 
@@ -5356,10 +5365,10 @@ def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
     Raises:
         TypeError: If `diagonal` is not an int.
         TypeError: If `input` is not a Tensor.
-        ValueError: If length of shape of `input` is less than 2.
+        ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
@@ -6285,6 +6294,9 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
           is :math:`(N, C, \prod(\text{kernel_size}), L)` .
         - In version 2.0, it is a 3-dimensional Tensor whose shape is
           :math:`(N, C \times \prod(\text{kernel_size}), L)` .
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): 4-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.

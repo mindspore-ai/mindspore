@@ -7,6 +7,9 @@ mindspore.ops.randperm
 
     返回由 n 推断出的具有确定shape的Tensor，其中的随机数取自给定类型可以表示的数据范围。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **n** (Union[Tensor, int]) - 输入大小，如果为Tensor，则形状为()或(1,)，数据类型为int64。数值必须大于0。
         - **seed** (int, 可选) - 随机种子。默认值： ``0`` 。当seed为-1（只有负值）时，offset为0，随机数由时间决定。

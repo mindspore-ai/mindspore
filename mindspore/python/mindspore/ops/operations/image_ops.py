@@ -766,6 +766,9 @@ class ResizeBicubic(Primitive):
     r"""
     Resize images to size using bicubic interpolation.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         align_corners (bool, optional):If true, the centers of the 4 corner pixels of the input
             and output tensors are aligned, preserving the values at the corner pixels.Default: False.

@@ -80,6 +80,9 @@ def adaptive_avg_pool2d(input, output_size):
         * (w_{end}- w_{start})}
         \end{align}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor,
             with float16, float32 or float64 data type.
@@ -109,7 +112,7 @@ def adaptive_avg_pool2d(input, output_size):
         ValueError: If the dimension of `input` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
@@ -1245,6 +1248,9 @@ def celu(x, alpha=1.0):
 
     For more details, please refer to `celu <https://arxiv.org/abs/1704.07483>`_.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         x (Tensor): The input of celu with data type of float16 or float32.
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
@@ -1615,6 +1621,9 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
     D the feature depth, H is the feature height, and W is the feature width.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
             Tensor of data type: float16, float32, double.
@@ -1664,7 +1673,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         ValueError: If the third dimension size of `_random_samples` is not 3.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])

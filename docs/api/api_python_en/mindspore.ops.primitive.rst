@@ -76,8 +76,10 @@ Neural Network
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
+    mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
+    mindspore.ops.ResizeNearestNeighborV2
 
 Loss Function
 ^^^^^^^^^^^^^
@@ -112,6 +114,7 @@ Activation Function
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.CeLU
     mindspore.ops.Elu
     mindspore.ops.FastGeLU
     mindspore.ops.GeLU
@@ -232,6 +235,7 @@ Mathematical Operators
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
     mindspore.ops.Cross
+    mindspore.ops.FFTWithSize
     mindspore.ops.Gcd
 
 Element-wise Operator
@@ -328,6 +332,7 @@ Element-wise Operator
     mindspore.ops.TruncateMod
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
+    mindspore.ops.Zeta
 
 
 Reduction Operator
@@ -388,6 +393,8 @@ Linear Algebraic Operator
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
+    mindspore.ops.MatrixPower
+    mindspore.ops.Ormqr
     mindspore.ops.Orgqr
     mindspore.ops.Svd
 
@@ -445,6 +452,7 @@ Array Operation
     mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
     mindspore.ops.BatchToSpaceND
+    mindspore.ops.BatchToSpaceNDV2
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle
@@ -459,8 +467,8 @@ Array Operation
     mindspore.ops.Diag
     mindspore.ops.DType
     mindspore.ops.Eig
-    mindspore.ops.Expand
     mindspore.ops.ExpandDims
+    mindspore.ops.FillDiagonal
     mindspore.ops.FillV2
     mindspore.ops.FloatStatus
     mindspore.ops.Fmax
@@ -473,8 +481,11 @@ Array Operation
     mindspore.ops.Hypot
     mindspore.ops.Identity
     mindspore.ops.Igamma
+    mindspore.ops.Igammac
+    mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
+    mindspore.ops.IndexPut
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceIndexAdd
     mindspore.ops.InplaceSub
@@ -487,7 +498,9 @@ Array Operation
     mindspore.ops.LogSpace
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
+    mindspore.ops.MaskedScatter
     mindspore.ops.MaskedSelect
+    mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixSetDiagV3
@@ -527,6 +540,7 @@ Array Operation
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
+    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterMul
@@ -538,6 +552,7 @@ Array Operation
     mindspore.ops.Transpose
     mindspore.ops.Tril
     mindspore.ops.TrilIndices
+    mindspore.ops.Triu
     mindspore.ops.TriuIndices
     mindspore.ops.Unique
     mindspore.ops.UniqueConsecutive
