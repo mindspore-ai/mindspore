@@ -1763,7 +1763,7 @@ def test_train():
     train_proccess(context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1774,5 +1774,5 @@ def test_train_pynative():
     Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
     """
     # set pynative_synchronize=True for temp avoid
-    context.set_context(pynative_synchronize=True)
+    context.set_context(pynative_synchronize=False)
     train_proccess(context.PYNATIVE_MODE)
