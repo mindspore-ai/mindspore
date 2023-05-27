@@ -1684,7 +1684,7 @@ REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUN
 
 REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto shape = ib->Shape(x);
+  auto shape = ib->Shape(x, true);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {dout, ib->Cast(shape, kInt64)});
   return {dx};
