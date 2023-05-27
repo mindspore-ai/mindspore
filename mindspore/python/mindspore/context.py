@@ -1033,10 +1033,6 @@ def set_context(**kwargs):
             - RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
               different types of operators in the network model. The sequence of RL and GA is not differentiated
               (Automatic selection).
-
-            For more information about the enable operator tuning tool settings, please check
-            `Enable the operator optimization tool
-            <https://www.mindspore.cn/tutorials/experts/en/r2.0/debug/auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
