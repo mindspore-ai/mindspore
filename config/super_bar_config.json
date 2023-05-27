@@ -417,6 +417,7 @@
     ]
   },
   "SkipDynamicCompileStatic": [
+    "LayerNorm",
     "SoftmaxV2",
     "PRelu",
     "Trunc",
