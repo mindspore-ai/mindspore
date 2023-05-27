@@ -2379,9 +2379,9 @@ class SparseCountSparseOutput(Primitive):
 
     Args:
         binary_output (bool) - If false, output the number of occurrences of each value,
-                               if True output 1 for orresponding values. Default False
-        minlength(Scalar) - Int type minimum value to count, default -1
-        maxlength(Scalar) - Int type maximum value to count, default -1
+                               if True output 1 for orresponding values. Default: False.
+        minlength(Scalar) - Int type minimum value to count, default: -1.
+        maxlength(Scalar) - Int type maximum value to count, default: -1.
 
     Inputs:
         - **indices** (Tensor) - Tensor representing the position of the element in the sparse

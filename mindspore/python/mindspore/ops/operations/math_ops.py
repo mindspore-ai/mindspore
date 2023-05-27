@@ -897,7 +897,7 @@ class ReduceAll(_Reduce):
 
     Args:
        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions. Default : False.
+                         If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
@@ -952,7 +952,7 @@ class ReduceAny(_Reduce):
 
     Args:
        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                         If false, don't keep these dimensions. Default : False.
+                         If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
@@ -1007,7 +1007,7 @@ class ReduceMax(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default : False.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -1091,7 +1091,7 @@ class ReduceMin(_Reduce):
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default : False.
+                          If false, don't keep these dimensions. Default: False.
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
@@ -2840,7 +2840,7 @@ class Histogram(Primitive):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
+        bins (int, optional): Number of histogram bins, optional. Default: 100. If specified, must be positive.
         min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
         max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
@@ -6934,7 +6934,7 @@ class MatrixSolveLs(Primitive):
     path is typically 6-7 times slower than the fast path. If `fast` is `False` then `l2_regularizer` is ignored.
 
     Args:
-        fast (bool): An optional bool. Defaults to True.
+        fast (bool): An optional bool. Default: True.
 
     Inputs:
         - **matrix** (Tensor) -  A Tensor. Must be one of the following data types: float64, float32, complex64,
