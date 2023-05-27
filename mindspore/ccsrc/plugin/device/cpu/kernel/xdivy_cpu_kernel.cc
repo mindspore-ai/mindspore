@@ -50,7 +50,7 @@ void XDivySameShapeTask(T *x_addr, T *y_addr, T *output_addr, size_t start, size
   Eigen::Map<Eigen::Array<T, -1, 1>> x_v(x_addr + start, end - start);
   Eigen::Map<Eigen::Array<T, -1, 1>> y_v(y_addr + start, end - start);
   Eigen::Map<Eigen::Array<T, -1, 1>> o_v(output_addr + start, end - start);
-  o_v = (x_v == T(0)).select(o_v, x_v / y_v);
+  o_v = (x_v == T(0)).select(T(0), x_v / y_v);
 }
 
 template <>
@@ -61,7 +61,7 @@ void XDivySameShapeTask(float16 *x_addr, float16 *y_addr, float16 *output_addr, 
   Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> x_v(ex_addr + start, end - start);
   Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> y_v(ey_addr + start, end - start);
   Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> o_v(eo_addr + start, end - start);
-  o_v = (x_v == Eigen::half(0)).select(o_v, x_v / y_v);
+  o_v = (x_v == Eigen::half(0)).select(Eigen::half(0), x_v / y_v);
 }
 
 template <typename T>
