@@ -195,13 +195,9 @@ void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight,
     LstmMatMul(gate_i, input, weight_i, bias_i, row, deep, col, col_align, is_vec, packed_ptr);
 
 #ifdef ENABLE_AVX
-    if (is_vec) {
-      weight_i += deep * col_align;
-    } else {
-      weight_i += deep * col;
-    }
-#else
     weight_i += deep * col_align;
+#else
+    weight_i += deep * (is_vec ? col : col_align);
 #endif
     bias_i += col_align;
     gate_i += row * col;
