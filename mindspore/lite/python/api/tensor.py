@@ -261,7 +261,6 @@ class Tensor:
     """
 
     def __init__(self, tensor=None):
-        self._numpy_obj = None
         if tensor is not None:
             if not isinstance(tensor, _c_lite_wrapper.TensorBind):
                 raise TypeError(f"tensor must be MindSpore Lite's Tensor._tensor, but got {type(tensor)}.")
@@ -498,5 +497,4 @@ class Tensor:
         if numpy_obj.nbytes != self.data_size:
             raise RuntimeError(
                 f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.data_size}")
-        self._numpy_obj = numpy_obj.flatten()  # keep reference count of numpy objects
-        self._tensor.set_data_from_numpy(self._numpy_obj)
+        self._tensor.set_data_from_numpy(numpy_obj)

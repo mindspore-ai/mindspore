@@ -360,12 +360,7 @@ const std::vector<int64_t> &MSTensor::Shape() const {
 
 int64_t MSTensor::ElementNum() const {
   MS_EXCEPTION_IF_NULL(impl_);
-  const auto &shape = impl_->Shape();
-  if (shape.empty()) {
-    // element number of scalar is 1
-    return 1;
-  }
-  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  return std::static_pointer_cast<MutableTensorImpl>(impl_)->ElementNum();
 }
 
 std::shared_ptr<const void> MSTensor::Data() const {

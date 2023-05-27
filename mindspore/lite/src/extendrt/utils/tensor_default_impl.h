@@ -76,20 +76,6 @@ class TensorDefaultImpl : public MutableTensorImpl {
   std::vector<QuantParam> GetQuantParams() const override { return quant_param_; }
   void SetQuantParams(const std::vector<QuantParam> &quant_param) override { quant_param_ = quant_param; }
 
-  int64_t ElementNum() const {
-    int64_t ele_num = 1;
-    for (auto &dim : shape_) {
-      if (dim < 0) {
-        return 0;
-      }
-      if (INT32_MAX / ele_num < dim) {
-        MS_LOG(ERROR) << "The shape " << shape_ << " is invalid";
-        return 0;
-      }
-      ele_num *= dim;
-    }
-    return ele_num;
-  }
   size_t DataSize() const override { return ElementNum() * lite::DataTypeSize(static_cast<enum TypeId>(type_)); }
 
   void SetDeviceData(void *data) override { device_data_ = data; }
