@@ -32,7 +32,6 @@
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "ops/core_ops.h"
-#include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"

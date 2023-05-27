@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -479,7 +479,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
     void *data = reinterpret_cast<void *>(const_cast<uint8_t *>(ge_tensor->GetData()));
     ssize_t data_size = static_cast<ssize_t>(SizeOf(me_dims));
     ssize_t itemsize = MeTensor(me_type, ShapeVector()).data().itemsize();
-    ssize_t ndim = me_dims.size();
+    ssize_t ndim = SizeToLong(me_dims.size());
     auto ref_data = std::make_shared<TensorRefData>(data, data_size, itemsize, ndim);
     return make_shared<MeTensor>(me_type, me_dims, ref_data);
   } else {
