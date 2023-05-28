@@ -1157,19 +1157,16 @@ class RandpermV2(Primitive):
         >>> n = Tensor([4], mstype.int64)
         >>> seed = 0
         >>> offset = 0
-        >>> randperm = ops.RandpermV2(layout=0, dtype=mstype.int64)
+        >>> randperm = ops.RandpermV2(dtype=mstype.int64)
         >>> output = randperm(n, seed, offset)
         >>> print(output)
         [1 0 2 3]
     """
 
     @prim_attr_register
-    def __init__(self, layout=0, dtype=mstype.int64):
+    def __init__(self, dtype=mstype.int64):
         """Initialize RandpermV2"""
         self.dtype = dtype
-        self.layout = layout
-        Validator.check_value_type('layout', layout, [int], self.name)
-        Validator.check_non_negative_int(layout, 'layout', self.name)
         valid_values = (mstype.int32, mstype.int64, mstype.int16, mstype.int8, mstype.uint8, mstype.float64
                         , mstype.float32, mstype.float16)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
