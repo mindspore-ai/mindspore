@@ -54,10 +54,14 @@ uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((rank >= 2), KERNEL_STATUS_PARAM_INVALID, "Input must be at least 2-dim, but get dims: %d", rank);
   int64_t m = x->GetTensorShape()->GetDimSize(rank - 2);
   int64_t n = x->GetTensorShape()->GetDimSize(rank - 1);
-  KERNEL_CHECK_FALSE((num_lower->GetTensorShape()->GetDimSizes().empty()), KERNEL_STATUS_PARAM_INVALID,
-                     "num_lower must be scalar.");
-  KERNEL_CHECK_FALSE((num_upper->GetTensorShape()->GetDimSizes().empty()), KERNEL_STATUS_PARAM_INVALID,
-                     "num_upper must be scalar.");
+  auto lower_shape = num_lower->GetTensorShape();
+  auto upper_shape = num_upper->GetTensorShape();
+  KERNEL_CHECK_FALSE(
+    (lower_shape->GetDimSizes().empty() || (lower_shape->GetDims() == 1 && lower_shape->GetDimSize(0) == 1)),
+    KERNEL_STATUS_PARAM_INVALID, "num_lower must be scalar or a single 1-dimension number.");
+  KERNEL_CHECK_FALSE(
+    (upper_shape->GetDimSizes().empty() || (upper_shape->GetDims() == 1 && upper_shape->GetDimSize(0) == 1)),
+    KERNEL_STATUS_PARAM_INVALID, "num_upper must be scalar or a single 1-dimension number.");
   DataType lower_type = num_lower->GetDataType();
   KERNEL_CHECK_FALSE((lower_type == DT_INT32 || lower_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
                      "Unsupported num_lower data_type[%s], "
