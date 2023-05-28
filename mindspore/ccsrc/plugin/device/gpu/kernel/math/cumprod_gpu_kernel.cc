@@ -39,11 +39,13 @@ bool CumProdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if (any(input_addr, output_addr, ws_addr)) {
     return false;
   }
-  auto axis_addr = GetDeviceAddress<T>(inputs, kIndex1);
+  auto axis_addr = GetDeviceAddress<int64_t>(inputs, kIndex1);
   if (axis_addr == nullptr) {
     return false;
   }
   int64_t axis_tmp;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize((cudaStream_t)cuda_stream_),
+                                     "CumProd cudaStreamSynchronized failed");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&axis_tmp, axis_addr, inputs[kIndex1]->size, cudaMemcpyDeviceToHost),
                                      "For '" << kernel_name_ << "', cudaMemcpy input 'axis' device to host failed.");
   axis_ = static_cast<int>(axis_tmp);
