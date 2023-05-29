@@ -1325,7 +1325,7 @@ REG_BPROP_BUILDER("Betainc").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto sx = ib->Shape(input_x);
   auto log_beta =
-    ib->Emit("Lgamma", {input_a}) + ib->Emit("Lgamma", {input_b}) + ib->Emit("Lgamma", {ib->Add(input_a, input_b)});
+    ib->Emit("Lgamma", {input_a}) + ib->Emit("Lgamma", {input_b}) - ib->Emit("Lgamma", {ib->Add(input_a, input_b)});
   auto partial_x = ib->Exp(ib->Sub(
     (ib->Add(
       (ib->Mul((ib->Sub(input_b, ib->Tensor(1, ib->GetDtype(input_b)))), (ib->Emit("Log1p", {ib->Neg(input_x)})))),
