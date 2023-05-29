@@ -54,6 +54,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/xlogy_cpu_kernel.cc"                              "unreadVariable"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/arithmetic_cpu_kernel.cc"                         "unreadVariable"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/hccl/mux_send_ascend_kernel.cc"                "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/xdivy_cpu_kernel.cc"                              "unreadVariable"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"
