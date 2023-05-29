@@ -27,10 +27,4 @@ mindspore.train.ConvertModelUtils
             - **keep_batchnorm_fp32** (bool) - 保持BN在 `float32` 中运行。如果为True，则将覆盖之前的级别设置。默认值： ``False`` 。
 
         返回：
-            model (Object)，用于训练的高级API。 
-        
-        样例：
-
-        .. note::
-            运行以下样例之前，需自定义网络Net和数据集准备函数create_dataset。详见 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/model.html>`_ 和 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html>`_ 。
-
+            model (Object)，用于训练的高级API。
