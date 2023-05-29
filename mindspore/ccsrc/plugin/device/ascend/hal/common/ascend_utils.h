@@ -19,6 +19,7 @@
 
 #include <string>
 #include <set>
+#include <vector>
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "include/backend/kernel_graph.h"
@@ -56,6 +57,7 @@ class ErrorManagerAdapter {
   static error_message::Context context_;
   static std::mutex initialized_mutex_;
   static bool initialized_;
+  static std::vector<std::string> traceback_;
 };
 
 bool IsGraphMode();
