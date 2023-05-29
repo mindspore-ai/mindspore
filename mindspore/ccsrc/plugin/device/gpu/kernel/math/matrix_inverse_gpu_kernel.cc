@@ -42,6 +42,9 @@ bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
   handle_cus = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   adjoint_ = kernel_ptr->get_adjoint();
+  if (adjoint_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' adjoint=True is not supported on GPU.";
+  }
   return true;
 }
 

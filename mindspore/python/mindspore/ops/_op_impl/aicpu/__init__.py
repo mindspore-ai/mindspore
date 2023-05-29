@@ -113,6 +113,8 @@ from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
 from .ctcloss import _ctcloss_aicpu
+from .ctc_loss_v2 import _ctc_loss_v2_aicpu
+from .ctc_loss_v2_grad import _ctc_loss_v2_grad_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
@@ -239,6 +241,7 @@ from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
 from .concat_offset import _concat_offset_aicpu
+from .concat_offset_v1 import _concat_offset_v1_aicpu
 from .range import _range_aicpu
 from .slice_grad import _slice_grad_aicpu
 from .median import _median_aicpu
@@ -421,3 +424,4 @@ from .sspaddmm import _sspaddmm_aicpu
 from .sequence_addn import _sequence_addn_aicpu
 from .sequence_concat import _sequence_concat_aicpu
 from .affine_grid import _affine_grid_aicpu
+from .depth_to_space import _depth_to_space_aicpu

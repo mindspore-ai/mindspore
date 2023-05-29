@@ -158,11 +158,6 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
   }
-  auto x_shp = x_shape_map[kShape];
-  auto y_shp = y_shape_map[kShape];
-  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
 
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
@@ -170,6 +165,12 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   bool transpose_b = GetValue<bool>(transpose_b_ptr);
   (void)primitive->AddAttr("transpose_x1", transpose_a_ptr);
   (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
+
+  auto x_shp = x_shape_map[kShape];
+  auto y_shp = y_shape_map[kShape];
+  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
 
   bool dynamic_shape = IsDynamic(x_shp) || IsDynamic(y_shp);
   if (!dynamic_shape) {

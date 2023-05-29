@@ -92,6 +92,8 @@ inline std::uint32_t CheckLgamma(CpuKernelContext &ctx, std::uint32_t inputs_num
 inline std::uint32_t ComputeLgamma(const CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
+    case DT_DOUBLE:
+      return ComputeLgamma<double, double>(ctx);
     case DT_FLOAT16:
       return ComputeLgamma<Eigen::half, Eigen::half>(ctx);
     case DT_FLOAT:
